@@ -9,13 +9,13 @@ direction, never the reverse).
 
 | Package | What it is |
 | --- | --- |
-| `@schemastud/beam-mdx` | File-driven MDX content rung (draft-exclusion Vite plugin, citation kit, `.site-prose`) |
+| `@splicewire/beam-mdx` | File-driven MDX content rung (draft-exclusion Vite plugin, citation kit, `.site-prose`) |
 
 Growing as FC mints `beam` / `beam-accounts` / `beam-notifications` / `beam-commerce`.
 
 ## Scope note
 
-beam publishes under the **shared `@schemastud` npm scope** (so `@schemastud/beam-mdx` keeps its
+beam publishes under the **shared `@schemastud` npm scope** (so `@splicewire/beam-mdx` keeps its
 name — the core/beam split is repo-level, not name-level). Two repos, one scope, one public
 registry; no consumer breakage.
 

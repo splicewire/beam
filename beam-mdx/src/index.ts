@@ -1,10 +1,10 @@
 // =============================================================================
-// @schemastud/beam-mdx — the file-driven MDX content rung.
+// @splicewire/beam-mdx — the file-driven MDX content rung.
 //
 // The browser surface: the content resolver, the cross-property citation kit (Ref /
 // Receipts), the frontmatter-driven JSON-LD builder, the embed-by-reference <Content>,
 // and the parameterized <ContentShow> renderer. The node-side build plugin + MDX preset
-// live at `@schemastud/beam-mdx/vite`; the base typography at `@schemastud/beam-mdx/css`.
+// live at `@splicewire/beam-mdx/vite`; the base typography at `@splicewire/beam-mdx/css`.
 // A consuming satellite keeps only its own references manifest and brand tokens.
 // =============================================================================
 

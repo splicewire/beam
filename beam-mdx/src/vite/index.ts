@@ -1,5 +1,5 @@
 // =============================================================================
-// @schemastud/beam-mdx/vite — the node-side build surface for the MDX content plane.
+// @splicewire/beam-mdx/vite — the node-side build surface for the MDX content plane.
 // =============================================================================
 
 export { beamMdxContent } from './content-plugin';

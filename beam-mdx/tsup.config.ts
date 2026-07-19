@@ -23,7 +23,7 @@ export default defineConfig({
         'remark-mdx-frontmatter',
     ],
     // The base typography rides alongside the JS as a plain, importable stylesheet
-    // (`@schemastud/beam-mdx/css`); satellites override the tokens it reads.
+    // (`@splicewire/beam-mdx/css`); satellites override the tokens it reads.
     onSuccess: async () => {
         copyFileSync('src/site-prose.css', 'dist/site-prose.css');
     },

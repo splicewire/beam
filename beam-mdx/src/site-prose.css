@@ -1,10 +1,10 @@
 /* =============================================================================
-   @schemastud/beam-mdx — base long-form essay / MDX typography.
+   @splicewire/beam-mdx — base long-form essay / MDX typography.
 
    Token-driven: every color, font, and hairline reads a CSS custom property
    (--sr-*, --font-*) the *satellite* defines, so a consuming site overrides the
    look by setting tokens, never by forking this stylesheet. Import once (e.g.
-   `@import '@schemastud/beam-mdx/css';`) and apply `.site-prose` to the article.
+   `@import '@splicewire/beam-mdx/css';`) and apply `.site-prose` to the article.
    ============================================================================= */
 
 .site-prose {

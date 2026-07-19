@@ -1,13 +1,13 @@
-# @schemastud/beam-mdx
+# @splicewire/beam-mdx
 
 The file-driven MDX content rung. The browser + build surface for an app whose essays, pages,
 and posts are hand-authored `.mdx` resolved at Vite build time — with a build-time draft gate so
-a work-in-progress never ships. Pairs with `schemastud/laravel-beam-mdx` (the Laravel companion:
+a work-in-progress never ships. Pairs with `splicewire/laravel-beam-mdx` (the Laravel companion:
 route macros + `beam-mdx:doctor`).
 
 ## Exports
 
-- **`@schemastud/beam-mdx`** — the browser surface:
+- **`@splicewire/beam-mdx`** — the browser surface:
   - `createContent(modules)` → `resolveContent` / `essaysList` / `essayTopics` /
     `broadcastsList` / `contentNames`, plus `isDraft` and every content type.
   - `Ref` / `Receipts` + `resolveReference` — the cross-property citation kit (the app supplies
@@ -16,13 +16,13 @@ route macros + `beam-mdx:doctor`).
   - `Content` — embed an authored fragment by name.
   - `ContentShow` — the parameterized content renderer (the app injects layouts, the MDX
     component map, and the references manifest).
-- **`@schemastud/beam-mdx/vite`** — the node/build surface:
+- **`@splicewire/beam-mdx/vite`** — the node/build surface:
   - `beamMdxContent(options)` — the build-time draft-exclusion plugin. Generates the
     `virtual:beam-mdx/content` module map, omitting drafts unless the current env is
     allowlisted (so a draft's content *and slug* are absent from a production bundle).
   - `beamMdxPreset(options)` — the MDX compile step (mdx + remark-frontmatter +
     remark-mdx-frontmatter).
-- **`@schemastud/beam-mdx/css`** — the token-driven base `.site-prose` typography (apps override
+- **`@splicewire/beam-mdx/css`** — the token-driven base `.site-prose` typography (apps override
   the `--sr-*` / `--font-*` tokens it reads).
 
 ## Draft convention
@@ -36,16 +36,16 @@ separated) is the visibility knob; empty = nothing previews. The Laravel compani
 
 ```ts
 // vite.config.ts
-import { beamMdxContent, beamMdxPreset } from '@schemastud/beam-mdx/vite';
+import { beamMdxContent, beamMdxPreset } from '@splicewire/beam-mdx/vite';
 // plugins: [ beamMdxContent({ contentDir, previewEnvs, currentEnv }), beamMdxPreset(), ... ]
 
 // resources/js/lib/content.ts — bind the resolver to this app's virtual module
-import { createContent } from '@schemastud/beam-mdx';
+import { createContent } from '@splicewire/beam-mdx';
 import { MODULES } from 'virtual:beam-mdx/content';
 export const { resolveContent, essaysList /* … */ } = createContent(MODULES);
 ```
 
 ```css
 /* app.css */
-@import '@schemastud/beam-mdx/css';
+@import '@splicewire/beam-mdx/css';
 ```

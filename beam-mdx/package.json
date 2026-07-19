@@ -1,5 +1,5 @@
 {
-    "name": "@schemastud/beam-mdx",
+    "name": "@splicewire/beam-mdx",
     "version": "0.1.0",
     "description": "The file-driven MDX content rung: a build-time draft-exclusion Vite plugin + MDX preset, a module-map content resolver (resolveContent / essaysList), a cross-property citation kit (Ref / Receipts), a frontmatter-driven JSON-LD builder, an embed-by-reference <Content>, a parameterized <ContentShow> renderer, and a token-driven .site-prose base stylesheet. Satellites keep their own references manifest and brand tokens; everything else rides the package.",
     "license": "MIT",
@@ -31,7 +31,8 @@
     },
     "repository": {
         "type": "git",
-        "url": "https://github.com/schemastud/beam-mdx.git"
+        "url": "https://github.com/splicewire/beam.git",
+        "directory": "beam-mdx"
     },
     "scripts": {
         "build": "tsup",
