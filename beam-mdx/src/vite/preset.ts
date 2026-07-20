@@ -7,6 +7,8 @@ import type { Plugin } from 'vite';
 export interface BeamMdxPresetOptions {
     /** Extra remark plugins to run after the frontmatter pair. */
     remarkPlugins?: PluggableList;
+    /** Rehype plugins to run on the HAST (e.g. syntax highlighting for fenced code). */
+    rehypePlugins?: PluggableList;
 }
 
 /**
@@ -26,6 +28,7 @@ export function beamMdxPreset(options: BeamMdxPresetOptions = {}): Plugin {
                 remarkMdxFrontmatter,
                 ...(options.remarkPlugins ?? []),
             ],
+            rehypePlugins: [...(options.rehypePlugins ?? [])],
         }),
     } as Plugin;
 }
