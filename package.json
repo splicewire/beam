@@ -6,7 +6,8 @@
     "packageManager": "npm@10.9.2",
     "//workspaces": "TOPOLOGICAL order (leaves first) so `npm run build --workspaces` resolves internal .d.ts in order. Grows as FC mints beam / beam-accounts / beam-notifications / beam-commerce.",
     "workspaces": [
-        "beam-mdx"
+        "beam-mdx",
+        "beam-mainframe"
     ],
     "scripts": {
         "build": "npm run build --workspaces --if-present",

@@ -1,0 +1,50 @@
+{
+    "name": "@splicewire/beam-mainframe",
+    "version": "0.1.0",
+    "description": "The app-level frame that hosts schemastud Frames: the missing site-shell for a beam site. Ships the frozen slot contract (as types), an SSR-safe named-slot registry, a Mainframe registry (register a mode-layout by name), the host→Mainframe delegation seam (state-preserving child-swap under a stable host), and a `can`-gated resolver. The moat is the engines, gated at the call-site — never this chrome (ADR-0092, ADR-0099).",
+    "license": "MIT",
+    "type": "module",
+    "main": "dist/index.js",
+    "types": "dist/index.d.ts",
+    "exports": {
+        ".": {
+            "types": "./dist/index.d.ts",
+            "import": "./dist/index.js"
+        }
+    },
+    "sideEffects": false,
+    "files": [
+        "dist",
+        "src",
+        "README.md"
+    ],
+    "publishConfig": {
+        "registry": "https://registry.npmjs.org",
+        "access": "public"
+    },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/splicewire/beam.git",
+        "directory": "beam-mainframe"
+    },
+    "scripts": {
+        "build": "tsup",
+        "dev": "tsup --watch",
+        "test": "vitest run --passWithNoTests",
+        "typecheck": "tsc --noEmit"
+    },
+    "peerDependencies": {
+        "react": ">=18"
+    },
+    "devDependencies": {
+        "@testing-library/react": "^16.1.0",
+        "@types/node": "^22.20.1",
+        "@types/react": "^19.0.0",
+        "jsdom": "^25.0.1",
+        "react": "^19.2.0",
+        "react-dom": "^19.2.0",
+        "tsup": "^8.5.1",
+        "typescript": "^5.7.2",
+        "vitest": "^4.1.10"
+    }
+}
