@@ -6,7 +6,7 @@ export default defineConfig({
     // Object form keeps distinct output basenames (dist/index.js + dist/vite.js);
     // a bare array would collide two `index` entries. The `vite` entry is the
     // node-side build plugin + MDX preset; `index` is the browser React surface.
-    entry: { index: 'src/index.ts', vite: 'src/vite/index.ts' },
+    entry: { index: 'src/index.ts', vite: 'src/vite/index.ts', kit: 'src/kit/index.ts' },
     format: ['esm'],
     dts: true,
     sourcemap: true,
@@ -26,5 +26,6 @@ export default defineConfig({
     // (`@splicewire/beam-mdx/css`); satellites override the tokens it reads.
     onSuccess: async () => {
         copyFileSync('src/site-prose.css', 'dist/site-prose.css');
+        copyFileSync('src/kit/kit.css', 'dist/kit.css');
     },
 });
