@@ -209,3 +209,72 @@
 .site-prose .bkit-step-body > :last-child {
     margin-bottom: 0;
 }
+
+/* --- DoctorOutput ---------------------------------------------------------- */
+.site-prose .bkit-doctoroutput {
+    margin: 1.5rem 0;
+    border: 1px solid var(--sr-hairline);
+    border-radius: 0.5rem;
+    overflow: hidden;
+    background: var(--swc-paper-raised, var(--swc-paper));
+    font-family: var(--font-mono, var(--swc-font-mono));
+}
+.site-prose .bkit-doctoroutput-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+.site-prose .bkit-doctoroutput-row {
+    display: grid;
+    grid-template-columns: 0.65rem auto 1fr;
+    align-items: baseline;
+    gap: 0 0.6rem;
+    padding: 0.4rem 1rem;
+    font-size: 0.8125rem;
+    line-height: 1.6;
+    border-top: 1px solid var(--sr-faint, var(--sr-hairline));
+}
+.site-prose .bkit-doctoroutput-list > :first-child {
+    border-top: none;
+}
+.site-prose .bkit-doctoroutput-pip {
+    align-self: center;
+    width: 0.6rem;
+    height: 0.6rem;
+    border-radius: 50%;
+    background: var(--bkit-doctor-accent);
+}
+.site-prose .bkit-doctoroutput-label {
+    font-family: var(--font-sans, var(--swc-font-sans));
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--bkit-doctor-accent);
+}
+.site-prose .bkit-doctoroutput-check {
+    color: var(--sr-heading);
+    font-weight: 600;
+}
+.site-prose .bkit-doctoroutput-detail {
+    grid-column: 3;
+    color: var(--sr-dim);
+}
+.site-prose .bkit-doctoroutput-row--pass {
+    --bkit-doctor-accent: var(--swc-green, var(--sr-brand));
+}
+.site-prose .bkit-doctoroutput-row--warn {
+    --bkit-doctor-accent: var(--swc-warn);
+}
+.site-prose .bkit-doctoroutput-row--fail {
+    --bkit-doctor-accent: var(--swc-danger);
+}
+.site-prose .bkit-doctoroutput-summary {
+    margin: 0;
+    padding: 0.5rem 1rem;
+    border-top: 1px solid var(--sr-hairline);
+    background: var(--swc-muted);
+    font-family: var(--font-sans, var(--swc-font-sans));
+    font-size: 0.75rem;
+    color: var(--sr-dim);
+}

@@ -15,3 +15,5 @@ export { Terminal } from './terminal';
 export { Callout } from './callout';
 export type { CalloutType } from './callout';
 export { Steps, Step } from './steps';
+export { DoctorOutput, parseDoctorOutput } from './doctor-output';
+export type { DoctorFinding } from './doctor-output';
