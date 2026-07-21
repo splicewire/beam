@@ -270,19 +270,19 @@ describe('window mode — public view falls out of entitlement (ticket 05)', () 
     });
 });
 
-// --- Workspace-mode: the focus placement — recedes the desk slots, no visitor fall-out (ticket 07) -
+// --- Focus-mode: the focus placement — recedes the desk slots, no visitor fall-out (ticket 07) -----
 
 /**
- * A stripped `workspace`-shaped Mainframe: it frames `main` (the focused task) full-bleed and places
- * one custom `workspaceExit` slot for its receding mode chrome — the shape splicewire-app's real
- * `WorkspaceMainframe` uses. Deliberately does NOT place the desk slots (rail/topBar/etc.): they
+ * A stripped `focus`-shaped Mainframe: it frames `main` (the focused task) full-bleed and places
+ * one custom `focusExit` slot for its receding mode chrome — the shape splicewire-app's real
+ * `FocusMainframe` uses. Deliberately does NOT place the desk slots (rail/topBar/etc.): they
  * resolve but this mode ignores them (the known-but-unplaced silent no-op). Unlike `window`, its
- * chrome is *ungated* — workspace is never a public view.
+ * chrome is *ungated* — focus is never a public view.
  */
-const WorkspaceLike: Mainframe = ({ slots, ctx }) => (
-    <div data-testid="workspace">
+const FocusLike: Mainframe = ({ slots, ctx }) => (
+    <div data-testid="focus">
         <div data-testid="task">{slots.main(ctx.payload)}</div>
-        {slots.items('workspaceExit').map((node, i) => (
+        {slots.items('focusExit').map((node, i) => (
             <div key={i} data-testid="exit-chrome">
                 {node}
             </div>
@@ -290,28 +290,28 @@ const WorkspaceLike: Mainframe = ({ slots, ctx }) => (
     </div>
 );
 
-function renderWorkspace(can: (cap: string) => boolean) {
+function renderFocus(can: (cap: string) => boolean) {
     const slots = createSlotRegistry();
     const mainframes = createMainframeRegistry();
-    mainframes.register('workspace', WorkspaceLike, {
-        slots: [{ name: 'workspaceExit', fillType: 'ordered-multi-source' }],
+    mainframes.register('focus', FocusLike, {
+        slots: [{ name: 'focusExit', fillType: 'ordered-multi-source' }],
     });
     // The task surface in `main` + an ungated exit pill in the custom slot. A desk-only contribution
-    // (`rail`) is also present, to prove workspace recedes it rather than placing it.
+    // (`rail`) is also present, to prove focus recedes it rather than placing it.
     slots.contribute({ slot: 'main', key: 'task', render: () => <p>focused editor</p> });
-    slots.contribute({ slot: 'workspaceExit', key: 'exit', node: <span>exit focus</span> });
+    slots.contribute({ slot: 'focusExit', key: 'exit', node: <span>exit focus</span> });
     slots.contribute({ slot: 'rail', key: 'nav', node: <span>rail nav</span> });
     const injection: MainframeInjection = { slots, mainframes, can };
     return render(
         <MainframeProvider injection={injection}>
-            <MainframeOutlet mode="workspace" ctx={{ payload: {} }} />
+            <MainframeOutlet mode="focus" ctx={{ payload: {} }} />
         </MainframeProvider>,
     );
 }
 
-describe('workspace mode — focus one task, no visitor fall-out (ticket 07)', () => {
+describe('focus mode — focus one task, no visitor fall-out (ticket 07)', () => {
     it('frames the task full-bleed, places its exit chrome, and recedes the desk rail', () => {
-        renderWorkspace((cap) => cap === 'site.edit'); // an entitled operator
+        renderFocus((cap) => cap === 'site.edit'); // an entitled operator
         expect(screen.getByTestId('task').textContent).toBe('focused editor');
         expect(screen.getAllByTestId('exit-chrome')).toHaveLength(1);
         expect(screen.getByText('exit focus')).toBeTruthy();
@@ -320,8 +320,8 @@ describe('workspace mode — focus one task, no visitor fall-out (ticket 07)', (
     });
 
     it('keeps its exit chrome regardless of entitlement — unlike window, no gate to fall through', () => {
-        renderWorkspace(() => false); // strip every capability
-        // workspace is admin-only, never a public view: the ungated exit pill still renders.
+        renderFocus(() => false); // strip every capability
+        // focus is admin-only, never a public view: the ungated exit pill still renders.
         expect(screen.getByTestId('task').textContent).toBe('focused editor');
         expect(screen.getByText('exit focus')).toBeTruthy();
     });
