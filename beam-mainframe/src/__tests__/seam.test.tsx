@@ -209,3 +209,63 @@ describe('resolver (frozen contract behavior)', () => {
         expect(container.textContent).toBe('panel');
     });
 });
+
+// --- Window-mode: the public "view" falls out of the entitlement axis (ticket 05) -----------------
+
+/**
+ * A stripped `window`-shaped Mainframe: it frames the `main` render-target (the live site) and floats
+ * a gated `windowEdit` custom slot for its editor overlays — the shape splicewire-app's real
+ * `WindowMainframe` uses. Rendered through the *same* seam with two different `can` predicates, it
+ * proves the ADR-0099 claim: the same mode tree gates down to the bare site for a visitor — no
+ * separate render path.
+ */
+const WindowLike: Mainframe = ({ slots, ctx }) => (
+    <div data-testid="window">
+        <div data-testid="site">{slots.main(ctx.payload)}</div>
+        {slots.items('windowEdit').map((node, i) => (
+            <div key={i} data-testid="edit-overlay">
+                {node}
+            </div>
+        ))}
+    </div>
+);
+
+function renderWindow(can: (cap: string) => boolean) {
+    const slots = createSlotRegistry();
+    const mainframes = createMainframeRegistry();
+    mainframes.register('window', WindowLike, {
+        slots: [{ name: 'windowEdit', fillType: 'ordered-multi-source' }],
+    });
+    // The site (ungated, everyone sees it) + a gated editor overlay — the exact contribution shape.
+    slots.contribute({ slot: 'main', key: 'site', render: () => <p>live site</p> });
+    slots.contribute({
+        slot: 'windowEdit',
+        key: 'editBar',
+        node: <span>edit tools</span>,
+        can: 'site.edit',
+    });
+    const injection: MainframeInjection = { slots, mainframes, can };
+    return render(
+        <MainframeProvider injection={injection}>
+            <MainframeOutlet mode="window" ctx={{ payload: {} }} />
+        </MainframeProvider>,
+    );
+}
+
+describe('window mode — public view falls out of entitlement (ticket 05)', () => {
+    it('editor (entitled) sees the same site plus the floating edit overlay', () => {
+        renderWindow((cap) => cap === 'site.edit'); // an editor
+        expect(screen.getByTestId('site').textContent).toBe('live site');
+        expect(screen.getAllByTestId('edit-overlay')).toHaveLength(1);
+        expect(screen.getByText('edit tools')).toBeTruthy();
+    });
+
+    it('visitor (unentitled) sees the SAME tree gated down to the bare site — no overlays', () => {
+        renderWindow(() => false); // a visitor: no site.edit
+        // Same Mainframe, same `main` — the site still renders...
+        expect(screen.getByTestId('site').textContent).toBe('live site');
+        // ...but the gated overlay resolved to empty: pure site, not a separate render path.
+        expect(screen.queryByTestId('edit-overlay')).toBeNull();
+        expect(screen.queryByText('edit tools')).toBeNull();
+    });
+});
