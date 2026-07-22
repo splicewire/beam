@@ -35,3 +35,7 @@ export type {
 
 // Section-landing pattern: hero + responsive card grid of full-card links.
 export { SectionLanding, CardGrid, Card } from './section-landing';
+
+// Collapsible, accessible sidebar over the nav-source seam.
+export { ExpandableNav } from './expandable-nav';
+export type { ExpandableNavProps } from './expandable-nav';

@@ -383,3 +383,102 @@
         transform: none;
     }
 }
+
+/* --- ExpandableNav (collapsible sidebar) ---------------------------------- */
+/* Disclosure groups over the nav-source tree. Token-driven; the expand/collapse
+   animation rides grid-template-rows and is suppressed under reduced-motion. The
+   host injects the leaf links, so only the group chrome is styled here. */
+.bkit-nav {
+    font-family: var(--font-sans, var(--swc-font-sans));
+}
+.bkit-nav-track {
+    margin-bottom: 2rem;
+}
+.bkit-nav-track-label {
+    margin: 0 0 0.75rem;
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    color: var(--sr-text, var(--swc-ink));
+}
+.bkit-nav-group {
+    margin-bottom: 0.25rem;
+}
+/* The disclosure header is a real button: full-width, keyboard-operable, focus-ring. */
+.bkit-nav-group-header {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    width: 100%;
+    margin: 0 0 0.25rem;
+    padding: 0.25rem 0.2rem;
+    border: 0;
+    background: none;
+    cursor: pointer;
+    text-align: left;
+    font: inherit;
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--sr-dim, var(--swc-ink-muted));
+    border-radius: 0.25rem;
+}
+.bkit-nav-group-header:hover {
+    color: var(--sr-text, var(--swc-ink));
+}
+.bkit-nav-group-header:focus-visible {
+    outline: 2px solid var(--swc-signal, var(--sr-brand));
+    outline-offset: 1px;
+}
+.bkit-nav-chevron {
+    display: inline-flex;
+    width: 0.85rem;
+    height: 0.85rem;
+    flex-shrink: 0;
+    transition: transform 180ms ease;
+}
+.bkit-nav-chevron[data-open='true'] {
+    transform: rotate(90deg);
+}
+.bkit-nav-chevron svg {
+    width: 100%;
+    height: 100%;
+}
+/* grid-rows 0fr→1fr animates height without a magic-number max-height. */
+.bkit-nav-collapse {
+    display: grid;
+    grid-template-rows: 1fr;
+    transition: grid-template-rows 200ms ease;
+}
+.bkit-nav-collapse[data-open='false'] {
+    grid-template-rows: 0fr;
+}
+.bkit-nav-collapse-inner {
+    overflow: hidden;
+    min-height: 0;
+    padding-left: 0.15rem;
+}
+/* Collapsed content is removed from the tab order + AT, not merely shrunk. */
+.bkit-nav-collapse[data-open='false'] .bkit-nav-collapse-inner {
+    visibility: hidden;
+}
+.bkit-nav-children {
+    margin-left: 0.75rem;
+    padding-left: 0.5rem;
+    border-left: 1px solid var(--sr-hairline, var(--swc-line));
+}
+.bkit-nav-loading {
+    color: var(--sr-faint, var(--swc-ink-muted));
+    font-size: 0.8rem;
+}
+.bkit-nav-loading-row {
+    display: block;
+    padding: 0.25rem 0.2rem;
+}
+@media (prefers-reduced-motion: reduce) {
+    .bkit-nav-chevron,
+    .bkit-nav-collapse {
+        transition: none;
+    }
+}
