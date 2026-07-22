@@ -17,3 +17,21 @@ export type { CalloutType } from './callout';
 export { Steps, Step } from './steps';
 export { DoctorOutput, parseDoctorOutput } from './doctor-output';
 export type { DoctorFinding } from './doctor-output';
+
+// Nav-source registry seam (compose-many) + the shared sidebar tree builder.
+export {
+    registerNavSource,
+    getNavSources,
+    clearNavSources,
+    resolveNavNodes,
+    buildNavTree,
+} from './nav-registry';
+export type {
+    NavNode,
+    NavSource,
+    NavGroup,
+    NavTrack,
+} from './nav-registry';
+
+// Section-landing pattern: hero + responsive card grid of full-card links.
+export { SectionLanding, CardGrid, Card } from './section-landing';

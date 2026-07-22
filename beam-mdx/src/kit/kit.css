@@ -278,3 +278,108 @@
     font-size: 0.75rem;
     color: var(--sr-dim);
 }
+
+/* --- Section landing + card grid ------------------------------------------ */
+/* A scannable gateway: a hero over a responsive grid of full-card links. Tokens
+   only — the signal accent falls back to the brand color on hosts without it. */
+.site-prose .bkit-landing {
+    margin: 0 0 2rem;
+}
+.site-prose .bkit-landing-hero {
+    margin: 0 0 2rem;
+}
+.site-prose .bkit-landing-eyebrow {
+    margin: 0 0 0.5rem;
+    font-family: var(--font-sans, var(--swc-font-sans));
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--swc-signal, var(--sr-brand));
+}
+.site-prose .bkit-landing-heading {
+    margin: 0 0 0.75rem;
+    font-size: 2rem;
+    line-height: 1.15;
+    color: var(--sr-heading);
+}
+.site-prose .bkit-landing-lede {
+    margin: 0;
+    max-width: 48ch;
+    font-size: 1.0625rem;
+    color: var(--sr-dim);
+}
+
+/* 1 → 2 → 3 columns; reflows to one column on a narrow viewport. */
+.site-prose .bkit-card-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    margin: 1.5rem 0;
+}
+@media (min-width: 40rem) {
+    .site-prose .bkit-card-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+@media (min-width: 64rem) {
+    .site-prose .bkit-card-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+/* The whole card is the link: a large, forgiving hit target. Hover raises the
+   border to the signal green with a subtle lift; focus shows a visible ring. */
+.site-prose .bkit-card {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    padding: 1.1rem 1.25rem;
+    border: 1px solid var(--sr-hairline);
+    border-radius: 0.65rem;
+    background: var(--swc-paper-raised, var(--swc-paper));
+    text-decoration: none;
+    cursor: pointer;
+    transition:
+        border-color 200ms ease,
+        transform 200ms ease,
+        box-shadow 200ms ease;
+}
+.site-prose .bkit-card:hover {
+    border-color: var(--swc-signal, var(--sr-brand));
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px -12px var(--swc-signal, var(--sr-brand));
+}
+.site-prose .bkit-card:focus-visible {
+    outline: 2px solid var(--swc-signal, var(--sr-brand));
+    outline-offset: 2px;
+}
+.site-prose .bkit-card-icon {
+    display: inline-flex;
+    width: 1.75rem;
+    height: 1.75rem;
+    color: var(--swc-signal, var(--sr-brand));
+}
+.site-prose .bkit-card-icon svg {
+    width: 100%;
+    height: 100%;
+}
+.site-prose .bkit-card-title {
+    font-family: var(--font-sans, var(--swc-font-sans));
+    font-size: 1.0625rem;
+    font-weight: 600;
+    color: var(--sr-heading);
+}
+.site-prose .bkit-card-blurb {
+    font-size: 0.9375rem;
+    line-height: 1.5;
+    color: var(--sr-dim);
+}
+@media (prefers-reduced-motion: reduce) {
+    .site-prose .bkit-card {
+        transition: none;
+    }
+    .site-prose .bkit-card:hover {
+        transform: none;
+    }
+}
