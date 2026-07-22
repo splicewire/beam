@@ -10,6 +10,10 @@
 
 // Content resolver + types.
 export { createContent, isDraft, DEFAULT_DRAFTABLE_PREFIXES } from './content';
+
+// Frontmatter → nav-node mapping (feeds a @schemastud/nav sidebar/breadcrumb).
+export { contentNavNodes } from './nav';
+export type { ContentNavNode, ContentNavOptions } from './nav';
 export type {
     ContentApi,
     ContentLayout,
