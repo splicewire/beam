@@ -22,6 +22,19 @@
     width: 100%;
     height: auto;
 }
+/* Inline exhibits (an ASCII diagram, an inline SVG, a mockup) instead of an image. */
+.site-prose .bkit-figure-body {
+    padding: 1rem 1.25rem;
+    overflow-x: auto;
+}
+.site-prose .bkit-figure-body > svg {
+    display: block;
+    width: 100%;
+    height: auto;
+}
+.site-prose .bkit-figure-body > pre {
+    margin: 0;
+}
 .site-prose .bkit-figcaption {
     border-top: 1px solid var(--sr-hairline);
     padding: 0.5rem 1rem;
