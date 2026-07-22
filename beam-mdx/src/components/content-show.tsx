@@ -1,7 +1,11 @@
 import { Head, usePage } from '@inertiajs/react';
 import type { ComponentType, ReactNode } from 'react';
 
-import type { ContentLayout, ContentModule } from '../content';
+import type {
+    ContentFrontmatter,
+    ContentLayout,
+    ContentModule,
+} from '../content';
 import { isDraft } from '../content';
 import { BeamMdxProvider, useLinks } from '../context';
 import type { Reference } from '../references';
@@ -27,6 +31,12 @@ export interface ContentShowProps {
     references?: Reference[];
     /** Content-name prefixes gated by a published date (draft convention). */
     draftablePrefixes?: string[];
+    /**
+     * Override the default eyebrow above the title (which prints `navGroup`). When
+     * provided and it returns non-null, that node renders in the eyebrow's place — e.g.
+     * a breadcrumb trail. The dated-essay meta line (draft/date/topic) is untouched.
+     */
+    renderEyebrow?: (frontmatter: ContentFrontmatter) => ReactNode;
 }
 
 /**
@@ -43,6 +53,7 @@ export function ContentShow({
     mdxComponents,
     references = [],
     draftablePrefixes,
+    renderEyebrow,
 }: ContentShowProps) {
     const { url: pageUrl } = usePage();
     const links = useLinks();
@@ -124,6 +135,8 @@ export function ContentShow({
                                 </>
                             ) : null}
                         </div>
+                    ) : renderEyebrow ? (
+                        renderEyebrow(frontmatter)
                     ) : frontmatter.navGroup ? (
                         <p className="mb-5 font-mono text-xs tracking-widest text-[color:var(--sr-brand)] uppercase">
                             {frontmatter.navGroup}
