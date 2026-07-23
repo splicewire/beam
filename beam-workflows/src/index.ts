@@ -45,6 +45,11 @@ export { WorkflowGraph } from './WorkflowGraph';
 export { WorkflowDiff } from './WorkflowDiff';
 export { RecipientPicker } from './RecipientPicker';
 
+// Mid-tree surfaces (slice 04): the schema-driven editor (no transport — takes a save callback) and
+// the marking-migration wizard (routes through the injected client).
+export { WorkflowEditor } from './WorkflowEditor';
+export { WorkflowMigrate } from './WorkflowMigrate';
+
 // Pure, DOM-free logic modules (moved byte-for-byte from the app twin).
 export { humanizeWorkflowKey } from './humanizeWorkflowKey';
 

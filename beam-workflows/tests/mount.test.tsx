@@ -1,11 +1,20 @@
-import { beforeAll, describe, expect, it } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { beforeAll, describe, expect, it, vi } from 'vitest';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import type {
     WorkflowBlueprintData,
     WorkflowVersionData,
     PrincipalKindData,
 } from '@splicewire/_resources/types/workflows';
-import { RecipientPicker, WorkflowDiff, WorkflowGraph } from '../src/index';
+import {
+    RecipientPicker,
+    WorkflowDiff,
+    WorkflowEditor,
+    WorkflowGraph,
+    WorkflowMigrate,
+    WorkflowsProvider,
+    type MigrateInput,
+    type WorkflowsClient,
+} from '../src/index';
 
 /**
  * The isolation bar (rehome-components §8a): the read-only leaves render off PLAIN generated-DTO
@@ -67,5 +76,71 @@ describe('@splicewire/beam-workflows read-only leaves mount in isolation', () =>
         expect(screen.getByText('Compare')).toBeDefined();
         // v1 → v2 adds the `published` place; the diff surfaces it (added-place line + route text).
         expect(screen.getAllByText(/published/).length).toBeGreaterThan(0);
+    });
+});
+
+/** A no-op client whose `migrate` records the last input and resolves a clean dry-run report. */
+function fakeClient(migrate: WorkflowsClient['migrate']): WorkflowsClient {
+    const nope = () => Promise.reject(new Error('not implemented in fixture'));
+    return {
+        listLineages: () => Promise.resolve([]),
+        catalog: nope as WorkflowsClient['catalog'],
+        coverage: nope as WorkflowsClient['coverage'],
+        saveVersion: nope as WorkflowsClient['saveVersion'],
+        bind: nope as WorkflowsClient['bind'],
+        unbind: () => Promise.resolve(),
+        migrate,
+        projection: () => Promise.resolve(null),
+        transition: nope as WorkflowsClient['transition'],
+    };
+}
+
+describe('@splicewire/beam-workflows mid-tree surfaces mount in isolation', () => {
+    it('WorkflowEditor renders the schema-form and saves the draft (no transport of its own)', () => {
+        const onSave = vi.fn();
+        render(
+            <WorkflowEditor
+                initial={blueprint()}
+                guards={[]}
+                effects={[]}
+                principals={[]}
+                onSave={onSave}
+            />,
+        );
+        // The schema-form authoring surface: places + transitions sections off the draft DTO.
+        expect(screen.getByText('Places')).toBeDefined();
+        expect(screen.getByLabelText('Place 1 name')).toBeDefined();
+        fireEvent.click(screen.getByRole('button', { name: /Save as new version/ }));
+        expect(onSave).toHaveBeenCalledWith(expect.objectContaining({ name: 'publish-flow' }));
+    });
+
+    it('WorkflowMigrate routes a dry-run through the injected client + fires notify', async () => {
+        const migrate = vi.fn<WorkflowsClient['migrate']>((_key, input: MigrateInput) =>
+            Promise.resolve({
+                lineageKey: 'publish-flow',
+                fromVersionId: input.from,
+                toVersionId: input.to,
+                total: 3,
+                migrated: 3,
+                unmappable: [],
+                applied: false,
+                dryRun: true,
+            }),
+        );
+        const notify = vi.fn();
+        const versions: WorkflowVersionData[] = [
+            { id: 'v1', version: 1, isActive: false, blueprint: blueprint() },
+            { id: 'v2', version: 2, isActive: true, blueprint: blueprint() },
+        ];
+        render(
+            <WorkflowsProvider services={{ client: fakeClient(migrate), notify }}>
+                <WorkflowMigrate versions={versions} lineageKey="publish-flow" />
+            </WorkflowsProvider>,
+        );
+        expect(screen.getAllByText('Migrate records').length).toBeGreaterThan(0);
+        // Same-named places seed a complete map, so Preview (dry run) is enabled.
+        fireEvent.click(screen.getByRole('button', { name: /Preview \(dry run\)/ }));
+        await waitFor(() => expect(migrate).toHaveBeenCalledWith('publish-flow', expect.objectContaining({ dryRun: true })));
+        await waitFor(() => expect(notify).toHaveBeenCalledWith(expect.objectContaining({ type: 'success' })));
     });
 });

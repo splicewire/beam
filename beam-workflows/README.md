@@ -13,7 +13,7 @@ services** (transport + real-time subscription + feedback + host chrome) through
 dependency (the `import type … from '@splicewire/_resources/types/workflows'` edge survives into
 `dist/index.d.ts`).
 
-## What ships today (slices 02–03)
+## What ships today (slices 02–04)
 
 - **The generated Workflow\* projection**, re-exported off `@splicewire/_resources/types/workflows`
   (12 DTOs: lineage / version / blueprint / transition / catalog / guard-catalog-entry / coverage
@@ -29,11 +29,14 @@ dependency (the `import type … from '@splicewire/_resources/types/workflows'` 
   `WorkflowsClient` over the 10 endpoints + `notify`/`onError` with a console default), and the
   `useWorkflowsServices` / `useNotify` hooks.
 - **The read-only leaf surfaces** — `WorkflowGraph` (xyflow definition preview), `WorkflowDiff`
-  (structural version diff), `RecipientPicker` (principals checklist). Each mounts in isolation off
-  pure DTO fixtures.
+  (structural version diff), `RecipientPicker` (principals checklist).
+- **The mid-tree surfaces** — `WorkflowEditor` (the schema-form authoring surface; renders guard/
+  effect params off their catalog JSON schemas; no transport — takes an `onSave` callback) and
+  `WorkflowMigrate` (the marking-migration wizard; dry-run + actuate route through the injected
+  `client.migrate`). Each mounts in isolation off pure DTO fixtures.
 
-The schema-driven `WorkflowEditor` + `WorkflowMigrate` (slice 04), and the real-time `subscribe`
-seam + `WorkflowStepper` + `WorkflowsAdminPage` root (slice 05) arrive next.
+The real-time `subscribe` seam + `WorkflowStepper` + the `WorkflowsAdminPage` root (slice 05) arrive
+next.
 
 ## The contract this honors (rehome-components §1–§8)
 
