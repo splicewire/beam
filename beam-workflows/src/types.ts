@@ -79,6 +79,14 @@ export interface NotifyEvent {
 }
 
 /**
+ * The real-time subscription seam — the 4th injection kind (06's headline delta for 07, alongside
+ * transport / feedback / render-slot). Transport-agnostic: a Laravel host wires Laravel Echo, a
+ * non-Laravel host wires SSE / WebSocket / a no-op. Subscribe to `event` on `channel`; the returned
+ * function unsubscribes (called on unmount / channel change).
+ */
+export type Subscribe = (channel: string, event: string, cb: () => void) => () => void;
+
+/**
  * Everything host-specific, injected through one Provider (contract §1, §3). Only `client` is
  * required; feedback and host chrome are optional with dependency-free defaults. The real-time
  * `subscribe` seam (the 4th injection kind) is added in slice 05.
@@ -89,6 +97,11 @@ export interface WorkflowsServices {
     notify?: (event: NotifyEvent) => void;
     /** Mutation-error hook; the host may toast/log/observe. The rejection still propagates. */
     onError?: (err: unknown) => void;
+    /**
+     * Real-time subscription (the 4th injection kind). Omitted → a no-op default, so a host with no
+     * live transport still mounts (the Stepper just won't auto-refresh on a push).
+     */
+    subscribe?: Subscribe;
     /**
      * Optional host chrome slotted beside a lineage's header — e.g. a bindings/coverage popover the
      * host owns. The component makes the slot; the host injects the affordance.

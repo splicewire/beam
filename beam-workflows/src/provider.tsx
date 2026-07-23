@@ -1,5 +1,5 @@
 import { createContext, useContext, type ReactNode } from 'react';
-import type { NotifyEvent, WorkflowsServices } from './types';
+import type { NotifyEvent, Subscribe, WorkflowsServices } from './types';
 
 const WorkflowsServicesContext = createContext<WorkflowsServices | null>(null);
 
@@ -37,4 +37,12 @@ export function useWorkflowsServices(): WorkflowsServices {
 /** The injected `notify`, or the console default when the host supplied none. */
 export function useNotify(): (event: NotifyEvent) => void {
     return useWorkflowsServices().notify ?? consoleNotify;
+}
+
+/** A no-op subscription: nothing to listen to, nothing to tear down. */
+const noopSubscribe: Subscribe = () => () => {};
+
+/** The injected real-time `subscribe`, or the no-op default when the host wired none. */
+export function useSubscribe(): Subscribe {
+    return useWorkflowsServices().subscribe ?? noopSubscribe;
 }

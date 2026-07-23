@@ -30,12 +30,14 @@ export type {
 export type { GuardCatalogEntry, BlueprintTransition, BlueprintDraft } from './blueprint';
 export { toDraft } from './blueprint';
 
-// The injection seams (contract §1, §3): the provider carrying the transport client + feedback.
-export { WorkflowsProvider, useWorkflowsServices, useNotify } from './provider';
+// The injection seams (contract §1, §3, + the 4th kind): the provider carrying the transport client,
+// feedback, and the real-time subscription.
+export { WorkflowsProvider, useWorkflowsServices, useNotify, useSubscribe } from './provider';
 export type {
     WorkflowsClient,
     WorkflowsServices,
     NotifyEvent,
+    Subscribe,
     BindInput,
     MigrateInput,
 } from './types';
@@ -49,6 +51,14 @@ export { RecipientPicker } from './RecipientPicker';
 // the marking-migration wizard (routes through the injected client).
 export { WorkflowEditor } from './WorkflowEditor';
 export { WorkflowMigrate } from './WorkflowMigrate';
+
+// The runtime lifecycle Stepper (slice 05): model-blind track + available-driven actions; the Echo
+// `.status.emitted` subscription is the injected `subscribe` service.
+export { WorkflowStepperTrack, WorkflowActions } from './WorkflowStepper';
+export type { WorkflowProjection, TransitionConfirm } from './WorkflowStepper';
+
+// The root admin surface (slice 05): composes Editor + Diff + Migrate over the injected client.
+export { WorkflowsAdminPage } from './WorkflowsAdminPage';
 
 // Pure, DOM-free logic modules (moved byte-for-byte from the app twin).
 export { humanizeWorkflowKey } from './humanizeWorkflowKey';

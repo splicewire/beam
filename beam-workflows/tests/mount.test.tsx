@@ -1,19 +1,26 @@
 import { beforeAll, describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import type { ReactNode } from 'react';
 import type {
     WorkflowBlueprintData,
+    WorkflowCatalogData,
+    WorkflowLineageData,
     WorkflowVersionData,
     PrincipalKindData,
 } from '@splicewire/_resources/types/workflows';
 import {
     RecipientPicker,
+    WorkflowActions,
     WorkflowDiff,
     WorkflowEditor,
     WorkflowGraph,
     WorkflowMigrate,
+    WorkflowsAdminPage,
     WorkflowsProvider,
     type MigrateInput,
     type WorkflowsClient,
+    type WorkflowsServices,
 } from '../src/index';
 
 /**
@@ -142,5 +149,99 @@ describe('@splicewire/beam-workflows mid-tree surfaces mount in isolation', () =
         fireEvent.click(screen.getByRole('button', { name: /Preview \(dry run\)/ }));
         await waitFor(() => expect(migrate).toHaveBeenCalledWith('publish-flow', expect.objectContaining({ dryRun: true })));
         await waitFor(() => expect(notify).toHaveBeenCalledWith(expect.objectContaining({ type: 'success' })));
+    });
+});
+
+function withProviders(services: WorkflowsServices) {
+    const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    return ({ children }: { children: ReactNode }) => (
+        <QueryClientProvider client={qc}>
+            <WorkflowsProvider services={services}>{children}</WorkflowsProvider>
+        </QueryClientProvider>
+    );
+}
+
+const catalogFixture: WorkflowCatalogData = {
+    blueprintSchema: {},
+    guards: [],
+    effects: [],
+    types: [],
+    principals: [],
+};
+
+describe('§8a — the full tree mounts off pure generated-DTO fixtures (no Laravel)', () => {
+    it('WorkflowsAdminPage renders lineages and routes a save through the injected client', async () => {
+        const version: WorkflowVersionData = {
+            id: 'v1',
+            version: 1,
+            isActive: true,
+            blueprint: blueprint(),
+        };
+        const lineage: WorkflowLineageData = {
+            key: 'publish-flow',
+            name: 'Publish flow',
+            isSystem: false,
+            boundTypes: [],
+            versions: [version],
+        };
+        const saveVersion = vi.fn<WorkflowsClient['saveVersion']>(() =>
+            Promise.resolve({ ...version, id: 'v2', version: 2 }),
+        );
+        const notify = vi.fn();
+        const client = fakeClient(() => Promise.reject(new Error('no migrate here')));
+        client.listLineages = () => Promise.resolve([lineage]);
+        client.catalog = () => Promise.resolve(catalogFixture);
+        client.coverage = () =>
+            Promise.resolve({ lineageKey: 'publish-flow', total: 0, versions: [] });
+        client.saveVersion = saveVersion;
+
+        const Wrapper = withProviders({ client, notify });
+        render(<WorkflowsAdminPage />, { wrapper: Wrapper });
+
+        // The list query resolves through client.listLineages().
+        await waitFor(() => expect(screen.getByText('Publish flow')).toBeDefined());
+
+        // Select the lineage → the editor loads its active version (catalog resolved too).
+        fireEvent.click(screen.getByText('Publish flow'));
+        await waitFor(() => expect(screen.getByRole('button', { name: /Save as new version/ })).toBeDefined());
+
+        // A mutation routes through the injected client and fires notify.
+        fireEvent.click(screen.getByRole('button', { name: /Save as new version/ }));
+        await waitFor(() => expect(saveVersion).toHaveBeenCalled());
+        await waitFor(() => expect(notify).toHaveBeenCalledWith(expect.objectContaining({ type: 'success' })));
+    });
+
+    it("WorkflowActions wires the Stepper's status subscription through the injected subscribe", () => {
+        const unsubscribe = vi.fn();
+        const subscribe = vi.fn<WorkflowsServices['subscribe']>(() => unsubscribe);
+        const Wrapper = withProviders({
+            client: fakeClient(() => Promise.reject(new Error('n/a'))),
+            subscribe,
+        });
+        const { unmount } = render(
+            <WorkflowActions
+                projection={{
+                    type: 'composition',
+                    places: ['draft', 'published'],
+                    transitions: [],
+                    current: 'draft',
+                    available: ['publish'],
+                }}
+                channel="status.App.Models.Composition.abc"
+                onTransition={() => {}}
+            />,
+            { wrapper: Wrapper },
+        );
+        // The 4th injection kind: the Echo `.status.emitted` subscription is the injected service.
+        expect(subscribe).toHaveBeenCalledWith(
+            'status.App.Models.Composition.abc',
+            '.status.emitted',
+            expect.any(Function),
+        );
+        // An available-driven action button renders off the projection.
+        expect(screen.getByRole('button', { name: /Publish/ })).toBeDefined();
+        // Unsubscribe runs on teardown.
+        unmount();
+        expect(unsubscribe).toHaveBeenCalled();
     });
 });

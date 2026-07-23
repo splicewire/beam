@@ -13,7 +13,7 @@ services** (transport + real-time subscription + feedback + host chrome) through
 dependency (the `import type … from '@splicewire/_resources/types/workflows'` edge survives into
 `dist/index.d.ts`).
 
-## What ships today (slices 02–04)
+## What ships today (slices 02–05 — the full component tree)
 
 - **The generated Workflow\* projection**, re-exported off `@splicewire/_resources/types/workflows`
   (12 DTOs: lineage / version / blueprint / transition / catalog / guard-catalog-entry / coverage
@@ -33,10 +33,15 @@ dependency (the `import type … from '@splicewire/_resources/types/workflows'` 
 - **The mid-tree surfaces** — `WorkflowEditor` (the schema-form authoring surface; renders guard/
   effect params off their catalog JSON schemas; no transport — takes an `onSave` callback) and
   `WorkflowMigrate` (the marking-migration wizard; dry-run + actuate route through the injected
-  `client.migrate`). Each mounts in isolation off pure DTO fixtures.
+  `client.migrate`).
+- **The runtime Stepper** — `WorkflowStepperTrack` (the model-blind places track) and
+  `WorkflowActions` (available-driven action buttons + per-transition confirm dialog + the injected
+  real-time `subscribe` to `.status.emitted`).
+- **The root** — `WorkflowsAdminPage`, composing Editor + Diff + Migrate over the injected client
+  (react-query `queryFn`/`mutationFn` all route through `WorkflowsClient`).
 
-The real-time `subscribe` seam + `WorkflowStepper` + the `WorkflowsAdminPage` root (slice 05) arrive
-next.
+The full tree mounts in isolation off pure generated-DTO fixtures (the §8a bar) — Admin renders
+lineages, a save routes through the injected client, and the Stepper's `subscribe` adapter fires.
 
 ## The contract this honors (rehome-components §1–§8)
 
