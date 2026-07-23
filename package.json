@@ -8,7 +8,8 @@
     "workspaces": [
         "beam-mdx",
         "beam-mainframe",
-        "beam-accounts"
+        "beam-accounts",
+        "beam-workflows"
     ],
     "scripts": {
         "build": "npm run build --workspaces --if-present",

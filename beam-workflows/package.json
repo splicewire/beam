@@ -1,0 +1,64 @@
+{
+    "name": "@splicewire/beam-workflows",
+    "version": "0.1.0",
+    "description": "The workflows-domain beam surfaces, authored pre-packaged and DTO-first (rehome-components, ADR-0092). Mirrors the PHP splicewire/laravel-beam-workflows package by domain. Ships the workflows administration surface — lineage admin, the schema-driven blueprint editor, the read-only diff/graph previews, the recipient picker, the marking-migration wizard, and the runtime lifecycle Stepper — as portable, tenancy-agnostic components: they own their react-query data logic, take their transport + real-time subscription + feedback + host chrome as injected services (never app-local imports), and type off the generated Workflow* projections delivered via @splicewire/_resources. Generic UI comes from the @schemastud/ui foundation; @xyflow/react is a host-provided peer.",
+    "license": "MIT",
+    "type": "module",
+    "main": "dist/index.js",
+    "types": "dist/index.d.ts",
+    "exports": {
+        ".": {
+            "types": "./dist/index.d.ts",
+            "import": "./dist/index.js"
+        }
+    },
+    "sideEffects": false,
+    "files": [
+        "dist",
+        "src",
+        "README.md"
+    ],
+    "publishConfig": {
+        "registry": "https://registry.npmjs.org",
+        "access": "public"
+    },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/splicewire/beam.git",
+        "directory": "beam-workflows"
+    },
+    "scripts": {
+        "build": "tsup",
+        "dev": "tsup --watch",
+        "test": "vitest run",
+        "typecheck": "tsc --noEmit",
+        "lint:imports": "node scripts/check-imports.mjs",
+        "prepublishOnly": "npm run build"
+    },
+    "dependencies": {
+        "@splicewire/_resources": "file:../../splicewire/_resources"
+    },
+    "peerDependencies": {
+        "@schemastud/ui": "*",
+        "@tanstack/react-query": ">=5",
+        "@xyflow/react": ">=12",
+        "lucide-react": ">=0.400.0",
+        "react": ">=18"
+    },
+    "devDependencies": {
+        "@schemastud/ui": "file:../../schemastud/ui",
+        "@tanstack/react-query": "^5.62.0",
+        "@testing-library/react": "^16.1.0",
+        "@testing-library/user-event": "^14.5.2",
+        "@types/node": "^22.20.1",
+        "@types/react": "^19.0.0",
+        "@xyflow/react": "^12.4.0",
+        "jsdom": "^25.0.1",
+        "lucide-react": "^0.468.0",
+        "react": "^19.2.0",
+        "react-dom": "^19.2.0",
+        "tsup": "^8.5.1",
+        "typescript": "^5.7.2",
+        "vitest": "^4.1.10"
+    }
+}
