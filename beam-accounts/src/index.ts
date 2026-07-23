@@ -29,3 +29,18 @@ export type {
     LifecycleInput,
     RevokeOthersResult,
 } from './types';
+
+// ── Auth surfaces (login-branding-passkey) ──────────────────────────────────
+export { AuthProvider, useAuthServices } from './auth-provider';
+export { useAuth, useLogin, useRequestPasswordReset, useResetPassword } from './auth-hooks';
+export { LoginPanel, type LoginPanelProps } from './login-panel';
+export { ForgotPasswordForm, type ForgotPasswordFormProps } from './forgot-password-form';
+export { ResetPasswordForm, type ResetPasswordFormProps } from './reset-password-form';
+export { PasswordInput, AuthError } from './auth-fields';
+export type {
+    AuthClient,
+    AuthServices,
+    LoginInput,
+    ForgotPasswordInput,
+    ResetPasswordInput,
+} from './types';
