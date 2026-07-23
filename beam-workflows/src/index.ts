@@ -25,8 +25,25 @@ export type {
     PrincipalKindData,
 } from '@splicewire/_resources/types/workflows';
 
-// The editable blueprint shapes (aliases of the DTOs) the editor + logic modules share.
+// The editable blueprint shapes (aliases of the DTOs) the editor + logic modules share, plus the
+// shared draft normalizer.
 export type { GuardCatalogEntry, BlueprintTransition, BlueprintDraft } from './blueprint';
+export { toDraft } from './blueprint';
+
+// The injection seams (contract §1, §3): the provider carrying the transport client + feedback.
+export { WorkflowsProvider, useWorkflowsServices, useNotify } from './provider';
+export type {
+    WorkflowsClient,
+    WorkflowsServices,
+    NotifyEvent,
+    BindInput,
+    MigrateInput,
+} from './types';
+
+// Read-only leaf surfaces (slice 03): consume pure DTOs + the moved logic modules, no transport.
+export { WorkflowGraph } from './WorkflowGraph';
+export { WorkflowDiff } from './WorkflowDiff';
+export { RecipientPicker } from './RecipientPicker';
 
 // Pure, DOM-free logic modules (moved byte-for-byte from the app twin).
 export { humanizeWorkflowKey } from './humanizeWorkflowKey';

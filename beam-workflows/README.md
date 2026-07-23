@@ -13,23 +13,27 @@ services** (transport + real-time subscription + feedback + host chrome) through
 dependency (the `import type … from '@splicewire/_resources/types/workflows'` edge survives into
 `dist/index.d.ts`).
 
-## What ships today (slice 02 — the DTO-first foundation)
+## What ships today (slices 02–03)
 
 - **The generated Workflow\* projection**, re-exported off `@splicewire/_resources/types/workflows`
   (12 DTOs: lineage / version / blueprint / transition / catalog / guard-catalog-entry / coverage
   (+version) / projection / type-option / binding / principal-kind). The projection travels as a
   dependency edge — no bundling.
 - **The editable blueprint aliases** (`BlueprintDraft`, `BlueprintTransition`, `GuardCatalogEntry`)
-  in their own `blueprint.ts` module, so the logic modules type off the DTOs, not a component.
+  and the shared `toDraft` normalizer in their own `blueprint.ts` module, so the logic modules +
+  leaves type off the DTOs, not a component.
 - **The zero-DOM logic modules**, moved byte-for-byte from the app twin:
   `principals`, `effectParams`, `workflowDelta`, `workflowLayout`, `migratePlan` — each with its
-  co-located `*.test.ts`.
-- **`humanizeWorkflowKey`**, extracted from the Stepper into its own pure module (so the editor
-  imports the helper, not the real-time Stepper).
+  co-located `*.test.ts`; plus `humanizeWorkflowKey` as its own pure module.
+- **The injection seams** — `<WorkflowsProvider>` carrying `WorkflowsServices` (the injected
+  `WorkflowsClient` over the 10 endpoints + `notify`/`onError` with a console default), and the
+  `useWorkflowsServices` / `useNotify` hooks.
+- **The read-only leaf surfaces** — `WorkflowGraph` (xyflow definition preview), `WorkflowDiff`
+  (structural version diff), `RecipientPicker` (principals checklist). Each mounts in isolation off
+  pure DTO fixtures.
 
-The provider, the injected `WorkflowsClient` / real-time `subscribe` seam, and the seven components
-(`WorkflowsAdminPage`, `WorkflowEditor`, `WorkflowStepper`, `WorkflowMigrate`, `WorkflowDiff`,
-`WorkflowGraph`, `RecipientPicker`) arrive in slices 03–05.
+The schema-driven `WorkflowEditor` + `WorkflowMigrate` (slice 04), and the real-time `subscribe`
+seam + `WorkflowStepper` + `WorkflowsAdminPage` root (slice 05) arrive next.
 
 ## The contract this honors (rehome-components §1–§8)
 
