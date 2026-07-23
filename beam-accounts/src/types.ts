@@ -120,6 +120,48 @@ export interface AuthClient<TResult = unknown> {
     login(input: LoginInput): Promise<TResult>;
     requestPasswordReset(input: ForgotPasswordInput): Promise<void>;
     resetPassword(input: ResetPasswordInput): Promise<void>;
+
+    // Passkey sign-in (ticket 10). Optional so a host with no passkey backend simply omits
+    // them and leaves the PasskeyButton out. `passkeyLoginOptions` fetches a server-bound
+    // challenge (+ opaque handle); `passkeyLogin` posts the ceremony result back to mint a
+    // token (the same TResult as password login).
+    passkeyLoginOptions?(): Promise<PasskeyChallenge>;
+    passkeyLogin?(input: PasskeyAssertionInput): Promise<TResult>;
+
+    // Passkey management (ticket 11), all behind the host's auth. Registration options +
+    // store (attestation), list, delete.
+    passkeyRegistrationOptions?(): Promise<PasskeyChallenge>;
+    passkeyRegister?(input: PasskeyAttestationInput): Promise<PasskeyData>;
+    passkeys?(): Promise<PasskeyData[]>;
+    deletePasskey?(id: number): Promise<void>;
+}
+
+/** A server-issued WebAuthn challenge: the opaque single-use handle + the browser options. */
+export interface PasskeyChallenge {
+    handle: string;
+    /** The `navigator.credentials` publicKey options as JSON (base64url fields), from the server. */
+    options: Record<string, unknown>;
+}
+
+export interface PasskeyAssertionInput {
+    handle: string;
+    /** The assertion PublicKeyCredential serialized to JSON (base64url fields). */
+    credential: Record<string, unknown>;
+}
+
+export interface PasskeyAttestationInput {
+    handle: string;
+    name: string;
+    /** The attestation PublicKeyCredential serialized to JSON (base64url fields). */
+    credential: Record<string, unknown>;
+}
+
+/** A registered passkey credential, name + when last used (for the management surface). */
+export interface PasskeyData {
+    id: number;
+    name: string;
+    last_used_at: string | null;
+    created_at: string | null;
 }
 
 /**

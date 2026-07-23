@@ -2,13 +2,14 @@ import type { ApiTokenData, TokenProvenance } from './types';
 
 // The facet vocabulary + how each type reads as a chip. `api` is the type this surface exists
 // to give a stable list of, so it leads and is the default filter; sessions/dev/broker are churn.
-export const FACETS: TokenProvenance[] = ['api', 'session', 'dev', 'broker'];
+export const FACETS: TokenProvenance[] = ['api', 'session', 'dev', 'broker', 'passkey'];
 
 export const PROVENANCE_LABEL: Record<TokenProvenance, string> = {
     api: 'API',
     session: 'Session',
     dev: 'Dev',
     broker: 'Broker',
+    passkey: 'Passkey',
 };
 
 export const PROVENANCE_BADGE: Record<TokenProvenance, 'default' | 'secondary' | 'outline'> = {
@@ -16,6 +17,7 @@ export const PROVENANCE_BADGE: Record<TokenProvenance, 'default' | 'secondary' |
     session: 'secondary',
     dev: 'outline',
     broker: 'outline',
+    passkey: 'secondary',
 };
 
 // Lifetime presets for minting / renewing / rotating — "never" is the default.

@@ -32,15 +32,31 @@ export type {
 
 // ── Auth surfaces (login-branding-passkey) ──────────────────────────────────
 export { AuthProvider, useAuthServices } from './auth-provider';
-export { useAuth, useLogin, useRequestPasswordReset, useResetPassword } from './auth-hooks';
+export {
+    useAuth,
+    useLogin,
+    useRequestPasswordReset,
+    useResetPassword,
+    usePasskey,
+    usePasskeys,
+    useRegisterPasskey,
+    useDeletePasskey,
+} from './auth-hooks';
 export { LoginPanel, type LoginPanelProps } from './login-panel';
 export { ForgotPasswordForm, type ForgotPasswordFormProps } from './forgot-password-form';
 export { ResetPasswordForm, type ResetPasswordFormProps } from './reset-password-form';
+export { PasskeyButton, type PasskeyButtonProps } from './passkey-button';
+export { PasskeysSection } from './passkeys-section';
 export { PasswordInput, AuthError } from './auth-fields';
+export { isWebAuthnSupported, runAssertionCeremony, runAttestationCeremony } from './webauthn';
 export type {
     AuthClient,
     AuthServices,
     LoginInput,
     ForgotPasswordInput,
     ResetPasswordInput,
+    PasskeyChallenge,
+    PasskeyAssertionInput,
+    PasskeyAttestationInput,
+    PasskeyData,
 } from './types';
