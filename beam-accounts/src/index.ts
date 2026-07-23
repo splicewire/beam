@@ -1,0 +1,31 @@
+// @splicewire/beam-accounts — the accounts-domain beam surfaces, authored pre-packaged and
+// DTO-first (rehome-components; ADR-0092 vendor seam). Mirrors PHP `splicewire/laravel-beam-accounts`.
+//
+// Customer-zero: the API-keys / tokens management surface. A host renders it by supplying ONE
+// transport adapter (+ optional feedback / chrome) through <TokensProvider>; everything else —
+// the react-query data logic, the DTO typing off the generated projection, the presentation —
+// travels inside the package.
+
+export { TokensProvider, useTokensServices, useNotify } from './provider';
+export { TokensPage } from './tokens-page';
+export {
+    useTokens,
+    usePermissions,
+    useCreateToken,
+    useArchiveToken,
+    usePermanentlyDeleteToken,
+    useRenewToken,
+    useRotateToken,
+    useRevokeOtherSessions,
+} from './hooks';
+export type {
+    ApiTokenData,
+    CreatedTokenData,
+    TokenProvenance,
+    TokensClient,
+    TokensServices,
+    NotifyEvent,
+    CreateTokenInput,
+    LifecycleInput,
+    RevokeOthersResult,
+} from './types';
