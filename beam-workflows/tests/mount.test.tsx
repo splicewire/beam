@@ -213,7 +213,7 @@ describe('§8a — the full tree mounts off pure generated-DTO fixtures (no Lara
 
     it("WorkflowActions wires the Stepper's status subscription through the injected subscribe", () => {
         const unsubscribe = vi.fn();
-        const subscribe = vi.fn<WorkflowsServices['subscribe']>(() => unsubscribe);
+        const subscribe = vi.fn<NonNullable<WorkflowsServices['subscribe']>>(() => unsubscribe);
         const Wrapper = withProviders({
             client: fakeClient(() => Promise.reject(new Error('n/a'))),
             subscribe,

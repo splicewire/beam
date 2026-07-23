@@ -3,7 +3,7 @@ import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
 import { defineConfig } from 'vitest/config';
 
-// beam-accounts consumes @schemastud/ui across a workspace boundary (a `file:` link), so its
+// beam-workflows consumes @schemastud/ui across a workspace boundary (a `file:` link), so its
 // transitive React / react-table / react-query would otherwise resolve a SECOND copy out of the
 // schemastud workspace's node_modules — duplicate instances, null hook dispatcher. Pin every
 // shared singleton to the ONE copy hoisted in the beam workspace (the same single-instance

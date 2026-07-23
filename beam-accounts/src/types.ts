@@ -74,3 +74,60 @@ export interface TokensServices<TToken = ApiTokenData> {
      */
     renderTokenActivity?: (token: TToken) => ReactNode;
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Auth surfaces (login-branding-passkey ticket 02) — the portable login /
+// forgot-password / reset-password kit. Same transport-injected + DTO-first
+// discipline as the tokens surface: the host supplies ONE `AuthClient`, the
+// package logs no one in and knows nothing about Sanctum/tenancy/brand. The
+// success payload (the "auth result") is host-shaped — the app returns its
+// AuthUserResource, a session host returns whatever it mints — so the surfaces
+// are generic over it and simply hand it back through a callback.
+// ─────────────────────────────────────────────────────────────────────────────
+
+export interface LoginInput {
+    email: string;
+    password: string;
+    /**
+     * Stay signed in on a trusted device. App-side this maps to token lifetime
+     * (ticket 06); the package only carries the flag through the transport.
+     */
+    remember?: boolean;
+}
+
+export interface ForgotPasswordInput {
+    email: string;
+}
+
+export interface ResetPasswordInput {
+    email: string;
+    token: string;
+    password: string;
+    password_confirmation: string;
+}
+
+/**
+ * The injected auth transport — the ONE thing a host implements. It wraps the
+ * host's own HTTP client and points it at the correct endpoints. `TResult` is
+ * the host's auth-result payload (the app's AuthUserResource); the package never
+ * inspects it — it hands it back through the surface's success callback, so a
+ * token host and a session host both consume the same components.
+ *
+ * Passkey methods are optional: they light up in ticket 10, and a host with no
+ * passkey backend simply omits them (the `PasskeyButton` slot stays empty).
+ */
+export interface AuthClient<TResult = unknown> {
+    login(input: LoginInput): Promise<TResult>;
+    requestPasswordReset(input: ForgotPasswordInput): Promise<void>;
+    resetPassword(input: ResetPasswordInput): Promise<void>;
+}
+
+/**
+ * Everything host-specific for the auth surfaces, injected through one Provider.
+ * Only `client` is required; the error hook is optional.
+ */
+export interface AuthServices<TResult = unknown> {
+    client: AuthClient<TResult>;
+    /** Mutation-error hook; the host may toast/log/observe. The rejection still propagates. */
+    onError?: (err: unknown) => void;
+}

@@ -5,9 +5,9 @@
 // feedback / chrome) through <WorkflowsProvider>; everything else — the react-query data logic,
 // the DTO typing off the generated projection, the presentation — travels inside the package.
 //
-// Slice 02 lands the DTO-first foundation: the generated Workflow* projection (re-exported off
-// @splicewire/_resources), the editable blueprint aliases, and the zero-DOM logic modules. The
-// components + provider/client seams arrive in slices 03–05.
+// The whole tree ships: the generated Workflow* projection (re-exported off @splicewire/_resources),
+// the editable blueprint aliases + toDraft, the zero-DOM logic modules, the provider/client/subscribe
+// seams, and all seven components (Admin root, Editor, Stepper, Migrate, Diff, Graph, RecipientPicker).
 
 // The generated DTO projection (rehome-components 01/08), delivered via @splicewire/_resources.
 export type {

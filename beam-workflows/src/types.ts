@@ -88,8 +88,8 @@ export type Subscribe = (channel: string, event: string, cb: () => void) => () =
 
 /**
  * Everything host-specific, injected through one Provider (contract §1, §3). Only `client` is
- * required; feedback and host chrome are optional with dependency-free defaults. The real-time
- * `subscribe` seam (the 4th injection kind) is added in slice 05.
+ * required; feedback, the real-time `subscribe` seam (the 4th injection kind), and host chrome are
+ * all optional with dependency-free defaults.
  */
 export interface WorkflowsServices {
     client: WorkflowsClient;
