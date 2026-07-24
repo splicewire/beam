@@ -1,0 +1,67 @@
+{
+    "name": "@splicewire/beam-calendar",
+    "version": "0.1.0",
+    "description": "The vocab-aware calendar satellite: ONE CompositionCalendar component, mounted twice (aggregate + single), sitting on the source-blind @schemastud/big-calendar foundation and the @splicewire/_resources calendar projection DTO. It knows 'calendar'/'composition'/'channel'/ADR-0070 exist and spreads the aggregate-vs-single difference across the vendor seam — while the foundation stays source-blind. Never imports react-big-calendar directly (foundation-only). Maps the projection DTO into FoundationCalendarEvent, encodes the (composition, cell/series, recurrence) write-target ref codec, resolves the per-mount hue axis (single = Kind, aggregate = provenance), and injects the vocab renderX chrome (event badge, provenance/status facets, lane headers). Mirrors the PHP splicewire/laravel-beam-calendar package by domain (deferred). big-calendar-surface PRD §3/§4/§5/§7.",
+    "license": "MIT",
+    "type": "module",
+    "main": "dist/index.js",
+    "types": "dist/index.d.ts",
+    "exports": {
+        ".": {
+            "types": "./dist/index.d.ts",
+            "import": "./dist/index.js"
+        }
+    },
+    "sideEffects": false,
+    "files": [
+        "dist",
+        "src",
+        "README.md"
+    ],
+    "publishConfig": {
+        "registry": "https://registry.npmjs.org",
+        "access": "public"
+    },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/splicewire/beam.git",
+        "directory": "beam-calendar"
+    },
+    "scripts": {
+        "build": "tsup",
+        "dev": "tsup --watch",
+        "test": "vitest run",
+        "typecheck": "tsc --noEmit",
+        "lint:imports": "node scripts/check-imports.mjs",
+        "prepublishOnly": "npm run build"
+    },
+    "dependencies": {
+        "@splicewire/_resources": "file:../../splicewire/_resources"
+    },
+    "peerDependencies": {
+        "@schemastud/big-calendar": "*",
+        "@tanstack/react-query": ">=5",
+        "lucide-react": ">=0.400.0",
+        "react": ">=18"
+    },
+    "devDependencies": {
+        "@schemastud/big-calendar": "file:../../schemastud/big-calendar",
+        "@tanstack/react-query": "^5.62.0",
+        "@testing-library/dom": "^10.4.1",
+        "@testing-library/react": "^16.1.0",
+        "@testing-library/user-event": "^14.5.2",
+        "@types/node": "^22.20.1",
+        "@types/react": "^19.0.0",
+        "@types/react-big-calendar": "^1.16.3",
+        "@types/react-dom": "^19.0.0",
+        "date-fns": "^3.6.0",
+        "jsdom": "^25.0.1",
+        "lucide-react": "^0.468.0",
+        "react": "^19.2.0",
+        "react-big-calendar": "^1.20.0",
+        "react-dom": "^19.2.0",
+        "tsup": "^8.5.1",
+        "typescript": "^5.7.2",
+        "vitest": "^4.1.10"
+    }
+}
