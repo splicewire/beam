@@ -40,6 +40,12 @@ export type {
 export { BeamMdxProvider, useBeamMdx, useLinks } from './context';
 export type { BeamMdxContextValue } from './context';
 
+// Runtime MDX compile/render + the content-delivery client — for content delivered after the
+// bundle (generic; no gate, no "guide"). RuntimeMdx takes an MDX string; RemoteMdx fetches a URL
+// (transport overridable via `fetcher`) and renders it through RuntimeMdx.
+export { RuntimeMdx, RemoteMdx, compileMdx, fetchMdx } from './runtime/runtime-mdx';
+export type { RuntimeMdxProps, RemoteMdxProps, RuntimeMdxOptions, MdxComponentMap } from './runtime/runtime-mdx';
+
 // Render surface.
 export { Ref, Receipts } from './components/reference';
 export { Content } from './components/content';

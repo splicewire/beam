@@ -47,6 +47,7 @@
     },
     "peerDependencies": {
         "@inertiajs/react": ">=2",
+        "@mdx-js/mdx": "^3",
         "@mdx-js/rollup": "^3",
         "react": ">=18",
         "remark-frontmatter": "^5",
@@ -54,6 +55,9 @@
         "vite": ">=5"
     },
     "peerDependenciesMeta": {
+        "@mdx-js/mdx": {
+            "optional": true
+        },
         "@mdx-js/rollup": {
             "optional": true
         },
@@ -69,10 +73,13 @@
     },
     "devDependencies": {
         "@inertiajs/react": "^3.0.0",
+        "@mdx-js/mdx": "^3.1.1",
         "@mdx-js/rollup": "^3.1.1",
         "@types/node": "^22.20.1",
         "@types/react": "^19.0.0",
+        "@types/react-dom": "^19.0.0",
         "react": "^19.2.0",
+        "react-dom": "^19.2.0",
         "remark-frontmatter": "^5.0.0",
         "remark-mdx-frontmatter": "^5.2.0",
         "tsup": "^8.5.1",

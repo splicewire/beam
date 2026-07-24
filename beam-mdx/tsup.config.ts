@@ -19,6 +19,7 @@ export default defineConfig({
         '@inertiajs/react',
         'vite',
         '@mdx-js/rollup',
+        '@mdx-js/mdx',
         'remark-frontmatter',
         'remark-mdx-frontmatter',
     ],

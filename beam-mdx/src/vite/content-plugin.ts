@@ -18,6 +18,13 @@ import type { Plugin } from 'vite';
  * `draftablePrefixes`, e.g. `essays/`, `broadcasts/`) is a draft when it carries no
  * `datePublished`, or when `draft: true` is set. Files outside those prefixes (root pages
  * like about, resume) are never dated and are always included.
+ *
+ * Gated signal (parallel axis): a file carrying an `access:` frontmatter key is **gated** —
+ * a confidentiality boundary delivered only over the host's authenticated route. It is
+ * omitted from the map **unconditionally**, in every environment (a preview env included) —
+ * unlike a draft, whose exclusion the allowlist can relax. "Gated" is opaque here: the plugin
+ * only asks *whether* a file is gated, never reads or interprets its tokens. The PHP `Mdx`
+ * twin applies the same rule to the route, so the two can never disagree.
  */
 
 const VIRTUAL_ID = 'virtual:beam-mdx/content';
@@ -83,6 +90,14 @@ function isDraft(
     return !fm.datePublished;
 }
 
+/**
+ * A file is gated when it declares an `access:` frontmatter key (present even if empty —
+ * fail-closed, matching the PHP twin). The token value is never read here; gating is opaque.
+ */
+function isGated(fm: Record<string, string>): boolean {
+    return fm.access !== undefined;
+}
+
 /** Recursively collect every `.mdx` under `dir`, returned as absolute paths. */
 function collectMdx(dir: string): string[] {
     const out: string[] = [];
@@ -137,15 +152,19 @@ export function beamMdxContent(options: BeamMdxContentOptions): Plugin {
             const included = collectMdx(contentDir)
                 .map((abs) => ({ abs, name: nameOf(abs) }))
                 .filter(({ abs, name }) => {
+                    const fm = readFrontmatter(fs.readFileSync(abs, 'utf8'));
+
+                    // Gated (access:) content never enters the bundle, in any env —
+                    // it is delivered only over the host's authenticated route.
+                    if (isGated(fm)) {
+                        return false;
+                    }
+
                     if (allowDrafts) {
                         return true;
                     }
 
-                    return !isDraft(
-                        name,
-                        readFrontmatter(fs.readFileSync(abs, 'utf8')),
-                        draftablePrefixes,
-                    );
+                    return !isDraft(name, fm, draftablePrefixes);
                 })
                 .sort((a, b) => a.name.localeCompare(b.name));
 
