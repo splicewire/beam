@@ -27,18 +27,24 @@ const AUTH_RESULT = { access_token: 'passkey-token' };
 
 const CHALLENGE = { handle: 'h-1', options: { challenge: 'abc', rpId: 'test' } };
 
-function fakeClient(overrides: Partial<AuthClient> = {}): AuthClient {
+function fakePasskey(overrides: Partial<AuthClient['passkey']> = {}): NonNullable<AuthClient['passkey']> {
+    return {
+        loginOptions: vi.fn(async () => CHALLENGE),
+        login: vi.fn(async () => AUTH_RESULT),
+        registrationOptions: vi.fn(async () => CHALLENGE),
+        register: vi.fn(async () => ({ id: 1, name: 'My laptop', last_used_at: null, created_at: null })),
+        list: vi.fn(async () => []),
+        remove: vi.fn(async () => {}),
+        ...overrides,
+    };
+}
+
+function fakeClient(passkey: Partial<AuthClient['passkey']> = {}): AuthClient {
     return {
         login: vi.fn(),
         requestPasswordReset: vi.fn(),
         resetPassword: vi.fn(),
-        passkeyLoginOptions: vi.fn(async () => CHALLENGE),
-        passkeyLogin: vi.fn(async () => AUTH_RESULT),
-        passkeyRegistrationOptions: vi.fn(async () => CHALLENGE),
-        passkeyRegister: vi.fn(async () => ({ id: 1, name: 'My laptop', last_used_at: null, created_at: null })),
-        passkeys: vi.fn(async () => []),
-        deletePasskey: vi.fn(async () => {}),
-        ...overrides,
+        passkey: fakePasskey(passkey),
     };
 }
 
@@ -62,10 +68,10 @@ describe('PasskeyButton (ticket 10)', () => {
 
         fireEvent.click(screen.getByRole('button', { name: /passkey/i }));
 
-        await waitFor(() => expect(client.passkeyLoginOptions).toHaveBeenCalledTimes(1));
+        await waitFor(() => expect(client.passkey!.loginOptions).toHaveBeenCalledTimes(1));
         expect(webauthn.runAssertionCeremony).toHaveBeenCalledWith(CHALLENGE.options);
         await waitFor(() =>
-            expect(client.passkeyLogin).toHaveBeenCalledWith({
+            expect(client.passkey!.login).toHaveBeenCalledWith({
                 handle: 'h-1',
                 credential: { id: 'assertion', type: 'public-key' },
             }),
@@ -98,7 +104,7 @@ describe('PasskeysSection (ticket 11)', () => {
         const fixture: PasskeyData[] = [
             { id: 7, name: 'Work laptop', last_used_at: '2026-07-01T00:00:00+00:00', created_at: null },
         ];
-        mount(<PasskeysSection />, fakeClient({ passkeys: vi.fn(async () => fixture) }));
+        mount(<PasskeysSection />, fakeClient({ list: vi.fn(async () => fixture) }));
 
         expect(await screen.findByText('Work laptop')).toBeTruthy();
     });
@@ -111,10 +117,10 @@ describe('PasskeysSection (ticket 11)', () => {
         fireEvent.change(screen.getByLabelText(/add a passkey/i), { target: { value: 'My phone' } });
         fireEvent.click(screen.getByRole('button', { name: /register/i }));
 
-        await waitFor(() => expect(client.passkeyRegistrationOptions).toHaveBeenCalledTimes(1));
+        await waitFor(() => expect(client.passkey!.registrationOptions).toHaveBeenCalledTimes(1));
         expect(webauthn.runAttestationCeremony).toHaveBeenCalledWith(CHALLENGE.options);
         await waitFor(() =>
-            expect(client.passkeyRegister).toHaveBeenCalledWith({
+            expect(client.passkey!.register).toHaveBeenCalledWith({
                 handle: 'h-1',
                 name: 'My phone',
                 credential: { id: 'attestation', type: 'public-key' },
@@ -127,11 +133,11 @@ describe('PasskeysSection (ticket 11)', () => {
         const fixture: PasskeyData[] = [
             { id: 9, name: 'Old key', last_used_at: null, created_at: null },
         ];
-        const client = fakeClient({ passkeys: vi.fn(async () => fixture) });
+        const client = fakeClient({ list: vi.fn(async () => fixture) });
         mount(<PasskeysSection />, client);
 
         fireEvent.click(await screen.findByRole('button', { name: /delete old key/i }));
 
-        await waitFor(() => expect(client.deletePasskey).toHaveBeenCalledWith(9));
+        await waitFor(() => expect(client.passkey!.remove).toHaveBeenCalledWith(9));
     });
 });

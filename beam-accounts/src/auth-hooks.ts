@@ -54,12 +54,10 @@ export function usePasskey<TResult = unknown>() {
     const { client, onError } = useAuthServices();
     return useMutation({
         mutationFn: async (): Promise<TResult> => {
-            if (!client.passkeyLoginOptions || !client.passkeyLogin) {
-                throw new Error('Passkey sign-in is not available.');
-            }
-            const { handle, options } = await client.passkeyLoginOptions();
+            if (!client.passkey) throw new Error('Passkey sign-in is not available.');
+            const { handle, options } = await client.passkey.loginOptions();
             const credential = await runAssertionCeremony(options);
-            return (await client.passkeyLogin({ handle, credential })) as TResult;
+            return (await client.passkey.login({ handle, credential })) as TResult;
         },
         onError: (err) => onError?.(err),
     });
@@ -73,7 +71,7 @@ export function usePasskeys() {
     const { client } = useAuthServices();
     return useQuery({
         queryKey: PASSKEYS_KEY,
-        queryFn: () => client.passkeys?.() ?? Promise.resolve([]),
+        queryFn: () => client.passkey?.list() ?? Promise.resolve([]),
     });
 }
 
@@ -82,12 +80,10 @@ export function useRegisterPasskey() {
     const queryClient = useQueryClient();
     return useMutation({
         mutationFn: async (name: string) => {
-            if (!client.passkeyRegistrationOptions || !client.passkeyRegister) {
-                throw new Error('Passkey registration is not available.');
-            }
-            const { handle, options } = await client.passkeyRegistrationOptions();
+            if (!client.passkey) throw new Error('Passkey registration is not available.');
+            const { handle, options } = await client.passkey.registrationOptions();
             const credential = await runAttestationCeremony(options);
-            return client.passkeyRegister({ handle, name, credential });
+            return client.passkey.register({ handle, name, credential });
         },
         onSuccess: () => queryClient.invalidateQueries({ queryKey: PASSKEYS_KEY }),
         onError: (err) => onError?.(err),
@@ -98,7 +94,7 @@ export function useDeletePasskey() {
     const { client, onError } = useAuthServices();
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: (id: number) => client.deletePasskey?.(id) ?? Promise.resolve(),
+        mutationFn: (id: number) => client.passkey?.remove(id) ?? Promise.resolve(),
         onSuccess: () => queryClient.invalidateQueries({ queryKey: PASSKEYS_KEY }),
         onError: (err) => onError?.(err),
     });

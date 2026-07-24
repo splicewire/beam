@@ -121,19 +121,26 @@ export interface AuthClient<TResult = unknown> {
     requestPasswordReset(input: ForgotPasswordInput): Promise<void>;
     resetPassword(input: ResetPasswordInput): Promise<void>;
 
-    // Passkey sign-in (ticket 10). Optional so a host with no passkey backend simply omits
-    // them and leaves the PasskeyButton out. `passkeyLoginOptions` fetches a server-bound
-    // challenge (+ opaque handle); `passkeyLogin` posts the ceremony result back to mint a
-    // token (the same TResult as password login).
-    passkeyLoginOptions?(): Promise<PasskeyChallenge>;
-    passkeyLogin?(input: PasskeyAssertionInput): Promise<TResult>;
+    /**
+     * Optional passkey capability (tickets 10 + 11). A host with a WebAuthn backend supplies the
+     * whole sub-client; one without simply omits it and leaves the PasskeyButton / passkeys
+     * surface out. Grouping keeps passkey an all-or-nothing capability rather than six
+     * independently-optional methods.
+     */
+    passkey?: PasskeyClient<TResult>;
+}
 
-    // Passkey management (ticket 11), all behind the host's auth. Registration options +
-    // store (attestation), list, delete.
-    passkeyRegistrationOptions?(): Promise<PasskeyChallenge>;
-    passkeyRegister?(input: PasskeyAttestationInput): Promise<PasskeyData>;
-    passkeys?(): Promise<PasskeyData[]>;
-    deletePasskey?(id: number): Promise<void>;
+/**
+ * The passkey transport. `loginOptions`/`login` drive passwordless sign-in; `registrationOptions`
+ * /`register`/`list`/`remove` drive the management surface (behind the host's auth).
+ */
+export interface PasskeyClient<TResult = unknown> {
+    loginOptions(): Promise<PasskeyChallenge>;
+    login(input: PasskeyAssertionInput): Promise<TResult>;
+    registrationOptions(): Promise<PasskeyChallenge>;
+    register(input: PasskeyAttestationInput): Promise<PasskeyData>;
+    list(): Promise<PasskeyData[]>;
+    remove(id: number): Promise<void>;
 }
 
 /** A server-issued WebAuthn challenge: the opaque single-use handle + the browser options. */

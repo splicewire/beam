@@ -51,6 +51,7 @@ export { PasswordInput, AuthError } from './auth-fields';
 export { isWebAuthnSupported, runAssertionCeremony, runAttestationCeremony } from './webauthn';
 export type {
     AuthClient,
+    PasskeyClient,
     AuthServices,
     LoginInput,
     ForgotPasswordInput,
