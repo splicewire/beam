@@ -69,7 +69,7 @@
     font-style: italic;
     font-size: 1.3rem;
     line-height: 1.5;
-    color: #aab0b8;
+    color: var(--beam-ink-45);
     border-left: 2px solid oklch(0.8 0.13 200 / 0.5);
     padding-left: 1.25rem;
     margin: 0 0 2.5rem;

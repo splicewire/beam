@@ -62,10 +62,10 @@ export function WorkflowStepperTrack({
                 className={cn(
                     'gap-1.5 font-mono text-[10.5px] tracking-[0.08em] uppercase',
                     badgeClassName ??
-                        'border-[var(--swc-amber,#b45309)]/45 text-[var(--swc-amber,#b45309)]',
+                        'border-[var(--beam-amber)]/45 text-[var(--beam-amber)]',
                 )}
             >
-                <span className="size-1.5 rounded-full bg-[var(--swc-amber,#b45309)]" />
+                <span className="size-1.5 rounded-full bg-[var(--beam-amber)]" />
                 {humanizeWorkflowKey(current)}
             </Badge>
         );
@@ -86,26 +86,26 @@ export function WorkflowStepperTrack({
                                 className={cn(
                                     'flex items-center gap-1 rounded-[20px] border px-[9px] py-0.5 font-mono text-[10.5px] font-medium tracking-[0.08em] uppercase',
                                     isActive
-                                        ? 'border-[var(--swc-green)]/45 text-[var(--swc-green)]'
+                                        ? 'border-[var(--beam-green)]/45 text-[var(--beam-green)]'
                                         : isPast
-                                          ? 'border-transparent text-[var(--swc-ink-45)]'
-                                          : 'border-[var(--swc-ink-15)] text-[var(--swc-ink-35)]',
+                                          ? 'border-transparent text-[var(--beam-ink-45)]'
+                                          : 'border-[var(--beam-ink-15)] text-[var(--beam-ink-35)]',
                                 )}
                             >
                                 <span
                                     className={cn(
                                         'size-1.5 rounded-full',
                                         isActive
-                                            ? 'bg-[var(--swc-green)]'
+                                            ? 'bg-[var(--beam-green)]'
                                             : isPast
-                                              ? 'bg-[var(--swc-ink-45)]'
-                                              : 'bg-[var(--swc-ink-20)]',
+                                              ? 'bg-[var(--beam-ink-45)]'
+                                              : 'bg-[var(--beam-ink-20)]',
                                     )}
                                 />
                                 {step}
                             </span>
                             {index < steps.length - 1 && (
-                                <span className="text-[var(--swc-ink-22)]">→</span>
+                                <span className="text-[var(--beam-ink-22)]">→</span>
                             )}
                         </div>
                     );
@@ -179,7 +179,7 @@ export function WorkflowActions({
                         disabled={pending}
                         className={cn(
                             cfg?.emphasize &&
-                                'border-[var(--swc-green)] font-semibold text-[var(--swc-green)] hover:bg-[var(--swc-green)]/10 hover:text-[var(--swc-green)]',
+                                'border-[var(--beam-green)] font-semibold text-[var(--beam-green)] hover:bg-[var(--beam-green)]/10 hover:text-[var(--beam-green)]',
                         )}
                         onClick={() =>
                             cfg?.onOpenChange ? cfg.onOpenChange(true) : onTransition(name)

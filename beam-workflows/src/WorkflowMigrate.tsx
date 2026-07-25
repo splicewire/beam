@@ -101,9 +101,9 @@ export function WorkflowMigrate({
     }
 
     return (
-        <div className="mb-4 space-y-3 rounded-md border border-[var(--swc-amber,#d97706)]/30 bg-[var(--swc-amber,#d97706)]/5 p-3">
+        <div className="mb-4 space-y-3 rounded-md border border-[var(--beam-amber)]/30 bg-[var(--beam-amber)]/5 p-3">
             <div className="flex items-center gap-2 text-sm">
-                <span className="font-mono text-[11px] tracking-[0.12em] text-[var(--swc-ink-45)] uppercase">
+                <span className="font-mono text-[11px] tracking-[0.12em] text-[var(--beam-ink-45)] uppercase">
                     Migrate records
                 </span>
                 <SimpleSelect
@@ -113,7 +113,7 @@ export function WorkflowMigrate({
                     onValueChange={setFromId}
                     options={ordered.map((v) => ({ value: v.id, label: `v${v.version}` }))}
                 />
-                <span className="text-[var(--swc-ink-45)]">→</span>
+                <span className="text-[var(--beam-ink-45)]">→</span>
                 <SimpleSelect
                     className="w-24"
                     aria-label="Migrate to version"
@@ -123,7 +123,7 @@ export function WorkflowMigrate({
                 />
             </div>
 
-            <p className="text-xs text-[var(--swc-ink-50)]">
+            <p className="text-xs text-[var(--beam-ink-50)]">
                 Re-pins records currently on the <b>from</b> version onto the <b>to</b> version.
                 This touches only records directly on this workflow — not any <code>$ref</code>'d
                 children (those are a separate cohort). The whole run is all-or-nothing.
@@ -132,13 +132,13 @@ export function WorkflowMigrate({
             {/* Before / after — the read-only graph reused as the migration render. */}
             <div className="grid grid-cols-2 gap-2">
                 <div>
-                    <div className="mb-1 font-mono text-[10px] text-[var(--swc-ink-45)] uppercase">
+                    <div className="mb-1 font-mono text-[10px] text-[var(--beam-ink-45)] uppercase">
                         From
                     </div>
                     <WorkflowGraph blueprint={fromDraft} />
                 </div>
                 <div>
-                    <div className="mb-1 font-mono text-[10px] text-[var(--swc-ink-45)] uppercase">
+                    <div className="mb-1 font-mono text-[10px] text-[var(--beam-ink-45)] uppercase">
                         To
                     </div>
                     <WorkflowGraph blueprint={toDraftBp} />
@@ -147,13 +147,13 @@ export function WorkflowMigrate({
 
             {/* Explicit old→new place mapping — each a reviewable author choice. */}
             <div className="space-y-1.5">
-                <div className="font-mono text-[10px] tracking-[0.12em] text-[var(--swc-ink-45)] uppercase">
+                <div className="font-mono text-[10px] tracking-[0.12em] text-[var(--beam-ink-45)] uppercase">
                     Place mapping
                 </div>
                 {fromDraft.places.map((place) => (
                     <div key={place} className="flex items-center gap-2 text-sm">
-                        <span className="w-40 font-mono text-[var(--swc-ink-60)]">{place}</span>
-                        <span className="text-[var(--swc-ink-45)]">→</span>
+                        <span className="w-40 font-mono text-[var(--beam-ink-60)]">{place}</span>
+                        <span className="text-[var(--beam-ink-45)]">→</span>
                         <SimpleSelect
                             className="w-48"
                             aria-label={`Map ${place} to`}
@@ -191,7 +191,7 @@ export function WorkflowMigrate({
                 </div>
             )}
             {report && !blocked && (
-                <div className="rounded-md border border-[var(--swc-green)]/30 bg-[var(--swc-green)]/5 p-2 text-sm text-[var(--swc-ink-70)]">
+                <div className="rounded-md border border-[var(--beam-green)]/30 bg-[var(--beam-green)]/5 p-2 text-sm text-[var(--beam-ink-70)]">
                     {report.applied
                         ? `Migrated ${report.migrated} of ${report.total} record(s).`
                         : `Dry run: all ${report.total} record(s) map cleanly and would migrate.`}

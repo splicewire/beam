@@ -115,7 +115,7 @@ export function WorkflowEditor({
 
             {/* Edit / Graph tabs — the schema-form is the authoring seam; the graph is a read-only
                 legibility view of the same draft (ticket 18). */}
-            <div className="flex gap-1 border-b border-[var(--swc-ink-08)]">
+            <div className="flex gap-1 border-b border-[var(--beam-ink-08)]">
                 {(['edit', 'graph'] as const).map((tab) => (
                     <button
                         key={tab}
@@ -124,8 +124,8 @@ export function WorkflowEditor({
                         aria-pressed={view === tab}
                         className={`-mb-px border-b-2 px-3 py-1.5 text-sm capitalize ${
                             view === tab
-                                ? 'border-[var(--swc-green)] text-[var(--swc-ink-80)]'
-                                : 'border-transparent text-[var(--swc-ink-45)] hover:text-[var(--swc-ink-60)]'
+                                ? 'border-[var(--beam-green)] text-[var(--beam-ink-80)]'
+                                : 'border-transparent text-[var(--beam-ink-45)] hover:text-[var(--beam-ink-60)]'
                         }`}
                     >
                         {tab === 'graph' ? 'Graph' : 'Edit'}
@@ -140,7 +140,7 @@ export function WorkflowEditor({
                     {/* Places */}
                     <section className="space-y-2">
                         <div className="flex items-center justify-between">
-                            <h3 className="font-mono text-[11px] font-medium tracking-[0.12em] text-[var(--swc-ink-45)] uppercase">
+                            <h3 className="font-mono text-[11px] font-medium tracking-[0.12em] text-[var(--beam-ink-45)] uppercase">
                                 Places
                             </h3>
                             <Button size="sm" variant="ghost" onClick={addPlace}>
@@ -155,11 +155,11 @@ export function WorkflowEditor({
                                     aria-label={`Place ${index + 1} name`}
                                     onChange={(e) => renamePlace(index, e.target.value)}
                                 />
-                                <label className="flex items-center gap-1.5 text-xs text-[var(--swc-ink-50)]">
+                                <label className="flex items-center gap-1.5 text-xs text-[var(--beam-ink-50)]">
                                     <input
                                         type="radio"
                                         name="initial"
-                                        className="accent-[var(--swc-green)]"
+                                        className="accent-[var(--beam-green)]"
                                         checked={draft.initial.includes(place)}
                                         onChange={() => patch({ initial: [place] })}
                                     />
@@ -180,7 +180,7 @@ export function WorkflowEditor({
                     {/* Transitions */}
                     <section className="space-y-3">
                         <div className="flex items-center justify-between">
-                            <h3 className="font-mono text-[11px] font-medium tracking-[0.12em] text-[var(--swc-ink-45)] uppercase">
+                            <h3 className="font-mono text-[11px] font-medium tracking-[0.12em] text-[var(--beam-ink-45)] uppercase">
                                 Transitions
                             </h3>
                             <Button size="sm" variant="ghost" onClick={addTransition}>
@@ -236,7 +236,7 @@ export function WorkflowEditor({
                                         </div>
                                         {/* Guard picker — a SELECT over the catalog (never typed code). */}
                                         <div className="flex items-center gap-2">
-                                            <Label className="text-[var(--swc-ink-50)]">
+                                            <Label className="text-[var(--beam-ink-50)]">
                                                 Guard
                                             </Label>
                                             <SimpleSelect
@@ -279,8 +279,8 @@ export function WorkflowEditor({
                                     An attached effect that declares params discloses a primitive form
                                     keyed to metadata.effect_params[<ref>] (ticket 16). */}
                                         {effects.length > 0 && (
-                                            <div className="space-y-1.5 border-t border-[var(--swc-ink-08)] pt-2">
-                                                <Label className="text-[var(--swc-ink-50)]">
+                                            <div className="space-y-1.5 border-t border-[var(--beam-ink-08)] pt-2">
+                                                <Label className="text-[var(--beam-ink-50)]">
                                                     When it fires
                                                 </Label>
                                                 <div className="flex flex-col gap-1.5">
@@ -356,7 +356,7 @@ function PlaceSelect({
     // the shadcn Input (border/radius/focus-ring) for visual consistency.
     return (
         <div className="space-y-1">
-            <Label className="text-xs text-[var(--swc-ink-50)]">{label}</Label>
+            <Label className="text-xs text-[var(--beam-ink-50)]">{label}</Label>
             <select
                 multiple
                 aria-label={label}
@@ -387,8 +387,8 @@ function GuardParams({
     if (Object.keys(properties).length === 0) return null;
 
     return (
-        <div className="space-y-2 rounded-md bg-[var(--swc-ink-05)] p-3">
-            <div className="font-mono text-[10px] tracking-[0.1em] text-[var(--swc-ink-45)] uppercase">
+        <div className="space-y-2 rounded-md bg-[var(--beam-ink-05)] p-3">
+            <div className="font-mono text-[10px] tracking-[0.1em] text-[var(--beam-ink-45)] uppercase">
                 {humanizeWorkflowKey(guard.name)} params
             </div>
             <PrimitiveParamFields properties={properties} value={value} onChange={onChange} />
@@ -417,8 +417,8 @@ function EffectParams({
     const arrayProps = Object.entries(properties).filter(([, s]) => s.type === 'array');
 
     return (
-        <div className="space-y-2 rounded-md border-l-2 border-[var(--swc-green)] bg-[var(--swc-ink-05)] p-3">
-            <div className="font-mono text-[10px] tracking-[0.1em] text-[var(--swc-ink-45)] uppercase">
+        <div className="space-y-2 rounded-md border-l-2 border-[var(--beam-green)] bg-[var(--beam-ink-05)] p-3">
+            <div className="font-mono text-[10px] tracking-[0.1em] text-[var(--beam-ink-45)] uppercase">
                 {humanizeWorkflowKey(effect.name)} params
             </div>
             {arrayProps.map(([key, schema]) => (
@@ -477,13 +477,13 @@ function EffectRow({
                     onCheckedChange={onToggle}
                     aria-label={`Attach ${effect.label}`}
                 />
-                <span className="text-[var(--swc-ink-60)]">{effect.label}</span>
+                <span className="text-[var(--beam-ink-60)]">{effect.label}</span>
                 {on && hasParams && (
                     <button
                         type="button"
                         onClick={() => setExpanded((e) => !e)}
                         aria-expanded={expanded}
-                        className="flex items-center gap-0.5 font-mono text-[10px] tracking-[0.08em] text-[var(--swc-ink-45)] uppercase hover:text-[var(--swc-ink-60)]"
+                        className="flex items-center gap-0.5 font-mono text-[10px] tracking-[0.08em] text-[var(--beam-ink-45)] uppercase hover:text-[var(--beam-ink-60)]"
                     >
                         <ChevronDown
                             className={`size-3 transition-transform ${expanded ? '' : '-rotate-90'}`}
@@ -528,7 +528,7 @@ function PrimitiveParamFields({
             {Object.entries(properties).map(([key, schema]) =>
                 schema.type === 'boolean' ? (
                     <div key={key} className="flex items-center justify-between gap-3">
-                        <Label htmlFor={`param-${key}`} className="text-[var(--swc-ink-60)]">
+                        <Label htmlFor={`param-${key}`} className="text-[var(--beam-ink-60)]">
                             {schema.title ?? key}
                         </Label>
                         <Switch
@@ -539,7 +539,7 @@ function PrimitiveParamFields({
                     </div>
                 ) : schema.type === 'string' || schema.type === 'number' ? (
                     <div key={key} className="space-y-1">
-                        <Label htmlFor={`param-${key}`} className="text-[var(--swc-ink-60)]">
+                        <Label htmlFor={`param-${key}`} className="text-[var(--beam-ink-60)]">
                             {schema.title ?? key}
                         </Label>
                         <Input

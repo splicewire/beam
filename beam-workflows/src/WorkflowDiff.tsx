@@ -45,9 +45,9 @@ export function WorkflowDiff({
     const options = ordered.map((v) => ({ value: v.id, label: `v${v.version}` }));
 
     return (
-        <div className="mb-4 space-y-3 rounded-md border border-[var(--swc-ink-08)] p-3">
+        <div className="mb-4 space-y-3 rounded-md border border-[var(--beam-ink-08)] p-3">
             <div className="flex items-center gap-2 text-sm">
-                <span className="font-mono text-[11px] tracking-[0.12em] text-[var(--swc-ink-45)] uppercase">
+                <span className="font-mono text-[11px] tracking-[0.12em] text-[var(--beam-ink-45)] uppercase">
                     Compare
                 </span>
                 <SimpleSelect
@@ -57,7 +57,7 @@ export function WorkflowDiff({
                     onValueChange={setFromId}
                     options={options}
                 />
-                <span className="text-[var(--swc-ink-45)]">→</span>
+                <span className="text-[var(--beam-ink-45)]">→</span>
                 <SimpleSelect
                     className="w-24"
                     aria-label="Diff to version"
@@ -68,7 +68,7 @@ export function WorkflowDiff({
             </div>
 
             {diff && isEmptyDiff(diff) ? (
-                <p className="text-xs text-[var(--swc-ink-50)]">
+                <p className="text-xs text-[var(--beam-ink-50)]">
                     No structural changes between these versions.
                 </p>
             ) : (
@@ -76,7 +76,7 @@ export function WorkflowDiff({
                     <div className="space-y-3 font-mono text-[12px]">
                         {(diff.places.added.length > 0 || diff.places.removed.length > 0) && (
                             <section className="space-y-0.5">
-                                <div className="text-[10px] tracking-[0.12em] text-[var(--swc-ink-45)] uppercase">
+                                <div className="text-[10px] tracking-[0.12em] text-[var(--beam-ink-45)] uppercase">
                                     Places
                                 </div>
                                 {diff.places.added.map((p) => (
@@ -94,7 +94,7 @@ export function WorkflowDiff({
 
                         {diff.transitions.length > 0 && (
                             <section className="space-y-1">
-                                <div className="text-[10px] tracking-[0.12em] text-[var(--swc-ink-45)] uppercase">
+                                <div className="text-[10px] tracking-[0.12em] text-[var(--beam-ink-45)] uppercase">
                                     Transitions
                                 </div>
                                 {diff.transitions.map((d) => (
@@ -106,7 +106,7 @@ export function WorkflowDiff({
                 )
             )}
 
-            <div className="flex gap-3 text-[10px] text-[var(--swc-ink-45)]">
+            <div className="flex gap-3 text-[10px] text-[var(--beam-ink-45)]">
                 <span>
                     <Mark kind="added">+</Mark> added
                 </span>
@@ -129,10 +129,10 @@ function TransitionRow({ delta }: { delta: TransitionDelta }) {
     return (
         <div className="space-y-0.5">
             <Line kind={kind}>
-                {sign} {delta.name} <span className="text-[var(--swc-ink-45)]">{route}</span>
+                {sign} {delta.name} <span className="text-[var(--beam-ink-45)]">{route}</span>
             </Line>
             {delta.guard && (
-                <div className="pl-4 text-[var(--swc-ink-60)]">
+                <div className="pl-4 text-[var(--beam-ink-60)]">
                     guard {delta.guard.from ?? '∅'} → {delta.guard.to ?? '∅'}
                 </div>
             )}
@@ -153,9 +153,9 @@ function TransitionRow({ delta }: { delta: TransitionDelta }) {
 }
 
 const KIND_CLASS = {
-    added: 'text-[var(--swc-green)]',
+    added: 'text-[var(--beam-green)]',
     removed: 'text-destructive',
-    changed: 'text-[var(--swc-amber,#d97706)]',
+    changed: 'text-[var(--beam-amber)]',
 } as const;
 
 function Line({ kind, children }: { kind: keyof typeof KIND_CLASS; children: ReactNode }) {

@@ -7,7 +7,7 @@ import type { ReactNode } from 'react';
 // Each card is a single full-card link target: the whole card is the anchor, so the
 // hit target is large and forgiving. Router-agnostic — a plain `<a>`, so the kit
 // stays free of Inertia; a landing links across doc pages (crawlable). All styling
-// rides `.bkit-*` classes in kit.css on the host's `--swc-*` tokens; SVG icons only.
+// rides `.bkit-*` classes in kit.css on the host's `--beam-*` tokens; SVG icons only.
 // =============================================================================
 
 /** The hero atop a landing: an optional eyebrow, a heading, and an optional lede. */

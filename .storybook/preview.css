@@ -64,6 +64,36 @@
         'Segoe UI Emoji', 'Segoe UI Symbol';
     --beam-font-mono:
         ui-monospace, 'IBM Plex Mono', SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace;
+
+    /* Ink opacity ramp — steps of the ink base (rgb 17 32 26); consumed as hairlines,
+     * faint fills and dimmed text by beam-workflows / beam-content / beam-calendar chrome.
+     * (Migrated off the retired `--swc-ink-NN` / wrong-tier `--splice-ink-NN` ramp — ticket 35.) */
+    --beam-ink-03: rgba(17, 32, 26, 0.03);
+    --beam-ink-04: rgba(17, 32, 26, 0.04);
+    --beam-ink-05: rgba(17, 32, 26, 0.05);
+    --beam-ink-08: rgba(17, 32, 26, 0.08);
+    --beam-ink-10: rgba(17, 32, 26, 0.1);
+    --beam-ink-12: rgba(17, 32, 26, 0.12);
+    --beam-ink-15: rgba(17, 32, 26, 0.15);
+    --beam-ink-20: rgba(17, 32, 26, 0.2);
+    --beam-ink-22: rgba(17, 32, 26, 0.22);
+    --beam-ink-30: rgba(17, 32, 26, 0.3);
+    --beam-ink-35: rgba(17, 32, 26, 0.35);
+    --beam-ink-40: rgba(17, 32, 26, 0.4);
+    --beam-ink-45: rgba(17, 32, 26, 0.45);
+    --beam-ink-50: rgba(17, 32, 26, 0.5);
+    --beam-ink-55: rgba(17, 32, 26, 0.55);
+    --beam-ink-60: rgba(17, 32, 26, 0.6);
+    --beam-ink-70: rgba(17, 32, 26, 0.7);
+    --beam-ink-80: rgba(17, 32, 26, 0.8);
+
+    /* Surface alias (paper-raised) + amber accent + status tints — beam's own-tier
+     * defaults for the workflow/calendar/content chrome migrated in ticket 35. */
+    --beam-surface: var(--beam-paper-raised);
+    --beam-amber: #d97706;
+    --beam-warn-tint: #fdf3e3;
+    --beam-info-tint: #e8eff8;
+    --beam-danger-tint: #f8e9e7;
 }
 
 /* Semantic interface (--primary etc.) mapped onto the beam primitives — the neutral,
@@ -150,6 +180,79 @@
     --sidebar-accent: oklch(0.78 0.17 155 / 0.16);
     --sidebar-border: oklch(0.78 0.17 155 / 0.22);
     --sidebar-avatar: oklch(0.28 0.03 160);
+}
+
+/*
+ * ─────────────────────────────────────────────────────────────────────────────
+ * Structural-axis layer (component-seams ticket 36 — the STRUCTURAL twin of the
+ * B1 token cascade).
+ *
+ * Satellite re-treatment is a deployment-root CASCADE with two channels of one
+ * mechanism (satellite-re-treatment.md / apocryphon
+ * `satellite-re-treatment-is-a-deployment-root-cascade`): color rides the
+ * `--stud-`/`--beam-`/`--splice-` tier vars (above); STRUCTURE rides two CSS
+ * data-attributes set at the deployment root —
+ *
+ *   • [data-canvas=flat|dotted]        → the background treatment (`--canvas-bg`)
+ *   • [data-density=comfortable|compact] → collection spacing (`--density-*`)
+ *
+ * These are NOT color and NOT tier-prefixed: they are the same in every repo (the
+ * structural vocabulary is tier-agnostic — a satellite re-declares the attribute at
+ * the root, exactly as it re-declares a tier var, with NO prefix and NO provider,
+ * per canon `tier-words-belong-only-at-the-tier-anchor`). A component authors canvas
+ * as a background off `--canvas-bg` and density off the `--density-*` spacing tokens;
+ * it NEVER hardcodes a `dotted-bg` pattern or a fixed collection gap (that is the
+ * `hardcoded-structure` lint violation — un-re-treatable, the cascade can't reach it).
+ *
+ * Defaults live on `:root`; the two `[data-…]` blocks below are the overrides a
+ * deployment root (or a satellite) flips. Because they cascade, setting the attribute
+ * ANYWHERE up-tree re-treats everything beneath — no JS, no threading.
+ *
+ * Durable home: like the color seed, this is the workbench's standalone copy; when
+ * packages ship self-contained token defaults (ticket 07's fog) this block travels
+ * into each package's own defaults unchanged.
+ * ─────────────────────────────────────────────────────────────────────────────
+ */
+:root {
+    /* canvas — flat is the plain surface; dotted paints the dot grid (below). */
+    --canvas-bg: transparent;
+    /* density — comfortable is the default rhythm of a collection. */
+    --density-gap: 1.5rem; /* inter-item gap (the `space-y-6` rhythm) */
+    --density-row-py: 0.625rem; /* table/list row vertical padding */
+    --density-pad: 1rem; /* container inset */
+}
+
+[data-canvas='flat'] {
+    --canvas-bg: transparent;
+}
+
+[data-canvas='dotted'] {
+    /* The dot grid is a treatment, not a color literal — its dot tone rides a token
+       (`--canvas-dot`) so it re-skins with the tier and re-treats under `.dark`. */
+    --canvas-dot: var(--border);
+    --canvas-bg: radial-gradient(var(--canvas-dot) 1px, transparent 1px);
+}
+
+[data-density='comfortable'] {
+    --density-gap: 1.5rem;
+    --density-row-py: 0.625rem;
+    --density-pad: 1rem;
+}
+
+[data-density='compact'] {
+    --density-gap: 0.75rem;
+    --density-row-py: 0.3125rem;
+    --density-pad: 0.625rem;
+}
+
+/*
+ * `.canvas-surface` — the one utility a shell/`main`-region composes to paint the
+ * attribute-driven canvas. Reads `--canvas-bg` off the cascade (never a hardcoded
+ * `dotted-bg`), so `[data-canvas=dotted]` at the root turns it on with zero JS.
+ */
+@utility canvas-surface {
+    background-image: var(--canvas-bg);
+    background-size: 16px 16px;
 }
 
 /* Semantic → Tailwind color/token bridge (the neutral interface Tailwind consumes) */

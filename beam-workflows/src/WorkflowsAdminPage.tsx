@@ -114,7 +114,7 @@ export function WorkflowsAdminPage() {
     return (
         <div className="mx-auto max-w-5xl px-6 py-8">
             <h1 className="mb-1 text-xl font-semibold">Workflows</h1>
-            <p className="mb-6 text-sm text-[var(--swc-ink-55)]">
+            <p className="mb-6 text-sm text-[var(--beam-ink-55)]">
                 Definition lineages, their immutable versions, and the types they govern. Editing
                 forks a new version — objects already running stay on the version they started on.
             </p>
@@ -132,27 +132,27 @@ export function WorkflowsAdminPage() {
                             className={cn(
                                 'block w-full rounded-md border px-3 py-2 text-left text-sm',
                                 selectedKey === lineage.key
-                                    ? 'border-[var(--swc-green)] bg-[var(--swc-green)]/5'
-                                    : 'border-[var(--swc-ink-12)] hover:bg-[var(--swc-ink-03)]',
+                                    ? 'border-[var(--beam-green)] bg-[var(--beam-green)]/5'
+                                    : 'border-[var(--beam-ink-12)] hover:bg-[var(--beam-ink-03)]',
                             )}
                         >
                             <div className="font-medium">{lineage.name}</div>
-                            <div className="font-mono text-[11px] text-[var(--swc-ink-45)]">
+                            <div className="font-mono text-[11px] text-[var(--beam-ink-45)]">
                                 {lineage.key}
                             </div>
                             <div className="mt-1 flex flex-wrap gap-1 text-[10px]">
                                 {lineage.isSystem && (
-                                    <span className="rounded bg-[var(--swc-ink-08)] px-1.5 py-0.5 uppercase">
+                                    <span className="rounded bg-[var(--beam-ink-08)] px-1.5 py-0.5 uppercase">
                                         system
                                     </span>
                                 )}
-                                <span className="rounded bg-[var(--swc-ink-08)] px-1.5 py-0.5">
+                                <span className="rounded bg-[var(--beam-ink-08)] px-1.5 py-0.5">
                                     v{lineage.versions.length}
                                 </span>
                                 {lineage.boundTypes.map((type) => (
                                     <span
                                         key={type}
-                                        className="rounded bg-[var(--swc-green)]/10 px-1.5 py-0.5 text-[var(--swc-green)]"
+                                        className="rounded bg-[var(--beam-green)]/10 px-1.5 py-0.5 text-[var(--beam-green)]"
                                     >
                                         {type}
                                     </span>
@@ -191,8 +191,8 @@ export function WorkflowsAdminPage() {
                                                 className={cn(
                                                     'rounded-md border px-2 py-1 font-mono',
                                                     v.isActive
-                                                        ? 'border-[var(--swc-green)] text-[var(--swc-green)]'
-                                                        : 'border-[var(--swc-ink-15)] text-[var(--swc-ink-45)]',
+                                                        ? 'border-[var(--beam-green)] text-[var(--beam-green)]'
+                                                        : 'border-[var(--beam-ink-15)] text-[var(--beam-ink-45)]',
                                                 )}
                                             >
                                                 v{v.version}
@@ -203,7 +203,7 @@ export function WorkflowsAdminPage() {
                                     })}
                                 </div>
                                 {/* The "is it active" evidence: live records pinned to this workflow. */}
-                                <p className="text-xs text-[var(--swc-ink-50)]">
+                                <p className="text-xs text-[var(--beam-ink-50)]">
                                     {coverage.isPending
                                         ? 'Checking coverage…'
                                         : (coverage.data?.total ?? 0) === 0
@@ -222,7 +222,7 @@ export function WorkflowsAdminPage() {
                                         type="button"
                                         onClick={() => setShowMigrate((s) => !s)}
                                         aria-expanded={showMigrate}
-                                        className="text-xs text-[var(--swc-amber,#d97706)] hover:underline"
+                                        className="text-xs text-[var(--beam-amber)] hover:underline"
                                     >
                                         {showMigrate
                                             ? 'Hide'
@@ -315,7 +315,7 @@ function BindingPanel({
     return (
         <Card className="mb-5">
             <CardHeader className="pb-3">
-                <CardTitle className="font-mono text-[11px] font-medium tracking-[0.12em] text-[var(--swc-ink-45)] uppercase">
+                <CardTitle className="font-mono text-[11px] font-medium tracking-[0.12em] text-[var(--beam-ink-45)] uppercase">
                     Governed types
                 </CardTitle>
             </CardHeader>
@@ -323,14 +323,14 @@ function BindingPanel({
                 {/* Currently-bound types with an unbind (disable) control. */}
                 <div className="space-y-1.5">
                     {lineage.boundTypes.length === 0 && (
-                        <p className="text-sm text-[var(--swc-ink-50)]">
+                        <p className="text-sm text-[var(--beam-ink-50)]">
                             No type is governed by this workflow yet.
                         </p>
                     )}
                     {lineage.boundTypes.map((type) => (
                         <div
                             key={type}
-                            className="flex items-center justify-between rounded-md bg-[var(--swc-ink-04)] px-3 py-1.5 text-sm"
+                            className="flex items-center justify-between rounded-md bg-[var(--beam-ink-04)] px-3 py-1.5 text-sm"
                         >
                             <span className="font-mono">{type}</span>
                             <Button
@@ -346,9 +346,9 @@ function BindingPanel({
                 </div>
 
                 {/* Bind (enable) a type + fill its guard params. */}
-                <div className="flex flex-wrap items-end gap-4 border-t border-[var(--swc-ink-08)] pt-3">
+                <div className="flex flex-wrap items-end gap-4 border-t border-[var(--beam-ink-08)] pt-3">
                     <div className="space-y-1">
-                        <Label htmlFor="bind-type-key" className="text-xs text-[var(--swc-ink-50)]">
+                        <Label htmlFor="bind-type-key" className="text-xs text-[var(--beam-ink-50)]">
                             Type
                         </Label>
                         <Select value={typeKey || undefined} onValueChange={setTypeKey}>
@@ -368,7 +368,7 @@ function BindingPanel({
                                                 <span>{t.label}</span>
                                                 {/* Full schema URI as small subtext under the nicename. */}
                                                 {t.key.includes('://') && (
-                                                    <span className="max-w-[260px] truncate text-[10px] text-[var(--swc-ink-45)]">
+                                                    <span className="max-w-[260px] truncate text-[10px] text-[var(--beam-ink-45)]">
                                                         {t.key}
                                                     </span>
                                                 )}
@@ -390,7 +390,7 @@ function BindingPanel({
                                 />
                                 <Label
                                     htmlFor={`bind-param-${field.key}`}
-                                    className="text-sm text-[var(--swc-ink-60)]"
+                                    className="text-sm text-[var(--beam-ink-60)]"
                                 >
                                     {field.title}
                                 </Label>
@@ -399,7 +399,7 @@ function BindingPanel({
                             <div key={field.key} className="space-y-1">
                                 <Label
                                     htmlFor={`bind-param-${field.key}`}
-                                    className="text-xs text-[var(--swc-ink-50)]"
+                                    className="text-xs text-[var(--beam-ink-50)]"
                                 >
                                     {field.title}
                                 </Label>

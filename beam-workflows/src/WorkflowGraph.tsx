@@ -38,9 +38,9 @@ export function WorkflowGraph({ blueprint }: { blueprint: BlueprintDraft }) {
                 padding: '6px 12px',
                 fontSize: 12,
                 border: n.data.initial
-                    ? '2px solid var(--swc-green)'
-                    : '1px solid var(--swc-ink-15, #d4d4d8)',
-                background: 'var(--swc-surface, #fff)',
+                    ? '2px solid var(--beam-green)'
+                    : '1px solid var(--beam-ink-15)',
+                background: 'var(--beam-surface)',
             },
         }));
 
@@ -51,14 +51,14 @@ export function WorkflowGraph({ blueprint }: { blueprint: BlueprintDraft }) {
             label: e.label,
             labelStyle: { fontSize: 11 },
             markerEnd: { type: MarkerType.ArrowClosed },
-            style: e.guarded ? { stroke: 'var(--swc-amber, #d97706)' } : undefined,
+            style: e.guarded ? { stroke: 'var(--beam-amber)' } : undefined,
         }));
 
         return { nodes: rfNodes, edges: rfEdges };
     }, [blueprint]);
 
     return (
-        <div className="h-[420px] w-full overflow-hidden rounded-md border border-[var(--swc-ink-08)]">
+        <div className="h-[420px] w-full overflow-hidden rounded-md border border-[var(--beam-ink-08)]">
             <ReactFlow
                 nodes={nodes}
                 edges={edges}

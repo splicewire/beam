@@ -3,7 +3,7 @@
 
    Every rule is scoped under `.site-prose` and prefixed `bkit-` to avoid host
    collisions. Colors, fonts, and hairlines read the host token vars only:
-   --sr-* (text/heading/brand/dim/faint/hairline) preferred, --swc-* for the
+   --sr-* (text/heading/brand/dim/faint/hairline) preferred, --beam-* for the
    status + surface palette. Nothing here hard-codes a color, so a consuming
    site restyles by overriding tokens, never by forking this sheet. Import once
    via `@splicewire/beam-mdx/kit/css`.
@@ -15,7 +15,7 @@
     overflow: hidden;
     border: 1px solid var(--sr-hairline);
     border-radius: 0.5rem;
-    background: var(--swc-muted);
+    background: var(--beam-muted);
 }
 .site-prose .bkit-figure img {
     display: block;
@@ -48,8 +48,8 @@
     padding: 0.85rem 1.1rem;
     border: 1px solid var(--sr-hairline);
     border-radius: 0.5rem;
-    background: var(--swc-paper-raised, var(--swc-paper));
-    font-family: var(--font-mono, var(--swc-font-mono));
+    background: var(--beam-paper-raised, var(--beam-paper));
+    font-family: var(--font-mono, var(--beam-font-mono));
     font-size: 0.8125rem;
     line-height: 1.7;
     color: var(--sr-text);
@@ -85,8 +85,8 @@
     border: 1px solid var(--sr-hairline);
     border-radius: 0.5rem;
     overflow: hidden;
-    background: var(--swc-muted);
-    font-family: var(--font-mono, var(--swc-font-mono));
+    background: var(--beam-muted);
+    font-family: var(--font-mono, var(--beam-font-mono));
 }
 .site-prose .bkit-terminal-bar {
     display: flex;
@@ -94,7 +94,7 @@
     gap: 0.65rem;
     padding: 0.5rem 0.85rem;
     border-bottom: 1px solid var(--sr-hairline);
-    background: var(--swc-paper-raised, var(--swc-paper));
+    background: var(--beam-paper-raised, var(--beam-paper));
 }
 .site-prose .bkit-terminal-dots {
     display: inline-flex;
@@ -129,7 +129,7 @@
 }
 .site-prose .bkit-callout-title {
     margin: 0 0 0.35rem;
-    font-family: var(--font-sans, var(--swc-font-sans));
+    font-family: var(--font-sans, var(--beam-font-sans));
     font-weight: 600;
     font-size: 0.9375rem;
     color: var(--sr-heading);
@@ -142,24 +142,24 @@
     margin-bottom: 0;
 }
 .site-prose .bkit-callout--note {
-    --bkit-callout-accent: var(--swc-signal);
-    --bkit-callout-tint: var(--swc-signal-13, var(--swc-muted));
+    --bkit-callout-accent: var(--beam-signal);
+    --bkit-callout-tint: var(--beam-signal-13, var(--beam-muted));
 }
 .site-prose .bkit-callout--tip {
-    --bkit-callout-accent: var(--swc-green);
-    --bkit-callout-tint: var(--swc-green-tint, var(--swc-muted));
+    --bkit-callout-accent: var(--beam-green);
+    --bkit-callout-tint: var(--beam-green-tint, var(--beam-muted));
 }
 .site-prose .bkit-callout--info {
-    --bkit-callout-accent: var(--swc-info);
-    --bkit-callout-tint: var(--swc-info-tint, var(--swc-muted));
+    --bkit-callout-accent: var(--beam-info);
+    --bkit-callout-tint: var(--beam-info-tint, var(--beam-muted));
 }
 .site-prose .bkit-callout--warning {
-    --bkit-callout-accent: var(--swc-warn);
-    --bkit-callout-tint: var(--swc-warn-tint, var(--swc-muted));
+    --bkit-callout-accent: var(--beam-warn);
+    --bkit-callout-tint: var(--beam-warn-tint, var(--beam-muted));
 }
 .site-prose .bkit-callout--danger {
-    --bkit-callout-accent: var(--swc-danger);
-    --bkit-callout-tint: var(--swc-danger-tint, var(--swc-muted));
+    --bkit-callout-accent: var(--beam-danger);
+    --bkit-callout-tint: var(--beam-danger-tint, var(--beam-muted));
 }
 
 /* --- Steps ----------------------------------------------------------------- */
@@ -200,11 +200,11 @@
     height: 1.75rem;
     border-radius: 50%;
     border: 1px solid var(--sr-hairline);
-    background: var(--swc-paper-raised, var(--swc-paper));
+    background: var(--beam-paper-raised, var(--beam-paper));
     display: flex;
     align-items: center;
     justify-content: center;
-    font-family: var(--font-sans, var(--swc-font-sans));
+    font-family: var(--font-sans, var(--beam-font-sans));
     font-size: 0.8125rem;
     font-weight: 600;
     color: var(--sr-brand);
@@ -215,7 +215,7 @@
 .site-prose .bkit-step-title {
     margin: 0 0 0.35rem;
     padding-top: 0.15rem;
-    font-family: var(--font-sans, var(--swc-font-sans));
+    font-family: var(--font-sans, var(--beam-font-sans));
     font-weight: 600;
     color: var(--sr-heading);
 }
@@ -229,8 +229,8 @@
     border: 1px solid var(--sr-hairline);
     border-radius: 0.5rem;
     overflow: hidden;
-    background: var(--swc-paper-raised, var(--swc-paper));
-    font-family: var(--font-mono, var(--swc-font-mono));
+    background: var(--beam-paper-raised, var(--beam-paper));
+    font-family: var(--font-mono, var(--beam-font-mono));
 }
 .site-prose .bkit-doctoroutput-list {
     list-style: none;
@@ -258,7 +258,7 @@
     background: var(--bkit-doctor-accent);
 }
 .site-prose .bkit-doctoroutput-label {
-    font-family: var(--font-sans, var(--swc-font-sans));
+    font-family: var(--font-sans, var(--beam-font-sans));
     font-size: 0.6875rem;
     font-weight: 600;
     letter-spacing: 0.04em;
@@ -274,20 +274,20 @@
     color: var(--sr-dim);
 }
 .site-prose .bkit-doctoroutput-row--pass {
-    --bkit-doctor-accent: var(--swc-green, var(--sr-brand));
+    --bkit-doctor-accent: var(--beam-green, var(--sr-brand));
 }
 .site-prose .bkit-doctoroutput-row--warn {
-    --bkit-doctor-accent: var(--swc-warn);
+    --bkit-doctor-accent: var(--beam-warn);
 }
 .site-prose .bkit-doctoroutput-row--fail {
-    --bkit-doctor-accent: var(--swc-danger);
+    --bkit-doctor-accent: var(--beam-danger);
 }
 .site-prose .bkit-doctoroutput-summary {
     margin: 0;
     padding: 0.5rem 1rem;
     border-top: 1px solid var(--sr-hairline);
-    background: var(--swc-muted);
-    font-family: var(--font-sans, var(--swc-font-sans));
+    background: var(--beam-muted);
+    font-family: var(--font-sans, var(--beam-font-sans));
     font-size: 0.75rem;
     color: var(--sr-dim);
 }
@@ -303,12 +303,12 @@
 }
 .site-prose .bkit-landing-eyebrow {
     margin: 0 0 0.5rem;
-    font-family: var(--font-sans, var(--swc-font-sans));
+    font-family: var(--font-sans, var(--beam-font-sans));
     font-size: 0.75rem;
     font-weight: 700;
     letter-spacing: 0.08em;
     text-transform: uppercase;
-    color: var(--swc-signal, var(--sr-brand));
+    color: var(--beam-signal, var(--sr-brand));
 }
 .site-prose .bkit-landing-heading {
     margin: 0 0 0.75rem;
@@ -350,7 +350,7 @@
     padding: 1.1rem 1.25rem;
     border: 1px solid var(--sr-hairline);
     border-radius: 0.65rem;
-    background: var(--swc-paper-raised, var(--swc-paper));
+    background: var(--beam-paper-raised, var(--beam-paper));
     text-decoration: none;
     cursor: pointer;
     transition:
@@ -359,26 +359,26 @@
         box-shadow 200ms ease;
 }
 .site-prose .bkit-card:hover {
-    border-color: var(--swc-signal, var(--sr-brand));
+    border-color: var(--beam-signal, var(--sr-brand));
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px -12px var(--swc-signal, var(--sr-brand));
+    box-shadow: 0 6px 20px -12px var(--beam-signal, var(--sr-brand));
 }
 .site-prose .bkit-card:focus-visible {
-    outline: 2px solid var(--swc-signal, var(--sr-brand));
+    outline: 2px solid var(--beam-signal, var(--sr-brand));
     outline-offset: 2px;
 }
 .site-prose .bkit-card-icon {
     display: inline-flex;
     width: 1.75rem;
     height: 1.75rem;
-    color: var(--swc-signal, var(--sr-brand));
+    color: var(--beam-signal, var(--sr-brand));
 }
 .site-prose .bkit-card-icon svg {
     width: 100%;
     height: 100%;
 }
 .site-prose .bkit-card-title {
-    font-family: var(--font-sans, var(--swc-font-sans));
+    font-family: var(--font-sans, var(--beam-font-sans));
     font-size: 1.0625rem;
     font-weight: 600;
     color: var(--sr-heading);

@@ -50,17 +50,17 @@ const FREQ_UNIT: Record<Freq, string> = { DAILY: 'days', WEEKLY: 'weeks', MONTHL
 function Field({ label, required, hint, error, children }: { label: string; required?: boolean; hint?: string; error?: string; children: ReactNode }) {
     return (
         <div className="grid gap-1.5">
-            <span className="font-mono text-[11px] font-medium tracking-wide text-[var(--splice-ink-55)]">
+            <span className="font-mono text-[11px] font-medium tracking-wide text-[var(--beam-ink-55)]">
                 {label}
-                {required ? <span className="text-[var(--splice-warn-deep)]"> *</span> : null}
+                {required ? <span className="text-[var(--beam-warn-deep)]"> *</span> : null}
             </span>
             {children}
             {error ? (
-                <span role="alert" className="text-xs text-[var(--splice-warn-deep)]">
+                <span role="alert" className="text-xs text-[var(--beam-warn-deep)]">
                     {error}
                 </span>
             ) : hint ? (
-                <span className="text-xs text-[var(--splice-ink-45)]">{hint}</span>
+                <span className="text-xs text-[var(--beam-ink-45)]">{hint}</span>
             ) : null}
         </div>
     );
@@ -68,8 +68,8 @@ function Field({ label, required, hint, error, children }: { label: string; requ
 
 function Section({ icon, title, children }: { icon: ReactNode; title: string; children: ReactNode }) {
     return (
-        <div className="grid gap-3 rounded-lg border border-[var(--splice-ink-10)] bg-background p-4">
-            <div className="flex items-center gap-1.5 font-mono text-[10px] font-medium tracking-[0.12em] text-[var(--splice-ink-45)] uppercase">
+        <div className="grid gap-3 rounded-lg border border-[var(--beam-ink-10)] bg-background p-4">
+            <div className="flex items-center gap-1.5 font-mono text-[10px] font-medium tracking-[0.12em] text-[var(--beam-ink-45)] uppercase">
                 {icon}
                 {title}
             </div>
@@ -81,7 +81,7 @@ function Section({ icon, title, children }: { icon: ReactNode; title: string; ch
 /** A small segmented control (matches the Grid | Calendar tab styling). */
 function Segmented<T extends string>({ value, onChange, options }: { value: T; onChange: (v: T) => void; options: { value: T; label: string; icon?: ReactNode }[] }) {
     return (
-        <div className="inline-flex overflow-hidden rounded-md border border-[var(--splice-ink-15)] text-xs">
+        <div className="inline-flex overflow-hidden rounded-md border border-[var(--beam-ink-15)] text-xs">
             {options.map((o) => (
                 <button
                     key={o.value}
@@ -91,7 +91,7 @@ function Segmented<T extends string>({ value, onChange, options }: { value: T; o
                     className={`flex items-center gap-1.5 px-3 py-1.5 transition-colors ${
                         value === o.value
                             ? 'bg-foreground text-background'
-                            : 'bg-background text-[var(--splice-ink-60)] hover:bg-[var(--splice-ink-05)]'
+                            : 'bg-background text-[var(--beam-ink-60)] hover:bg-[var(--beam-ink-05)]'
                     }`}
                 >
                     {o.icon}
@@ -247,7 +247,7 @@ export function CalendarCellForm({
             {formError ? (
                 <div
                     role="alert"
-                    className="rounded-md border border-[var(--splice-danger)] bg-[var(--splice-danger-tint)] px-3 py-2 text-sm text-[var(--splice-danger)]"
+                    className="rounded-md border border-[var(--beam-danger)] bg-[var(--beam-danger-tint)] px-3 py-2 text-sm text-[var(--beam-danger)]"
                 >
                     {formError}
                 </div>
@@ -264,7 +264,7 @@ export function CalendarCellForm({
                     ]}
                 />
             ) : (
-                <div className="inline-flex items-center gap-1.5 rounded-full border border-[var(--splice-ink-15)] px-2.5 py-0.5 font-mono text-[10.5px] text-[var(--splice-ink-55)] uppercase">
+                <div className="inline-flex items-center gap-1.5 rounded-full border border-[var(--beam-ink-15)] px-2.5 py-0.5 font-mono text-[10.5px] text-[var(--beam-ink-55)] uppercase">
                     {kind === 'series' ? <Repeat className="size-3" /> : <CalendarClock className="size-3" />}
                     {kind === 'series' ? 'Recurring series' : 'One-off release'}
                 </div>
@@ -314,7 +314,7 @@ export function CalendarCellForm({
 
                     <Section icon={<Repeat className="size-3" />} title="Repeats">
                         <div className="flex flex-wrap items-center gap-2 text-sm">
-                            <span className="text-[var(--splice-ink-55)]">Every</span>
+                            <span className="text-[var(--beam-ink-55)]">Every</span>
                             <input
                                 type="number"
                                 min={1}
@@ -326,11 +326,11 @@ export function CalendarCellForm({
                             <div className="min-w-[120px]">
                                 <SimpleSelect value={freq} onValueChange={(v) => setFreq(v as Freq)} options={FREQ_OPTIONS} />
                             </div>
-                            <span className="text-[var(--splice-ink-45)]">({FREQ_UNIT[freq]})</span>
+                            <span className="text-[var(--beam-ink-45)]">({FREQ_UNIT[freq]})</span>
                         </div>
 
                         <div className="grid gap-2">
-                            <span className="font-mono text-[11px] text-[var(--splice-ink-55)]">Ends</span>
+                            <span className="font-mono text-[11px] text-[var(--beam-ink-55)]">Ends</span>
                             <Segmented<EndMode>
                                 value={endMode}
                                 onChange={setEndMode}
@@ -342,7 +342,7 @@ export function CalendarCellForm({
                             />
                             {endMode === 'count' ? (
                                 <div className="flex items-center gap-2 text-sm">
-                                    <span className="text-[var(--splice-ink-55)]">After</span>
+                                    <span className="text-[var(--beam-ink-55)]">After</span>
                                     <input
                                         type="number"
                                         min={1}
@@ -351,13 +351,13 @@ export function CalendarCellForm({
                                         className={`${dateInputClass} w-20`}
                                         aria-label="Occurrence count"
                                     />
-                                    <span className="text-[var(--splice-ink-45)]">occurrences</span>
+                                    <span className="text-[var(--beam-ink-45)]">occurrences</span>
                                 </div>
                             ) : null}
                             {endMode === 'until' ? (
                                 <div className="grid gap-1">
                                     <input type="date" className={dateInputClass} value={until} onChange={(e) => setUntil(e.target.value)} aria-label="End date" />
-                                    {errors.until ? <span role="alert" className="text-xs text-[var(--splice-warn-deep)]">{errors.until}</span> : null}
+                                    {errors.until ? <span role="alert" className="text-xs text-[var(--beam-warn-deep)]">{errors.until}</span> : null}
                                 </div>
                             ) : null}
                         </div>

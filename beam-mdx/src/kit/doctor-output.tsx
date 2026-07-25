@@ -61,7 +61,7 @@ export function parseDoctorOutput(raw: string): DoctorFinding[] {
 // report — inside a guide. Accepts the text via the `raw` prop OR as children (a fenced
 // or plain text block); resolves `raw ?? children`. Each finding is a row with a status
 // pip/label, a mono `check`, and its `detail`; a summary line tallies the three levels.
-// Purely presentational — colors ride the host `--swc-*` / `--sr-*` tokens via kit.css.
+// Purely presentational — colors ride the host `--beam-*` / `--sr-*` tokens via kit.css.
 export function DoctorOutput({
     raw,
     children,

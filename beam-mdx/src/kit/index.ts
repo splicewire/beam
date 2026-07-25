@@ -5,7 +5,7 @@
 // framed figures, file trees, terminal chrome, admonitions, and stepped procedures.
 // Every component is presentational and side-effect-free; all styling rides the
 // `.bkit-*` classes in `@splicewire/beam-mdx/kit/css`, which read the host's `--sr-*` /
-// `--swc-*` token vars. No colors hard-coded, no dependencies beyond React (a peer).
+// `--beam-*` token vars. No colors hard-coded, no dependencies beyond React (a peer).
 // =============================================================================
 
 export { Figure } from './figure';

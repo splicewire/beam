@@ -21,9 +21,9 @@ export function ContentOutlineNodeView({ node, updateAttrs }: NodeViewComponentP
     const setHeadings = (next: string[]) => updateAttrs({ sectionHeadings: next });
 
     return (
-        <div className="blockdoc-content-outline rounded-lg border border-[var(--splice-ink-10)] bg-background" contentEditable={false}>
+        <div className="blockdoc-content-outline rounded-lg border border-[var(--beam-ink-10)] bg-background" contentEditable={false}>
             <div className="flex items-center gap-2 px-3.5 pt-2.5">
-                <span className="inline-flex items-center gap-1 font-mono text-[9px] font-medium tracking-[0.14em] text-[var(--splice-ink-40)] uppercase">
+                <span className="inline-flex items-center gap-1 font-mono text-[9px] font-medium tracking-[0.14em] text-[var(--beam-ink-40)] uppercase">
                     <ListTree className="size-3" /> Outline
                 </span>
             </div>
@@ -33,20 +33,20 @@ export function ContentOutlineNodeView({ node, updateAttrs }: NodeViewComponentP
                 onChange={(event) => updateAttrs({ title: event.target.value })}
                 placeholder="Article title…"
                 aria-label="Article title"
-                className="w-full bg-transparent px-3.5 py-1 text-[15px] font-semibold tracking-tight outline-none placeholder:text-[var(--splice-ink-30)]"
+                className="w-full bg-transparent px-3.5 py-1 text-[15px] font-semibold tracking-tight outline-none placeholder:text-[var(--beam-ink-30)]"
             />
             <input
                 value={excerpt}
                 onChange={(event) => updateAttrs({ excerpt: event.target.value })}
                 placeholder="A one-line excerpt…"
                 aria-label="Excerpt"
-                className="w-full bg-transparent px-3.5 pb-1.5 text-[13px] text-[var(--splice-ink-60)] outline-none placeholder:text-[var(--splice-ink-30)]"
+                className="w-full bg-transparent px-3.5 pb-1.5 text-[13px] text-[var(--beam-ink-60)] outline-none placeholder:text-[var(--beam-ink-30)]"
             />
 
             <ol className="space-y-1 px-3.5 pb-3">
                 {headings.map((heading, index) => (
                     <li key={index} className="flex items-center gap-2">
-                        <span className="w-5 shrink-0 text-right font-mono text-[11px] text-[var(--splice-ink-35)]">
+                        <span className="w-5 shrink-0 text-right font-mono text-[11px] text-[var(--beam-ink-35)]">
                             {index + 1}.
                         </span>
                         <input
@@ -58,13 +58,13 @@ export function ContentOutlineNodeView({ node, updateAttrs }: NodeViewComponentP
                             }}
                             placeholder="Section heading…"
                             aria-label={`Section heading ${index + 1}`}
-                            className="min-w-0 flex-1 rounded border border-transparent bg-[var(--splice-ink-04)] px-2 py-1 text-[13px] outline-none focus:border-[var(--splice-ink-15)] placeholder:text-[var(--splice-ink-30)]"
+                            className="min-w-0 flex-1 rounded border border-transparent bg-[var(--beam-ink-04)] px-2 py-1 text-[13px] outline-none focus:border-[var(--beam-ink-15)] placeholder:text-[var(--beam-ink-30)]"
                         />
                         <button
                             type="button"
                             onClick={() => setHeadings(headings.filter((_, i) => i !== index))}
                             aria-label={`Remove section ${index + 1}`}
-                            className="shrink-0 rounded p-1 text-[var(--splice-ink-40)] transition-colors hover:bg-[var(--splice-ink-08)] hover:text-foreground"
+                            className="shrink-0 rounded p-1 text-[var(--beam-ink-40)] transition-colors hover:bg-[var(--beam-ink-08)] hover:text-foreground"
                         >
                             <X className="size-3.5" />
                         </button>
@@ -74,7 +74,7 @@ export function ContentOutlineNodeView({ node, updateAttrs }: NodeViewComponentP
                     <button
                         type="button"
                         onClick={() => setHeadings([...headings, ''])}
-                        className="ml-7 inline-flex items-center gap-1 text-[12px] font-medium text-[var(--splice-green)] transition-colors hover:underline"
+                        className="ml-7 inline-flex items-center gap-1 text-[12px] font-medium text-[var(--beam-green)] transition-colors hover:underline"
                     >
                         <Plus className="size-3.5" /> Add section
                     </button>

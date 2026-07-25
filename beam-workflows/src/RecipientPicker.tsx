@@ -44,7 +44,7 @@ export function RecipientPicker({
 
     return (
         <div className="space-y-1">
-            <span className="text-sm text-[var(--swc-ink-60)]">{label}</span>
+            <span className="text-sm text-[var(--beam-ink-60)]">{label}</span>
             <Popover>
                 <PopoverTrigger asChild>
                     <div
@@ -53,14 +53,14 @@ export function RecipientPicker({
                         className="flex min-h-9 w-full cursor-pointer flex-wrap items-center gap-1.5 rounded-md border border-input bg-transparent px-2 py-1.5 text-left text-sm shadow-sm focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none"
                     >
                         {chips.length === 0 ? (
-                            <span className="text-[var(--swc-ink-45)]">Choose recipients…</span>
+                            <span className="text-[var(--beam-ink-45)]">Choose recipients…</span>
                         ) : (
                             chips.map((chip) => (
                                 <span
                                     key={chip.token}
                                     className={`inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-xs ${
                                         chip.known
-                                            ? 'border-[var(--swc-ink-15)] bg-[var(--swc-ink-05)]'
+                                            ? 'border-[var(--beam-ink-15)] bg-[var(--beam-ink-05)]'
                                             : 'border-dashed border-destructive/50 bg-destructive/5'
                                     }`}
                                 >
@@ -73,7 +73,7 @@ export function RecipientPicker({
                                     <span
                                         className={`font-mono text-[9px] tracking-[0.06em] uppercase ${
                                             chip.known
-                                                ? 'text-[var(--swc-ink-45)]'
+                                                ? 'text-[var(--beam-ink-45)]'
                                                 : 'text-destructive'
                                         }`}
                                     >
@@ -90,14 +90,14 @@ export function RecipientPicker({
                                             e.stopPropagation();
                                             toggle(chip.token);
                                         }}
-                                        className="flex size-3.5 items-center justify-center rounded hover:bg-[var(--swc-ink-08)]"
+                                        className="flex size-3.5 items-center justify-center rounded hover:bg-[var(--beam-ink-08)]"
                                     >
                                         <X className="size-2.5" />
                                     </span>
                                 </span>
                             ))
                         )}
-                        <Plus className="ml-auto size-3.5 text-[var(--swc-ink-45)]" />
+                        <Plus className="ml-auto size-3.5 text-[var(--beam-ink-45)]" />
                     </div>
                 </PopoverTrigger>
                 <PopoverContent className="w-64 p-1">
@@ -112,7 +112,7 @@ export function RecipientPicker({
 
                     {roleRows.length > 0 && (
                         <>
-                            <div className="px-2 pt-2 pb-1 font-mono text-[9px] tracking-[0.1em] text-[var(--swc-ink-45)] uppercase">
+                            <div className="px-2 pt-2 pb-1 font-mono text-[9px] tracking-[0.1em] text-[var(--beam-ink-45)] uppercase">
                                 By role
                             </div>
                             {roleRows.map((row) => (
@@ -126,7 +126,7 @@ export function RecipientPicker({
                         </>
                     )}
 
-                    <div className="px-2 pt-2 pb-1 font-mono text-[9px] tracking-[0.1em] text-[var(--swc-ink-45)] uppercase">
+                    <div className="px-2 pt-2 pb-1 font-mono text-[9px] tracking-[0.1em] text-[var(--beam-ink-45)] uppercase">
                         Advanced
                     </div>
                     <div className="flex gap-1 px-1 pb-1">
@@ -164,10 +164,10 @@ function ChecklistRow({
             type="button"
             onClick={onClick}
             aria-pressed={selected}
-            className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-sm hover:bg-[var(--swc-ink-05)]"
+            className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-sm hover:bg-[var(--beam-ink-05)]"
         >
             <span className="flex size-3.5 items-center justify-center">
-                {selected && <Check className="size-3.5 text-[var(--swc-green)]" />}
+                {selected && <Check className="size-3.5 text-[var(--beam-green)]" />}
             </span>
             {label}
         </button>

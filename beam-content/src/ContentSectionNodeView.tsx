@@ -34,18 +34,18 @@ export function ContentSectionNodeView({
     const [showContext, setShowContext] = useState(false);
 
     return (
-        <div className="blockdoc-content-section rounded-lg border border-[var(--splice-ink-10)] bg-background">
+        <div className="blockdoc-content-section rounded-lg border border-[var(--beam-ink-10)] bg-background">
             {/* Chrome — non-editable so PM leaves these inputs alone. */}
             <div contentEditable={false}>
                     <div className="flex items-center gap-2 px-3.5 pt-2.5">
-                        <span className="font-mono text-[9px] font-medium tracking-[0.14em] text-[var(--splice-ink-40)] uppercase">
+                        <span className="font-mono text-[9px] font-medium tracking-[0.14em] text-[var(--beam-ink-40)] uppercase">
                             Section
                         </span>
                         {hasContext && (
                             <button
                                 type="button"
                                 onClick={() => setShowContext((open) => !open)}
-                                className="ml-auto flex items-center gap-1 font-mono text-[9.5px] tracking-wide text-[var(--splice-ink-45)] uppercase transition-colors hover:text-foreground"
+                                className="ml-auto flex items-center gap-1 font-mono text-[9.5px] tracking-wide text-[var(--beam-ink-45)] uppercase transition-colors hover:text-foreground"
                             >
                                 <Sparkles className="size-3" /> Context
                                 <ChevronDown
@@ -60,23 +60,23 @@ export function ContentSectionNodeView({
                         onChange={(event) => updateAttrs({ heading: event.target.value })}
                         placeholder="Section heading…"
                         aria-label="Section heading"
-                        className="w-full bg-transparent px-3.5 py-1 text-[15px] font-semibold tracking-tight outline-none placeholder:text-[var(--splice-ink-30)]"
+                        className="w-full bg-transparent px-3.5 py-1 text-[15px] font-semibold tracking-tight outline-none placeholder:text-[var(--beam-ink-30)]"
                     />
 
                     {hasContext && showContext && (
-                        <div className="mx-3.5 mb-2 space-y-2 rounded-md bg-[var(--splice-ink-04)] p-2.5">
+                        <div className="mx-3.5 mb-2 space-y-2 rounded-md bg-[var(--beam-ink-04)] p-2.5">
                             {strategy && (
                                 <div className="flex items-center gap-2 text-[11px]">
-                                    <span className="font-mono tracking-wide text-[var(--splice-ink-45)] uppercase">
+                                    <span className="font-mono tracking-wide text-[var(--beam-ink-45)] uppercase">
                                         Strategy
                                     </span>
-                                    <span className="font-medium text-[var(--splice-ink-70)]">
+                                    <span className="font-medium text-[var(--beam-ink-70)]">
                                         {strategy}
                                     </span>
                                 </div>
                             )}
                             <label className="flex items-center gap-2 text-[11px]">
-                                <span className="inline-flex shrink-0 items-center gap-1 font-mono tracking-wide text-[var(--splice-ink-45)] uppercase">
+                                <span className="inline-flex shrink-0 items-center gap-1 font-mono tracking-wide text-[var(--beam-ink-45)] uppercase">
                                     <ImageIcon className="size-3" /> Image
                                 </span>
                                 <input
@@ -85,18 +85,18 @@ export function ContentSectionNodeView({
                                         updateAttrs({ imagePrompt: event.target.value || null })
                                     }
                                     placeholder="No image prompt"
-                                    className="min-w-0 flex-1 bg-transparent text-[var(--splice-ink-70)] outline-none placeholder:text-[var(--splice-ink-30)]"
+                                    className="min-w-0 flex-1 bg-transparent text-[var(--beam-ink-70)] outline-none placeholder:text-[var(--beam-ink-30)]"
                                 />
                             </label>
                             {groundingTokens.length > 0 && (
                                 <div className="flex flex-wrap items-center gap-1">
-                                    <span className="font-mono text-[10px] tracking-wide text-[var(--splice-ink-45)] uppercase">
+                                    <span className="font-mono text-[10px] tracking-wide text-[var(--beam-ink-45)] uppercase">
                                         Grounding
                                     </span>
                                     {groundingTokens.map((token, index) => (
                                         <span
                                             key={`${token}-${index}`}
-                                            className="rounded bg-[var(--splice-ink-08)] px-1.5 py-0.5 font-mono text-[10px] text-[var(--splice-ink-60)]"
+                                            className="rounded bg-[var(--beam-ink-08)] px-1.5 py-0.5 font-mono text-[10px] text-[var(--beam-ink-60)]"
                                         >
                                             {token}
                                         </span>
