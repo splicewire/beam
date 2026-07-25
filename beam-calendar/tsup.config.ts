@@ -21,6 +21,7 @@ export default defineConfig({
         'react-dom',
         '@tanstack/react-query',
         '@schemastud/big-calendar',
+        '@schemastud/ui',
         'lucide-react',
     ],
 });

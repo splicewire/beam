@@ -20,6 +20,28 @@ export { kindHue, provenanceHue, type HueAxis } from './hue';
 // The vocab renderX chrome (also exported so a host can compose it).
 export { EventBadge, LaneHeader, Filters, type FacetState } from './chrome';
 
+// ── The rehomed CalendarCellForm surface (frame-canonical-forms ticket 02) ──────────────
+// A pre-packaged, DTO-first data-surface (rehome-ui / ADR-0116): the purpose-built calendar
+// item editor, typed off the @splicewire/_resources CompositionCell DTO, with its four
+// host-couplings injected via the four kinds (client REQUIRED / notify·onError / renderX /
+// subscribe-none). Its react-query layer travels inside the package (cell-hooks) and calls the
+// injected client.
+export { CalendarCellForm, isFriendlyCalendarKind } from './CalendarCellForm';
+export { CalendarCellFormProvider, useCellFormServices, useCellNotify } from './cell-provider';
+export { useCompositionCells, useCompositionProfiles, useSaveCell } from './cell-hooks';
+export type {
+    CompositionCellData,
+    CalendarCell,
+    CalendarCellKind,
+    CalendarProfile,
+    SaveCellInput,
+    CellClientError,
+    CalendarCellClient,
+    CellNotifyMessage,
+    CellContentPickerProps,
+    CalendarCellFormServices,
+} from './cell-types';
+
 // types.ts: the generated projection DTO (re-exported off @splicewire/_resources) + the
 // four-kind foundation contract + the satellite-facing transport/props/ref types.
 export type {

@@ -40,12 +40,14 @@
     },
     "peerDependencies": {
         "@schemastud/big-calendar": "*",
+        "@schemastud/ui": "*",
         "@tanstack/react-query": ">=5",
         "lucide-react": ">=0.400.0",
         "react": ">=18"
     },
     "devDependencies": {
         "@schemastud/big-calendar": "file:../../schemastud/big-calendar",
+        "@schemastud/ui": "file:../../schemastud/ui",
         "@tanstack/react-query": "^5.62.0",
         "@testing-library/dom": "^10.4.1",
         "@testing-library/react": "^16.1.0",
