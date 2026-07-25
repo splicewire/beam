@@ -1,0 +1,202 @@
+@import 'tailwindcss';
+
+/*
+ * Scan the whole beam estate (every workspace's src + colocated stories) for utility
+ * classes. node_modules / .gitignore'd paths are auto-excluded by Tailwind v4.
+ */
+@source '../';
+
+/*
+ * ─────────────────────────────────────────────────────────────────────────────
+ * Workbench token layer (seeded, self-contained).
+ *
+ * The beam packages are headless — they ship NO CSS; the app owns the token layer
+ * (splicewire-app: resources/css/brand-tokens.css + ui/src/index.css). This file is the
+ * workbench's standalone copy so components render skinned in isolation. It is a BASELINE,
+ * not the source of truth: when packages ship their own token defaults (component-seams
+ * ticket 07's aspiration — beam ships `--beam-*` raw + passthroughs), this seed shrinks
+ * to just the semantic → Tailwind bridge.
+ *
+ * TOKEN PREFIX = `beam-` (component-seams ticket 07 decision 1: vendor-axis prefixes
+ * stud- / beam- / splice-). This is beam's tier. Values mirror the shared Splicewire
+ * visual family (beam is the free-tier arm of Splicewire) so isolation renders match the
+ * app; a downstream tier re-binds semantics through its own owned keys, never these.
+ * ─────────────────────────────────────────────────────────────────────────────
+ */
+
+/* Brand primitives (--beam-*) — beam's tier defaults, in the Splicewire visual family */
+:root {
+    /* Surfaces */
+    --beam-paper: #eef1ee;
+    --beam-paper-raised: #ffffff;
+    --beam-muted: #e6eae5;
+
+    /* Ink */
+    --beam-ink: #2e2c26;
+    --beam-ink-muted: rgba(17, 32, 26, 0.5);
+    --beam-ink-18: rgba(17, 32, 26, 0.18);
+    --beam-line: #e3e6e2;
+
+    /* Green — primary */
+    --beam-green: #14803f;
+    --beam-green-deep: #0f5f2e;
+    --beam-green-tint: #eaf6ee;
+
+    /* Signal + status */
+    --beam-signal: #35d07a;
+    --beam-warn: #e8a13a;
+    --beam-warn-deep: #9a6608;
+    --beam-info: #2b63a7;
+    --beam-danger: #a3271b;
+
+    /* The rail — deep green-black */
+    --beam-rail: #11201a;
+    --beam-rail-deep: #0d1a14;
+    --beam-rail-fg: rgba(207, 233, 216, 0.6);
+    --beam-rail-active: #eaf6ee;
+    --beam-rail-avatar: #1d3527;
+    --beam-signal-13: rgba(53, 208, 122, 0.13);
+    --beam-signal-18: rgba(53, 208, 122, 0.18);
+
+    /* Type */
+    --beam-font-sans:
+        'Space Grotesk', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji',
+        'Segoe UI Emoji', 'Segoe UI Symbol';
+    --beam-font-mono:
+        ui-monospace, 'IBM Plex Mono', SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace;
+}
+
+/* Semantic interface (--primary etc.) mapped onto the beam primitives — the neutral,
+ * unprefixed interface Tailwind `@theme inline` consumes (ticket 07 decision 2). */
+:root {
+    --background: var(--beam-paper);
+    --foreground: var(--beam-ink);
+    --card: var(--beam-paper-raised);
+    --card-foreground: var(--beam-ink);
+    --popover: var(--beam-paper-raised);
+    --popover-foreground: var(--beam-ink);
+    --primary: var(--beam-green);
+    --primary-foreground: var(--beam-paper-raised);
+    --secondary: var(--beam-muted);
+    --secondary-foreground: var(--beam-ink);
+    --muted: var(--beam-muted);
+    --muted-foreground: var(--beam-ink-muted);
+    --accent: var(--beam-green-tint);
+    --accent-foreground: var(--beam-green-deep);
+    --destructive: var(--beam-danger);
+    --destructive-foreground: var(--beam-paper-raised);
+    --border: var(--beam-line);
+    --input: var(--beam-ink-18);
+    --ring: var(--beam-green);
+    --radius: 0.5rem;
+    --signal: var(--beam-signal);
+    --warning: var(--beam-warn);
+    --warning-foreground: var(--beam-warn-deep);
+    --info: var(--beam-info);
+    --sidebar: var(--beam-rail);
+    --sidebar-deep: var(--beam-rail-deep);
+    --sidebar-foreground: var(--beam-rail-fg);
+    --sidebar-active-foreground: var(--beam-rail-active);
+    --sidebar-primary: var(--beam-signal);
+    --sidebar-accent: var(--beam-signal-13);
+    --sidebar-border: var(--beam-signal-18);
+    --sidebar-avatar: var(--beam-rail-avatar);
+}
+
+/*
+ * ─────────────────────────────────────────────────────────────────────────────
+ * Dark seed (component-seams ticket 13's light+dark-required-now obligation, inherited
+ * by the beam stand-up, ticket 23; the schemastud pilot grew this layer first in ticket 14).
+ *
+ * The `colorScheme` toolbar in `.storybook/preview.ts` toggles `.dark` on the preview root;
+ * because these override the SEMANTIC interface directly, the `@theme inline` bridge below
+ * re-resolves and every `bg-primary`/`bg-card`/`text-muted-foreground`/… re-skins with zero
+ * per-story work. Mirrored from the app's shipped dark theme so isolation matches production.
+ * ─────────────────────────────────────────────────────────────────────────────
+ */
+.dark {
+    --background: oklch(0.2 0.02 165);
+    --foreground: oklch(0.93 0.015 160);
+    --card: oklch(0.24 0.022 165);
+    --card-foreground: oklch(0.93 0.015 160);
+    --popover: oklch(0.23 0.022 165);
+    --popover-foreground: oklch(0.93 0.015 160);
+    --primary: oklch(0.75 0.18 155);
+    --primary-foreground: oklch(0.16 0.03 160);
+    --secondary: oklch(0.29 0.02 165);
+    --secondary-foreground: oklch(0.9 0.015 160);
+    --muted: oklch(0.28 0.02 165);
+    --muted-foreground: oklch(0.68 0.02 160);
+    --accent: oklch(0.32 0.03 160);
+    --accent-foreground: oklch(0.93 0.015 160);
+    --destructive: oklch(0.62 0.19 25);
+    --destructive-foreground: oklch(0.97 0.01 25);
+    --border: oklch(0.32 0.02 165);
+    --input: oklch(0.33 0.02 165);
+    --ring: oklch(0.75 0.18 155);
+
+    /* Signal + status — brightened so they read against the dark canvas. */
+    --signal: oklch(0.78 0.17 155);
+    --warning: oklch(0.78 0.14 75);
+    --warning-foreground: oklch(0.22 0.04 75);
+    --info: oklch(0.68 0.13 245);
+
+    /* The rail — a distinct deep tone below the raised surfaces. */
+    --sidebar: oklch(0.17 0.02 165);
+    --sidebar-deep: oklch(0.14 0.02 165);
+    --sidebar-foreground: oklch(0.72 0.03 160);
+    --sidebar-active-foreground: oklch(0.95 0.015 160);
+    --sidebar-primary: oklch(0.78 0.17 155);
+    --sidebar-accent: oklch(0.78 0.17 155 / 0.16);
+    --sidebar-border: oklch(0.78 0.17 155 / 0.22);
+    --sidebar-avatar: oklch(0.28 0.03 160);
+}
+
+/* Semantic → Tailwind color/token bridge (the neutral interface Tailwind consumes) */
+@theme inline {
+    --color-background: var(--background);
+    --color-foreground: var(--foreground);
+    --color-card: var(--card);
+    --color-card-foreground: var(--card-foreground);
+    --color-popover: var(--popover);
+    --color-popover-foreground: var(--popover-foreground);
+    --color-primary: var(--primary);
+    --color-primary-foreground: var(--primary-foreground);
+    --color-secondary: var(--secondary);
+    --color-secondary-foreground: var(--secondary-foreground);
+    --color-muted: var(--muted);
+    --color-muted-foreground: var(--muted-foreground);
+    --color-accent: var(--accent);
+    --color-accent-foreground: var(--accent-foreground);
+    --color-destructive: var(--destructive);
+    --color-destructive-foreground: var(--destructive-foreground);
+    --color-border: var(--border);
+    --color-input: var(--input);
+    --color-ring: var(--ring);
+    --color-signal: var(--signal);
+    --color-warning: var(--warning);
+    --color-warning-foreground: var(--warning-foreground);
+    --color-info: var(--info);
+    --color-sidebar: var(--sidebar);
+    --color-sidebar-deep: var(--sidebar-deep);
+    --color-sidebar-foreground: var(--sidebar-foreground);
+    --color-sidebar-active-foreground: var(--sidebar-active-foreground);
+    --color-sidebar-primary: var(--sidebar-primary);
+    --color-sidebar-accent: var(--sidebar-accent);
+    --color-sidebar-border: var(--sidebar-border);
+    --color-sidebar-avatar: var(--sidebar-avatar);
+    --radius-sm: calc(var(--radius) - 4px);
+    --radius-md: calc(var(--radius) - 2px);
+    --radius-lg: var(--radius);
+    --radius-xl: calc(var(--radius) + 4px);
+    --font-sans: var(--beam-font-sans);
+    --font-mono: var(--beam-font-mono);
+}
+
+@layer base {
+    body {
+        background: var(--background);
+        color: var(--foreground);
+        font-family: var(--beam-font-sans);
+    }
+}

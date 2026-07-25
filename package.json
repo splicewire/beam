@@ -1,26 +1,37 @@
 {
-    "name": "beam",
-    "private": true,
-    "type": "module",
-    "description": "The beam app-substrate package family — one npm workspace. App/site-level substrate + capabilities (ADR-0082: beam = substrate), sitting above the schemastud core/tooling layer. Publishes under the @splicewire npm scope (Beam is the free-tier arm of Splicewire).",
-    "packageManager": "npm@10.9.2",
-    "//workspaces": "TOPOLOGICAL order (leaves first) so `npm run build --workspaces` resolves internal .d.ts in order. Grows as FC mints beam / beam-accounts / beam-notifications / beam-commerce.",
-    "workspaces": [
-        "beam-mdx",
-        "beam-mainframe",
-        "beam-accounts",
-        "beam-workflows"
-    ],
-    "scripts": {
-        "build": "npm run build --workspaces --if-present",
-        "dev": "npm run dev --workspaces --if-present",
-        "test": "npm run test --workspaces --if-present",
-        "typecheck": "npm run typecheck --workspaces --if-present",
-        "changeset": "changeset",
-        "version-packages": "changeset version",
-        "release": "npm run build && changeset publish"
-    },
-    "devDependencies": {
-        "@changesets/cli": "^2.27.9"
-    }
+  "name": "beam",
+  "private": true,
+  "type": "module",
+  "description": "The beam app-substrate package family — one npm workspace. App/site-level substrate + capabilities (ADR-0082: beam = substrate), sitting above the schemastud core/tooling layer. Publishes under the @splicewire npm scope (Beam is the free-tier arm of Splicewire).",
+  "packageManager": "npm@10.9.2",
+  "//workspaces": "TOPOLOGICAL order (leaves first) so `npm run build --workspaces` resolves internal .d.ts in order. Grows as FC mints beam / beam-accounts / beam-notifications / beam-commerce.",
+  "workspaces": [
+    "beam-mdx",
+    "beam-mainframe",
+    "beam-accounts",
+    "beam-workflows"
+  ],
+  "scripts": {
+    "build": "npm run build --workspaces --if-present",
+    "dev": "npm run dev --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "changeset": "changeset",
+    "version-packages": "changeset version",
+    "release": "npm run build && changeset publish",
+    "storybook": "storybook dev -p 6007",
+    "build-storybook": "storybook build",
+    "test-storybook": "test-storybook --url http://127.0.0.1:6007",
+    "lint:tokens": "node scripts/lint-tokens.mjs"
+  },
+  "devDependencies": {
+    "@changesets/cli": "^2.27.9",
+    "@storybook/react-vite": "^10.5.4",
+    "@storybook/test-runner": "^0.24.4",
+    "@tailwindcss/vite": "^4.3.3",
+    "jest-image-snapshot": "^6.5.2",
+    "playwright": "^1.61.1",
+    "storybook": "^10.5.4",
+    "tailwindcss": "^4.3.3"
+  }
 }

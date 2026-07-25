@@ -6,3 +6,9 @@ dist/
 .turbo/
 coverage/
 .import-bak-*/
+
+# Storybook (component-seams ticket 23) — build output + VR runner artifacts.
+# VR baselines are NOT captured here (owner-env; graduates with the beam catalog wave),
+# so the whole .tests/ tree stays ignored for now.
+storybook-static/
+.tests/
