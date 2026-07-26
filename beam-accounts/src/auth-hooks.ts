@@ -90,6 +90,19 @@ export function useRegisterPasskey() {
     });
 }
 
+export function useRenamePasskey() {
+    const { client, onError } = useAuthServices();
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: ({ id, name }: { id: number; name: string }) => {
+            if (!client.passkey?.rename) throw new Error('Passkey rename is not available.');
+            return client.passkey.rename(id, name);
+        },
+        onSuccess: () => queryClient.invalidateQueries({ queryKey: PASSKEYS_KEY }),
+        onError: (err) => onError?.(err),
+    });
+}
+
 export function useDeletePasskey() {
     const { client, onError } = useAuthServices();
     const queryClient = useQueryClient();

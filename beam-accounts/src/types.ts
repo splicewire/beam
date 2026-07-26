@@ -132,7 +132,7 @@ export interface AuthClient<TResult = unknown> {
 
 /**
  * The passkey transport. `loginOptions`/`login` drive passwordless sign-in; `registrationOptions`
- * /`register`/`list`/`remove` drive the management surface (behind the host's auth).
+ * /`register`/`list`/`rename`/`remove` drive the management surface (behind the host's auth).
  */
 export interface PasskeyClient<TResult = unknown> {
     loginOptions(): Promise<PasskeyChallenge>;
@@ -140,6 +140,12 @@ export interface PasskeyClient<TResult = unknown> {
     registrationOptions(): Promise<PasskeyChallenge>;
     register(input: PasskeyAttestationInput): Promise<PasskeyData>;
     list(): Promise<PasskeyData[]>;
+    /**
+     * Rename a registered credential (its only editable field). Optional so a host that exposes
+     * list/register/remove but no rename endpoint stays valid — the section hides the affordance
+     * when it's absent.
+     */
+    rename?(id: number, name: string): Promise<PasskeyData>;
     remove(id: number): Promise<void>;
 }
 

@@ -103,6 +103,11 @@ export function makeAuthClient(config: AuthMockConfig = {}): AuthClient {
                 passkeyOutcome,
             ),
         list: () => (passkeysLoading ? never : Promise.resolve(passkeys)),
+        rename: (id, name) =>
+            settle<PasskeyData>(
+                { id, name, last_used_at: null, created_at: new Date().toISOString() },
+                passkeyOutcome,
+            ),
         remove: async () => settle(undefined),
     };
 

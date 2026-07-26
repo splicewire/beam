@@ -34,6 +34,7 @@ function fakePasskey(overrides: Partial<AuthClient['passkey']> = {}): NonNullabl
         registrationOptions: vi.fn(async () => CHALLENGE),
         register: vi.fn(async () => ({ id: 1, name: 'My laptop', last_used_at: null, created_at: null })),
         list: vi.fn(async () => []),
+        rename: vi.fn(async (id: number, name: string) => ({ id, name, last_used_at: null, created_at: null })),
         remove: vi.fn(async () => {}),
         ...overrides,
     };
@@ -126,6 +127,35 @@ describe('PasskeysSection (ticket 11)', () => {
                 credential: { id: 'attestation', type: 'public-key' },
             }),
         );
+    });
+
+    it('renames a passkey inline through the injected transport', async () => {
+        vi.mocked(webauthn.isWebAuthnSupported).mockReturnValue(true);
+        const fixture: PasskeyData[] = [
+            { id: 5, name: 'Work laptop', last_used_at: null, created_at: '2026-01-01T00:00:00Z' },
+        ];
+        const client = fakeClient({ list: vi.fn(async () => fixture) });
+        mount(<PasskeysSection />, client);
+
+        fireEvent.click(await screen.findByRole('button', { name: /rename work laptop/i }));
+        fireEvent.change(screen.getByLabelText(/rename work laptop/i), {
+            target: { value: 'Home laptop' },
+        });
+        fireEvent.click(screen.getByRole('button', { name: /save name/i }));
+
+        await waitFor(() => expect(client.passkey!.rename).toHaveBeenCalledWith(5, 'Home laptop'));
+    });
+
+    it('hides the rename affordance when the host omits the transport', async () => {
+        vi.mocked(webauthn.isWebAuthnSupported).mockReturnValue(true);
+        const fixture: PasskeyData[] = [
+            { id: 8, name: 'Solo key', last_used_at: null, created_at: null },
+        ];
+        const client = fakeClient({ list: vi.fn(async () => fixture), rename: undefined });
+        mount(<PasskeysSection />, client);
+
+        await screen.findByText('Solo key');
+        expect(screen.queryByRole('button', { name: /rename solo key/i })).toBeNull();
     });
 
     it('deletes a passkey through the injected transport', async () => {

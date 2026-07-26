@@ -40,6 +40,7 @@ export {
     usePasskey,
     usePasskeys,
     useRegisterPasskey,
+    useRenamePasskey,
     useDeletePasskey,
 } from './auth-hooks';
 export { LoginPanel, type LoginPanelProps } from './login-panel';
