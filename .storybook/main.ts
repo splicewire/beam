@@ -1,5 +1,6 @@
 import type { StorybookConfig } from '@storybook/react-vite';
 import tailwindcss from '@tailwindcss/vite';
+import { fileURLToPath } from 'node:url';
 
 /**
  * The beam per-repo Storybook — the "free-tier" catalog of the composition architecture
@@ -29,6 +30,18 @@ const config: StorybookConfig = {
         // within one repo the workspace already hoists a single copy).
         cfg.resolve ??= {};
         cfg.resolve.dedupe = [...(cfg.resolve.dedupe ?? []), 'react', 'react-dom'];
+        // Stub `@inertiajs/react` (component-seams ticket 40). beam-mdx is the ONLY Inertia
+        // consumer in the whole beam Storybook (its `context.tsx` + `content-show.tsx`); its
+        // render-time touch is just `usePage()` + `<Head>`. The real package boots a global
+        // router with side effects and renders a resolved page component — the wrong tool for
+        // cataloguing bare surfaces. The stub supplies exactly those two seams, story-driven,
+        // so the citation kit renders off pure fixtures with no app/Laravel coupling.
+        cfg.resolve.alias = {
+            ...(cfg.resolve.alias as Record<string, string> | undefined),
+            '@inertiajs/react': fileURLToPath(
+                new URL('./inertia-react.stub.tsx', import.meta.url),
+            ),
+        };
         return cfg;
     },
 };

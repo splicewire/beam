@@ -1,0 +1,51 @@
+/* =============================================================================
+   beam-mdx Storybook harness stylesheet (component-seams ticket 40).
+
+   The kit + prose sheets are TOKEN-DRIVEN: they read `--sr-*` (text/heading/brand/
+   dim/faint/hairline) + a few `--beam-*` doc tokens + `--font-serif`/`--font-sans`/
+   `--font-mono`. The beam workbench seed (`.storybook/preview.css`) supplies the
+   `--beam-*` brand primitives + the semantic interface, but NOT the `--sr-*` prose
+   tokens nor `--font-serif` — those are the SATELLITE's contract in production (a
+   consuming site defines them; the package ships none, by design — see site-prose.css
+   header). This harness supplies a standalone `--sr-*` mapping so the kit renders
+   skinned in isolation, exactly as ticket 07's headless-token seed does for the
+   semantic layer.
+
+   CRUCIAL: every `--sr-*` here maps onto an existing `--beam-*` / semantic token (never
+   a raw literal), so the whole kit RE-SKINS under `.dark` for free — the dark seed
+   overrides `--foreground`/`--muted-foreground`/`--border`/`--primary`, these `--sr-*`
+   vars point at them, and the kit re-treats with zero per-story work (the ticket's
+   "confirm the --beam-* migration re-skins the kit under .dark" bar).
+
+   Imports the SHIPPED package sheets (src, pre-build) so the story catalogues the real
+   skin, mounted under `.site-prose` per the ticket.
+   ============================================================================= */
+
+@import './site-prose.css';
+@import './kit/kit.css';
+
+/* --- Prose token mapping (the satellite's `--sr-*` contract, standalone) ----------- */
+:root {
+    /* Text roles → the semantic ink interface (re-skins under .dark automatically). */
+    --sr-text: var(--foreground);
+    --sr-heading: var(--foreground);
+    --sr-brand: var(--primary);
+    --sr-dim: var(--muted-foreground);
+    --sr-faint: var(--border);
+    --sr-hairline: var(--border);
+
+    /* The prose serif face — the one font var the kit/prose reads that the beam seed
+       (sans + mono only) does not define. A readable serif stack for long-form. */
+    --font-serif: ui-serif, Georgia, Cambria, 'Times New Roman', Times, serif;
+}
+
+/* The story `.site-prose` island: keep it left-aligned and readable in the centered
+   preview frame, on the page background so the framed exhibits read against real chrome. */
+.bmdx-story {
+    width: 100%;
+    max-width: 44rem;
+    padding: 1.5rem;
+    background: var(--background);
+    color: var(--foreground);
+    text-align: left;
+}
