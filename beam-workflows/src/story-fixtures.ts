@@ -186,6 +186,7 @@ export const catalog: WorkflowCatalogData = {
     effects,
     types,
     principals,
+    canAuthor: true,
 };
 
 export const coverage: WorkflowCoverageData = {

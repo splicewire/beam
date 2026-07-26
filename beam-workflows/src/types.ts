@@ -59,8 +59,12 @@ export interface WorkflowsClient<
     catalog(): Promise<TCatalog>;
     /** Per-version subject counts for a lineage (GET /workflows/{key}/coverage). */
     coverage(key: string): Promise<TCoverage>;
-    /** Save a blueprint — forks a new immutable version (POST /workflows/{key}/versions). */
-    saveVersion(key: string, blueprint: BlueprintDraft): Promise<TVersion>;
+    /**
+     * Save a blueprint — forks a new immutable version (POST /workflows/{key}/versions). `activate`
+     * (default true) decides whether the new version becomes the lineage's active pointer or is forked
+     * inert (fork-only), so an author can stage a draft version without re-pinning new subjects onto it.
+     */
+    saveVersion(key: string, blueprint: BlueprintDraft, activate?: boolean): Promise<TVersion>;
     /** Bind a subject-type to a lineage (PUT /workflow-bindings). */
     bind(input: BindInput): Promise<TBinding>;
     /** Unbind a subject-type (DELETE /workflow-bindings). */
@@ -107,4 +111,12 @@ export interface WorkflowsServices {
      * host owns. The component makes the slot; the host injects the affordance.
      */
     renderLineageChrome?: (lineage: WorkflowLineageData) => ReactNode;
+    /**
+     * The selection channel (admin-redesign ticket 08): the surface emits the currently-selected
+     * lineage (or `null` when the selection is cleared) so the host can echo it in its own chrome — a
+     * shell status glance ("governing N records"), a breadcrumb third level, a deep-link. The surface
+     * remains self-contained (it still renders its own coverage inline); this is a one-way notification,
+     * never a control input. Omitted → the surface simply doesn't announce selection.
+     */
+    onSelectLineage?: (lineage: WorkflowLineageData | null) => void;
 }

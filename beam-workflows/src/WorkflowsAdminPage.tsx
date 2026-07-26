@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Trash2 } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
     Button,
     Card,
@@ -44,10 +44,18 @@ type WorkflowLineage = WorkflowLineageData;
 
 export function WorkflowsAdminPage() {
     const qc = useQueryClient();
-    const { client, onError } = useWorkflowsServices();
+    const { client, onError, onSelectLineage } = useWorkflowsServices();
     const notify = useNotify();
     const [selectedKey, setSelectedKey] = useState<string | null>(null);
     const [showMigrate, setShowMigrate] = useState(false);
+    // Lineage-index filter (admin-redesign ticket 08) — a router-agnostic filter over the already-
+    // loaded lineages (the surface stays portable: no query-string / router coupling). Free-text
+    // search across name+key, plus a system/custom segment.
+    const [query, setQuery] = useState('');
+    const [scope, setScope] = useState<'all' | 'system' | 'custom'>('all');
+    // Fork-only vs fork-and-activate (admin-redesign ticket 08) — the save path already accepts an
+    // `activate` flag server-side; this exposes it so an author can stage an inert draft version.
+    const [activateOnSave, setActivateOnSave] = useState(true);
 
     const lineages = useQuery({
         queryKey: ['beam-workflows', 'lineages'],
@@ -57,6 +65,10 @@ export function WorkflowsAdminPage() {
         queryKey: ['beam-workflows', 'catalog'],
         queryFn: () => client.catalog(),
     });
+    // Server-authoritative write capability (admin-redesign ticket 08): drives the surface's own
+    // write affordances so a read-only member never submits into a 403 (the gate is still enforced
+    // server-side on every write path).
+    const canAuthor = catalog.data?.canAuthor ?? false;
 
     // Coverage (visibility): how many live records are actually pinned to each version — the
     // evidence the workflow is governing objects, not just configured.
@@ -70,12 +82,29 @@ export function WorkflowsAdminPage() {
     const selected = lineages.data?.find((l) => l.key === selectedKey) ?? null;
     const activeVersion = selected?.versions.find((v) => v.isActive) ?? selected?.versions.at(-1);
 
+    // The selection channel (ticket 08): announce the active lineage to the host so it can echo it in
+    // its own chrome. One-way notification — the surface still owns selection + renders coverage inline.
+    useEffect(() => {
+        onSelectLineage?.(selected);
+    }, [selected, onSelectLineage]);
+
+    // The filtered master list — free-text over name+key, then the system/custom segment.
+    const filteredLineages = useMemo(() => {
+        const needle = query.trim().toLowerCase();
+        return (lineages.data ?? []).filter((l) => {
+            if (scope === 'system' && !l.isSystem) return false;
+            if (scope === 'custom' && l.isSystem) return false;
+            if (!needle) return true;
+            return l.name.toLowerCase().includes(needle) || l.key.toLowerCase().includes(needle);
+        });
+    }, [lineages.data, query, scope]);
+
     const invalidateLineages = () =>
         qc.invalidateQueries({ queryKey: ['beam-workflows', 'lineages'] });
 
     const save = useMutation({
         mutationFn: (blueprint: BlueprintDraft) =>
-            client.saveVersion(selectedKey as string, blueprint),
+            client.saveVersion(selectedKey as string, blueprint, activateOnSave),
         onSuccess: () => {
             notify({ type: 'success', message: 'Saved a new version' });
             invalidateLineages();
@@ -112,7 +141,9 @@ export function WorkflowsAdminPage() {
     });
 
     return (
-        <div className="mx-auto max-w-5xl px-6 py-8">
+        // Full-bleed (admin-redesign ticket 08): the desk shell owns the outer gutter, so the surface
+        // drops its own `mx-auto max-w-5xl px-6 py-8` and spans the framed main.
+        <div>
             <h1 className="mb-1 text-xl font-semibold">Workflows</h1>
             <p className="mb-6 text-sm text-[var(--beam-ink-55)]">
                 Definition lineages, their immutable versions, and the types they govern. Editing
@@ -122,12 +153,44 @@ export function WorkflowsAdminPage() {
             <div className="grid grid-cols-[260px_1fr] gap-6">
                 {/* Lineage list */}
                 <aside className="space-y-1.5">
+                    {/* Lineage-index filter (ticket 08) — router-agnostic search + system/custom segment. */}
+                    <div className="mb-2 space-y-1.5">
+                        <Input
+                            value={query}
+                            onChange={(e) => setQuery(e.target.value)}
+                            placeholder="Filter workflows…"
+                            aria-label="Filter workflows"
+                            className="h-8 text-sm"
+                        />
+                        <div className="flex gap-1">
+                            {(['all', 'system', 'custom'] as const).map((s) => (
+                                <button
+                                    key={s}
+                                    type="button"
+                                    onClick={() => setScope(s)}
+                                    aria-pressed={scope === s}
+                                    className={cn(
+                                        'rounded-md border px-2 py-0.5 text-[11px] capitalize',
+                                        scope === s
+                                            ? 'border-[var(--beam-green)] text-[var(--beam-green)]'
+                                            : 'border-[var(--beam-ink-12)] text-[var(--beam-ink-45)] hover:bg-[var(--beam-ink-03)]',
+                                    )}
+                                >
+                                    {s}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
                     {lineages.isPending && (
                         <p className="text-sm text-muted-foreground">Loading…</p>
                     )}
-                    {lineages.data?.map((lineage) => (
+                    {!lineages.isPending && filteredLineages.length === 0 && (
+                        <p className="text-sm text-muted-foreground">No workflows match.</p>
+                    )}
+                    {filteredLineages.map((lineage) => (
                         <button
                             key={lineage.key}
+                            data-lineage-key={lineage.key}
                             onClick={() => setSelectedKey(lineage.key)}
                             className={cn(
                                 'block w-full rounded-md border px-3 py-2 text-left text-sm',
@@ -176,6 +239,7 @@ export function WorkflowsAdminPage() {
                                 guards={catalog.data?.guards ?? []}
                                 types={catalog.data?.types ?? []}
                                 binding={bind.isPending}
+                                canAuthor={canAuthor}
                                 onBind={(typeKey, params) =>
                                     bind.mutate({ typeKey, lineageRef: selected.key, params })
                                 }
@@ -216,7 +280,7 @@ export function WorkflowsAdminPage() {
 
                             {/* Marking migration (ticket 20) — high blast radius, so collapsed behind an
                                 explicit disclosure rather than always open. */}
-                            {selected.versions.length >= 2 && (
+                            {selected.versions.length >= 2 && canAuthor && (
                                 <div className="mb-4">
                                     <button
                                         type="button"
@@ -239,25 +303,44 @@ export function WorkflowsAdminPage() {
                                 </div>
                             )}
                             {activeVersion && catalog.data && (
-                                <WorkflowEditor
-                                    key={`${selected.key}-${activeVersion.id}`}
-                                    initial={toDraft({
-                                        ...activeVersion.blueprint,
-                                        name: activeVersion.blueprint.name ?? selected.key,
-                                    })}
-                                    guards={catalog.data.guards}
-                                    effects={catalog.data.effects}
-                                    // `catalog.principals` (ticket 17) now travels typed in the
-                                    // generated WorkflowCatalogData projection — no local cast needed.
-                                    principals={catalog.data.principals}
-                                    saving={save.isPending}
-                                    error={
-                                        save.isError
-                                            ? errorMessage(save.error, 'Save failed')
-                                            : null
-                                    }
-                                    onSave={(blueprint) => save.mutate(blueprint)}
-                                />
+                                <>
+                                    {/* Fork-only vs fork-and-activate (ticket 08) — author-only. */}
+                                    {canAuthor && (
+                                        <label className="mb-3 flex items-center gap-2 text-xs text-[var(--beam-ink-60)]">
+                                            <Switch
+                                                checked={activateOnSave}
+                                                onCheckedChange={setActivateOnSave}
+                                                aria-label="Activate the new version on save"
+                                            />
+                                            Activate on save
+                                            <span className="text-[var(--beam-ink-45)]">
+                                                {activateOnSave
+                                                    ? '— new subjects pin to this version'
+                                                    : '— fork inert; the active version is unchanged'}
+                                            </span>
+                                        </label>
+                                    )}
+                                    <WorkflowEditor
+                                        key={`${selected.key}-${activeVersion.id}`}
+                                        initial={toDraft({
+                                            ...activeVersion.blueprint,
+                                            name: activeVersion.blueprint.name ?? selected.key,
+                                        })}
+                                        guards={catalog.data.guards}
+                                        effects={catalog.data.effects}
+                                        // `catalog.principals` (ticket 17) now travels typed in the
+                                        // generated WorkflowCatalogData projection — no local cast needed.
+                                        principals={catalog.data.principals}
+                                        saving={save.isPending}
+                                        canSave={canAuthor}
+                                        error={
+                                            save.isError
+                                                ? errorMessage(save.error, 'Save failed')
+                                                : null
+                                        }
+                                        onSave={(blueprint) => save.mutate(blueprint)}
+                                    />
+                                </>
                             )}
                         </>
                     )}
@@ -279,6 +362,7 @@ function BindingPanel({
     guards,
     types,
     binding,
+    canAuthor,
     onBind,
     onUnbind,
 }: {
@@ -287,6 +371,8 @@ function BindingPanel({
     guards: GuardCatalogEntry[];
     types: WorkflowTypeOptionData[];
     binding: boolean;
+    /** Whether the viewer may govern types (admin-redesign ticket 08) — disables bind/unbind when false. */
+    canAuthor: boolean;
     onBind: (typeKey: string, params: Record<string, unknown>) => void;
     onUnbind: (typeKey: string) => void;
 }) {
@@ -336,6 +422,7 @@ function BindingPanel({
                             <Button
                                 size="sm"
                                 variant="ghost"
+                                disabled={!canAuthor}
                                 className="h-auto py-1 text-xs text-destructive hover:bg-destructive/10 hover:text-destructive"
                                 onClick={() => onUnbind(type)}
                             >
@@ -415,7 +502,7 @@ function BindingPanel({
                         ),
                     )}
                     <Button
-                        disabled={binding || typeKey.trim() === ''}
+                        disabled={binding || typeKey.trim() === '' || !canAuthor}
                         onClick={() => onBind(typeKey.trim(), params)}
                     >
                         Bind type

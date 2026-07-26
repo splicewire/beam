@@ -167,6 +167,7 @@ const catalogFixture: WorkflowCatalogData = {
     effects: [],
     types: [],
     principals: [],
+    canAuthor: true,
 };
 
 describe('§8a — the full tree mounts off pure generated-DTO fixtures (no Laravel)', () => {

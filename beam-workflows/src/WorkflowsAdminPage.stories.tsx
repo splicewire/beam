@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { WorkflowsAdminPage } from './WorkflowsAdminPage';
 import { MockWorkflowsProvider, makeMockClient } from './story-harness';
-import { lineages } from './story-fixtures';
+import { catalog, lineages } from './story-fixtures';
 
 /**
  * Catalog story for {@link WorkflowsAdminPage} (component-seams ticket 26; beam-workflows v2 ticket 09).
@@ -80,7 +80,32 @@ export const Selected: Story = {
     ],
     play: async ({ canvasElement }) => {
         await new Promise((r) => setTimeout(r, 150));
-        const firstLineage = canvasElement.querySelector<HTMLButtonElement>('aside button');
+        const firstLineage = canvasElement.querySelector<HTMLButtonElement>('aside button[data-lineage-key]');
+        firstLineage?.click();
+        await new Promise((r) => setTimeout(r, 350));
+    },
+};
+
+/**
+ * The read-only affordance (admin-redesign ticket 08): a member who clears the read gate but lacks
+ * `author-workflows` (`catalog.canAuthor === false`). The lineage list + version coverage still read,
+ * but the write affordances are suppressed — Bind/Unbind disabled, the migrate disclosure hidden, the
+ * activate toggle absent, and the editor's Save disabled with a "read-only" hint. The gate is still
+ * enforced server-side; this only keeps a read-only member from submitting into a 403.
+ */
+export const ReadOnly: Story = {
+    decorators: [
+        (Story) => (
+            <MockWorkflowsProvider
+                client={makeMockClient({ lineages, catalog: { ...catalog, canAuthor: false } })}
+            >
+                <Story />
+            </MockWorkflowsProvider>
+        ),
+    ],
+    play: async ({ canvasElement }) => {
+        await new Promise((r) => setTimeout(r, 150));
+        const firstLineage = canvasElement.querySelector<HTMLButtonElement>('aside button[data-lineage-key]');
         firstLineage?.click();
         await new Promise((r) => setTimeout(r, 350));
     },

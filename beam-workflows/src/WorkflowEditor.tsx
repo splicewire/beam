@@ -43,6 +43,7 @@ export function WorkflowEditor({
     effects = [],
     principals = [],
     saving = false,
+    canSave = true,
     error,
     onSave,
 }: {
@@ -53,6 +54,12 @@ export function WorkflowEditor({
     /** The recipient-picker vocabulary (ticket 17) — `catalog.principals`, for array effect params. */
     principals?: PrincipalKind[];
     saving?: boolean;
+    /**
+     * Whether the viewer may author (admin-redesign ticket 08). Defaults true; a read-only member
+     * (lacks `author-workflows`) gets a disabled Save with a hint — the surface never lets them submit
+     * into a server 403. Presentation only: the gate is still enforced server-side on save.
+     */
+    canSave?: boolean;
     error?: string | null;
     onSave: (blueprint: BlueprintDraft) => void;
 }) {
@@ -331,8 +338,13 @@ export function WorkflowEditor({
                 </>
             )}
 
-            <div className="flex justify-end">
-                <Button disabled={saving} onClick={() => onSave(draft)}>
+            <div className="flex items-center justify-end gap-3">
+                {!canSave && (
+                    <span className="text-xs text-[var(--beam-ink-45)]">
+                        Read-only — you lack the workflow-author permission.
+                    </span>
+                )}
+                <Button disabled={saving || !canSave} onClick={() => onSave(draft)}>
                     {saving ? 'Saving…' : 'Save as new version'}
                 </Button>
             </div>
