@@ -1,0 +1,44 @@
+import { dirname, join } from 'node:path';
+import { createRequire } from 'node:module';
+import { fileURLToPath } from 'node:url';
+import { defineConfig } from 'vitest/config';
+
+// beam-versioning consumes @schemastud/ui across a workspace boundary (a `file:` link), so its
+// transitive React / react-query would otherwise resolve a SECOND copy out of the schemastud
+// workspace's node_modules — duplicate instances, null hook dispatcher. Pin every shared singleton
+// to the ONE copy hoisted in the beam workspace (the same single-instance guarantee the app's Vite
+// gives at runtime). Deterministic aliases beat `dedupe` here because the foundation UI is pulled
+// in from a different node_modules root. Mirrors beam-accounts/vitest.config.ts.
+const require = createRequire(import.meta.url);
+const pkgDir = (id: string) => dirname(require.resolve(`${id}/package.json`));
+const react = pkgDir('react');
+const reactDom = pkgDir('react-dom');
+const self = dirname(fileURLToPath(import.meta.url));
+
+export default defineConfig({
+    resolve: {
+        alias: {
+            'react/jsx-runtime': join(react, 'jsx-runtime.js'),
+            'react/jsx-dev-runtime': join(react, 'jsx-dev-runtime.js'),
+            'react-dom/client': join(reactDom, 'client.js'),
+            react,
+            'react-dom': reactDom,
+            '@tanstack/react-query': pkgDir('@tanstack/react-query'),
+            // Resolve the foundation UI to its built dist (its published entry), not its src.
+            '@schemastud/ui': join(self, '..', '..', 'schemastud', 'ui', 'dist', 'index.js'),
+        },
+    },
+    test: {
+        // The verification bar (rehome-components §8a) mounts a live tree, so it needs a DOM.
+        environment: 'jsdom',
+        globals: true,
+        // Inline the cross-workspace deps so Vite TRANSFORMS them and the single-instance
+        // aliases above actually apply — otherwise vitest hands them to node's CJS resolver,
+        // which bypasses `resolve.alias` and reloads the schemastud-workspace React copies.
+        server: {
+            deps: {
+                inline: true,
+            },
+        },
+    },
+});
