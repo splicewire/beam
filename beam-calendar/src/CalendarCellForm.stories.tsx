@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { within, userEvent, expect, fn } from 'storybook/test';
+import { DefaultFormBody, createFormIntentBus, type Row, type SchemaNode } from '@schemastud/frame';
 import { CalendarCellForm } from './CalendarCellForm';
 import { CalendarCellFormProvider } from './cell-provider';
 import type {
@@ -8,7 +9,7 @@ import type {
     CalendarCellFormServices,
     CellContentPickerProps,
 } from './cell-types';
-import { WithQuery } from './story-harness';
+import { MockFrameProvider, WithQuery } from './story-harness';
 
 /**
  * Calendar/CalendarCellForm (frame-canonical-forms ticket 27→02). The rehomed purpose-built
@@ -159,4 +160,36 @@ export const MultiChannel: Story = {
             <CalendarCellForm compositionId="cal-demo" initialCell={cell()} onSaved={() => {}} />
         </CalendarCellFormProvider>
     ),
+};
+
+/**
+ * The isolated-storyable end state (frame-canonical-forms ticket 03). Renders the cell form THROUGH
+ * `@schemastud/frame`'s `DefaultFormBody` → form resolver — NOT by mounting `<CalendarCellForm>`
+ * directly — with NO app. `MockFrameProvider` registers the form against its `composition-ref` /
+ * `series` kinds; `DefaultFormBody`, handed a schema whose `$id` terminates in `composition-ref` and
+ * a cell record as `formData`, consults the resolver and mounts the bespoke form (the resolver IS the
+ * lookup that replaced the app's old `isFriendlyCalendarKind` branch). The pinned "One-off release"
+ * chip + Save button prove the resolved form rendered, not a generic schema dump.
+ */
+export const ResolvedThroughFrame: Story = {
+    render: () => (
+        <CalendarCellFormProvider services={services()}>
+            <MockFrameProvider>
+                <DefaultFormBody
+                    schema={{ $id: 'https://schemas.test/kind/composition-ref', type: 'object' } as SchemaNode}
+                    formData={cell() as unknown as Row}
+                    intentBus={createFormIntentBus()}
+                    readOnly={false}
+                    form="bare"
+                    onChange={() => {}}
+                    onSubmit={fn()}
+                />
+            </MockFrameProvider>
+        </CalendarCellFormProvider>
+    ),
+    play: async ({ canvasElement }) => {
+        const canvas = within(canvasElement);
+        await expect(await canvas.findByText(/One-off release/i)).toBeInTheDocument();
+        await expect(canvas.getByRole('button', { name: 'Save' })).toBeInTheDocument();
+    },
 };

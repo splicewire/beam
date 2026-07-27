@@ -47,6 +47,7 @@
     },
     "devDependencies": {
         "@schemastud/big-calendar": "file:../../schemastud/big-calendar",
+        "@schemastud/frame": "file:../../schemastud/frame",
         "@schemastud/ui": "file:../../schemastud/ui",
         "@tanstack/react-query": "^5.62.0",
         "@testing-library/dom": "^10.4.1",

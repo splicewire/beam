@@ -50,6 +50,9 @@ import 'react-big-calendar/lib/addons/dragAndDrop/styles.css';
 import type { LaneAxis } from '@schemastud/big-calendar';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useMemo, type ReactNode } from 'react';
+import { FrameProvider, createFormResolver, type FormBodySlotProps, type FrameInjection } from '@schemastud/frame';
+import { CalendarCellForm } from './CalendarCellForm';
+import type { CalendarCell } from './cell-types';
 import type {
     CalendarEventData,
     CalendarSummary,
@@ -164,6 +167,43 @@ function makeQueryClient(): QueryClient {
 export function WithQuery({ children }: { children: ReactNode }) {
     const queryClient = useMemo(makeQueryClient, []);
     return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
+}
+
+// ── Frame resolver harness (frame-canonical-forms ticket 03) ─────────────────────────────
+// The isolated proof that the rehomed CalendarCellForm renders THROUGH @schemastud/frame's
+// `DefaultFormBody` → form resolver, with NO app. A MockFrameProvider whose injected `formResolver`
+// registers the cell form against its two kinds (`series` / `composition-ref`) — the exact twin of
+// what AppFrameProvider does in prod. A story wraps `<CalendarCellFormProvider services=…>` ABOVE
+// `<DefaultFormBody>`, so the resolved form reads its injected client via context. `@schemastud/frame`
+// is a beam-calendar devDependency consumed ONLY here + in stories — never by `src/index.ts`, so it
+// never enters `dist` (tsup builds the index graph only). The satellite ships zero frame coupling.
+
+/**
+ * The `FormBodySlotProps` adapter — the same shape the app registers at its frame root. The resolver
+ * mounts it; it derives the form's props from `formData` (a cell record: `compositionId` + optional
+ * `id`/`slots`) and threads the bespoke form's own `onSaved` back out through the frame `onSubmit`.
+ */
+function StoryCellFormBody({ formData, onSubmit }: FormBodySlotProps) {
+    const cell = formData as unknown as CalendarCell & { compositionId?: string };
+    const compositionId = String(cell?.compositionId ?? 'cal-demo');
+    const initialCell = cell?.id ? (cell as CalendarCell) : null;
+    return (
+        <CalendarCellForm compositionId={compositionId} initialCell={initialCell} onSaved={() => onSubmit(formData)} />
+    );
+}
+
+/** A Frame host whose `formResolver` resolves the two calendar cell kinds to the rehomed form. */
+export function MockFrameProvider({ children }: { children: ReactNode }) {
+    const injection = useMemo<FrameInjection>(() => {
+        const formResolver = createFormResolver();
+        formResolver.registerFormForSchema('series', StoryCellFormBody);
+        formResolver.registerFormForSchema('composition-ref', StoryCellFormBody);
+        // Only `formResolver` is exercised on DefaultFormBody's canonical path; the remaining
+        // FrameInjection seams (transport/primitives/registry/…) are never reached here, so an inert
+        // cast-through stub keeps the harness free of the full host wiring.
+        return { formResolver } as unknown as FrameInjection;
+    }, []);
+    return <FrameProvider value={injection}>{children}</FrameProvider>;
 }
 
 /** A demo edit-panel chrome slot — proves the host `renderEditPanel` injection point renders. */

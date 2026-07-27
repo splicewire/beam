@@ -26,7 +26,7 @@ export { EventBadge, LaneHeader, Filters, type FacetState } from './chrome';
 // host-couplings injected via the four kinds (client REQUIRED / notify·onError / renderX /
 // subscribe-none). Its react-query layer travels inside the package (cell-hooks) and calls the
 // injected client.
-export { CalendarCellForm, isFriendlyCalendarKind } from './CalendarCellForm';
+export { CalendarCellForm } from './CalendarCellForm';
 export { CalendarCellFormProvider, useCellFormServices, useCellNotify } from './cell-provider';
 export { useCompositionCells, useCompositionProfiles, useSaveCell } from './cell-hooks';
 export type {

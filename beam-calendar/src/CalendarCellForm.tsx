@@ -24,17 +24,12 @@ import type { CalendarCell, CellClientError, CellContentPickerProps } from './ce
 
 type Kind = 'release' | 'series';
 
-/**
- * Whether a cell's Kind is one the purpose-built calendar form handles (a Release or a Series).
- * A stored `kind` is the full schema-$id URL (…/kind/composition-ref), so match on the short
- * suffix. Shared by every calendar cell-editing surface (the calendar tab AND the Studio grid) so
- * they render one consistent form.
- */
-export function isFriendlyCalendarKind(kind: unknown): boolean {
-    if (typeof kind !== 'string') return false;
-    const suffix = kind.split('/').pop() ?? kind;
-    return suffix === 'composition-ref' || suffix === 'series';
-}
+// NOTE (frame-canonical-forms ticket 03): the old `isFriendlyCalendarKind` predicate lived here
+// and was re-exported so app surfaces could branch `if (friendly) <bespoke> else <generic>`. It is
+// GONE — which kinds get the bespoke form is now decided by the `@schemastud/frame` form resolver
+// the host registers this component against (kind `series` / `composition-ref` → this form), never a
+// hardcoded predicate. The next bespoke whole-form is a `registerFormForSchema`, not another branch.
+
 type Freq = 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'YEARLY';
 type EndMode = 'never' | 'count' | 'until';
 type SpawnMode = 'generate' | 'reference';
