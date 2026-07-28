@@ -1,0 +1,21 @@
+/*
+ * Generic styling for the schema-driven block inspector. Design-neutral: the shadcn-var → host-token
+ * bridge that themes @rjsf/shadcn on the host's palette is the HOST's job (it knows its tokens), so it
+ * is NOT here. This ships only the layout compaction so a block's props sit neatly inside the editor.
+ */
+.mdx-schema-form {
+    padding: 0.5rem 0.25rem;
+    font-size: 0.8125rem;
+}
+.mdx-schema-form .form-group,
+.mdx-schema-form fieldset {
+    margin: 0 0 0.5rem;
+    border: 0;
+    padding: 0;
+}
+.mdx-schema-form label {
+    font-size: 0.6875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    opacity: 0.7;
+}
