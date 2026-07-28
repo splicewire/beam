@@ -18,6 +18,7 @@ import {
     diffSourcePlugin,
     jsxPlugin,
     type JsxComponentDescriptor,
+    type ViewMode,
     toolbarPlugin,
     DiffSourceToggleWrapper,
     UndoRedo,
@@ -48,6 +49,12 @@ export interface MdxDocumentEditorProps {
     onChange: (next: string) => void;
     /** The custom-JSX descriptors mdxeditor needs to parse the guides' components into rich mode. */
     jsxDescriptors?: JsxComponentDescriptor[];
+    /**
+     * Which view the editor opens in — `'rich-text'` (WYSIWYG), `'source'` (raw MDX), or `'diff'`.
+     * Defaults to `'source'` (the reliable-for-every-guide v1 default); an in-place editing host that
+     * wants true WYSIWYG passes `'rich-text'`. The diff/source toolbar toggle switches at runtime regardless.
+     */
+    defaultViewMode?: ViewMode;
     className?: string;
 }
 
@@ -58,6 +65,7 @@ export function MdxDocumentEditor({
     value,
     onChange,
     jsxDescriptors = KIT_JSX_DESCRIPTORS,
+    defaultViewMode = 'source',
     className,
 }: MdxDocumentEditorProps) {
     const ref = useRef<MDXEditorMethods>(null);
@@ -86,8 +94,9 @@ export function MdxDocumentEditor({
                 // Register the kit's custom JSX components so rich mode can parse the guides
                 // (unregistered JSX makes mdxeditor refuse rich mode). Derived from the kit manifest.
                 jsxPlugin({ jsxComponentDescriptors: jsxDescriptors }),
-                // Default to source in v1 — reliable for every guide (incl. custom JSX + Artifact).
-                diffSourcePlugin({ viewMode: 'source' }),
+                // Caller-chosen initial view — `'source'` by default (reliable for every guide incl.
+                // custom JSX + Artifact); an in-place WYSIWYG host passes `'rich'`.
+                diffSourcePlugin({ viewMode: defaultViewMode }),
                 toolbarPlugin({
                     toolbarContents: () => (
                         <DiffSourceToggleWrapper>
