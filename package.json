@@ -9,7 +9,8 @@
     "beam-mdx",
     "beam-mainframe",
     "beam-accounts",
-    "beam-workflows"
+    "beam-workflows",
+    "beam-commerce"
   ],
   "scripts": {
     "build": "npm run build --workspaces --if-present",
