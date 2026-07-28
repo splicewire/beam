@@ -1,0 +1,56 @@
+{
+    "name": "@splicewire/beam-transforms",
+    "version": "0.1.0",
+    "description": "The transforms-domain beam surface (popcorn-runner-substrate ticket 09, ADR-0116/0141): the RunnerTransform authoring editor for sandboxed, user-authored transforms. Authored pre-packaged and DTO-first — it owns its react-query data logic, takes its transport + feedback as injected services (never app-local imports), and types off the RunnerTransform wire shape. Generic UI comes from the @schemastud/ui foundation.",
+    "license": "MIT",
+    "type": "module",
+    "main": "dist/index.js",
+    "types": "dist/index.d.ts",
+    "exports": {
+        ".": {
+            "types": "./dist/index.d.ts",
+            "import": "./dist/index.js"
+        }
+    },
+    "sideEffects": false,
+    "files": [
+        "dist",
+        "src",
+        "README.md"
+    ],
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/splicewire/beam.git",
+        "directory": "beam-transforms"
+    },
+    "scripts": {
+        "build": "tsup",
+        "dev": "tsup --watch",
+        "test": "vitest run",
+        "typecheck": "tsc --noEmit",
+        "lint:imports": "node scripts/check-imports.mjs",
+        "prepublishOnly": "npm run build"
+    },
+    "peerDependencies": {
+        "@schemastud/ui": "*",
+        "@tanstack/react-query": ">=5",
+        "lucide-react": ">=0.400.0",
+        "react": ">=18"
+    },
+    "devDependencies": {
+        "@schemastud/ui": "file:../../schemastud/ui",
+        "@storybook/react-vite": "^9.0.0",
+        "@tanstack/react-query": "^5.62.0",
+        "@testing-library/react": "^16.1.0",
+        "@testing-library/user-event": "^14.5.2",
+        "@types/node": "^22.20.1",
+        "@types/react": "^19.0.0",
+        "jsdom": "^25.0.1",
+        "lucide-react": "^0.468.0",
+        "react": "^19.2.0",
+        "react-dom": "^19.2.0",
+        "tsup": "^8.5.1",
+        "typescript": "^5.6.0",
+        "vitest": "^3.0.0"
+    }
+}

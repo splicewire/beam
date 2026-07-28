@@ -10,7 +10,8 @@
     "beam-mainframe",
     "beam-accounts",
     "beam-workflows",
-    "beam-commerce"
+    "beam-commerce",
+    "beam-transforms"
   ],
   "scripts": {
     "build": "npm run build --workspaces --if-present",
