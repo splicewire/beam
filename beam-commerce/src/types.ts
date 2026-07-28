@@ -85,7 +85,7 @@ export interface AutoReloadConfigUpdate {
 /**
  * The injected transport adapter — the ONE thing a host must implement (kind 1). It wraps
  * whatever transport the host already has (axios, fetch, a server action) and points it at
- * the correct tenant + the literal `studio/credits/auto-reload*` endpoints; the component is
+ * the correct tenant + the `beam/commerce/auto-reload*` endpoints (resolved by route name); the component is
  * tenant- and URL-blind.
  */
 export interface AutoReloadClient {

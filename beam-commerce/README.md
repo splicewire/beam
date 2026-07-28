@@ -22,9 +22,11 @@ import {
 } from '@splicewire/beam-commerce';
 
 const client: AutoReloadClient = {
-    getConfig: () => api.get('studio/credits/auto-reload').then((r) => r.data.data),
-    updateConfig: (body) => api.put('studio/credits/auto-reload', body).then((r) => r.data.data),
-    getActivity: () => api.get('studio/credits/auto-reload/activity').then((r) => r.data.data),
+    // The host resolves the endpoints however it likes — a route-name registry (recommended)
+    // or literal paths. splicewire-app keys off `route('beam.commerce.auto-reload.*')`.
+    getConfig: () => api.get(route('beam.commerce.auto-reload.show')).then((r) => r.data.data),
+    updateConfig: (body) => api.put(route('beam.commerce.auto-reload.update'), body).then((r) => r.data.data),
+    getActivity: () => api.get(route('beam.commerce.auto-reload.activity')).then((r) => r.data.data),
 };
 
 <AutoReloadProvider
@@ -42,8 +44,8 @@ const client: AutoReloadClient = {
 
 ## The four-kind injection contract
 
-- **kind 1 — `client`** (required): the transport adapter, pointed at the literal
-  `studio/credits/auto-reload*` endpoints. The component is tenant- and URL-blind.
+- **kind 1 — `client`** (required): the transport adapter, pointed at the
+  `beam/commerce/auto-reload*` endpoints (resolved by route name). The component is tenant- and URL-blind.
 - **kind 2 — `notify` / `onError`**: feedback + mutation-error hooks. Dependency-free console
   defaults apply when omitted (no bundled toaster).
 - **kind 3 — `onSavePaymentMethod`**: the Stripe SetupIntent (usage=off_session) host slot the
