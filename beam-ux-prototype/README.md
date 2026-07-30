@@ -55,6 +55,33 @@ export const router = createBrowserRouter([
 A `lint:imports` deny-list gate (`npm run lint:imports`) guarantees no `@/` app-local import leaks
 back into the package.
 
-> More chrome (`Gallery`, `VariantBar`, `SettingsFrame`, `PrototypeDesk`) and the
-> `verify-prototype-boundary` CLI land in subsequent tickets of the extraction; this README grows
-> with them.
+## `verify-prototype-boundary` (CLI)
+
+Turns "prototypes never ship" into a build-time **assertion**: it runs the host's production build
+and fails if any prototype code (or a `/_prototype/` route string) survived the DEV-guard
+tree-shake. Wire it as the host's boundary script:
+
+```jsonc
+// host package.json
+"scripts": { "verify:prod-boundary": "verify-prototype-boundary" },
+"prototype": { "outDir": "../public/ui" }  // build output the CLI scans
+```
+
+| Flag | Default | Meaning |
+| --- | --- | --- |
+| `--out-dir <path>` | `prototype.outDir` in host `package.json` | build output dir to scan (relative to cwd) |
+| `--tokens <a,b>` | `/_prototype/,_prototype` | comma-separated forbidden tokens |
+| `--build-command <cmd>` | `npm run build` | the host build to run first |
+| `--no-build` | (off) | skip the build; assert against an existing `--out-dir` |
+
+Run it from the host UI package root; paths resolve relative to that cwd.
+
+## Co-dev install note
+
+This app consumes the package as a `file:` link inside an **npm workspace** (the repo root is the
+workspace root). Always run `npm install` at the **workspace root**, never inside a member like
+`ui/` — a member-level install mis-resolves hoisted transitive deps (e.g. duplicates
+`prosemirror-view` across the co-dev tree) and can leave a `tsc -b` type clash in unrelated files.
+
+> More chrome (`Gallery`, `VariantBar`, `SettingsFrame`, `PrototypeDesk`) lands in subsequent
+> tickets of the extraction; this README grows with them.

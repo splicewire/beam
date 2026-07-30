@@ -12,9 +12,13 @@
             "import": "./dist/index.js"
         }
     },
+    "bin": {
+        "verify-prototype-boundary": "bin/verify-prototype-boundary.mjs"
+    },
     "sideEffects": false,
     "files": [
         "dist",
+        "bin",
         "src",
         "README.md"
     ],
