@@ -1,0 +1,54 @@
+{
+    "name": "@splicewire/beam-ux-prototype",
+    "version": "0.1.0",
+    "description": "The repo-agnostic runtime for the rushing-prototype UX-prototyping system (Beam free-tier arm; ADR-0116 rehome-ui). Ships the glob→route mount utility (createPrototypeRoutes), the generic prototyping chrome (Gallery, VariantBar, SettingsFrame, and a brand-parameterized PrototypeDesk), and the production-boundary verifier CLI, so any React+Vite host prototypes UX the way splicewire does — real @/ components rendered read-only over colocated fixtures, auto-mounted at /_prototype/<slug>, fenced from production. The load-bearing seam stays at the host: import.meta.glob is a Vite compile-time macro the host writes and passes in; everything around it is packaged. Generic UI comes from the @schemastud/ui foundation (peer); react/react-router/lucide-react are host-provided peers.",
+    "license": "MIT",
+    "type": "module",
+    "main": "dist/index.js",
+    "types": "dist/index.d.ts",
+    "exports": {
+        ".": {
+            "types": "./dist/index.d.ts",
+            "import": "./dist/index.js"
+        }
+    },
+    "sideEffects": false,
+    "files": [
+        "dist",
+        "src",
+        "README.md"
+    ],
+    "publishConfig": {
+        "registry": "https://registry.npmjs.org",
+        "access": "public"
+    },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/splicewire/beam.git",
+        "directory": "beam-ux-prototype"
+    },
+    "scripts": {
+        "build": "tsup",
+        "dev": "tsup --watch",
+        "typecheck": "tsc --noEmit",
+        "lint:imports": "node scripts/check-imports.mjs",
+        "prepublishOnly": "npm run build"
+    },
+    "peerDependencies": {
+        "@schemastud/ui": "*",
+        "lucide-react": ">=0.400.0",
+        "react": ">=18",
+        "react-router": ">=7"
+    },
+    "devDependencies": {
+        "@schemastud/ui": "file:../../schemastud/ui",
+        "@types/node": "^22.20.1",
+        "@types/react": "^19.0.0",
+        "lucide-react": "^0.525.0",
+        "react": "^19.2.0",
+        "react-dom": "^19.2.0",
+        "react-router": "^7.1.0",
+        "tsup": "^8.5.1",
+        "typescript": "^5.7.2"
+    }
+}
