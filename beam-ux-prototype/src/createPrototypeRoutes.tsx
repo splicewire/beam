@@ -21,6 +21,11 @@ export type PrototypeGlob = Record<string, () => Promise<Record<string, unknown>
 export interface CreatePrototypeRoutesOptions {
     /** Route namespace the prototypes mount under. Default `/_prototype`. */
     namespace?: string;
+    /**
+     * Auto-mount the `Gallery` index at the namespace root (`/_prototype`). Default `true` — a host
+     * gets the clickable index for free. Set `false` to mount your own index route.
+     */
+    gallery?: boolean;
 }
 
 // The convention anchor: every prototype tree lives under a `_prototype/` directory, so glob keys
@@ -53,8 +58,9 @@ export function createPrototypeRoutes(
     opts: CreatePrototypeRoutesOptions = {},
 ): RouteObject[] {
     const namespace = opts.namespace ?? '/_prototype';
+    const withGallery = opts.gallery ?? true;
 
-    return Object.entries(glob)
+    const prototypeRoutes = Object.entries(glob)
         // `_`-prefixed subdirs (_chrome, _fixtures) hold shared chrome + fixtures, not prototypes.
         .filter(([path]) => !subdirSegments(path).some((seg) => seg.startsWith('_')))
         .map(([path, load]): RouteObject => {
@@ -71,4 +77,21 @@ export function createPrototypeRoutes(
                 },
             };
         });
+
+    if (!withGallery) return prototypeRoutes;
+
+    // The clickable index at the namespace root. Lazily imported so `Gallery` (+ its shadcn deps)
+    // stays out of the host's entry chunk and tree-shakes cleanly when this whole call sits in the
+    // host's `import.meta.env.DEV` dead branch.
+    const galleryRoute: RouteObject = {
+        path: namespace,
+        lazy: async () => {
+            const { Gallery } = await import('./Gallery');
+            return {
+                Component: () => <Gallery glob={glob} namespace={namespace} />,
+            };
+        },
+    };
+
+    return [galleryRoute, ...prototypeRoutes];
 }

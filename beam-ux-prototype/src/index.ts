@@ -17,3 +17,9 @@ export { cn, type Cn, type ClassValue } from './cn';
 
 // Generic shapes the packaged chrome types its props off (the splicewire nav DATA stays host-owned).
 export type { NavItem, NavGroup, NavTab, VariantSpec, IconComponent } from './types';
+
+// The generic, brand-free prototyping chrome (ticket 03). `Gallery` is auto-mounted by
+// `createPrototypeRoutes`; `VariantBar` + `SettingsFrame` are imported by prototypes/host wrappers.
+export { Gallery, type GalleryProps } from './Gallery';
+export { VariantBar, type VariantBarProps } from './VariantBar';
+export { SettingsFrame, type SettingsFrameProps } from './SettingsFrame';

@@ -44,12 +44,27 @@ export const router = createBrowserRouter([
 - Each module must export a `*Prototype` component (or a `default`).
 - `opts.namespace` defaults to `/_prototype`.
 
+## Generic chrome
+
+Three brand-free prototyping components ship from the package (`import { … } from
+'@splicewire/beam-ux-prototype'`):
+
+- **`Gallery`** — the clickable index. Takes the same `glob` prop; `createPrototypeRoutes`
+  auto-mounts it at the namespace root, so you get it for free (opt out with `{ gallery: false }`).
+- **`VariantBar`** — the floating `?variant=` switcher (needs only `cn`).
+- **`SettingsFrame`** — the Settings meta-area two-column layout; takes its sub-nav `tabs` as a prop
+  (host-owned nav data — nothing is imported from a host `nav.ts`).
+
+Each accepts an optional `cn` override; `Gallery`/`SettingsFrame` type their data off the package's
+`NavTab`/`VariantSpec` shapes. `Gallery` uses `react-router`'s `Link` — **dedupe `react-router` in
+the host** (Vite `resolve.dedupe`) so a `file:`-linked build binds the app's single router context.
+
 ## Injection contract
 
 | What | Who provides it | Notes |
 | --- | --- | --- |
 | the glob result | **host** (required) | Vite macro; must stay at the call site |
-| `react` / `react-router` / `lucide-react` / `@schemastud/ui` | host peer deps | single-instance |
+| `react` / `react-router` / `lucide-react` / `@schemastud/ui` | host peer deps | single-instance (dedupe `react-router`) |
 | `cn` | bundled default, overridable | dependency-free; pass your own for Tailwind conflict de-dup |
 
 A `lint:imports` deny-list gate (`npm run lint:imports`) guarantees no `@/` app-local import leaks
