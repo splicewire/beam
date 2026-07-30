@@ -12,9 +12,7 @@ import { Link } from 'react-router';
 import { Badge, Card, CardDescription, CardHeader, CardTitle } from '@schemastud/ui';
 import { cn as defaultCn, type Cn } from './cn';
 import type { PrototypeGlob } from './createPrototypeRoutes';
-
-const DIR_MARKER = '_prototype/';
-const ROOT = 'root';
+import { NAMESPACE_DEFAULT, parsePrototypePath } from './discovery';
 
 interface Entry {
     dir: string; // per-effort subdir, or 'root'
@@ -28,25 +26,12 @@ function toTitle(slug: string): string {
     return s.charAt(0).toUpperCase() + s.slice(1);
 }
 
-/** Path relative to `_prototype/` (or the whole path if the marker is absent). */
-function relPath(path: string): string {
-    const at = path.indexOf(DIR_MARKER);
-    return at === -1 ? path.replace(/^.*\//, '') : path.slice(at + DIR_MARKER.length);
-}
-
 function toEntries(glob: PrototypeGlob): Entry[] {
     return Object.keys(glob)
-        .map(relPath)
+        .map(parsePrototypePath)
         // `_`-prefixed dirs (_chrome, _fixtures) hold shared chrome + fixtures, not prototypes.
-        .filter((rel) => !rel.split('/').slice(0, -1).some((seg) => seg.startsWith('_')))
-        .map((rel): Entry => {
-            const parts = rel.split('/');
-            const dir = parts.length > 1 ? parts[0] : ROOT;
-            const base = parts[parts.length - 1].replace(/\.tsx$/, '');
-            const m = base.match(/^(ar)?(\d+)-(.*)$/);
-            const slug = m ? m[3] : base;
-            return { dir, slug, ticket: m ? m[2] : null, title: toTitle(slug) };
-        })
+        .filter((p) => !p.isExcluded)
+        .map(({ dir, slug, ticket }): Entry => ({ dir, slug, ticket, title: toTitle(slug) }))
         .sort(
             (a, b) =>
                 a.dir.localeCompare(b.dir) ||
@@ -64,7 +49,7 @@ export interface GalleryProps {
     cn?: Cn;
 }
 
-export function Gallery({ glob, namespace = '/_prototype', cn = defaultCn }: GalleryProps) {
+export function Gallery({ glob, namespace = NAMESPACE_DEFAULT, cn = defaultCn }: GalleryProps) {
     const entries = useMemo(() => toEntries(glob), [glob]);
     const dirs = useMemo(() => Array.from(new Set(entries.map((e) => e.dir))).sort(), [entries]);
 
