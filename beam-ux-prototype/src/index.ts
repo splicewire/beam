@@ -23,3 +23,5 @@ export type { NavItem, NavGroup, NavTab, VariantSpec, IconComponent } from './ty
 export { Gallery, type GalleryProps } from './Gallery';
 export { VariantBar, type VariantBarProps } from './VariantBar';
 export { SettingsFrame, type SettingsFrameProps } from './SettingsFrame';
+// The desk shell (ticket 04) — brand + nav injected, host CSS tokens referenced by classname.
+export { PrototypeDesk, Crumb, type PrototypeDeskProps } from './PrototypeDesk';

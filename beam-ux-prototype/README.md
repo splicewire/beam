@@ -54,6 +54,26 @@ Three brand-free prototyping components ship from the package (`import { … } f
 - **`VariantBar`** — the floating `?variant=` switcher (needs only `cn`).
 - **`SettingsFrame`** — the Settings meta-area two-column layout; takes its sub-nav `tabs` as a prop
   (host-owned nav data — nothing is imported from a host `nav.ts`).
+- **`PrototypeDesk`** (+ `Crumb`) — the rail + topbar + main + overlay desk shell. Its two host
+  couplings are injected: a `BrandComponent?` prop (the rail brand lockup) and a `nav: NavGroup[]`
+  prop (host-owned rail data). Ships **no stylesheet** — it references host CSS tokens by classname.
+
+### `PrototypeDesk` CSS token contract
+
+`PrototypeDesk` references these host-defined Tailwind/CSS custom-property tokens by classname (ADR
+-0116: the package ships no bespoke CSS). A host **must** define them in its own `:root` (splicewire
+does, in `ui/src/index.css`):
+
+| Token (classname) | Role |
+| --- | --- |
+| `bg-sidebar-deep` / `--sidebar-deep` | rail background |
+| `text-sidebar-foreground` / `--sidebar-foreground` | rail text |
+| `text-sidebar-active-foreground` / `--sidebar-active-foreground` | active/brand text |
+| `bg-sidebar-accent` / `--sidebar-accent` | active row + chip fill |
+| `border-sidebar-primary` / `--sidebar-primary` | active row accent + proposed-delta ring |
+| `bg-sidebar-avatar` / `--sidebar-avatar` | identity avatar fill |
+| `dotted-bg` utility (reads `--dotted-dot`) | the `canvas="dotted"` work surface |
+| `bg-background` | the `canvas="flat"` Settings/meta surface |
 
 Each accepts an optional `cn` override; `Gallery`/`SettingsFrame` type their data off the package's
 `NavTab`/`VariantSpec` shapes. `Gallery` uses `react-router`'s `Link` — **dedupe `react-router` in
