@@ -1,7 +1,7 @@
 import { defineConfig } from 'tsup';
 
 export default defineConfig({
-    entry: { index: 'src/index.ts' },
+    entry: { index: 'src/index.ts', puck: 'src/puck.ts' },
     format: ['esm'],
     dts: true,
     sourcemap: true,
@@ -25,5 +25,8 @@ export default defineConfig({
         '@schemastud/ui',
         '@schemastud/seam',
         'lucide-react',
+        // The structural editor: host owns the single @measured/puck instance (peer), same as
+        // react/react-query — never bundled. Only the /puck entry touches it.
+        '@measured/puck',
     ],
 });
