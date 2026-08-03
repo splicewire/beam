@@ -1,0 +1,64 @@
+{
+    "name": "@splicewire/beam-ux",
+    "version": "0.1.0",
+    "description": "The beam UX-builder surfaces, authored pre-packaged and DTO-first (rehome-ui, ADR-0116). Mirrors the PHP splicewire/laravel-beam-ux package by domain. Ships the in-app visual editing surface for a beam site's OWN front-end — the docked region inspector, the floating in-context overlay editor, the live region canvas, and the layout›template›page composition structure panel with its component palette — as portable, tenancy-agnostic components: they own their react-query data logic, take their transport + feedback as injected services (never app-local imports), and type off the generated BeamUxEntryBody projection delivered via @splicewire/_resources. Generic UI comes from the @schemastud/ui foundation; the schema-driven form editor is the real @schemastud/seam SchemaForm, a host-provided peer.",
+    "license": "MIT",
+    "type": "module",
+    "main": "dist/index.js",
+    "types": "dist/index.d.ts",
+    "exports": {
+        ".": {
+            "types": "./dist/index.d.ts",
+            "import": "./dist/index.js"
+        }
+    },
+    "sideEffects": false,
+    "files": [
+        "dist",
+        "src",
+        "README.md"
+    ],
+    "publishConfig": {
+        "registry": "https://registry.npmjs.org",
+        "access": "public"
+    },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/splicewire/beam.git",
+        "directory": "beam-ux"
+    },
+    "scripts": {
+        "build": "tsup",
+        "dev": "tsup --watch",
+        "test": "vitest run",
+        "typecheck": "tsc --noEmit",
+        "lint:imports": "node scripts/check-imports.mjs",
+        "prepublishOnly": "npm run build"
+    },
+    "dependencies": {
+        "@splicewire/_resources": "file:../../splicewire/_resources"
+    },
+    "peerDependencies": {
+        "@schemastud/seam": "*",
+        "@schemastud/ui": "*",
+        "@tanstack/react-query": ">=5",
+        "lucide-react": ">=0.400.0",
+        "react": ">=18"
+    },
+    "devDependencies": {
+        "@schemastud/seam": "file:../../schemastud/seam",
+        "@schemastud/ui": "file:../../schemastud/ui",
+        "@tanstack/react-query": "^5.62.0",
+        "@testing-library/react": "^16.1.0",
+        "@testing-library/user-event": "^14.5.2",
+        "@types/node": "^22.20.1",
+        "@types/react": "^19.0.0",
+        "jsdom": "^25.0.1",
+        "lucide-react": "^0.468.0",
+        "react": "^19.2.0",
+        "react-dom": "^19.2.0",
+        "tsup": "^8.5.1",
+        "typescript": "^5.7.2",
+        "vitest": "^4.1.10"
+    }
+}

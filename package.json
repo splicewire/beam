@@ -11,6 +11,7 @@
     "beam-mainframe",
     "beam-accounts",
     "beam-workflows",
+    "beam-ux",
     "beam-commerce",
     "beam-transforms"
   ],
