@@ -18,6 +18,10 @@
         "./blockdoc": {
             "types": "./dist/blockdoc.d.ts",
             "import": "./dist/blockdoc.js"
+        },
+        "./manifest": {
+            "types": "./dist/manifest.d.ts",
+            "import": "./dist/manifest.js"
         }
     },
     "sideEffects": false,

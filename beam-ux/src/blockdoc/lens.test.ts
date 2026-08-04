@@ -5,6 +5,8 @@ import {
     patchProp,
     patchPropExpression,
     patchText,
+    addProp,
+    removeProp,
 } from './lens.js';
 import type { BlockNode, BlockProp, TextNode } from './types.js';
 
@@ -259,6 +261,108 @@ describe('prop edit is surgical + idempotent', () => {
         expect(gen1).toContain('{/* another */}');
         expect(gen1).toContain('<li>Uno</li>');
         expect(gen1).toContain('<li>Two</li>');
+    });
+});
+
+// ---------------------------------------------------------------------------
+// Attribute add / remove ops (ticket 09) — set/clear an ABSENT attr, lossless
+// ---------------------------------------------------------------------------
+
+describe('addProp adds an absent attribute losslessly', () => {
+    it('adds a className that was not present; siblings + children intact', () => {
+        const src = `function X() { return <div id="root"><span>hi</span></div>; }`;
+        const doc = parse(src);
+        const div = doc.roots[0];
+        expect(findProp(div, 'className')).toBeUndefined();
+        const prop = addProp(div, 'className', 'card');
+        expect(prop.kind).toBe('string');
+        const gen = print(doc);
+        expect(gen).toContain('className="card"');
+        expect(gen).toContain('id="root"');
+        expect(gen).toContain('<span>hi</span>');
+        // reflected in the lens too
+        expect(findProp(div, 'className')?.value).toBe('card');
+        // idempotent serialize
+        expect(print(parse(gen))).toBe(gen);
+    });
+
+    it('adds a data-* string attr', () => {
+        const doc = parse(HERO);
+        const section = doc.roots[0];
+        addProp(section, 'data-x', 'y');
+        const gen = print(doc);
+        expect(gen).toContain('data-x="y"');
+        // untouched siblings survive
+        expect(gen).toContain('className="hero"');
+        expect(gen).toContain('data-testid="hero"');
+        expect(gen).toContain('<strong>truly yours</strong>');
+        expect(print(parse(gen))).toBe(gen);
+    });
+
+    it('adds an inline style as an expression attr', () => {
+        const doc = parse(HERO);
+        const section = doc.roots[0];
+        const prop = addProp(section, 'style', { expression: "{ color: 'red', padding: 8 }" });
+        expect(prop.kind).toBe('expression');
+        const gen = print(doc);
+        // recast may reflow a freshly-built object literal; assert the style attr + its values landed,
+        // and — the load-bearing property — that the emitted source round-trips losslessly.
+        expect(gen).toContain('style={{');
+        expect(gen).toContain("color: 'red'");
+        expect(gen).toContain('padding: 8');
+        expect(gen).toContain('className="hero"');
+        expect(print(parse(gen))).toBe(gen);
+    });
+
+    it('adds a number and a boolean attr', () => {
+        const doc = parse(HERO);
+        const section = doc.roots[0];
+        addProp(section, 'data-n', 5);
+        addProp(section, 'data-flag', true);
+        const gen = print(doc);
+        expect(gen).toContain('data-n={5}');
+        expect(gen).toContain('data-flag={true}');
+        expect(print(parse(gen))).toBe(gen);
+    });
+
+    it('is idempotent — adding an existing attr patches in place (no duplicate)', () => {
+        const doc = parse(HERO);
+        const section = doc.roots[0];
+        addProp(section, 'className', 'hero-2');
+        const gen = print(doc);
+        // exactly one className attribute
+        expect(gen.match(/className=/g)?.length).toBe(1);
+        expect(gen).toContain('className="hero-2"');
+    });
+});
+
+describe('removeProp removes an attribute losslessly', () => {
+    it('removes an attr; other attrs + children intact', () => {
+        const doc = parse(HERO);
+        const section = doc.roots[0];
+        expect(removeProp(section, 'data-testid')).toBe(true);
+        const gen = print(doc);
+        expect(gen).not.toContain('data-testid');
+        expect(gen).toContain('className="hero"');
+        expect(gen).toContain('aria-label="Intro"');
+        expect(gen).toContain('<strong>truly yours</strong>');
+        expect(findProp(section, 'data-testid')).toBeUndefined();
+        expect(print(parse(gen))).toBe(gen);
+    });
+
+    it('returns false for an absent attr (no-op, idempotent)', () => {
+        const doc = parse(HERO);
+        const section = doc.roots[0];
+        expect(removeProp(section, 'nope')).toBe(false);
+        expect(print(doc)).toBe(HERO);
+    });
+
+    it('add then remove returns to the original source', () => {
+        const doc = parse(HERO);
+        const section = doc.roots[0];
+        addProp(section, 'data-temp', 'x');
+        removeProp(section, 'data-temp');
+        expect(print(doc)).toBe(HERO);
     });
 });
 

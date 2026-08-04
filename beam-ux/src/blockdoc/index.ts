@@ -9,7 +9,15 @@
  * and the canvas (beam Model-B tickets 08/09/10/11/16).
  */
 
-export { parse, print, patchProp, patchPropExpression, patchText } from './lens.js';
+export {
+    parse,
+    print,
+    patchProp,
+    patchPropExpression,
+    patchText,
+    addProp,
+    removeProp,
+} from './lens.js';
 export type {
     BlockDoc,
     BlockNode,

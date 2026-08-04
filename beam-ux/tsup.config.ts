@@ -1,7 +1,12 @@
 import { defineConfig } from 'tsup';
 
 export default defineConfig({
-    entry: { index: 'src/index.ts', puck: 'src/puck.ts', blockdoc: 'src/blockdoc/index.ts' },
+    entry: {
+        index: 'src/index.ts',
+        puck: 'src/puck.ts',
+        blockdoc: 'src/blockdoc/index.ts',
+        manifest: 'src/manifest/index.ts',
+    },
     format: ['esm'],
     dts: true,
     sourcemap: true,

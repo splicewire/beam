@@ -29,7 +29,11 @@ function* walk(dir) {
     for (const name of readdirSync(dir)) {
         const path = join(dir, name);
         if (statSync(path).isDirectory()) yield* walk(path);
-        else if (/\.tsx?$/.test(path)) yield path;
+        // Test files legitimately carry `@/…` strings as FIXTURES — they assert on the codegen's
+        // generated `import { … } from '@/puck/blocks'` output (the bridge + manifest generator tests).
+        // Those are expected-output literals, not real package imports; the boundary applies to SHIPPED
+        // source only, so skip `*.test.ts(x)`.
+        else if (/\.tsx?$/.test(path) && !/\.test\.tsx?$/.test(path)) yield path;
     }
 }
 
