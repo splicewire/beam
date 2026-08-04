@@ -6,6 +6,7 @@ export default defineConfig({
         puck: 'src/puck.ts',
         blockdoc: 'src/blockdoc/index.ts',
         manifest: 'src/manifest/index.ts',
+        leaf: 'src/leaf/index.ts',
     },
     format: ['esm'],
     dts: true,

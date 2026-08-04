@@ -38,7 +38,29 @@ export type FieldSpec =
     | { type: 'select'; label?: string; options: Array<{ label: string; value: string | number | boolean }> }
     | { type: 'radio'; label?: string; options: Array<{ label: string; value: string | number | boolean }> }
     | { type: 'slot'; allow?: string[] }
+    | RichTextField
     | RawField;
+
+/**
+ * The **inline rich-text leaf field** (beam Model-B ticket 10) — a block's text run edited through a
+ * rich-text projection (bold / italic / link / inline-code) that round-trips losslessly into `.tsx`.
+ *
+ * The rich-text engine is NOT hardcoded: `engine` NAMES it (`'mdx'` default; `'prosemirror'` bindable
+ * later via the SAME leaf seam + registry). The generator emits a Puck `custom` field that delegates to
+ * a host-provided leaf-field FACTORY — `richtextLeafField(engine)` — so the heavy, client-only editor
+ * widget stays host-side (code-split), while the engine SELECTION lives in this manifest. The factory
+ * is imported from {@link RichTextField.factoryModule} (defaults to `@/puck/richtext-field`); the
+ * factory internally resolves the named engine from the leaf registry and wires it to the seam's
+ * `bindTextNode` (TextNode ⟷ editor ⟷ `patchText`).
+ */
+export interface RichTextField {
+    type: 'richtext';
+    /** The leaf engine's registry key — the binding this field's editor uses. Defaults to `'mdx'`. */
+    engine?: string;
+    label?: string;
+    /** The module the `richtextLeafField` factory is imported from. Defaults to `@/puck/richtext-field`. */
+    factoryModule?: string;
+}
 
 /**
  * The escape hatch: a field the generator can't (or shouldn't) model structurally — a Puck `custom`
@@ -171,9 +193,13 @@ export function generatePuckConfig(manifest: BlockManifest): string {
     const renderSymbols = [...new Set(blocks.map((b) => b.render))].sort();
     const rawImports = new Set<string>();
     for (const b of blocks)
-        for (const p of propsFor(b))
+        for (const p of propsFor(b)) {
             if (p.field.type === 'raw')
                 for (const line of p.field.imports ?? []) rawImports.add(line);
+            // A richtext leaf field pulls its host-provided factory in from the factory module.
+            if (p.field.type === 'richtext')
+                rawImports.add(`import { richtextLeafField } from '${richtextModule(p.field)}';`);
+        }
     for (const line of manifest.imports ?? []) rawImports.add(line);
 
     // Merge any `import type {…} from '@measured/puck'` a raw field / manifest contributed into the
@@ -340,7 +366,21 @@ function fieldSource(f: FieldSpec): string {
             return `{ type: 'radio'${label(f.label)}, options: ${optionsSource(f.options)} }`;
         case 'slot':
             return `{ type: 'slot'${f.allow ? `, allow: ${JSON.stringify(f.allow)}` : ''} }`;
+        case 'richtext':
+            // Delegate to the host's leaf-field factory, passing the manifest-named engine. The factory
+            // returns a Puck `custom` field whose editor is bound to that engine via the leaf seam.
+            return `richtextLeafField({ engine: ${JSON.stringify(f.engine ?? DEFAULT_LEAF_ENGINE)}${
+                f.label ? `, label: ${JSON.stringify(f.label)}` : ''
+            } })`;
     }
+}
+
+/** The default leaf engine when a `richtext` field omits `engine` — the shipped `mdx` binding. */
+const DEFAULT_LEAF_ENGINE = 'mdx';
+
+/** The module a `richtext` field imports its `richtextLeafField` factory from. */
+function richtextModule(f: RichTextField): string {
+    return f.factoryModule || '@/puck/richtext-field';
 }
 
 function label(l: string | undefined): string {

@@ -22,6 +22,10 @@
         "./manifest": {
             "types": "./dist/manifest.d.ts",
             "import": "./dist/manifest.js"
+        },
+        "./leaf": {
+            "types": "./dist/leaf.d.ts",
+            "import": "./dist/leaf.js"
         }
     },
     "sideEffects": false,

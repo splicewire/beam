@@ -142,3 +142,64 @@ describe('generatePuckConfig', () => {
         expect(attributeFields.map((f) => f.name)).toEqual(['className', 'dataAttrs', 'style']);
     });
 });
+
+describe('generatePuckConfig — richtext leaf field (ticket 10)', () => {
+    const RICH: BlockManifest = {
+        blocksModule: '@/puck/blocks',
+        blocks: [
+            {
+                name: 'Prose',
+                render: 'Prose',
+                props: [
+                    {
+                        name: 'text',
+                        field: { type: 'richtext', engine: 'mdx', label: 'Prose text' },
+                        default: 'Write your prose.',
+                    },
+                ],
+            },
+            {
+                name: 'Fancy',
+                render: 'Fancy',
+                // Omits engine → defaults to 'mdx'. Shares the default factory module with Prose (a
+                // manifest uses ONE leaf-field factory), so the factory import is emitted once.
+                props: [{ name: 'body', field: { type: 'richtext' } }],
+            },
+        ],
+    };
+    const out = generatePuckConfig(RICH);
+
+    it('produces valid TSX', () => {
+        expect(parses(out)).toBe(true);
+    });
+
+    it('delegates the field to the host richtextLeafField factory, passing the named engine', () => {
+        expect(out).toContain(`text: richtextLeafField({ engine: "mdx", label: "Prose text" }),`);
+    });
+
+    it("defaults the engine to 'mdx' when omitted", () => {
+        expect(out).toContain(`body: richtextLeafField({ engine: "mdx" }),`);
+    });
+
+    it('imports the factory once from the default module (shared across blocks)', () => {
+        expect(out).toContain(`import { richtextLeafField } from '@/puck/richtext-field';`);
+        expect(out.match(/import \{ richtextLeafField \}/g)?.length).toBe(1);
+    });
+
+    it('honors a per-field factoryModule override', () => {
+        const overridden = generatePuckConfig({
+            blocksModule: '@/puck/blocks',
+            blocks: [{ name: 'B', render: 'B', props: [{ name: 't', field: { type: 'richtext', factoryModule: '@/puck/rt' } }] }],
+        });
+        expect(overridden).toContain(`import { richtextLeafField } from '@/puck/rt';`);
+    });
+
+    it('types a richtext prop as string (the inline-markup run)', () => {
+        expect(out).toContain('text: string;');
+        expect(out).toContain('body: string;');
+    });
+
+    it('is deterministic', () => {
+        expect(generatePuckConfig(RICH)).toBe(out);
+    });
+});

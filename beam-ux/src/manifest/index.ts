@@ -19,4 +19,5 @@ export type {
     PropSpec,
     FieldSpec,
     RawField,
+    RichTextField,
 } from './generator.js';
