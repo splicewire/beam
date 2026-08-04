@@ -16,6 +16,7 @@ import type {
     BlockDoc,
     BlockNode,
     BlockProp,
+    OpaqueNode,
     PropKind,
     TextNode,
 } from './types.js';
@@ -92,11 +93,20 @@ function buildBlock(
             if (t.isStringLiteral(expr) || t.isTemplateLiteral(expr)) {
                 children.push(textFromExpression(child, expr));
             } else {
-                // Any other expression child (`{items.map(...)}`, `{cond && <X/>}`, a bare
-                // identifier, a call) is dynamic — an opaque island for ticket 11.
+                // Any other expression child (`{items.map(...)}`, `{cond && <X/>}`, a ternary, a
+                // bare identifier, an imported-expression call) is dynamic — captured as an OPAQUE
+                // ISLAND (ticket 11): its verbatim source is preserved as an addressable child so the
+                // file round-trips losslessly and the canvas can seal it. This works at ANY depth —
+                // a `.map` nested inside an editable `<Section>` is captured here in that Section's
+                // child loop, so nesting seals + round-trips too.
+                sealSubtree(child, seen);
+                children.push(opaqueFromExpression(child, expr));
                 dynamic = true;
             }
         } else if (t.isJSXSpreadChild(child)) {
+            // `{...children}` — a spread child. Opaque, but still preserved verbatim.
+            sealSubtree(child, seen);
+            children.push(opaqueFromSpreadChild(child));
             dynamic = true;
         }
     }
@@ -171,6 +181,62 @@ function textFromExpression(
         : expr.quasis.map((q) => q.value.cooked ?? q.value.raw).join('');
     // Back the text node with the literal itself so a patch targets its tokens.
     return { type: 'text', value, node: expr };
+}
+
+/**
+ * Build an {@link OpaqueNode} from a dynamic JSX expression child (`{items.map(...)}`,
+ * `{cond && <X/>}`, a ternary, an imported-expression call). The backing node is the WHOLE
+ * `JSXExpressionContainer` so recast reprints it byte-for-byte on serialize; `source` is that
+ * container printed (`{…}` included) for the canvas preview + the Puck bridge to carry verbatim.
+ */
+function opaqueFromExpression(
+    container: t.JSXExpressionContainer,
+    expr: t.Expression,
+): OpaqueNode {
+    return {
+        type: 'opaque',
+        reason: opaqueReason(expr),
+        source: exprSource(container),
+        node: container,
+    };
+}
+
+/** Build an {@link OpaqueNode} from a `{...spread}` JSX child. */
+function opaqueFromSpreadChild(child: t.JSXSpreadChild): OpaqueNode {
+    return {
+        type: 'opaque',
+        reason: 'spread',
+        source: exprSource(child),
+        node: child,
+    };
+}
+
+/**
+ * Mark every JSX element/fragment inside an opaque subtree as `seen`, so the top-level `parse` walk
+ * doesn't re-collect the island's INNER JSX (e.g. the `<li>` inside `{items.map(i => <li/>)}`) as a
+ * spurious separate root. The island already carries that JSX verbatim in its `source`.
+ */
+function sealSubtree(root: t.Node, seen: Set<t.Node>): void {
+    walk(root, (n) => {
+        if (t.isJSXElement(n) || t.isJSXFragment(n)) seen.add(n);
+    });
+}
+
+/** Classify WHY an expression is opaque — drives the canvas label; purely descriptive. */
+function opaqueReason(expr: t.Expression): OpaqueNode['reason'] {
+    if (t.isConditionalExpression(expr)) return 'ternary';
+    if (t.isLogicalExpression(expr) && (expr.operator === '&&' || expr.operator === '||')) {
+        return 'conditional';
+    }
+    if (
+        t.isCallExpression(expr) &&
+        t.isMemberExpression(expr.callee) &&
+        t.isIdentifier(expr.callee.property) &&
+        expr.callee.property.name === 'map'
+    ) {
+        return 'map';
+    }
+    return 'expression';
 }
 
 // ---------------------------------------------------------------------------

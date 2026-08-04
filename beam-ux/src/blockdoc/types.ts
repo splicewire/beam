@@ -35,7 +35,31 @@ export interface BlockProp {
     node: unknown;
 }
 
-export type BlockChild = BlockNode | TextNode;
+export type BlockChild = BlockNode | TextNode | OpaqueNode;
+
+/**
+ * A **dynamic/opaque island** child (ticket 11): a JSX expression child the static lens cannot safely
+ * decompose — a `.map(...)` loop, a `{cond && <X/>}` conditional, a ternary, an imported-expression
+ * call, a bare identifier, or a `{...spread}` child. It is NOT structurally editable; instead the lens
+ * captures its **verbatim source text** so the file always round-trips: the canvas renders it as a
+ * sealed block (position/delete only) and the bridge preserves it as an `OpaqueIsland` Puck node.
+ *
+ * The `node` handle is the backing `JSXExpressionContainer` / `JSXSpreadChild` — the addressable AST
+ * subtree recast reprints byte-for-byte on serialization. `source` is that same subtree printed for
+ * display / for the bridge to carry through Puck Data.
+ */
+export interface OpaqueNode {
+    type: 'opaque';
+    /**
+     * The reason this subtree is opaque — the flavor of dynamic control flow detected. Purely
+     * descriptive (drives the canvas label); the source is always carried verbatim regardless.
+     */
+    reason: 'map' | 'conditional' | 'ternary' | 'expression' | 'spread';
+    /** The verbatim source text of the expression (recast-printed from `node`). */
+    source: string;
+    /** The `JSXExpressionContainer` / `JSXSpreadChild` AST node backing this island. */
+    node: unknown;
+}
 
 export interface TextNode {
     type: 'text';
@@ -59,8 +83,10 @@ export interface BlockNode {
     children: BlockChild[];
     /**
      * True when this subtree contains dynamic control flow the static lens does not model
-     * (a `.map(...)`, a conditional `&&`/ternary rendering JSX, a spread child, etc).
-     * Ticket 11 renders these as opaque islands — edit the AST directly, never via the lens.
+     * (a `.map(...)`, a conditional `&&`/ternary rendering JSX, a spread child, etc), OR a
+     * spread ATTRIBUTE (`<X {...props} />`). Ticket 11: the dynamic *children* are captured as
+     * {@link OpaqueNode} entries in `children` (preserved verbatim, sealed in the canvas); this
+     * flag additionally marks a block whose OPENING TAG carries a spread the lens can't decompose.
      */
     dynamic: boolean;
     /** The `JSXElement` / `JSXFragment` AST node. */

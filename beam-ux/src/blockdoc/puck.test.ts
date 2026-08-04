@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { blockDocToPuck, puckToTsx, stripIds, CODEGEN_MARKER } from './puck.js';
-import type { PuckData } from './puck.js';
+import { blockDocToPuck, puckToTsx, stripIds, CODEGEN_MARKER, OPAQUE_ISLAND_TYPE } from './puck.js';
+import type { PuckData, PuckNode } from './puck.js';
 
 // ---------------------------------------------------------------------------
 // Fixtures — the REAL seeded `library-lyrics` page (BeamUxPuckSeedCommand::pageData)
@@ -129,5 +129,97 @@ describe('round-trip (the load-bearing AC)', () => {
         const roundTripped = puckToTsx(blockDocToPuck(tsx)!, slug);
 
         expect(roundTripped).toBe(tsx);
+    });
+});
+
+// ---------------------------------------------------------------------------
+// Ticket 11 — opaque islands. Dynamic subtrees the structural lens can't decompose
+// (`.map`, `{cond && <X/>}`, ternary, imported-expression, spread) are PRESERVED as
+// sealed `OpaqueIsland` Puck nodes carrying their verbatim source — NOT dropped — and
+// re-emitted verbatim so `tsx → PuckData → tsx` is byte-lossless. This closes ticket 08's
+// known drop-gap.
+// ---------------------------------------------------------------------------
+
+// A codegen-shaped page MIXING editable blocks (Heading/Prose/ResourceList) with a top-level `.map`
+// island AND a `{cond && <X/>}` island. Authored at the exact indentation `puckToTsx` emits (indent 3 =
+// 6 spaces for top-level content) so the byte-lossless assertion is meaningful.
+const MIXED_PAGE = `// ${CODEGEN_MARKER} — DO NOT EDIT.
+// Edit via the Puck page editor; this file is regenerated on Publish.
+import { Heading, Prose, ResourceList } from '@/puck/blocks';
+
+export default function MixedPage() {
+  return (
+    <>
+      <Heading text="Lyrics" />
+      {items.map((i) => (
+        <ResourceList key={i.id} resource={i.slug} />
+      ))}
+      <Prose mdx="between" />
+      {showList && <ResourceList resource="songs" />}
+    </>
+  );
+}
+`;
+
+// A `.map` island nested INSIDE an editable `<Section>` slot (indent 4 = 8 spaces) — proves nesting
+// seals + round-trips, not just top-level islands.
+const NESTED_ISLAND_PAGE = `// ${CODEGEN_MARKER} — DO NOT EDIT.
+// Edit via the Puck page editor; this file is regenerated on Publish.
+import { Heading, ResourceList, Section } from '@/puck/blocks';
+
+export default function NestedPage() {
+  return (
+    <>
+      <Section heading="Lyrics">
+        <Heading text="Words" />
+        {items.map((i) => (
+          <ResourceList key={i.id} resource={i.slug} />
+        ))}
+      </Section>
+    </>
+  );
+}
+`;
+
+describe('ticket 11 — opaque islands preserve dynamic subtrees (closes ticket 08 drop-gap)', () => {
+    it('does NOT drop dynamic subtrees — they become OpaqueIsland nodes carrying verbatim source', () => {
+        const data = blockDocToPuck(MIXED_PAGE)!;
+
+        // Editable blocks survive as normal nodes.
+        const types = data.content.map((n) => n.type);
+        expect(types).toEqual(['Heading', OPAQUE_ISLAND_TYPE, 'Prose', OPAQUE_ISLAND_TYPE]);
+
+        const [, mapIsland, , condIsland] = data.content;
+        expect(mapIsland.type).toBe(OPAQUE_ISLAND_TYPE);
+        expect(String(mapIsland.props.source)).toContain('items.map');
+        expect(String(mapIsland.props.reason)).toBe('map');
+        expect(String(condIsland.props.source)).toContain('showList && <ResourceList resource="songs" />');
+        expect(String(condIsland.props.reason)).toBe('conditional');
+    });
+
+    it('tsx → PuckData → tsx is BYTE-LOSSLESS for a mixed page (editable + .map + conditional)', () => {
+        const back = blockDocToPuck(MIXED_PAGE)!;
+        const roundTripped = puckToTsx(back, 'mixed');
+        expect(roundTripped).toBe(MIXED_PAGE);
+    });
+
+    it('seals + round-trips an island NESTED inside an editable Section (not just top-level)', () => {
+        const back = blockDocToPuck(NESTED_ISLAND_PAGE)!;
+
+        // The Section survived as an editable block; its slot holds the Heading + the island, in order.
+        const section = back.content.find((n) => n.type === 'Section')!;
+        const slot = section.props.content as PuckNode[];
+        expect(slot.map((n) => n.type)).toEqual(['Heading', OPAQUE_ISLAND_TYPE]);
+        expect(String(slot[1].props.source)).toContain('items.map');
+
+        // And it round-trips byte-for-byte.
+        expect(puckToTsx(back, 'nested')).toBe(NESTED_ISLAND_PAGE);
+    });
+
+    it('OpaqueIsland is NOT added to the blocks import line (it re-emits raw source)', () => {
+        const back = blockDocToPuck(MIXED_PAGE)!;
+        const tsx = puckToTsx(back, 'mixed');
+        expect(tsx).not.toContain(`${OPAQUE_ISLAND_TYPE},`);
+        expect(tsx).not.toContain(`${OPAQUE_ISLAND_TYPE} }`);
     });
 });

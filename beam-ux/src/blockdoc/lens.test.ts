@@ -8,7 +8,7 @@ import {
     addProp,
     removeProp,
 } from './lens.js';
-import type { BlockNode, BlockProp, TextNode } from './types.js';
+import type { BlockNode, BlockProp, OpaqueNode, TextNode } from './types.js';
 
 // ---------------------------------------------------------------------------
 // Fixtures
@@ -187,14 +187,61 @@ describe('parse exposes block structure', () => {
         expect(values.some((v) => v.includes('Plain text here'))).toBe(true);
     });
 
-    it('flags dynamic subtrees (map / conditional) as opaque islands', () => {
+    it('captures dynamic subtrees (map / conditional) as opaque islands, verbatim', () => {
         const doc = parse(DYNAMIC);
-        expect(doc.roots[0].dynamic).toBe(true);
+        const ul = doc.roots[0];
+        expect(ul.dynamic).toBe(true);
+
+        const islands = ul.children.filter((c): c is OpaqueNode => c.type === 'opaque');
+        expect(islands).toHaveLength(2);
+
+        // The `.map(...)` island — classified + carries its exact source.
+        const map = islands[0];
+        expect(map.reason).toBe('map');
+        expect(map.source).toContain('items.map');
+        expect(map.source).toContain('<li key={i.id}>{i.label}</li>');
+        expect(map.source.startsWith('{')).toBe(true);
+        expect(map.source.endsWith('}')).toBe(true);
+
+        // The `{cond && <X/>}` island — classified `conditional`.
+        const cond = islands[1];
+        expect(cond.reason).toBe('conditional');
+        expect(cond.source).toContain('items.length === 0 && <li>empty</li>');
+    });
+
+    it('does NOT re-collect an island\'s inner JSX as a spurious root', () => {
+        // The `<li>` inside the `.map` callback is sealed into the island's verbatim source, not a root.
+        const doc = parse(DYNAMIC);
+        expect(doc.roots).toHaveLength(1);
+        expect(doc.roots[0].name).toBe('ul');
+    });
+
+    it('classifies a ternary island', () => {
+        const doc = parse('function X({ a }) { return <div>{a ? <p>y</p> : <p>n</p>}</div>; }');
+        const island = doc.roots[0].children.find((c): c is OpaqueNode => c.type === 'opaque')!;
+        expect(island.reason).toBe('ternary');
+    });
+
+    it('captures an imported-expression call as an opaque island', () => {
+        const doc = parse('function X() { return <div>{renderThing(props)}</div>; }');
+        const island = doc.roots[0].children.find((c): c is OpaqueNode => c.type === 'opaque')!;
+        expect(island.reason).toBe('expression');
+        expect(island.source).toContain('renderThing(props)');
     });
 
     it('flags a spread attribute as dynamic', () => {
         const doc = parse(`function X(p) { return <div {...p} className="a" />; }`);
         expect(doc.roots[0].dynamic).toBe(true);
+    });
+
+    it('captures a `{...spread}` child as an opaque island', () => {
+        const doc = parse('function X({ kids }) { return <div>{...kids}</div>; }');
+        const island = doc.roots[0].children.find((c): c is OpaqueNode => c.type === 'opaque')!;
+        expect(island.reason).toBe('spread');
+    });
+
+    it('an island round-trips byte-identically through print', () => {
+        expect(print(parse(DYNAMIC))).toBe(DYNAMIC);
     });
 
     it('yields empty roots but still round-trips a file with no JSX', () => {

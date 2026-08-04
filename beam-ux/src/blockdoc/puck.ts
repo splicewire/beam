@@ -31,12 +31,25 @@
  *  - `zones`-keyed slots (the older form) codegen INTO nested JSX, so a parse recovers them as
  *    INLINE slot props — the two are equivalent to Puck's normalize, but a Data authored with
  *    `zones` will round-trip as inline. v1 emits inline slots only (matches the seed shape).
- *  - A `dynamic` subtree (a `.map`, a conditional, a spread — flagged by the lens) is opaque to this
- *    static bridge: it is ticket 11 territory and is NOT reconstructed into Puck nodes here.
+ *  - A `dynamic` subtree (a `.map`, a conditional, a ternary, an imported-expression call, a `{...spread}`
+ *    child) is opaque to the STRUCTURAL bridge — its internals aren't Puck nodes. Ticket 11 CLOSES the
+ *    old drop-gap: instead of being dropped, each such subtree is preserved as an `OpaqueIsland` Puck
+ *    node `{ type: 'OpaqueIsland', props: { id, source } }` carrying its VERBATIM `{…}` source, and
+ *    `puckToTsx` re-emits that source exactly. So `tsx → PuckData → tsx` is byte-lossless even for a
+ *    page mixing editable blocks (Heading/Prose/ResourceList) AND `.map`/conditional islands — at ANY
+ *    nesting depth (a `.map` inside a `<Section>` seals + round-trips as an island in that slot).
  */
 
 import { parse } from './lens.js';
-import type { BlockDoc, BlockNode, BlockProp } from './types.js';
+import type { BlockDoc, BlockNode, BlockProp, OpaqueNode } from './types.js';
+
+/**
+ * The Puck block type an {@link OpaqueNode} maps to (ticket 11). NOT a real render component in the
+ * blocks vocabulary — a SEALED marker block the canvas renders read-only and the codegen re-emits as
+ * its verbatim `{…}` expression source. Kept out of the import line (it's not imported from the blocks
+ * module) and recognized specially by both codegen directions so the source round-trips byte-for-byte.
+ */
+export const OPAQUE_ISLAND_TYPE = 'OpaqueIsland';
 
 /** A Puck node: a typed block with a props bag (holds the structural `id` + optional inline slots). */
 export interface PuckNode {
@@ -119,13 +132,37 @@ function collectBlockTypes(content: PuckNode[], zones: Record<string, PuckNode[]
     const walk = (nodes: PuckNode[]): void => {
         for (const node of nodes) {
             if (!node || typeof node !== 'object') continue;
-            if (typeof node.type === 'string' && node.type !== '') types.add(node.type);
+            if (node.type === OPAQUE_ISLAND_TYPE) {
+                // OpaqueIsland is NOT itself a component — but its verbatim source may REFERENCE blocks
+                // (`{items.map(i => <ResourceList .../>)}`). Those must still be imported so the emitted
+                // file compiles + stays byte-identical, so we harvest PascalCase JSX tags from the source.
+                for (const name of componentsInSource(sourceOf(node))) types.add(name);
+            } else if (typeof node.type === 'string' && node.type !== '') {
+                types.add(node.type);
+            }
             for (const children of childSlotsFor(node, zones)) walk(children);
         }
     };
 
     walk(content);
     return [...types].sort();
+}
+
+/** An OpaqueIsland node's verbatim source text (empty string when absent). */
+function sourceOf(node: PuckNode): string {
+    const props = propsOf(node);
+    return typeof props.source === 'string' ? props.source : '';
+}
+
+/**
+ * The PascalCase JSX component tags referenced inside an opaque island's source — so a `.map`/conditional
+ * that renders `<ResourceList/>` still contributes it to the blocks import line. Matches `<Name` and
+ * `<Name.Member` opens; lowercase (host intrinsic) tags are skipped (they're not module imports).
+ */
+function componentsInSource(source: string): string[] {
+    const names = new Set<string>();
+    for (const m of source.matchAll(/<([A-Z][A-Za-z0-9]*)/g)) names.add(m[1]);
+    return [...names];
 }
 
 function propsOf(node: PuckNode): PuckProps {
@@ -146,6 +183,14 @@ function renderNode(node: PuckNode, zones: Record<string, PuckNode[]>, indent: n
     if (typeof type !== 'string' || type === '') return '';
 
     const pad = '  '.repeat(indent);
+
+    // An OpaqueIsland re-emits its VERBATIM source (ticket 11) — the `{items.map(...)}` /
+    // `{cond && <X/>}` expression the lens preserved. It's a JSX expression child, not a component, so
+    // it composes into the surrounding JSX unchanged and the round-trip stays byte-lossless.
+    if (type === OPAQUE_ISLAND_TYPE) {
+        return renderOpaqueIsland(node, pad);
+    }
+
     const props = propsOf(node);
 
     const attrs = renderAttrs(props);
@@ -162,6 +207,23 @@ function renderNode(node: PuckNode, zones: Record<string, PuckNode[]>, indent: n
 
     const inner = renderNodes(childNodes, zones, indent + 1);
     return `${pad}<${type}${attrStr}>\n${inner}\n${pad}</${type}>`;
+}
+
+/**
+ * Render an `OpaqueIsland` node — emit its verbatim `source` (ticket 11). recast prints a detached
+ * subtree with its OWN 2-space-step indentation starting at column 0 (line 1 flush-left, continuation
+ * lines relatively indented). We prefix the island's slot `pad` to EVERY line so the block lands at the
+ * right depth while continuation lines keep their relative offset — reproducing a codegen-shaped source
+ * byte-for-byte on a `.tsx → PuckData → tsx` trip (the codegen emits islands at these same fixed depths).
+ */
+function renderOpaqueIsland(node: PuckNode, pad: string): string {
+    const props = propsOf(node);
+    const source = typeof props.source === 'string' ? props.source : '';
+    if (source === '') return '';
+    return source
+        .split('\n')
+        .map((line) => (line === '' ? '' : pad + line))
+        .join('\n');
 }
 
 /**
@@ -250,15 +312,19 @@ export function blockDocToPuck(input: string | BlockDoc): PuckData | null {
     const doc: BlockDoc = typeof input === 'string' ? parse(input) : input;
 
     // The codegen wraps content in a single `<>…</>` fragment (a root BlockNode with name === null).
-    // Prefer that; otherwise take all top-level element roots as the content list.
+    // Prefer that; otherwise take all top-level element roots as the content list. Top-level opaque
+    // islands (a `.map`/conditional directly inside the return fragment) are preserved in-order too
+    // (ticket 11) — not dropped.
     const fragment = doc.roots.find((r) => r.name === null);
-    const topLevel: BlockNode[] = fragment
-        ? fragment.children.filter((c): c is BlockNode => c.type === 'block')
+    const topLevel: Array<BlockNode | OpaqueNode> = fragment
+        ? fragment.children.filter(
+              (c): c is BlockNode | OpaqueNode => c.type === 'block' || c.type === 'opaque',
+          )
         : doc.roots.filter((r) => r.name !== null);
 
     if (topLevel.length === 0 && !fragment) return null;
 
-    const content = topLevel.map((block, i) => blockToPuckNode(block, `${i}`));
+    const content = topLevel.map((child, i) => childToPuckNode(child, `${i}`));
 
     return { root: {}, content, zones: {} };
 }
@@ -272,14 +338,41 @@ function blockToPuckNode(block: BlockNode, path: string): PuckNode {
         props[prop.name] = puckPropValue(prop);
     }
 
-    // Element children (a node-list) become the block's inline default slot. The codegen composes a
-    // single default slot; recover it as one slot prop named `content` (the vocabulary's Section slot).
-    const childBlocks = block.children.filter((c): c is BlockNode => c.type === 'block');
-    if (childBlocks.length > 0) {
-        props.content = childBlocks.map((child, i) => blockToPuckNode(child, `${path}-${i}`));
+    // Element children AND opaque islands (ticket 11) become the block's inline default slot, IN ORDER
+    // — a `.map` island nested inside a `<Section>` is preserved as an `OpaqueIsland` node in that
+    // Section's slot (not dropped), so nesting round-trips + seals. Whitespace-only text is layout the
+    // lens already elides; other text children aren't part of the codegen's composed shape.
+    const slotChildren = block.children.filter(
+        (c): c is BlockNode | OpaqueNode => c.type === 'block' || c.type === 'opaque',
+    );
+    if (slotChildren.length > 0) {
+        props.content = slotChildren.map((child, i) => childToPuckNode(child, `${path}-${i}`));
     }
 
     return { type, props };
+}
+
+/** A slot child — an element block or an opaque island — to a Puck node. */
+function childToPuckNode(child: BlockNode | OpaqueNode, path: string): PuckNode {
+    return child.type === 'opaque'
+        ? opaqueToPuckNode(child, path)
+        : blockToPuckNode(child, path);
+}
+
+/**
+ * One {@link OpaqueNode} → the sealed `OpaqueIsland` Puck node carrying its VERBATIM source. This is
+ * the ticket-11 preservation: the source text (`{items.map(...)}`, `{cond && <X/>}`, …) rides through
+ * Puck Data untouched and `puckToTsx` re-emits it exactly, so the round-trip stays byte-lossless.
+ */
+function opaqueToPuckNode(node: OpaqueNode, path: string): PuckNode {
+    return {
+        type: OPAQUE_ISLAND_TYPE,
+        props: {
+            id: synthesizeId(OPAQUE_ISLAND_TYPE, path),
+            source: node.source,
+            reason: node.reason,
+        },
+    };
 }
 
 /** Decode a BlockProp back to a Puck prop value, inverting the codegen's attr encoding. */
