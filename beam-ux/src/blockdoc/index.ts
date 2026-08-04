@@ -18,3 +18,8 @@ export type {
     PropKind,
     TextNode,
 } from './types.js';
+
+// The PuckData ⟷ BlockDoc bridge (ticket 08) — the reverse .tsx→body leg. `puckToTsx` mirrors PHP
+// PuckPageCodegen exactly; `blockDocToPuck` parses a page .tsx back into Puck Data for file→DB sync.
+export { blockDocToPuck, puckToTsx, stripIds, CODEGEN_MARKER } from './puck.js';
+export type { PuckData, PuckNode, PuckProps, PuckPropValue } from './puck.js';

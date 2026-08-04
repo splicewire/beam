@@ -21,9 +21,13 @@
         }
     },
     "sideEffects": false,
+    "bin": {
+        "beam-ux-puck-bridge": "bin/puck-bridge.mjs"
+    },
     "files": [
         "dist",
         "src",
+        "bin",
         "README.md"
     ],
     "publishConfig": {
