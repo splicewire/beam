@@ -14,6 +14,10 @@
         "./puck": {
             "types": "./dist/puck.d.ts",
             "import": "./dist/puck.js"
+        },
+        "./blockdoc": {
+            "types": "./dist/blockdoc.d.ts",
+            "import": "./dist/blockdoc.js"
         }
     },
     "sideEffects": false,
@@ -40,7 +44,10 @@
         "prepublishOnly": "npm run build"
     },
     "dependencies": {
-        "@splicewire/_resources": "file:../../splicewire/_resources"
+        "@babel/parser": "^7.29.7",
+        "@babel/types": "^7.29.7",
+        "@splicewire/_resources": "file:../../splicewire/_resources",
+        "recast": "^0.23.12"
     },
     "peerDependencies": {
         "@measured/puck": ">=0.20",
