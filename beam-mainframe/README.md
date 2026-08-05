@@ -31,10 +31,40 @@ This package is the **seam**, not the modes. It ships:
 - **Entitlement** (`can`) — gates _which contributions render_. Public "view" = `window` ∩
   no-edit-entitlement: the same tree, gated down to the bare site.
 
+## The host-shell factory (`createMainframeHost`)
+
+The seam above is the _mechanism_. But every beam site re-implemented the **same** host wiring on top
+of it — the registry construction, the `domain`/`window` mode components, the mode state, the
+entry-body load, the `can` gate, the `?beam_entry` override, the kind-aware `main` fork. splicewire-app's
+`DocsHost` and audiostud's `mainframe-host.tsx` were the same ~380-line shape. **`createMainframeHost`
+promotes that shape here** (the README's long-promised "modes ship separately" — now bundled): a host
+writes ~15 lines of config and gets the framed Inertia layout.
+
+```tsx
+export default createMainframeHost<PageBody>({
+  componentToEntry,                 // Inertia component name → beam-ux entry slug (map; slash-swap fallback)
+  usePageContext: () => ({ ... }),  // host wraps Inertia usePage → { component, canAuthor, slug? }
+  loadEntryBody,                    // host injects the transport (route it through beam-ux's UxBuilderClient)
+  ribbon,                           // the host's frame chrome as a render-prop ({ mode, entrySlug, … })
+  renderEditor, renderRead, renderInspector,  // host-local renderers (carry the heavy author-only deps)
+});
+```
+
+It ships `createMainframeHost` + the OOTB `DomainMainframe`/`WindowMainframe` mode components +
+`useBeamUxEntry` (the seam a reshelled page reads its chrome through) + `isPuckBody` (the shared
+kind test) + `defaultRibbon` (the shell a host with no `ribbon` gets).
+
+**Topology:** the factory stays **dependency-pure** (react-only). It does **not** import
+`@splicewire/beam-ux` for entry loading — the host _injects_ `loadEntryBody` (routing it through
+beam-ux's `UxBuilderClient` on its side), so no `beam-mainframe → beam-ux` edge is introduced. The
+three renderers stay host-local for the same reason: the package owns the _fork_, the host owns the
+heavy _renderers_.
+
 ## Status
 
-Ticket 03 (delegation + registry seam) landed here. Modes ship separately: `desk` (ticket 04,
-wires splicewire-app's `AppShell`) and `window` (ticket 05). No modes are bundled in this package.
+Ticket 03 (delegation + registry seam) landed here. Ticket 06 promoted the **host-shell factory**
+(`createMainframeHost` + OOTB `domain`/`window` modes + `useBeamUxEntry`) — retiring the DocsHost /
+mainframe-host duplication. The `desk`/`workspace` modes (tickets 04/05) remain separate.
 
 ## Dev loop
 

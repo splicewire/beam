@@ -44,6 +44,23 @@ export {
 // The resolver (gate by `can`, sort ordered, single-node winner, unknown-slot dev-warn).
 export { resolveSlots, type ResolvedSlots, type MainframeCan, type ResolveParams } from './resolve';
 
+// The OOTB host-shell factory (the layer above the seam): a host writes ~15 lines of config and gets
+// the framed `domain`/`window` layout. Modes + `useBeamUxEntry` + `isPuckBody` bundle here (ticket 06).
+export {
+    createMainframeHost,
+    useBeamUxEntry,
+    isPuckBody,
+    DomainMainframe,
+    WindowMainframe,
+    defaultRibbon,
+    type MainframeHostConfig,
+    type HostPageContext,
+    type HostEntryBody,
+    type BeamUxEntryContext,
+    type RibbonProps,
+    type RibbonRender,
+} from './host';
+
 // The React seam (host delegation): provider, hooks, the delegation outlet, declarative contribution.
 export {
     MainframeProvider,
