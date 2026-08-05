@@ -30,6 +30,10 @@
         "./site": {
             "types": "./dist/site.d.ts",
             "import": "./dist/site.js"
+        },
+        "./account": {
+            "types": "./dist/account.d.ts",
+            "import": "./dist/account.js"
         }
     },
     "sideEffects": false,

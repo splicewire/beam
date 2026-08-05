@@ -8,6 +8,7 @@ export default defineConfig({
         manifest: 'src/manifest/index.ts',
         leaf: 'src/leaf/index.ts',
         site: 'src/site/index.ts',
+        account: 'src/account/index.ts',
     },
     format: ['esm'],
     dts: true,
