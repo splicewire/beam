@@ -10,3 +10,12 @@ export {
     type PuckPageProps,
     type PuckPageRenderProps,
 } from './PuckPage';
+
+// The config/seed registry (beam-ux-uplift ticket 05) — a host registers its block vocabularies keyed by
+// realm/slug and a mount resolves the matching `{config, seed}` pair, so the pairing can't drift.
+export {
+    createPuckRegistry,
+    resolvePuck,
+    type PuckRegistry,
+    type PuckVocabulary,
+} from './PuckRegistry';
