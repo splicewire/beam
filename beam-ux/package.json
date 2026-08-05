@@ -26,6 +26,10 @@
         "./leaf": {
             "types": "./dist/leaf.d.ts",
             "import": "./dist/leaf.js"
+        },
+        "./site": {
+            "types": "./dist/site.d.ts",
+            "import": "./dist/site.js"
         }
     },
     "sideEffects": false,

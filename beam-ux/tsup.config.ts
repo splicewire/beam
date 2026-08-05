@@ -7,6 +7,7 @@ export default defineConfig({
         blockdoc: 'src/blockdoc/index.ts',
         manifest: 'src/manifest/index.ts',
         leaf: 'src/leaf/index.ts',
+        site: 'src/site/index.ts',
     },
     format: ['esm'],
     dts: true,
