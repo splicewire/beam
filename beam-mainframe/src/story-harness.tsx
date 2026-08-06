@@ -26,12 +26,16 @@
 // =============================================================================
 import { useMemo, type ReactNode } from 'react';
 
-import { MainframeProvider, MainframeOutlet } from './react';
-import { createSlotRegistry } from './slot-registry';
-import { createMainframeRegistry } from './mainframe-registry';
-import type { Mainframe } from './mainframe-registry';
-import type { MainframeCan, ResolvedSlots } from './resolve';
-import type { SlotContributionInput } from './slot-registry';
+import {
+    MainframeProvider,
+    MainframeOutlet,
+    createSlotRegistry,
+    createMainframeRegistry,
+    type Mainframe,
+    type MainframeCan,
+    type ResolvedSlots,
+    type SlotContributionInput,
+} from '@schemastud/mainframe';
 
 // ── The DeskMainframe demo shell ────────────────────────────────────────────────
 // A representative OUTER shell that reads the resolved slots and places the frozen

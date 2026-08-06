@@ -1,11 +1,17 @@
 /**
- * @splicewire/beam-mainframe — the app-level frame that hosts schemastud Frames.
+ * @splicewire/beam-mainframe — the CMS-authoring host layer over the generic Mainframe engine.
  *
- * Ticket 03 output: the delegation + registry **seam** every mode plugs into. No modes ship here
- * (`desk` → ticket 04, `window` → ticket 05); this is the mechanism alone. See ADR-0099 for doctrine.
+ * Frame OS ADR-0011 (ticket 01, EXPAND phase): the generic engine — the slot contract, the two
+ * registries, the resolver, and the React delegation seam — relocated to `@schemastud/mainframe`.
+ * This barrel **re-exports** those primitives so every existing consumer import keeps resolving
+ * unchanged. Ticket 02 (CONTRACT phase) removes the generic re-export and points consumers directly
+ * at `@schemastud/mainframe`; until then this forward is intentional.
+ *
+ * What stays authored here is the CMS-authoring layer: `createMainframeHost`, the `domain`/`window`
+ * modes, `useBeamUxEntry`, `isPuckBody`, and the edit-affordance host wiring (see host.tsx).
  */
 
-// The frozen slot contract (ticket 01) as types + tables.
+// --- Re-exported generic engine (relocated to @schemastud/mainframe; forwarded for compat) --------
 export {
     CORE_SLOTS,
     OPTIONAL_SLOTS,
@@ -19,18 +25,10 @@ export {
     type FillType,
     type MainPayload,
     type MainRender,
-} from './contract';
-
-// The named-slot registry (the socket — compose-many-by-name; SSR-safe per scope).
-export {
     createSlotRegistry,
     type SlotRegistry,
     type SlotContribution,
     type SlotContributionInput,
-} from './slot-registry';
-
-// The Mainframe registry (register a mode-layout by name).
-export {
     createMainframeRegistry,
     type MainframeRegistry,
     type MainframeRegistration,
@@ -39,13 +37,20 @@ export {
     type MainframeContext,
     type CustomSlotSpec,
     type RegisterOptions,
-} from './mainframe-registry';
+    resolveSlots,
+    type ResolvedSlots,
+    type MainframeCan,
+    type ResolveParams,
+    MainframeProvider,
+    MainframeOutlet,
+    useMainframe,
+    useSlotRegistry,
+    useResolvedSlots,
+    useSlot,
+    type MainframeInjection,
+} from '@schemastud/mainframe';
 
-// The resolver (gate by `can`, sort ordered, single-node winner, unknown-slot dev-warn).
-export { resolveSlots, type ResolvedSlots, type MainframeCan, type ResolveParams } from './resolve';
-
-// The OOTB host-shell factory (the layer above the seam): a host writes ~15 lines of config and gets
-// the framed `domain`/`window` layout. Modes + `useBeamUxEntry` + `isPuckBody` bundle here (ticket 06).
+// --- The CMS-authoring host layer (stays here) ----------------------------------------------------
 export {
     createMainframeHost,
     useBeamUxEntry,
@@ -60,14 +65,3 @@ export {
     type RibbonProps,
     type RibbonRender,
 } from './host';
-
-// The React seam (host delegation): provider, hooks, the delegation outlet, declarative contribution.
-export {
-    MainframeProvider,
-    MainframeOutlet,
-    useMainframe,
-    useSlotRegistry,
-    useResolvedSlots,
-    useSlot,
-    type MainframeInjection,
-} from './react';

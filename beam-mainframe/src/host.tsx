@@ -18,10 +18,17 @@
 import type { ReactNode } from 'react';
 import { createContext, Suspense, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 
-import { createMainframeRegistry, type MainframeRegistry, type MainframeProps } from './mainframe-registry';
-import { createSlotRegistry, type SlotRegistry } from './slot-registry';
-import { MainframeProvider, MainframeOutlet, type MainframeInjection } from './react';
-import type { MainframeCan } from './resolve';
+import {
+    createMainframeRegistry,
+    type MainframeRegistry,
+    type MainframeProps,
+    createSlotRegistry,
+    type SlotRegistry,
+    MainframeProvider,
+    MainframeOutlet,
+    type MainframeInjection,
+    type MainframeCan,
+} from '@schemastud/mainframe';
 
 // --- Kind test ---------------------------------------------------------------------------------
 
