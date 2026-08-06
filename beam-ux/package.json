@@ -39,6 +39,10 @@
             "types": "./dist/shell.d.ts",
             "import": "./dist/shell.js"
         },
+        "./appshell": {
+            "types": "./dist/appshell.d.ts",
+            "import": "./dist/appshell.js"
+        },
         "./nav": {
             "types": "./dist/nav.d.ts",
             "import": "./dist/nav.js"
@@ -79,6 +83,8 @@
     },
     "peerDependencies": {
         "@measured/puck": ">=0.20",
+        "@schemastud/frame": "*",
+        "@schemastud/mainframe": "*",
         "@schemastud/seam": "*",
         "@schemastud/ui": "*",
         "@tanstack/react-query": ">=5",
@@ -88,10 +94,18 @@
     "peerDependenciesMeta": {
         "@measured/puck": {
             "optional": true
+        },
+        "@schemastud/frame": {
+            "optional": true
+        },
+        "@schemastud/mainframe": {
+            "optional": true
         }
     },
     "devDependencies": {
         "@measured/puck": "^0.20.2",
+        "@schemastud/frame": "file:../../schemastud/frame",
+        "@schemastud/mainframe": "file:../../schemastud/mainframe",
         "@schemastud/seam": "file:../../schemastud/seam",
         "@schemastud/ui": "file:../../schemastud/ui",
         "@tanstack/react-query": "^5.62.0",

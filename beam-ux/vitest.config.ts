@@ -24,10 +24,32 @@ export default defineConfig({
             react,
             'react-dom': reactDom,
             '@tanstack/react-query': pkgDir('@tanstack/react-query'),
+            // The `@schemastud/ui` dist is aliased to an ABSOLUTE path outside the beam workspace, so
+            // its transitive Radix scroll-lock helpers otherwise resolve (and `require('react')`) out
+            // of the schemastud workspace's node_modules — a second React, null hook dispatcher when a
+            // Sheet/Dialog mounts. Pin the scroll-lock chain to the beam-workspace copies too, so the
+            // single-React aliases above actually reach them (the FrameSidePanelOverlay renders a Sheet).
+            'react-remove-scroll': pkgDir('react-remove-scroll'),
+            'react-style-singleton': pkgDir('react-style-singleton'),
+            'use-sidecar': pkgDir('use-sidecar'),
+            'use-callback-ref': pkgDir('use-callback-ref'),
+            'aria-hidden': pkgDir('aria-hidden'),
             // Resolve the foundation UI + the seam to their built dist (their published entries),
             // not their src.
             '@schemastud/ui': join(self, '..', '..', 'schemastud', 'ui', 'dist', 'index.js'),
             '@schemastud/seam': join(self, '..', '..', 'schemastud', 'seam', 'dist', 'index.js'),
+            // The /appshell entry's overlay reads the frame side-panel store; its mode-core types
+            // off mainframe. Resolve both to their built dist (their published entries).
+            '@schemastud/frame': join(self, '..', '..', 'schemastud', 'frame', 'dist', 'index.js'),
+            '@schemastud/mainframe': join(
+                self,
+                '..',
+                '..',
+                'schemastud',
+                'mainframe',
+                'dist',
+                'index.js',
+            ),
         },
     },
     test: {

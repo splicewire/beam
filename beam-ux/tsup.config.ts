@@ -10,6 +10,7 @@ export default defineConfig({
         site: 'src/site/index.ts',
         account: 'src/account/index.ts',
         shell: 'src/shell/index.ts',
+        appshell: 'src/appshell/index.ts',
         nav: 'src/nav/index.ts',
     },
     format: ['esm'],
@@ -34,6 +35,10 @@ export default defineConfig({
         '@tanstack/react-query',
         '@schemastud/ui',
         '@schemastud/seam',
+        // The mainframe `can`-type + the frame side-panel store: host owns their single instance
+        // (the `/appshell` entry's mode-gate + overlay peer on them), never bundled.
+        '@schemastud/frame',
+        '@schemastud/mainframe',
         'lucide-react',
         // The structural editor: host owns the single @measured/puck instance (peer), same as
         // react/react-query — never bundled. Only the /puck entry touches it.
