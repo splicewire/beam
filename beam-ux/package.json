@@ -38,6 +38,10 @@
         "./shell": {
             "types": "./dist/shell.d.ts",
             "import": "./dist/shell.js"
+        },
+        "./nav": {
+            "types": "./dist/nav.d.ts",
+            "import": "./dist/nav.js"
         }
     },
     "sideEffects": false,

@@ -10,6 +10,7 @@ export default defineConfig({
         site: 'src/site/index.ts',
         account: 'src/account/index.ts',
         shell: 'src/shell/index.ts',
+        nav: 'src/nav/index.ts',
     },
     format: ['esm'],
     dts: true,
