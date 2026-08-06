@@ -17,12 +17,19 @@ const self = dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
     resolve: {
+        // Collapse the shared singletons to ONE instance. The Sheet/Dialog surfaces (credits +
+        // billing) drag in Radix's scroll-lock tail (react-remove-scroll, react-style-singleton,
+        // use-sidecar, aria-hidden…), each of which lives in the schemastud workspace's node_modules
+        // and would otherwise resolve a SECOND React → the null-dispatcher `useRef` crash. `dedupe`
+        // forces every copy of these to the one hoisted here, complementing the deterministic aliases.
+        dedupe: ['react', 'react-dom', 'react-remove-scroll'],
         alias: {
             'react/jsx-runtime': join(react, 'jsx-runtime.js'),
             'react/jsx-dev-runtime': join(react, 'jsx-dev-runtime.js'),
             'react-dom/client': join(reactDom, 'client.js'),
             react,
             'react-dom': reactDom,
+            'react-remove-scroll': pkgDir('react-remove-scroll'),
             '@tanstack/react-table': pkgDir('@tanstack/react-table'),
             '@tanstack/react-query': pkgDir('@tanstack/react-query'),
             // Resolve the foundation UI to its built dist (its published entry), not its src.
