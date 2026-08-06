@@ -9,6 +9,7 @@ export default defineConfig({
         leaf: 'src/leaf/index.ts',
         site: 'src/site/index.ts',
         account: 'src/account/index.ts',
+        shell: 'src/shell/index.ts',
     },
     format: ['esm'],
     dts: true,
