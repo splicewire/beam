@@ -24,10 +24,16 @@ export interface ParsedPrototypePath {
     isExcluded: boolean;
 }
 
-/** Path relative to `_prototype/` (or just the basename if the marker is absent). */
+/**
+ * Path relative to `_prototype/`. When the marker segment is present (a call site OUTSIDE the tree,
+ * e.g. `import.meta.glob('../_prototype/**​/*.tsx')`), slice after it. When it is absent — a call
+ * site INSIDE the tree globbing `./**​/*.tsx`, so keys look like `./_chrome/PrototypeDesk.tsx` — the
+ * key IS already relative to `_prototype/`; just strip a leading `./`. (Dropping to the bare basename
+ * here would discard the `_chrome`/`_fixtures` subdir and leak shared chrome into the gallery.)
+ */
 function relPath(path: string): string {
     const at = path.indexOf(DIR_MARKER);
-    return at === -1 ? path.replace(/^.*\//, '') : path.slice(at + DIR_MARKER.length);
+    return at === -1 ? path.replace(/^\.\//, '') : path.slice(at + DIR_MARKER.length);
 }
 
 /** Parse one glob key into its discovery facts. */
