@@ -122,6 +122,15 @@ export interface MainframeHostConfig {
     componentToEntry?: Record<string, string>;
     /** The author-gate capability fed to the `can` predicate. Defaults to `author-ux`. */
     capability?: string;
+    /**
+     * READ-mode rendering strategy:
+     *  - `'body'` (default) — the factory renders the entry's Puck body via `renderRead` (for pages that
+     *    are bare shells bound to an entry).
+     *  - `'page'` — render the real Inertia page (`payload.page`) unchanged; the PAGE renders its own body
+     *    (its own SiteLayout chrome + scoped CSS + PuckPageRender). Use this when pages are NOT shells —
+     *    otherwise the read-swap strips the page's chrome/CSS. Author (`window`) mode is unaffected.
+     */
+    readMode?: 'body' | 'page';
     /** Host wraps Inertia `usePage` → `{component, canAuthor, slug?}` (keeps inertia out of the package). */
     usePageContext: () => HostPageContext;
     /** Host-injected transport — routes through beam-ux's `UxBuilderClient`; `null` on miss (page falls back). */
@@ -283,6 +292,12 @@ function useHydrated(): boolean {
 function PuckReadOrPage({ payload }: { payload: DomainPayload }) {
     const hydrated = useHydrated();
     const body = payload.entryBodyRaw;
+
+    // `readMode: 'page'` — the page renders its OWN body (chrome + scoped CSS + its own PuckPageRender);
+    // never swap it for the bare entry body (which would strip its SiteLayout/nav/CSS).
+    if (payload.config.readMode === 'page') {
+        return <>{payload.page}</>;
+    }
 
     // SSR + first client render → the plain page (SSR-safe, hydrates cleanly). Puck read is client-only.
     if (!hydrated || !isPuckBody(body)) {
