@@ -354,27 +354,10 @@ export function patchPropExpression(prop: BlockProp, exprSrc: string): void {
     prop.value = exprSrc;
 }
 
-/**
- * Patch a text node's content. For a `JSXText` node the raw value is replaced; for a
- * string/template literal (a `{"..."}` child) the literal's value is replaced. Only this
- * text node's tokens change on reprint.
- */
-export function patchText(text: TextNode, value: string): void {
-    const node = text.node as t.Node;
-    if (t.isJSXText(node)) {
-        node.value = value;
-        // recast reprints from `value`; clear the cached raw extra so it re-emits.
-        (node as { extra?: unknown }).extra = undefined;
-    } else if (t.isStringLiteral(node)) {
-        node.value = value;
-        (node as { extra?: unknown }).extra = undefined;
-    } else if (t.isTemplateLiteral(node)) {
-        // Collapse the template to a single cooked/raw quasi so the new text round-trips.
-        node.expressions = [];
-        node.quasis = [t.templateElement({ raw: value, cooked: value }, true)];
-    }
-    text.value = value;
-}
+// `patchText` lives in a babel-free module (`patch-text.ts`) so the inline leaf seam
+// (`@splicewire/beam-ux/leaf`) can import a lossless text patch without dragging `@babel/types` +
+// `recast` onto the client render bundle. Re-exported here to keep the lens public API unchanged.
+export { patchText } from './patch-text.js';
 
 // ---------------------------------------------------------------------------
 // Helpers

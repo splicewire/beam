@@ -9,7 +9,7 @@
  * are untouched (proved by the round-trip + surgical-patch tests).
  */
 
-import { patchText } from '../blockdoc/lens.js';
+import { patchText } from '../blockdoc/patch-text.js';
 import type { TextNode } from '../blockdoc/types.js';
 import { resolveLeafEngine } from './registry.js';
 import type { EditorDoc, InlineLeafEditor } from './types.js';
