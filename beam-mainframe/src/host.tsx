@@ -401,13 +401,14 @@ export function createMainframeHost(config: MainframeHostConfig) {
                     //   - composable Puck body → the Puck composed-page editor.
                     //   - chrome-only body     → the real page in place + the RegionInspector over it.
                     //   - no editable body     → fall through to the page, never a blank editor.
-                    if (p.authoring) {
-                        // `readMode: 'page'` hosts author with the structural editor (the tree-JSON visual
-                        // editor) directly — no Puck body-kind fork.
-                        if (p.config.readMode === 'page') {
-                            return <>{p.config.renderEditor({ slug: p.entrySlug })}</>;
-                        }
+                    // `readMode: 'page'` — the PAGE renders itself in BOTH modes and edits IN PLACE (its
+                    // own SiteLayout chrome + full class hierarchy intact); it reads the mode off the
+                    // broadcast and swaps its content region to the editor. So window mode is just the page.
+                    if (p.config.readMode === 'page') {
+                        return <>{p.page}</>;
+                    }
 
+                    if (p.authoring) {
                         // Structural (Puck) editing requires BOTH a Puck body AND `composable` (F06) —
                         // a non-composable behavior-realm entry is sealed even if it carried a Puck body.
                         if (p.composable && isPuckBody(p.entryBodyRaw)) {
