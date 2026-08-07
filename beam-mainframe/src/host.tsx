@@ -346,15 +346,16 @@ export function createMainframeHost(config: MainframeHostConfig) {
             };
         }, [canAuthor]);
 
-        // Broadcast mode + editability so an external control (the operator dock) can label its
-        // Edit/Exit affordance and know whether the current page is editable at all.
+        // Broadcast mode + editability + the current entry slug so an external control (the operator
+        // dock) can label its Edit affordance, know whether the current page is editable, and open the
+        // page-properties surface for the right slug.
         useEffect(() => {
             window.dispatchEvent(
                 new CustomEvent('beam-ux:mode', {
-                    detail: { mode, editable: canAuthor && entry !== null },
+                    detail: { mode, editable: canAuthor && entry !== null, slug: entrySlug },
                 }),
             );
-        }, [mode, canAuthor, entry]);
+        }, [mode, canAuthor, entry, entrySlug]);
 
         // Registries built once; the page + live state ride ctx.payload each render.
         const registries = useMemo<{ slots: SlotRegistry; mainframes: MainframeRegistry }>(() => {

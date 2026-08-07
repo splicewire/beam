@@ -1,21 +1,37 @@
 /**
- * Package-namespaced `App.Data.*`/`App.Enums.*`/etc. reference rename (surgeon-audit-viability
- * ticket 33, splicewire-app). `HostNamespaceProjection::locationFor()` now inserts a package-derived
- * segment right after the pivot (`App.Data.AgentData` -> `App.Data.Tower.AgentData`) to close the
- * cross-package short-name collision class this session hit repeatedly (`ThreadMessageData`,
- * `CreateInvitationData`, `MembershipResourceData`, `TokenResourceData`, `PlanData`). Every
- * hand-written `App.<pivot>.<ClassName>` reference across `ui/src/**` needs the same segment
- * inserted to keep compiling.
+ * `App.<pivot>[.<Package>].*` -> real-native-namespace reference rename (surgeon-audit-viability
+ * ticket 33, extended ticket 34, splicewire-app).
+ *
+ * Ticket 33 made `HostNamespaceProjection::locationFor()` insert a package-derived segment right
+ * after the pivot (`App.Data.AgentData` -> `App.Data.Tower.AgentData`) to close the cross-package
+ * short-name collision class that session hit repeatedly. Ticket 34 went further and DROPPED that
+ * remap entirely — every `#[TypeScript]` class (app-owned, Splicewire-family, or third-party) now
+ * emits at its real native PHP namespace (`Splicewire.Tower.Data.AgentData`, not `App.Data.Tower.
+ * AgentData`), collision-proof by construction rather than by a custom projection rule. Every
+ * hand-written `App.<pivot>[.<Package>].<...>.<ClassName>` reference across `ui/src/**` written
+ * against the ticket-33 shape needs the same rename this codemod already does — just to a
+ * different target path.
+ *
+ * IMPORTANT (ticket 34): since collisions between same-short-name classes no longer prevent
+ * co-emission (they land at different native paths now), `generated.d.ts` CAN legitimately declare
+ * two different classes with the same short name (e.g. two `MembershipResourceData`s, one under
+ * `Splicewire.Tower.Data.Frame`, one under `Splicewire.Beam.Accounts.Data.Frame`). A short-name-only
+ * lookup would be ambiguous for such cases. This codemod matches on the FULL current dotted path
+ * instead — computing, for every class in `generated.d.ts`, what its OLD ticket-33-era `App.*` path
+ * WOULD have been (via the same pivot + package-segment derivation that projection used, applied
+ * historically here purely to know the shape being migrated FROM), and building an exact
+ * old-full-path -> new-full-path map. App-owned and third-party classes were never remapped by
+ * ticket 33 either, so their old path already equals their new path — naturally excluded (no-op).
  *
  * `App` is a global ambient namespace (`declare namespace App {...}`, no `export`) — every
  * reference is an inline `TSQualifiedName` in type position, never an `import type` specifier (no
  * binding/scope-fan-out complexity ticket 08's call-site migration needed). This makes the rewrite
- * a pure `TSQualifiedName`-rename: find `App.<pivot>...<ClassName>`, look up `<ClassName>`'s real
- * current full path (derived straight from `generated.d.ts`, the single source of truth — not a
- * re-derivation of the PHP-side package rule, so this can never drift from what actually emits),
- * and rewrite if the reference doesn't already match. A no-op on an already-correct reference makes
- * this genuinely idempotent and safe to re-run after any future class relocation between packages —
- * that's the whole point: a future move is "re-run this," not another hand migration.
+ * a pure `TSQualifiedName`-rename: find the reference's full current dotted path, look it up
+ * EXACTLY in the rename map, and rewrite if found and different. A no-op when the reference is
+ * already at its correct current path (whether that's because it was never remapped, or because a
+ * prior run already fixed it) makes this genuinely idempotent and safe to re-run after any future
+ * class relocation between packages — that's the whole point: a future move is "re-run this," not
+ * another hand migration.
  *
  * `recast` + `babel-ts` (not `@babel/traverse`) — same reasoning as `sdkHookMigration.ts`/
  * `blockdoc/lens.ts`: a hand-rolled walker avoids pulling traverse in at runtime, and recast's
@@ -28,18 +44,26 @@ import type { File, TSQualifiedName, TSTypeReference } from '@babel/types';
 
 const parser = babelTsParser;
 
-/** Short class/enum name -> its full dotted `App.<pivot>[.<Package>][.<subdir>...].<Name>` path. */
+/** Full dotted OLD (ticket-33-era) path -> full dotted NEW (native) path. */
 export type NamespaceLookup = Record<string, string>;
 
+const PIVOTS = new Set(['Data', 'Enums', 'Models', 'Spiders', 'Conduits', 'Routing']);
+
+interface DeclaredEntry {
+    /** The namespace segments enclosing the declaration, e.g. `['Splicewire','Tower','Data','Frame']`. */
+    namespaceSegments: string[];
+    className: string;
+}
+
 /**
- * Parse `generated.d.ts` into a short-name -> full-path lookup. Line-based, not a full AST parse:
- * the file is 100% machine-generated with one namespace-open/type/close per line, so a simple
- * brace-depth stack is exact and far simpler than parsing TS ambient-namespace AST nodes. A bare
- * `}` line is a namespace close; a type body's closing brace is always `};` (has the trailing
- * semicolon a namespace close never has), so the two never get confused.
+ * Parse `generated.d.ts` into every declared type's (namespace segments, class name). Line-based,
+ * not a full AST parse: the file is 100% machine-generated with one namespace-open/type/close per
+ * line, so a simple brace-depth stack is exact and far simpler than parsing TS ambient-namespace
+ * AST nodes. A bare `}` line is a namespace close; a type body's closing brace is always `};` (has
+ * the trailing semicolon a namespace close never has), so the two never get confused.
  */
-export function buildNamespaceLookup(generatedDtsSource: string): NamespaceLookup {
-    const lookup: NamespaceLookup = {};
+function parseDeclaredEntries(generatedDtsSource: string): DeclaredEntry[] {
+    const entries: DeclaredEntry[] = [];
     const stack: string[] = [];
 
     for (const rawLine of generatedDtsSource.split('\n')) {
@@ -58,15 +82,73 @@ export function buildNamespaceLookup(generatedDtsSource: string): NamespaceLooku
 
         const typeDecl = line.match(/^export\s+type\s+(\w+)\s*=/);
         if (typeDecl) {
-            const name = typeDecl[1];
-            lookup[name] = [...stack, name].join('.');
+            entries.push({ namespaceSegments: [...stack], className: typeDecl[1] });
         }
     }
 
-    return lookup;
+    return entries;
 }
 
-const PIVOTS = new Set(['Data', 'Enums', 'Models', 'Spiders', 'Conduits', 'Routing']);
+/**
+ * The owning package's ticket-33-era short FE segment, mirroring the PHP-side
+ * `HostNamespaceProjection::packageSegmentFor()`/`ClientTypeName::packageSegmentFor()` derivation
+ * exactly (those were deleted by ticket 34, since the projection no longer runs — this is a
+ * historical replica, kept only so this codemod knows the shape it's migrating FROM). Null for
+ * app-owned code, which stayed flat with no package segment.
+ */
+function legacyPackageSegmentFor(namespaceSegments: string[]): string | null {
+    if (namespaceSegments[0] !== 'Splicewire') return null;
+    if (namespaceSegments[1] === 'Tower') return 'Tower';
+    if (namespaceSegments[1] === 'Beam') {
+        const next = namespaceSegments[2];
+        return next !== undefined && !PIVOTS.has(next) ? next : 'Beam';
+    }
+    return null;
+}
+
+/**
+ * What this class's OLD ticket-33 `App.<pivot>[.<Package>].<...>.<ClassName>` path would have been,
+ * or null if ticket 33 never remapped it (app-owned — already flat `App.*`, identity; or
+ * third-party — deferred to native namespace even then) — in both null cases the old path already
+ * equals the new native path, so there's nothing to rename.
+ */
+function legacyProjectedPath(namespaceSegments: string[], className: string): string | null {
+    if (namespaceSegments[0] === 'App') return null;
+    if (namespaceSegments[0] !== 'Splicewire') return null;
+
+    const pivotIdx = namespaceSegments.findIndex((s) => PIVOTS.has(s));
+    if (pivotIdx === -1) return null;
+
+    const pivot = namespaceSegments[pivotIdx];
+    const rest = namespaceSegments.slice(pivotIdx + 1);
+    const packageSegment = legacyPackageSegmentFor(namespaceSegments);
+
+    const path =
+        packageSegment === null
+            ? ['App', pivot, ...rest, className]
+            : ['App', pivot, packageSegment, ...rest, className];
+
+    return path.join('.');
+}
+
+/**
+ * Build the old-full-path -> new-full-path rename map straight from `generated.d.ts` — the single
+ * source of truth, not a re-derivation of a rule that could drift from what actually emits.
+ */
+export function buildNamespaceLookup(generatedDtsSource: string): NamespaceLookup {
+    const map: NamespaceLookup = {};
+
+    for (const entry of parseDeclaredEntries(generatedDtsSource)) {
+        const newPath = [...entry.namespaceSegments, entry.className].join('.');
+        const oldPath = legacyProjectedPath(entry.namespaceSegments, entry.className);
+
+        if (oldPath !== null && oldPath !== newPath) {
+            map[oldPath] = newPath;
+        }
+    }
+
+    return map;
+}
 
 /** Flatten a `TSQualifiedName`/`Identifier` type-reference chain into its dotted segments. */
 function segmentsOf(node: TSTypeReference['typeName']): string[] | null {
@@ -83,7 +165,7 @@ function segmentsOf(node: TSTypeReference['typeName']): string[] | null {
     return null;
 }
 
-/** Rebuild a `TSQualifiedName` chain from dotted segments (e.g. `['App','Data','Tower','X']`). */
+/** Rebuild a `TSQualifiedName` chain from dotted segments (e.g. `['Splicewire','Tower','Data','X']`). */
 function qualifiedNameFromSegments(segments: string[]): TSTypeReference['typeName'] {
     const bt = recast.types.builders;
     let node: TSTypeReference['typeName'] = bt.identifier(segments[0]) as unknown as TSTypeReference['typeName'];
@@ -94,9 +176,9 @@ function qualifiedNameFromSegments(segments: string[]): TSTypeReference['typeNam
 }
 
 /**
- * Rewrite one file's `App.<pivot>...<ClassName>` references to match `lookup`'s current correct
- * paths. Returns the reprinted source, or null if nothing needed changing (idempotent — re-running
- * on an already-correct file is always a no-op).
+ * Rewrite one file's references whose full current dotted path is a key in `lookup` to the
+ * corresponding new path. Returns the reprinted source, or null if nothing needed changing
+ * (idempotent — re-running on an already-correct file is always a no-op).
  */
 export function renameFile(source: string, lookup: NamespaceLookup): string | null {
     let ast: File;
@@ -123,24 +205,15 @@ export function renameFile(source: string, lookup: NamespaceLookup): string | nu
             const ref = n as unknown as TSTypeReference;
             const segments = segmentsOf(ref.typeName);
 
-            if (
-                segments !== null &&
-                segments.length >= 3 &&
-                segments[0] === 'App' &&
-                PIVOTS.has(segments[1])
-            ) {
-                const className = segments[segments.length - 1];
-                const correctPath = lookup[className];
+            if (segments !== null) {
+                const currentPath = segments.join('.');
+                const newPath = lookup[currentPath];
 
-                if (correctPath !== undefined) {
-                    const correctSegments = correctPath.split('.');
-                    const current = segments.join('.');
-
-                    if (current !== correctPath) {
-                        (ref as unknown as { typeName: unknown }).typeName =
-                            qualifiedNameFromSegments(correctSegments);
-                        changed = true;
-                    }
+                if (newPath !== undefined && newPath !== currentPath) {
+                    (ref as unknown as { typeName: unknown }).typeName = qualifiedNameFromSegments(
+                        newPath.split('.'),
+                    );
+                    changed = true;
                 }
             }
             // Don't descend into a type reference's own typeName chain further — segmentsOf already

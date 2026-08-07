@@ -1,10 +1,9 @@
 #!/usr/bin/env node
 /**
- * `beam-ux-namespace-rename` — standing, re-runnable CLI for the `App.<pivot>.*` package-namespace
- * rename (surgeon-audit-viability ticket 33). Rebuilds its lookup fresh from `generated.d.ts` every
- * run, so re-running after ANY future `->returns()`/`->streams()` DTO relocation between packages
- * (or any other change to the emitted namespace tree) only touches the delta — idempotent by
- * construction, not a one-shot migration script.
+ * `beam-ux-namespace-rename` — standing, re-runnable CLI for the `App.<pivot>[.<Package>].*` ->
+ * real-native-namespace rename (surgeon-audit-viability tickets 33/34). Rebuilds its lookup fresh
+ * from `generated.d.ts` every run, so re-running after ANY future change to the emitted namespace
+ * tree only touches the delta — idempotent by construction, not a one-shot migration script.
  *
  * Usage:
  *   echo '{"generatedDtsPath":"...","sourceRoot":"..."}' | node bin/namespace-rename.mjs scan
