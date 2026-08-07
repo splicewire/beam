@@ -16,7 +16,7 @@
  * on its side), so no `beam-mainframe → beam-ux` edge is introduced and the factory stays generic.
  */
 import type { ReactNode } from 'react';
-import { createContext, Suspense, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { createContext, Suspense, useCallback, useContext, useEffect, useMemo, useState, useSyncExternalStore } from 'react';
 
 import {
     createMainframeRegistry,
@@ -271,11 +271,21 @@ function overrideEntrySlug(): string | null {
 
 // --- The read fork -----------------------------------------------------------------------------
 
+// True once hydrated; false on the server AND the first client render (so SSR HTML and the first client
+// render agree). Puck's read renderer isn't SSR-safe — it adds client-only drag/interaction attributes —
+// so we render the plain Inertia page for SSR + first paint, then swap to the Puck render after hydration.
+const subscribeHydrated = () => () => {};
+function useHydrated(): boolean {
+    return useSyncExternalStore(subscribeHydrated, () => true, () => false);
+}
+
 /** Read view: the composed Puck render for a Puck body, else the wrapped Inertia page (never blank). */
 function PuckReadOrPage({ payload }: { payload: DomainPayload }) {
+    const hydrated = useHydrated();
     const body = payload.entryBodyRaw;
 
-    if (!isPuckBody(body)) {
+    // SSR + first client render → the plain page (SSR-safe, hydrates cleanly). Puck read is client-only.
+    if (!hydrated || !isPuckBody(body)) {
         return <>{payload.page}</>;
     }
 
