@@ -46,11 +46,21 @@
         "./nav": {
             "types": "./dist/nav.d.ts",
             "import": "./dist/nav.js"
+        },
+        "./surgeon": {
+            "types": "./dist/surgeon.d.ts",
+            "import": "./dist/surgeon.js"
+        },
+        "./streaming": {
+            "types": "./dist/streaming.d.ts",
+            "import": "./dist/streaming.js"
         }
     },
     "sideEffects": false,
     "bin": {
-        "beam-ux-puck-bridge": "bin/puck-bridge.mjs"
+        "beam-ux-puck-bridge": "bin/puck-bridge.mjs",
+        "beam-ux-sdk-hook-migration": "bin/sdk-hook-migration.mjs",
+        "beam-ux-namespace-rename": "bin/namespace-rename.mjs"
     },
     "files": [
         "dist",
@@ -83,6 +93,7 @@
     },
     "peerDependencies": {
         "@measured/puck": ">=0.20",
+        "@schemastud/chat": "*",
         "@schemastud/frame": "*",
         "@schemastud/mainframe": "*",
         "@schemastud/seam": "*",
@@ -95,6 +106,9 @@
         "@measured/puck": {
             "optional": true
         },
+        "@schemastud/chat": {
+            "optional": true
+        },
         "@schemastud/frame": {
             "optional": true
         },
@@ -104,6 +118,7 @@
     },
     "devDependencies": {
         "@measured/puck": "^0.20.2",
+        "@schemastud/chat": "file:../../schemastud/chat",
         "@schemastud/frame": "file:../../schemastud/frame",
         "@schemastud/mainframe": "file:../../schemastud/mainframe",
         "@schemastud/seam": "file:../../schemastud/seam",

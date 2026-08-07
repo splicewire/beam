@@ -12,6 +12,8 @@ export default defineConfig({
         shell: 'src/shell/index.ts',
         appshell: 'src/appshell/index.ts',
         nav: 'src/nav/index.ts',
+        surgeon: 'src/surgeon/sdkHookMigration.ts',
+        streaming: 'src/streaming/index.ts',
     },
     format: ['esm'],
     dts: true,
@@ -43,5 +45,8 @@ export default defineConfig({
         // The structural editor: host owns the single @measured/puck instance (peer), same as
         // react/react-query — never bundled. Only the /puck entry touches it.
         '@measured/puck',
+        // readSse() — the generic SSE frame parser the /streaming entry builds on. Only that
+        // entry touches it; a consumer using other subpaths never needs it installed.
+        '@schemastud/chat',
     ],
 });

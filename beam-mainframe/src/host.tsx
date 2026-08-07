@@ -328,6 +328,34 @@ export function createMainframeHost(config: MainframeHostConfig) {
             };
         }, [entrySlug]);
 
+        // External authoring control (e.g. a Frame OS operator dock): custom window events drive the
+        // mode, so authoring needs NO on-page ribbon button. Only an author may enter window mode.
+        useEffect(() => {
+            const enter = () => {
+                if (canAuthor) {
+                    setMode('window');
+                }
+            };
+            const exit = () => setMode('domain');
+            window.addEventListener('beam-ux:edit', enter);
+            window.addEventListener('beam-ux:exit', exit);
+
+            return () => {
+                window.removeEventListener('beam-ux:edit', enter);
+                window.removeEventListener('beam-ux:exit', exit);
+            };
+        }, [canAuthor]);
+
+        // Broadcast mode + editability so an external control (the operator dock) can label its
+        // Edit/Exit affordance and know whether the current page is editable at all.
+        useEffect(() => {
+            window.dispatchEvent(
+                new CustomEvent('beam-ux:mode', {
+                    detail: { mode, editable: canAuthor && entry !== null },
+                }),
+            );
+        }, [mode, canAuthor, entry]);
+
         // Registries built once; the page + live state ride ctx.payload each render.
         const registries = useMemo<{ slots: SlotRegistry; mainframes: MainframeRegistry }>(() => {
             const slots = createSlotRegistry();
