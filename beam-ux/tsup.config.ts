@@ -43,6 +43,9 @@ export default defineConfig({
         // (the `/appshell` entry's mode-gate + overlay peer on them), never bundled.
         '@schemastud/frame',
         '@schemastud/mainframe',
+        // The Frame OS desktop subpath (the canonical window manager + realm-agnostic chrome the
+        // `/shell` realm layer re-bases onto; ADR-0017). Host owns its single instance.
+        '@schemastud/mainframe/os',
         'lucide-react',
         // The structural editor: host owns the single @measured/puck instance (peer), same as
         // react/react-query — never bundled. Only the /puck entry touches it.

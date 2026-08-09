@@ -1,31 +1,35 @@
 /**
- * `@splicewire/beam-ux/shell` — the OS-shell layer (beam-ux-uplift ticket 11; the ticket-03 spike
- * made real). The capstone that FRAMES the already-promoted seams — it invents no substrate.
+ * `@splicewire/beam-ux/shell` — the REALM-AWARE OS-shell layer (editor-promotion ticket 07 / ADR-0017).
  *
- * A generic desktop chrome so a host mounts one component and gets a desktop of realms:
- *   - {@link Shell} — menu bar (system/realm status) + dock + launcher (start-menu) + window
- *     manager (open / focus / minimize / close), with a deliberate single-app compact mode on
- *     small screens.
- *   - {@link useWindowManager} / {@link windowManagerReducer} — the pure window-manager state core.
+ * The generic desktop chrome + window manager are canonical in `@schemastud/mainframe/os`. This subpath
+ * re-exports them (so a host imports the OS story from one place) and ADDS the thin realm-awareness:
+ * `buildAppsFromManifest` turns the server realm manifest into the chrome's generic `DesktopApp[]`,
+ * applying entitlement gating (locked/upsell) + auto-surfacing. The `RealmManifestEntry` /
+ * `RealmSurfaceBinding` types live here and NOWHERE in the chrome tier.
  *
- * Realm surfaces are framed via HOST-INJECTED app renderers (`apps[].render`) — the package owns the
- * frame, the host owns the content. The launcher is DATA-DRIVEN from the `apps` prop (+ an
- * `autoSurfaced` tier for realm-derived pages), never a hardcoded list; the host derives it from its
- * RealmRegistry / nav. Theme-neutral: NO palette, fonts, or wordmark ship here — the Analog-Studio
- * ember look is host-supplied via className/style + CSS-vars, mirroring `/site` + `/account`. Origin:
- * `.scratch/beam-ux-uplift/OS-SHELL-NOTES.md`.
+ * The old ticket-11 `<Shell>` + its duplicate `windowManager.ts` reducer were ORPHANED (the live path
+ * used `@schemastud/mainframe/os`) and are retired — this subpath is now the realm layer, not a second
+ * shell. See `.scratch/editor-promotion/issues/07-*` + ADR-0017.
  */
-
-export { Shell, type ShellProps } from './Shell.js';
 export {
+    // Realm-aware builder + its (manifest-side) types — the beam layer's own vocabulary.
+    buildAppsFromManifest,
+    type RealmManifestEntry,
+    type RealmSurfaceBinding,
+    type BuildAppsOptions,
+    // Re-exported canonical chrome + window manager (from @schemastud/mainframe/os).
+    buildDesktopChrome,
+    Dock,
+    Launcher,
+    Clock,
+    UpsellPopover,
+    WorkspacePersistence,
+    OperatorOverlay,
     useWindowManager,
-    windowManagerReducer,
-    initialWindowManagerState,
-    visibleWindows,
-    isTaskOpen,
+    type DesktopApp,
+    type DesktopUpsell,
+    type DesktopChromeConfig,
+    type OperatorOverlayProps,
+    type OverlayWindow,
     type WindowManager,
-    type WindowManagerState,
-    type WindowManagerAction,
-    type ManagedWindow,
-} from './windowManager.js';
-export type { ShellApp, ShellAutoPage, ShellMenu, ShellThemeHooks } from './types.js';
+} from './realm';
