@@ -6,6 +6,7 @@ export default defineConfig({
         puck: 'src/puck.ts',
         blockdoc: 'src/blockdoc/index.ts',
         'blockdoc/json': 'src/blockdoc/json.ts',
+        canvas: 'src/canvas/index.ts',
         manifest: 'src/manifest/index.ts',
         leaf: 'src/leaf/index.ts',
         site: 'src/site/index.ts',

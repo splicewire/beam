@@ -23,6 +23,10 @@
             "types": "./dist/blockdoc/json.d.ts",
             "import": "./dist/blockdoc/json.js"
         },
+        "./canvas": {
+            "types": "./dist/canvas.d.ts",
+            "import": "./dist/canvas.js"
+        },
         "./manifest": {
             "types": "./dist/manifest.d.ts",
             "import": "./dist/manifest.js"

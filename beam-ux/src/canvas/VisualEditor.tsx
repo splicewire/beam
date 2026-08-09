@@ -1,0 +1,182 @@
+// The composed window-mode editor (controlled): a full-screen surface with Insert palette + live canvas +
+// Inspector, over a single-root JsonDoc body. Port of the host `VisualEditor`, re-based on JsonNode +
+// injected config/theme. `value`/`onChange` carry the body so a host persists it.
+import { useMemo, useState } from 'react';
+import {
+    getAt,
+    isJsonBlock,
+    isLeafText,
+    jsonToTsx,
+    moveBefore,
+    removeAt,
+    setProp,
+    setText,
+    updateAt,
+} from '../blockdoc/json.js';
+import type { JsonBlock, JsonDoc } from '../blockdoc/json.js';
+import { CanvasNode } from './CanvasNode.js';
+import { useCanvas } from './context.js';
+import { selectionCss, veCss } from './css.js';
+import type { CanvasTheme } from './css.js';
+import { Inspector } from './Inspector.js';
+import { insertRelativeTo } from './insert.js';
+import { setAttrs } from './props.js';
+import { DEFAULT_BLOCK_TEMPLATES } from './templates.js';
+
+export interface VisualEditorProps {
+    /** The body — a single-root JsonDoc. */
+    value: JsonDoc;
+    onChange: (doc: JsonDoc) => void;
+    onSave?: () => void;
+    theme?: Partial<CanvasTheme>;
+    /** Brand label shown in the top bar (host-supplied). Defaults to a generic label. */
+    brand?: string;
+}
+
+export function VisualEditor({ value, onChange, onSave, theme, brand = 'visual editor' }: VisualEditorProps) {
+    const config = useCanvas();
+    const templates = config.blockTemplates ?? DEFAULT_BLOCK_TEMPLATES;
+    const [sel, setSel] = useState<string | null>(null);
+    const [editing, setEditing] = useState<string | null>(null);
+    const [dragPath, setDragPath] = useState<string | null>(null);
+    const [leftOpen, setLeftOpen] = useState(true);
+    const [rightOpen, setRightOpen] = useState(true);
+    const selNode = sel ? getAt(value, sel) : null;
+    const selBlock: JsonBlock | null = selNode && isJsonBlock(selNode) ? selNode : null;
+    const serialized = useMemo(() => jsonToTsx(value), [value]);
+
+    const onCanvasClick = (e: React.MouseEvent) => {
+        e.preventDefault();
+        const el = (e.target as HTMLElement).closest('[data-bd-path]');
+        setSel(el ? el.getAttribute('data-bd-path') : null);
+        setEditing(null);
+    };
+    const onCanvasDbl = (e: React.MouseEvent) => {
+        const p = (e.target as HTMLElement)
+            .closest('[data-bd-path]')
+            ?.getAttribute('data-bd-path');
+        const node = p ? getAt(value, p) : null;
+        if (p && node && isJsonBlock(node) && isLeafText(node)) setEditing(p);
+    };
+
+    const addBlock = (make: () => JsonBlock) => onChange(insertRelativeTo(value, sel, make));
+
+    return (
+        <div className="ve-root">
+            <style dangerouslySetInnerHTML={{ __html: veCss(theme) }} />
+            {sel && (
+                <style
+                    dangerouslySetInnerHTML={{ __html: selectionCss(sel, theme?.accent ?? '#4F7CFF') }}
+                />
+            )}
+
+            <div className="ve-bar">
+                <span className="ve-brand">
+                    <span className="ve-mark" />
+                    {brand}
+                </span>
+                <span className="ve-hint">
+                    click = select · double-click text = edit · drag = reorder
+                </span>
+                <span className="ve-spacer" />
+                <button
+                    className={`ve-toggle${leftOpen ? ' on' : ''}`}
+                    onClick={() => setLeftOpen((v) => !v)}
+                >
+                    Insert
+                </button>
+                <button
+                    className={`ve-toggle${rightOpen ? ' on' : ''}`}
+                    onClick={() => setRightOpen((v) => !v)}
+                >
+                    Inspector
+                </button>
+                {onSave && (
+                    <button className="ve-toggle ve-save" onClick={onSave}>
+                        Save
+                    </button>
+                )}
+            </div>
+
+            <div className="ve-body">
+                {leftOpen && (
+                    <aside className="ve-palette">
+                        <div className="ve-insp-h">Insert block</div>
+                        {templates.map((b) => (
+                            <button
+                                key={b.label}
+                                className="ve-pal-item"
+                                onClick={() => addBlock(b.make)}
+                            >
+                                + {b.label}
+                            </button>
+                        ))}
+                        <div className="ve-pal-note">inserts into / after the selected element</div>
+                    </aside>
+                )}
+
+                <div className="ve-canvas" onClickCapture={onCanvasClick} onDoubleClick={onCanvasDbl}>
+                    {value.map((n, i) => (
+                        <CanvasNode
+                            key={i}
+                            node={n}
+                            path={String(i)}
+                            editing={editing}
+                            onEditText={(p, text) => {
+                                onChange(
+                                    updateAt(value, p, (el) =>
+                                        isJsonBlock(el) ? setText(el, text) : el,
+                                    ),
+                                );
+                                setEditing(null);
+                            }}
+                            onEditMd={(p, md) =>
+                                onChange(
+                                    updateAt(value, p, (el) =>
+                                        isJsonBlock(el) ? setProp(el, 'md', md, 'string') : el,
+                                    ),
+                                )
+                            }
+                            dnd={{
+                                onDragStart: setDragPath,
+                                onDropBefore: (p) => {
+                                    if (dragPath) onChange(moveBefore(value, dragPath, p));
+                                    setDragPath(null);
+                                },
+                            }}
+                        />
+                    ))}
+                </div>
+
+                {rightOpen && (
+                    <aside className="ve-side">
+                        {selBlock ? (
+                            <Inspector
+                                block={selBlock}
+                                onAttrs={(attrs) =>
+                                    onChange(
+                                        updateAt(value, sel!, (el) =>
+                                            isJsonBlock(el) ? setAttrs(el, attrs) : el,
+                                        ),
+                                    )
+                                }
+                                onDelete={() => {
+                                    if (sel && sel !== '0') {
+                                        onChange(removeAt(value, sel));
+                                        setSel(null);
+                                    }
+                                }}
+                            />
+                        ) : (
+                            <div className="ve-insp-empty">Select an element to edit it.</div>
+                        )}
+                        <div className="ve-src">
+                            <div className="ve-insp-h">Serialized</div>
+                            <pre>{serialized}</pre>
+                        </div>
+                    </aside>
+                )}
+            </div>
+        </div>
+    );
+}
