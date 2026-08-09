@@ -12,9 +12,35 @@ CSS-vars).
 |---|---|
 | `.` | The in-app visual editing surfaces (region inspector, overlay editor, region canvas, structure panel). |
 | `./puck` · `./blockdoc` · `./manifest` · `./leaf` | The Puck registry, the lossless `.tsx⟷AST` BlockDoc lens, manifest→config generation, the pluggable rich-text leaf. |
+| `./blockdoc/json` | **Babel-free** JSON projection of BlockDoc — the visual-editor runtime shape (`JsonNode`) + immutable edit ops. Safe for the client bundle. |
 | `./site` | Generic public-site chrome — `SiteLayout` + `SiteNav` (ticket 10). |
 | `./account` | Generic authed-account chrome — `AccountShell` + `AccountNav` (ticket 13). |
 | `./shell` | The **OS-shell layer** — `Shell` + the window-manager core (ticket 11). |
+
+## `@splicewire/beam-ux/blockdoc/json` — the visual-editor runtime shape
+
+The BlockDoc lens (`./blockdoc`) is lossless but AST-backed — it pulls recast/@babel and is a
+**build/server** concern. `./blockdoc/json` is its **Babel-free** mirror: a plain, serializable
+`JsonNode` tree (`kind: 'block' | 'text' | 'opaque'`) plus immutable edit ops, so the visual editor
+canvas can edit + persist it in the client bundle without ever loading Babel (ADR-0016).
+
+```ts
+// server / build boundary (the `./blockdoc` index — Babel-side):
+import { parse, toJson, fromJson } from '@splicewire/beam-ux/blockdoc';
+const doc = toJson(parse(tsxSource));        // .tsx ▶ JsonNode[]  (persist this)
+const back = fromJson(doc);                  // JsonNode[] ▶ BlockDoc  (= parse(jsonToTsx(doc)))
+
+// browser (the canvas — Babel-free):
+import { getAt, updateAt, setText, type JsonDoc } from '@splicewire/beam-ux/blockdoc/json';
+```
+
+- `toJson(BlockDoc | BlockNode | BlockChild[]) → JsonNode[]` — AST-free projection (pure).
+- `jsonToTsx(JsonNode[]) → string` — a pure JSX printer (no Babel).
+- `fromJson(JsonNode[]) → BlockDoc` — re-parses (Babel-side; from the `./blockdoc` index).
+- Edit ops (pure, immutable): `getAt` · `updateAt` · `insertInto` · `removeAt` · `moveBefore` ·
+  `setProp` · `removeProp` · `setText` · `propValue`, addressed by dotted path (`"0.2"` = `doc[0].children[2]`).
+- `JsonOpaque` is the ONE sealed-island concept (a `.map`/conditional the static lens can't decompose,
+  carried verbatim); further opacity is a per-node **policy overlay** the canvas computes, not a shape.
 
 ## `@splicewire/beam-ux/shell` — the OS-shell layer
 
