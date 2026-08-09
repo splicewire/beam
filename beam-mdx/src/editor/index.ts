@@ -14,5 +14,7 @@ export type { MdxDocumentEditorProps } from './MdxDocumentEditor';
 // The kit-as-manifest + the derived descriptors — a host can extend or replace the descriptor set.
 export { KIT_MANIFEST, type KitManifest, type KitNodeManifest, type JsonSchema } from './manifest';
 export { KIT_JSX_DESCRIPTORS, nodeToJsxDescriptor } from './descriptors';
+// The `<Content>` reference rendered as the real partial inline + a picker (editor-promotion ticket 04).
+export { contentJsxDescriptor, withContentDescriptor } from './content-descriptor';
 export { SchemaFormPropertyEditor } from './schema-form';
 export { InsertKitBlock } from './toolbar';
