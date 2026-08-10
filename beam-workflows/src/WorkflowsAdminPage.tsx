@@ -328,8 +328,6 @@ export function WorkflowsAdminPage() {
                                         })}
                                         guards={catalog.data.guards}
                                         effects={catalog.data.effects}
-                                        // `catalog.principals` (ticket 17) now travels typed in the
-                                        // generated WorkflowCatalogData projection — no local cast needed.
                                         principals={catalog.data.principals}
                                         saving={save.isPending}
                                         canSave={canAuthor}

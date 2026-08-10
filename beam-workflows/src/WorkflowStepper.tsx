@@ -147,7 +147,9 @@ export function WorkflowActions({
     confirm = {},
 }: {
     projection: WorkflowProjection | null;
-    channel: string;
+    // Optional/falsy is a real, handled state (the effect below no-ops on it) — a host may not know
+    // the subject's channel yet (e.g. its detail record is still loading).
+    channel: string | null | undefined;
     onTransition: (name: string) => void;
     onStatusEmitted?: () => void;
     pending?: boolean;
