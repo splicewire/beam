@@ -12,3 +12,4 @@ coverage/
 # so the whole .tests/ tree stays ignored for now.
 storybook-static/
 .tests/
+CLAUDE.md

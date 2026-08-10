@@ -7,13 +7,16 @@
   "//workspaces": "TOPOLOGICAL order (leaves first) so `npm run build --workspaces` resolves internal .d.ts in order. Grows as FC mints beam / beam-accounts / beam-notifications / beam-commerce.",
   "workspaces": [
     "beam-mdx",
+    "beam-content",
     "beam-ux-prototype",
     "beam-mainframe",
     "beam-accounts",
     "beam-workflows",
     "beam-ux",
     "beam-commerce",
-    "beam-transforms"
+    "beam-transforms",
+    "beam-calendar",
+    "beam-versioning"
   ],
   "scripts": {
     "build": "npm run build --workspaces --if-present",
