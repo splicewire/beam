@@ -62,6 +62,10 @@
         "./streaming": {
             "types": "./dist/streaming.d.ts",
             "import": "./dist/streaming.js"
+        },
+        "./admin": {
+            "types": "./dist/admin.d.ts",
+            "import": "./dist/admin.js"
         }
     },
     "sideEffects": false,

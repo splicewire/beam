@@ -16,6 +16,7 @@ export default defineConfig({
         nav: 'src/nav/index.ts',
         surgeon: 'src/surgeon/sdkHookMigration.ts',
         streaming: 'src/streaming/index.ts',
+        admin: 'src/admin/index.ts',
     },
     format: ['esm'],
     dts: true,
