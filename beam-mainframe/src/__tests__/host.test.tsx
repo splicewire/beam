@@ -4,9 +4,11 @@
  *
  *   1. **Mode select + author gate** — a non-author sees only the page (no ribbon/toggle); an author
  *      gets the ribbon and the read↔author toggle, and toggling swaps the `main` fork.
- *   2. **Kind-aware `main` fork** — authoring a composable Puck body opens `renderEditor`; a
- *      chrome-only body opens `renderInspector` over the page; an unbound entry falls through to the
- *      page (never a blank editor); a non-composable Puck body is sealed to the inspector.
+ *   2. **Kind-aware `main` fork** — authoring a Puck body opens `renderEditor`; a chrome-only body
+ *      opens `renderInspector` over the page; an unbound entry falls through to the page (never a
+ *      blank editor). The retired whole-entry `composable` seal (ticket 14 F06) is GONE — per-node
+ *      opacity (ADR-0016, `isIsland()`) now seals individual nodes INSIDE the mounted editor, so a
+ *      Puck body always opens `renderEditor`, sealed or not.
  *   3. **`?beam_entry=` override** — the query param loads that entry instead of the route's own.
  *   4. **`useBeamUxEntry`** — a wrapped page reads the loaded entry chrome through the context.
  */
@@ -61,7 +63,7 @@ describe('createMainframeHost — author gate + mode select', () => {
         // read mode: a Puck body renders through renderRead
         expect(screen.getByTestId('read')).toBeTruthy();
 
-        // toggle into window mode → the kind-aware fork picks the Puck editor (composable Puck body)
+        // toggle into window mode → the kind-aware fork picks the Puck editor (Puck body)
         act(() => {
             fireEvent.click(screen.getByText('Edit page'));
         });
@@ -87,8 +89,13 @@ describe('createMainframeHost — kind-aware main fork', () => {
         expect(screen.queryByTestId('editor')).toBeNull();
     });
 
-    it('a non-composable Puck body is sealed — the structural editor never opens', async () => {
-        const body: HostEntryBody = { slug: 'auth-login', schema: null, body: { content: [] }, composable: false };
+    it('a Puck body always opens the structural editor — no whole-entry composable seal', async () => {
+        // Ticket 04 (theme-entries-and-authoring): the retired `composable` flag used to seal a whole
+        // behavior-realm entry (e.g. auth-login) to the inspector even when it carried a Puck body.
+        // That seal is GONE — a Puck body now always opens `renderEditor`; per-node opacity (ADR-0016,
+        // `isIsland()`) is the host-owned canvas's job to seal individual nodes, out of this
+        // package's scope to simulate (beam-mainframe stays canvas-agnostic).
+        const body: HostEntryBody = { slug: 'auth-login', schema: null, body: { content: [] } };
         const Host = createMainframeHost(
             stubConfig({ usePageContext: () => ({ component: 'listen', canAuthor: true }), loadEntryBody: async () => body }),
         );
@@ -97,9 +104,8 @@ describe('createMainframeHost — kind-aware main fork', () => {
 
         act(() => fireEvent.click(screen.getByText('Edit page')));
 
-        // sealed → falls to the inspector (bound), never the structural canvas
-        await waitFor(() => expect(screen.getByTestId('inspector')).toBeTruthy());
-        expect(screen.queryByTestId('editor')).toBeNull();
+        await waitFor(() => expect(screen.getByTestId('editor')).toBeTruthy());
+        expect(screen.queryByTestId('inspector')).toBeNull();
     });
 
     it('an unbound entry (load miss) never shows the toggle — nothing to author', async () => {

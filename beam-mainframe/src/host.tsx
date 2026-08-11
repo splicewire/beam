@@ -44,15 +44,12 @@ export function isPuckBody(body: unknown): boolean {
 // --- The entry a reshelled page reads its chrome through ----------------------------------------
 
 /**
- * The loaded `page` entry as the host projects it (beam-ux `entries.body.show`). `composable` is the
- * ticket-14 editability tier (F06): structural Puck editing is offered only when it is not `false`.
- * Backwards-compatible — an older projection that omits it is treated as composable.
+ * The loaded `page` entry as the host projects it (beam-ux `entries.body.show`).
  */
 export interface HostEntryBody {
     slug: string;
     schema: Record<string, unknown> | null;
     body: unknown;
-    composable?: boolean;
 }
 
 /** The `{slug, schema, body}` a wrapped page reads via {@link useBeamUxEntry}. `body` is host-typed. */
@@ -83,7 +80,6 @@ interface DomainPayload {
     canAuthor: boolean;
     authoring: boolean;
     entryBodyRaw: unknown;
-    composable: boolean;
     onEdit: () => void;
     onExit: () => void;
     config: MainframeHostConfig;
@@ -320,7 +316,7 @@ function PuckReadOrPage({ payload }: { payload: DomainPayload }) {
  *
  *   - `domain` (read) — the page renders as the `main` payload, bound to its `page` entry.
  *   - `window` (author) — for an author with the `capability` ability, `main` swaps to the kind-aware
- *     editor (Puck canvas for a composable Puck body, else the in-place inspector).
+ *     editor (Puck canvas for a Puck body, else the in-place inspector).
  *
  * Mode-switch is a child-swap under the stable provider (ADR-0099) — no remount, so the toggle is
  * smooth. The entitlement is fed to the `can` predicate; a non-author never sees the toggle or editor.
@@ -398,7 +394,8 @@ export function createMainframeHost(config: MainframeHostConfig) {
                     const p = payload as DomainPayload;
 
                     // Authoring is kind-aware (no blind Puck swap):
-                    //   - composable Puck body → the Puck composed-page editor.
+                    //   - Puck body            → the Puck composed-page editor (per-node opacity overlay
+                    //                             inside it seals any registered island, ADR-0016).
                     //   - chrome-only body     → the real page in place + the RegionInspector over it.
                     //   - no editable body     → fall through to the page, never a blank editor.
                     // `readMode: 'page'` — the PAGE renders itself in BOTH modes and edits IN PLACE (its
@@ -409,9 +406,12 @@ export function createMainframeHost(config: MainframeHostConfig) {
                     }
 
                     if (p.authoring) {
-                        // Structural (Puck) editing requires BOTH a Puck body AND `composable` (F06) —
-                        // a non-composable behavior-realm entry is sealed even if it carried a Puck body.
-                        if (p.composable && isPuckBody(p.entryBodyRaw)) {
+                        // Structural editing opens for any Puck body. The retired `composable` flag was a
+                        // coarse whole-entry seal (ticket-14 F06); ADR-0016's per-node opacity overlay
+                        // (`isIsland()`, @splicewire/beam-ux/canvas) now does that sealing INSIDE the
+                        // canvas the host's `renderEditor` mounts — a behavior-realm entry with a sealed
+                        // root node (e.g. AuthForm) still opens the editor, it's just non-editable there.
+                        if (isPuckBody(p.entryBodyRaw)) {
                             return <>{p.config.renderEditor({ slug: p.entrySlug })}</>;
                         }
 
@@ -456,9 +456,6 @@ export function createMainframeHost(config: MainframeHostConfig) {
             canAuthor,
             authoring,
             entryBodyRaw: entry?.body ?? null,
-            // Composable unless the projection explicitly declares `false`; an unbound entry is treated
-            // as non-composable (nothing to structurally edit until the body is known).
-            composable: entry?.composable !== false && entry !== null,
             onEdit: () => setMode('window'),
             onExit: () => setMode('domain'),
             config,
