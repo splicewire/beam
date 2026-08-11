@@ -11,10 +11,6 @@
             "types": "./dist/index.d.ts",
             "import": "./dist/index.js"
         },
-        "./puck": {
-            "types": "./dist/puck.d.ts",
-            "import": "./dist/puck.js"
-        },
         "./blockdoc": {
             "types": "./dist/blockdoc.d.ts",
             "import": "./dist/blockdoc.js"
@@ -26,10 +22,6 @@
         "./canvas": {
             "types": "./dist/canvas.d.ts",
             "import": "./dist/canvas.js"
-        },
-        "./manifest": {
-            "types": "./dist/manifest.d.ts",
-            "import": "./dist/manifest.js"
         },
         "./leaf": {
             "types": "./dist/leaf.d.ts",
@@ -70,7 +62,6 @@
     },
     "sideEffects": false,
     "bin": {
-        "beam-ux-puck-bridge": "bin/puck-bridge.mjs",
         "beam-ux-sdk-hook-migration": "bin/sdk-hook-migration.mjs",
         "beam-ux-namespace-rename": "bin/namespace-rename.mjs"
     },
@@ -104,7 +95,6 @@
         "recast": "^0.23.12"
     },
     "peerDependencies": {
-        "@measured/puck": ">=0.20",
         "@schemastud/chat": "*",
         "@schemastud/frame": "*",
         "@schemastud/mainframe": "*",
@@ -115,9 +105,6 @@
         "react": ">=18"
     },
     "peerDependenciesMeta": {
-        "@measured/puck": {
-            "optional": true
-        },
         "@schemastud/chat": {
             "optional": true
         },
@@ -129,7 +116,6 @@
         }
     },
     "devDependencies": {
-        "@measured/puck": "^0.20.2",
         "@schemastud/chat": "file:../../schemastud/chat",
         "@schemastud/frame": "file:../../schemastud/frame",
         "@schemastud/mainframe": "file:../../schemastud/mainframe",

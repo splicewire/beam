@@ -33,11 +33,6 @@ export type {
     TextNode,
 } from './types.js';
 
-// The PuckData ⟷ BlockDoc bridge (ticket 08) — the reverse .tsx→body leg. `puckToTsx` mirrors PHP
-// PuckPageCodegen exactly; `blockDocToPuck` parses a page .tsx back into Puck Data for file→DB sync.
-export { blockDocToPuck, puckToTsx, stripIds, CODEGEN_MARKER, OPAQUE_ISLAND_TYPE } from './puck.js';
-export type { PuckData, PuckNode, PuckProps, PuckPropValue } from './puck.js';
-
 // The browser-safe JSON projection (editor-promotion ticket 01) — the AST-free runtime + persistence
 // shape the visual editor canvas edits. The `toJson`/`jsonToTsx` seam is re-exported here for SERVER
 // consumers; a BROWSER bundle must import `@splicewire/beam-ux/blockdoc/json` directly (this index

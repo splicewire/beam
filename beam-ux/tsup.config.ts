@@ -3,11 +3,9 @@ import { defineConfig } from 'tsup';
 export default defineConfig({
     entry: {
         index: 'src/index.ts',
-        puck: 'src/puck.ts',
         blockdoc: 'src/blockdoc/index.ts',
         'blockdoc/json': 'src/blockdoc/json.ts',
         canvas: 'src/canvas/index.ts',
-        manifest: 'src/manifest/index.ts',
         leaf: 'src/leaf/index.ts',
         site: 'src/site/index.ts',
         account: 'src/account/index.ts',
@@ -48,9 +46,6 @@ export default defineConfig({
         // `/shell` realm layer re-bases onto; ADR-0017). Host owns its single instance.
         '@schemastud/mainframe/os',
         'lucide-react',
-        // The structural editor: host owns the single @measured/puck instance (peer), same as
-        // react/react-query — never bundled. Only the /puck entry touches it.
-        '@measured/puck',
         // readSse() — the generic SSE frame parser the /streaming entry builds on. Only that
         // entry touches it; a consumer using other subpaths never needs it installed.
         '@schemastud/chat',

@@ -1,7 +1,7 @@
 /**
- * The **inline leaf-engine registry** — the indirection that lets the manifest's `engine` name SELECT a
+ * The **inline leaf-engine registry** — the indirection that lets a manifest's `engine` name SELECT a
  * rich-text binding at runtime, so a second engine (ProseMirror) becomes bindable by registering it
- * here, with ZERO changes to any call site (the generated Puck field always asks the registry).
+ * here, with ZERO changes to any call site.
  *
  * A host registers its engine bindings once at boot (`registerLeafEngine(mdxLeafEngine)`); the generated
  * leaf field resolves the engine the manifest named via `resolveLeafEngine('mdx')`.

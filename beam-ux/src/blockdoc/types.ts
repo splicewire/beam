@@ -42,11 +42,11 @@ export type BlockChild = BlockNode | TextNode | OpaqueNode;
  * decompose — a `.map(...)` loop, a `{cond && <X/>}` conditional, a ternary, an imported-expression
  * call, a bare identifier, or a `{...spread}` child. It is NOT structurally editable; instead the lens
  * captures its **verbatim source text** so the file always round-trips: the canvas renders it as a
- * sealed block (position/delete only) and the bridge preserves it as an `OpaqueIsland` Puck node.
+ * sealed block (position/delete only) and its {@link JsonOpaque} mirror carries it through unchanged.
  *
  * The `node` handle is the backing `JSXExpressionContainer` / `JSXSpreadChild` — the addressable AST
  * subtree recast reprints byte-for-byte on serialization. `source` is that same subtree printed for
- * display / for the bridge to carry through Puck Data.
+ * display / for the JSON mirror to carry verbatim.
  */
 export interface OpaqueNode {
     type: 'opaque';

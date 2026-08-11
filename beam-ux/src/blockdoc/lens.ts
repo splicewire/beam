@@ -187,7 +187,7 @@ function textFromExpression(
  * Build an {@link OpaqueNode} from a dynamic JSX expression child (`{items.map(...)}`,
  * `{cond && <X/>}`, a ternary, an imported-expression call). The backing node is the WHOLE
  * `JSXExpressionContainer` so recast reprints it byte-for-byte on serialize; `source` is that
- * container printed (`{…}` included) for the canvas preview + the Puck bridge to carry verbatim.
+ * container printed (`{…}` included) for the canvas preview + the JSON mirror to carry verbatim.
  */
 function opaqueFromExpression(
     container: t.JSXExpressionContainer,

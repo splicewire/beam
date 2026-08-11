@@ -8,10 +8,10 @@
  * The seam maps a BlockDoc {@link TextNode} ⟷ an editor doc:
  *   read `TextNode.value` → `toDoc` → (edit in the engine's editor) → `fromDoc` → `patchText` → `.tsx`.
  *
- * Why a seam and not a hardcoded engine: the manifest / schema field vocab (ticket 09) NAMES the
- * engine (`{ kind: 'richtext', engine: 'mdx' }`). A second engine (e.g. `'prosemirror'`) binds via the
- * SAME contract + registry without touching a single call site — the generated Puck field asks the
- * registry for the engine the manifest named and gets back an {@link InlineLeafEditor}.
+ * Why a seam and not a hardcoded engine: a field's `{ kind: 'richtext', engine: 'mdx' }` declaration
+ * NAMES the engine. A second engine (e.g. `'prosemirror'`) binds via the SAME contract + registry
+ * without touching a single call site — a field asks the registry for the named engine and gets back
+ * an {@link InlineLeafEditor}.
  */
 
 /**

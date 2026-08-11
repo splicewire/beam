@@ -11,7 +11,8 @@ CSS-vars).
 | Entry | What it ships |
 |---|---|
 | `.` | The in-app visual editing surfaces (region inspector, overlay editor, region canvas, structure panel). |
-| `./puck` · `./blockdoc` · `./manifest` · `./leaf` | The Puck registry, the lossless `.tsx⟷AST` BlockDoc lens, manifest→config generation, the pluggable rich-text leaf. |
+| `./blockdoc` · `./leaf` | The lossless `.tsx⟷AST` BlockDoc lens, the pluggable rich-text leaf. |
+| `./admin` | The `BeamUxEntry` admin lifecycle surface — a standalone `RowActions` component (edit/duplicate/delete/promote-to-central). |
 | `./blockdoc/json` | **Babel-free** JSON projection of BlockDoc — the visual-editor runtime shape (`JsonNode`) + immutable edit ops. Safe for the client bundle. |
 | `./site` | Generic public-site chrome — `SiteLayout` + `SiteNav` (ticket 10). |
 | `./account` | Generic authed-account chrome — `AccountShell` + `AccountNav` (ticket 13). |
