@@ -14,6 +14,7 @@
     "beam-workflows",
     "beam-ux",
     "beam-commerce",
+    "beam-market",
     "beam-transforms",
     "beam-calendar",
     "beam-versioning"
