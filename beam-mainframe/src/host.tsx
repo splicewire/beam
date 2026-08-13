@@ -398,10 +398,18 @@ export function createMainframeHost(config: MainframeHostConfig) {
                     //                             inside it seals any registered island, ADR-0016).
                     //   - chrome-only body     → the real page in place + the RegionInspector over it.
                     //   - no editable body     → fall through to the page, never a blank editor.
-                    // `readMode: 'page'` — the PAGE renders itself in BOTH modes and edits IN PLACE (its
-                    // own SiteLayout chrome + full class hierarchy intact); it reads the mode off the
-                    // broadcast and swaps its content region to the editor. So window mode is just the page.
-                    if (p.config.readMode === 'page') {
+                    // `readMode: 'page'` — in READ mode only, the page renders itself unchanged (its own
+                    // SiteLayout chrome + full class hierarchy intact) rather than being swapped for the
+                    // bare entry body. This must NOT also short-circuit AUTHORING mode (`p.authoring`) —
+                    // doing so unconditionally (as this did before) skips every branch below and makes
+                    // "Edit this page" a no-op on every readMode:'page' host page that doesn't itself
+                    // independently re-implement the mode-broadcast swap (only pages embedding
+                    // `PageEditor` did). Falling through instead lands every authoring readMode:'page'
+                    // page on the SAME `entryBound` branch below (the entries.body.show envelope always
+                    // succeeds, even for an unattached page — `entryBound` is effectively always true) —
+                    // the real page in place + the generic, slug-only `renderInspector` overlaid, with
+                    // zero per-page integration required.
+                    if (p.config.readMode === 'page' && !p.authoring) {
                         return <>{p.page}</>;
                     }
 
