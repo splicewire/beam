@@ -5,13 +5,14 @@ import {
     CardContent,
     CardHeader,
     CardTitle,
+    Input,
     ListSkeleton,
     ListState,
     SimpleSelect,
 } from '@schemastud/ui';
 import { useState } from 'react';
 import { DisconnectedBanner } from './DisconnectedBanner';
-import { useExtensionsCatalog } from './hooks';
+import { useConnectionStatus, useExtensionsCatalog } from './hooks';
 import { RequiresSplicewireBadge, TrustBadge } from './TrustBadge';
 import type { CatalogFilters, ExtensionListingSummary } from './types';
 
@@ -66,56 +67,53 @@ function ListingCard({
     );
 }
 
+/** The install-mechanism facet is a fixed two-value vocabulary — the "All kinds" dropdown options,
+ * static (ticket 08 revision: the catalog no longer computes a `facets.kinds` vocabulary
+ * server-side; there are only ever these two install mechanisms). */
+const KIND_OPTIONS = [
+    { value: '', label: 'All kinds' },
+    { value: 'scaffold_pack', label: 'Scaffold Pack' },
+    { value: 'beam_extension', label: 'Beam Extension' },
+];
+
 /**
- * The unified `/extensions` catalog (ticket 08): ONE surface for both listing kinds, an
- * install-mechanism (`kind`) facet, category facet, and an own "Platform Tier" Browse section for
+ * The unified `/extensions` catalog (ticket 08, REVISED): ONE surface for both listing kinds, an
+ * install-mechanism (`kind`) facet, a category facet, and its own "Platform Tier" Browse section for
  * Satellite/Tower — pulled out of the generic grid purely by `isPlatformTier`, never a second
  * endpoint or listing kind. The area-wide disconnected promo banner renders here, once, off the
- * SAME `connected` fact the catalog query already carries.
+ * site-wide `useConnectionStatus()` fact (no longer bundled into the catalog response — see that
+ * hook's own docblock). The category filter is a free-text Silo-slug box, not a dropdown: the
+ * catalog no longer computes a `facets.categories` vocabulary server-side (the declarative
+ * `market-extensions` particle resource has no facet-computation step) — a host wanting a dropdown
+ * can build one off its own Silo list (e.g. the `/silos` resource) and pass the chosen slug through
+ * `filters.category` unchanged.
  */
 export function ExtensionsCatalog({ onSelect }: { onSelect: (id: number) => void }) {
     const [filters, setFilters] = useState<CatalogFilters>({});
     const { data, isPending } = useExtensionsCatalog(filters);
+    const { data: connectionStatus } = useConnectionStatus();
 
     const listings = data?.listings ?? [];
     const platformTier = listings.filter((l) => l.isPlatformTier);
     const rest = listings.filter((l) => !l.isPlatformTier);
 
-    // Explicit parameter typing sidesteps a fleet-wide quirk: the generated `_resources` bundle's
-    // nested cross-refs (e.g. `ExtensionsCatalogData.facets`) resolve via a dotted namespace path
-    // that's only fully declared in the app's own `generated.d.ts` — outside that context (an
-    // isolated package's own `tsc`), `skipLibCheck` silently widens the unresolved ref to `any`
-    // rather than erroring (the SAME shape `beam-commerce`'s `WalletBalanceData.ledger` carries;
-    // it just never hits an inline `.map()` there). The facet arrays are genuinely `string[]` at
-    // runtime — this is a type-inference sidestep, not a behavior change.
-    const categories: string[] = data?.facets.categories ?? [];
-    const kinds: string[] = data?.facets.kinds ?? [];
-    const categoryOptions = [
-        { value: '', label: 'All categories' },
-        ...categories.map((c: string) => ({ value: c, label: c })),
-    ];
-    const kindOptions = [
-        { value: '', label: 'All kinds' },
-        ...kinds.map((k: string) => ({ value: k, label: kindLabel(k) })),
-    ];
-
     return (
         <div className="flex flex-col gap-6">
-            {data && !data.connected && <DisconnectedBanner />}
+            {connectionStatus && !connectionStatus.connected && <DisconnectedBanner />}
 
             <div className="flex flex-wrap items-center gap-2">
-                <SimpleSelect
+                <Input
                     aria-label="Filter by category"
                     value={filters.category ?? ''}
-                    onValueChange={(value) => setFilters((f) => ({ ...f, category: value || undefined }))}
-                    options={categoryOptions}
-                    placeholder="All categories"
+                    onChange={(e) => setFilters((f) => ({ ...f, category: e.target.value || undefined }))}
+                    placeholder="Filter by category…"
+                    className="w-48"
                 />
                 <SimpleSelect
                     aria-label="Filter by kind"
                     value={filters.kind ?? ''}
                     onValueChange={(value) => setFilters((f) => ({ ...f, kind: value || undefined }))}
-                    options={kindOptions}
+                    options={KIND_OPTIONS}
                     placeholder="All kinds"
                 />
                 {(filters.category || filters.kind) && (

@@ -9,7 +9,7 @@ import {
     SheetTitle,
 } from '@schemastud/ui';
 import { Lock } from 'lucide-react';
-import { useExtensionListing, useInstallExtension } from './hooks';
+import { useConnectionStatus, useExtensionListing, useInstallExtension } from './hooks';
 import { useExtensionsServices } from './provider';
 import { RequiresSplicewireBadge, TrustBadge } from './TrustBadge';
 
@@ -19,10 +19,13 @@ const KIND_LABELS: Record<string, string> = {
 };
 
 /**
- * The Extensions area's detail sheet (ticket 08): the trust badge, the full `requires_splicewire`
- * notice + "Connect Splicewire to install" CTA when gated and disconnected, the changelog, and the
- * Install action — the ONE place (alongside the Installed tab's own actions) a Listing's install
- * state actually changes.
+ * The Extensions area's detail sheet (ticket 08, REVISED): the trust badge, the full
+ * `requires_splicewire` notice + "Connect Splicewire to install" CTA when gated and disconnected,
+ * the changelog, and the Install action — the ONE place (alongside the Installed tab's own actions)
+ * a Listing's install state actually changes. `data` is now the FLAT `MarketExtension` shape (no
+ * more `.summary` wrapper — the particle resource projects list/show through the same shape);
+ * `connected` no longer rides the listing response at all — it's `useConnectionStatus()`, the
+ * site-wide fact fetched once.
  */
 export function ExtensionDetailSheet({
     listingId,
@@ -32,32 +35,32 @@ export function ExtensionDetailSheet({
     onOpenChange: (open: boolean) => void;
 }) {
     const { data } = useExtensionListing(listingId);
+    const { data: connectionStatus } = useConnectionStatus();
     const install = useInstallExtension();
     const { renderConnectCta, connectUrl } = useExtensionsServices();
 
-    const summary = data?.summary;
-    const gatedAndDisconnected = Boolean(summary?.requiresSplicewire) && data?.connected === false;
+    const gatedAndDisconnected = Boolean(data?.requiresSplicewire) && connectionStatus?.connected === false;
 
     return (
         <Sheet open={listingId !== null} onOpenChange={onOpenChange}>
             <SheetContent side="right" className="w-full max-w-md overflow-y-auto">
-                {summary && (
+                {data && (
                     <>
                         <SheetHeader>
                             <div className="flex items-start justify-between gap-2">
-                                <SheetTitle>{summary.name}</SheetTitle>
-                                {summary.requiresSplicewire && <RequiresSplicewireBadge />}
+                                <SheetTitle>{data.name}</SheetTitle>
+                                {data.requiresSplicewire && <RequiresSplicewireBadge />}
                             </div>
-                            <SheetDescription>{data?.description}</SheetDescription>
+                            <SheetDescription>{data.description}</SheetDescription>
                         </SheetHeader>
 
                         <div className="flex flex-col gap-4 px-4 pb-4">
                             <div className="flex flex-wrap items-center gap-1.5">
-                                <TrustBadge tier={summary.trustTier} />
+                                <TrustBadge tier={data.trustTier} />
                                 <Badge variant="outline" className="font-normal text-muted-foreground">
-                                    {KIND_LABELS[summary.kind] ?? summary.kind}
+                                    {KIND_LABELS[data.kind] ?? data.kind}
                                 </Badge>
-                                {summary.isPlatformTier && (
+                                {data.isPlatformTier && (
                                     <Badge variant="outline" className="font-normal text-muted-foreground">
                                         Platform Tier
                                     </Badge>
@@ -90,18 +93,18 @@ export function ExtensionDetailSheet({
                             )}
 
                             <div className="flex items-center justify-between">
-                                <span className="text-sm text-muted-foreground">by {summary.sellerName}</span>
-                                <span className="font-medium">{summary.isFree ? 'Free' : summary.priceLabel}</span>
+                                <span className="text-sm text-muted-foreground">by {data.sellerName}</span>
+                                <span className="font-medium">{data.isFree ? 'Free' : data.priceLabel}</span>
                             </div>
 
                             <Button
-                                disabled={summary.isInstalled || install.isPending || gatedAndDisconnected}
-                                onClick={() => install.mutate(summary.id)}
+                                disabled={data.isInstalled || install.isPending || gatedAndDisconnected}
+                                onClick={() => install.mutate(data.id)}
                             >
-                                {summary.isInstalled ? 'Installed' : 'Install'}
+                                {data.isInstalled ? 'Installed' : 'Install'}
                             </Button>
 
-                            {data && data.changelog.length > 0 && (
+                            {data.changelog.length > 0 && (
                                 <>
                                     <Separator />
                                     <div className="flex flex-col gap-3">

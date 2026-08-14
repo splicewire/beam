@@ -25,6 +25,9 @@ beforeAll(() => {
 
 // The §8a bar: pure generated-DTO-shaped fixtures so the render can't drift from the real
 // projected shape (ADR-0116 §7a — an isolation mount off a pure fixture, no Laravel).
+// ticket 08 REVISION: one unified `MarketExtension` shape now serves both the catalog row and the
+// detail sheet (no more `facets`/`connected` on the catalog envelope, no more `.summary` wrapper on
+// the detail response — `connected` moves to its own `getConnectionStatus()` fixture below).
 const CATALOG: ExtensionsCatalogRead = {
     listings: [
         {
@@ -40,6 +43,9 @@ const CATALOG: ExtensionsCatalogRead = {
             categories: ['Productivity'],
             sellerName: 'Acme',
             installCount: 4,
+            description: 'A test listing.',
+            changelog: [],
+            createdAt: '2026-08-01T00:00:00Z',
         },
         {
             id: 2,
@@ -54,10 +60,20 @@ const CATALOG: ExtensionsCatalogRead = {
             categories: ['Platform Tier'],
             sellerName: 'Splicewire',
             installCount: 1,
+            description: null,
+            changelog: [],
+            createdAt: '2026-08-01T00:00:00Z',
         },
     ],
-    facets: { categories: ['Productivity', 'Platform Tier'], kinds: ['beam_extension', 'scaffold_pack'] },
+};
+
+const DISCONNECTED_STATUS = {
     connected: false,
+    pairingGuidance: {
+        connectCommand: 'php artisan splicewire:connect',
+        manualTokenEnvVar: 'SPLICEWIRE_TOKEN',
+        manualFallbackHint: 'Paste a Personal Access Token directly: php artisan splicewire:connect --token=<pat>',
+    },
 };
 
 const INSTALLED: InstalledExtension[] = [
@@ -78,7 +94,8 @@ const INSTALLED: InstalledExtension[] = [
 function fakeClient(overrides: Partial<ExtensionsClient> = {}): ExtensionsClient {
     return {
         getCatalog: vi.fn(async () => CATALOG),
-        getListing: vi.fn(async () => ({ summary: CATALOG.listings[0], description: 'A test listing.', changelog: [], connected: false })),
+        getListing: vi.fn(async () => CATALOG.listings[0]),
+        getConnectionStatus: vi.fn(async () => DISCONNECTED_STATUS),
         getInstalled: vi.fn(async () => INSTALLED),
         install: vi.fn(async () => INSTALLED[0]),
         update: vi.fn(async () => ({ ...INSTALLED[0], updateAvailable: false, installedVersion: '1.1.0' })),
@@ -124,7 +141,9 @@ describe('ExtensionsCatalog — isolation mount (no Laravel)', () => {
     });
 
     it('does not show the disconnected banner when connected', async () => {
-        const client = fakeClient({ getCatalog: vi.fn(async () => ({ ...CATALOG, connected: true })) });
+        const client = fakeClient({
+            getConnectionStatus: vi.fn(async () => ({ ...DISCONNECTED_STATUS, connected: true })),
+        });
         mount(<ExtensionsCatalog onSelect={() => {}} />, client);
 
         await screen.findByText('Acme Waveform');

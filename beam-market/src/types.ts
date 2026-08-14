@@ -2,23 +2,22 @@
 // read-models, sliced off the app's single `generated.d.ts` and delivered as the `market` bundle.
 // This build-time dependency is LOAD-BEARING — each surface's default typing IS the projection,
 // so the PHP source of truth genuinely travels into this package.
+//
+// splicewire-marketplace-build ticket 08 (REVISION): the catalog no longer projects a bespoke
+// `ExtensionsCatalogData`/`ExtensionListingSummaryData`/`ExtensionListingDetailData` split — ONE
+// `MarketExtensionData` shape now serves both the list row AND the detail sheet (the fleet's
+// declarative `#[ParticleResource]` pattern projects list/show through the SAME `project()`, so
+// there is no server-side summary/detail narrowing any more). `connected`/`pairingGuidance` moved
+// off every row onto their own `ConnectionStatusData`, fetched once (see `useConnectionStatus`).
 import type {
+    ConnectionStatusData,
     ExtensionChangelogEntryData,
-    ExtensionListingDetailData,
-    ExtensionListingSummaryData,
-    ExtensionsCatalogData,
-    ExtensionsCatalogFacetsData,
     InstalledExtensionData,
+    MarketExtensionData,
+    PairingGuidanceData,
 } from '@splicewire/_resources/types/market';
 
-export type {
-    ExtensionChangelogEntryData,
-    ExtensionListingDetailData,
-    ExtensionListingSummaryData,
-    ExtensionsCatalogData,
-    ExtensionsCatalogFacetsData,
-    InstalledExtensionData,
-};
+export type { ConnectionStatusData, ExtensionChangelogEntryData, InstalledExtensionData, MarketExtensionData, PairingGuidanceData };
 
 // ── Display-hint unions ─────────────────────────────────────────────────────
 // The DTOs ship these fields as bare `string`; the package narrows them to the vocabulary each
@@ -33,20 +32,25 @@ export type TrustTier = 'Official' | 'Verified' | 'Standard' | string;
 
 // ── Read-models (DTO + narrowed display-hint unions) ─────────────────────────
 
-export type ExtensionListingSummary = Omit<ExtensionListingSummaryData, 'kind' | 'trustTier'> & {
+/**
+ * A catalog row/detail row — the SAME shape (`MarketExtensionData`) serves both the grid card and
+ * the detail sheet now, so `ExtensionListingSummary`/`ExtensionListingDetail` are aliases of one
+ * another, kept as distinct names only so call sites documenting "this is a summary" vs "this is a
+ * detail" don't need to rename.
+ */
+export type MarketExtension = Omit<MarketExtensionData, 'kind' | 'trustTier'> & {
     kind: ListingKind;
     trustTier: TrustTier;
 };
 
-export type ExtensionListingDetail = Omit<ExtensionListingDetailData, 'summary'> & {
-    summary: ExtensionListingSummary;
-};
+export type ExtensionListingSummary = MarketExtension;
+export type ExtensionListingDetail = MarketExtension;
 
 export type ExtensionChangelogEntry = ExtensionChangelogEntryData;
-export type ExtensionsCatalogFacets = ExtensionsCatalogFacetsData;
 
-export type ExtensionsCatalog = Omit<ExtensionsCatalogData, 'listings'> & {
-    listings: ExtensionListingSummary[];
+/** The catalog list — a thin wrapper (not just a bare array) so a future page/cursor fact has somewhere to land. */
+export type ExtensionsCatalog = {
+    listings: MarketExtension[];
 };
 
 export type InstalledExtension = Omit<InstalledExtensionData, 'kind' | 'trustTier'> & {
@@ -54,7 +58,18 @@ export type InstalledExtension = Omit<InstalledExtensionData, 'kind' | 'trustTie
     trustTier: TrustTier;
 };
 
-/** The `/extensions` catalog's facet filter state — both optional (no filter applied). */
+/**
+ * The Extensions area's SITE-WIDE connection fact (ticket 08 revision) — whether this beam site has
+ * a paired Splicewire connection, fetched ONCE (`useConnectionStatus`), never per-listing. A
+ * listing's own `pairingGuidance` visibility is a pure client-side combination of THIS `connected`
+ * flag and that listing's own `requiresSplicewire`.
+ */
+export type ConnectionStatus = ConnectionStatusData;
+
+/** The `/extensions` catalog's facet filter state — both optional (no filter applied). `category`
+ * is a Silo slug, `kind` the install-mechanism token; a host's `ExtensionsClient.getCatalog`
+ * implementation maps these onto the data-filters query-param convention
+ * (`?filter[category]=…&filter[kind]=…`), not the retired bespoke `?category=&kind=` pair. */
 export interface CatalogFilters {
     category?: string;
     kind?: ListingKind;

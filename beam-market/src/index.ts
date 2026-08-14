@@ -15,6 +15,7 @@ export type { ExtensionsClient, ExtensionsServices, NotifyEvent } from './provid
 export {
     useExtensionsCatalog,
     useExtensionListing,
+    useConnectionStatus,
     useInstalledExtensions,
     useInstallExtension,
     useUpdateInstalledExtension,
@@ -23,12 +24,13 @@ export {
 
 export type {
     CatalogFilters,
+    ConnectionStatus,
     ExtensionChangelogEntry,
     ExtensionListingDetail,
     ExtensionListingSummary,
     ExtensionsCatalog as ExtensionsCatalogRead,
-    ExtensionsCatalogFacets,
     InstalledExtension,
     ListingKind,
+    MarketExtension,
     TrustTier,
 } from './types';

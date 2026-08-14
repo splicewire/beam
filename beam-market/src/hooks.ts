@@ -8,6 +8,7 @@ const catalogKey = (filters?: CatalogFilters) =>
     ['beam-market', 'catalog', filters?.category ?? null, filters?.kind ?? null] as const;
 const listingKey = (id: number) => ['beam-market', 'listing', id] as const;
 const INSTALLED_KEY = ['beam-market', 'installed'] as const;
+const CONNECTION_STATUS_KEY = ['beam-market', 'connection'] as const;
 
 /** The unified `/extensions` catalog — one query for both listing kinds, filterable by category/kind. */
 export function useExtensionsCatalog(filters?: CatalogFilters) {
@@ -24,6 +25,21 @@ export function useExtensionListing(id: number | null) {
         queryKey: listingKey(id ?? -1),
         queryFn: () => client.getListing(id as number),
         enabled: id !== null,
+    });
+}
+
+/**
+ * The site-wide connection fact (ticket 08 revision) — fetched ONCE, shared by every surface that
+ * needs it (the disconnected promo banner, the detail sheet's gated-and-disconnected notice) rather
+ * than each catalog/detail response carrying its own copy. Long `staleTime`: this fact changes only
+ * when a human actually runs the connect flow, never on a normal catalog browse.
+ */
+export function useConnectionStatus() {
+    const { client } = useExtensionsServices();
+    return useQuery({
+        queryKey: CONNECTION_STATUS_KEY,
+        queryFn: () => client.getConnectionStatus(),
+        staleTime: 60_000,
     });
 }
 

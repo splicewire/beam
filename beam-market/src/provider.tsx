@@ -1,18 +1,29 @@
 import { createContext, useContext, type ReactNode } from 'react';
-import type { CatalogFilters, ExtensionListingDetail, ExtensionsCatalog, InstalledExtension } from './types';
+import type { CatalogFilters, ConnectionStatus, ExtensionListingDetail, ExtensionsCatalog, InstalledExtension } from './types';
 
 // ── The injected transport adapter — the ONE thing a host must implement (kind 1) ──
 //
 // It wraps whatever transport the host already has (axios, fetch, a server action) and points it
-// at the correct `beam-market/extensions/*` endpoints; the surfaces are host- and URL-blind.
-// Endpoints stay relative (ADR-0116 §2 kind 1).
+// at the correct endpoints; the surfaces are host- and URL-blind. Endpoints stay relative
+// (ADR-0116 §2 kind 1).
 //
-// The package-side endpoints answer on the standard `{ data: … }` envelope — the adapter is the
-// unwrap seam: each method resolves with the envelope's `data` payload (the DTO shapes below),
-// never the envelope itself.
+// splicewire-marketplace-build ticket 08 (REVISION): `getCatalog`/`getListing` now point at the
+// declarative `market-extensions` particle resource (a host mounts it via
+// `Route::particleResource('extensions', 'market-extensions', …)`, e.g. `/extensions` /
+// `/extensions/{id}`) instead of the retired bespoke `/api/beam-market/extensions` controller —
+// filter with the data-filters query-param convention (`?filter[kind]=…&filter[category]=…`), not
+// the old `?kind=&category=` pair. `getConnectionStatus` is NEW: the site-wide connection fact,
+// called once (not per listing) — see `laravel-beam-market`'s own `ConnectionStatusController`.
+//
+// The package-side endpoints answer on their host's standard envelope — the adapter is the unwrap
+// seam: each method resolves with the envelope's `data` payload (the DTO shapes below), never the
+// envelope itself. `getCatalog`'s particle-resource endpoint is PAGINATED
+// (`{ data, limit, offset, total }`) — the adapter is also the pagination-unwrap seam for now (this
+// package renders one page, no pager UI yet); only `data` need be resolved.
 export interface ExtensionsClient {
     getCatalog(filters?: CatalogFilters): Promise<ExtensionsCatalog>;
     getListing(id: number): Promise<ExtensionListingDetail>;
+    getConnectionStatus(): Promise<ConnectionStatus>;
     getInstalled(): Promise<InstalledExtension[]>;
     install(id: number): Promise<InstalledExtension>;
     update(installId: number): Promise<InstalledExtension>;
