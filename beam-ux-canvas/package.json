@@ -1,0 +1,51 @@
+{
+    "name": "@splicewire/beam-ux-canvas",
+    "version": "0.1.0",
+    "description": "Optional VFX decoration layer for beam surfaces — effects decorate, they never replace: every effect wraps real, shippable DOM (the real component tree is always present, focusable, and accessible underneath). Ships ParticleObject, a Three.js GPU point cloud sampled from a source image with cursor scatter + spring-damper return, gated behind WebGL-capability and prefers-reduced-motion detection. Promoted out of splicewire-app's app-local beam-ux-canvas prototype (ui/src/_prototype/beam-ux-canvas).",
+    "license": "MIT",
+    "type": "module",
+    "main": "dist/index.js",
+    "types": "dist/index.d.ts",
+    "exports": {
+        ".": {
+            "types": "./dist/index.d.ts",
+            "import": "./dist/index.js"
+        }
+    },
+    "sideEffects": false,
+    "files": [
+        "dist",
+        "src",
+        "README.md"
+    ],
+    "publishConfig": {
+        "registry": "https://registry.npmjs.org",
+        "access": "public"
+    },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/splicewire/beam.git",
+        "directory": "beam-ux-canvas"
+    },
+    "scripts": {
+        "build": "tsup",
+        "dev": "tsup --watch",
+        "test": "vitest run",
+        "typecheck": "tsc --noEmit",
+        "prepublishOnly": "npm run build"
+    },
+    "peerDependencies": {
+        "react": ">=18",
+        "three": ">=0.170.0"
+    },
+    "devDependencies": {
+        "@types/node": "^22.20.1",
+        "@types/react": "^19.0.0",
+        "@types/three": "^0.185.1",
+        "react": "^19.2.0",
+        "three": "^0.185.1",
+        "tsup": "^8.5.1",
+        "typescript": "^5.7.2",
+        "vitest": "^4.1.10"
+    }
+}
