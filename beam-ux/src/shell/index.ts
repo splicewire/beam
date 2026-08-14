@@ -33,3 +33,10 @@ export {
     type OverlayWindow,
     type WindowManager,
 } from './realm';
+
+export {
+    DefaultOsDesktop,
+    type DefaultOsDesktopProps,
+    defaultGenericBinding,
+    defaultSurfaceInjection,
+} from './default-desktop';

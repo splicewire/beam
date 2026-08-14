@@ -95,6 +95,7 @@
         "recast": "^0.23.12"
     },
     "peerDependencies": {
+        "@inertiajs/react": ">=2",
         "@schemastud/chat": "*",
         "@schemastud/frame": "*",
         "@schemastud/mainframe": "*",
@@ -116,6 +117,7 @@
         }
     },
     "devDependencies": {
+        "@inertiajs/react": "^3.0.0",
         "@schemastud/chat": "file:../../schemastud/chat",
         "@schemastud/frame": "file:../../schemastud/frame",
         "@schemastud/mainframe": "file:../../schemastud/mainframe",

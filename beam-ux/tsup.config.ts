@@ -35,6 +35,7 @@ export default defineConfig({
         'react',
         'react/jsx-runtime',
         'react-dom',
+        '@inertiajs/react',
         '@tanstack/react-query',
         '@schemastud/ui',
         '@schemastud/seam',
