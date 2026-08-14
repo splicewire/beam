@@ -60,7 +60,7 @@ export function useEntitlements() {
 export function useSubscriptionCheckout() {
     const { client, onError } = useCommerceServices();
     return useMutation({
-        mutationFn: (plan: string) => client.startSubscriptionCheckout(plan),
+        mutationFn: (planId: string) => client.startSubscriptionCheckout(planId),
         onError: (err) => onError?.(err),
     });
 }

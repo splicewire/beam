@@ -18,8 +18,8 @@ import type {
 export interface CommerceClient {
     // Credits / wallet
     getWallet(): Promise<WalletBalance>;
-    /** Start an embedded Stripe Checkout top-up; returns the client_secret the element mounts on. */
-    startTopupCheckout(amountUsd: number): Promise<{ client_secret: string }>;
+    /** Start an embedded Stripe Checkout top-up; returns the clientSecret the element mounts on. */
+    startTopupCheckout(amountUsd: number): Promise<{ clientSecret: string }>;
 
     // Billing / spend control
     getBudget(): Promise<BudgetVerdict>;
@@ -31,8 +31,12 @@ export interface CommerceClient {
     getSubscription(): Promise<SubscriptionView>;
     /** The resolved entitlement rows (they ride `GET me` in splicewire — the host supplies them). */
     getEntitlements(): Promise<EntitlementRecord[]>;
-    /** Start hosted Stripe Checkout for a plan; the surface hard-navigates to the returned URL. */
-    startSubscriptionCheckout(plan: string): Promise<{ url: string }>;
+    /**
+     * Start hosted Stripe Checkout for a plan; the surface hard-navigates to the returned URL.
+     * Takes the Plan ID — the backend moved onto the `plans/{id}/op/checkout` particle op, where
+     * the plan rides the path segment (the old transport took a body slug).
+     */
+    startSubscriptionCheckout(planId: string): Promise<{ url: string }>;
     /** Get the Stripe Customer Portal URL for self-serve plan changes / cancellation. */
     getSubscriptionPortal(): Promise<{ url: string }>;
 }

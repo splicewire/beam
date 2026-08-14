@@ -325,15 +325,16 @@ export function SubscriptionSurface({
     const onPortal = () =>
         portal.mutate(undefined, { onSuccess: ({ url }) => navigate(url) });
     const onCheckout = () => {
-        const slug = data?.subscription?.planSlug;
-        if (slug) checkout.mutate(slug, { onSuccess: ({ url }) => navigate(url) });
+        // The plans/{id}/op/checkout particle op takes the Plan ID in the path (not a body slug).
+        const planId = data?.subscription?.planId;
+        if (planId) checkout.mutate(planId, { onSuccess: ({ url }) => navigate(url) });
     };
 
     const actions = data?.hasStripeId ? (
         <Button variant="outline" size="sm" onClick={onPortal} disabled={portal.isPending}>
             Manage subscription <ExternalLink className="size-3.5" />
         </Button>
-    ) : data?.stripePriceId && data.subscription?.planSlug ? (
+    ) : data?.stripePriceId && data.subscription?.planId ? (
         <Button size="sm" onClick={onCheckout} disabled={checkout.isPending}>
             Subscribe <ArrowUpRight className="size-3.5" />
         </Button>
