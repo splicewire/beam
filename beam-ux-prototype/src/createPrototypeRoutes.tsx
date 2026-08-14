@@ -15,7 +15,7 @@ import { NAMESPACE_DEFAULT, parsePrototypePath } from './discovery';
  *
  * The host keeps the `import.meta.env.DEV ? [...] : []` guard around the call so the whole branch
  * (and its lazily-imported chunks) tree-shakes out of production — asserted by the packaged
- * `verify-prototype-boundary` CLI.
+ * `beam-verify-prototype-boundary` CLI.
  */
 
 /** The shape of a lazy (non-eager) `import.meta.glob` result: path → module loader. */

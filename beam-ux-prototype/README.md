@@ -90,7 +90,7 @@ the host** (Vite `resolve.dedupe`) so a `file:`-linked build binds the app's sin
 A `lint:imports` deny-list gate (`npm run lint:imports`) guarantees no `@/` app-local import leaks
 back into the package.
 
-## `verify-prototype-boundary` (CLI)
+## `beam-verify-prototype-boundary` (CLI)
 
 Turns "prototypes never ship" into a build-time **assertion**: it runs the host's production build
 and fails if any prototype code (or a `/_prototype/` route string) survived the DEV-guard
@@ -98,7 +98,7 @@ tree-shake. Wire it as the host's boundary script:
 
 ```jsonc
 // host package.json
-"scripts": { "verify:prod-boundary": "verify-prototype-boundary" },
+"scripts": { "beam:verify-prototype-boundary": "beam-verify-prototype-boundary" },
 "prototype": { "outDir": "../public/ui" }  // build output the CLI scans
 ```
 

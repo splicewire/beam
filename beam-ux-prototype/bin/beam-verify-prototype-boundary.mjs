@@ -20,11 +20,11 @@
  * the token strings are now parameters.
  *
  * Usage (run from the host UI package root, e.g. splicewire-app `ui/`):
- *   verify-prototype-boundary                       # build, then assert
- *   verify-prototype-boundary --no-build            # assert against existing out-dir
- *   verify-prototype-boundary --out-dir ../public/ui
- *   verify-prototype-boundary --tokens /_prototype/,_prototype
- *   verify-prototype-boundary --build-command "npm run build"
+ *   beam-verify-prototype-boundary                       # build, then assert
+ *   beam-verify-prototype-boundary --no-build            # assert against existing out-dir
+ *   beam-verify-prototype-boundary --out-dir ../public/ui
+ *   beam-verify-prototype-boundary --tokens /_prototype/,_prototype
+ *   beam-verify-prototype-boundary --build-command "npm run build"
  *
  * Defaults:
  *   --out-dir      : the host `package.json` `prototype.outDir` key (required if not passed)

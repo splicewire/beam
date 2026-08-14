@@ -13,7 +13,7 @@
         }
     },
     "bin": {
-        "verify-prototype-boundary": "bin/verify-prototype-boundary.mjs"
+        "beam-verify-prototype-boundary": "bin/beam-verify-prototype-boundary.mjs"
     },
     "sideEffects": false,
     "files": [
