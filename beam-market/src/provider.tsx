@@ -6,6 +6,10 @@ import type { CatalogFilters, ExtensionListingDetail, ExtensionsCatalog, Install
 // It wraps whatever transport the host already has (axios, fetch, a server action) and points it
 // at the correct `beam-market/extensions/*` endpoints; the surfaces are host- and URL-blind.
 // Endpoints stay relative (ADR-0116 §2 kind 1).
+//
+// The package-side endpoints answer on the standard `{ data: … }` envelope — the adapter is the
+// unwrap seam: each method resolves with the envelope's `data` payload (the DTO shapes below),
+// never the envelope itself.
 export interface ExtensionsClient {
     getCatalog(filters?: CatalogFilters): Promise<ExtensionsCatalog>;
     getListing(id: number): Promise<ExtensionListingDetail>;
