@@ -3,11 +3,12 @@
 // dock "Edit content"), then the same content region becomes editable with FLOATING panels (Insert ·
 // Inspector) + Save + Exit. Port of the host `PageEditor`, re-based on JsonNode + injected transport/notify
 // (no `sonner`, no app imports). The mode seam (`beam-ux:mode` / `beam-ux:exit` window events) is preserved.
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
     getAt,
     isJsonBlock,
     isLeafText,
+    moveAfter,
     moveBefore,
     removeAt,
     setProp,
@@ -16,8 +17,9 @@ import {
 } from '../blockdoc/json.js';
 import type { JsonBlock, JsonDoc } from '../blockdoc/json.js';
 import { CanvasNode } from './CanvasNode.js';
+import type { DropEdge } from './CanvasNode.js';
 import { useCanvas } from './context.js';
-import { peCss, selectionCss, veCss } from './css.js';
+import { dropIndicatorCss, peCss, selectionCss, veCss } from './css.js';
 import type { CanvasTheme } from './css.js';
 import { Inspector } from './Inspector.js';
 import { insertRelativeTo } from './insert.js';
@@ -48,6 +50,14 @@ export interface PageEditorProps {
     fallbackDoc?: (slug: string) => JsonDoc | null;
     /** Brand label shown in the floating bar. */
     brand?: string;
+    /**
+     * Undo/redo — entirely host-injected (the package stays version-blind, ADR-0116 four-kind seam).
+     * Buttons render only when supplied. See {@link VisualEditorProps} for the same seam in window mode.
+     */
+    onUndo?: () => void;
+    onRedo?: () => void;
+    canUndo?: boolean;
+    canRedo?: boolean;
 }
 
 const EMPTY_DOC: JsonDoc = [
@@ -77,6 +87,10 @@ export function PageEditor({
     theme,
     fallbackDoc,
     brand,
+    onUndo,
+    onRedo,
+    canUndo = false,
+    canRedo = false,
 }: PageEditorProps) {
     const config = useCanvas();
     const templates = config.blockTemplates ?? DEFAULT_BLOCK_TEMPLATES;
@@ -85,7 +99,8 @@ export function PageEditor({
     const [doc, setDoc] = useState<JsonDoc>(initial);
     const [sel, setSel] = useState<string | null>(null);
     const [editText, setEditText] = useState<string | null>(null);
-    const dragPath = useRef<string | null>(null);
+    const [dragPath, setDragPath] = useState<string | null>(null);
+    const [dropTarget, setDropTarget] = useState<{ path: string; edge: DropEdge } | null>(null);
     const [leftOpen, setLeftOpen] = useState(true);
     // Closed by default (nothing to show); auto-opens on selection, and the Inspector button forces it open.
     const [rightOpen, setRightOpen] = useState(false);
@@ -101,9 +116,12 @@ export function PageEditor({
     const onCanvasClick = (e: React.MouseEvent) => {
         // Clicks inside the mdxeditor belong to it — don't hijack them for selection.
         if ((e.target as HTMLElement).closest('[data-mdx-edit]')) return;
-        e.preventDefault();
         const el = (e.target as HTMLElement).closest('[data-bd-path]');
         const path = el ? el.getAttribute('data-bd-path') : null;
+        // A click inside the node currently being text-edited places the caret — see VisualEditor's
+        // onCanvasClick for why intercepting it here would both block that and exit edit mode instantly.
+        if (editText && path === editText) return;
+        e.preventDefault();
         setSel(path);
         setEditText(null);
         if (path) setRightOpen(true);
@@ -126,6 +144,22 @@ export function PageEditor({
         }
     };
     const exit = () => window.dispatchEvent(new CustomEvent('beam-ux:exit'));
+    const dnd = {
+        onDragStart: setDragPath,
+        onDragOverNode: (path: string, edge: DropEdge) => setDropTarget({ path, edge }),
+        onDrop: () => {
+            if (dragPath && dropTarget) {
+                const move = dropTarget.edge === 'before' ? moveBefore : moveAfter;
+                setDoc(move(doc, dragPath, dropTarget.path));
+            }
+            setDragPath(null);
+            setDropTarget(null);
+        },
+        onDragEnd: () => {
+            setDragPath(null);
+            setDropTarget(null);
+        },
+    };
 
     return (
         <>
@@ -133,6 +167,13 @@ export function PageEditor({
             {sel && (
                 <style
                     dangerouslySetInnerHTML={{ __html: selectionCss(sel, theme?.accent ?? '#4F7CFF') }}
+                />
+            )}
+            {dragPath && dropTarget && (
+                <style
+                    dangerouslySetInnerHTML={{
+                        __html: dropIndicatorCss(dropTarget.path, dropTarget.edge, theme?.accent ?? '#4F7CFF'),
+                    }}
                 />
             )}
 
@@ -157,15 +198,7 @@ export function PageEditor({
                                 ),
                             )
                         }
-                        dnd={{
-                            onDragStart: (p) => {
-                                dragPath.current = p;
-                            },
-                            onDropBefore: (p) => {
-                                if (dragPath.current) setDoc(moveBefore(doc, dragPath.current, p));
-                                dragPath.current = null;
-                            },
-                        }}
+                        dnd={dnd}
                     />
                 ))}
             </div>
@@ -177,6 +210,16 @@ export function PageEditor({
                     {brand ?? `editing · ${slug}`}
                 </span>
                 <span style={{ flex: 1 }} />
+                {(onUndo || onRedo) && (
+                    <>
+                        <button className="pe-btn" onClick={onUndo} disabled={!canUndo} title="Undo">
+                            ↶ Undo
+                        </button>
+                        <button className="pe-btn" onClick={onRedo} disabled={!canRedo} title="Redo">
+                            ↷ Redo
+                        </button>
+                    </>
+                )}
                 <button className="pe-btn" onClick={() => setLeftOpen((v) => !v)}>
                     Insert
                 </button>

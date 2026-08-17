@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import type { JsonBlock, JsonDoc } from '../blockdoc/json.js';
-import { CanvasNode } from './CanvasNode.js';
+import { CanvasNode, edgeAt } from './CanvasNode.js';
 import { CanvasProvider } from './context.js';
 import type { CanvasConfig } from './context.js';
 import { Inspector } from './Inspector.js';
@@ -29,7 +29,7 @@ const block = (over: Partial<JsonBlock>): JsonBlock => ({
     ...over,
 });
 
-const noopDnd = { onDragStart: vi.fn(), onDropBefore: vi.fn() };
+const noopDnd = { onDragStart: vi.fn(), onDragOverNode: vi.fn(), onDrop: vi.fn(), onDragEnd: vi.fn() };
 
 // ── CanvasNode: island seal ───────────────────────────────────────────────────────────────────────────
 describe('CanvasNode — opaque islands', () => {
@@ -60,29 +60,76 @@ describe('CanvasNode — opaque islands', () => {
 
 // ── CanvasNode: inline text edit ──────────────────────────────────────────────────────────────────────
 describe('CanvasNode — inline text edit', () => {
-    it('makes a leaf editable and calls onEditText on blur', () => {
+    it('makes a leaf editable, autofocuses it, and calls onEditText on blur', () => {
         const onEditText = vi.fn();
         const node = block({ name: 'h2', children: [{ kind: 'text', value: 'Title' }] });
         render(wrap(<CanvasNode node={node} path="0" editing="0" onEditText={onEditText} dnd={noopDnd} />));
         const h2 = document.querySelector('h2') as HTMLElement;
         expect(h2.getAttribute('contenteditable')).toBe('true');
+        // entering edit mode focuses the node directly — no second click needed to place the caret
+        // (the bug this guards: without this, a click to place the caret was intercepted by the
+        // canvas's own selection handler and immediately exited edit mode).
+        expect(document.activeElement).toBe(h2);
         h2.textContent = 'Changed';
         fireEvent.blur(h2);
         expect(onEditText).toHaveBeenCalledWith('0', 'Changed');
+    });
+
+    it('is not draggable while being text-edited (draggable would hijack text-selection drag)', () => {
+        const node = block({ name: 'h2', children: [{ kind: 'text', value: 'Title' }] });
+        render(wrap(<CanvasNode node={node} path="0" editing="0" onEditText={vi.fn()} dnd={noopDnd} />));
+        const h2 = document.querySelector('h2') as HTMLElement;
+        expect(h2.getAttribute('draggable')).toBe('false');
+    });
+
+    it('is draggable again once editing ends', () => {
+        const node = block({ name: 'h2', children: [{ kind: 'text', value: 'Title' }] });
+        render(wrap(<CanvasNode node={node} path="0" editing={null} onEditText={vi.fn()} dnd={noopDnd} />));
+        const h2 = document.querySelector('h2') as HTMLElement;
+        expect(h2.getAttribute('draggable')).toBe('true');
+    });
+});
+
+// ── edgeAt: the pure drop-edge computation ────────────────────────────────────────────────────────────
+describe('edgeAt', () => {
+    const el = (rect: Partial<DOMRect>): HTMLElement =>
+        ({ getBoundingClientRect: () => ({ top: 0, height: 100, ...rect }) }) as HTMLElement;
+
+    it('reports "before" for the top half and "after" for the bottom half of the box', () => {
+        expect(edgeAt(el({ top: 0, height: 100 }), 10)).toBe('before');
+        expect(edgeAt(el({ top: 0, height: 100 }), 90)).toBe('after');
+        // the midpoint itself belongs to the bottom half (strict "<" for the top half)
+        expect(edgeAt(el({ top: 0, height: 100 }), 50)).toBe('after');
+    });
+
+    it('accounts for the box\'s own top offset, not just the viewport-absolute cursor position', () => {
+        expect(edgeAt(el({ top: 200, height: 100 }), 210)).toBe('before');
+        expect(edgeAt(el({ top: 200, height: 100 }), 290)).toBe('after');
     });
 });
 
 // ── CanvasNode: drag reorder ──────────────────────────────────────────────────────────────────────────
 describe('CanvasNode — drag/drop', () => {
-    it('raises onDragStart / onDropBefore with the node path', () => {
-        const dnd = { onDragStart: vi.fn(), onDropBefore: vi.fn() };
+    it('raises onDragStart / onDragOverNode / onDrop / onDragEnd with the node path', () => {
+        const dnd = { onDragStart: vi.fn(), onDragOverNode: vi.fn(), onDrop: vi.fn(), onDragEnd: vi.fn() };
         const node = block({ name: 'p', children: [{ kind: 'text', value: 'x' }] });
         render(wrap(<CanvasNode node={node} path="0.3" editing={null} onEditText={vi.fn()} dnd={dnd} />));
         const p = document.querySelector('p') as HTMLElement;
+
         fireEvent.dragStart(p);
         expect(dnd.onDragStart).toHaveBeenCalledWith('0.3');
+
+        // jsdom's DragEvent doesn't reliably plumb clientY/layout through fireEvent, so this only
+        // proves the wiring raises onDragOverNode for this path — edgeAt's own before/after boundary
+        // math is unit-tested directly above, decoupled from jsdom's event/layout support.
+        fireEvent.dragOver(p);
+        expect(dnd.onDragOverNode).toHaveBeenCalledWith('0.3', expect.stringMatching(/^(before|after)$/));
+
         fireEvent.drop(p);
-        expect(dnd.onDropBefore).toHaveBeenCalledWith('0.3');
+        expect(dnd.onDrop).toHaveBeenCalled();
+
+        fireEvent.dragEnd(p);
+        expect(dnd.onDragEnd).toHaveBeenCalled();
     });
 });
 

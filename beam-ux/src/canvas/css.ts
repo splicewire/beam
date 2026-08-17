@@ -47,6 +47,14 @@ const theme = (t?: Partial<CanvasTheme>): CanvasTheme => ({ ...DEFAULT_CANVAS_TH
 export const selectionCss = (path: string, accent: string): string =>
     `[data-bd-path="${path}"]{outline:2px solid ${accent} !important;outline-offset:1px}`;
 
+/**
+ * Drop-target indicator CSS: a solid line on the hovered block's top (`before`) or bottom (`after`)
+ * edge, showing exactly where a drag-reorder will land (shared by both mounts). `!important` beats the
+ * hover dashed-outline rule so the indicator stays legible while dragging over an element.
+ */
+export const dropIndicatorCss = (path: string, edge: 'before' | 'after', accent: string): string =>
+    `[data-bd-path="${path}"]{box-shadow:inset 0 ${edge === 'before' ? '3px' : '-3px'} 0 0 ${accent} !important;outline:none !important}`;
+
 /** The window-mode composed editor CSS (host `VE_CSS`), theme-parametrized. */
 export function veCss(t?: Partial<CanvasTheme>): string {
     const c = theme(t);
@@ -58,6 +66,7 @@ export function veCss(t?: Partial<CanvasTheme>): string {
 .ve-hint{color:${c.muted}}
 .ve-spacer{flex:1}
 .ve-toggle{background:none;border:1px solid rgba(255,255,255,.14);border-radius:8px;color:${c.panelFg};cursor:pointer;font:inherit;font-size:11px;padding:5px 11px}
+.ve-toggle:disabled{opacity:.35;cursor:not-allowed}
 .ve-toggle.on{color:#fff;background:${c.accent}28;border-color:${c.accent}66}
 .ve-toggle.ve-save{color:#fff;background:${c.accent};border-color:${c.accent}}
 .ve-toggle.ve-save:hover{background:${c.accentHover}}
@@ -124,6 +133,7 @@ export function peCss(t?: Partial<CanvasTheme>): string {
 .pe-mark{width:14px;height:14px;border-radius:23%;background:${c.accent}}
 .pe-btn{background:none;border:1px solid rgba(255,255,255,.16);border-radius:8px;color:${c.panelFg};cursor:pointer;font:inherit;font-size:11px;padding:5px 12px}
 .pe-btn:hover{color:#fff;border-color:${c.accent}80}
+.pe-btn:disabled{opacity:.35;cursor:not-allowed}
 .pe-btn.primary{background:${c.accent};border-color:${c.accent};color:#fff}
 .pe-panel{position:fixed;top:48px;bottom:14px;width:300px;z-index:2147483200;background:${c.panelBg};border:1px solid rgba(255,255,255,.1);border-radius:12px;overflow:auto;box-shadow:0 24px 60px -18px rgba(0,0,0,.6)}
 .pe-left{left:14px;width:200px;padding:14px 12px;display:flex;flex-direction:column;gap:7px}

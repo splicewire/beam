@@ -245,13 +245,22 @@ export function removeAt(doc: JsonDoc, path: string): JsonDoc {
 
 /** Move the node at `from` to be the sibling immediately before `target`. No-op if dropping into self. */
 export function moveBefore(doc: JsonDoc, from: string, target: string): JsonDoc {
+    return moveTo(doc, from, target, 'before');
+}
+
+/** Move the node at `from` to be the sibling immediately after `target`. No-op if dropping into self. */
+export function moveAfter(doc: JsonDoc, from: string, target: string): JsonDoc {
+    return moveTo(doc, from, target, 'after');
+}
+
+function moveTo(doc: JsonDoc, from: string, target: string, edge: 'before' | 'after'): JsonDoc {
     if (from === target || target.startsWith(`${from}.`)) return doc;
     const node = getAt(doc, from);
     if (!node) return doc;
 
     const removed = removeAt(doc, from);
-    let tParent = parentOf(target);
-    let tIndex = indexOf(target);
+    const tParent = parentOf(target);
+    let tIndex = indexOf(target) + (edge === 'after' ? 1 : 0);
 
     // Removing an earlier sibling under the same parent shifts the target index down by one.
     if (parentOf(from) === tParent && indexOf(from) < tIndex) tIndex -= 1;

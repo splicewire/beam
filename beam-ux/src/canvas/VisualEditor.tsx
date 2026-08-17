@@ -7,6 +7,7 @@ import {
     isJsonBlock,
     isLeafText,
     jsonToTsx,
+    moveAfter,
     moveBefore,
     removeAt,
     setProp,
@@ -15,8 +16,9 @@ import {
 } from '../blockdoc/json.js';
 import type { JsonBlock, JsonDoc } from '../blockdoc/json.js';
 import { CanvasNode } from './CanvasNode.js';
+import type { DropEdge } from './CanvasNode.js';
 import { useCanvas } from './context.js';
-import { selectionCss, veCss } from './css.js';
+import { dropIndicatorCss, selectionCss, veCss } from './css.js';
 import type { CanvasTheme } from './css.js';
 import { Inspector } from './Inspector.js';
 import { insertRelativeTo } from './insert.js';
@@ -31,14 +33,34 @@ export interface VisualEditorProps {
     theme?: Partial<CanvasTheme>;
     /** Brand label shown in the top bar (host-supplied). Defaults to a generic label. */
     brand?: string;
+    /**
+     * Undo/redo — entirely host-injected (the package stays version-blind, ADR-0116 four-kind seam).
+     * A host typically backs these with its own version-history mechanism (e.g.
+     * `@splicewire/beam-versioning`'s `useRestoreVersion`). Buttons render only when supplied.
+     */
+    onUndo?: () => void;
+    onRedo?: () => void;
+    canUndo?: boolean;
+    canRedo?: boolean;
 }
 
-export function VisualEditor({ value, onChange, onSave, theme, brand = 'visual editor' }: VisualEditorProps) {
+export function VisualEditor({
+    value,
+    onChange,
+    onSave,
+    theme,
+    brand = 'visual editor',
+    onUndo,
+    onRedo,
+    canUndo = false,
+    canRedo = false,
+}: VisualEditorProps) {
     const config = useCanvas();
     const templates = config.blockTemplates ?? DEFAULT_BLOCK_TEMPLATES;
     const [sel, setSel] = useState<string | null>(null);
     const [editing, setEditing] = useState<string | null>(null);
     const [dragPath, setDragPath] = useState<string | null>(null);
+    const [dropTarget, setDropTarget] = useState<{ path: string; edge: DropEdge } | null>(null);
     const [leftOpen, setLeftOpen] = useState(true);
     const [rightOpen, setRightOpen] = useState(true);
     const selNode = sel ? getAt(value, sel) : null;
@@ -46,9 +68,15 @@ export function VisualEditor({ value, onChange, onSave, theme, brand = 'visual e
     const serialized = useMemo(() => jsonToTsx(value), [value]);
 
     const onCanvasClick = (e: React.MouseEvent) => {
-        e.preventDefault();
         const el = (e.target as HTMLElement).closest('[data-bd-path]');
-        setSel(el ? el.getAttribute('data-bd-path') : null);
+        const path = el ? el.getAttribute('data-bd-path') : null;
+        // A click inside the node currently being text-edited places the caret — let the browser handle
+        // it natively. Intercepting here (as every other click is, to drive selection) would both steal
+        // the click's default caret-placement behavior AND immediately drop out of edit mode, so typing
+        // would never get a chance to start.
+        if (editing && path === editing) return;
+        e.preventDefault();
+        setSel(path);
         setEditing(null);
     };
     const onCanvasDbl = (e: React.MouseEvent) => {
@@ -61,12 +89,36 @@ export function VisualEditor({ value, onChange, onSave, theme, brand = 'visual e
 
     const addBlock = (make: () => JsonBlock) => onChange(insertRelativeTo(value, sel, make));
 
+    const dnd = {
+        onDragStart: setDragPath,
+        onDragOverNode: (path: string, edge: DropEdge) => setDropTarget({ path, edge }),
+        onDrop: () => {
+            if (dragPath && dropTarget) {
+                const move = dropTarget.edge === 'before' ? moveBefore : moveAfter;
+                onChange(move(value, dragPath, dropTarget.path));
+            }
+            setDragPath(null);
+            setDropTarget(null);
+        },
+        onDragEnd: () => {
+            setDragPath(null);
+            setDropTarget(null);
+        },
+    };
+
     return (
         <div className="ve-root">
             <style dangerouslySetInnerHTML={{ __html: veCss(theme) }} />
             {sel && (
                 <style
                     dangerouslySetInnerHTML={{ __html: selectionCss(sel, theme?.accent ?? '#4F7CFF') }}
+                />
+            )}
+            {dragPath && dropTarget && (
+                <style
+                    dangerouslySetInnerHTML={{
+                        __html: dropIndicatorCss(dropTarget.path, dropTarget.edge, theme?.accent ?? '#4F7CFF'),
+                    }}
                 />
             )}
 
@@ -79,6 +131,16 @@ export function VisualEditor({ value, onChange, onSave, theme, brand = 'visual e
                     click = select · double-click text = edit · drag = reorder
                 </span>
                 <span className="ve-spacer" />
+                {(onUndo || onRedo) && (
+                    <>
+                        <button className="ve-toggle" onClick={onUndo} disabled={!canUndo} title="Undo">
+                            ↶ Undo
+                        </button>
+                        <button className="ve-toggle" onClick={onRedo} disabled={!canRedo} title="Redo">
+                            ↷ Redo
+                        </button>
+                    </>
+                )}
                 <button
                     className={`ve-toggle${leftOpen ? ' on' : ''}`}
                     onClick={() => setLeftOpen((v) => !v)}
@@ -137,13 +199,7 @@ export function VisualEditor({ value, onChange, onSave, theme, brand = 'visual e
                                     ),
                                 )
                             }
-                            dnd={{
-                                onDragStart: setDragPath,
-                                onDropBefore: (p) => {
-                                    if (dragPath) onChange(moveBefore(value, dragPath, p));
-                                    setDragPath(null);
-                                },
-                            }}
+                            dnd={dnd}
                         />
                     ))}
                 </div>

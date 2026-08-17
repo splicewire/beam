@@ -2,7 +2,7 @@
 // and renders opaque islands / opaque nodes SEALED. A faithful port of the host `CanvasNode`, re-based on
 // the `JsonNode` tree from `@splicewire/beam-ux/blockdoc/json` + the injected CanvasConfig (registry / MDX
 // island / — NO app imports).
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import {
     isJsonOpaque,
     isJsonText,
@@ -14,8 +14,21 @@ import type { JsonBlock, JsonNode } from '../blockdoc/json.js';
 import { isIsland, useCanvas } from './context.js';
 import { blockToProps, islandProps } from './props.js';
 
-/** Drag/drop callbacks the canvas raises upward (the mount owns drag state). */
-export type Dnd = { onDragStart: (path: string) => void; onDropBefore: (path: string) => void };
+/** Which half of a hovered block's box a drag is over — the mount inserts on that edge. */
+export type DropEdge = 'before' | 'after';
+
+/**
+ * Drag/drop callbacks the canvas raises upward (the mount owns drag state, so multiple sibling
+ * CanvasNodes agree on a single source of truth for "what's being dragged, and over which edge").
+ */
+export type Dnd = {
+    onDragStart: (path: string) => void;
+    /** The drag is hovering `path`, over its top (`before`) or bottom (`after`) half. */
+    onDragOverNode: (path: string, edge: DropEdge) => void;
+    /** Commit the move at whatever (path, edge) the mount last recorded via `onDragOverNode`. */
+    onDrop: () => void;
+    onDragEnd: () => void;
+};
 
 export interface CanvasNodeProps {
     node: JsonNode;
@@ -27,9 +40,33 @@ export interface CanvasNodeProps {
     dnd: Dnd;
 }
 
+/** The vertical half of `el`'s box `clientY` falls in — the edge a drop at this cursor position targets. */
+export function edgeAt(el: HTMLElement, clientY: number): DropEdge {
+    const rect = el.getBoundingClientRect();
+    return clientY - rect.top < rect.height / 2 ? 'before' : 'after';
+}
+
 export function CanvasNode({ node, path, editing, onEditText, onEditMd, dnd }: CanvasNodeProps) {
     const config = useCanvas();
     const { MdxEdit, registry } = config;
+    const hostRef = useRef<HTMLElement | null>(null);
+    const isEditingThis = node.kind === 'block' && editing === path && isLeafText(node);
+
+    // Entering inline-edit places focus + the caret at the end of the existing text — without this the
+    // element becomes contentEditable but nothing is focused, so a user has to click again to type, and
+    // that click is exactly what the canvas's own click handler intercepts to SELECT (see VisualEditor/
+    // PageEditor's onCanvasClick guard) — the double-click would otherwise appear to do nothing.
+    useEffect(() => {
+        if (!isEditingThis || !hostRef.current) return;
+        const el = hostRef.current;
+        el.focus();
+        const range = document.createRange();
+        range.selectNodeContents(el);
+        range.collapse(false);
+        const sel = window.getSelection();
+        sel?.removeAllRanges();
+        sel?.addRange(range);
+    }, [isEditingThis]);
 
     // Text leaf — rendered as bare content (the parent element hosts it; contentEditable is applied there).
     if (isJsonText(node)) return <>{node.value}</>;
@@ -46,12 +83,17 @@ export function CanvasNode({ node, path, editing, onEditText, onEditMd, dnd }: C
                     e.stopPropagation();
                     dnd.onDragStart(path);
                 }}
-                onDragOver={(e) => e.preventDefault()}
+                onDragOver={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    dnd.onDragOverNode(path, edgeAt(e.currentTarget, e.clientY));
+                }}
                 onDrop={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    dnd.onDropBefore(path);
+                    dnd.onDrop();
                 }}
+                onDragEnd={dnd.onDragEnd}
                 title={`Sealed ${node.reason} island`}
             >
                 <pre className="ve-opaque-src" style={{ pointerEvents: 'none' }}>
@@ -78,12 +120,17 @@ export function CanvasNode({ node, path, editing, onEditText, onEditMd, dnd }: C
                         e.stopPropagation();
                         dnd.onDragStart(path);
                     }}
-                    onDragOver={(e) => e.preventDefault()}
+                    onDragOver={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        dnd.onDragOverNode(path, edgeAt(e.currentTarget, e.clientY));
+                    }}
                     onDrop={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
-                        dnd.onDropBefore(path);
+                        dnd.onDrop();
                     }}
+                    onDragEnd={dnd.onDragEnd}
                     title="Select this content block"
                 >
                     ◆ content{file ? ` · ${String(file)}` : ''}
@@ -101,7 +148,10 @@ export function CanvasNode({ node, path, editing, onEditText, onEditMd, dnd }: C
 
     const props: Record<string, unknown> = {
         'data-bd-path': path,
-        draggable: true,
+        // A node mid text-edit isn't draggable — HTML5 drag and contentEditable's own click-drag text
+        // selection fight over the same mousedown-then-move gesture, so a drag start here would hijack
+        // what the user meant as "select this word" and the caret would never land.
+        draggable: !isEditingThis,
         onDragStart: (e: React.DragEvent) => {
             // A drag begun inside the mdxeditor belongs to it — don't drag the containing block.
             if ((e.target as HTMLElement).closest('[data-mdx-edit]')) {
@@ -111,12 +161,17 @@ export function CanvasNode({ node, path, editing, onEditText, onEditMd, dnd }: C
             e.stopPropagation();
             dnd.onDragStart(path);
         },
-        onDragOver: (e: React.DragEvent) => e.preventDefault(),
+        onDragOver: (e: React.DragEvent<HTMLElement>) => {
+            e.preventDefault();
+            e.stopPropagation();
+            dnd.onDragOverNode(path, edgeAt(e.currentTarget, e.clientY));
+        },
         onDrop: (e: React.DragEvent) => {
             e.preventDefault();
             e.stopPropagation();
-            dnd.onDropBefore(path);
+            dnd.onDrop();
         },
+        onDragEnd: dnd.onDragEnd,
         ...blockToProps(block),
     };
 
@@ -139,11 +194,12 @@ export function CanvasNode({ node, path, editing, onEditText, onEditMd, dnd }: C
         return React.createElement(tag, props);
     }
 
-    if (editing === path && isLeafText(block)) {
+    if (isEditingThis) {
         return React.createElement(
             tag,
             {
                 ...props,
+                ref: hostRef,
                 contentEditable: true,
                 suppressContentEditableWarning: true,
                 onBlur: (e: React.FocusEvent<HTMLElement>) =>

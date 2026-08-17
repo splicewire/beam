@@ -24,8 +24,8 @@ export type {
 } from './context.js';
 
 // The editor surfaces
-export { CanvasNode } from './CanvasNode.js';
-export type { CanvasNodeProps, Dnd } from './CanvasNode.js';
+export { CanvasNode, edgeAt } from './CanvasNode.js';
+export type { CanvasNodeProps, Dnd, DropEdge } from './CanvasNode.js';
 export { TreeRender } from './TreeRender.js';
 export { Inspector } from './Inspector.js';
 export type { InspectorProps } from './Inspector.js';
@@ -35,7 +35,7 @@ export { PageEditor, useEditMode } from './PageEditor.js';
 export type { PageEditorProps, PageEditorTransport, Notify } from './PageEditor.js';
 
 // Theme + CSS factories
-export { veCss, peCss, selectionCss, DEFAULT_CANVAS_THEME } from './css.js';
+export { veCss, peCss, selectionCss, dropIndicatorCss, DEFAULT_CANVAS_THEME } from './css.js';
 export type { CanvasTheme } from './css.js';
 
 // Generic defaults (host-overridable)
