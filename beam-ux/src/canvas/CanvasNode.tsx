@@ -238,6 +238,16 @@ export function CanvasNode({ node, path, editing, onEditText, onEditMd, dnd }: C
                 suppressContentEditableWarning: true,
                 onBlur: (e: React.FocusEvent<HTMLElement>) =>
                     onEditText(path, e.currentTarget.textContent ?? ''),
+                onKeyDown: (e: React.KeyboardEvent<HTMLElement>) => {
+                    // Escape discards the in-progress edit and drops back to plain selection — not a
+                    // full deselect. Reverting the DOM text BEFORE blurring makes the ensuing onBlur's
+                    // onEditText call a no-op (it commits the now-reverted, unchanged text).
+                    if (e.key === 'Escape') {
+                        e.preventDefault();
+                        e.currentTarget.textContent = childText(block);
+                        e.currentTarget.blur();
+                    }
+                },
             },
             childText(block),
         );

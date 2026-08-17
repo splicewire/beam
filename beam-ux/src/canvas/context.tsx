@@ -40,6 +40,13 @@ export interface CanvasConfig {
     /** Insert-palette templates. Defaults to a generic HTML block set. */
     blockTemplates?: BlockTemplate[];
     /**
+     * Known entitlement-key autocomplete pool for the Inspector's Access section (view/edit gate
+     * fields) — so authoring a gate is picking from a list, not guessing a string. A `<datalist>`, not
+     * a hard `<select>`: a key not yet in this pool still types in freely (e.g. a bespoke key a host
+     * hasn't wired into its can-map yet). Omitted ⇒ no suggestions, plain free-text inputs.
+     */
+    entitlementKeys?: string[];
+    /**
      * The current author's flat entitlement can-map (same shape a host's `CanMapBuilder` already
      * produces for its Inertia `can` prop — `{ [entitlementKey]: boolean }`). Drives per-element EDIT
      * gating: a node whose `data-edit-gate` prop names a key this map doesn't clear renders sealed

@@ -20,6 +20,7 @@ export function Inspector({ block, onAttrs, onDelete }: InspectorProps) {
     const config = useCanvas();
     const classSuggestions = config.classSuggestions ?? DEFAULT_CLASS_SUGGESTIONS;
     const varSuggestions = config.varSuggestions ?? DEFAULT_VAR_SUGGESTIONS;
+    const entitlementKeys = config.entitlementKeys ?? [];
 
     const view = attrsView(block);
     const classes = (view.className ?? '').split(/\s+/).filter(Boolean);
@@ -136,17 +137,32 @@ export function Inspector({ block, onAttrs, onDelete }: InspectorProps) {
             <div className="ve-insp-sec">
                 <div className="ve-insp-h">Access</div>
                 <div className="ve-kv">
-                    <input value={view[VIEW_GATE_ATTR] ?? ''} placeholder="view gate (entitlement key)" onChange={(e) => set({ [VIEW_GATE_ATTR]: e.target.value || undefined })} />
+                    <input
+                        value={view[VIEW_GATE_ATTR] ?? ''}
+                        placeholder="view gate (entitlement key)"
+                        list="ve-entitlement-suggest"
+                        onChange={(e) => set({ [VIEW_GATE_ATTR]: e.target.value || undefined })}
+                    />
                     {view[VIEW_GATE_ATTR] && (
                         <button onClick={() => set({ [VIEW_GATE_ATTR]: undefined })}>×</button>
                     )}
                 </div>
                 <div className="ve-kv">
-                    <input value={view[EDIT_GATE_ATTR] ?? ''} placeholder="edit gate (entitlement key)" onChange={(e) => set({ [EDIT_GATE_ATTR]: e.target.value || undefined })} />
+                    <input
+                        value={view[EDIT_GATE_ATTR] ?? ''}
+                        placeholder="edit gate (entitlement key)"
+                        list="ve-entitlement-suggest"
+                        onChange={(e) => set({ [EDIT_GATE_ATTR]: e.target.value || undefined })}
+                    />
                     {view[EDIT_GATE_ATTR] && (
                         <button onClick={() => set({ [EDIT_GATE_ATTR]: undefined })}>×</button>
                     )}
                 </div>
+                <datalist id="ve-entitlement-suggest">
+                    {entitlementKeys.map((k) => (
+                        <option key={k} value={k} />
+                    ))}
+                </datalist>
                 <div className="ve-pal-note">
                     View gate hides this element (and everything inside it) from a viewer lacking the key —
                     enforced server-side. Edit gate leaves it visible but seals it from an author lacking

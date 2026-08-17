@@ -5,20 +5,28 @@
 // (no `sonner`, no app imports). The mode seam (`beam-ux:mode` / `beam-ux:exit` window events) is preserved.
 import { useEffect, useState } from 'react';
 import {
+    duplicateAt,
     getAt,
+    indexOf,
+    insertInto,
     isJsonBlock,
     isLeafText,
     moveAfter,
     moveBefore,
+    parentOf,
     removeAt,
     setProp,
     setText,
     updateAt,
 } from '../blockdoc/json.js';
 import type { JsonBlock, JsonDoc } from '../blockdoc/json.js';
+import { Breadcrumb } from './Breadcrumb.js';
 import { CanvasNode } from './CanvasNode.js';
 import type { DropEdge } from './CanvasNode.js';
+import { ContextMenu } from './ContextMenu.js';
+import type { ContextMenuState } from './ContextMenu.js';
 import { useCanvas } from './context.js';
+import type { BlockTemplate } from './context.js';
 import { dropIndicatorCss, peCss, selectionCss, veCss } from './css.js';
 import type { CanvasTheme } from './css.js';
 import { Inspector } from './Inspector.js';
@@ -100,7 +108,9 @@ export function PageEditor({
     const [sel, setSel] = useState<string | null>(null);
     const [editText, setEditText] = useState<string | null>(null);
     const [dragPath, setDragPath] = useState<string | null>(null);
+    const [dragTemplate, setDragTemplate] = useState<BlockTemplate | null>(null);
     const [dropTarget, setDropTarget] = useState<{ path: string; edge: DropEdge } | null>(null);
+    const [menu, setMenu] = useState<ContextMenuState | null>(null);
     const [leftOpen, setLeftOpen] = useState(true);
     // Closed by default (nothing to show); auto-opens on selection, and the Inspector button forces it open.
     const [rightOpen, setRightOpen] = useState(false);
@@ -134,6 +144,17 @@ export function PageEditor({
         const node = p ? getAt(doc, p) : null;
         if (p && node && isJsonBlock(node) && isLeafText(node)) setEditText(p);
     };
+    const onCanvasContextMenu = (e: React.MouseEvent) => {
+        if ((e.target as HTMLElement).closest('[data-mdx-edit]')) return;
+        const p = (e.target as HTMLElement)
+            .closest('[data-bd-path]')
+            ?.getAttribute('data-bd-path');
+        if (!p) return;
+        e.preventDefault();
+        setSel(p);
+        setRightOpen(true);
+        setMenu({ x: e.clientX, y: e.clientY, path: p });
+    };
     const addBlock = (make: () => JsonBlock) => setDoc(insertRelativeTo(doc, sel, make));
     const save = async () => {
         try {
@@ -145,18 +166,28 @@ export function PageEditor({
     };
     const exit = () => window.dispatchEvent(new CustomEvent('beam-ux:exit'));
     const dnd = {
-        onDragStart: setDragPath,
+        onDragStart: (path: string) => {
+            setDragTemplate(null);
+            setDragPath(path);
+        },
         onDragOverNode: (path: string, edge: DropEdge) => setDropTarget({ path, edge }),
         onDrop: () => {
-            if (dragPath && dropTarget) {
-                const move = dropTarget.edge === 'before' ? moveBefore : moveAfter;
-                setDoc(move(doc, dragPath, dropTarget.path));
+            if (dropTarget) {
+                if (dragTemplate) {
+                    const index = indexOf(dropTarget.path) + (dropTarget.edge === 'after' ? 1 : 0);
+                    setDoc(insertInto(doc, parentOf(dropTarget.path), index, dragTemplate.make()));
+                } else if (dragPath) {
+                    const move = dropTarget.edge === 'before' ? moveBefore : moveAfter;
+                    setDoc(move(doc, dragPath, dropTarget.path));
+                }
             }
             setDragPath(null);
+            setDragTemplate(null);
             setDropTarget(null);
         },
         onDragEnd: () => {
             setDragPath(null);
+            setDragTemplate(null);
             setDropTarget(null);
         },
     };
@@ -169,7 +200,7 @@ export function PageEditor({
                     dangerouslySetInnerHTML={{ __html: selectionCss(sel, theme?.accent ?? '#4F7CFF') }}
                 />
             )}
-            {dragPath && dropTarget && (
+            {(dragPath || dragTemplate) && dropTarget && (
                 <style
                     dangerouslySetInnerHTML={{
                         __html: dropIndicatorCss(dropTarget.path, dropTarget.edge, theme?.accent ?? '#4F7CFF'),
@@ -178,7 +209,12 @@ export function PageEditor({
             )}
 
             {/* The content region — IN PLACE (inside the page's layout), so classes + scoped CSS apply. */}
-            <div className="pe-canvas" onClickCapture={onCanvasClick} onDoubleClick={onCanvasDbl}>
+            <div
+                className="pe-canvas"
+                onClickCapture={onCanvasClick}
+                onDoubleClick={onCanvasDbl}
+                onContextMenu={onCanvasContextMenu}
+            >
                 {doc.map((n, i) => (
                     <CanvasNode
                         key={i}
@@ -238,10 +274,20 @@ export function PageEditor({
                 <aside className="pe-panel pe-left">
                     <div className="ve-insp-h">Insert block</div>
                     {templates.map((b) => (
-                        <button key={b.label} className="ve-pal-item" onClick={() => addBlock(b.make)}>
+                        <button
+                            key={b.label}
+                            className="ve-pal-item"
+                            draggable
+                            onDragStart={() => setDragTemplate(b)}
+                            onDragEnd={() => setDragTemplate(null)}
+                            onClick={() => addBlock(b.make)}
+                        >
                             + {b.label}
                         </button>
                     ))}
+                    <div className="ve-pal-note">
+                        click inserts into / after the selection · drag to drop at a specific position
+                    </div>
                 </aside>
             )}
 
@@ -249,6 +295,7 @@ export function PageEditor({
                 and selecting an element auto-opens it with that element's properties. */}
             {rightOpen && (
                 <aside className="pe-panel pe-right">
+                    {sel && <Breadcrumb doc={doc} path={sel} onSelect={setSel} />}
                     {selBlock ? (
                         <Inspector
                             block={selBlock}
@@ -270,6 +317,28 @@ export function PageEditor({
                         <div className="ve-insp-empty">Click an element to edit it.</div>
                     )}
                 </aside>
+            )}
+
+            {menu && (
+                <ContextMenu
+                    state={menu}
+                    onClose={() => setMenu(null)}
+                    actions={[
+                        {
+                            label: 'Duplicate',
+                            onSelect: () => setDoc(duplicateAt(doc, menu.path)),
+                        },
+                        {
+                            label: 'Delete',
+                            danger: true,
+                            onSelect: () => {
+                                if (menu.path === '0') return;
+                                setDoc(removeAt(doc, menu.path));
+                                if (sel === menu.path) setSel(null);
+                            },
+                        },
+                    ]}
+                />
             )}
         </>
     );

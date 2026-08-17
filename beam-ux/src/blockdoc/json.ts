@@ -243,6 +243,18 @@ export function removeAt(doc: JsonDoc, path: string): JsonDoc {
     });
 }
 
+/**
+ * Duplicate the node at `path`, inserting the clone as the next sibling. A structural (deep) clone —
+ * no new node has any identity beyond its position, so this is exactly "insert a second copy of this
+ * subtree right after the original." No-op (returns `doc` unchanged) if `path` doesn't resolve.
+ */
+export function duplicateAt(doc: JsonDoc, path: string): JsonDoc {
+    const node = getAt(doc, path);
+    if (!node) return doc;
+
+    return insertInto(doc, parentOf(path), indexOf(path) + 1, structuredClone(node));
+}
+
 /** Move the node at `from` to be the sibling immediately before `target`. No-op if dropping into self. */
 export function moveBefore(doc: JsonDoc, from: string, target: string): JsonDoc {
     return moveTo(doc, from, target, 'before');

@@ -1,7 +1,9 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import type { JsonBlock, JsonDoc } from '../blockdoc/json.js';
+import { Breadcrumb } from './Breadcrumb.js';
 import { CanvasNode, edgeAt } from './CanvasNode.js';
+import { ContextMenu } from './ContextMenu.js';
 import { CanvasProvider, isEditGated } from './context.js';
 import type { CanvasConfig } from './context.js';
 import { Inspector } from './Inspector.js';
@@ -137,6 +139,21 @@ describe('CanvasNode — inline text edit', () => {
         h2.textContent = 'Changed';
         fireEvent.blur(h2);
         expect(onEditText).toHaveBeenCalledWith('0', 'Changed');
+    });
+
+    it('Escape reverts the text and blurs (canceling, not committing, the edit)', () => {
+        const onEditText = vi.fn();
+        const node = block({ name: 'h2', children: [{ kind: 'text', value: 'Title' }] });
+        render(wrap(<CanvasNode node={node} path="0" editing="0" onEditText={onEditText} dnd={noopDnd} />));
+        const h2 = document.querySelector('h2') as HTMLElement;
+        h2.textContent = 'Half-typed nonsense';
+        fireEvent.keyDown(h2, { key: 'Escape' });
+        // the DOM text is reverted to the ORIGINAL block content before the (Escape-triggered) blur —
+        // so onEditText, if it fires at all via the blur it triggers, commits the unchanged original.
+        expect(h2.textContent).toBe('Title');
+        if (onEditText.mock.calls.length > 0) {
+            expect(onEditText).toHaveBeenCalledWith('0', 'Title');
+        }
     });
 
     it('is not draggable while being text-edited (draggable would hijack text-selection drag)', () => {
@@ -319,5 +336,108 @@ describe('PageEditor — mode fork + transport', () => {
         fireEvent.click(exitBtn);
         expect(onExit).toHaveBeenCalled();
         window.removeEventListener('beam-ux:exit', onExit);
+    });
+
+    it('right-click opens a context menu; Duplicate clones the node, Delete removes it', async () => {
+        const saveBody = vi.fn().mockResolvedValue({});
+        const { container } = render(wrap(<PageEditor slug="home" body={doc()} transport={{ saveBody }} />));
+        fireEvent(window, new CustomEvent('beam-ux:mode', { detail: { mode: 'window' } }));
+        const h1 = container.querySelector('h1') as HTMLElement;
+
+        fireEvent.contextMenu(h1, { clientX: 10, clientY: 10 });
+        const menuButton = (label: string) =>
+            Array.from(document.querySelectorAll('.ve-menu .ve-menu-item')).find((b) => b.textContent === label)!;
+        fireEvent.click(menuButton('Duplicate'));
+        // duplicating "0.0" (the h1) makes it appear twice under the root div
+        expect(container.querySelectorAll('h1')).toHaveLength(2);
+
+        fireEvent.contextMenu(container.querySelectorAll('h1')[0], { clientX: 10, clientY: 10 });
+        fireEvent.click(menuButton('Delete'));
+        expect(container.querySelectorAll('h1')).toHaveLength(1);
+    });
+
+    it('the context menu closes on outside click without acting', () => {
+        const { container } = render(wrap(<PageEditor slug="home" body={doc()} transport={{ saveBody: vi.fn() }} />));
+        fireEvent(window, new CustomEvent('beam-ux:mode', { detail: { mode: 'window' } }));
+        const h1 = container.querySelector('h1') as HTMLElement;
+        fireEvent.contextMenu(h1, { clientX: 10, clientY: 10 });
+        expect(document.querySelector('.ve-menu')).not.toBeNull();
+        fireEvent.click(document.body);
+        expect(document.querySelector('.ve-menu')).toBeNull();
+    });
+
+    it('shows a breadcrumb for the selection, and clicking an ancestor crumb re-selects it', () => {
+        const { container } = render(wrap(<PageEditor slug="home" body={doc()} transport={{ saveBody: vi.fn() }} />));
+        fireEvent(window, new CustomEvent('beam-ux:mode', { detail: { mode: 'window' } }));
+        const h1 = container.querySelector('h1') as HTMLElement;
+        fireEvent.click(h1);
+
+        const crumbs = Array.from(container.querySelectorAll('.ve-crumb')).map((b) => b.textContent);
+        expect(crumbs).toEqual(['div', 'h1']);
+        // the h1 tag shown in the Inspector proves it's selected
+        expect(container.querySelector('.ve-insp-tag')?.textContent).toBe('h1');
+
+        // clicking the ancestor "div" crumb re-selects the parent
+        fireEvent.click(screen.getByText('div'));
+        expect(container.querySelector('.ve-insp-tag')?.textContent).toBe('div');
+    });
+
+    it('insert-palette items are draggable (drag-to-position, alongside click-to-insert)', () => {
+        const { container } = render(wrap(<PageEditor slug="home" body={doc()} transport={{ saveBody: vi.fn() }} />));
+        fireEvent(window, new CustomEvent('beam-ux:mode', { detail: { mode: 'window' } }));
+        const palItems = container.querySelectorAll('.pe-panel.pe-left .ve-pal-item');
+        expect(palItems.length).toBeGreaterThan(0);
+        palItems.forEach((el) => expect(el.getAttribute('draggable')).toBe('true'));
+    });
+});
+
+// ── Breadcrumb ────────────────────────────────────────────────────────────────────────────────────────
+describe('Breadcrumb', () => {
+    const bcDoc: JsonDoc = [
+        block({
+            name: 'section',
+            children: [block({ name: 'p', children: [{ kind: 'text', value: 'x' }] })],
+        }),
+    ];
+
+    it('renders one crumb per ancestor, labeled by tag name, deepest last', () => {
+        render(<Breadcrumb doc={bcDoc} path="0.0" onSelect={vi.fn()} />);
+        const labels = Array.from(document.querySelectorAll('.ve-crumb')).map((b) => b.textContent);
+        expect(labels).toEqual(['section', 'p']);
+    });
+
+    it('the current (deepest) crumb is disabled; ancestors are clickable and call onSelect', () => {
+        const onSelect = vi.fn();
+        render(<Breadcrumb doc={bcDoc} path="0.0" onSelect={onSelect} />);
+        const crumbs = Array.from(document.querySelectorAll('.ve-crumb')) as HTMLButtonElement[];
+        expect(crumbs[1].disabled).toBe(true); // "p", the selected node itself
+        expect(crumbs[0].disabled).toBe(false); // "section", its ancestor
+        fireEvent.click(crumbs[0]);
+        expect(onSelect).toHaveBeenCalledWith('0');
+    });
+});
+
+// ── ContextMenu ───────────────────────────────────────────────────────────────────────────────────────
+describe('ContextMenu', () => {
+    it('renders the given actions and invokes onSelect + onClose when clicked', () => {
+        const onSelect = vi.fn();
+        const onClose = vi.fn();
+        render(
+            <ContextMenu
+                state={{ x: 5, y: 5, path: '0' }}
+                actions={[{ label: 'Duplicate', onSelect }]}
+                onClose={onClose}
+            />,
+        );
+        fireEvent.click(screen.getByText('Duplicate'));
+        expect(onSelect).toHaveBeenCalled();
+        expect(onClose).toHaveBeenCalled();
+    });
+
+    it('closes on Escape', () => {
+        const onClose = vi.fn();
+        render(<ContextMenu state={{ x: 5, y: 5, path: '0' }} actions={[]} onClose={onClose} />);
+        fireEvent.keyDown(window, { key: 'Escape' });
+        expect(onClose).toHaveBeenCalled();
     });
 });

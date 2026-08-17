@@ -9,6 +9,8 @@ import {
     insertInto,
     removeAt,
     moveBefore,
+    moveAfter,
+    duplicateAt,
     setProp,
     removeProp,
     setText,
@@ -158,6 +160,36 @@ describe('browser edit ops (pure, immutable)', () => {
             'p', 'h2',
         ]);
         expect(moveBefore(doc, '0', '0.0')).toBe(doc); // dropping into self is a no-op
+    });
+
+    it('moveAfter reorders siblings (the mirror of moveBefore) and no-ops into self', () => {
+        const moved = moveAfter(doc, '0.0', '0.1'); // h2 after p
+        expect((getAt(moved, '0') as JsonBlock).children.map((c) => (c as JsonBlock).name)).toEqual([
+            'p', 'h2',
+        ]);
+        expect(moveAfter(doc, '0', '0.0')).toBe(doc); // dropping into self is a no-op
+    });
+
+    it('moveAfter can place a node at the very end (moveBefore alone never could)', () => {
+        const withThree: JsonDoc = toJson(parse(`<section><h2>Title</h2><p>Body</p><hr/></section>`));
+        const moved = moveAfter(withThree, '0.0', '0.2'); // h2 after the last child (hr)
+        expect((getAt(moved, '0') as JsonBlock).children.map((c) => (c as JsonBlock).name)).toEqual([
+            'p', 'hr', 'h2',
+        ]);
+    });
+
+    it('duplicateAt deep-clones the node as the very next sibling, independent of the original', () => {
+        const dup = duplicateAt(doc, '0.0');
+        const siblings = (getAt(dup, '0') as JsonBlock).children.map((c) => (c as JsonBlock).name);
+        expect(siblings).toEqual(['h2', 'h2', 'p']);
+        // it's a real independent copy, not the same reference — editing one doesn't affect the other
+        const edited = updateAt(dup, '0.0', (n) => setText(n as JsonBlock, 'Changed'));
+        expect(((getAt(edited, '0.0') as JsonBlock).children[0] as { value: string }).value).toBe('Changed');
+        expect(((getAt(edited, '0.1') as JsonBlock).children[0] as { value: string }).value).toBe('Title');
+    });
+
+    it('duplicateAt is a no-op for a path that does not resolve', () => {
+        expect(duplicateAt(doc, '0.9')).toBe(doc);
     });
 
     it('setProp / removeProp / propValue', () => {

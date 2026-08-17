@@ -3,21 +3,29 @@
 // injected config/theme. `value`/`onChange` carry the body so a host persists it.
 import { useMemo, useState } from 'react';
 import {
+    duplicateAt,
     getAt,
+    indexOf,
+    insertInto,
     isJsonBlock,
     isLeafText,
     jsonToTsx,
     moveAfter,
     moveBefore,
+    parentOf,
     removeAt,
     setProp,
     setText,
     updateAt,
 } from '../blockdoc/json.js';
 import type { JsonBlock, JsonDoc } from '../blockdoc/json.js';
+import { Breadcrumb } from './Breadcrumb.js';
 import { CanvasNode } from './CanvasNode.js';
 import type { DropEdge } from './CanvasNode.js';
+import { ContextMenu } from './ContextMenu.js';
+import type { ContextMenuState } from './ContextMenu.js';
 import { useCanvas } from './context.js';
+import type { BlockTemplate } from './context.js';
 import { dropIndicatorCss, selectionCss, veCss } from './css.js';
 import type { CanvasTheme } from './css.js';
 import { Inspector } from './Inspector.js';
@@ -60,7 +68,9 @@ export function VisualEditor({
     const [sel, setSel] = useState<string | null>(null);
     const [editing, setEditing] = useState<string | null>(null);
     const [dragPath, setDragPath] = useState<string | null>(null);
+    const [dragTemplate, setDragTemplate] = useState<BlockTemplate | null>(null);
     const [dropTarget, setDropTarget] = useState<{ path: string; edge: DropEdge } | null>(null);
+    const [menu, setMenu] = useState<ContextMenuState | null>(null);
     const [leftOpen, setLeftOpen] = useState(true);
     const [rightOpen, setRightOpen] = useState(true);
     const selNode = sel ? getAt(value, sel) : null;
@@ -86,22 +96,41 @@ export function VisualEditor({
         const node = p ? getAt(value, p) : null;
         if (p && node && isJsonBlock(node) && isLeafText(node)) setEditing(p);
     };
+    const onCanvasContextMenu = (e: React.MouseEvent) => {
+        const p = (e.target as HTMLElement)
+            .closest('[data-bd-path]')
+            ?.getAttribute('data-bd-path');
+        if (!p) return;
+        e.preventDefault();
+        setSel(p);
+        setMenu({ x: e.clientX, y: e.clientY, path: p });
+    };
 
     const addBlock = (make: () => JsonBlock) => onChange(insertRelativeTo(value, sel, make));
 
     const dnd = {
-        onDragStart: setDragPath,
+        onDragStart: (path: string) => {
+            setDragTemplate(null);
+            setDragPath(path);
+        },
         onDragOverNode: (path: string, edge: DropEdge) => setDropTarget({ path, edge }),
         onDrop: () => {
-            if (dragPath && dropTarget) {
-                const move = dropTarget.edge === 'before' ? moveBefore : moveAfter;
-                onChange(move(value, dragPath, dropTarget.path));
+            if (dropTarget) {
+                if (dragTemplate) {
+                    const index = indexOf(dropTarget.path) + (dropTarget.edge === 'after' ? 1 : 0);
+                    onChange(insertInto(value, parentOf(dropTarget.path), index, dragTemplate.make()));
+                } else if (dragPath) {
+                    const move = dropTarget.edge === 'before' ? moveBefore : moveAfter;
+                    onChange(move(value, dragPath, dropTarget.path));
+                }
             }
             setDragPath(null);
+            setDragTemplate(null);
             setDropTarget(null);
         },
         onDragEnd: () => {
             setDragPath(null);
+            setDragTemplate(null);
             setDropTarget(null);
         },
     };
@@ -114,7 +143,7 @@ export function VisualEditor({
                     dangerouslySetInnerHTML={{ __html: selectionCss(sel, theme?.accent ?? '#4F7CFF') }}
                 />
             )}
-            {dragPath && dropTarget && (
+            {(dragPath || dragTemplate) && dropTarget && (
                 <style
                     dangerouslySetInnerHTML={{
                         __html: dropIndicatorCss(dropTarget.path, dropTarget.edge, theme?.accent ?? '#4F7CFF'),
@@ -128,7 +157,7 @@ export function VisualEditor({
                     {brand}
                 </span>
                 <span className="ve-hint">
-                    click = select · double-click text = edit · drag = reorder
+                    click = select · double-click text = edit · drag = reorder · right-click = actions
                 </span>
                 <span className="ve-spacer" />
                 {(onUndo || onRedo) && (
@@ -168,16 +197,26 @@ export function VisualEditor({
                             <button
                                 key={b.label}
                                 className="ve-pal-item"
+                                draggable
+                                onDragStart={() => setDragTemplate(b)}
+                                onDragEnd={() => setDragTemplate(null)}
                                 onClick={() => addBlock(b.make)}
                             >
                                 + {b.label}
                             </button>
                         ))}
-                        <div className="ve-pal-note">inserts into / after the selected element</div>
+                        <div className="ve-pal-note">
+                            click inserts into / after the selection · drag to drop at a specific position
+                        </div>
                     </aside>
                 )}
 
-                <div className="ve-canvas" onClickCapture={onCanvasClick} onDoubleClick={onCanvasDbl}>
+                <div
+                    className="ve-canvas"
+                    onClickCapture={onCanvasClick}
+                    onDoubleClick={onCanvasDbl}
+                    onContextMenu={onCanvasContextMenu}
+                >
                     {value.map((n, i) => (
                         <CanvasNode
                             key={i}
@@ -206,6 +245,7 @@ export function VisualEditor({
 
                 {rightOpen && (
                     <aside className="ve-side">
+                        {sel && <Breadcrumb doc={value} path={sel} onSelect={setSel} />}
                         {selBlock ? (
                             <Inspector
                                 block={selBlock}
@@ -233,6 +273,28 @@ export function VisualEditor({
                     </aside>
                 )}
             </div>
+
+            {menu && (
+                <ContextMenu
+                    state={menu}
+                    onClose={() => setMenu(null)}
+                    actions={[
+                        {
+                            label: 'Duplicate',
+                            onSelect: () => onChange(duplicateAt(value, menu.path)),
+                        },
+                        {
+                            label: 'Delete',
+                            danger: true,
+                            onSelect: () => {
+                                if (menu.path === '0') return;
+                                onChange(removeAt(value, menu.path));
+                                if (sel === menu.path) setSel(null);
+                            },
+                        },
+                    ]}
+                />
+            )}
         </div>
     );
 }

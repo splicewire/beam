@@ -96,6 +96,16 @@ export function veCss(t?: Partial<CanvasTheme>): string {
 .ve-canvas .ve-gated::before,.pe-canvas .ve-gated::before{content:"sealed"}
 .ve-canvas .ve-gated::after,.pe-canvas .ve-gated::after{content:"";position:absolute;inset:0;z-index:4;outline:1.5px dashed #E0A030;outline-offset:-1px;pointer-events:none}
 .ve-side{width:340px;flex:none;background:${c.panelBg};color:${c.panelFg};border-left:1px solid rgba(255,255,255,.08);overflow:auto;display:flex;flex-direction:column}
+.ve-crumbs{display:flex;flex-wrap:wrap;align-items:center;gap:2px;padding:10px 16px;border-bottom:1px solid rgba(255,255,255,.08);font-family:${c.fontMono};font-size:11px}
+.ve-crumb-seg{display:inline-flex;align-items:center;gap:2px}
+.ve-crumb-sep{color:${c.muted};margin:0 2px}
+.ve-crumb{background:none;border:none;color:${c.muted};cursor:pointer;font:inherit;padding:2px 4px;border-radius:4px}
+.ve-crumb:hover:not(:disabled){color:#fff;background:rgba(255,255,255,.08)}
+.ve-crumb:disabled{color:${c.panelFg};cursor:default}
+.ve-menu{position:fixed;z-index:2147483500;background:${c.panelBg};border:1px solid rgba(255,255,255,.14);border-radius:8px;box-shadow:0 12px 32px -10px rgba(0,0,0,.6);padding:4px;min-width:150px;font-family:${c.fontMono};font-size:12px}
+.ve-menu-item{display:block;width:100%;text-align:left;background:none;border:none;color:${c.panelFg};cursor:pointer;padding:7px 10px;border-radius:5px;font:inherit}
+.ve-menu-item:hover{background:${c.accent}28;color:#fff}
+.ve-menu-item.danger:hover{background:#e0433033;color:#ff8a7a}
 .ve-insp{padding:14px 16px;display:flex;flex-direction:column;gap:16px}
 .ve-insp-top{display:flex;align-items:center;justify-content:space-between}
 .ve-insp-empty{padding:24px 16px;color:${c.muted};font-size:13px}
