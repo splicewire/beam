@@ -26,8 +26,15 @@ export type Dnd = {
     onDragStart: (path: string) => void;
     /** The drag is hovering `path`, over its top (`before`) or bottom (`after`) half. */
     onDragOverNode: (path: string, edge: DropEdge) => void;
-    /** Commit the move at whatever (path, edge) the mount last recorded via `onDragOverNode`. */
-    onDrop: () => void;
+    /**
+     * Commit the move at whatever (path, edge) the mount last recorded via `onDragOverNode`. The
+     * native `DataTransfer` is passed through (not just relied on via same-tree local state) because
+     * a drag can originate OUTSIDE this component tree entirely — e.g. an insert-palette item hosted
+     * by a shell region that is a REACT SIBLING of the canvas, not an ancestor/descendant, so it has
+     * no shared React state to stash "what's being dragged" in. `null` when the browser doesn't
+     * expose one (defensive; real drag events always carry it).
+     */
+    onDrop: (dataTransfer: DataTransfer | null) => void;
     onDragEnd: () => void;
 };
 
@@ -92,7 +99,7 @@ export function CanvasNode({ node, path, editing, onEditText, onEditMd, dnd }: C
                 onDrop={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    dnd.onDrop();
+                    dnd.onDrop(e.dataTransfer);
                 }}
                 onDragEnd={dnd.onDragEnd}
                 title={`Sealed ${node.reason} island`}
@@ -129,7 +136,7 @@ export function CanvasNode({ node, path, editing, onEditText, onEditMd, dnd }: C
                     onDrop={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
-                        dnd.onDrop();
+                        dnd.onDrop(e.dataTransfer);
                     }}
                     onDragEnd={dnd.onDragEnd}
                     title="Select this content block"
@@ -170,7 +177,7 @@ export function CanvasNode({ node, path, editing, onEditText, onEditMd, dnd }: C
                 onDrop={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    dnd.onDrop();
+                    dnd.onDrop(e.dataTransfer);
                 }}
                 onDragEnd={dnd.onDragEnd}
                 title={`Sealed — editing requires "${editGateOf(block)}"`}
@@ -203,7 +210,7 @@ export function CanvasNode({ node, path, editing, onEditText, onEditMd, dnd }: C
         onDrop: (e: React.DragEvent) => {
             e.preventDefault();
             e.stopPropagation();
-            dnd.onDrop();
+            dnd.onDrop(e.dataTransfer);
         },
         onDragEnd: dnd.onDragEnd,
         ...blockToProps(block),

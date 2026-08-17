@@ -2,11 +2,22 @@
  * `@splicewire/beam-ux/canvas` — the portable, in-place visual editor promoted from the audiostud host
  * (editor-promotion tickets 02+03). A Webflow-grade editor over a single-root `JsonDoc` body (the AST-free
  * tree from `@splicewire/beam-ux/blockdoc/json`): click to select, double-click text to edit inline, drag
- * to reorder, an Insert palette to add blocks, and an OS-styled Inspector (classes · CSS + vars · attrs).
+ * to reorder (from the canvas OR from the Insert palette), a breadcrumb + right-click menu, and an
+ * entitlement-gated seal for per-element access control.
  *
- * Everything app-specific is INJECTED via {@link CanvasConfig} through a {@link CanvasProvider} — the
- * component registry (opaque islands), the MDX island view/edit components, the insert templates, and the
- * class/var suggestion pools. Theme is parametrized via {@link veCss}/{@link peCss} tokens. The package is
+ * Attrs editing (classes / style / access gates / arbitrary attributes) is `@schemastud/frame`'s own
+ * schema-driven `Inspector` — a JsonBlock's editable props are projected to a JSON Schema
+ * ({@link attrsSchemaFor}) with two custom widgets ({@link ClassChipsWidget}, {@link StyleRowsWidget})
+ * preserving the chip/row UX; `FiveRegionEditShell` (window mode, `VisualEditor`) and a locally-built
+ * `EditShellMount` (in-place mode, `PageEditor`) both drive the SAME Inspector off the SAME
+ * `CanvasWidget` (registered as a heavyweight widget in window mode, mounted directly in in-place mode)
+ * — one canvas implementation, one attrs-editing implementation, two host chromes.
+ *
+ * Everything ELSE app-specific is still INJECTED via {@link CanvasConfig} through a {@link CanvasProvider}
+ * — the component registry (opaque islands), the MDX island view/edit components, the insert templates,
+ * the class/var/entitlement-key suggestion pools. Theme is parametrized via {@link veCss}/{@link peCss}
+ * tokens (the canvas region's own styling; the shell's OUTER chrome in window mode rides
+ * `@schemastud/frame`'s `--stud-*` tokens instead — a host bridges those separately). The package is
  * Babel-free: it imports ONLY the JSON tree ops, never the recast/@babel lens.
  */
 
@@ -28,8 +39,6 @@ export type {
 export { CanvasNode, edgeAt } from './CanvasNode.js';
 export type { CanvasNodeProps, Dnd, DropEdge } from './CanvasNode.js';
 export { TreeRender, renderNode } from './TreeRender.js';
-export { Inspector } from './Inspector.js';
-export type { InspectorProps } from './Inspector.js';
 export { Breadcrumb } from './Breadcrumb.js';
 export type { BreadcrumbProps } from './Breadcrumb.js';
 export { ContextMenu } from './ContextMenu.js';
@@ -38,6 +47,20 @@ export { VisualEditor } from './VisualEditor.js';
 export type { VisualEditorProps } from './VisualEditor.js';
 export { PageEditor, useEditMode } from './PageEditor.js';
 export type { PageEditorProps, PageEditorTransport, Notify } from './PageEditor.js';
+
+// The heavyweight widget adapter + its @schemastud/frame registration (window-mode mounting; PageEditor
+// mounts CanvasWidget directly, no registry needed there).
+export { CanvasWidget, TEMPLATE_DATA_KEY } from './CanvasWidget.js';
+export type { CanvasWidgetProps } from './CanvasWidget.js';
+export { CANVAS_WIDGET_NAME, createCanvasWidgetRegistry } from './widgetRegistry.js';
+export { CanvasPalette } from './CanvasPalette.js';
+
+// attrsSchema — the JsonBlock -> JSON Schema translation frame's Inspector renders, + its two custom
+// RJSF widgets (register these yourself if you build your own WidgetRegistry instead of using
+// createCanvasWidgetRegistry()).
+export { attrsSchemaFor } from './attrsSchema.js';
+export type { AttrsSchemaResult, SchemaNode } from './attrsSchema.js';
+export { ClassChipsWidget, StyleRowsWidget } from './widgets.js';
 
 // Theme + CSS factories
 export { veCss, peCss, selectionCss, dropIndicatorCss, DEFAULT_CANVAS_THEME } from './css.js';
