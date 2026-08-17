@@ -156,7 +156,7 @@ export function PageEditor({
                 <style dangerouslySetInnerHTML={{ __html: veCss(theme) + peCss(theme) }} />
 
                 {/* The content region — IN PLACE (inside the page's layout), so classes + scoped CSS apply. */}
-                <CanvasWidget value={doc} onChange={setDoc} editShellMount={mount} />
+                <CanvasWidget value={doc} onChange={setDoc} editShellMount={mount} theme={theme} />
 
                 {/* Floating editor chrome — fixed over the page. */}
                 <div className="pe-bar">

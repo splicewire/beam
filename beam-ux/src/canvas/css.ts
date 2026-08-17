@@ -43,17 +43,26 @@ export const DEFAULT_CANVAS_THEME: CanvasTheme = {
 
 const theme = (t?: Partial<CanvasTheme>): CanvasTheme => ({ ...DEFAULT_CANVAS_THEME, ...t });
 
-/** Selection outline CSS for the currently selected path (shared by both mounts). */
+/**
+ * Selection outline CSS for the currently selected path (shared by both mounts). A single-color ring
+ * can vanish against block content that happens to share its hue (a real, reported case: a blue-ish
+ * accent against a cyan block background) — layered as two box-shadows instead of one flat `outline`:
+ * a thin white ring hugging the content (drawn on top — box-shadow list order is front-to-back, per
+ * spec), then the accent ring just beyond it. The white ring separates the accent from ANY content
+ * color behind it, so the indicator stays legible regardless of what the selected block's own
+ * background happens to be — the same halo technique most editor selection UIs use.
+ */
 export const selectionCss = (path: string, accent: string): string =>
-    `[data-bd-path="${path}"]{outline:2px solid ${accent} !important;outline-offset:1px}`;
+    `[data-bd-path="${path}"]{outline:none !important;box-shadow:0 0 0 1px #fff,0 0 0 3px ${accent} !important}`;
 
 /**
  * Drop-target indicator CSS: a solid line on the hovered block's top (`before`) or bottom (`after`)
  * edge, showing exactly where a drag-reorder will land (shared by both mounts). `!important` beats the
- * hover dashed-outline rule so the indicator stays legible while dragging over an element.
+ * hover dashed-outline rule so the indicator stays legible while dragging over an element. Same
+ * white-then-accent layering as {@link selectionCss}, for the same reason.
  */
 export const dropIndicatorCss = (path: string, edge: 'before' | 'after', accent: string): string =>
-    `[data-bd-path="${path}"]{box-shadow:inset 0 ${edge === 'before' ? '3px' : '-3px'} 0 0 ${accent} !important;outline:none !important}`;
+    `[data-bd-path="${path}"]{box-shadow:inset 0 ${edge === 'before' ? '2px' : '-2px'} 0 0 ${accent},inset 0 ${edge === 'before' ? '4px' : '-4px'} 0 0 #fff !important;outline:none !important}`;
 
 /** The window-mode composed editor CSS (host `VE_CSS`), theme-parametrized. */
 export function veCss(t?: Partial<CanvasTheme>): string {

@@ -31,7 +31,8 @@ import type { DropEdge } from './CanvasNode.js';
 import { ContextMenu } from './ContextMenu.js';
 import type { ContextMenuState } from './ContextMenu.js';
 import { useCanvas } from './context.js';
-import { dropIndicatorCss, selectionCss } from './css.js';
+import { DEFAULT_CANVAS_THEME, dropIndicatorCss, selectionCss } from './css.js';
+import type { CanvasTheme } from './css.js';
 import { setAttrs } from './props.js';
 import { insertRelativeTo } from './insert.js';
 import { DEFAULT_BLOCK_TEMPLATES } from './templates.js';
@@ -48,6 +49,9 @@ export interface CanvasWidgetProps {
     onChange?: (doc: JsonDoc) => void;
     editShellMount?: EditShellMountValue;
     readOnly?: boolean;
+    /** The host's theme (same object VisualEditor/PageEditor thread into `veCss()`/`peCss()`) — drives
+     * the selection/drop-indicator accent color. Defaults to `DEFAULT_CANVAS_THEME.accent` when absent. */
+    theme?: Partial<CanvasTheme>;
 }
 
 /** The path of `path`'s sibling `delta` positions over (-1 previous, +1 next), or `null` past either
@@ -68,11 +72,20 @@ function countNodes(nodes: JsonNode[]): number {
     return n;
 }
 
-export function CanvasWidget({ value, formData, onChange, editShellMount: mount, readOnly = false }: CanvasWidgetProps) {
+export function CanvasWidget({
+    value,
+    formData,
+    onChange,
+    editShellMount: mount,
+    readOnly = false,
+    theme,
+}: CanvasWidgetProps) {
     const config = useCanvas();
     const doc: JsonDoc = value ?? formData ?? [];
     const templates = config.blockTemplates ?? DEFAULT_BLOCK_TEMPLATES;
-    const accent = '#4F7CFF';
+    // Was hardcoded to a fixed blue regardless of the host's actual theme — found live: it clashed
+    // (near-invisible) against block content whose own background happened to be a similar hue.
+    const accent = theme?.accent ?? DEFAULT_CANVAS_THEME.accent;
 
     const [editing, setEditing] = useState<string | null>(null);
     const [dragPath, setDragPath] = useState<string | null>(null);

@@ -62,6 +62,13 @@ export function VisualEditor({
 }: VisualEditorProps) {
     const onChangeRef = useRef(onChange);
     onChangeRef.current = onChange;
+    // Same ref-bridge reason as onChangeRef — CanvasWidget reads this for its selection/drop-indicator
+    // accent color; a host rarely changes `theme` at runtime, so a stale read between renders is a
+    // non-issue in practice, and the alternative (putting `theme` in the registry's deps) would defeat
+    // the whole point of the stable-identity wrapper (remounting the widget on every theme reference
+    // change, losing local canvas state).
+    const themeRef = useRef(theme);
+    themeRef.current = theme;
 
     // Created once per mount (empty deps) — see the file docblock for why identity must stay stable.
     // `props.value`/`props.formData` still flow through normally (WidgetSurface passes the shell's
@@ -69,7 +76,7 @@ export function VisualEditor({
     const registry = useMemo(
         () =>
             createCanvasWidgetRegistry((props) => (
-                <CanvasWidget {...props} onChange={(doc) => onChangeRef.current(doc)} />
+                <CanvasWidget {...props} onChange={(doc) => onChangeRef.current(doc)} theme={themeRef.current} />
             )),
         [],
     );
