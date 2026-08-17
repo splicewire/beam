@@ -58,6 +58,16 @@ export interface PageEditorProps {
     onRedo?: () => void;
     canUndo?: boolean;
     canRedo?: boolean;
+    /**
+     * Bump (any changed value) to force the editor to re-seed its internal `doc` from the current
+     * `body` prop — e.g. after a host-side undo/redo restore changed the entry's saved body out from
+     * under an already-mounted editor. `doc` is otherwise uncontrolled (seeded once via `useState`),
+     * so a `body` prop change alone does nothing after the first render. Deliberately NOT a `key`-based
+     * remount at the call site: that would also reset {@link useEditMode}'s own local `editing` state
+     * back to read mode (it forgets it was ever in window mode until the next `beam-ux:mode` broadcast),
+     * silently kicking an operator out of the editor on every undo/redo.
+     */
+    reloadToken?: number | string;
 }
 
 const EMPTY_DOC: JsonDoc = [
@@ -91,10 +101,20 @@ export function PageEditor({
     onRedo,
     canUndo = false,
     canRedo = false,
+    reloadToken,
 }: PageEditorProps) {
     const editing = useEditMode();
     const initial: JsonDoc = isDoc(body) ? body : fallbackDoc?.(slug) ?? EMPTY_DOC;
     const [doc, setDoc] = useState<JsonDoc>(initial);
+    // Re-seed on an explicit host-driven reload only (see PageEditorProps.reloadToken) — reading the
+    // latest body/fallbackDoc/slug from this render's closure, not from a dependency-tracked value, so
+    // an incidental `body` prop identity change (e.g. a host re-render) never overwrites in-progress
+    // local edits; only a genuine `reloadToken` bump does.
+    useEffect(() => {
+        if (reloadToken === undefined) return;
+        setDoc(isDoc(body) ? body : fallbackDoc?.(slug) ?? EMPTY_DOC);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [reloadToken]);
     const mount = useEditShellMountController();
     // The canvas widget itself is never resolved off this registry (CanvasWidget is mounted directly
     // below, not via WidgetSurface) — this exists purely so frame's Inspector's SchemaForm resolves

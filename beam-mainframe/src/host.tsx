@@ -44,17 +44,22 @@ export function isPuckBody(body: unknown): boolean {
 // --- The entry a reshelled page reads its chrome through ----------------------------------------
 
 /**
- * The loaded `page` entry as the host projects it (beam-ux `entries.body.show`).
+ * The loaded `page` entry as the host projects it (beam-ux `entries.body.show`). `id` is the entry's
+ * uuid (the `Route::recordVersions()` addressing key, `/beam-ux/entries/{id}/versions`) — optional
+ * since a host's `loadEntryBody` may project a narrower shape; present whenever the underlying
+ * `BeamUxEntryBodyData` envelope carries it (it always does).
  */
 export interface HostEntryBody {
     slug: string;
+    id?: string;
     schema: Record<string, unknown> | null;
     body: unknown;
 }
 
-/** The `{slug, schema, body}` a wrapped page reads via {@link useBeamUxEntry}. `body` is host-typed. */
+/** The `{slug, id, schema, body}` a wrapped page reads via {@link useBeamUxEntry}. `body` is host-typed. */
 export interface BeamUxEntryContext<TBody = Record<string, unknown>> {
     slug: string;
+    id?: string;
     schema: Record<string, unknown> | null;
     body: TBody;
 }
@@ -451,7 +456,12 @@ export function createMainframeHost(config: MainframeHostConfig) {
             () =>
                 entry === null
                     ? null
-                    : { slug: entry.slug, schema: entry.schema, body: (entry.body ?? {}) as Record<string, unknown> },
+                    : {
+                          slug: entry.slug,
+                          id: entry.id,
+                          schema: entry.schema,
+                          body: (entry.body ?? {}) as Record<string, unknown>,
+                      },
             [entry],
         );
 
