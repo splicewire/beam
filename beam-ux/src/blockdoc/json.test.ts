@@ -227,4 +227,21 @@ describe('jsonToTsx printer (Babel-free)', () => {
         // Re-parsing the printed source keeps the braces from breaking the tree.
         expect(() => parse(out)).not.toThrow();
     });
+
+    it('separates multiple top-level roots so the printed source stays re-parseable', () => {
+        // A real page is never single-root (several top-level sections) — bare adjacent JSX with no
+        // separator is a syntax error ("Adjacent JSX elements must be wrapped..."), so this is the
+        // NORMAL case, not an edge case. Regression coverage for a real bug: fromJson() (this
+        // module's own round-trip closer) threw on any multi-root doc before jsonToTsx started
+        // terminating each root as its own statement.
+        const doc: JsonDoc = [
+            { kind: 'block', name: 'section', isComponent: false, dynamic: false, props: [],
+              children: [{ kind: 'text', value: 'first' }] },
+            { kind: 'block', name: 'section', isComponent: false, dynamic: false, props: [],
+              children: [{ kind: 'text', value: 'second' }] },
+        ];
+        const out = jsonToTsx(doc);
+        expect(() => parse(out)).not.toThrow();
+        expect(fromJson(doc).roots).toHaveLength(2);
+    });
 });

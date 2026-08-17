@@ -115,9 +115,20 @@ function childToJson(child: BlockChild): JsonNode {
 
 const INDENT = '  ';
 
-/** Print a JSON document to indented JSX source (the import/export boundary — no Babel needed). */
+/**
+ * Print a JSON document to indented JSX source (the import/export boundary — no Babel needed). Each
+ * root prints as its own top-level JSX expression STATEMENT (a trailing `;`) — bare adjacent JSX
+ * elements/fragments with no separator are a parse error ("Adjacent JSX elements must be wrapped in
+ * an enclosing tag"), so a multi-root document (the normal shape for a real page: several top-level
+ * sections) needs an explicit statement terminator between roots to stay re-parseable — verified
+ * live: `fromJson()`, this module's own round-trip closer (`parse(jsonToTsx(doc))`), threw on any
+ * multi-root doc before this fix; every existing test happened to only cover single-root docs. Only
+ * affects these top-level SIBLINGS — a node's own children are printed by `printNode` directly, never
+ * through this function, so nested JSX (which doesn't need statement separators, being inside a
+ * parent's tags already) is untouched.
+ */
 export function jsonToTsx(doc: JsonDoc, depth = 0): string {
-    return doc.map((n) => printNode(n, depth)).join('\n');
+    return doc.map((n) => printNode(n, depth) + ';').join('\n');
 }
 
 function printNode(node: JsonNode, depth: number): string {
