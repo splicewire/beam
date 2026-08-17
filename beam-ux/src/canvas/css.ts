@@ -95,7 +95,6 @@ export function veCss(t?: Partial<CanvasTheme>): string {
 .ve-canvas .ve-island:hover::before,.pe-canvas .ve-island:hover::before{opacity:.9}
 .ve-canvas .ve-gated::before,.pe-canvas .ve-gated::before{content:"sealed"}
 .ve-canvas .ve-gated::after,.pe-canvas .ve-gated::after{content:"";position:absolute;inset:0;z-index:4;outline:1.5px dashed #E0A030;outline-offset:-1px;pointer-events:none}
-.ve-side{width:340px;flex:none;background:${c.panelBg};color:${c.panelFg};border-left:1px solid rgba(255,255,255,.08);overflow:auto;display:flex;flex-direction:column}
 .ve-crumbs{display:flex;flex-wrap:wrap;align-items:center;gap:2px;padding:10px 16px;border-bottom:1px solid rgba(255,255,255,.08);font-family:${c.fontMono};font-size:11px}
 .ve-crumb-seg{display:inline-flex;align-items:center;gap:2px}
 .ve-crumb-sep{color:${c.muted};margin:0 2px}
@@ -103,34 +102,46 @@ export function veCss(t?: Partial<CanvasTheme>): string {
 .ve-crumb:hover:not(:disabled){color:#fff;background:rgba(255,255,255,.08)}
 .ve-crumb:disabled{color:${c.panelFg};cursor:default}
 .ve-menu{position:fixed;z-index:2147483500;background:${c.panelBg};border:1px solid rgba(255,255,255,.14);border-radius:8px;box-shadow:0 12px 32px -10px rgba(0,0,0,.6);padding:4px;min-width:150px;font-family:${c.fontMono};font-size:12px}
-.ve-menu-item{display:block;width:100%;text-align:left;background:none;border:none;color:${c.panelFg};cursor:pointer;padding:7px 10px;border-radius:5px;font:inherit}
-.ve-menu-item:hover{background:${c.accent}28;color:#fff}
-.ve-menu-item.danger:hover{background:#e0433033;color:#ff8a7a}
-.ve-insp{padding:14px 16px;display:flex;flex-direction:column;gap:16px}
-.ve-insp-top{display:flex;align-items:center;justify-content:space-between}
-.ve-insp-empty{padding:24px 16px;color:${c.muted};font-size:13px}
-.ve-insp-tag{font-family:${c.fontMono};font-size:13px;color:${c.accent};background:${c.accent}20;padding:3px 9px;border-radius:6px}
-.ve-insp-del{background:none;border:1px solid rgba(255,255,255,.14);border-radius:7px;color:${c.panelFg};cursor:pointer;font:inherit;font-size:11px;padding:4px 9px}
-.ve-insp-del:hover{color:#fff;border-color:${c.accent}80}
-.ve-insp-sec{display:flex;flex-direction:column;gap:7px}
+.ve-menu-item{display:block;width:100%;text-align:left;background:none;border:none;color:${c.panelFg};cursor:pointer;padding:7px 10px;border-radius:5px;font:inherit;white-space:nowrap}
+.ve-menu-item:not(:disabled):hover{background:${c.accent}28;color:#fff}
+.ve-menu-item.danger:not(:disabled):hover{background:#e0433033;color:#ff8a7a}
+.ve-menu-item:disabled{opacity:.35;cursor:not-allowed}
 .ve-insp-h{font-family:${c.fontMono};font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:${c.muted}}
-.ve-chips{display:flex;flex-wrap:wrap;gap:5px;align-items:center}
-.ve-chip{display:inline-flex;align-items:center;gap:5px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);border-radius:7px;padding:3px 4px 3px 9px;font-size:12px;font-family:${c.fontMono}}
-.ve-chip button{background:none;border:none;color:${c.muted};cursor:pointer;font-size:14px;line-height:1;padding:0 3px}
-.ve-chip button:hover{color:${c.accent}}
-.ve-chip-in{background:rgba(255,255,255,.05);border:1px dashed rgba(255,255,255,.15);border-radius:7px;color:${c.panelFg};font:inherit;font-size:12px;padding:4px 8px;width:88px}
-.ve-kv{display:flex;gap:5px;align-items:center}
-.ve-kv input{flex:1;min-width:0;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:6px;color:${c.panelFg};font-family:${c.fontMono};font-size:11px;padding:5px 7px}
-.ve-kv input:focus{outline:none;border-color:${c.accent}}
-.ve-kv input[readonly]{color:${c.muted};background:rgba(255,255,255,.02)}
-.ve-kv button{background:none;border:none;color:${c.muted};cursor:pointer;font-size:14px;padding:0 4px}
-.ve-kv button:hover{color:${c.accent}}
-.ve-add{align-self:flex-start;background:none;border:1px dashed rgba(255,255,255,.16);border-radius:7px;color:${c.panelFg};cursor:pointer;font:inherit;font-size:11px;padding:5px 10px}
-.ve-add:hover{color:#fff;border-color:${c.accent}80}
 .ve-src{margin-top:auto;border-top:1px solid rgba(255,255,255,.08);padding:12px 16px}
 .ve-src pre{margin:6px 0 0;font-family:${c.fontMono};font-size:10px;line-height:1.5;color:${c.muted};white-space:pre-wrap;max-height:180px;overflow:auto}
+${inspectorCss}
 `;
 }
+
+/**
+ * Shared Inspector-region CSS — the schema-driven Inspector (@schemastud/frame's own
+ * `[data-frame-region="inspector"]`, rendering GroupedObjectFieldTemplate's stacked
+ * sections/tabs) ships with no self-padding (frame is headless), so both mounts supply
+ * it here. `.ve-chip`/`.ve-chip-in`/`.ve-kv`/`.ve-add` (the class-chips/style-rows
+ * custom widget CSS, widgets.tsx) are sized to match the surrounding shadcn Input/Select
+ * fields (~36px tall, 13px type) and themed off the standard shadcn CSS variables
+ * (`--border`/`--foreground`/`--muted`/etc, bridged dark for the editor by the
+ * consuming app's stud-tokens.css) rather than hardcoded rgba values, so they read as
+ * ONE form, not a denser hand-rolled section bolted onto lighter shadcn fields.
+ */
+const inspectorCss = `
+[data-frame-region="inspector"]{padding:16px}
+[data-frame-region="inspector"][data-frame-inspector-empty]{padding:0}
+.ve-chips{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.ve-chip{display:inline-flex;align-items:center;gap:6px;height:28px;background:var(--muted);border:1px solid var(--border);border-radius:6px;padding:0 4px 0 10px;font-size:13px;color:var(--foreground)}
+.ve-chip button{background:none;border:none;color:var(--muted-foreground);cursor:pointer;font-size:15px;line-height:1;padding:0 4px}
+.ve-chip button:hover{color:var(--foreground)}
+.ve-chip-in{background:transparent;border:1px dashed var(--border);border-radius:6px;color:var(--foreground);font:inherit;font-size:13px;height:28px;padding:0 10px;width:104px}
+.ve-chip-in:focus{outline:none;border-style:solid;border-color:var(--ring)}
+.ve-kv{display:flex;gap:6px;align-items:center;margin-bottom:6px}
+.ve-kv input{flex:1;min-width:0;height:36px;background:transparent;border:1px solid var(--border);border-radius:8px;color:var(--foreground);font-size:13px;padding:0 12px}
+.ve-kv input:focus{outline:none;border-color:var(--ring)}
+.ve-kv input[readonly]{color:var(--muted-foreground);background:var(--muted)}
+.ve-kv button{background:none;border:none;color:var(--muted-foreground);cursor:pointer;font-size:15px;padding:0 6px}
+.ve-kv button:hover{color:var(--foreground)}
+.ve-add{align-self:flex-start;background:none;border:1px dashed var(--border);border-radius:8px;color:var(--muted-foreground);cursor:pointer;font:inherit;font-size:13px;height:32px;padding:0 12px}
+.ve-add:hover{color:var(--foreground);border-color:var(--ring)}
+`;
 
 /** The in-place page-editor floating-panel CSS (host `PE_CSS`), theme-parametrized. */
 export function peCss(t?: Partial<CanvasTheme>): string {
@@ -150,5 +161,6 @@ export function peCss(t?: Partial<CanvasTheme>): string {
 .pe-panel{position:fixed;top:48px;bottom:14px;width:300px;z-index:2147483200;background:${c.panelBg};border:1px solid rgba(255,255,255,.1);border-radius:12px;overflow:auto;box-shadow:0 24px 60px -18px rgba(0,0,0,.6)}
 .pe-left{left:14px;width:200px;padding:14px 12px;display:flex;flex-direction:column;gap:7px}
 .pe-right{right:14px}
+${inspectorCss}
 `;
 }

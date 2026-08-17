@@ -257,20 +257,23 @@ describe('attrsSchemaFor', () => {
         expect(attrs.id).toBe('top');
     });
 
-    it('className/style get the class-chips/style-rows custom widgets, grouped for the form template', () => {
+    it('className/style get the class-chips/style-rows custom widgets, grouped under the Style tab', () => {
         const { schema } = attrsSchemaFor(target);
         const props = schema.properties as Record<string, Record<string, unknown>>;
         expect(props.className['x-widget']).toBe('class-chips');
         expect(props.className['x-group']).toBe('Classes');
+        expect(props.className['x-tab']).toBe('Style');
         expect(props.style['x-widget']).toBe('style-rows');
         expect(props.style['x-group']).toBe('Style');
+        expect(props.style['x-tab']).toBe('Style');
     });
 
-    it('the two gate attrs are forced-select enum fields grouped under Access', () => {
+    it('the two gate attrs are forced-select enum fields grouped under Access, on the Advanced tab', () => {
         const { schema } = attrsSchemaFor(target, ['ux.author', 'os.enter']);
         const props = schema.properties as Record<string, Record<string, unknown>>;
         expect(props[EDIT_GATE_ATTR]['x-widget']).toBe('select');
         expect(props[EDIT_GATE_ATTR]['x-group']).toBe('Access');
+        expect(props[EDIT_GATE_ATTR]['x-tab']).toBe('Advanced');
         expect(props[EDIT_GATE_ATTR].enum).toEqual(['', 'ux.author', 'os.enter']);
         expect(props[VIEW_GATE_ATTR].enum).toEqual(['', 'ux.author', 'os.enter']);
     });
@@ -282,11 +285,14 @@ describe('attrsSchemaFor', () => {
         expect(props[EDIT_GATE_ATTR].enum).toContain('legal.author');
     });
 
-    it('additionalProperties covers arbitrary/new attrs (the old "+ attribute" section), grouped Attributes', () => {
+    it('additionalProperties covers arbitrary/new attrs (the old "+ attribute" section), grouped Attributes on Advanced', () => {
         const { schema } = attrsSchemaFor(target);
-        expect((schema.additionalProperties as Record<string, unknown>)['x-group']).toBe('Attributes');
+        const additional = schema.additionalProperties as Record<string, unknown>;
+        expect(additional['x-group']).toBe('Attributes');
+        expect(additional['x-tab']).toBe('Advanced');
         const props = schema.properties as Record<string, Record<string, unknown>>;
         expect(props.id['x-group']).toBe('Attributes');
+        expect(props.id['x-tab']).toBe('Advanced');
     });
 });
 
@@ -485,6 +491,46 @@ describe('ContextMenu', () => {
         const onClose = vi.fn();
         render(<ContextMenu state={{ x: 5, y: 5, path: '0' }} actions={[]} onClose={onClose} />);
         fireEvent.keyDown(window, { key: 'Escape' });
+        expect(onClose).toHaveBeenCalled();
+    });
+
+    it('a disabled action renders disabled and never fires onSelect', () => {
+        const onSelect = vi.fn();
+        render(
+            <ContextMenu
+                state={{ x: 5, y: 5, path: '0' }}
+                actions={[{ label: 'Move up', onSelect, disabled: true }]}
+                onClose={vi.fn()}
+            />,
+        );
+        const button = screen.getByText('Move up').closest('button')! as HTMLButtonElement;
+        expect(button.disabled).toBe(true);
+        fireEvent.click(button);
+        // A disabled native button never dispatches a click in a real browser; only assert the
+        // handler contract (onSelect never fires) since jsdom's scripted fireEvent still bubbles
+        // the event to the menu's own outside-click listener regardless of the disabled attribute.
+        expect(onSelect).not.toHaveBeenCalled();
+    });
+
+    it('a nested action opens a submenu on hover; clicking a child fires its own onSelect + closes', () => {
+        const childSelect = vi.fn();
+        const onClose = vi.fn();
+        render(
+            <ContextMenu
+                state={{ x: 5, y: 5, path: '0' }}
+                actions={[
+                    {
+                        label: 'Insert',
+                        children: [{ label: 'Heading', onSelect: childSelect }],
+                    },
+                ]}
+                onClose={onClose}
+            />,
+        );
+        expect(screen.queryByText('Heading')).toBeNull();
+        fireEvent.mouseEnter(screen.getByText('Insert', { exact: false }).closest('div')!);
+        fireEvent.click(screen.getByText('Heading'));
+        expect(childSelect).toHaveBeenCalled();
         expect(onClose).toHaveBeenCalled();
     });
 });

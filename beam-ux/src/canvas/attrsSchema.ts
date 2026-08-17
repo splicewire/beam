@@ -6,6 +6,11 @@
 // become real `enum` dropdowns off the host's known-key pool; everything else falls
 // through to `additionalProperties`, which RJSF renders as an open-ended "+ Add" key/value
 // editor — the schema-driven equivalent of the old "+ attribute" section.
+//
+// Two tabs, via seam's GroupedObjectFieldTemplate `x-tab` convention: "Style" (Classes +
+// Style — how the block looks) and "Advanced" (Access + Attributes — technical/gating
+// settings a content editor rarely touches) — reads like a blockdoc embed's fields, not a
+// flat dump of every attribute at once.
 import type { JsonBlock } from '../blockdoc/json.js';
 import { attrsView, EDIT_GATE_ATTR, RESERVED_ATTRS, VIEW_GATE_ATTR } from './props.js';
 
@@ -41,18 +46,25 @@ export function attrsSchemaFor(block: JsonBlock, entitlementKeys: string[] = [])
             title: 'Classes',
             'x-widget': 'class-chips',
             'x-group': 'Classes',
+            'x-tab': 'Style',
+            // The "Classes" x-group fieldset legend already labels this — a single-property
+            // group repeating its own title as the field label too was pure duplication.
+            'x-widget-options': { label: false },
         },
         style: {
             type: 'string',
             title: 'Style · CSS + vars',
             'x-widget': 'style-rows',
             'x-group': 'Style',
+            'x-tab': 'Style',
+            'x-widget-options': { label: false },
         },
         [VIEW_GATE_ATTR]: {
             type: 'string',
             title: 'View gate',
             'x-widget': 'select',
             'x-group': 'Access',
+            'x-tab': 'Advanced',
             enum: gateEnum(entitlementKeys, view[VIEW_GATE_ATTR]),
         },
         [EDIT_GATE_ATTR]: {
@@ -60,6 +72,7 @@ export function attrsSchemaFor(block: JsonBlock, entitlementKeys: string[] = [])
             title: 'Edit gate',
             'x-widget': 'select',
             'x-group': 'Access',
+            'x-tab': 'Advanced',
             enum: gateEnum(entitlementKeys, view[EDIT_GATE_ATTR]),
         },
     };
@@ -67,7 +80,7 @@ export function attrsSchemaFor(block: JsonBlock, entitlementKeys: string[] = [])
     // Existing arbitrary attrs get a named property (so they show with their real key as the
     // label); additionalProperties covers adding a BRAND NEW key not yet on the block.
     for (const k of otherKeys) {
-        properties[k] = { type: 'string', title: k, 'x-group': 'Attributes' };
+        properties[k] = { type: 'string', title: k, 'x-group': 'Attributes', 'x-tab': 'Advanced' };
     }
 
     const attrs: Record<string, string> = {
@@ -82,7 +95,7 @@ export function attrsSchemaFor(block: JsonBlock, entitlementKeys: string[] = [])
         schema: {
             type: 'object',
             properties,
-            additionalProperties: { type: 'string', 'x-group': 'Attributes' },
+            additionalProperties: { type: 'string', 'x-group': 'Attributes', 'x-tab': 'Advanced' },
         },
         attrs,
     };

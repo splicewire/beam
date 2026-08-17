@@ -22,6 +22,7 @@ import {
     setText,
     updateAt,
 } from '../blockdoc/json.js';
+import type { ContextMenuAction } from './ContextMenu.js';
 import type { JsonDoc, JsonNode } from '../blockdoc/json.js';
 import { attrsSchemaFor } from './attrsSchema.js';
 import { Breadcrumb } from './Breadcrumb.js';
@@ -47,6 +48,15 @@ export interface CanvasWidgetProps {
     onChange?: (doc: JsonDoc) => void;
     editShellMount?: EditShellMountValue;
     readOnly?: boolean;
+}
+
+/** The path of `path`'s sibling `delta` positions over (-1 previous, +1 next), or `null` past either
+ * end. Root-level paths ("0", "1", …) have no dot; nested paths ("0.2") keep their parent prefix. */
+function siblingPath(path: string, delta: number): string | null {
+    const parent = parentOf(path);
+    const idx = indexOf(path) + delta;
+    if (idx < 0) return null;
+    return parent === '' ? String(idx) : `${parent}.${idx}`;
 }
 
 function countNodes(nodes: JsonNode[]): number {
@@ -190,6 +200,45 @@ export function CanvasWidget({ value, formData, onChange, editShellMount: mount,
         },
     };
 
+    const contextMenuActions = (path: string): ContextMenuAction[] => {
+        const prev = siblingPath(path, -1);
+        const next = siblingPath(path, 1);
+        return [
+            { label: 'Duplicate', onSelect: () => emit(duplicateAt(doc, path)) },
+            {
+                label: 'Move up',
+                disabled: !prev || !getAt(doc, prev),
+                onSelect: () => {
+                    if (prev) emit(moveBefore(doc, path, prev));
+                },
+            },
+            {
+                label: 'Move down',
+                disabled: !next || !getAt(doc, next),
+                onSelect: () => {
+                    if (next) emit(moveAfter(doc, path, next));
+                },
+            },
+            {
+                label: 'Insert',
+                children: templates.map((t) => ({
+                    label: t.label,
+                    onSelect: () => emit(insertRelativeTo(doc, path, t.make)),
+                })),
+            },
+            {
+                label: 'Delete',
+                danger: true,
+                disabled: path === '0',
+                onSelect: () => {
+                    if (path === '0') return;
+                    emit(removeAt(doc, path));
+                    if (sel === path) setSel(null);
+                },
+            },
+        ];
+    };
+
     return (
         <div className="ve-canvas-widget">
             {sel && <style dangerouslySetInnerHTML={{ __html: selectionCss(sel, accent) }} />}
@@ -235,18 +284,7 @@ export function CanvasWidget({ value, formData, onChange, editShellMount: mount,
                 <ContextMenu
                     state={menu}
                     onClose={() => setMenu(null)}
-                    actions={[
-                        { label: 'Duplicate', onSelect: () => emit(duplicateAt(doc, menu.path)) },
-                        {
-                            label: 'Delete',
-                            danger: true,
-                            onSelect: () => {
-                                if (menu.path === '0') return;
-                                emit(removeAt(doc, menu.path));
-                                if (sel === menu.path) setSel(null);
-                            },
-                        },
-                    ]}
+                    actions={contextMenuActions(menu.path)}
                 />
             )}
         </div>
