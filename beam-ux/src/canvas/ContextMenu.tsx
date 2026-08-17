@@ -3,7 +3,16 @@
 // (fixed). A leaf action with no `children` fires `onSelect` and closes the menu; an action WITH
 // `children` (Insert's block-type flyout) opens a nested submenu on hover instead — it never fires
 // `onSelect` itself (there's nothing to "select," it's just a grouping).
-import { useEffect, useState } from 'react';
+//
+// The outside-click listener is capture-phase on `window` — it fires BEFORE the event reaches an
+// item button's own onClick (which runs in the bubble phase), so it must check `.contains()` against a
+// ref rather than closing unconditionally (relying on the menu's own bubble-phase `stopPropagation()`
+// to save it — that can never reach back in time to cancel a capture-phase listener that already ran).
+// A real, physically-dispatched click (verified live: not a synthetic `.click()` call, which happens
+// not to trigger this) closes the menu on the SAME tick as the item's own click, before that handler
+// runs, if the ref check is missing — the action silently never fires, menu just closes. `.click()` in
+// a test/JS-console context doesn't reproduce this, which is how it went unnoticed.
+import { useEffect, useRef, useState } from 'react';
 
 export interface ContextMenuAction {
     label: string;
@@ -31,14 +40,20 @@ export interface ContextMenuProps {
 
 export function ContextMenu({ state, actions, onClose }: ContextMenuProps) {
     const [openSubmenu, setOpenSubmenu] = useState<string | null>(null);
+    const rootRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
-        const onDocClick = () => onClose();
+        const onDocClick = (e: MouseEvent) => {
+            if (rootRef.current && !rootRef.current.contains(e.target as Node)) onClose();
+        };
         const onKeyDown = (e: KeyboardEvent) => {
             if (e.key === 'Escape') onClose();
         };
         // Capture phase: a click anywhere (including on a canvas node behind the menu) closes it before
         // that node's own click handler runs — right-click-then-click-elsewhere shouldn't leave it open.
+        // The `.contains()` check (not `stopPropagation()` on the menu itself — bubble phase can't undo
+        // a capture-phase listener that already ran) is what keeps a click ON a menu item from closing
+        // the menu before the item's own onClick fires.
         window.addEventListener('click', onDocClick, true);
         window.addEventListener('keydown', onKeyDown);
         return () => {
@@ -49,9 +64,9 @@ export function ContextMenu({ state, actions, onClose }: ContextMenuProps) {
 
     return (
         <div
+            ref={rootRef}
             className="ve-menu"
             style={{ position: 'fixed', left: state.x, top: state.y }}
-            onClick={(e) => e.stopPropagation()}
         >
             {actions.map((a) => (
                 <div
