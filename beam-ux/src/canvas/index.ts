@@ -15,6 +15,7 @@ export {
     CanvasProvider,
     useCanvas,
     isIsland,
+    isEditGated,
 } from './context.js';
 export type {
     CanvasConfig,
@@ -26,7 +27,7 @@ export type {
 // The editor surfaces
 export { CanvasNode, edgeAt } from './CanvasNode.js';
 export type { CanvasNodeProps, Dnd, DropEdge } from './CanvasNode.js';
-export { TreeRender } from './TreeRender.js';
+export { TreeRender, renderNode } from './TreeRender.js';
 export { Inspector } from './Inspector.js';
 export type { InspectorProps } from './Inspector.js';
 export { VisualEditor } from './VisualEditor.js';
@@ -54,6 +55,10 @@ export {
     setAttrs,
     blockText,
     RESERVED_ATTRS,
+    VIEW_GATE_ATTR,
+    EDIT_GATE_ATTR,
+    editGateOf,
+    viewGateOf,
 } from './props.js';
 
 // Insert placement

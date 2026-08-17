@@ -15,7 +15,12 @@ import { isIsland, useCanvas } from './context.js';
 import type { CanvasConfig } from './context.js';
 import { blockToProps, islandProps } from './props.js';
 
-function renderNode(node: JsonNode, path: string, config: CanvasConfig): ReactNode {
+/**
+ * Render a single node (and its subtree) read-only. Exported so CanvasNode can reuse it for an
+ * entitlement-sealed node's content (same "sealed but real" rendering an opaque/component island
+ * already gets — just gated on the viewer's can-map instead of source-reachability).
+ */
+export function renderNode(node: JsonNode, path: string, config: CanvasConfig): ReactNode {
     if (isJsonText(node)) return node.value;
     // A sealed opaque island renders its verbatim source read-only (mirrors the canvas seal, view-side).
     if (isJsonOpaque(node)) {

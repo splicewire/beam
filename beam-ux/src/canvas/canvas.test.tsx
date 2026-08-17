@@ -2,11 +2,11 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import type { JsonBlock, JsonDoc } from '../blockdoc/json.js';
 import { CanvasNode, edgeAt } from './CanvasNode.js';
-import { CanvasProvider } from './context.js';
+import { CanvasProvider, isEditGated } from './context.js';
 import type { CanvasConfig } from './context.js';
 import { Inspector } from './Inspector.js';
 import { PageEditor } from './PageEditor.js';
-import { attrsView, setAttrs } from './props.js';
+import { attrsView, EDIT_GATE_ATTR, setAttrs, VIEW_GATE_ATTR } from './props.js';
 
 // ── injected config ───────────────────────────────────────────────────────────────────────────────────
 const Hero = (props: Record<string, unknown>) => <div data-testid="hero">HERO {String(props.title ?? '')}</div>;
@@ -55,6 +55,70 @@ describe('CanvasNode — opaque islands', () => {
         expect(opaque.getAttribute('data-bd-path')).toBe('0');
         expect(opaque.textContent).toContain('items.map');
         expect((opaque.querySelector('pre') as HTMLElement).style.pointerEvents).toBe('none');
+    });
+});
+
+// ── CanvasNode: entitlement gating ────────────────────────────────────────────────────────────────────
+describe('isEditGated', () => {
+    const gated = block({ props: [{ name: EDIT_GATE_ATTR, kind: 'string', value: 'legal.author' }] });
+    const ungated = block({});
+
+    it('is false for a node with no edit-gate prop', () => {
+        expect(isEditGated({ registry: {}, MdxView, MdxEdit }, ungated)).toBe(false);
+    });
+
+    it('is false when the host never injects a can-map — edit-gating is a no-op, not a lockout', () => {
+        expect(isEditGated({ registry: {}, MdxView, MdxEdit }, gated)).toBe(false);
+    });
+
+    it('is true when the can-map is present but lacks the key (fails closed per-key)', () => {
+        expect(isEditGated({ registry: {}, MdxView, MdxEdit, can: {} }, gated)).toBe(true);
+        expect(isEditGated({ registry: {}, MdxView, MdxEdit, can: { 'legal.author': false } }, gated)).toBe(true);
+    });
+
+    it('is false when the can-map clears the key', () => {
+        expect(isEditGated({ registry: {}, MdxView, MdxEdit, can: { 'legal.author': true } }, gated)).toBe(false);
+    });
+});
+
+describe('CanvasNode — entitlement-gated blocks render sealed', () => {
+    it('renders an edit-gated block sealed (real content, read-only, not drillable/editable)', () => {
+        const gatedConfig: CanvasConfig = { ...config, can: { 'legal.author': false } };
+        const node = block({
+            name: 'section',
+            props: [{ name: EDIT_GATE_ATTR, kind: 'string', value: 'legal.author' }],
+            children: [block({ name: 'p', children: [{ kind: 'text', value: 'Confidential' }] })],
+        });
+        const { container } = render(
+            <CanvasProvider config={gatedConfig}>
+                <CanvasNode node={node} path="0" editing={null} onEditText={vi.fn()} dnd={noopDnd} />
+            </CanvasProvider>,
+        );
+        const sealed = container.querySelector('.ve-gated') as HTMLElement;
+        expect(sealed).not.toBeNull();
+        expect(sealed.getAttribute('data-bd-path')).toBe('0');
+        // the real content still renders (this isn't a view-gate) — just read-only underneath
+        expect(sealed.textContent).toContain('Confidential');
+        const inner = sealed.querySelector('div') as HTMLElement;
+        expect(inner.style.pointerEvents).toBe('none');
+        // sealed nodes are still draggable (movable/deletable) — only editing is blocked
+        expect(sealed.getAttribute('draggable')).toBe('true');
+    });
+
+    it('renders a block normally (editable) once the can-map clears its edit-gate key', () => {
+        const clearedConfig: CanvasConfig = { ...config, can: { 'legal.author': true } };
+        const node = block({
+            name: 'section',
+            props: [{ name: EDIT_GATE_ATTR, kind: 'string', value: 'legal.author' }],
+            children: [block({ name: 'p', children: [{ kind: 'text', value: 'Editable now' }] })],
+        });
+        const { container } = render(
+            <CanvasProvider config={clearedConfig}>
+                <CanvasNode node={node} path="0" editing={null} onEditText={vi.fn()} dnd={noopDnd} />
+            </CanvasProvider>,
+        );
+        expect(container.querySelector('.ve-gated')).toBeNull();
+        expect(container.querySelector('section')?.getAttribute('data-bd-path')).toBe('0');
     });
 });
 
@@ -165,14 +229,30 @@ describe('Inspector', () => {
         ],
     });
 
-    it('excludes md / className / style from the attributes list but shows other attrs', () => {
-        render(wrap(<Inspector block={target} onAttrs={vi.fn()} onDelete={vi.fn()} />));
-        // the "other attributes" row has a readonly key input for `id`, not for md/className/style
+    it('excludes md / className / style / gate attrs from the attributes list but shows other attrs', () => {
+        const gated = block({ ...target, props: [...target.props, { name: EDIT_GATE_ATTR, kind: 'string', value: 'legal.author' }] });
+        render(wrap(<Inspector block={gated} onAttrs={vi.fn()} onDelete={vi.fn()} />));
+        // the "other attributes" row has a readonly key input for `id`, not for md/className/style/gates
         const readonly = Array.from(document.querySelectorAll('input[readonly]')).map((i) => (i as HTMLInputElement).value);
         expect(readonly).toContain('id');
         expect(readonly).not.toContain('md');
         expect(readonly).not.toContain('className');
         expect(readonly).not.toContain('style');
+        expect(readonly).not.toContain(EDIT_GATE_ATTR);
+    });
+
+    it('the Access section edits the view/edit gate attrs, emitting the full next attr set', () => {
+        const onAttrs = vi.fn();
+        render(wrap(<Inspector block={target} onAttrs={onAttrs} onDelete={vi.fn()} />));
+        const editGateInput = document.querySelector('input[placeholder="edit gate (entitlement key)"]') as HTMLInputElement;
+        fireEvent.change(editGateInput, { target: { value: 'legal.author' } });
+        expect(onAttrs).toHaveBeenCalledWith(expect.objectContaining({ [EDIT_GATE_ATTR]: 'legal.author' }));
+        // reserved attrs (className/style/md/id) are preserved in the emitted set, not dropped
+        expect(onAttrs).toHaveBeenCalledWith(expect.objectContaining({ className: 'hero big', id: 'top' }));
+
+        const viewGateInput = document.querySelector('input[placeholder="view gate (entitlement key)"]') as HTMLInputElement;
+        fireEvent.change(viewGateInput, { target: { value: 'ux.author' } });
+        expect(onAttrs).toHaveBeenCalledWith(expect.objectContaining({ [VIEW_GATE_ATTR]: 'ux.author' }));
     });
 
     it('editing a class chip emits the full next attr set via onAttrs', () => {

@@ -11,8 +11,9 @@ import {
     VOID_TAGS,
 } from '../blockdoc/json.js';
 import type { JsonBlock, JsonNode } from '../blockdoc/json.js';
-import { isIsland, useCanvas } from './context.js';
-import { blockToProps, islandProps } from './props.js';
+import { isEditGated, isIsland, useCanvas } from './context.js';
+import { blockToProps, editGateOf, islandProps } from './props.js';
+import { renderNode } from './TreeRender.js';
 
 /** Which half of a hovered block's box a drag is over — the mount inserts on that edge. */
 export type DropEdge = 'before' | 'after';
@@ -142,6 +143,39 @@ export function CanvasNode({ node, path, editing, onEditText, onEditMd, dnd }: C
                         onChange={(next) => onEditMd?.(path, next)}
                     />
                 </div>
+            </div>
+        );
+    }
+
+    // Entitlement-sealed: this author's can-map doesn't clear the block's data-edit-gate key. Rendered
+    // like an opaque/component island — selectable/movable/deletable, its real content shown read-only
+    // (via TreeRender's renderNode) rather than editable. (MDX blocks are exempted for now — they
+    // already fork their own edit/view rendering via MdxEdit/MdxView, a separate follow-up to route
+    // through this same gate.)
+    if (isEditGated(config, block)) {
+        return (
+            <div
+                data-bd-path={path}
+                className="ve-island ve-gated"
+                draggable
+                onDragStart={(e) => {
+                    e.stopPropagation();
+                    dnd.onDragStart(path);
+                }}
+                onDragOver={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    dnd.onDragOverNode(path, edgeAt(e.currentTarget, e.clientY));
+                }}
+                onDrop={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    dnd.onDrop();
+                }}
+                onDragEnd={dnd.onDragEnd}
+                title={`Sealed — editing requires "${editGateOf(block)}"`}
+            >
+                <div style={{ pointerEvents: 'none' }}>{renderNode(block, path, config)}</div>
             </div>
         );
     }

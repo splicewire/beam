@@ -91,8 +91,10 @@ export function veCss(t?: Partial<CanvasTheme>): string {
 .beam-content-ref-body{padding:12px 14px;color:${c.ink}}
 /* mdxeditor popups (link dialog, selects) must sit ABOVE the fixed editor panels. */
 .mdxeditor-popup-container{z-index:2147483600 !important}
-.ve-canvas .ve-island::before{content:"◆ component";position:absolute;top:0;left:0;z-index:5;background:${c.panelBg};color:${c.muted};font:10px ${c.fontMono};letter-spacing:.1em;padding:2px 6px;border-radius:0 0 6px 0;opacity:0;pointer-events:none}
-.ve-canvas .ve-island:hover::before{opacity:.9}
+.ve-canvas .ve-island::before,.pe-canvas .ve-island::before{content:"◆ component";position:absolute;top:0;left:0;z-index:5;background:${c.panelBg};color:${c.muted};font:10px ${c.fontMono};letter-spacing:.1em;padding:2px 6px;border-radius:0 0 6px 0;opacity:0;pointer-events:none}
+.ve-canvas .ve-island:hover::before,.pe-canvas .ve-island:hover::before{opacity:.9}
+.ve-canvas .ve-gated::before,.pe-canvas .ve-gated::before{content:"sealed"}
+.ve-canvas .ve-gated::after,.pe-canvas .ve-gated::after{content:"";position:absolute;inset:0;z-index:4;outline:1.5px dashed #E0A030;outline-offset:-1px;pointer-events:none}
 .ve-side{width:340px;flex:none;background:${c.panelBg};color:${c.panelFg};border-left:1px solid rgba(255,255,255,.08);overflow:auto;display:flex;flex-direction:column}
 .ve-insp{padding:14px 16px;display:flex;flex-direction:column;gap:16px}
 .ve-insp-top{display:flex;align-items:center;justify-content:space-between}

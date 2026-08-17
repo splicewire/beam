@@ -10,9 +10,28 @@ import {
 } from '../blockdoc/json.js';
 import type { JsonBlock, JsonProp } from '../blockdoc/json.js';
 
+/** The reserved prop names carrying a node's per-element entitlement gates (an entitlement key string
+ * each, e.g. `ux.author` or a host-registered bespoke key). See {@link CanvasConfig.can} (edit gate)
+ * and the host's server-side body filter (view gate) for how each is actually enforced. */
+export const VIEW_GATE_ATTR = 'data-view-gate';
+export const EDIT_GATE_ATTR = 'data-edit-gate';
+
 /** Props whose editing lives OUTSIDE the "other attributes" list (className/style edited specially; md
- * is the MDX island body, edited in the canvas). Mirrors the host's `class`/`style`/`md` exclusion. */
-export const RESERVED_ATTRS = new Set(['className', 'style', 'md']);
+ * is the MDX island body, edited in the canvas; the two gate attrs get their own Inspector section).
+ * Mirrors the host's `class`/`style`/`md` exclusion. */
+export const RESERVED_ATTRS = new Set(['className', 'style', 'md', VIEW_GATE_ATTR, EDIT_GATE_ATTR]);
+
+/** The node's edit-gate entitlement key, or null when ungated. */
+export const editGateOf = (block: JsonBlock): string | null => {
+    const v = propValue(block, EDIT_GATE_ATTR);
+    return typeof v === 'string' && v !== '' ? v : null;
+};
+
+/** The node's view-gate entitlement key, or null when ungated. */
+export const viewGateOf = (block: JsonBlock): string | null => {
+    const v = propValue(block, VIEW_GATE_ATTR);
+    return typeof v === 'string' && v !== '' ? v : null;
+};
 
 /**
  * Map a JsonBlock's props into React element props (mirror host `attrsToProps`):

@@ -6,7 +6,7 @@ import { useState } from 'react';
 import { joinStyle, styleRows } from '../blockdoc/json.js';
 import type { JsonBlock } from '../blockdoc/json.js';
 import { useCanvas } from './context.js';
-import { attrsView, RESERVED_ATTRS } from './props.js';
+import { attrsView, EDIT_GATE_ATTR, RESERVED_ATTRS, VIEW_GATE_ATTR } from './props.js';
 import { DEFAULT_CLASS_SUGGESTIONS, DEFAULT_VAR_SUGGESTIONS } from './templates.js';
 
 export interface InspectorProps {
@@ -131,6 +131,27 @@ export function Inspector({ block, onAttrs, onDelete }: InspectorProps) {
                 >
                     + declaration
                 </button>
+            </div>
+
+            <div className="ve-insp-sec">
+                <div className="ve-insp-h">Access</div>
+                <div className="ve-kv">
+                    <input value={view[VIEW_GATE_ATTR] ?? ''} placeholder="view gate (entitlement key)" onChange={(e) => set({ [VIEW_GATE_ATTR]: e.target.value || undefined })} />
+                    {view[VIEW_GATE_ATTR] && (
+                        <button onClick={() => set({ [VIEW_GATE_ATTR]: undefined })}>×</button>
+                    )}
+                </div>
+                <div className="ve-kv">
+                    <input value={view[EDIT_GATE_ATTR] ?? ''} placeholder="edit gate (entitlement key)" onChange={(e) => set({ [EDIT_GATE_ATTR]: e.target.value || undefined })} />
+                    {view[EDIT_GATE_ATTR] && (
+                        <button onClick={() => set({ [EDIT_GATE_ATTR]: undefined })}>×</button>
+                    )}
+                </div>
+                <div className="ve-pal-note">
+                    View gate hides this element (and everything inside it) from a viewer lacking the key —
+                    enforced server-side. Edit gate leaves it visible but seals it from an author lacking
+                    the key, here in the canvas.
+                </div>
             </div>
 
             <div className="ve-insp-sec">
