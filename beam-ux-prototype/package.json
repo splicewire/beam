@@ -46,7 +46,7 @@
         "react-router": ">=7"
     },
     "dependencies": {
-        "@schemastud/ui": "github:schemastud/js#03150fe3f55a7cfbc455db997239af83fb6bc1a4&path:ui"
+        "@schemastud/ui": "^0.1.0"
     },
     "devDependencies": {
         "@types/node": "^22.20.1",
