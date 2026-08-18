@@ -167,7 +167,7 @@ export function peCss(t?: Partial<CanvasTheme>): string {
 .pe-btn:hover{color:#fff;border-color:${c.accent}80}
 .pe-btn:disabled{opacity:.35;cursor:not-allowed}
 .pe-btn.primary{background:${c.accent};border-color:${c.accent};color:#fff}
-.pe-panel{position:fixed;top:48px;bottom:14px;width:300px;z-index:2147483200;background:${c.panelBg};border:1px solid rgba(255,255,255,.1);border-radius:12px;overflow:auto;box-shadow:0 24px 60px -18px rgba(0,0,0,.6)}
+.pe-panel{position:fixed;top:40px;bottom:14px;width:300px;z-index:2147483200;background:${c.panelBg};border:1px solid rgba(255,255,255,.1);border-top:none;border-radius:0 0 12px 12px;overflow:auto;box-shadow:0 24px 60px -18px rgba(0,0,0,.6);mask-image:linear-gradient(to bottom,#000 0%,#000 88%,transparent 100%);-webkit-mask-image:linear-gradient(to bottom,#000 0%,#000 88%,transparent 100%)}
 .pe-left{left:14px;width:200px;padding:14px 12px;display:flex;flex-direction:column;gap:7px}
 .pe-right{right:14px}
 ${inspectorCss}

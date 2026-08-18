@@ -52,6 +52,11 @@ export interface CanvasWidgetProps {
     /** The host's theme (same object VisualEditor/PageEditor thread into `veCss()`/`peCss()`) — drives
      * the selection/drop-indicator accent color. Defaults to `DEFAULT_CANVAS_THEME.accent` when absent. */
     theme?: Partial<CanvasTheme>;
+    /** Suppress the built-in in-flow breadcrumb — for a host that renders {@see Breadcrumb} itself
+     * elsewhere (PageEditor puts it in the floating Inspector panel; in-flow here would render behind
+     * that same panel, since both sit at the top of the real page's content flow). Default false keeps
+     * FiveRegionEditShell/VisualEditor's own docked-region layout, where in-flow is correct, unchanged. */
+    hideBreadcrumb?: boolean;
 }
 
 /** The path of `path`'s sibling `delta` positions over (-1 previous, +1 next), or `null` past either
@@ -79,6 +84,7 @@ export function CanvasWidget({
     editShellMount: mount,
     readOnly = false,
     theme,
+    hideBreadcrumb = false,
 }: CanvasWidgetProps) {
     const config = useCanvas();
     const doc: JsonDoc = value ?? formData ?? [];
@@ -263,7 +269,7 @@ export function CanvasWidget({
                 />
             )}
 
-            {sel && <Breadcrumb doc={doc} path={sel} onSelect={setSel} />}
+            {!hideBreadcrumb && sel && <Breadcrumb doc={doc} path={sel} onSelect={setSel} />}
 
             <div
                 className="ve-canvas"

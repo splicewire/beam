@@ -20,6 +20,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { EditShellMountProvider, Inspector as FrameInspector, useEditShellMountController } from '@schemastud/frame';
 import { WidgetRegistryContext } from '@schemastud/seam';
 import type { JsonDoc } from '../blockdoc/json.js';
+import { Breadcrumb } from './Breadcrumb.js';
 import { CanvasPalette } from './CanvasPalette.js';
 import { CanvasWidget } from './CanvasWidget.js';
 import { peCss, veCss } from './css.js';
@@ -155,8 +156,13 @@ export function PageEditor({
             <EditShellMountProvider value={mount}>
                 <style dangerouslySetInnerHTML={{ __html: veCss(theme) + peCss(theme) }} />
 
-                {/* The content region — IN PLACE (inside the page's layout), so classes + scoped CSS apply. */}
-                <CanvasWidget value={doc} onChange={setDoc} editShellMount={mount} theme={theme} />
+                {/* The content region — IN PLACE (inside the page's layout), so classes + scoped CSS apply.
+                    hideBreadcrumb: PageEditor renders its own breadcrumb in the floating Inspector panel
+                    below — the in-flow one would render at the top of the real page's content, which is
+                    exactly where the floating pe-left/pe-right panels sit, so it was rendering almost
+                    entirely behind them (found live: only its LAST segment's last few pixels peeked out
+                    past the left panel's edge). */}
+                <CanvasWidget value={doc} onChange={setDoc} editShellMount={mount} theme={theme} hideBreadcrumb />
 
                 {/* Floating editor chrome — fixed over the page. */}
                 <div className="pe-bar">
@@ -200,6 +206,9 @@ export function PageEditor({
                     frame's own Inspector already renders its own empty state when nothing is selected. */}
                 {rightOpen && (
                     <aside className="pe-panel pe-right">
+                        {mount.selectedNodeId && (
+                            <Breadcrumb doc={doc} path={mount.selectedNodeId} onSelect={mount.selectNode} />
+                        )}
                         <FrameInspector />
                     </aside>
                 )}
