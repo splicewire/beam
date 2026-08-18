@@ -244,4 +244,17 @@ describe('jsonToTsx printer (Babel-free)', () => {
         expect(() => parse(out)).not.toThrow();
         expect(fromJson(doc).roots).toHaveLength(2);
     });
+
+    it('prints a null string-kind value as an empty string, not the text "null"', () => {
+        // A cleared string attr (e.g. an entitlement gate select) round-trips through Laravel's
+        // default `ConvertEmptyStringsToNull` middleware as a real `null`, not `''`. `String(null)`
+        // is the JS footgun `"null"` — regression coverage for a real bug: this used to print the
+        // 4-character text `data-view-gate="null"` into live JSX instead of an empty attribute.
+        const out = jsonToTsx([
+            { kind: 'block', name: 'p', isComponent: false, dynamic: false, children: [],
+              props: [{ name: 'data-view-gate', kind: 'string', value: null }] },
+        ]);
+        expect(out).toContain('data-view-gate=""');
+        expect(out).not.toContain('null');
+    });
 });

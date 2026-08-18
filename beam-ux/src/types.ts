@@ -16,10 +16,19 @@ export type { BeamUxEntryBodyData };
  * with a divergent shape can bind its own.
  */
 export interface UxBuilderClient<TBody = BeamUxEntryBodyData> {
-    /** Load the schema + body for an editable region's canonical record (GET .../entries/{slug}/body). */
-    loadBody(slug: string): Promise<TBody>;
-    /** Persist a region's body — returns the fresh projection (PUT .../entries/{slug}/body). */
-    saveBody(slug: string, body: Record<string, unknown>): Promise<TBody>;
+    /**
+     * Load the schema + body for an editable region's canonical record (GET .../entries/{slug}/body).
+     * `namespace` disambiguates when `slug` alone is shared by more than one entry (a `theme`-namespaced
+     * override and a null-namespace page can legitimately share a slug) — pass it whenever the caller
+     * already knows which entry it means (it has the row, e.g. from a list fetch); omit it only when
+     * addressing the conventional null-namespace page entry by bare slug, the in-page canvas editor's
+     * own case. `null` addresses the null-namespace entry explicitly (distinct from omitting the
+     * argument, which defers to the server's own no-namespace-given tiebreak).
+     */
+    loadBody(slug: string, namespace?: string | null): Promise<TBody>;
+    /** Persist a region's body — returns the fresh projection (PUT .../entries/{slug}/body). See
+     * `loadBody`'s `namespace` for the disambiguation contract; same rules apply here. */
+    saveBody(slug: string, body: Record<string, unknown>, namespace?: string | null): Promise<TBody>;
 }
 
 export interface NotifyEvent {

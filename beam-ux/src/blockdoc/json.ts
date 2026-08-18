@@ -28,8 +28,13 @@ import type { BlockChild, BlockDoc, BlockNode, PropKind } from './types.js';
 export interface JsonProp {
     name: string;
     kind: PropKind;
-    /** Decoded literal for string/number/boolean; source text (`{…}` stripped) for `expression`. */
-    value: string | number | boolean;
+    /**
+     * Decoded literal for string/number/boolean; source text (`{…}` stripped) for `expression`.
+     * `null` is a legitimate string-kind value — e.g. Laravel's default `ConvertEmptyStringsToNull`
+     * middleware turns a cleared string attr's `''` into a real `null` before it's ever persisted, so
+     * a round-tripped doc can carry `null` here even though nothing in this package writes it directly.
+     */
+    value: string | number | boolean | null;
 }
 
 /** An intrinsic element or component node. `isComponent` ⇒ a registered PascalCase component. */
@@ -161,7 +166,9 @@ function printProp(p: JsonProp): string {
         case 'boolean-shorthand':
             return ` ${p.name}`;
         case 'string':
-            return ` ${p.name}=${JSON.stringify(String(p.value))}`;
+            // `String(null)` is `"null"` — a JS footgun that would otherwise print the 4-character
+            // text "null" as the attribute's literal value instead of an empty string.
+            return ` ${p.name}=${JSON.stringify(String(p.value ?? ''))}`;
         case 'number':
             return ` ${p.name}={${p.value}}`;
         case 'boolean':

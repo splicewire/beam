@@ -42,8 +42,8 @@ export function blockToProps(block: JsonBlock): Record<string, unknown> {
     const out: Record<string, unknown> = {};
     for (const p of block.props) {
         if (p.kind === 'expression') continue;
-        if (p.name === 'className') out.className = String(p.value);
-        else if (p.name === 'style' && p.kind === 'string') out.style = parseStyle(String(p.value));
+        if (p.name === 'className') out.className = String(p.value ?? '');
+        else if (p.name === 'style' && p.kind === 'string') out.style = parseStyle(String(p.value ?? ''));
         else out[p.name] = p.value;
     }
     return out;
@@ -64,7 +64,10 @@ export function attrsView(block: JsonBlock): Record<string, string> {
     const out: Record<string, string> = {};
     for (const p of block.props) {
         if (p.kind === 'string' || p.kind === 'number' || p.kind === 'boolean') {
-            out[p.name] = String(p.value);
+            // `p.value` can be a real `null` for a string-kind prop (Laravel's default
+            // `ConvertEmptyStringsToNull` middleware turns a cleared `''` into `null` on save) —
+            // `String(null)` is `"null"`, so guard it the same way an absent value already reads.
+            out[p.name] = String(p.value ?? '');
         }
     }
     return out;
