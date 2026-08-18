@@ -169,7 +169,7 @@ export function peCss(t?: Partial<CanvasTheme>): string {
 .pe-btn:hover{color:#fff;border-color:${c.accent}80}
 .pe-btn:disabled{opacity:.35;cursor:not-allowed}
 .pe-btn.primary{background:${c.accent};border-color:${c.accent};color:#fff}
-.pe-panel{position:fixed;top:40px;bottom:14px;width:300px;z-index:2147483200;background:${c.panelBg};border:1px solid rgba(255,255,255,.1);border-top:none;overflow:auto;box-shadow:0 24px 60px -18px rgba(0,0,0,.6);mask-image:linear-gradient(to bottom,#000 0%,#000 55%,transparent 100%);-webkit-mask-image:linear-gradient(to bottom,#000 0%,#000 55%,transparent 100%)}
+.pe-panel{position:fixed;top:40px;bottom:14px;width:300px;z-index:2147483200;background:${c.panelBg};border:1px solid rgba(255,255,255,.1);border-top:none;overflow:auto;box-shadow:0 24px 60px -18px rgba(0,0,0,.6);mask-image:linear-gradient(to bottom,#000 0%,#000 55%,rgba(0,0,0,.5) 100%);-webkit-mask-image:linear-gradient(to bottom,#000 0%,#000 55%,rgba(0,0,0,.5) 100%)}
 .pe-left{left:0;width:200px;padding:14px 12px;display:flex;flex-direction:column;gap:7px;border-left:none;border-radius:0 0 12px 0}
 .pe-right{right:0;border-right:none;border-radius:0 0 0 12px}
 .pe-comp-badge{margin:-6px 16px 6px;font-family:${c.fontMono};font-size:10px;letter-spacing:.08em;color:${c.accent}}
