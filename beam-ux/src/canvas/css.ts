@@ -52,8 +52,8 @@ const theme = (t?: Partial<CanvasTheme>): CanvasTheme => ({ ...DEFAULT_CANVAS_TH
  * color behind it, so the indicator stays legible regardless of what the selected block's own
  * background happens to be — the same halo technique most editor selection UIs use.
  */
-export const selectionCss = (path: string, accent: string): string =>
-    `[data-bd-path="${path}"]{outline:none !important;box-shadow:0 0 0 1px #fff,0 0 0 3px ${accent} !important}`;
+export const selectionCss = (path: string, accent: string, isComponent = false): string =>
+    `[data-bd-path="${path}"]{outline:${isComponent ? `2px dotted ${accent}` : 'none'} !important;outline-offset:5px;box-shadow:0 0 0 1px #fff,0 0 0 3px ${accent} !important}`;
 
 /**
  * Drop-target indicator CSS: a solid line on the hovered block's top (`before`) or bottom (`after`)
@@ -86,6 +86,7 @@ export function veCss(t?: Partial<CanvasTheme>): string {
 .ve-pal-note{margin-top:6px;color:${c.muted};font-size:10px;line-height:1.4}
 .ve-canvas{flex:1;overflow:auto;background:${c.canvas};color:${c.ink}}
 .ve-canvas [data-bd-path]:hover{outline:1.5px dashed ${c.accent}80;outline-offset:1px}
+.ve-canvas [data-bd-component]:hover{outline:1.5px dotted ${c.accent};outline-offset:1px}
 .ve-canvas [contenteditable="true"]{outline:2px solid ${c.editAccent} !important;cursor:text}
 .ve-canvas .ve-island{position:relative}
 .ve-canvas .ve-opaque{position:relative}
@@ -158,6 +159,7 @@ export function peCss(t?: Partial<CanvasTheme>): string {
     return `
 .pe-canvas{position:relative}
 .pe-canvas [data-bd-path]:hover{outline:1.5px dashed ${c.accent}80;outline-offset:1px}
+.pe-canvas [data-bd-component]:hover{outline:1.5px dotted ${c.accent};outline-offset:1px}
 .pe-canvas [contenteditable="true"]{outline:2px solid ${c.editAccent} !important;cursor:text}
 .pe-canvas .ve-island{position:relative}
 .pe-bar{position:fixed;top:0;left:0;right:0;z-index:2147483200;display:flex;align-items:center;gap:8px;height:40px;padding:0 14px;background:${c.panelBg};color:${c.panelFg};border-bottom:1px solid rgba(255,255,255,.1);font-family:${c.fontMono};font-size:11px}
@@ -167,9 +169,10 @@ export function peCss(t?: Partial<CanvasTheme>): string {
 .pe-btn:hover{color:#fff;border-color:${c.accent}80}
 .pe-btn:disabled{opacity:.35;cursor:not-allowed}
 .pe-btn.primary{background:${c.accent};border-color:${c.accent};color:#fff}
-.pe-panel{position:fixed;top:40px;bottom:14px;width:300px;z-index:2147483200;background:${c.panelBg};border:1px solid rgba(255,255,255,.1);border-top:none;border-radius:0 0 12px 12px;overflow:auto;box-shadow:0 24px 60px -18px rgba(0,0,0,.6);mask-image:linear-gradient(to bottom,#000 0%,#000 88%,transparent 100%);-webkit-mask-image:linear-gradient(to bottom,#000 0%,#000 88%,transparent 100%)}
-.pe-left{left:14px;width:200px;padding:14px 12px;display:flex;flex-direction:column;gap:7px}
-.pe-right{right:14px}
+.pe-panel{position:fixed;top:40px;bottom:14px;width:300px;z-index:2147483200;background:${c.panelBg};border:1px solid rgba(255,255,255,.1);border-top:none;overflow:auto;box-shadow:0 24px 60px -18px rgba(0,0,0,.6);mask-image:linear-gradient(to bottom,#000 0%,#000 55%,transparent 100%);-webkit-mask-image:linear-gradient(to bottom,#000 0%,#000 55%,transparent 100%)}
+.pe-left{left:0;width:200px;padding:14px 12px;display:flex;flex-direction:column;gap:7px;border-left:none;border-radius:0 0 12px 0}
+.pe-right{right:0;border-right:none;border-radius:0 0 0 12px}
+.pe-comp-badge{margin:-6px 16px 6px;font-family:${c.fontMono};font-size:10px;letter-spacing:.08em;color:${c.accent}}
 ${inspectorCss}
 `;
 }

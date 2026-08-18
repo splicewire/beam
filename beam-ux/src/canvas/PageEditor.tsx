@@ -19,6 +19,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { EditShellMountProvider, Inspector as FrameInspector, useEditShellMountController } from '@schemastud/frame';
 import { WidgetRegistryContext } from '@schemastud/seam';
+import { getAt, isJsonBlock } from '../blockdoc/json.js';
 import type { JsonDoc } from '../blockdoc/json.js';
 import { Breadcrumb } from './Breadcrumb.js';
 import { CanvasPalette } from './CanvasPalette.js';
@@ -77,6 +78,14 @@ const EMPTY_DOC: JsonDoc = [
 
 const isDoc = (b: unknown): b is JsonDoc =>
     Array.isArray(b) && b.every((n) => !!n && typeof n === 'object' && 'kind' in (n as object));
+
+/** Whether `path` resolves to a `block` node the lens parsed from a PascalCase (component) tag —
+ * see `CanvasNode`'s `data-bd-component` for the canvas-side half of this same distinction. */
+const isSelectedNodeComponent = (doc: JsonDoc, path: string): boolean => {
+    const node = getAt(doc, path);
+
+    return !!node && isJsonBlock(node) && node.isComponent;
+};
 
 /** Track window (edit) mode off the host MainframeHost's `beam-ux:mode` broadcast. */
 export function useEditMode(): boolean {
@@ -207,7 +216,12 @@ export function PageEditor({
                 {rightOpen && (
                     <aside className="pe-panel pe-right">
                         {mount.selectedNodeId && (
-                            <Breadcrumb doc={doc} path={mount.selectedNodeId} onSelect={mount.selectNode} />
+                            <>
+                                <Breadcrumb doc={doc} path={mount.selectedNodeId} onSelect={mount.selectNode} />
+                                {isSelectedNodeComponent(doc, mount.selectedNodeId) && (
+                                    <div className="pe-comp-badge">◆ component</div>
+                                )}
+                            </>
                         )}
                         <FrameInspector />
                     </aside>

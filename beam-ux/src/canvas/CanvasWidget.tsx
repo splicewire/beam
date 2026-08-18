@@ -260,7 +260,15 @@ export function CanvasWidget({
 
     return (
         <div className="ve-canvas-widget">
-            {sel && <style dangerouslySetInnerHTML={{ __html: selectionCss(sel, accent) }} />}
+            {sel &&
+                (() => {
+                    const selNode = getAt(doc, sel);
+                    const selIsComponent = !!selNode && isJsonBlock(selNode) && selNode.isComponent;
+
+                    return (
+                        <style dangerouslySetInnerHTML={{ __html: selectionCss(sel, accent, selIsComponent) }} />
+                    );
+                })()}
             {dropTarget && (
                 <style
                     dangerouslySetInnerHTML={{

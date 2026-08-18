@@ -189,6 +189,13 @@ export function CanvasNode({ node, path, editing, onEditText, onEditMd, dnd }: C
 
     const props: Record<string, unknown> = {
         'data-bd-path': path,
+        // Set whenever the LENS parsed this as a PascalCase component tag (`block.isComponent`) —
+        // regardless of whether it's currently registered as a sealed island (below) or falls through
+        // to render/drill in as a plain tag. Before this, an unregistered (or drill-in-able) component
+        // was visually IDENTICAL to a bare `<div>` — the only nodes with any distinct treatment were
+        // ones already `isIsland` (registered), via `.ve-island`. A plain data attribute (not a class)
+        // so CSS can target it with `[data-bd-component]` without a JS-side class-name concat.
+        ...(block.isComponent ? { 'data-bd-component': 'true' } : {}),
         // A node mid text-edit isn't draggable — HTML5 drag and contentEditable's own click-drag text
         // selection fight over the same mousedown-then-move gesture, so a drag start here would hijack
         // what the user meant as "select this word" and the caret would never land.
