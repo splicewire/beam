@@ -14,7 +14,7 @@ CSS-vars).
 | `./blockdoc` · `./leaf` | The lossless `.tsx⟷AST` BlockDoc lens, the pluggable rich-text leaf. |
 | `./admin` | The `BeamUxEntry` admin lifecycle surface — a standalone `RowActions` component (edit/duplicate/delete/promote-to-central). |
 | `./blockdoc/json` | **Babel-free** JSON projection of BlockDoc — the visual-editor runtime shape (`JsonNode`) + immutable edit ops. Safe for the client bundle. |
-| `./site` | Generic public-site chrome — `SiteLayout` + `SiteNav` (ticket 10). |
+| `./site` | Generic public-site chrome — `SiteLayout` + `SiteNav` (ticket 10), plus the docs surfaces a contributed page renders: `ManifestTable` + `ApiReference` (ADR-0210 §5). |
 | `./account` | Generic authed-account chrome — `AccountShell` + `AccountNav` (ticket 13). |
 | `./shell` | The **realm-aware OS-shell layer** — `buildAppsFromManifest` over the canonical `@schemastud/mainframe/os` chrome (ADR-0017). |
 
