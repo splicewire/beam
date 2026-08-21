@@ -1,8 +1,17 @@
 /* =============================================================================
    @splicewire/beam-mdx/kit — Tier-1 guide-doc component styles.
 
-   Every rule is scoped under `.site-prose` and prefixed `bkit-` to avoid host
-   collisions. Colors, fonts, and hairlines read the host token vars only:
+   Every rule is scoped by its own `bkit-` prefix, which is the whole
+   collision-avoidance story. It USED to also require a `.site-prose` ancestor —
+   one host's wrapper class, welded into a distributable package — so the kit
+   rendered unstyled on any site that did not happen to reproduce that class
+   name. Found on `splicewire/www`, whose entry shell wraps bodies in
+   `<Prose>` from `@splicewire/beam-ux/site` and scopes to `[data-beam-prose]`
+   deliberately: the stylesheet loaded, and every selector in it missed
+   (beam-docs-satellite ticket 08). The prefix was already doing the work the
+   ancestor was credited with.
+
+   Colors, fonts, and hairlines read the host token vars only:
    --sr-* (text/heading/brand/dim/faint/hairline) preferred, --beam-* for the
    status + surface palette. Nothing here hard-codes a color, so a consuming
    site restyles by overriding tokens, never by forking this sheet. Import once
@@ -10,32 +19,32 @@
    ============================================================================= */
 
 /* --- Figure ---------------------------------------------------------------- */
-.site-prose .bkit-figure {
-    margin: 1.5rem 0;
+.bkit-figure {
+    margin-block: 1.5rem;
     overflow: hidden;
     border: 1px solid var(--sr-hairline);
     border-radius: 0.5rem;
     background: var(--beam-muted);
 }
-.site-prose .bkit-figure img {
+.bkit-figure img {
     display: block;
     width: 100%;
     height: auto;
 }
 /* Inline exhibits (an ASCII diagram, an inline SVG, a mockup) instead of an image. */
-.site-prose .bkit-figure-body {
+.bkit-figure-body {
     padding: 1rem 1.25rem;
     overflow-x: auto;
 }
-.site-prose .bkit-figure-body > svg {
+.bkit-figure-body > svg {
     display: block;
     width: 100%;
     height: auto;
 }
-.site-prose .bkit-figure-body > pre {
+.bkit-figure-body > pre {
     margin: 0;
 }
-.site-prose .bkit-figcaption {
+.bkit-figcaption {
     border-top: 1px solid var(--sr-hairline);
     padding: 0.5rem 1rem;
     font-size: 0.875rem;
@@ -43,8 +52,8 @@
 }
 
 /* --- FileTree -------------------------------------------------------------- */
-.site-prose .bkit-filetree {
-    margin: 1.5rem 0;
+.bkit-filetree {
+    margin-block: 1.5rem;
     padding: 0.85rem 1.1rem;
     border: 1px solid var(--sr-hairline);
     border-radius: 0.5rem;
@@ -55,40 +64,40 @@
     color: var(--sr-text);
     overflow-x: auto;
 }
-.site-prose .bkit-filetree pre,
-.site-prose .bkit-filetree code {
+.bkit-filetree pre,
+.bkit-filetree code {
     margin: 0;
     padding: 0;
     background: transparent;
 }
-.site-prose .bkit-filetree-list {
+.bkit-filetree-list {
     list-style: none;
     margin: 0;
     padding: 0;
 }
-.site-prose .bkit-filetree-list .bkit-filetree-list {
+.bkit-filetree-list .bkit-filetree-list {
     margin: 0;
     padding-left: 1.1rem;
     border-left: 1px solid var(--sr-faint, var(--sr-hairline));
 }
-.site-prose .bkit-filetree-item {
+.bkit-filetree-item {
     margin: 0;
     padding: 0.05rem 0;
 }
-.site-prose .bkit-filetree-name {
+.bkit-filetree-name {
     color: var(--sr-text);
 }
 
 /* --- Terminal -------------------------------------------------------------- */
-.site-prose .bkit-terminal {
-    margin: 1.5rem 0;
+.bkit-terminal {
+    margin-block: 1.5rem;
     border: 1px solid var(--sr-hairline);
     border-radius: 0.5rem;
     overflow: hidden;
     background: var(--beam-muted);
     font-family: var(--font-mono, var(--beam-font-mono));
 }
-.site-prose .bkit-terminal-bar {
+.bkit-terminal-bar {
     display: flex;
     align-items: center;
     gap: 0.65rem;
@@ -96,79 +105,79 @@
     border-bottom: 1px solid var(--sr-hairline);
     background: var(--beam-paper-raised, var(--beam-paper));
 }
-.site-prose .bkit-terminal-dots {
+.bkit-terminal-dots {
     display: inline-flex;
     gap: 0.4rem;
 }
-.site-prose .bkit-terminal-dot {
+.bkit-terminal-dot {
     width: 0.65rem;
     height: 0.65rem;
     border-radius: 50%;
     background: var(--sr-faint, var(--sr-hairline));
 }
-.site-prose .bkit-terminal-title {
+.bkit-terminal-title {
     font-size: 0.75rem;
     color: var(--sr-dim);
     letter-spacing: 0.01em;
 }
-.site-prose .bkit-terminal-body {
+.bkit-terminal-body {
     padding: 0.25rem 0;
 }
-.site-prose .bkit-terminal-body pre {
+.bkit-terminal-body pre {
     margin: 0;
     border-radius: 0;
 }
 
 /* --- Callout --------------------------------------------------------------- */
-.site-prose .bkit-callout {
-    margin: 1.5rem 0;
+.bkit-callout {
+    margin-block: 1.5rem;
     padding: 0.9rem 1.1rem;
     border-left: 3px solid var(--bkit-callout-accent);
     border-radius: 0 0.375rem 0.375rem 0;
     background: var(--bkit-callout-tint);
 }
-.site-prose .bkit-callout-title {
-    margin: 0 0 0.35rem;
+.bkit-callout-title {
+    margin-block-end: 0.35rem;
     font-family: var(--font-sans, var(--beam-font-sans));
     font-weight: 600;
     font-size: 0.9375rem;
     color: var(--sr-heading);
 }
-.site-prose .bkit-callout-body {
+.bkit-callout-body {
     color: var(--sr-text);
     font-size: 0.9375rem;
 }
-.site-prose .bkit-callout-body > :last-child {
+.bkit-callout-body > :last-child {
     margin-bottom: 0;
 }
-.site-prose .bkit-callout--note {
+.bkit-callout--note {
     --bkit-callout-accent: var(--beam-signal);
     --bkit-callout-tint: var(--beam-signal-13, var(--beam-muted));
 }
-.site-prose .bkit-callout--tip {
+.bkit-callout--tip {
     --bkit-callout-accent: var(--beam-green);
     --bkit-callout-tint: var(--beam-green-tint, var(--beam-muted));
 }
-.site-prose .bkit-callout--info {
+.bkit-callout--info {
     --bkit-callout-accent: var(--beam-info);
     --bkit-callout-tint: var(--beam-info-tint, var(--beam-muted));
 }
-.site-prose .bkit-callout--warning {
+.bkit-callout--warning {
     --bkit-callout-accent: var(--beam-warn);
     --bkit-callout-tint: var(--beam-warn-tint, var(--beam-muted));
 }
-.site-prose .bkit-callout--danger {
+.bkit-callout--danger {
     --bkit-callout-accent: var(--beam-danger);
     --bkit-callout-tint: var(--beam-danger-tint, var(--beam-muted));
 }
 
 /* --- Steps ----------------------------------------------------------------- */
-.site-prose .bkit-steps {
+.bkit-steps {
     counter-reset: bkit-step;
-    margin: 1.5rem 0;
+    margin-block: 1.5rem;
     padding-left: 0.5rem;
 }
-.site-prose .bkit-step {
+.bkit-step {
     position: relative;
     counter-increment: bkit-step;
     display: grid;
@@ -177,7 +186,7 @@
     padding-bottom: 1.5rem;
 }
 /* Vertical rail: a line down the marker column, stopping at the last step. */
-.site-prose .bkit-step::before {
+.bkit-step::before {
     content: '';
     position: absolute;
     left: 0.875rem;
@@ -187,13 +196,13 @@
     background: var(--sr-hairline);
     transform: translateX(-0.5px);
 }
-.site-prose .bkit-step:last-child {
+.bkit-step:last-child {
     padding-bottom: 0;
 }
-.site-prose .bkit-step:last-child::before {
+.bkit-step:last-child::before {
     display: none;
 }
-.site-prose .bkit-step-marker {
+.bkit-step-marker {
     position: relative;
     z-index: 1;
     width: 1.75rem;
@@ -209,35 +218,35 @@
     font-weight: 600;
     color: var(--sr-brand);
 }
-.site-prose .bkit-step-marker::before {
+.bkit-step-marker::before {
     content: counter(bkit-step);
 }
-.site-prose .bkit-step-title {
-    margin: 0 0 0.35rem;
+.bkit-step-title {
+    margin-block-end: 0.35rem;
     padding-top: 0.15rem;
     font-family: var(--font-sans, var(--beam-font-sans));
     font-weight: 600;
     color: var(--sr-heading);
 }
-.site-prose .bkit-step-body > :last-child {
+.bkit-step-body > :last-child {
     margin-bottom: 0;
 }
 
 /* --- DoctorOutput ---------------------------------------------------------- */
-.site-prose .bkit-doctoroutput {
-    margin: 1.5rem 0;
+.bkit-doctoroutput {
+    margin-block: 1.5rem;
     border: 1px solid var(--sr-hairline);
     border-radius: 0.5rem;
     overflow: hidden;
     background: var(--beam-paper-raised, var(--beam-paper));
     font-family: var(--font-mono, var(--beam-font-mono));
 }
-.site-prose .bkit-doctoroutput-list {
+.bkit-doctoroutput-list {
     list-style: none;
     margin: 0;
     padding: 0;
 }
-.site-prose .bkit-doctoroutput-row {
+.bkit-doctoroutput-row {
     display: grid;
     grid-template-columns: 0.65rem auto 1fr;
     align-items: baseline;
@@ -247,17 +256,17 @@
     line-height: 1.6;
     border-top: 1px solid var(--sr-faint, var(--sr-hairline));
 }
-.site-prose .bkit-doctoroutput-list > :first-child {
+.bkit-doctoroutput-list > :first-child {
     border-top: none;
 }
-.site-prose .bkit-doctoroutput-pip {
+.bkit-doctoroutput-pip {
     align-self: center;
     width: 0.6rem;
     height: 0.6rem;
     border-radius: 50%;
     background: var(--bkit-doctor-accent);
 }
-.site-prose .bkit-doctoroutput-label {
+.bkit-doctoroutput-label {
     font-family: var(--font-sans, var(--beam-font-sans));
     font-size: 0.6875rem;
     font-weight: 600;
@@ -265,24 +274,24 @@
     text-transform: uppercase;
     color: var(--bkit-doctor-accent);
 }
-.site-prose .bkit-doctoroutput-check {
+.bkit-doctoroutput-check {
     color: var(--sr-heading);
     font-weight: 600;
 }
-.site-prose .bkit-doctoroutput-detail {
+.bkit-doctoroutput-detail {
     grid-column: 3;
     color: var(--sr-dim);
 }
-.site-prose .bkit-doctoroutput-row--pass {
+.bkit-doctoroutput-row--pass {
     --bkit-doctor-accent: var(--beam-green, var(--sr-brand));
 }
-.site-prose .bkit-doctoroutput-row--warn {
+.bkit-doctoroutput-row--warn {
     --bkit-doctor-accent: var(--beam-warn);
 }
-.site-prose .bkit-doctoroutput-row--fail {
+.bkit-doctoroutput-row--fail {
     --bkit-doctor-accent: var(--beam-danger);
 }
-.site-prose .bkit-doctoroutput-summary {
+.bkit-doctoroutput-summary {
     margin: 0;
     padding: 0.5rem 1rem;
     border-top: 1px solid var(--sr-hairline);
@@ -295,14 +304,14 @@
 /* --- Section landing + card grid ------------------------------------------ */
 /* A scannable gateway: a hero over a responsive grid of full-card links. Tokens
    only — the signal accent falls back to the brand color on hosts without it. */
-.site-prose .bkit-landing {
-    margin: 0 0 2rem;
+.bkit-landing {
+    margin-block-end: 2rem;
 }
-.site-prose .bkit-landing-hero {
-    margin: 0 0 2rem;
+.bkit-landing-hero {
+    margin-block-end: 2rem;
 }
-.site-prose .bkit-landing-eyebrow {
-    margin: 0 0 0.5rem;
+.bkit-landing-eyebrow {
+    margin-block-end: 0.5rem;
     font-family: var(--font-sans, var(--beam-font-sans));
     font-size: 0.75rem;
     font-weight: 700;
@@ -310,13 +319,13 @@
     text-transform: uppercase;
     color: var(--beam-signal, var(--sr-brand));
 }
-.site-prose .bkit-landing-heading {
-    margin: 0 0 0.75rem;
+.bkit-landing-heading {
+    margin-block-end: 0.75rem;
     font-size: 2rem;
     line-height: 1.15;
     color: var(--sr-heading);
 }
-.site-prose .bkit-landing-lede {
+.bkit-landing-lede {
     margin: 0;
     max-width: 48ch;
     font-size: 1.0625rem;
@@ -324,26 +333,34 @@
 }
 
 /* 1 → 2 → 3 columns; reflows to one column on a narrow viewport. */
-.site-prose .bkit-card-grid {
+.bkit-card-grid {
     display: grid;
     grid-template-columns: 1fr;
     gap: 1rem;
-    margin: 1.5rem 0;
+    margin-block: 1.5rem;
 }
 @media (min-width: 40rem) {
-    .site-prose .bkit-card-grid {
+    .bkit-card-grid {
         grid-template-columns: repeat(2, 1fr);
     }
 }
 @media (min-width: 64rem) {
-    .site-prose .bkit-card-grid {
+    .bkit-card-grid {
         grid-template-columns: repeat(3, 1fr);
     }
 }
 
 /* The whole card is the link: a large, forgiving hit target. Hover raises the
    border to the signal green with a subtle lift; focus shows a visible ring. */
-.site-prose .bkit-card {
+/* The class is doubled purely for SPECIFICITY, and only here. A host's prose sheet
+   styles `a` under its own wrapper — `[data-beam-prose] a` in `@splicewire/beam-ux/site`
+   — which is (0,2,0) and beat a single `.bkit-card`, so every card rendered with
+   underlined title and blurb. Dropping the `.site-prose` ancestor is what exposed it:
+   the ancestor had been supplying this specificity as a side effect of coupling the
+   kit to one host's class name. This buys the same weight and stays host-agnostic.
+   Nothing else in this sheet competes with a host element selector, so nothing else
+   needs it. */
+.bkit-card.bkit-card {
     display: flex;
     flex-direction: column;
     gap: 0.4rem;
@@ -358,41 +375,41 @@
         transform 200ms ease,
         box-shadow 200ms ease;
 }
-.site-prose .bkit-card:hover {
+.bkit-card.bkit-card:hover {
     border-color: var(--beam-signal, var(--sr-brand));
     transform: translateY(-2px);
     box-shadow: 0 6px 20px -12px var(--beam-signal, var(--sr-brand));
 }
-.site-prose .bkit-card:focus-visible {
+.bkit-card.bkit-card:focus-visible {
     outline: 2px solid var(--beam-signal, var(--sr-brand));
     outline-offset: 2px;
 }
-.site-prose .bkit-card-icon {
+.bkit-card-icon {
     display: inline-flex;
     width: 1.75rem;
     height: 1.75rem;
     color: var(--beam-signal, var(--sr-brand));
 }
-.site-prose .bkit-card-icon svg {
+.bkit-card-icon svg {
     width: 100%;
     height: 100%;
 }
-.site-prose .bkit-card-title {
+.bkit-card-title {
     font-family: var(--font-sans, var(--beam-font-sans));
     font-size: 1.0625rem;
     font-weight: 600;
     color: var(--sr-heading);
 }
-.site-prose .bkit-card-blurb {
+.bkit-card-blurb {
     font-size: 0.9375rem;
     line-height: 1.5;
     color: var(--sr-dim);
 }
 @media (prefers-reduced-motion: reduce) {
-    .site-prose .bkit-card {
+    .bkit-card {
         transition: none;
     }
-    .site-prose .bkit-card:hover {
+    .bkit-card:hover {
         transform: none;
     }
 }
