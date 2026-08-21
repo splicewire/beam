@@ -18,12 +18,18 @@
  *     it can be swapped in one file. Loads from a CDN by default; takes an injected factory for
  *     air-gapped / CSP-strict installs.
  *
+ * …and the typographic scale a rendered entry body reads at (beam-docs-satellite ticket 07):
+ *   - {@link Prose} — the SCALE only (rhythm, measure, headings, code, tables), every value a
+ *     `--beam-*` token with a plain fallback. Without it a seeded docs page renders headings and body
+ *     copy at the same weight, which is not a docs site that documents anything.
+ *
  * The package ships NO palette, fonts, or wordmark and imports NO router — a host supplies its theme
  * via className/style/CSS-vars and injects its `<Link>` through `linkComponent`. The Analog-Studio
  * ember theme stays host-local (audiostud collapses its `site-layout.tsx` to a thin token wrapper).
  */
 
 export { SiteLayout, type SiteLayoutProps, type SiteFooterLink } from './SiteLayout.js';
+export { Prose, PROSE_CSS, type ProseProps } from './Prose.js';
 export { SiteNav, type SiteNavProps } from './SiteNav.js';
 export {
     ManifestTable,
