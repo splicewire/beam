@@ -159,5 +159,20 @@ export function ApiReference({
         onError,
     ]);
 
-    return <div ref={mount} className={className} style={style} data-beam-ux-api-reference={specUrl} />;
+    // `data-beam-full-bleed` is declared by the COMPONENT, not by each host's wrapper. A reference is a
+    // whole application — its own sidebar, search and request panes — never an article, so it wants the
+    // page's full width on every host that will ever render it. Ticket 07 found it boxed inside the
+    // article measure on `splicewire/www` and fixed it there with a host-local wrapper div; a fresh
+    // `laravel-beam-starter` then reproduced the identical defect, because a fact true of the component
+    // everywhere was being restated per host (beam-docs-satellite ticket 11). A host still decides what
+    // full-bleed MEANS — the attribute is only the declaration.
+    return (
+        <div
+            ref={mount}
+            className={className}
+            style={style}
+            data-beam-ux-api-reference={specUrl}
+            data-beam-full-bleed=""
+        />
+    );
 }

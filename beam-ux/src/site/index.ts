@@ -23,6 +23,11 @@
  *     `--beam-*` token with a plain fallback. Without it a seeded docs page renders headings and body
  *     copy at the same weight, which is not a docs site that documents anything.
  *
+ * …and the loader that gets a compiled body onto the screen (beam-docs-satellite ticket 11):
+ *   - {@link EntryBody} — imports the entry's compiled artifact and calls it with this bundle's React.
+ *     Pure machinery, identical on every host and wrong twice before it was lifted here; the component
+ *     MAP it renders with stays the host's, because that is the contribution contract.
+ *
  * The package ships NO palette, fonts, or wordmark and imports NO router — a host supplies its theme
  * via className/style/CSS-vars and injects its `<Link>` through `linkComponent`. The Analog-Studio
  * ember theme stays host-local (audiostud collapses its `site-layout.tsx` to a thin token wrapper).
@@ -45,6 +50,13 @@ export {
     type ApiReferenceProps,
     type ApiReferenceFactory,
 } from './ApiReference.js';
+export {
+    EntryBody,
+    useEntryArtifact,
+    type EntryBodyProps,
+    type EntryArtifact,
+    type UseEntryArtifactResult,
+} from './EntryBody.js';
 export type {
     SiteNavItem,
     SiteNavData,
