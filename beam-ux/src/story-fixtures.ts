@@ -5,34 +5,51 @@
 import type { BeamUxEntryBodyData } from '@splicewire/_resources/types/beam-ux';
 import type { PaletteItem, Region, TreeNode } from './types';
 
+/**
+ * Deterministic fixture entry ids. Real ones are uuids off `beam_ux_entries`; these are stable,
+ * readable stand-ins so a story diff never churns and a failure names the region it came from.
+ * `Region.recordId` addresses by id since ADR-0214 §2 — `recordLabel` carries the slug the editor
+ * header used to show.
+ */
+export const entryIds = {
+    hero: '0193b1e0-hero-0000-0000-000000000001',
+    card: '0193b1e0-card-0000-0000-000000000002',
+    roster: '0193b1e0-rost-0000-0000-000000000003',
+    list: '0193b1e0-list-0000-0000-000000000004',
+} as const;
+
 /** The live page's editable regions, top-to-bottom as they render on the canvas. */
 export const regions: Region[] = [
     {
         id: 'hero',
         label: 'Hero › heading + intro',
         kind: 'richtext',
-        record: 'page.programs.hero',
+        recordId: entryIds.hero,
+        recordLabel: 'page.programs.hero',
         note: 'blockdoc rich content · value+onChange (≈ FileEditSurface).',
     },
     {
         id: 'card',
         label: 'Program card › config + SEO',
         kind: 'form',
-        record: 'program-card',
+        recordId: entryIds.card,
+        recordLabel: 'program-card',
         note: 'REAL @schemastud/seam SchemaForm off the loaded schema → EditShell on ship.',
     },
     {
         id: 'roster',
         label: 'Enrollment roster › table',
         kind: 'frame',
-        record: 'frame:enrollment',
+        recordId: entryIds.roster,
+        recordLabel: 'frame:enrollment',
         note: 'Frame EditShell — opaque, self-loading/saving island. Host buffer/save unused.',
     },
     {
         id: 'list',
         label: 'Program list › bound to /programs/{slug}',
         kind: 'list',
-        record: 'query:programs',
+        recordId: entryIds.list,
+        recordLabel: 'query:programs',
         note: 'List component reads {slug} from the route and resolves its collection.',
     },
 ];
@@ -40,6 +57,7 @@ export const regions: Region[] = [
 /** The `form` region's loaded entry-body (program.card.v2) — driven into the real SchemaForm. */
 export const cardEntryBody: BeamUxEntryBodyData = {
     slug: 'program-card',
+    id: entryIds.card,
     type: 'form',
     schema: {
         type: 'object',
@@ -63,11 +81,16 @@ export const cardEntryBody: BeamUxEntryBodyData = {
         seatsShown: true,
         ctaLabel: 'Enroll',
     },
+    compileError: null,
 };
 
-/** A schemaless entry body for the non-form kinds (richtext/frame/list load a plain body). */
-export function plainEntryBody(slug: string): BeamUxEntryBodyData {
-    return { slug, type: 'richtext', schema: null, body: {} };
+/**
+ * A schemaless entry body for the non-form kinds (richtext/frame/list load a plain body). Addressed
+ * by id; `slug` is echoed back the way the real read does, and defaults to the id when the caller
+ * has no slug for it.
+ */
+export function plainEntryBody(id: string, slug: string = id): BeamUxEntryBodyData {
+    return { slug, id, type: 'richtext', schema: null, body: {}, compileError: null };
 }
 
 /** Structure-mode tree: layout → template → page → the region placements above. */

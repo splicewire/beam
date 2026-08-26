@@ -28,7 +28,7 @@ export function placementFor(kind: RegionKind, placement: EditorPlacement): Edit
 // buffer, and saves through the injected client. Renders the inspector or the floating overlay.
 
 function useRegionEditor(region: Region) {
-    const query = useEntryBody(region.record);
+    const query = useEntryBody(region.recordId);
     const save = useSaveEntryBody();
     const [draft, setDraft] = useState<Record<string, unknown> | null>(null);
 
@@ -39,7 +39,7 @@ function useRegionEditor(region: Region) {
         schema,
         body,
         onChange: setDraft,
-        onSave: () => save.mutate({ slug: region.record, body }),
+        onSave: () => save.mutate({ id: region.recordId, body }),
         saving: save.isPending,
     };
 }

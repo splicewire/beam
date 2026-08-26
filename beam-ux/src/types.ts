@@ -17,18 +17,21 @@ export type { BeamUxEntryBodyData };
  */
 export interface UxBuilderClient<TBody = BeamUxEntryBodyData> {
     /**
-     * Load the schema + body for an editable region's canonical record (GET .../entries/{slug}/body).
-     * `namespace` disambiguates when `slug` alone is shared by more than one entry (a `theme`-namespaced
-     * override and a null-namespace page can legitimately share a slug) — pass it whenever the caller
-     * already knows which entry it means (it has the row, e.g. from a list fetch); omit it only when
-     * addressing the conventional null-namespace page entry by bare slug, the in-page canvas editor's
-     * own case. `null` addresses the null-namespace entry explicitly (distinct from omitting the
-     * argument, which defers to the server's own no-namespace-given tiebreak).
+     * Load the schema + body for an editable region's canonical record, addressed by the entry's
+     * **id** (`GET .../beam-ux-entries/{id}/op/body`).
+     *
+     * It used to take a `slug` plus an optional `namespace` to disambiguate one. Both are gone:
+     * ADR-0214 §2 moved the transport onto the particle pipeline's own `{id}` addressing, where the
+     * ambiguity the `namespace` argument mitigated (a `theme`-namespaced override and a null-namespace
+     * page sharing one slug, an ambiguous `first()` silently serving the WRONG entry) is not
+     * representable rather than merely guarded against.
      */
-    loadBody(slug: string, namespace?: string | null): Promise<TBody>;
-    /** Persist a region's body — returns the fresh projection (PUT .../entries/{slug}/body). See
-     * `loadBody`'s `namespace` for the disambiguation contract; same rules apply here. */
-    saveBody(slug: string, body: Record<string, unknown>, namespace?: string | null): Promise<TBody>;
+    loadBody(id: string): Promise<TBody>;
+    /**
+     * Persist a region's body — returns the fresh projection
+     * (`POST .../beam-ux-entries/{id}/op/save-body`). Addressed by id, same as {@link loadBody}.
+     */
+    saveBody(id: string, body: Record<string, unknown>): Promise<TBody>;
 }
 
 export interface NotifyEvent {
@@ -59,8 +62,22 @@ export interface Region {
     /** placement label as it reads in the layout tree */
     label: string;
     kind: RegionKind;
-    /** the canonical record this region edits — the slug the client loads/saves against */
-    record: string;
+    /**
+     * The canonical record this region edits — the **entry id** the client loads/saves against
+     * (ADR-0214 §2).
+     *
+     * Renamed from `record` deliberately when the addressing moved. Both a slug and an id are
+     * `string`, so a host that kept feeding a slug into an id-addressed transport would have
+     * typechecked cleanly and 404'd at runtime on every editor open; the rename is what turns that
+     * into a compile error at every `Region` construction site.
+     */
+    recordId: string;
+    /**
+     * Optional human provenance line for the editor header (the small mono line under `label`).
+     * Falls back to `recordId`. It exists because the header used to show the slug and a raw uuid is
+     * strictly less useful there — a host that has the row should pass its slug.
+     */
+    recordLabel?: string;
     /** one-line note shown in the editor header */
     note: string;
 }

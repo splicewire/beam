@@ -20,19 +20,26 @@ import {
  * `../src/index` here would fail to resolve and this file would not even load.
  */
 
+// Entry IDS, not slugs — the transport addresses by id since ADR-0214 §2, and `Region.recordId` is
+// what the builder hands the injected client.
+const CARD_ID = '0193b1e0-card-0000-0000-000000000002';
+const HERO_ID = '0193b1e0-hero-0000-0000-000000000001';
+
 const regions: Region[] = [
     {
         id: 'card',
         label: 'Program card › config',
         kind: 'form',
-        record: 'program-card',
+        recordId: CARD_ID,
+        recordLabel: 'program-card',
         note: 'REAL SchemaForm off the loaded schema.',
     },
     {
         id: 'hero',
         label: 'Hero › heading',
         kind: 'richtext',
-        record: 'page.programs.hero',
+        recordId: HERO_ID,
+        recordLabel: 'page.programs.hero',
         note: 'blockdoc preview.',
     },
 ];
@@ -60,6 +67,7 @@ const palette: PaletteItem[] = [
 
 const cardBody: BeamUxEntryBodyData = {
     slug: 'program-card',
+    id: CARD_ID,
     type: 'form',
     schema: {
         type: 'object',
@@ -70,13 +78,18 @@ const cardBody: BeamUxEntryBodyData = {
         required: ['title'],
     },
     body: { title: 'Frontend Foundations', ctaLabel: 'Enroll' },
+    compileError: null,
 };
 
 /** An in-memory client that records the last save and resolves the fixture body. */
 function makeClient(saveBody: UxBuilderClient['saveBody']): UxBuilderClient {
     return {
-        loadBody: (slug: string) =>
-            Promise.resolve(slug === 'program-card' ? cardBody : { slug, type: 'richtext', schema: null, body: {} }),
+        loadBody: (id: string) =>
+            Promise.resolve<BeamUxEntryBodyData>(
+                id === CARD_ID
+                    ? cardBody
+                    : { slug: id, id, type: 'richtext', schema: null, body: {}, compileError: null },
+            ),
         saveBody,
     };
 }
@@ -92,8 +105,8 @@ function withProviders(services: UxBuilderServices) {
 
 describe('§8a — @splicewire/beam-ux UxBuilder mounts off pure DTO fixtures (no Laravel)', () => {
     it('renders the engaged region and routes an edit→save through the injected client', async () => {
-        const saveBody = vi.fn<UxBuilderClient['saveBody']>((slug, body) =>
-            Promise.resolve({ ...cardBody, slug, body }),
+        const saveBody = vi.fn<UxBuilderClient['saveBody']>((id, body) =>
+            Promise.resolve({ ...cardBody, id, body }),
         );
         const notify = vi.fn();
         const Wrapper = withProviders({ client: makeClient(saveBody), notify });
@@ -120,7 +133,7 @@ describe('§8a — @splicewire/beam-ux UxBuilder mounts off pure DTO fixtures (n
 
         await waitFor(() =>
             expect(saveBody).toHaveBeenCalledWith(
-                'program-card',
+                CARD_ID,
                 expect.objectContaining({ title: 'Backend Foundations' }),
             ),
         );

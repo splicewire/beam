@@ -38,7 +38,7 @@ export function RegionOverlay({
                     </div>
                     <div className="mt-1 flex flex-wrap items-center gap-1.5">
                         <span className="font-mono text-[10px] text-muted-foreground">
-                            {region.record}
+                            {region.recordLabel ?? region.recordId}
                         </span>
                         <Badge variant="secondary" className="font-mono text-[10px]">
                             {region.kind}

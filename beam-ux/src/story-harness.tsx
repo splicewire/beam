@@ -19,7 +19,7 @@ import { cardEntryBody, plainEntryBody } from './story-fixtures';
 
 /** Delay a mock method resolves after — 0 = a microtask, >0 = a "loading" story. */
 export interface MockClientOptions {
-    /** Override the loaded body for a slug; else `program-card` resolves the card fixture. */
+    /** Override the loaded body per ENTRY ID; else `entryIds.card` resolves the card fixture. */
     bodies?: Record<string, BeamUxEntryBodyData>;
     delayMs?: number;
     /** Make every read hang forever — the "loading" story state. */
@@ -34,10 +34,10 @@ function settle<T>(value: T, opts: MockClientOptions): Promise<T> {
     return Promise.resolve(value);
 }
 
-function bodyFor(slug: string, opts: MockClientOptions): BeamUxEntryBodyData {
-    if (opts.bodies?.[slug]) return opts.bodies[slug];
-    if (slug === cardEntryBody.slug) return cardEntryBody;
-    return plainEntryBody(slug);
+function bodyFor(id: string, opts: MockClientOptions): BeamUxEntryBodyData {
+    if (opts.bodies?.[id]) return opts.bodies[id];
+    if (id === cardEntryBody.id) return cardEntryBody;
+    return plainEntryBody(id);
 }
 
 /**
@@ -47,9 +47,9 @@ function bodyFor(slug: string, opts: MockClientOptions): BeamUxEntryBodyData {
  */
 export function makeMockClient(opts: MockClientOptions = {}): UxBuilderClient {
     return {
-        loadBody: (slug: string) => settle(bodyFor(slug, opts), opts),
-        saveBody: (slug: string, body: Record<string, unknown>) =>
-            settle<BeamUxEntryBodyData>({ ...bodyFor(slug, opts), slug, body }, opts),
+        loadBody: (id: string) => settle(bodyFor(id, opts), opts),
+        saveBody: (id: string, body: Record<string, unknown>) =>
+            settle<BeamUxEntryBodyData>({ ...bodyFor(id, opts), id, body }, opts),
     };
 }
 
