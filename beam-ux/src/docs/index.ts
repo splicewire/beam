@@ -23,14 +23,49 @@
  * package that imports `@inertiajs/react`, and keeping it separate is what lets everything here stay
  * usable by a host that renders entries some other way.
  *
- * ## What is NOT here, and why
+ * ## What is NOT here, and why — settled, not deferred (ticket 39)
  *
- * `DocsHost` — the read⇄window authoring host (ADR-0099) — is not in this build. The only live
- * implementation (`splicewire-app`'s, 250 lines) is welded to a content-source abstraction, an mdx
- * editor mount, a window-chrome context and a route-hydration step, none of which is generic yet;
- * lifting it as-is would ship one host's authoring stack to every host, which is the opposite of what
- * ticket 26 is for. It is tracked on the map rather than stubbed here, because a `DocsHost` that is
- * not the one hosts need is worse than no export at all.
+ * `DocsHost` — the read⇄window authoring host (ADR-0099) — is not in this build and **is not coming**.
+ * Not because it is too host-shaped to lift, which is what ticket 26 assumed: because **it has already
+ * been lifted, one package down.** `createMainframeHost` in `@splicewire/beam-mainframe` is exactly
+ * ADR-0213 §1's host — "providers, capabilities, mode state, the slot registry" above a swappable body
+ * — and its own docblock records that `splicewire-app`'s `DocsHost` was one of the two 380-line shapes
+ * it was promoted FROM. Five hosts run it today in ~15 lines of config (`rushing/audiostud`,
+ * `splicewire/www`, and all three starters). `splicewire-app`'s `DocsHost` is the residue that predates
+ * the promotion, not a sixth thing waiting for a home.
+ *
+ * So the three pieces ticket 39 proposed lifting resolve, and none of them lands here:
+ *
+ *  - **the content source** (`load`/`save`/`EditSurface`) — already seamed, as
+ *    `MainframeHostConfig.renderEditor`. The factory owns the READ leg (`loadEntryBody`) and leaves the
+ *    save leg inside the host-local editor, which is where a WYSIWYG's buffer already lives. Adding a
+ *    `contentSource` port beside it would ship a second, competing save path into every host that
+ *    installs beam-mainframe, with exactly one caller — a write path with no reader, which this map has
+ *    paid for three times already (the mdx body codec, the disk mirror's inbound leg, the dead config
+ *    keys).
+ *  - **the edit buffer** — one host's inversion, bought to feed a side panel that no longer exists (the
+ *    editor mounts in `main` now). None of the five factory consumers needed it.
+ *  - **`useDocsCan` and route hydration** — already host props. `usePageContext()` returns `canAuthor`;
+ *    `hydrateRoutes` is a host module. Nothing to lift.
+ *
+ * And the lift that *was* proposed would have put **mdxeditor** — a heavy, author-only dependency —
+ * inside a package every beam host installs headlessly. That is the same shape as shipping one host's
+ * class name in a distributable: the direction (host → package) is legal, the cargo is not.
+ *
+ * **Mounting an authoring host over the packaged entry page** (what ticket 18 actually needs) is a host
+ * act and needs no export from here. {@link configureEntryPage}'s `wrap` runs inside the page, so it
+ * cannot give you Inertia PERSISTENCE across navigations — assign the host as the page's persistent
+ * layout in the resolver instead:
+ *
+ * ```ts
+ * resolve: async (name) => {
+ *     const local = own[`./pages/${name}.tsx`];
+ *     if (local) return local();
+ *     const mod = await beamUxPages[name]();
+ *     if (name === 'site/entry') (mod.default as any).layout = MainframeHost;
+ *     return mod;
+ * }
+ * ```
  */
 
 export { DocsLayout } from './DocsLayout.js';
