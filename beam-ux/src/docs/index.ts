@@ -13,8 +13,10 @@
  * - {@link DocsLayout} — header · breadcrumb · rail · main · on-this-page, every part a slot or a class.
  * - {@link ProseTemplate} / {@link SpreadTemplate} — the reading measure and the full-bleed surface;
  *   ADR-0213 §1's CSS hack promoted to data.
- * - The chrome **registry** ({@link registerChrome}) — a name resolves to a registered component first
- *   and to another entry's slug second (§7). The three above are registered on import.
+ * - The chrome **registry** ({@link registerChrome}) — a name resolves to a HOST registration first,
+ *   then to the packaged map in `builtins.ts`, and only then to another entry's slug (§7). The
+ *   packaged map is read by the resolver rather than registered at import, because `sideEffects:
+ *   false` entitles a bundler to drop an import-time registration — and it did.
  * - {@link configureEntryPage} — how a host hands the packaged Inertia page the things only a host has.
  *
  * The page itself lives at `@splicewire/beam-ux/pages`, deliberately: that is the one module in this
@@ -31,10 +33,6 @@
  * not the one hosts need is worse than no export at all.
  */
 
-import { DocsLayout } from './DocsLayout.js';
-import { registerChrome } from './registry.js';
-import { ProseTemplate, SpreadTemplate } from './templates.js';
-
 export { DocsLayout } from './DocsLayout.js';
 export { ProseTemplate, SpreadTemplate } from './templates.js';
 export {
@@ -47,6 +45,8 @@ export {
     clearChromeRegistry,
 } from './registry.js';
 export { configureEntryPage, entryPageConfig, resetEntryPageConfig, type EntryPageConfig } from './config.js';
+export { BUILTIN_LAYOUTS, BUILTIN_TEMPLATES } from './builtins.js';
+export { DOCS_LAYOUT_CSS, DOCS_TEMPLATE_CSS } from './css.js';
 export type {
     ChromeComponent,
     ChromeProps,
@@ -55,16 +55,3 @@ export type {
     EntryArtifactPayload,
 } from './types.js';
 
-/**
- * The shipped names, registered at import. A host that imports this module for anything at all gets
- * them; a host that registers a layout of its own adds it beside them.
- *
- * These three strings are the same ones `config/beam/ux.php`'s `beam.ux.chrome.registered` is seeded
- * with, and that duplication is deliberate and one-directional: PHP cannot see a TypeScript `Record`,
- * so the doctor check has to be told. `registeredChromeNames()` is what a host echoes back if it ever
- * wants to prove the two lists agree.
- */
-registerChrome({
-    layouts: { DocsLayout },
-    templates: { ProseTemplate, SpreadTemplate },
-});

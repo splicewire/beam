@@ -26,13 +26,12 @@ import { ProseTemplate, SpreadTemplate } from './templates.js';
  * five host copies of this page got wrong, not incidental coverage.
  */
 
-function seedRegistry() {
-    clearChromeRegistry();
-    registerChrome({ layouts: { DocsLayout }, templates: { ProseTemplate, SpreadTemplate } });
-}
-
 beforeEach(() => {
-    seedRegistry();
+    // Emptied, NOT seeded: the packaged chrome must resolve with an empty host registry, because
+    // `sideEffects: false` means a bundler may drop an import-time registration — and did, on the beam
+    // starter, where `/docs/mcp` rendered with its inherited `DocsLayout` resolving to nothing behind
+    // a 200. Seeding here would have hidden exactly that.
+    clearChromeRegistry();
     resetEntryPageConfig();
 });
 
@@ -59,6 +58,13 @@ describe('the chrome registry', () => {
         // take a docs site down.
         expect(resolveLayout('DcosLayout')).toBeNull();
         expect(resolveLayout(null)).toBeNull();
+    });
+
+    it('lets a host registration of the same name win over the packaged one', () => {
+        const Custom = ({ children }: { children?: unknown }) => <div data-custom="">{children as never}</div>;
+        registerChrome({ layouts: { DocsLayout: Custom as never } });
+
+        expect(resolveLayout('DocsLayout')).toBe(Custom);
     });
 
     it('keeps layouts and templates in separate maps', () => {

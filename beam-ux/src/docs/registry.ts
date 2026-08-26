@@ -1,3 +1,4 @@
+import { BUILTIN_LAYOUTS, BUILTIN_TEMPLATES } from './builtins.js';
 import type { ChromeComponent } from './types.js';
 
 /**
@@ -50,17 +51,29 @@ export function registerChrome(chrome: {
     }
 }
 
+/**
+ * A host registration wins over the packaged one, so overriding `DocsLayout` is one `registerLayout`
+ * call and never a de-registration. The packaged map is consulted HERE rather than registered at
+ * import time — see `builtins.ts` for the tree-shaking failure that forced it.
+ */
 export function resolveLayout(name: string | null | undefined): ChromeComponent | null {
-    return name ? (layouts.get(name) ?? null) : null;
+    return name ? (layouts.get(name) ?? BUILTIN_LAYOUTS[name] ?? null) : null;
 }
 
 export function resolveTemplate(name: string | null | undefined): ChromeComponent | null {
-    return name ? (templates.get(name) ?? null) : null;
+    return name ? (templates.get(name) ?? BUILTIN_TEMPLATES[name] ?? null) : null;
 }
 
-/** Every registered name, in registration order — what a host would echo into `beam.ux.chrome.registered`. */
+/**
+ * Every resolvable name — packaged first, then whatever the host added. This is the list
+ * `beam.ux.chrome.registered` has to agree with, and the reason `BeamUxChromeAudit` reads that config
+ * key at all: PHP cannot see this map.
+ */
 export function registeredChromeNames(): { layouts: string[]; templates: string[] } {
-    return { layouts: [...layouts.keys()], templates: [...templates.keys()] };
+    return {
+        layouts: [...new Set([...Object.keys(BUILTIN_LAYOUTS), ...layouts.keys()])],
+        templates: [...new Set([...Object.keys(BUILTIN_TEMPLATES), ...templates.keys()])],
+    };
 }
 
 /** Test seam. Never called by the page — a registry that could be emptied at runtime is a blank page. */
