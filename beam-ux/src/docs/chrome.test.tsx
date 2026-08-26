@@ -89,7 +89,8 @@ describe('the packaged entry page', () => {
         expect(container.querySelector('main')).not.toBeNull();
         // …and the SPREAD template framed the body full-bleed rather than in the reading measure.
         expect(container.querySelector('[data-beam-full-bleed]')).not.toBeNull();
-        expect(container.querySelector('.\\[\\&\\>\\*\\]\\:max-w-3xl')).toBeNull();
+        expect(container.querySelector('.beam-tpl-prose')).toBeNull();
+        expect(container.querySelector('.beam-tpl-spread')).not.toBeNull();
     });
 
     it('defaults to the prose measure and to no layout at all', () => {
@@ -99,7 +100,13 @@ describe('the packaged entry page', () => {
         const { container } = render(<SiteEntry entry={entry} artifact={artifact} nav={null} />);
 
         expect(container.querySelector('aside[aria-label="Docs sections"]')).toBeNull();
-        expect(container.querySelector('[data-beam-prose]')?.className).toContain('max-w-3xl');
+        expect(container.querySelector('[data-beam-prose]')?.className).toContain('beam-tpl-prose');
+
+        // …and the measure is a real RULE, not a class name with nothing behind it. A host's Tailwind
+        // does not scan node_modules, so the utility list the five host copies used renders
+        // edge-to-edge the moment it ships inside a package — measured on the beam starter before this
+        // became an injected stylesheet.
+        expect(container.querySelector('style')?.textContent ?? '').toContain('--beam-measure');
     });
 
     it('falls back rather than crashing on a name nothing registers', () => {

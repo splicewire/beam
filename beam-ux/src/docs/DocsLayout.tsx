@@ -1,6 +1,7 @@
 import { OnThisPage } from '@schemastud/nav';
 import { RealmNav } from '../nav/RealmNav.js';
 import type { RealmNavNode } from '../nav/types.js';
+import { DOCS_LAYOUT_CSS } from './css.js';
 import type { ChromeProps } from './types.js';
 
 /**
@@ -30,18 +31,22 @@ import type { ChromeProps } from './types.js';
  * artifact this layout has never seen. `routeKey` is the current URL so a client-side navigation
  * re-scans; without it the second guide a reader opens shows the first one's headings.
  *
- * ## Every className is overridable and none of them name a colour
+ * ## Every dimension is a token and none of them name a colour
  *
- * The defaults are structural only — widths, gaps, flex. A host passes `classNames` to paint them.
- * That split is the same one `<Prose>` and `<SiteLayout>` already make.
+ * The packaged rules are structural only — widths, gaps, flex — each a `--beam-*` custom property with
+ * the number the host copies hardcoded as its fallback. A host redefines a token to change a
+ * dimension, or passes `classNames` to add its own layer on top. That split is the same one
+ * `<Prose>` and `<SiteLayout>` already make, and the rules are an INJECTED STRING for the reason
+ * `css.ts` records: a host's Tailwind does not scan `node_modules`, so a utility class shipped inside a
+ * package's bundle is a name with no rule behind it.
  */
 
 const DEFAULTS = {
-    root: 'flex min-h-screen flex-col',
-    body: 'mx-auto flex w-full max-w-7xl flex-1 gap-10 px-6 py-10',
-    rail: 'w-56 shrink-0',
-    main: 'min-w-0 flex-1',
-    aside: 'hidden w-56 shrink-0 xl:block',
+    root: 'beam-docs',
+    body: 'beam-docs-body',
+    rail: 'beam-docs-rail',
+    main: 'beam-docs-main',
+    aside: 'beam-docs-aside',
 } as const;
 
 export function DocsLayout({ nav, linkComponent, currentHref, slots, classNames, children }: ChromeProps) {
@@ -53,21 +58,22 @@ export function DocsLayout({ nav, linkComponent, currentHref, slots, classNames,
     const items = railItemsFor(nav?.items ?? [], currentHref);
 
     return (
-        <div className={classNames?.root ?? DEFAULTS.root}>
+        <div className={[DEFAULTS.root, classNames?.root].filter(Boolean).join(' ')}>
+            <style>{DOCS_LAYOUT_CSS}</style>
             {slots?.header}
 
-            <div className={classNames?.body ?? DEFAULTS.body}>
-                <aside className={classNames?.rail ?? DEFAULTS.rail} aria-label="Docs sections">
+            <div className={[DEFAULTS.body, classNames?.body].filter(Boolean).join(' ')}>
+                <aside className={[DEFAULTS.rail, classNames?.rail].filter(Boolean).join(' ')} aria-label="Docs sections">
                     {slots?.railTop}
                     <RealmNav items={items} variant="flat-with-headers" linkComponent={linkComponent} />
                 </aside>
 
-                <main className={classNames?.main ?? DEFAULTS.main}>
+                <main className={[DEFAULTS.main, classNames?.main].filter(Boolean).join(' ')}>
                     {slots?.breadcrumb}
                     {children}
                 </main>
 
-                <div className={classNames?.aside ?? DEFAULTS.aside}>
+                <div className={[DEFAULTS.aside, classNames?.aside].filter(Boolean).join(' ')}>
                     <OnThisPage routeKey={currentHref} />
                 </div>
             </div>
