@@ -19,7 +19,7 @@ import {
     resolveLayout,
     resolveTemplate,
 } from './registry.js';
-import { ProseTemplate, SpreadTemplate } from './templates.js';
+import { SpreadTemplate } from './templates.js';
 
 /**
  * ADR-0213 §3/§4/§7/§8, the client half. The cases are the ones the ADR argued for and the ones the
