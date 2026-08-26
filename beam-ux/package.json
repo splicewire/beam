@@ -1,7 +1,7 @@
 {
     "name": "@splicewire/beam-ux",
     "version": "0.1.0",
-    "description": "The beam UX-builder surfaces, authored pre-packaged and DTO-first (rehome-ui, ADR-0116). Mirrors the PHP splicewire/laravel-beam-ux package by domain. Ships the in-app visual editing surface for a beam site's OWN front-end — the docked region inspector, the floating in-context overlay editor, the live region canvas, and the layout›template›page composition structure panel with its component palette — as portable, tenancy-agnostic components: they own their react-query data logic, take their transport + feedback as injected services (never app-local imports), and type off the generated BeamUxEntryBody projection delivered via @splicewire/_resources. Generic UI comes from the @schemastud/ui foundation; the schema-driven form editor is the real @schemastud/seam SchemaForm, a host-provided peer.",
+    "description": "The beam UX-builder surfaces, authored pre-packaged and DTO-first (rehome-ui, ADR-0116). Mirrors the PHP splicewire/laravel-beam-ux package by domain. Ships the in-app visual editing surface for a beam site's OWN front-end \u2014 the docked region inspector, the floating in-context overlay editor, the live region canvas, and the layout\u203atemplate\u203apage composition structure panel with its component palette \u2014 as portable, tenancy-agnostic components: they own their react-query data logic, take their transport + feedback as injected services (never app-local imports), and type off the generated BeamUxEntryBody projection delivered via @splicewire/_resources. Generic UI comes from the @schemastud/ui foundation; the schema-driven form editor is the real @schemastud/seam SchemaForm, a host-provided peer.",
     "license": "MIT",
     "type": "module",
     "main": "dist/index.js",
@@ -30,6 +30,14 @@
         "./site": {
             "types": "./dist/site.d.ts",
             "import": "./dist/site.js"
+        },
+        "./docs": {
+            "types": "./dist/docs.d.ts",
+            "import": "./dist/docs.js"
+        },
+        "./pages": {
+            "types": "./dist/pages.d.ts",
+            "import": "./dist/pages.js"
         },
         "./account": {
             "types": "./dist/account.d.ts",
@@ -103,6 +111,7 @@
         "@schemastud/chat": "*",
         "@schemastud/frame": "*",
         "@schemastud/mainframe": "*",
+        "@schemastud/nav": "*",
         "@schemastud/seam": "*",
         "@schemastud/ui": "*",
         "@tanstack/react-query": ">=5",
@@ -116,6 +125,9 @@
         },
         "@schemastud/mainframe": {
             "optional": true
+        },
+        "@schemastud/nav": {
+            "optional": true
         }
     },
     "devDependencies": {
@@ -123,6 +135,7 @@
         "@schemastud/chat": "file:../../schemastud/chat",
         "@schemastud/frame": "file:../../schemastud/frame",
         "@schemastud/mainframe": "file:../../schemastud/mainframe",
+        "@schemastud/nav": "file:../../schemastud/nav",
         "@schemastud/seam": "file:../../schemastud/seam",
         "@schemastud/ui": "file:../../schemastud/ui",
         "@tanstack/react-query": "^5.62.0",

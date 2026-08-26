@@ -37,12 +37,35 @@ function* walk(dir) {
     }
 }
 
+/**
+ * The ONE sanctioned Inertia coupling (ADR-0213 §2/§3, beam-docs-satellite ticket 26).
+ *
+ * §6 of ADR-0209 — "no beam package ships a rendered page" — is withdrawn, and what replaced it is two
+ * narrower invariants: a package ships no palette, fonts, or wordmark, and **a package imports no
+ * router**. `src/pages/` is the page map: the Inertia pages this package contributes to a host's
+ * resolver. It cannot be Inertia-free and still be an Inertia page.
+ *
+ * So the exemption is scoped to that directory and to the head manager only — `router`, `Link`,
+ * `useForm` and `usePage` stay forbidden everywhere, including here, because THOSE are the router and
+ * the invariant that survived. A host still injects its `<Link>` through `linkComponent`.
+ */
+const PAGE_MAP_DIR = join(SRC, 'pages');
+const ROUTER_BINDINGS = /\b(router|Link|useForm|usePage|useRemember)\b/;
+
+function isSanctionedPageMapImport(file, line) {
+    return file.startsWith(PAGE_MAP_DIR) && /@inertiajs\//.test(line) && !ROUTER_BINDINGS.test(line);
+}
+
 const violations = [];
 for (const file of walk(SRC)) {
     const lines = readFileSync(file, 'utf8').split('\n');
     lines.forEach((line, i) => {
         for (const { re, why } of FORBIDDEN) {
             if (re.test(line)) {
+                if (isSanctionedPageMapImport(file, line)) {
+                    continue;
+                }
+
                 violations.push(`  ${file}:${i + 1} — ${why}\n    ${line.trim()}`);
             }
         }

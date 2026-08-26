@@ -96,12 +96,19 @@ function toGroups(items: RealmNavNode[], variant: RealmNavVariant): RailGroup[] 
     }
 
     // flat-with-headers: nodes are items; an `href`-less node OPENS a new labeled group (§7 convention).
+    //
+    // A heading may also CARRY its members as children, which is the shape beam-ux's own `NavProjector`
+    // emits for ADR-0213 §8's `nav_group` — a `NavLink` with no href whose children are the grouped
+    // entries. Seeding the new group with them keeps one convention rather than two: a heading followed
+    // by flat siblings (a host frame manifest) and a heading holding its members (the containment-tree
+    // projection) both render as one labeled group. Nothing regresses, because no manifest emitting the
+    // flat shape gives an href-less node children.
     const groups: RailGroup[] = [];
     let current: RailGroup = { items: [] };
     for (const node of items) {
         if (!node.href) {
             if (current.items.length > 0) groups.push(current);
-            current = { label: node.title, items: [] };
+            current = { label: node.title, items: (node.children ?? []).filter((child) => child.href) };
         } else {
             current.items.push(node);
         }

@@ -113,6 +113,14 @@ export type EntryBodyProps = {
     fallback?: ReactNode;
     /** Shown while the artifact is in flight. Defaults to nothing — the load is usually imperceptible. */
     loading?: ReactNode;
+    /**
+     * Extra props handed to the compiled body — ADR-0213 §6's escape hatch. A screen component owns its
+     * data logic and fetches, because an artifact is a static module addressed by body hash with
+     * nowhere in it for a per-request value. Where a round trip is silly (the current user), the
+     * renderer's page props reach the body here under one well-known name rather than each host
+     * inventing a channel.
+     */
+    bodyProps?: Record<string, unknown>;
 };
 
 const DEFAULT_FALLBACK = (
@@ -125,7 +133,7 @@ const DEFAULT_FALLBACK = (
     </p>
 );
 
-export function EntryBody({ artifact, components, fallback, loading = null }: EntryBodyProps) {
+export function EntryBody({ artifact, components, fallback, loading = null, bodyProps }: EntryBodyProps) {
     const { Body, failed } = useEntryArtifact(artifact.url, artifact.version);
 
     if (failed) {
@@ -138,5 +146,5 @@ export function EntryBody({ artifact, components, fallback, loading = null }: En
 
     // The compiler runs without `providerImportSource`, so the compiled body takes its component map
     // as a PROP. An `<MDXProvider>` wrapper around this would be inert.
-    return <Body components={components ?? {}} />;
+    return <Body {...(bodyProps ?? {})} components={components ?? {}} />;
 }

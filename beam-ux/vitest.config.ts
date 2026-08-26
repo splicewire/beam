@@ -41,6 +41,9 @@ export default defineConfig({
             // The /appshell entry's overlay reads the frame side-panel store; its mode-core types
             // off mainframe. Resolve both to their built dist (their published entries).
             '@schemastud/frame': join(self, '..', '..', 'schemastud', 'frame', 'dist', 'index.js'),
+            // The nav primitives the `/docs` layout composes (`<OnThisPage>`); same cross-workspace
+            // `file:` link, same second-React hazard, same pin to the built dist.
+            '@schemastud/nav': join(self, '..', '..', 'schemastud', 'nav', 'dist', 'index.js'),
             '@schemastud/mainframe': join(
                 self,
                 '..',
