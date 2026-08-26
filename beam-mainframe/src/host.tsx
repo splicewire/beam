@@ -14,6 +14,12 @@
  * **Topology:** this module stays dependency-pure (react-only). It does NOT import `@splicewire/beam-ux`
  * for entry loading — the host *injects* `loadEntryBody` (routing it through beam-ux's `UxBuilderClient`
  * on its side), so no `beam-mainframe → beam-ux` edge is introduced and the factory stays generic.
+ *
+ * **It is also the thing that DECIDES THE ADDRESS**, which is why beam-docs-satellite ticket 37 found it
+ * only by executing a migration rather than by grepping for `UxBuilderClient` (this package does not
+ * implement that interface; it sits above it). Everything the host's transport can do is bounded by the
+ * key this factory hands it, so ADR-0214's id-addressed entry-body operations could not reach a single
+ * host until that key stopped being a bare slug. See {@link EntryRef}.
  */
 import type { ReactNode } from 'react';
 import { createContext, Suspense, useCallback, useContext, useEffect, useMemo, useState, useSyncExternalStore } from 'react';
@@ -56,6 +62,55 @@ export interface HostEntryBody {
     body: unknown;
 }
 
+// --- The entry REFERENCE (the addressing key this factory hands the host) -------------------------
+
+/**
+ * **How the Mainframe addresses the entry a page is bound to** — `{id, slug}`, both nullable, at least
+ * one always populated.
+ *
+ * This used to be a bare `string`, and that string was a SLUG in every branch. beam-docs-satellite
+ * ticket 37 is the measurement that ended it: `@splicewire/beam-mainframe` sits ABOVE `UxBuilderClient`
+ * and decides the address, so ADR-0214's move to id-addressed entry-body operations could not land at
+ * any host while this factory could only ever produce a slug.
+ *
+ * ### Why a pair and not just an id
+ *
+ * ADR-0214 §2 says "the renderer already puts the entry id in its props", and it does — for RENDERED
+ * entries. Measured, that is one branch of three, and the other two cannot carry an id:
+ *
+ *  - `?beam_entry=<slug>` is typed by a HUMAN. Nobody types a uuid.
+ *  - `componentToEntry` is a host-authored, COMPILE-TIME frontend map. `{'customers': 'customers-page'}`
+ *    is authorable; `{'customers': '01a001bc-…'}` is not — a uuid differs in every database the app is
+ *    deployed into, including a fresh install.
+ *  - and at `rushing/audiostud` the slug branch has a permanent resident besides: AUTO-PROVISIONING.
+ *    A page whose entry does not exist yet is authored BY SLUG, because there is no row to hold an id.
+ *
+ * So the honest shape is a pair, with the id preferred wherever it exists. A host that has migrated
+ * (every page a rendered entry carrying `props.entry.id`) simply never sees `id: null` and can refuse
+ * a slug-only ref outright — which is exactly what `splicewire/www` now does.
+ *
+ * ### Why this is a TYPE change and not a rename
+ *
+ * The same trap ticket 33 recorded: a slug and an id are both `string`, so a slug flowing into an
+ * id-addressed seam is invisible to `tsc`. It is not hypothetical — measured 2026-08-26, all three
+ * starters (`laravel-beam-starter`, `-satellite-`, `-tower-`) declare `bodyClient: UxBuilderClient`
+ * and call `loadBody(slug)` against the slug macro, and the compiler has never once complained.
+ * Widening `loadEntryBody`'s parameter from `string` to `EntryRef` breaks every such call site LOUDLY
+ * (parameter contravariance under `strictFunctionTypes`), which is the only reason the migration is
+ * reviewable at all.
+ */
+export interface EntryRef {
+    /** The entry's uuid — the ADR-0214 §2 addressing key — when the host could supply one, else null. */
+    id: string | null;
+    /** The domain slug, when known. Null only on an id-only ref (`?beam_entry_id=`). */
+    slug: string | null;
+}
+
+/** Display label for a ref — the slug when there is one, else the id. Never blank for a real ref. */
+export function entryRefLabel(ref: EntryRef | null): string {
+    return ref?.slug ?? ref?.id ?? '—';
+}
+
 /** The `{slug, id, schema, body}` a wrapped page reads via {@link useBeamUxEntry}. `body` is host-typed. */
 export interface BeamUxEntryContext<TBody = Record<string, unknown>> {
     slug: string;
@@ -80,7 +135,8 @@ export function useBeamUxEntry<TBody = Record<string, unknown>>(): BeamUxEntryCo
 
 interface DomainPayload {
     page: ReactNode;
-    entrySlug: string;
+    /** Null when NO branch produced a key — the page is simply not entry-bound and nothing is probed. */
+    entryRef: EntryRef | null;
     entryBound: boolean;
     canAuthor: boolean;
     authoring: boolean;
@@ -99,7 +155,8 @@ interface DomainPayload {
  */
 export interface RibbonProps {
     mode: 'domain' | 'window';
-    entrySlug: string;
+    /** The addressed entry, or null when this page is bound to none. See {@link entryRefLabel}. */
+    entryRef: EntryRef | null;
     entryBound: boolean;
     onEdit: () => void;
     onExit: () => void;
@@ -111,7 +168,18 @@ export type RibbonRender = (props: RibbonProps) => ReactNode;
 export interface HostPageContext {
     component: string;
     canAuthor: boolean;
+    /** The entry SLUG off the page's props (`props.entry.slug`, or a host's own explicit `props.slug`). */
     slug?: string | null;
+    /**
+     * The entry's **uuid** off the page's props (`props.entry.id`, emitted by `PublicEntryController`
+     * since ADR-0209 §6). Supply it and this page addresses by id — the branch ADR-0214 §2 describes.
+     *
+     * This one is deliberately additive/optional rather than forced, because it is the branch a host
+     * MIGRATES INTO: a host that does not supply it keeps working on `slug`, exactly as before, and its
+     * remaining work is visible as a missing `entryId` rather than as a break. The forcing happens one
+     * level down, on {@link MainframeHostConfig.loadEntryBody}, whose parameter type changed.
+     */
+    entryId?: string | null;
 }
 
 export interface MainframeHostConfig {
@@ -121,6 +189,22 @@ export interface MainframeHostConfig {
      * (`songs/index`→`songs`). A component with no mapping falls back to the slash-swap.
      */
     componentToEntry?: Record<string, string>;
+    /**
+     * Whether an UNMAPPED component may still fall back to the slash-swapped component name
+     * (`songs/index` → `songs-index`). **Defaults to `false`**, which is a change: it used to be
+     * unconditional, and unconditional is what produced the defect ADR-0214 §2 names.
+     *
+     * Measured: every rendered entry is the Inertia component `site/entry`, so every one of them
+     * slash-swapped to `site-entry` and probed a row that has never existed — a stray 401 per anonymous
+     * page view, and the WRONG row for an author. Worse at a host with auto-provisioning
+     * (`rushing/audiostud`), where an author merely VISITING such a page mints a junk entry named after
+     * a component.
+     *
+     * With no fallback and no mapping, {@link createMainframeHost} resolves NO ref and loads nothing —
+     * the page is simply not entry-bound, which is the truth. A host that genuinely wants the old
+     * name-guessing behaviour opts back into it here, in one visible line.
+     */
+    componentSlugFallback?: boolean;
     /** The author-gate capability fed to the `can` predicate. Defaults to `author-ux`. */
     capability?: string;
     /**
@@ -134,14 +218,20 @@ export interface MainframeHostConfig {
     readMode?: 'body' | 'page';
     /** Host wraps Inertia `usePage` → `{component, canAuthor, slug?}` (keeps inertia out of the package). */
     usePageContext: () => HostPageContext;
-    /** Host-injected transport — routes through beam-ux's `UxBuilderClient`; `null` on miss (page falls back). */
-    loadEntryBody: (slug: string) => Promise<HostEntryBody | null>;
+    /**
+     * Host-injected transport — `null` on miss (the page falls back to its own copy).
+     *
+     * Takes an {@link EntryRef}, not a slug. A host on the id-addressed `beam-ux-entry` operations
+     * (ADR-0214 §1) reads `ref.id` and REFUSES a slug-only ref; a host still on the slug macro reads
+     * `ref.slug`. Both are legal, and the type is what makes which one a host is on legible.
+     */
+    loadEntryBody: (ref: EntryRef) => Promise<HostEntryBody | null>;
     /** The structural Puck editor mount (host-local; carries the heavy author-only deps). */
-    renderEditor: (args: { slug: string }) => ReactNode;
+    renderEditor: (args: { ref: EntryRef }) => ReactNode;
     /** The composed read render for a Puck body (host-local). */
-    renderRead: (args: { body: unknown; slug: string }) => ReactNode;
+    renderRead: (args: { body: unknown; ref: EntryRef }) => ReactNode;
     /** The in-place RegionInspector overlay for a chrome-only body (host-local). */
-    renderInspector: (args: { slug: string }) => ReactNode;
+    renderInspector: (args: { ref: EntryRef }) => ReactNode;
     /** The frame ribbon chrome. Optional — a host with none gets the {@link defaultRibbon} shell. */
     ribbon?: RibbonRender;
     /**
@@ -188,10 +278,10 @@ const DEFAULT_BTN: React.CSSProperties = {
  * The OOTB frame ribbon a host gets when it injects no `ribbon`. A bottom status bar with the mode +
  * entry + the read↔author toggle. A host with a design system passes its own render-prop to override.
  */
-export const defaultRibbon: RibbonRender = ({ mode, entrySlug, entryBound, onEdit, onExit }) => (
-    <div data-beam-ux-frame={entrySlug} data-beam-ux-mode={mode} style={DEFAULT_BAR}>
+export const defaultRibbon: RibbonRender = ({ mode, entryRef, entryBound, onEdit, onExit }) => (
+    <div data-beam-ux-frame={entryRefLabel(entryRef)} data-beam-ux-mode={mode} style={DEFAULT_BAR}>
         <span style={{ color: '#FF5B3A' }}>beam-ux</span>
-        <span style={{ opacity: 0.6 }}>{mode === 'window' ? 'editing' : 'page'} · {entrySlug}</span>
+        <span style={{ opacity: 0.6 }}>{mode === 'window' ? 'editing' : 'page'} · {entryRefLabel(entryRef)}</span>
         {mode === 'domain' ? (
             <>
                 <span style={{ opacity: 0.8 }}>entry {entryBound ? 'bound ✓' : '…'}</span>
@@ -226,7 +316,7 @@ export function DomainMainframe({ slots, ctx }: MainframeProps) {
         <>
             {p.ribbon({
                 mode: 'domain',
-                entrySlug: p.entrySlug,
+                entryRef: p.entryRef,
                 entryBound: p.entryBound,
                 onEdit: p.onEdit,
                 onExit: p.onExit,
@@ -248,7 +338,7 @@ export function WindowMainframe({ slots, ctx }: MainframeProps) {
         <>
             {p.ribbon({
                 mode: 'window',
-                entrySlug: p.entrySlug,
+                entryRef: p.entryRef,
                 entryBound: p.entryBound,
                 onEdit: p.onEdit,
                 onExit: p.onExit,
@@ -258,25 +348,60 @@ export function WindowMainframe({ slots, ctx }: MainframeProps) {
     );
 }
 
-// --- Entry-slug resolution ---------------------------------------------------------------------
+// --- Entry-ref resolution ------------------------------------------------------------------------
 
-function entrySlugFor(component: string, map: Record<string, string>): string {
-    return map[component] ?? component.replace(/\//g, '-');
+/** Trim to a non-empty string, or null. The one place blank-vs-absent is normalised. */
+function nonEmpty(value: string | null | undefined): string | null {
+    const trimmed = typeof value === 'string' ? value.trim() : '';
+
+    return trimmed === '' ? null : trimmed;
 }
 
 /**
- * The authoring OVERRIDE seam: `?beam_entry=<slug>` on any authored route loads THAT entry into the
- * window-mode editor instead of the route's own entry — the cheapest way to author a slot-bearing
- * template before a dedicated admin index exists. Absent the param, resolution is unchanged.
+ * The COMPONENT-NAME branch — the third and last, and the one that cannot ever carry an id.
+ *
+ * An explicit `componentToEntry` mapping always wins. Absent a mapping, the slash-swapped component
+ * name is used ONLY when the host has opted into it ({@link MainframeHostConfig.componentSlugFallback}),
+ * because guessing produced the `site-entry` probe defect ADR-0214 §2 names. No mapping and no opt-in
+ * ⇒ **null**: this page is bound to no entry, and nothing is fetched.
  */
-function overrideEntrySlug(): string | null {
+function componentEntryRef(component: string, map: Record<string, string>, guess: boolean): EntryRef | null {
+    const mapped = nonEmpty(map[component]);
+
+    if (mapped !== null) {
+        return { id: null, slug: mapped };
+    }
+
+    return guess ? { id: null, slug: component.replace(/\//g, '-') } : null;
+}
+
+/**
+ * The authoring OVERRIDE seam: `?beam_entry=<slug>` (or `?beam_entry_id=<uuid>`) on any authored route
+ * loads THAT entry into the window-mode editor instead of the route's own — the cheapest way to author
+ * a slot-bearing template before a dedicated admin index exists. Absent both params, resolution is
+ * unchanged.
+ *
+ * `beam_entry_id` is the id-addressed twin, added with {@link EntryRef}: an author copies a uuid out of
+ * the entries admin. `beam_entry` stays because a human typing a KEY types a slug, and a host still on
+ * the slug transport (or one that auto-provisions) can serve it. A host that has retired slug
+ * addressing simply returns null from `loadEntryBody` for a slug-only ref — the override then does
+ * nothing, loudly and locally, rather than silently addressing the wrong row.
+ */
+function overrideEntryRef(): EntryRef | null {
     if (typeof window === 'undefined') {
         return null;
     }
 
-    const slug = new URLSearchParams(window.location.search).get('beam_entry');
+    const params = new URLSearchParams(window.location.search);
+    const id = nonEmpty(params.get('beam_entry_id'));
 
-    return slug && slug.trim() !== '' ? slug.trim() : null;
+    if (id !== null) {
+        return { id, slug: null };
+    }
+
+    const slug = nonEmpty(params.get('beam_entry'));
+
+    return slug === null ? null : { id: null, slug };
 }
 
 // --- The read fork -----------------------------------------------------------------------------
@@ -309,7 +434,9 @@ function PuckReadOrPage({ payload }: { payload: DomainPayload }) {
     // live Inertia page — the fallback is the page, not blank. Only the fork knows the page, so the
     // Suspense lives here (the host's `renderEditor`/`renderInspector` own their own author-chrome fallbacks).
     return (
-        <Suspense fallback={<>{payload.page}</>}>{payload.config.renderRead({ body, slug: payload.entrySlug })}</Suspense>
+        <Suspense fallback={<>{payload.page}</>}>
+            {payload.entryRef === null ? payload.page : payload.config.renderRead({ body, ref: payload.entryRef })}
+        </Suspense>
     );
 }
 
@@ -329,30 +456,52 @@ function PuckReadOrPage({ payload }: { payload: DomainPayload }) {
 export function createMainframeHost(config: MainframeHostConfig) {
     const capability = config.capability ?? 'author-ux';
     const componentToEntry = config.componentToEntry ?? {};
+    const componentSlugFallback = config.componentSlugFallback ?? false;
     const ribbon = config.ribbon ?? defaultRibbon;
 
     return function MainframeHost({ children }: { children: ReactNode }) {
-        const { component, canAuthor, slug } = config.usePageContext();
+        const { component, canAuthor, slug, entryId } = config.usePageContext();
 
-        // A `beam-page` component carries its entry key as an explicit `slug` prop (its component NAME
-        // is `beam-page` for every such page, so the name→slug map can't distinguish them). Prefer it.
-        const propSlug = typeof slug === 'string' && slug !== '' ? slug : null;
+        // A `beam-page` component carries its entry key as explicit props (its component NAME is
+        // `beam-page` — or `site/entry` for a rendered entry — for EVERY such page, so the name→slug map
+        // cannot distinguish them). Prefer the props, and prefer the id within them.
+        const propSlug = nonEmpty(slug);
+        const propId = nonEmpty(entryId);
 
-        const entrySlug = useMemo(
-            () => overrideEntrySlug() ?? propSlug ?? entrySlugFor(component, componentToEntry),
-            [component, propSlug],
+        // The three branches, in order. Only the first can be an id-only ref; only the props branch can
+        // carry BOTH — and it is the branch every migrated page lands on, so the common case addresses
+        // by id with the slug still available for display (ADR-0214 §2).
+        const entryRef = useMemo<EntryRef | null>(
+            () =>
+                overrideEntryRef() ??
+                (propId !== null || propSlug !== null ? { id: propId, slug: propSlug } : null) ??
+                componentEntryRef(component, componentToEntry, componentSlugFallback),
+            [component, propSlug, propId],
         );
         const [entry, setEntry] = useState<HostEntryBody | null>(null);
         const [mode, setMode] = useState<'domain' | 'window'>('domain');
 
+        // `entryRef === null` is a real, common answer — a page bound to no entry — and it must NOT
+        // reach the transport. Probing anyway is what made every rendered entry ask for a `site-entry`
+        // row that has never existed.
+        const refKey = entryRef === null ? null : `${entryRef.id ?? ''}\u0000${entryRef.slug ?? ''}`;
+
         useEffect(() => {
+            if (entryRef === null) {
+                setEntry(null);
+
+                return;
+            }
+
             let live = true;
-            void config.loadEntryBody(entrySlug).then((e) => live && setEntry(e));
+            void config.loadEntryBody(entryRef).then((e) => live && setEntry(e));
 
             return () => {
                 live = false;
             };
-        }, [entrySlug]);
+            // eslint-disable-next-line react-hooks/exhaustive-deps -- refKey IS entryRef, flattened to a
+            // primitive so a fresh object identity per render does not re-fetch on every render.
+        }, [refKey]);
 
         // External authoring control (e.g. a Frame OS operator dock): custom window events drive the
         // mode, so authoring needs NO on-page ribbon button. Only an author may enter window mode.
@@ -378,10 +527,20 @@ export function createMainframeHost(config: MainframeHostConfig) {
         useEffect(() => {
             window.dispatchEvent(
                 new CustomEvent('beam-ux:mode', {
-                    detail: { mode, editable: canAuthor && entry !== null, slug: entrySlug },
+                    // `slug` is kept for the operator docks that already read it (they label their Edit
+                    // affordance and open page-properties with it); `entryId` is ADDITIVE beside it. A
+                    // CustomEvent detail is untyped, so a rename here would be invisible to every
+                    // consumer — the one place in this migration where additive is the safe move.
+                    detail: {
+                        mode,
+                        editable: canAuthor && entry !== null,
+                        slug: entryRef?.slug ?? null,
+                        entryId: entryRef?.id ?? entry?.id ?? null,
+                    },
                 }),
             );
-        }, [mode, canAuthor, entry, entrySlug]);
+            // eslint-disable-next-line react-hooks/exhaustive-deps -- refKey IS entryRef (see above).
+        }, [mode, canAuthor, entry, refKey]);
 
         // Registries built once; the page + live state ride ctx.payload each render.
         const registries = useMemo<{ slots: SlotRegistry; mainframes: MainframeRegistry }>(() => {
@@ -425,14 +584,14 @@ export function createMainframeHost(config: MainframeHostConfig) {
                         // canvas the host's `renderEditor` mounts — a behavior-realm entry with a sealed
                         // root node (e.g. AuthForm) still opens the editor, it's just non-editable there.
                         if (isPuckBody(p.entryBodyRaw)) {
-                            return <>{p.config.renderEditor({ slug: p.entrySlug })}</>;
+                            return <>{p.entryRef === null ? p.page : p.config.renderEditor({ ref: p.entryRef })}</>;
                         }
 
                         if (p.entryBound) {
                             return (
                                 <>
                                     {p.page}
-                                    {p.config.renderInspector({ slug: p.entrySlug })}
+                                    {p.entryRef !== null && p.config.renderInspector({ ref: p.entryRef })}
                                 </>
                             );
                         }
@@ -469,7 +628,7 @@ export function createMainframeHost(config: MainframeHostConfig) {
 
         const payload: DomainPayload = {
             page: children,
-            entrySlug,
+            entryRef,
             entryBound: entry !== null,
             canAuthor,
             authoring,

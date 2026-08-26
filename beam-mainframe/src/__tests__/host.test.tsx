@@ -11,20 +11,34 @@
  *      Puck body always opens `renderEditor`, sealed or not.
  *   3. **`?beam_entry=` override** — the query param loads that entry instead of the route's own.
  *   4. **`useBeamUxEntry`** — a wrapped page reads the loaded entry chrome through the context.
+ *
+ * Plus the {@link EntryRef} contract (beam-docs-satellite ticket 37): the transport is handed an
+ * `{id, slug}` pair, the id wins wherever a host supplies one, and an unmappable component resolves to
+ * NO ref and probes NOTHING.
  */
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { createMainframeHost, useBeamUxEntry, type HostEntryBody, type MainframeHostConfig } from '../index';
+import {
+    createMainframeHost,
+    entryRefLabel,
+    useBeamUxEntry,
+    type EntryRef,
+    type HostEntryBody,
+    type MainframeHostConfig,
+} from '../index';
 
-// A stub renderer set: each fork renders a distinct testid so we can assert WHICH fork won.
+// A stub renderer set: each fork renders a distinct testid so we can assert WHICH fork won. Every case
+// below opts into `componentSlugFallback` because it addresses its entry by COMPONENT NAME ('listen');
+// that guess is opt-in now, so a stub that forgot it would resolve no ref at all.
 function stubConfig(over: Partial<MainframeHostConfig>): MainframeHostConfig {
     return {
+        componentSlugFallback: true,
         usePageContext: () => ({ component: 'listen', canAuthor: false }),
         loadEntryBody: async () => null,
-        renderEditor: ({ slug }) => <div data-testid="editor">editor:{slug}</div>,
-        renderRead: ({ slug }) => <div data-testid="read">read:{slug}</div>,
-        renderInspector: ({ slug }) => <div data-testid="inspector">inspector:{slug}</div>,
+        renderEditor: ({ ref }) => <div data-testid="editor">editor:{entryRefLabel(ref)}</div>,
+        renderRead: ({ ref }) => <div data-testid="read">read:{entryRefLabel(ref)}</div>,
+        renderInspector: ({ ref }) => <div data-testid="inspector">inspector:{entryRefLabel(ref)}</div>,
         ...over,
     };
 }
@@ -68,7 +82,7 @@ describe('createMainframeHost — author gate + mode select', () => {
             fireEvent.click(screen.getByText('Edit page'));
         });
         await waitFor(() => expect(screen.getByTestId('editor')).toBeTruthy());
-        // the editor is handed the resolved entry slug (component-derived here → 'listen')
+        // the editor is handed the resolved entry REF (component-derived here → slug 'listen', no id)
         expect(screen.getByTestId('editor').textContent).toBe('editor:listen');
     });
 });
@@ -127,20 +141,40 @@ describe('createMainframeHost — kind-aware main fork', () => {
 describe('createMainframeHost — ?beam_entry override + useBeamUxEntry', () => {
     it('?beam_entry loads that slug instead of the route entry', async () => {
         window.history.replaceState({}, '', '/?beam_entry=template-foo');
-        const seen: string[] = [];
+        const seen: EntryRef[] = [];
         const Host = createMainframeHost(
             stubConfig({
                 usePageContext: () => ({ component: 'listen', canAuthor: true }),
-                loadEntryBody: async (slug) => {
-                    seen.push(slug);
-                    return { slug, schema: null, body: { content: [] } };
+                loadEntryBody: async (ref) => {
+                    seen.push(ref);
+                    return { slug: ref.slug ?? '', schema: null, body: { content: [] } };
                 },
             }),
         );
         render(<Host>{PAGE}</Host>);
 
-        await waitFor(() => expect(seen).toContain('template-foo'));
-        expect(seen).not.toContain('listen-songs');
+        await waitFor(() => expect(seen.map((r) => r.slug)).toContain('template-foo'));
+        expect(seen.map((r) => r.slug)).not.toContain('listen');
+        // the override is slug-addressed by construction — a human types a key, not a uuid
+        expect(seen.every((r) => r.id === null)).toBe(true);
+    });
+
+    it('?beam_entry_id addresses by id, and the ref carries no slug', async () => {
+        window.history.replaceState({}, '', '/?beam_entry_id=01a001bc-0000-7000-8000-000000000001');
+        const seen: EntryRef[] = [];
+        const Host = createMainframeHost(
+            stubConfig({
+                usePageContext: () => ({ component: 'listen', canAuthor: true }),
+                loadEntryBody: async (ref) => {
+                    seen.push(ref);
+                    return { slug: 'whatever', schema: null, body: { content: [] } };
+                },
+            }),
+        );
+        render(<Host>{PAGE}</Host>);
+
+        await waitFor(() => expect(seen).toHaveLength(1));
+        expect(seen[0]).toEqual({ id: '01a001bc-0000-7000-8000-000000000001', slug: null });
     });
 
     it('a wrapped page reads the loaded entry chrome via useBeamUxEntry', async () => {
@@ -159,5 +193,75 @@ describe('createMainframeHost — ?beam_entry override + useBeamUxEntry', () => 
         );
 
         await waitFor(() => expect(screen.getByText('From the entry')).toBeTruthy());
+    });
+});
+
+describe('createMainframeHost — the entry REF (ticket 37)', () => {
+    it('prefers props.entry.id over every other branch, and still carries the slug', async () => {
+        const seen: EntryRef[] = [];
+        const Host = createMainframeHost(
+            stubConfig({
+                componentToEntry: { listen: 'listen-songs' },
+                usePageContext: () => ({
+                    component: 'listen',
+                    canAuthor: true,
+                    slug: 'the-real-entry',
+                    entryId: '01a001bc-0000-7000-8000-0000000000aa',
+                }),
+                loadEntryBody: async (ref) => {
+                    seen.push(ref);
+                    return { slug: 'the-real-entry', schema: null, body: { content: [] } };
+                },
+            }),
+        );
+        render(<Host>{PAGE}</Host>);
+
+        await waitFor(() => expect(seen).toHaveLength(1));
+        expect(seen[0]).toEqual({ id: '01a001bc-0000-7000-8000-0000000000aa', slug: 'the-real-entry' });
+    });
+
+    it('an unmapped component with the guess OFF resolves no ref and never touches the transport', async () => {
+        // The `site-entry` defect, as a test. Every rendered entry is the component `site/entry`; the
+        // old unconditional slash-swap probed `site-entry`, a row that has never existed — a stray 401
+        // per anonymous page view, and at an auto-provisioning host a junk entry minted on author visit.
+        const seen: EntryRef[] = [];
+        const Host = createMainframeHost(
+            stubConfig({
+                componentSlugFallback: false,
+                componentToEntry: {},
+                usePageContext: () => ({ component: 'site/entry', canAuthor: true }),
+                loadEntryBody: async (ref) => {
+                    seen.push(ref);
+                    return null;
+                },
+            }),
+        );
+        render(<Host>{PAGE}</Host>);
+
+        await act(async () => {
+            await Promise.resolve();
+        });
+
+        expect(seen).toEqual([]);
+        expect(screen.getByTestId('page')).toBeTruthy();
+        expect(screen.queryByText('Edit page')).toBeNull();
+    });
+
+    it('the guess stays available, opt-in, for a host that still wants it', async () => {
+        const seen: EntryRef[] = [];
+        const Host = createMainframeHost(
+            stubConfig({
+                componentSlugFallback: true,
+                usePageContext: () => ({ component: 'site/entry', canAuthor: true }),
+                loadEntryBody: async (ref) => {
+                    seen.push(ref);
+                    return null;
+                },
+            }),
+        );
+        render(<Host>{PAGE}</Host>);
+
+        await waitFor(() => expect(seen).toHaveLength(1));
+        expect(seen[0]).toEqual({ id: null, slug: 'site-entry' });
     });
 });
