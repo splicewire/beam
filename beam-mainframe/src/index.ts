@@ -32,3 +32,14 @@ export {
     type RibbonProps,
     type RibbonRender,
 } from './host';
+
+// --- The `beam-ux:mode` broadcast, read side -------------------------------------------------------
+// host.tsx EMITS this event; the listener lives beside it so a detail-field rename moves both halves
+// at once. See src/useBeamUxMode.ts for why it is not left to each external control to transcribe.
+export {
+    useBeamUxMode,
+    requestBeamUxEdit,
+    requestBeamUxExit,
+    type BeamUxMode,
+    type BeamUxModeState,
+} from './useBeamUxMode';

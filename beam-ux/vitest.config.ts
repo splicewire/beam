@@ -34,6 +34,16 @@ export default defineConfig({
             'use-sidecar': pkgDir('use-sidecar'),
             'use-callback-ref': pkgDir('use-callback-ref'),
             'aria-hidden': pkgDir('aria-hidden'),
+            // react-rnd (the window-frame geometry atom `@schemastud/mainframe/os` carries) is
+            // installed in the SCHEMASTUD workspace, and its `re-resizable`/`react-draggable` chain is
+            // CJS: vitest inlines those modules but their `require('react')` still goes through node's
+            // resolver, which finds the schemastud-workspace React — a second copy, null hook
+            // dispatcher the moment a float window mounts. `react-rnd` is therefore a beam-workspace
+            // devDependency too, and these pins make the OS chrome resolve THAT copy, whose own
+            // `require('react')` lands on the single instance the aliases above establish.
+            'react-rnd': pkgDir('react-rnd'),
+            're-resizable': pkgDir('re-resizable'),
+            'react-draggable': pkgDir('react-draggable'),
             // Resolve the foundation UI + the seam to their built dist (their published entries),
             // not their src.
             '@schemastud/ui': join(self, '..', '..', 'schemastud', 'ui', 'dist', 'index.js'),
@@ -44,6 +54,18 @@ export default defineConfig({
             // The nav primitives the `/docs` layout composes (`<OnThisPage>`); same cross-workspace
             // `file:` link, same second-React hazard, same pin to the built dist.
             '@schemastud/nav': join(self, '..', '..', 'schemastud', 'nav', 'dist', 'index.js'),
+            // The Frame OS desktop subpath (OperatorOverlay + the window manager the /desk entry
+            // composes). Listed BEFORE the bare specifier — vite matches alias keys in order, so the
+            // bare '@schemastud/mainframe' would otherwise swallow '/os' and resolve the wrong entry.
+            '@schemastud/mainframe/os': join(
+                self,
+                '..',
+                '..',
+                'schemastud',
+                'mainframe',
+                'dist',
+                'os.js',
+            ),
             '@schemastud/mainframe': join(
                 self,
                 '..',

@@ -12,6 +12,7 @@ export default defineConfig({
         pages: 'src/pages/index.ts',
         account: 'src/account/index.ts',
         shell: 'src/shell/index.ts',
+        desk: 'src/desk/index.ts',
         appshell: 'src/appshell/index.ts',
         nav: 'src/nav/index.ts',
         surgeon: 'src/surgeon/sdkHookMigration.ts',
