@@ -39,7 +39,7 @@ function makeEvent(overrides: Partial<FoundationCalendarEvent> & { meta?: Record
         start: new Date('2026-07-25T00:00:00Z'),
         end: new Date('2026-07-25T00:00:00Z'),
         allDay: true,
-        compositionId: 'comp-1',
+        sourceId: 'comp-1',
         laneId: 'lane-1',
         colorToken: 'green',
         resident: true,

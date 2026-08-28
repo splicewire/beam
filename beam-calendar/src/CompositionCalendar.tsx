@@ -70,7 +70,7 @@ export function CompositionCalendar({
         return (event: FoundationCalendarEvent) => {
             const meta = readMeta(event);
             const okStatus = facets.statuses.size === 0 || facets.statuses.has(meta.status);
-            const okCalendar = facets.calendars.size === 0 || facets.calendars.has(event.compositionId);
+            const okCalendar = facets.calendars.size === 0 || facets.calendars.has(event.sourceId);
             return okStatus && okCalendar;
         };
     }, [isAggregate, facets]);

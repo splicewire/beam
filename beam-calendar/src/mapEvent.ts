@@ -25,8 +25,11 @@ export function readMeta(event: FoundationCalendarEvent): CalendarEventMeta {
  * Map the slice-05 projection DTO INTO a {@see FoundationCalendarEvent} (PRD §4.2). The
  * foundation cannot depend on `@splicewire/_resources`, so this mapping lives here.
  *
- *  - `compositionId` (top-level, routable) = the OWNING CALENDAR — the write target and the
+ *  - `sourceId` (top-level, routable) = the OWNING CALENDAR — the write target and the
  *    aggregate provenance axis. The referenced published composition lives in `meta`.
+ *    The foundation's field was called `compositionId` until this very mapping — filling a
+ *    "composition" field with a calendar id and parking the real composition in `meta` — was
+ *    taken as evidence the field name was wrong rather than the mapping.
  *  - `colorToken` is resolved by the mount's `hue` axis; the foundation just paints it.
  *  - `resident = !virtual`; `ref` encodes the full write-target (owning calendar + cell |
  *    series+recurrence) so a write routes correctly.
@@ -52,7 +55,7 @@ export function toFoundationEvent(
         start,
         end: start,
         allDay: true,
-        compositionId: owningCalendarId,
+        sourceId: owningCalendarId,
         laneId: dto.channel,
         colorToken: hue(dto, owningCalendarId),
         resident: !dto.virtual,

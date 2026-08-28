@@ -98,7 +98,7 @@ describe('projection DTO → FoundationCalendarEvent', () => {
         const event = toFoundationEvent(dto({ virtual: true, cell_id: null, series_ref: 'ser-9', recurrence_id: '2026-07-22' }), 'cal-a', () => 'violet');
 
         expect(event.resident).toBe(false);
-        expect(event.compositionId).toBe('cal-a'); // owning calendar (routable), not the referenced composition
+        expect(event.sourceId).toBe('cal-a'); // owning calendar (routable), not the referenced composition
         expect(event.colorToken).toBe('violet');
         expect(event.allDay).toBe(true);
         expect(decodeRef(event.ref)).toMatchObject({ compositionId: 'cal-a', seriesRef: 'ser-9', recurrenceId: '2026-07-22' });
@@ -115,9 +115,9 @@ describe('client adapters route writes by composition', () => {
         const client = createAggregateClient(transport);
 
         const events = await client.listEvents();
-        expect(events.map((e) => e.compositionId).sort()).toEqual(['cal-a', 'cal-b']);
+        expect(events.map((e) => e.sourceId).sort()).toEqual(['cal-a', 'cal-b']);
 
-        const evB = events.find((e) => e.compositionId === 'cal-b')!;
+        const evB = events.find((e) => e.sourceId === 'cal-b')!;
         await client.reAnchor(evB.ref, new Date(2026, 6, 22));
 
         expect(reAnchor).toHaveBeenCalledWith('cal-b', expect.objectContaining({ compositionId: 'cal-b', cellId: 'b1' }), expect.any(Date));
@@ -130,7 +130,7 @@ describe('client adapters route writes by composition', () => {
 
         const events = await client.listEvents();
         expect(events).toHaveLength(1);
-        expect(events[0].compositionId).toBe('cal-x');
+        expect(events[0].sourceId).toBe('cal-x');
 
         await client.editCell(events[0].ref, { title: 'edited' });
         expect(editCell).toHaveBeenCalledWith('cal-x', expect.objectContaining({ compositionId: 'cal-x', cellId: 'x1' }), { title: 'edited' });

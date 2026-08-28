@@ -21,7 +21,7 @@ export function createSingleClient(
         listEvents: async (range) =>
             (await transport.listEvents(compositionId, range)).map((d) => toFoundationEvent(d, compositionId, hue)),
         reAnchor: (ref, newDate) => transport.reAnchor(decodeRef(ref).compositionId, decodeRef(ref), newDate),
-        createRelease: async (input) =>
+        createEvent: async (input) =>
             toFoundationEvent(await transport.createRelease(compositionId, input), compositionId, hue),
         editCell: (ref, patch) => transport.editCell(decodeRef(ref).compositionId, decodeRef(ref), patch),
         materialize: async (ref) => {
@@ -61,7 +61,7 @@ export function createAggregateClient(
         // Aggregate create is ambiguous (which calendar?) — the host's edit panel picks the
         // calendar in create mode and calls transport.createRelease directly. The foundation's
         // empty-cell click opens that panel; it never calls this path.
-        createRelease: () =>
+        createEvent: () =>
             Promise.reject(new Error('Aggregate create must target a calendar — use the edit panel (create mode).')),
         editCell: (ref, patch) => {
             const target = decodeRef(ref);
