@@ -47,6 +47,44 @@ type RailGroup = {
     items: RealmNavNode[];
 };
 
+/**
+ * The active item's text colour, as a token with a plain fallback.
+ *
+ * ## The defect this replaces
+ *
+ * This used to be the bare utility `text-sidebar-active-foreground`. `sidebar-active-foreground` is
+ * **not** one of shadcn's eight standard sidebar tokens (`sidebar`, `-foreground`, `-primary`,
+ * `-primary-foreground`, `-accent`, `-accent-foreground`, `-border`, `-ring`) — it was invented by
+ * splicewire-app, which is the only host that defines it. Any other host adopting `RealmNav` got an
+ * active item with **no text colour at all**: the class is scanned, the theme key does not exist, so
+ * Tailwind emits no rule and the page still returns 200. The estate's recurring shape — the module
+ * resolved, every static check passed, and the behaviour was gone.
+ *
+ * ## Why the fallback names the RAW token, not the `--color-` theme key
+ *
+ * The obvious chain is `var(--color-sidebar-active-foreground, var(--color-sidebar-foreground))`, and
+ * it would be silently broken at the one host that matters. splicewire-app declares its palette in
+ * `@theme inline`, which resolves `--color-*` at BUILD time and emits none of them as runtime custom
+ * properties — so the first `var()` would be undefined *at the flagship* and the whole rail would
+ * collapse onto the fallback, changing the host that was previously correct. The un-prefixed
+ * `--sidebar-*` properties, by contrast, are real `:root` declarations in both the flagship
+ * (`ui/src/index.css`) and a stock starter (`resources/css/app.css`), so the chain below is the one
+ * that actually resolves in both.
+ *
+ * Net effect: splicewire-app renders byte-identically (its token is defined, so the fallback is never
+ * reached), and every other host gets the standard `--sidebar-foreground` instead of nothing.
+ *
+ * This is the utility-class form of the contract `docs/css.ts` states for injected CSS — the package
+ * picks the ARRANGEMENT, the host picks the value, and every token carries a plain fallback so a host
+ * that defines nothing still renders. Preferred over an injected stylesheet here because the rest of
+ * the component is utilities and this package is `sideEffects: false`, where an import-time style
+ * injection is exactly what a bundler is entitled to drop.
+ *
+ * Exported for the test to assert against — the classes below spell it out literally, because
+ * Tailwind's scanner cannot see through an interpolation (see the note at the use site).
+ */
+export const SIDEBAR_ACTIVE_FG = 'var(--sidebar-active-foreground,var(--sidebar-foreground))';
+
 /** The packaged default look — the classes splicewire-app rendered host-locally (byte-for-byte). */
 const DEFAULTS = {
     root: 'flex-1 space-y-4 overflow-y-auto px-2.5 text-[13px] font-medium',
@@ -56,9 +94,14 @@ const DEFAULTS = {
     item: (active: boolean) =>
         [
             'flex items-center gap-2.5 rounded-md border-l-2 border-transparent px-2.5 py-2 transition-colors',
+            // ⚠️ Written out LITERALLY, never interpolated from `ACTIVE_FG`. Tailwind's scanner is a
+            // regex over raw source text, so a `text-[${...}]` template would produce the correct
+            // class at runtime and no rule at build time — re-creating the exact defect this fixes,
+            // one layer down. `ACTIVE_FG` exists to be asserted against in the test, not to build
+            // these strings.
             active
-                ? 'border-sidebar-primary bg-sidebar-accent font-semibold text-sidebar-active-foreground'
-                : 'text-sidebar-foreground/85 hover:bg-sidebar-accent/40 hover:text-sidebar-active-foreground',
+                ? 'border-sidebar-primary bg-sidebar-accent font-semibold text-[var(--sidebar-active-foreground,var(--sidebar-foreground))]'
+                : 'text-sidebar-foreground/85 hover:bg-sidebar-accent/40 hover:text-[var(--sidebar-active-foreground,var(--sidebar-foreground))]',
         ].join(' '),
     itemIcon: (active: boolean) =>
         ['size-[17px] flex-none', active ? 'text-sidebar-primary' : 'text-sidebar-foreground/70'].join(
