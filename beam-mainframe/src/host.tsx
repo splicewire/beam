@@ -226,6 +226,30 @@ export interface MainframeHostConfig {
      * `ref.slug`. Both are legal, and the type is what makes which one a host is on legible.
      */
     loadEntryBody: (ref: EntryRef) => Promise<HostEntryBody | null>;
+    /**
+     * Whether a NON-author may trigger {@link loadEntryBody}. **Defaults to `false`** — the factory
+     * loads an entry body only for a reader the host has already told it may author
+     * ({@link HostPageContext.canAuthor}).
+     *
+     * The default is `false` because the transport behind `loadEntryBody` is the AUTHORING one.
+     * `Splicewire\Beam\Ux\Particle\EntryBodyShowOp` declares `ability: 'ux.author'`, and every host
+     * on this factory computes the `canAuthor` prop it feeds us as literally
+     * `$request->user()?->can('ux.author') ?? false` — the same predicate. So `canAuthor === false`
+     * means the load is *guaranteed* to 401; firing it anyway buys nothing and costs an authenticated
+     * round-trip plus a permanent console/monitoring 401 on every anonymous view of every public page
+     * (beam-docs-satellite ticket 47, measured in a browser at `beam.test/docs` and
+     * `satellite.test/docs`).
+     *
+     * It is a fetch gate, not an authorization gate: the server's gate is unchanged and remains the
+     * only thing that decides. Nothing a reader can see changes — `loadEntryBody` already contracts to
+     * return `null` on a miss, and `null` is exactly what the 401 produced.
+     *
+     * Same shape, and the same reasoning, as {@link componentSlugFallback}: unconditional is what
+     * produced the defect, so the safe branch is the default and a host that genuinely serves entry
+     * bodies to readers (a public read transport, not `EntryBodyShowOp`) opts back in here, in one
+     * visible line.
+     */
+    loadEntryBodyForReaders?: boolean;
     /** The structural Puck editor mount (host-local; carries the heavy author-only deps). */
     renderEditor: (args: { ref: EntryRef }) => ReactNode;
     /** The composed read render for a Puck body (host-local). */
@@ -457,6 +481,7 @@ export function createMainframeHost(config: MainframeHostConfig) {
     const capability = config.capability ?? 'author-ux';
     const componentToEntry = config.componentToEntry ?? {};
     const componentSlugFallback = config.componentSlugFallback ?? false;
+    const loadEntryBodyForReaders = config.loadEntryBodyForReaders ?? false;
     const ribbon = config.ribbon ?? defaultRibbon;
 
     return function MainframeHost({ children }: { children: ReactNode }) {
@@ -486,8 +511,13 @@ export function createMainframeHost(config: MainframeHostConfig) {
         // row that has never existed.
         const refKey = entryRef === null ? null : `${entryRef.id ?? ''}\u0000${entryRef.slug ?? ''}`;
 
+        // "Not an author" is the OTHER answer that must not reach the transport, and it is the far more
+        // common one: it is every anonymous view of every public page. See
+        // {@link MainframeHostConfig.loadEntryBodyForReaders}.
+        const mayLoadBody = canAuthor || loadEntryBodyForReaders;
+
         useEffect(() => {
-            if (entryRef === null) {
+            if (entryRef === null || !mayLoadBody) {
                 setEntry(null);
 
                 return;
@@ -501,7 +531,7 @@ export function createMainframeHost(config: MainframeHostConfig) {
             };
             // eslint-disable-next-line react-hooks/exhaustive-deps -- refKey IS entryRef, flattened to a
             // primitive so a fresh object identity per render does not re-fetch on every render.
-        }, [refKey]);
+        }, [refKey, mayLoadBody]);
 
         // External authoring control (e.g. a Frame OS operator dock): custom window events drive the
         // mode, so authoring needs NO on-page ribbon button. Only an author may enter window mode.

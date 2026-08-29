@@ -183,8 +183,14 @@ describe('createMainframeHost — ?beam_entry override + useBeamUxEntry', () => 
             return <div data-testid="page">{entry?.body.heading ?? 'fallback'}</div>;
         }
         const body: HostEntryBody = { slug: 'listen-songs', schema: null, body: { heading: 'From the entry' } };
+        // `loadEntryBodyForReaders` because this asserts a NON-author reading the loaded chrome, and the
+        // reader load is opt-in since ticket 47 (see the `reader fetch gate` block below).
         const Host = createMainframeHost(
-            stubConfig({ usePageContext: () => ({ component: 'listen', canAuthor: false }), loadEntryBody: async () => body }),
+            stubConfig({
+                loadEntryBodyForReaders: true,
+                usePageContext: () => ({ component: 'listen', canAuthor: false }),
+                loadEntryBody: async () => body,
+            }),
         );
         render(
             <Host>
@@ -263,5 +269,69 @@ describe('createMainframeHost — the entry REF (ticket 37)', () => {
 
         await waitFor(() => expect(seen).toHaveLength(1));
         expect(seen[0]).toEqual({ id: null, slug: 'site-entry' });
+    });
+});
+
+describe('createMainframeHost — the reader fetch gate (beam-docs-satellite ticket 47)', () => {
+    // The transport behind `loadEntryBody` is the AUTHORING one: `EntryBodyShowOp` declares
+    // `ability: 'ux.author'`, and every host on this factory feeds us
+    // `canAuthor = $request->user()?->can('ux.author') ?? false` — the SAME predicate. So a load fired
+    // with `canAuthor === false` is guaranteed to 401. Measured in a browser 2026-08-29 at
+    // `beam.test/docs` and `satellite.test/docs`, anonymous: page 200, console 401 on
+    // `/beam-ux-entries/{id}/op/body`, every view.
+    it('a non-author never reaches the transport', async () => {
+        const seen: EntryRef[] = [];
+        const Host = createMainframeHost(
+            stubConfig({
+                usePageContext: () => ({ component: 'listen', canAuthor: false, entryId: '01a001bc-0000-7000-8000-0000000000aa' }),
+                loadEntryBody: async (ref) => {
+                    seen.push(ref);
+                    return null;
+                },
+            }),
+        );
+        render(<Host>{PAGE}</Host>);
+
+        await act(async () => {
+            await Promise.resolve();
+        });
+
+        expect(seen).toEqual([]);
+        // and the page is untouched — the fetch was never what rendered it
+        expect(screen.getByTestId('page')).toBeTruthy();
+    });
+
+    it('an author still reaches it, with the same ref as before', async () => {
+        const seen: EntryRef[] = [];
+        const Host = createMainframeHost(
+            stubConfig({
+                usePageContext: () => ({ component: 'listen', canAuthor: true, entryId: '01a001bc-0000-7000-8000-0000000000aa' }),
+                loadEntryBody: async (ref) => {
+                    seen.push(ref);
+                    return null;
+                },
+            }),
+        );
+        render(<Host>{PAGE}</Host>);
+
+        await waitFor(() => expect(seen).toHaveLength(1));
+        expect(seen[0]).toEqual({ id: '01a001bc-0000-7000-8000-0000000000aa', slug: null });
+    });
+
+    it('a host with a genuinely public read transport opts back in, in one line', async () => {
+        const seen: EntryRef[] = [];
+        const Host = createMainframeHost(
+            stubConfig({
+                loadEntryBodyForReaders: true,
+                usePageContext: () => ({ component: 'listen', canAuthor: false, entryId: '01a001bc-0000-7000-8000-0000000000aa' }),
+                loadEntryBody: async (ref) => {
+                    seen.push(ref);
+                    return null;
+                },
+            }),
+        );
+        render(<Host>{PAGE}</Host>);
+
+        await waitFor(() => expect(seen).toHaveLength(1));
     });
 });
