@@ -73,6 +73,23 @@ export function ExtensionDetailSheet({
                                         <Lock className="size-4 shrink-0" aria-hidden="true" />
                                         This listing requires a connected Splicewire account.
                                     </p>
+                                    {connectionStatus?.pairingGuidance && (
+                                        // The guided pairing step (splicewire-marketplace-build ticket 10):
+                                        // `PairingGuidanceData` rode the wire with no consumer until this
+                                        // block — the copy is the DTO's, never authored here.
+                                        <div className="flex flex-col gap-1 text-sm">
+                                            <p className="text-muted-foreground">
+                                                Pair this site from its own terminal, then approve in your browser:
+                                            </p>
+                                            <code className="rounded bg-muted px-2 py-1 font-mono text-xs">
+                                                {connectionStatus.pairingGuidance.connectCommand}
+                                            </code>
+                                            <p className="text-xs text-muted-foreground">
+                                                {connectionStatus.pairingGuidance.manualFallbackHint}{' '}
+                                                (sets <code className="font-mono">{connectionStatus.pairingGuidance.manualTokenEnvVar}</code>).
+                                            </p>
+                                        </div>
+                                    )}
                                     {renderConnectCta ? (
                                         renderConnectCta({ connectUrl })
                                     ) : (

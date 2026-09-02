@@ -5,6 +5,7 @@ import { beforeAll, describe, expect, it, vi } from 'vitest';
 // Import through the package barrel — the same entry a host consumes.
 import {
     ExtensionsArea,
+    ExtensionDetailSheet,
     ExtensionsCatalog,
     ExtensionsProvider,
     InstalledTab,
@@ -195,5 +196,27 @@ describe('ExtensionsArea — top-level composition', () => {
 
         fireEvent.click(screen.getByRole('button', { name: 'Installed' }));
         expect(await screen.findByText('Satellite')).toBeTruthy();
+    });
+});
+
+describe('ExtensionDetailSheet — guided pairing step (ticket 10)', () => {
+    it('renders the pairing guidance off the connection-status DTO when gated and disconnected', async () => {
+        const client = fakeClient();
+        mount(<ExtensionDetailSheet listingId={1} onOpenChange={() => {}} />, client);
+
+        expect(await screen.findByText(/requires a connected Splicewire account/)).toBeTruthy();
+        expect(screen.getByText(DISCONNECTED_STATUS.pairingGuidance.connectCommand)).toBeTruthy();
+        expect(screen.getByText(DISCONNECTED_STATUS.pairingGuidance.manualTokenEnvVar)).toBeTruthy();
+        expect(screen.getByText(/Paste a Personal Access Token directly/)).toBeTruthy();
+    });
+
+    it('renders no pairing guidance once connected', async () => {
+        const client = fakeClient({
+            getConnectionStatus: vi.fn(async () => ({ ...DISCONNECTED_STATUS, connected: true })),
+        });
+        mount(<ExtensionDetailSheet listingId={1} onOpenChange={() => {}} />, client);
+
+        expect(await screen.findByText('Acme Waveform')).toBeTruthy();
+        expect(screen.queryByText(DISCONNECTED_STATUS.pairingGuidance.connectCommand)).toBeNull();
     });
 });
