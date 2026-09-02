@@ -1,17 +1,22 @@
 /* =============================================================================
    @splicewire/beam-mdx — base long-form essay / MDX typography.
 
-   Token-driven: every color, font, and hairline reads a CSS custom property
-   (--sr-*, --font-*) the *satellite* defines, so a consuming site overrides the
-   look by setting tokens, never by forking this stylesheet. Import once (e.g.
-   `@import '@splicewire/beam-mdx/css';`) and apply `.site-prose` to the article.
+   Token-driven: every color and hairline reads the shadcn SEMANTIC custom
+   properties every host's seam defines (--foreground, --primary, --muted-foreground,
+   --border), fonts read --font-serif/--font-sans/--font-mono, so a consuming site
+   owns the look through its seam, never by forking this stylesheet. It USED to read
+   `--sr-*` — one satellite's brand prefix (stephenrushing), unset on every other host
+   (theming-migration 08). A brand with more ink steps than the semantic set carries
+   (a brighter heading than body text, a fainter rule than --border) restores them by
+   overriding the `.site-prose` rule in its own sheet, after this import. Import once
+   (e.g. `@import '@splicewire/beam-mdx/css';`) and apply `.site-prose` to the article.
    ============================================================================= */
 
 .site-prose {
     font-family: var(--font-serif);
     font-size: 19px;
     line-height: 1.72;
-    color: var(--sr-text);
+    color: var(--foreground);
 }
 .site-prose h1 {
     font-family: var(--font-sans);
@@ -19,7 +24,7 @@
     font-size: clamp(2rem, 5vw, 2.625rem);
     line-height: 1.16;
     letter-spacing: -0.02em;
-    color: var(--sr-heading);
+    color: var(--foreground);
     margin: 0 0 1.25rem;
 }
 .site-prose h2 {
@@ -28,21 +33,21 @@
     font-size: 1.5rem;
     line-height: 1.3;
     letter-spacing: -0.01em;
-    color: var(--sr-heading);
+    color: var(--foreground);
     margin: 3rem 0 1rem;
 }
 .site-prose h3 {
     font-family: var(--font-sans);
     font-weight: 600;
     font-size: 1.15rem;
-    color: var(--sr-heading);
+    color: var(--foreground);
     margin: 2rem 0 0.75rem;
 }
 .site-prose p {
     margin: 0 0 1.5rem;
 }
 .site-prose a {
-    color: var(--sr-brand);
+    color: var(--primary);
     text-decoration: none;
 }
 .site-prose a:hover {
@@ -50,10 +55,10 @@
 }
 .site-prose em {
     font-style: italic;
-    color: var(--sr-heading);
+    color: var(--foreground);
 }
 .site-prose strong {
-    color: var(--sr-heading);
+    color: var(--foreground);
     font-weight: 500;
 }
 .site-prose ul {
@@ -70,7 +75,7 @@
     font-size: 1.3rem;
     line-height: 1.5;
     color: var(--beam-ink-45);
-    border-left: 2px solid oklch(0.8 0.13 200 / 0.5);
+    border-left: 2px solid oklch(from var(--primary) l c h / 0.5);
     padding-left: 1.25rem;
     margin: 0 0 2.5rem;
 }
@@ -81,19 +86,35 @@
     font-size: clamp(1.375rem, 3.5vw, 1.75rem);
     line-height: 1.34;
     letter-spacing: -0.01em;
-    color: var(--sr-heading);
+    color: var(--foreground);
     margin: 2.75rem 0;
 }
 .site-prose hr {
     border: 0;
-    border-top: 1px solid var(--sr-hairline);
+    border-top: 1px solid var(--border);
     margin: 3rem 0;
+}
+
+/* The <ContentShow> eyebrow: draft chip · date · topic · reading time, or the nav group.
+   Colour lives here (not in the component's utility classes) so a host restyles the
+   steps through this sheet — the separator and note collapse onto --muted-foreground,
+   which a brand with distinct "dim" and "faint" steps overrides per class. */
+.site-prose .eyebrow {
+    color: var(--primary);
+}
+.site-prose .eyebrow-draft {
+    background: color-mix(in oklab, var(--primary) 15%, transparent);
+    box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--primary) 40%, transparent);
+}
+.site-prose .eyebrow-sep,
+.site-prose .eyebrow-note {
+    color: var(--muted-foreground);
 }
 
 /* Inline cross-property cite (<Ref>) — an evidence link at a concrete claim. Reads as
    the brand link but carries a faint dotted underline so it's legible as a citation. */
 .site-prose .sr-ref {
-    color: var(--sr-brand);
+    color: var(--primary);
     text-decoration: underline;
     text-decoration-style: dotted;
     text-underline-offset: 0.2em;
@@ -108,14 +129,14 @@
 .site-prose .receipts {
     margin: 3.5rem 0 0;
     padding-top: 1.75rem;
-    border-top: 1px solid var(--sr-hairline);
+    border-top: 1px solid var(--border);
 }
 .site-prose .receipts-label {
     font-family: var(--font-mono, ui-monospace, monospace);
     font-size: 0.6875rem;
     letter-spacing: 0.14em;
     text-transform: uppercase;
-    color: var(--sr-brand);
+    color: var(--primary);
     margin: 0 0 1rem;
 }
 .site-prose .receipts ul {
@@ -129,7 +150,7 @@
     gap: 0.35rem 0.9rem;
     align-items: baseline;
     padding: 0.85rem 0;
-    border-top: 1px solid var(--sr-faint, var(--sr-hairline));
+    border-top: 1px solid var(--border);
 }
 .site-prose .receipts li:first-child {
     border-top: 0;
@@ -139,13 +160,13 @@
     font-size: 0.625rem;
     letter-spacing: 0.1em;
     text-transform: uppercase;
-    color: var(--sr-dim);
+    color: var(--muted-foreground);
     padding-top: 0.15em;
 }
 .site-prose .receipts-link {
     font-family: var(--font-sans);
     font-size: 1rem;
-    color: var(--sr-brand);
+    color: var(--primary);
     text-decoration: none;
 }
 .site-prose .receipts-link:hover {
@@ -156,5 +177,5 @@
     font-family: var(--font-sans);
     font-size: 0.875rem;
     line-height: 1.5;
-    color: var(--sr-dim);
+    color: var(--muted-foreground);
 }

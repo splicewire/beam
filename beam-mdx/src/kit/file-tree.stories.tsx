@@ -1,6 +1,6 @@
 // FileTree — a framed, monospace directory tree. Two authoring shapes are its axis:
 // the structured `tree` node array vs. MDX `children` (a nested list). Ambient light⊗dark;
-// the frame + rails ride `--sr-*`/`--beam-*` tokens.
+// the frame + rails ride the semantic/`--beam-*` tokens.
 import type { Meta, StoryObj } from '@storybook/react-vite';
 
 import { FileTree, type FileTreeNode } from './file-tree';

@@ -11,18 +11,23 @@
    (beam-docs-satellite ticket 08). The prefix was already doing the work the
    ancestor was credited with.
 
-   Colors, fonts, and hairlines read the host token vars only:
-   --sr-* (text/heading/brand/dim/faint/hairline) preferred, --beam-* for the
-   status + surface palette. Nothing here hard-codes a color, so a consuming
-   site restyles by overriding tokens, never by forking this sheet. Import once
-   via `@splicewire/beam-mdx/kit/css`.
+   Colors, fonts, and hairlines read the host token vars only: the shadcn
+   SEMANTIC set every host's seam already defines (--foreground, --primary,
+   --muted-foreground, --border) for ink, plus --beam-* for the status + surface
+   palette. It USED to read one satellite's brand prefix (`--sr-*`, stephenrushing's)
+   — a package naming one host's vocabulary, unset on every other host, so the kit
+   rendered with inherited colours and no hairlines there (theming-migration 08).
+   Nothing here hard-codes a color, so a consuming site restyles through its seam,
+   never by forking this sheet. A host whose palette has more ink steps than the
+   semantic set (a brighter heading, a fainter rule) overrides the `.bkit-*` rule in
+   its own sheet. Import once via `@splicewire/beam-mdx/kit/css`.
    ============================================================================= */
 
 /* --- Figure ---------------------------------------------------------------- */
 .bkit-figure {
     margin-block: 1.5rem;
     overflow: hidden;
-    border: 1px solid var(--sr-hairline);
+    border: 1px solid var(--border);
     border-radius: 0.5rem;
     background: var(--beam-muted);
 }
@@ -45,23 +50,23 @@
     margin: 0;
 }
 .bkit-figcaption {
-    border-top: 1px solid var(--sr-hairline);
+    border-top: 1px solid var(--border);
     padding: 0.5rem 1rem;
     font-size: 0.875rem;
-    color: var(--sr-dim);
+    color: var(--muted-foreground);
 }
 
 /* --- FileTree -------------------------------------------------------------- */
 .bkit-filetree {
     margin-block: 1.5rem;
     padding: 0.85rem 1.1rem;
-    border: 1px solid var(--sr-hairline);
+    border: 1px solid var(--border);
     border-radius: 0.5rem;
     background: var(--beam-paper-raised, var(--beam-paper));
     font-family: var(--font-mono, var(--beam-font-mono));
     font-size: 0.8125rem;
     line-height: 1.7;
-    color: var(--sr-text);
+    color: var(--foreground);
     overflow-x: auto;
 }
 .bkit-filetree pre,
@@ -78,20 +83,20 @@
 .bkit-filetree-list .bkit-filetree-list {
     margin: 0;
     padding-left: 1.1rem;
-    border-left: 1px solid var(--sr-faint, var(--sr-hairline));
+    border-left: 1px solid var(--border);
 }
 .bkit-filetree-item {
     margin: 0;
     padding: 0.05rem 0;
 }
 .bkit-filetree-name {
-    color: var(--sr-text);
+    color: var(--foreground);
 }
 
 /* --- Terminal -------------------------------------------------------------- */
 .bkit-terminal {
     margin-block: 1.5rem;
-    border: 1px solid var(--sr-hairline);
+    border: 1px solid var(--border);
     border-radius: 0.5rem;
     overflow: hidden;
     background: var(--beam-muted);
@@ -102,7 +107,7 @@
     align-items: center;
     gap: 0.65rem;
     padding: 0.5rem 0.85rem;
-    border-bottom: 1px solid var(--sr-hairline);
+    border-bottom: 1px solid var(--border);
     background: var(--beam-paper-raised, var(--beam-paper));
 }
 .bkit-terminal-dots {
@@ -113,11 +118,11 @@
     width: 0.65rem;
     height: 0.65rem;
     border-radius: 50%;
-    background: var(--sr-faint, var(--sr-hairline));
+    background: var(--border);
 }
 .bkit-terminal-title {
     font-size: 0.75rem;
-    color: var(--sr-dim);
+    color: var(--muted-foreground);
     letter-spacing: 0.01em;
 }
 .bkit-terminal-body {
@@ -141,10 +146,10 @@
     font-family: var(--font-sans, var(--beam-font-sans));
     font-weight: 600;
     font-size: 0.9375rem;
-    color: var(--sr-heading);
+    color: var(--foreground);
 }
 .bkit-callout-body {
-    color: var(--sr-text);
+    color: var(--foreground);
     font-size: 0.9375rem;
 }
 .bkit-callout-body > :last-child {
@@ -193,7 +198,7 @@
     top: 1.75rem;
     bottom: 0;
     width: 1px;
-    background: var(--sr-hairline);
+    background: var(--border);
     transform: translateX(-0.5px);
 }
 .bkit-step:last-child {
@@ -208,7 +213,7 @@
     width: 1.75rem;
     height: 1.75rem;
     border-radius: 50%;
-    border: 1px solid var(--sr-hairline);
+    border: 1px solid var(--border);
     background: var(--beam-paper-raised, var(--beam-paper));
     display: flex;
     align-items: center;
@@ -216,7 +221,7 @@
     font-family: var(--font-sans, var(--beam-font-sans));
     font-size: 0.8125rem;
     font-weight: 600;
-    color: var(--sr-brand);
+    color: var(--primary);
 }
 .bkit-step-marker::before {
     content: counter(bkit-step);
@@ -226,7 +231,7 @@
     padding-top: 0.15rem;
     font-family: var(--font-sans, var(--beam-font-sans));
     font-weight: 600;
-    color: var(--sr-heading);
+    color: var(--foreground);
 }
 .bkit-step-body > :last-child {
     margin-bottom: 0;
@@ -235,7 +240,7 @@
 /* --- DoctorOutput ---------------------------------------------------------- */
 .bkit-doctoroutput {
     margin-block: 1.5rem;
-    border: 1px solid var(--sr-hairline);
+    border: 1px solid var(--border);
     border-radius: 0.5rem;
     overflow: hidden;
     background: var(--beam-paper-raised, var(--beam-paper));
@@ -254,7 +259,7 @@
     padding: 0.4rem 1rem;
     font-size: 0.8125rem;
     line-height: 1.6;
-    border-top: 1px solid var(--sr-faint, var(--sr-hairline));
+    border-top: 1px solid var(--border);
 }
 .bkit-doctoroutput-list > :first-child {
     border-top: none;
@@ -275,15 +280,15 @@
     color: var(--bkit-doctor-accent);
 }
 .bkit-doctoroutput-check {
-    color: var(--sr-heading);
+    color: var(--foreground);
     font-weight: 600;
 }
 .bkit-doctoroutput-detail {
     grid-column: 3;
-    color: var(--sr-dim);
+    color: var(--muted-foreground);
 }
 .bkit-doctoroutput-row--pass {
-    --bkit-doctor-accent: var(--beam-green, var(--sr-brand));
+    --bkit-doctor-accent: var(--beam-green, var(--primary));
 }
 .bkit-doctoroutput-row--warn {
     --bkit-doctor-accent: var(--beam-warn);
@@ -294,11 +299,11 @@
 .bkit-doctoroutput-summary {
     margin: 0;
     padding: 0.5rem 1rem;
-    border-top: 1px solid var(--sr-hairline);
+    border-top: 1px solid var(--border);
     background: var(--beam-muted);
     font-family: var(--font-sans, var(--beam-font-sans));
     font-size: 0.75rem;
-    color: var(--sr-dim);
+    color: var(--muted-foreground);
 }
 
 /* --- Section landing + card grid ------------------------------------------ */
@@ -317,19 +322,19 @@
     font-weight: 700;
     letter-spacing: 0.08em;
     text-transform: uppercase;
-    color: var(--beam-signal, var(--sr-brand));
+    color: var(--beam-signal, var(--primary));
 }
 .bkit-landing-heading {
     margin-block-end: 0.75rem;
     font-size: 2rem;
     line-height: 1.15;
-    color: var(--sr-heading);
+    color: var(--foreground);
 }
 .bkit-landing-lede {
     margin: 0;
     max-width: 48ch;
     font-size: 1.0625rem;
-    color: var(--sr-dim);
+    color: var(--muted-foreground);
 }
 
 /* 1 → 2 → 3 columns; reflows to one column on a narrow viewport. */
@@ -365,7 +370,7 @@
     flex-direction: column;
     gap: 0.4rem;
     padding: 1.1rem 1.25rem;
-    border: 1px solid var(--sr-hairline);
+    border: 1px solid var(--border);
     border-radius: 0.65rem;
     background: var(--beam-paper-raised, var(--beam-paper));
     text-decoration: none;
@@ -376,19 +381,19 @@
         box-shadow 200ms ease;
 }
 .bkit-card.bkit-card:hover {
-    border-color: var(--beam-signal, var(--sr-brand));
+    border-color: var(--beam-signal, var(--primary));
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px -12px var(--beam-signal, var(--sr-brand));
+    box-shadow: 0 6px 20px -12px var(--beam-signal, var(--primary));
 }
 .bkit-card.bkit-card:focus-visible {
-    outline: 2px solid var(--beam-signal, var(--sr-brand));
+    outline: 2px solid var(--beam-signal, var(--primary));
     outline-offset: 2px;
 }
 .bkit-card-icon {
     display: inline-flex;
     width: 1.75rem;
     height: 1.75rem;
-    color: var(--beam-signal, var(--sr-brand));
+    color: var(--beam-signal, var(--primary));
 }
 .bkit-card-icon svg {
     width: 100%;
@@ -398,12 +403,12 @@
     font-family: var(--font-sans, var(--beam-font-sans));
     font-size: 1.0625rem;
     font-weight: 600;
-    color: var(--sr-heading);
+    color: var(--foreground);
 }
 .bkit-card-blurb {
     font-size: 0.9375rem;
     line-height: 1.5;
-    color: var(--sr-dim);
+    color: var(--muted-foreground);
 }
 @media (prefers-reduced-motion: reduce) {
     .bkit-card {

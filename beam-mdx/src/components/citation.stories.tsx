@@ -5,7 +5,7 @@
 //
 // Axis = STATES: a live cite (dofollow anchor) / a pending cite (degrades to plain text) /
 // an unknown key (degrades) / a populated Receipts ledger / an empty ledger (renders null).
-// `.sr-ref` + `.receipts` skin off `--sr-*`; ambient light⊗dark.
+// `.sr-ref` + `.receipts` skin off the semantic tokens; ambient light⊗dark.
 import type { Meta, StoryObj } from '@storybook/react-vite';
 
 import { Ref, Receipts } from './reference';

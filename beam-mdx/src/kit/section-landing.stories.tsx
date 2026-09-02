@@ -1,7 +1,7 @@
 // SectionLanding / CardGrid / Card — the scannable gateway pattern: a hero over a
 // responsive 1→2→3 card grid, each card a full-card link. Axes: hero states (eyebrow/lede
 // present-or-absent), card states (icon present-or-absent), grid VIEWPORT (the column
-// reflow). Signal accent + lift ride `--beam-signal`/`--sr-*`; ambient light⊗dark.
+// reflow). Signal accent + lift ride `--beam-signal`/the semantic tokens; ambient light⊗dark.
 import type { Meta, StoryObj } from '@storybook/react-vite';
 
 import { SectionLanding, CardGrid, Card } from './section-landing';

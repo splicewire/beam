@@ -23,7 +23,7 @@ route macros + `beam-mdx:doctor`).
   - `beamMdxPreset(options)` — the MDX compile step (mdx + remark-frontmatter +
     remark-mdx-frontmatter).
 - **`@splicewire/beam-mdx/css`** — the token-driven base `.site-prose` typography (apps override
-  the `--sr-*` / `--font-*` tokens it reads).
+  the shadcn semantic `--foreground`/`--primary`/`--muted-foreground`/`--border` + `--font-*` tokens it reads).
 
 ## Draft convention
 

@@ -18,7 +18,7 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 const mixed = `PASS  Vite preset: registered and building the content map
-PASS  Tokens: --sr-* + --beam-* resolved
+PASS  Tokens: semantic + --beam-* resolved
 WARN  Draftable prefixes: broadcasts/ has 3 undated entries
 INFO  References: 12 live, 2 pending
 FAIL  Site prose: .site-prose stylesheet not imported`;
@@ -41,7 +41,7 @@ export const AllFail: Story = {
     args: {
         raw: `FAIL  Vite preset: not registered
 FAIL  Content map: empty
-ERROR Tokens: --sr-* undefined`,
+ERROR Tokens: --foreground undefined`,
     },
 };
 

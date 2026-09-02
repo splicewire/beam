@@ -1,21 +1,18 @@
 /* =============================================================================
    beam-mdx Storybook harness stylesheet (component-seams ticket 40).
 
-   The kit + prose sheets are TOKEN-DRIVEN: they read `--sr-*` (text/heading/brand/
-   dim/faint/hairline) + a few `--beam-*` doc tokens + `--font-serif`/`--font-sans`/
-   `--font-mono`. The beam workbench seed (`.storybook/preview.css`) supplies the
-   `--beam-*` brand primitives + the semantic interface, but NOT the `--sr-*` prose
-   tokens nor `--font-serif` — those are the SATELLITE's contract in production (a
-   consuming site defines them; the package ships none, by design — see site-prose.css
-   header). This harness supplies a standalone `--sr-*` mapping so the kit renders
-   skinned in isolation, exactly as ticket 07's headless-token seed does for the
-   semantic layer.
+   The kit + prose sheets are TOKEN-DRIVEN: they read the shadcn semantic set
+   (`--foreground`/`--primary`/`--muted-foreground`/`--border`) + a few `--beam-*` doc
+   tokens + `--font-serif`/`--font-sans`/`--font-mono`. The beam workbench seed
+   (`.storybook/preview.css`) supplies the `--beam-*` brand primitives + the semantic
+   interface, so the kit re-skins under `.dark` for free — the dark seed overrides the
+   semantics and the kit re-treats with zero per-story work. The one thing the seed does
+   not define is `--font-serif`, supplied here.
 
-   CRUCIAL: every `--sr-*` here maps onto an existing `--beam-*` / semantic token (never
-   a raw literal), so the whole kit RE-SKINS under `.dark` for free — the dark seed
-   overrides `--foreground`/`--muted-foreground`/`--border`/`--primary`, these `--sr-*`
-   vars point at them, and the kit re-treats with zero per-story work (the ticket's
-   "confirm the --beam-* migration re-skins the kit under .dark" bar).
+   This harness USED to carry a standalone `--sr-*` → semantic mapping, because the
+   sheets read one satellite's brand prefix (stephenrushing's) and would have rendered
+   unskinned without it. The sheets read the semantics directly now (theming-migration
+   08), and that mapping was the prior art for the direction they took.
 
    Imports the SHIPPED package sheets (src, pre-build) so the story catalogues the real
    skin, mounted under `.site-prose` per the ticket.
@@ -24,18 +21,9 @@
 @import './site-prose.css';
 @import './kit/kit.css';
 
-/* --- Prose token mapping (the satellite's `--sr-*` contract, standalone) ----------- */
+/* --- The prose serif face — the one font var the kit/prose reads that the beam seed
+   (sans + mono only) does not define. A readable serif stack for long-form. ------- */
 :root {
-    /* Text roles → the semantic ink interface (re-skins under .dark automatically). */
-    --sr-text: var(--foreground);
-    --sr-heading: var(--foreground);
-    --sr-brand: var(--primary);
-    --sr-dim: var(--muted-foreground);
-    --sr-faint: var(--border);
-    --sr-hairline: var(--border);
-
-    /* The prose serif face — the one font var the kit/prose reads that the beam seed
-       (sans + mono only) does not define. A readable serif stack for long-form. */
     --font-serif: ui-serif, Georgia, Cambria, 'Times New Roman', Times, serif;
 }
 

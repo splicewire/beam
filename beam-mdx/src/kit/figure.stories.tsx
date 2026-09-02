@@ -1,6 +1,6 @@
 // Figure — a captioned, framed exhibit. Axis: the two body shapes (an `img` via
 // `src`+`alt`, or inline `children` — an ASCII/SVG diagram) ⊗ caption present/absent.
-// Framed off `--sr-hairline`/`--beam-muted`; ambient light⊗dark.
+// Framed off `--border`/`--beam-muted`; ambient light⊗dark.
 import type { Meta, StoryObj } from '@storybook/react-vite';
 
 import { Figure } from './figure';
@@ -21,14 +21,14 @@ export const InlineDiagram: Story = {
     render: () => (
         <Figure caption="The content plane: MDX files → resolver → ContentShow.">
             <svg viewBox="0 0 320 80" role="img" aria-label="content pipeline">
-                <rect x="4" y="24" width="80" height="32" rx="4" fill="var(--beam-green-tint)" stroke="var(--sr-hairline)" />
-                <text x="44" y="44" textAnchor="middle" fontSize="11" fill="var(--sr-heading)">.mdx</text>
-                <line x1="88" y1="40" x2="120" y2="40" stroke="var(--sr-dim)" strokeWidth="1.5" />
-                <rect x="120" y="24" width="80" height="32" rx="4" fill="var(--beam-green-tint)" stroke="var(--sr-hairline)" />
-                <text x="160" y="44" textAnchor="middle" fontSize="11" fill="var(--sr-heading)">resolve</text>
-                <line x1="204" y1="40" x2="236" y2="40" stroke="var(--sr-dim)" strokeWidth="1.5" />
-                <rect x="236" y="24" width="80" height="32" rx="4" fill="var(--beam-green-tint)" stroke="var(--sr-hairline)" />
-                <text x="276" y="44" textAnchor="middle" fontSize="11" fill="var(--sr-heading)">Show</text>
+                <rect x="4" y="24" width="80" height="32" rx="4" fill="var(--beam-green-tint)" stroke="var(--border)" />
+                <text x="44" y="44" textAnchor="middle" fontSize="11" fill="var(--foreground)">.mdx</text>
+                <line x1="88" y1="40" x2="120" y2="40" stroke="var(--muted-foreground)" strokeWidth="1.5" />
+                <rect x="120" y="24" width="80" height="32" rx="4" fill="var(--beam-green-tint)" stroke="var(--border)" />
+                <text x="160" y="44" textAnchor="middle" fontSize="11" fill="var(--foreground)">resolve</text>
+                <line x1="204" y1="40" x2="236" y2="40" stroke="var(--muted-foreground)" strokeWidth="1.5" />
+                <rect x="236" y="24" width="80" height="32" rx="4" fill="var(--beam-green-tint)" stroke="var(--border)" />
+                <text x="276" y="44" textAnchor="middle" fontSize="11" fill="var(--foreground)">Show</text>
             </svg>
         </Figure>
     ),

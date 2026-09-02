@@ -5,7 +5,7 @@
 // lives entirely in `.site-prose` + `kit.css` (token-driven, `bkit-*` classes scoped
 // UNDER `.site-prose`). So every story mounts under `.site-prose` — nothing in the kit
 // draws correctly outside it (the `bkit-*` rules are `.site-prose .bkit-*`). This harness
-// provides that mount, the standalone `--sr-*` token seed (story-harness.css), and the
+// provides that mount, the `--font-serif` seed (story-harness.css), and the
 // fixtures the citation kit reads from context/page-props.
 //
 // Mirrors the ticket 15/16 shared-harness pattern (one non-shipped `story-harness.tsx`

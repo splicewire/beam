@@ -44,7 +44,8 @@ export interface ContentShowProps {
  * satellite's chosen layout, emit frontmatter-driven JSON-LD (with live cross-property
  * citations), render the compiled MDX with the injected component map, and close with the
  * Receipts ledger. Everything satellite-specific — layouts, essay devices, the citation
- * manifest — arrives as props; the brand look rides CSS tokens (.site-prose + --sr-*).
+ * manifest — arrives as props; the brand look rides the host seam through .site-prose
+ * (the shadcn semantic tokens — never one satellite's brand prefix).
  */
 export function ContentShow({
     slug,
@@ -101,9 +102,9 @@ export function ContentShow({
                 ) : null}
                 <article className="site-prose mx-auto max-w-2xl px-6 py-14 sm:px-8 sm:py-16">
                     {draft || frontmatter.topic || frontmatter.datePublished ? (
-                        <div className="mb-6 flex items-center gap-3 font-mono text-xs tracking-wide text-[color:var(--sr-brand)] uppercase">
+                        <div className="eyebrow mb-6 flex items-center gap-3 font-mono text-xs tracking-wide uppercase">
                             {draft ? (
-                                <span className="rounded-sm bg-[color:var(--sr-brand)]/15 px-1.5 py-0.5 font-medium ring-1 ring-[color:var(--sr-brand)]/40 ring-inset">
+                                <span className="eyebrow-draft rounded-sm px-1.5 py-0.5 font-medium">
                                     Draft
                                 </span>
                             ) : null}
@@ -116,20 +117,20 @@ export function ContentShow({
                             ) : null}
                             {frontmatter.topic ? (
                                 <>
-                                    <span className="text-[color:var(--sr-faint)]">
+                                    <span className="eyebrow-sep">
                                         |
                                     </span>
-                                    <span className="text-[color:var(--sr-dim)]">
+                                    <span className="eyebrow-note">
                                         {frontmatter.topic}
                                     </span>
                                 </>
                             ) : null}
                             {frontmatter.readingTime ? (
                                 <>
-                                    <span className="text-[color:var(--sr-faint)]">
+                                    <span className="eyebrow-sep">
                                         |
                                     </span>
-                                    <span className="text-[color:var(--sr-dim)]">
+                                    <span className="eyebrow-note">
                                         {frontmatter.readingTime}
                                     </span>
                                 </>
@@ -138,7 +139,7 @@ export function ContentShow({
                     ) : renderEyebrow ? (
                         renderEyebrow(frontmatter)
                     ) : frontmatter.navGroup ? (
-                        <p className="mb-5 font-mono text-xs tracking-widest text-[color:var(--sr-brand)] uppercase">
+                        <p className="eyebrow mb-5 font-mono text-xs tracking-widest uppercase">
                             {frontmatter.navGroup}
                         </p>
                     ) : null}

@@ -1,6 +1,6 @@
 // Steps / Step — an auto-numbered procedure list with a vertical rail. No enum axes
 // (the sanctioned axis is STATES-of-content: titled vs untitled, count); the CSS counter
-// numbers the markers, the rail + markers ride `--sr-*`/`--beam-*` tokens. Ambient light⊗dark.
+// numbers the markers, the rail + markers ride the semantic/`--beam-*` tokens. Ambient light⊗dark.
 import type { Meta, StoryObj } from '@storybook/react-vite';
 
 import { Steps, Step } from './steps';
