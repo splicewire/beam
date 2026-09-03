@@ -10,6 +10,12 @@ export const PROVENANCE_LABEL: Record<TokenProvenance, string> = {
     dev: 'Dev',
     broker: 'Broker',
     passkey: 'Passkey',
+    // Two machine principals the generated projection grew after this map was written
+    // (`federation` in _resources 753d57c, `service` in the 79411d4 regen). They are absent
+    // from FACETS above — a deliberate 5-of-7 filter subset — but required here, because
+    // both maps are exhaustive over TokenProvenance.
+    federation: 'Federation',
+    service: 'Service',
 };
 
 export const PROVENANCE_BADGE: Record<TokenProvenance, 'default' | 'secondary' | 'outline'> = {
@@ -18,6 +24,10 @@ export const PROVENANCE_BADGE: Record<TokenProvenance, 'default' | 'secondary' |
     dev: 'outline',
     broker: 'outline',
     passkey: 'secondary',
+    // Machine principals read as `outline`, alongside `broker` — the badge the flagship's own
+    // copy of this surface already gives them (splicewire-app 6d8c90109).
+    federation: 'outline',
+    service: 'outline',
 };
 
 // Lifetime presets for minting / renewing / rotating — "never" is the default.
