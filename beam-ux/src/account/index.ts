@@ -21,6 +21,7 @@ export {
     type AccountShellSections,
 } from './AccountShell.js';
 export { AccountNav, type AccountNavProps } from './AccountNav.js';
+export { ACCOUNT_SHELL_CSS } from './css.js';
 export type {
     AccountNavItem,
     AccountNavData,

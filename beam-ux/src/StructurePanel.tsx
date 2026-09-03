@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import { cn } from '@schemastud/ui';
 import { KIND_ICON } from './kindIcon';
 import type { PaletteItem, Region, TreeNode } from './types';
+import { UX_BUILDER_CSS } from './css';
 
 function TreeRow({
     node,
@@ -64,7 +65,8 @@ export function StructurePanel({
     renderEditor: (region: Region) => ReactNode;
 }) {
     return (
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_300px]">
+        <div className="beam-ux-structure-grid grid grid-cols-1 gap-6">
+            <style>{UX_BUILDER_CSS}</style>
             <div className="space-y-6">
                 {/* the composition tree */}
                 <section className="rounded-lg border bg-card">

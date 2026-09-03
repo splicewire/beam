@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { RealmNav, SIDEBAR_ACTIVE_FG } from './RealmNav.js';
+import { REALM_NAV_CSS } from './css.js';
 import type { LinkComponent, RealmNavNode } from './types.js';
 
 const node = (over: Partial<RealmNavNode> & { title: string }): RealmNavNode => ({
@@ -113,14 +114,14 @@ describe('RealmNav — injected chrome', () => {
 
     // Regression guard for the non-standard-token defect. `sidebar-active-foreground` is not one of
     // shadcn's eight standard sidebar tokens, so the bare utility resolved to no colour at all on any
-    // host but splicewire-app. Both assertions matter:
-    //  - the class must carry a FALLBACK, so a stock shadcn host still gets a colour;
+    // host but splicewire-app. The colour is a rule in the sheet the component renders, keyed off the
+    // server-stamped `data-active` (beam-docs-satellite 62 — an arbitrary-value utility inside this
+    // package's dist was invisible to every host that does not scan it). Both assertions still matter:
+    //  - the rule must carry a FALLBACK, so a stock shadcn host still gets a colour;
     //  - the fallback must chain the RAW `--sidebar-*` properties, not the `--color-*` theme keys,
     //    because splicewire-app declares its palette in `@theme inline` and therefore emits no
     //    `--color-*` custom properties at runtime.
-    // It also asserts the class is spelled LITERALLY — an interpolated `text-[${...}]` is invisible
-    // to Tailwind's source scanner and would re-create the defect at build time.
-    it('colours the active item through a token with a standard-token fallback', () => {
+    it('colours the active item through a sheet rule with a standard-token fallback', () => {
         const items = [node({ title: 'Songs', active: true }), node({ title: 'Lyrics' })];
         const { container } = render(<RealmNav items={items} variant="flat-with-headers" />);
         const [activeLink, idleLink] = Array.from(container.querySelectorAll('a'));
@@ -128,12 +129,16 @@ describe('RealmNav — injected chrome', () => {
         expect(SIDEBAR_ACTIVE_FG).toBe('var(--sidebar-active-foreground,var(--sidebar-foreground))');
         expect(SIDEBAR_ACTIVE_FG).not.toContain('--color-');
 
-        expect(activeLink.className).toContain(`text-[${SIDEBAR_ACTIVE_FG}]`);
-        expect(idleLink.className).toContain(`hover:text-[${SIDEBAR_ACTIVE_FG}]`);
+        expect(container.querySelector('style')?.textContent).toBe(REALM_NAV_CSS);
+        expect(REALM_NAV_CSS).toContain(`.beam-nav-item[data-active='true'] { color: ${SIDEBAR_ACTIVE_FG}; }`);
+        expect(activeLink.className).toContain('beam-nav-item');
+        expect(activeLink.getAttribute('data-active')).toBe('true');
+        expect(idleLink.getAttribute('data-active')).toBe('false');
 
-        // The bare non-standard utility must not come back.
+        // Neither the bare non-standard utility nor its arbitrary-value successor may come back.
         for (const link of [activeLink, idleLink]) {
             expect(link.className).not.toMatch(/(^|\s|:)text-sidebar-active-foreground(\s|$|\/)/);
+            expect(link.className).not.toContain('text-[var(--sidebar-active-foreground');
         }
     });
 

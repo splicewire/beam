@@ -30,6 +30,7 @@ import {
 } from '@schemastud/ui';
 import { AccountNav, type AccountNavProps } from './AccountNav.js';
 import type { AccountNavItem, AccountShellData, LinkComponent } from './types.js';
+import { ACCOUNT_SHELL_CSS } from './css.js';
 
 /** Which OPT-IN sidebar sections to render below the nav (all default off — nav-only sidebar). */
 export type AccountShellSections = {
@@ -129,6 +130,7 @@ export function AccountShell({
                 needs a TooltipProvider ancestor — the shell supplies its own so a host need not
                 remember to. (A host-level provider higher up nests harmlessly.) */}
             <TooltipProvider delayDuration={0}>
+                <style>{ACCOUNT_SHELL_CSS}</style>
                 <Sidebar collapsible={collapsible} variant={variant}>
                 {brandHeader != null && (
                     <SidebarHeader>
@@ -144,7 +146,7 @@ export function AccountShell({
 
                 <SidebarContent>
                     {action != null && (
-                        <SidebarGroup className="px-2 py-0 group-data-[collapsible=icon]:hidden">
+                        <SidebarGroup className="beam-ux-account-action px-2 py-0">
                             {action}
                         </SidebarGroup>
                     )}
@@ -230,7 +232,7 @@ function ProfileBlock({ shell }: { shell: AccountShellData }) {
         <div data-account-section="profile" className="px-2 py-1.5 text-xs">
             <div className="font-medium">{handle}</div>
             {metrics.length > 0 && (
-                <div className="text-muted-foreground mt-1 flex flex-wrap gap-x-3 gap-y-0.5">
+                <div className="beam-ux-account-metrics text-muted-foreground mt-1 flex flex-wrap gap-x-3">
                     {metrics.map((metric) => (
                         <span key={metric.label}>
                             <span className="font-medium">{metric.value}</span> {metric.label}

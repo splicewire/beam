@@ -8,6 +8,7 @@ import { RegionInspector } from './RegionInspector';
 import { RegionOverlay } from './RegionOverlay';
 import { StructurePanel } from './StructurePanel';
 import type { PaletteItem, Region, RegionKind, TreeNode } from './types';
+import { UX_BUILDER_CSS } from './css';
 
 export type BuilderMode = 'overlay' | 'structure';
 /** WHERE the editor materializes in overlay mode when a region is dock-placed. */
@@ -134,8 +135,9 @@ export function UxBuilder({
 
     return (
         <div className="space-y-5">
+            <style>{UX_BUILDER_CSS}</style>
             <div className="flex items-center justify-between gap-3">
-                <span className="hidden font-mono text-[11px] text-muted-foreground md:inline">
+                <span className="beam-ux-mode-hint font-mono text-[11px] text-muted-foreground">
                     editing the app&rsquo;s own front-end
                 </span>
                 <ModeToggle mode={mode} onChange={setMode} />
@@ -154,7 +156,7 @@ export function UxBuilder({
                 />
             ) : dockInInspector ? (
                 /* INSPECTOR placement — docked right-hand column, always present. */
-                <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(360px,400px)]">
+                <div className="beam-ux-inspector-grid grid grid-cols-1 gap-6">
                     <RegionCanvas regions={regions} engaged={engaged} onEngage={setEngaged} />
                     <aside className="lg:sticky lg:top-2 lg:self-start">
                         {active ? (
@@ -173,7 +175,7 @@ export function UxBuilder({
                         <RegionCanvas regions={regions} engaged={engaged} onEngage={setEngaged} />
                     </div>
                     {active && (
-                        <div className="fixed right-6 top-24 z-40 w-[380px]">
+                        <div className="beam-ux-overlay-dock">
                             <RegionOverlayConnected
                                 key={active.id}
                                 region={active}

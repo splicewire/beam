@@ -26,6 +26,7 @@ export type {
 // structure panel, and the root that composes them.
 export { RegionInspector, type RegionEditorProps } from './RegionInspector';
 export { RegionOverlay } from './RegionOverlay';
+export { UX_BUILDER_CSS } from './css';
 export { RegionCanvas, RegionBlock } from './RegionCanvas';
 export { StructurePanel } from './StructurePanel';
 export {

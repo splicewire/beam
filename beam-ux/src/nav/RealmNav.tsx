@@ -15,6 +15,7 @@
 // classes are the default look, every one overridable via `classNames`; a host wanting client-side
 // active styling forwards `data-active` (the server-stamped flag) or matches in its own `<Link>`.
 import type { ReactNode } from 'react';
+import { REALM_NAV_CSS } from './css.js';
 import type {
     LinkComponent,
     RealmNavClassNames,
@@ -48,63 +49,48 @@ type RailGroup = {
 };
 
 /**
- * The active item's text colour, as a token with a plain fallback.
+ * The active item's colour, the group label's tracking and the icon size are rules in
+ * {@link REALM_NAV_CSS}, a sheet the component renders inline, keyed off `data-active` — NOT
+ * utilities.
  *
- * ## The defect this replaces
+ * ## The defect this replaces, twice over
  *
- * This used to be the bare utility `text-sidebar-active-foreground`. `sidebar-active-foreground` is
- * **not** one of shadcn's eight standard sidebar tokens (`sidebar`, `-foreground`, `-primary`,
- * `-primary-foreground`, `-accent`, `-accent-foreground`, `-border`, `-ring`) — it was invented by
- * splicewire-app, which is the only host that defines it. Any other host adopting `RealmNav` got an
- * active item with **no text colour at all**: the class is scanned, the theme key does not exist, so
- * Tailwind emits no rule and the page still returns 200. The estate's recurring shape — the module
- * resolved, every static check passed, and the behaviour was gone.
+ * First cut: the bare utility `text-sidebar-active-foreground`. `sidebar-active-foreground` is not one
+ * of shadcn's eight standard sidebar tokens — splicewire-app invented it and is the only host that
+ * defines it — so every other host got an active item with **no text colour at all**: the class was
+ * scanned, the theme key did not exist, Tailwind emitted no rule, and the page still returned 200.
  *
- * ## Why the fallback names the RAW token, not the `--color-` theme key
+ * Second cut: `text-[var(--sidebar-active-foreground,var(--sidebar-foreground))]` — the fallback was
+ * right, but an arbitrary-value utility that exists only inside this package's dist is generated only
+ * at a host whose Tailwind scans `node_modules/@splicewire/beam-ux/dist`, and most do not
+ * (beam-docs-satellite 62). Same shape one layer down: the module resolved, every static check
+ * passed, and the colour was gone. So was `tracking-[0.1em]` on the group label, which sat in the same
+ * literal as `text-sidebar-foreground/55` (emitted everywhere) — the right colour at the wrong
+ * letter-spacing, half a class list.
  *
- * The obvious chain is `var(--color-sidebar-active-foreground, var(--color-sidebar-foreground))`, and
- * it would be silently broken at the one host that matters. splicewire-app declares its palette in
- * `@theme inline`, which resolves `--color-*` at BUILD time and emits none of them as runtime custom
- * properties — so the first `var()` would be undefined *at the flagship* and the whole rail would
- * collapse onto the fallback, changing the host that was previously correct. The un-prefixed
- * `--sidebar-*` properties, by contrast, are real `:root` declarations in both the flagship
- * (`ui/src/index.css`) and a stock starter (`resources/css/app.css`), so the chain below is the one
- * that actually resolves in both.
- *
- * Net effect: splicewire-app renders byte-identically (its token is defined, so the fallback is never
- * reached), and every other host gets the standard `--sidebar-foreground` instead of nothing.
- *
- * This is the utility-class form of the contract `docs/css.ts` states for injected CSS — the package
- * picks the ARRANGEMENT, the host picks the value, and every token carries a plain fallback so a host
- * that defines nothing still renders. Preferred over an injected stylesheet here because the rest of
- * the component is utilities and this package is `sideEffects: false`, where an import-time style
- * injection is exactly what a bundler is entitled to drop.
- *
- * Exported for the test to assert against — the classes below spell it out literally, because
- * Tailwind's scanner cannot see through an interpolation (see the note at the use site).
+ * A render-time `<style>` is the package's settled answer (`docs/css.ts`, `<Prose>`): it is not an
+ * import-time side effect, so `sideEffects: false` cannot drop it, and it needs nothing from the
+ * host's scan scope. The colour chain itself is unchanged and still exported for the test to assert
+ * against — see {@link SIDEBAR_ACTIVE_FG} for why it names the raw `--sidebar-*` properties.
  */
-export const SIDEBAR_ACTIVE_FG = 'var(--sidebar-active-foreground,var(--sidebar-foreground))';
+export { SIDEBAR_ACTIVE_FG } from './css.js';
 
 /** The packaged default look — the classes splicewire-app rendered host-locally (byte-for-byte). */
 const DEFAULTS = {
     root: 'flex-1 space-y-4 overflow-y-auto px-2.5 text-[13px] font-medium',
     group: 'space-y-0.5',
-    groupLabel:
-        'px-2.5 pb-1 pt-2 text-[10px] font-medium uppercase tracking-[0.1em] text-sidebar-foreground/55',
+    groupLabel: 'beam-nav-label px-2.5 pb-1 pt-2 text-[10px] font-medium uppercase text-sidebar-foreground/55',
+    // The active / hover text colour is `.beam-nav-item[data-active=…]` in REALM_NAV_CSS; the
+    // utilities here are the ones every host emits for its own sidebar.
     item: (active: boolean) =>
         [
-            'flex items-center gap-2.5 rounded-md border-l-2 border-transparent px-2.5 py-2 transition-colors',
-            // ⚠️ Written out LITERALLY, never interpolated from `ACTIVE_FG`. Tailwind's scanner is a
-            // regex over raw source text, so a `text-[${...}]` template would produce the correct
-            // class at runtime and no rule at build time — re-creating the exact defect this fixes,
-            // one layer down. `ACTIVE_FG` exists to be asserted against in the test, not to build
-            // these strings.
+            'beam-nav-item flex items-center gap-2.5 rounded-md border-l-2 border-transparent px-2.5 py-2 transition-colors',
             active
-                ? 'border-sidebar-primary bg-sidebar-accent font-semibold text-[var(--sidebar-active-foreground,var(--sidebar-foreground))]'
-                : 'text-sidebar-foreground/85 hover:bg-sidebar-accent/40 hover:text-[var(--sidebar-active-foreground,var(--sidebar-foreground))]',
+                ? 'border-sidebar-primary bg-sidebar-accent font-semibold'
+                : 'text-sidebar-foreground/85 hover:bg-sidebar-accent/40',
         ].join(' '),
     itemIcon: (active: boolean) =>
-        ['size-[17px] flex-none', active ? 'text-sidebar-primary' : 'text-sidebar-foreground/70'].join(
+        ['beam-nav-icon flex-none', active ? 'text-sidebar-primary' : 'text-sidebar-foreground/70'].join(
             ' ',
         ),
     itemLabel: 'min-w-0 flex-1 truncate',
@@ -203,6 +189,7 @@ export function RealmNav({
 
     return (
         <nav className={classNames?.root ?? DEFAULTS.root}>
+            <style>{REALM_NAV_CSS}</style>
             {groups.map((group, i) => (
                 <div key={group.label ?? `group-${i}`} className={classNames?.group ?? DEFAULTS.group}>
                     {group.label ? (

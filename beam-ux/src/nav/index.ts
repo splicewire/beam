@@ -12,7 +12,8 @@
  * overridable via `classNames`; icons via an injected renderer).
  */
 
-export { RealmNav, SIDEBAR_ACTIVE_FG, type RealmNavProps } from './RealmNav.js';
+export { RealmNav, type RealmNavProps } from './RealmNav.js';
+export { REALM_NAV_CSS, SIDEBAR_ACTIVE_FG } from './css.js';
 export type {
     RealmNavNode,
     RealmNavVariant,

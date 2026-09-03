@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { SchemaForm, type SchemaNode } from '@schemastud/seam';
 import { Badge, Button, Input, cn } from '@schemastud/ui';
 import type { Region } from './types';
+import { UX_BUILDER_CSS } from './css';
 
 /**
  * The kind-driven editor body — the concrete thing mounted for an engaged region. `form` renders the
@@ -115,6 +116,7 @@ function RichtextEditor() {
 function FrameEditor() {
     return (
         <div className="relative overflow-hidden rounded-md border">
+            <style>{UX_BUILDER_CSS}</style>
             <div className="border-b bg-muted/40 px-3 py-2 text-xs">
                 <span className="font-mono">frame:enrollment</span> &mdash; self-loading
             </div>
@@ -129,7 +131,7 @@ function FrameEditor() {
                 ))}
             </div>
             {/* the "opaque island" scrim — you cannot reach into its buffer */}
-            <div className="pointer-events-none absolute inset-0 flex items-end justify-center bg-gradient-to-t from-background/70 to-transparent p-2">
+            <div className="beam-ux-scrim pointer-events-none absolute inset-0 flex items-end justify-center p-2">
                 <span className="rounded bg-foreground/80 px-2 py-1 font-mono text-[10px] text-background">
                     opaque EditShell island &middot; self-loads/saves via FrameProvider
                 </span>

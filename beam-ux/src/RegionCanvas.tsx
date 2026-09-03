@@ -1,6 +1,7 @@
 import { Button, cn } from '@schemastud/ui';
 import { KIND_ICON } from './kindIcon';
 import type { Region } from './types';
+import { UX_BUILDER_CSS } from './css';
 
 const LIST_ROWS = [
     { slug: 'frontend-foundations', title: 'Frontend Foundations' },
@@ -29,13 +30,13 @@ export function RegionBlock({
             tabIndex={0}
             onClick={onEngage}
             onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && onEngage()}
+            data-engaged={engaged ? '' : undefined}
             className={cn(
-                'group relative block w-full cursor-pointer rounded-lg border bg-card p-4 text-left transition-all',
-                engaged
-                    ? 'border-primary ring-2 ring-primary/30'
-                    : 'border-transparent hover:border-primary/40 hover:ring-1 hover:ring-primary/20',
+                'beam-ux-region relative block w-full cursor-pointer rounded-lg border bg-card p-4 text-left transition-all',
+                engaged ? 'border-primary ring-2 ring-primary/30' : 'border-transparent hover:border-primary/40',
             )}
         >
+            <style>{UX_BUILDER_CSS}</style>
             <div className={cn(!engaged && 'opacity-90')}>
                 {region.kind === 'richtext' && (
                     <>
@@ -73,13 +74,12 @@ export function RegionBlock({
                 )}
             </div>
 
-            {/* engage affordance — the region label tab, visible on hover/engage */}
+            {/* engage affordance — the region label tab, visible on hover/engage (the reveal and the
+                offset are sheet rules keyed by `data-engaged` on the block) */}
             <span
                 className={cn(
-                    'absolute -top-2.5 left-3 flex items-center gap-1 rounded-full border bg-card px-2 py-0.5 font-mono text-[10px] transition-opacity',
-                    engaged
-                        ? 'border-primary text-primary opacity-100'
-                        : 'opacity-0 group-hover:opacity-100',
+                    'beam-ux-region-tab absolute left-3 flex items-center gap-1 rounded-full border bg-card px-2 py-0.5 font-mono text-[10px]',
+                    engaged && 'border-primary text-primary',
                 )}
             >
                 <Icon className="size-3" />

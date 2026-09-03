@@ -3,6 +3,7 @@ import { Badge, cn } from '@schemastud/ui';
 import { KIND_ICON } from './kindIcon';
 import { RegionEditorBody } from './RegionEditorBody';
 import type { RegionEditorProps } from './RegionInspector';
+import { UX_BUILDER_CSS } from './css';
 
 /**
  * The floating in-context region editor — the OVERLAY-placement variant of {@link RegionInspector}. A
@@ -20,7 +21,8 @@ export function RegionOverlay({
 }: RegionEditorProps & { onClose: () => void }) {
     const Icon = KIND_ICON[region.kind];
     return (
-        <div className={cn('rounded-lg border bg-card shadow-2xl ring-1 ring-primary/20')}>
+        <div className={cn('beam-ux-overlay rounded-lg border bg-card ring-1 ring-primary/20')}>
+            <style>{UX_BUILDER_CSS}</style>
             <div className="flex items-start gap-2 border-b px-4 py-3">
                 <Icon className="mt-0.5 size-4 flex-none text-muted-foreground" />
                 <div className="min-w-0 flex-1">
