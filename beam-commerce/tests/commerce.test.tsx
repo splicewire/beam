@@ -112,6 +112,14 @@ const SUBSCRIPTION: SubscriptionView = {
         tenantId: 't1',
         planId: 'p1',
         planSlug: 'songwriter',
+        subscribableType: null,
+        subscribableId: null,
+        // `undefined` is what the wire projection actually types today: SubscriptionData::$cadence
+        // is a `Rushing\Commerce\Enums\Cadence`, and that enum carries no `#[TypeScript]`, so the
+        // transformer emits the property with no resolvable type. Tracked as a finding on
+        // particle-resource-contract-regen 02 — this fixture mirrors the contract, it does not
+        // paper over it.
+        cadence: undefined,
         commitmentMonths: null,
         overrides: {},
         entitlements: {},
@@ -119,6 +127,8 @@ const SUBSCRIPTION: SubscriptionView = {
         startedAt: '2026-01-01T00:00:00Z',
         endedAt: null,
         active: true,
+        pausedAt: null,
+        pausedUntil: null,
         plan: { id: 'p1', slug: 'songwriter', name: 'Songwriter', description: 'The pro plan', components: [] },
         earliestBillablePeriod: '2026-01',
         latestBillablePeriod: '2026-08',
