@@ -16,6 +16,7 @@ export function RegionOverlay({
     body,
     onChange,
     onSave,
+    onDiscard,
     saving,
     onClose,
 }: RegionEditorProps & { onClose: () => void }) {
@@ -55,6 +56,7 @@ export function RegionOverlay({
                     body={body}
                     onChange={onChange}
                     onSave={onSave}
+                    onDiscard={onDiscard}
                     saving={saving}
                 />
                 <p className="mt-3 border-t pt-3 text-[11px] leading-relaxed text-muted-foreground">

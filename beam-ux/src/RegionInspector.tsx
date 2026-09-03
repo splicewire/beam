@@ -11,6 +11,13 @@ export interface RegionEditorProps {
     body: Record<string, unknown>;
     onChange: (body: Record<string, unknown>) => void;
     onSave: () => void;
+    /**
+     * Drop the in-flight edit buffer, returning the editor to the last persisted body. Optional
+     * because the surfaces are also mounted by hosts that own the buffer themselves and have no
+     * separate draft to discard; the control renders disabled when it is omitted rather than
+     * rendering an affordance that does nothing.
+     */
+    onDiscard?: () => void;
     saving?: boolean;
 }
 
@@ -25,6 +32,7 @@ export function RegionInspector({
     body,
     onChange,
     onSave,
+    onDiscard,
     saving,
 }: RegionEditorProps) {
     const Icon = KIND_ICON[region.kind];
@@ -51,6 +59,7 @@ export function RegionInspector({
                     body={body}
                     onChange={onChange}
                     onSave={onSave}
+                    onDiscard={onDiscard}
                     saving={saving}
                 />
                 <p className="mt-3 border-t pt-3 text-[11px] leading-relaxed text-muted-foreground">

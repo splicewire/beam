@@ -41,6 +41,9 @@ function useRegionEditor(region: Region) {
         body,
         onChange: setDraft,
         onSave: () => save.mutate({ id: region.recordId, body }),
+        // The draft IS the unsaved edit, so dropping it is the whole of Discard — the next render
+        // falls back to `query.data.body`, the last thing the server actually stored.
+        onDiscard: () => setDraft(null),
         saving: save.isPending,
     };
 }

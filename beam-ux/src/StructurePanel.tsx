@@ -43,8 +43,26 @@ function TreeRow({
 }
 
 /**
+ * The tree's OWN rungs, in depth order, deduplicated — `page › region` over a page-rooted tree,
+ * `layout › template › page › region` over a fully composed one.
+ *
+ * The header used to be the fixed string "layout › template › page › regions" above a tree that
+ * contains only page › region, because no host resolves the upper two rungs yet: a label describing
+ * an aspiration over data that describes something else, which makes a reader trust the panel more
+ * than they should (beam-docs-satellite 64). Deriving it means the label cannot be wrong again — the
+ * day a composition model lands, the header grows the rungs the tree grew.
+ */
+export function treeKindPath(node: TreeNode): string {
+    const kinds: TreeNode['kind'][] = [];
+    for (let cursor: TreeNode | undefined = node; cursor; cursor = cursor.children?.[0]) {
+        if (!kinds.includes(cursor.kind)) kinds.push(cursor.kind);
+    }
+    return kinds.join(' › ');
+}
+
+/**
  * Structure mode — the page-composition layer, kept SEPARATE from overlay editing. The composition
- * tree (layout › template › page › regions) on the left with the selected region's placement config
+ * tree (the rungs the tree actually carries) on the left with the selected region's placement config
  * beneath it, and the component palette on the right. `renderEditor` is the editor slot for the
  * selected region (the host wires load/save through it); the palette is the drop-source structural
  * layer.
@@ -71,7 +89,7 @@ export function StructurePanel({
                 {/* the composition tree */}
                 <section className="rounded-lg border bg-card">
                     <div className="border-b px-4 py-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                        Composition tree &mdash; layout &rsaquo; template &rsaquo; page &rsaquo; regions
+                        Composition tree &mdash; {treeKindPath(pageTree)}
                     </div>
                     <div className="p-2">
                         <TreeRow node={pageTree} depth={0} selected={selected} onSelect={onSelect} />
