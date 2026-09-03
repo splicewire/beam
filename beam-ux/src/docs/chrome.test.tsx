@@ -151,6 +151,42 @@ describe('the packaged entry page', () => {
         expect(container.querySelector('[data-beam-prose]')).not.toBeNull();
     });
 
+    it('falls to the host DEFAULT before the packaged fallback when a name resolves to nothing (55 Q3)', () => {
+        // A host that declares a default has said what "nothing better" means. A typo'd slug that
+        // rendered BARE would look like a deliberate bare page; rendering the host's default keeps the
+        // mistake visible as chrome-that-was-not-asked-for while the audit's Warn names it.
+        registerChrome({
+            layouts: { HostShell: ({ children }) => <div data-host-shell>{children}</div> },
+            templates: { HostTpl: ({ children }) => <div data-host-tpl>{children}</div> },
+        });
+        configureEntryPage({ defaultLayout: 'HostShell', defaultTemplate: 'HostTpl' });
+
+        const { container } = render(
+            <SiteEntry
+                entry={{ ...entry, layout: 'DcosLayout', template: 'ProzeTemplate' }}
+                artifact={artifact}
+                nav={null}
+            />,
+        );
+
+        expect(container.querySelector('[data-host-shell] [data-host-tpl] [data-beam-entry-uncompiled]')).not.toBeNull();
+        expect(container.querySelector('.beam-tpl-prose')).toBeNull();
+    });
+
+    it('still reaches the packaged fallback when the host default is itself unresolvable', () => {
+        configureEntryPage({ defaultLayout: 'AlsoMissing', defaultTemplate: 'AlsoMissing' });
+
+        const { container } = render(
+            <SiteEntry
+                entry={{ ...entry, layout: 'DcosLayout', template: 'ProzeTemplate' }}
+                artifact={artifact}
+                nav={null}
+            />,
+        );
+
+        expect(container.querySelector('[data-beam-prose] [data-beam-entry-uncompiled]')).not.toBeNull();
+    });
+
     it('nests the body in another ENTRY when the declared layout is that entry\'s slug (§7)', () => {
         // `www` declares `layout: site` on five rows and the audit passed them by slug, while this page
         // fell through to Passthrough — the declared resolution had no consumer (ticket 55). The server

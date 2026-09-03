@@ -103,11 +103,19 @@ export default function SiteEntry(props: SiteEntryProps) {
         [nav, config.components, config.linkComponent],
     );
 
-    // §7's order, per axis: a registered component, then the named entry's artifact, then the fallback.
-    const Layout = resolveLayout(entry.layout ?? config.defaultLayout);
-    const layoutArtifact = Layout ? null : (props.chrome?.layout ?? null);
-    const Template = resolveTemplate(entry.template ?? config.defaultTemplate ?? 'ProseTemplate');
-    const templateArtifact = Template ? null : (props.chrome?.template ?? null);
+    // §7's order, per axis: a registered component, then the named entry's artifact, then the HOST's
+    // default, then the packaged fallback. The host-default hop is beam-docs-satellite 55 Q3: a name
+    // that resolves to neither a component nor a nestable entry used to defeat `config.defaultLayout`
+    // as well, so a typo'd slug rendered BARE and looked like a deliberate bare page. A host that
+    // declares a default has said what "nothing better" means; `BeamUxChromeAudit` still names the
+    // miss, and now the mistake is visible as chrome-that-was-not-asked-for rather than as nothing.
+    const declaredLayout = resolveLayout(entry.layout ?? config.defaultLayout);
+    const layoutArtifact = declaredLayout ? null : (props.chrome?.layout ?? null);
+    const Layout = declaredLayout ?? (layoutArtifact ? null : resolveLayout(config.defaultLayout));
+    const declaredTemplate = resolveTemplate(entry.template ?? config.defaultTemplate ?? 'ProseTemplate');
+    const templateArtifact = declaredTemplate ? null : (props.chrome?.template ?? null);
+    const Template =
+        declaredTemplate ?? (templateArtifact ? null : resolveTemplate(config.defaultTemplate));
 
     const slots = typeof config.slots === 'function' ? config.slots(entry) : config.slots;
 
