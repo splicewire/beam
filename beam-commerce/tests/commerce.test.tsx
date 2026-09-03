@@ -114,12 +114,12 @@ const SUBSCRIPTION: SubscriptionView = {
         planSlug: 'songwriter',
         subscribableType: null,
         subscribableId: null,
-        // `undefined` is what the wire projection actually types today: SubscriptionData::$cadence
-        // is a `Rushing\Commerce\Enums\Cadence`, and that enum carries no `#[TypeScript]`, so the
-        // transformer emits the property with no resolvable type. Tracked as a finding on
-        // particle-resource-contract-regen 02 — this fixture mirrors the contract, it does not
-        // paper over it.
-        cadence: undefined,
+        // Was `undefined`, with a comment blaming a missing `#[TypeScript]` on
+        // `Rushing\Commerce\Enums\Cadence`. That diagnosis was wrong and the attribute was never the
+        // mechanism (particle-resource-contract-regen 02): the flagship's transformer simply did not
+        // SCAN `rushing/laravel-commerce`, and the stock `EnumTransformer` claims any backed enum in a
+        // scanned directory, attribute or not. One scan directory at the host emits the real union.
+        cadence: 'recurring',
         commitmentMonths: null,
         overrides: {},
         entitlements: {},
