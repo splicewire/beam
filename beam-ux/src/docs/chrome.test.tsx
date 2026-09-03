@@ -8,6 +8,30 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 vi.mock('@inertiajs/react', () => ({
     Head: ({ title }: { title?: string }) => <title>{title}</title>,
 }));
+// An entry-backed chrome (ADR-0213 §7) is a compiled artifact the page IMPORTS by URL. jsdom cannot
+// `import()` a route, so the loader is stubbed at the one seam the page reaches it through: a known
+// address resolves to a body that frames its children, an unknown one fails exactly as the real
+// loader does. `EntryBody`'s own internal call is untouched — the page body still reports uncompiled.
+vi.mock('../site/EntryBody.js', async (importOriginal) => {
+    const original = await importOriginal<typeof import('../site/EntryBody.js')>();
+    const shells: Record<string, string> = {
+        '/artifacts/site-shell/v1.js': 'site-shell',
+        '/artifacts/site-tpl/v1.js': 'site-tpl',
+    };
+
+    return {
+        ...original,
+        useEntryArtifact: (url: string) =>
+            shells[url]
+                ? {
+                      Body: ({ children }: { children?: unknown }) => (
+                          <div data-entry-chrome={shells[url]}>{children as never}</div>
+                      ),
+                      failed: false,
+                  }
+                : { Body: null, failed: true },
+    };
+});
 import { RealmNav } from '../nav/RealmNav.js';
 import SiteEntry from '../pages/SiteEntry.js';
 import { configureEntryPage, resetEntryPageConfig } from './config.js';
@@ -125,6 +149,69 @@ describe('the packaged entry page', () => {
         );
 
         expect(container.querySelector('[data-beam-prose]')).not.toBeNull();
+    });
+
+    it('nests the body in another ENTRY when the declared layout is that entry\'s slug (§7)', () => {
+        // `www` declares `layout: site` on five rows and the audit passed them by slug, while this page
+        // fell through to Passthrough — the declared resolution had no consumer (ticket 55). The server
+        // now carries the named entry's artifact address, and the page nests it.
+        const { container } = render(
+            <SiteEntry
+                entry={{ ...entry, layout: 'site-shell' }}
+                artifact={artifact}
+                nav={null}
+                chrome={{ layout: { url: '/artifacts/site-shell/v1.js', version: 'v1' } }}
+            />,
+        );
+
+        const shell = container.querySelector('[data-entry-chrome="site-shell"]');
+        expect(shell).not.toBeNull();
+        // The page body renders INSIDE the entry-backed layout, still through the packaged loader.
+        expect(shell?.querySelector('[data-beam-entry-uncompiled]')).not.toBeNull();
+    });
+
+    it('nests the body in an entry-backed TEMPLATE the same way, in place of the prose default', () => {
+        const { container } = render(
+            <SiteEntry
+                entry={{ ...entry, template: 'site-tpl' }}
+                artifact={artifact}
+                nav={null}
+                chrome={{ template: { url: '/artifacts/site-tpl/v1.js', version: 'v1' } }}
+            />,
+        );
+
+        expect(container.querySelector('[data-entry-chrome="site-tpl"] [data-beam-entry-uncompiled]')).not.toBeNull();
+        expect(container.querySelector('.beam-tpl-prose')).toBeNull();
+    });
+
+    it('lets a registered name win over an entry artifact carrying the same name', () => {
+        // Resolution order is registered first, THEN entry (§7): a host that registers `DocsLayout`
+        // and also happens to have an entry with that slug gets the component, not the artifact.
+        const { container } = render(
+            <SiteEntry
+                entry={{ ...entry, layout: 'DocsLayout' }}
+                artifact={artifact}
+                nav={null}
+                chrome={{ layout: { url: '/artifacts/site-shell/v1.js', version: 'v1' } }}
+            />,
+        );
+
+        expect(container.querySelector('aside[aria-label="Docs sections"]')).not.toBeNull();
+        expect(container.querySelector('[data-entry-chrome]')).toBeNull();
+    });
+
+    it('never holds the body hostage to a chrome artifact that cannot load', () => {
+        const { container } = render(
+            <SiteEntry
+                entry={{ ...entry, layout: 'site-shell' }}
+                artifact={artifact}
+                nav={null}
+                chrome={{ layout: { url: '/artifacts/gone.js', version: 'v0' } }}
+            />,
+        );
+
+        expect(container.querySelector('[data-entry-chrome]')).toBeNull();
+        expect(container.querySelector('[data-beam-entry-uncompiled]')).not.toBeNull();
     });
 
     it('renders the uncompiled empty state through the packaged loader, not a host re-derivation', () => {

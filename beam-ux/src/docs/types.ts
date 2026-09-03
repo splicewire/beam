@@ -24,6 +24,17 @@ export type EntryArtifactPayload = {
 };
 
 /**
+ * The artifact addresses of chrome that resolved to **another entry** (ADR-0213 §7's second half),
+ * one slot per axis — null when the resolved name is not a nestable entry. The server hands these
+ * over because the client can only nest what it can address; the client still prefers a registered
+ * component of the same name, so a host registration is never overridden by a row.
+ */
+export type ChromeArtifactsPayload = {
+    layout?: EntryArtifactPayload | null;
+    template?: EntryArtifactPayload | null;
+};
+
+/**
  * The props every layout and every template receives. One shape for both, because the difference
  * between them is what fills the hole (ADR-0213 §1) and not what they are told — a template that
  * wanted the nav to render a "next page" pager should not have to be a layout to get it.

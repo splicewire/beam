@@ -17,6 +17,8 @@
  *   then to the packaged map in `builtins.ts`, and only then to another entry's slug (§7). The
  *   packaged map is read by the resolver rather than registered at import, because `sideEffects:
  *   false` entitles a bundler to drop an import-time registration — and it did.
+ * - {@link ArtifactChrome} — the "then another entry's slug" half: a layout or template that is an
+ *   authored entry, imported by its artifact address and nested around the page (§7).
  * - {@link configureEntryPage} — how a host hands the packaged Inertia page the things only a host has.
  *
  * The page itself lives at `@splicewire/beam-ux/pages`, deliberately: that is the one module in this
@@ -69,6 +71,7 @@
  */
 
 export { DocsLayout } from './DocsLayout.js';
+export { ArtifactChrome, type ArtifactChromeProps } from './ArtifactChrome.js';
 export { ProseTemplate, SpreadTemplate } from './templates.js';
 export {
     registerChrome,
@@ -88,5 +91,6 @@ export type {
     ChromeSlots,
     EntryPayload,
     EntryArtifactPayload,
+    ChromeArtifactsPayload,
 } from './types.js';
 
