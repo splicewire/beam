@@ -25,8 +25,8 @@ import type { Bill, BudgetVerdict, UsageModelBreakdown } from './commerce-types'
  * Billing / spend control (Frame OS ticket 21 — promoted from the app's settings `BillingPage`). The
  * single vertical scrolling spend pane answering "what am I spending / what will I owe":
  *   Section 1 — BudgetMeter   (no perm; always renders)
- *   Section 2 — UsageSummary  (view-usage)
- *   Section 3 — Bill preview + Bills roster (view-billing) with a line-items drill dialog.
+ *   Section 2 — UsageSummary  (usage.view)
+ *   Section 3 — Bill preview + Bills roster (billing.view) with a line-items drill dialog.
  * Adding a permission only extends the scroll downward; the page never restructures per role, so no
  * gated section ever 403s on click.
  *
@@ -255,7 +255,7 @@ function BudgetSection() {
     );
 }
 
-// ── Section 2: Usage summary (view-usage) ──────────────────────────────────────
+// ── Section 2: Usage summary (usage.view) ──────────────────────────────────────
 function UsageSection() {
     const [month, setMonth] = useState(currentMonth);
     const summary = useUsageSummary(month);
@@ -402,13 +402,22 @@ function BillsSection({ onSelect }: { onSelect: (bill: Bill) => void }) {
 }
 
 export function BillingSurface() {
-    // Progressive-disclosure gate: the meter always renders (no perm); usage needs view-usage; the
-    // bill preview + roster need view-billing. Gate on the actual permission — the client mirror of
+    // Progressive-disclosure gate: the meter always renders (no perm); usage needs usage.view; the
+    // bill preview + roster need billing.view. Gate on the actual permission — the client mirror of
     // the server's in-controller abort(403) — so a section only renders when the tenant can truly
     // read it. Adding a permission extends the scroll downward; no gated section 403s on click.
+    //
+    // ⚠️ These are the SERVER's permission names, verbatim. They were authored `view-usage` /
+    // `view-billing` and matched nothing: the estate's vocabulary is dotted `<subject>.<verb>`
+    // (`database/seeders/PermissionsSeeder.php:140,143` grants Admin `usage.view` + `billing.view`;
+    // `BillController::index/preview` gate on `billing.view`). The flagship's `can()` is an exact
+    // `permissions.includes()` with a `Root` short-circuit, so the mismatch rendered the usage
+    // summary, the next-bill estimate and the bills roster invisible to every non-Root user while
+    // Root — the account any of this gets demoed from — saw the whole pane. The test below granted
+    // the same wrong pair, so the suite agreed with the component and neither agreed with the server.
     const can = useCommerceCan();
-    const canUsage = can('view-usage');
-    const canBilling = can('view-billing');
+    const canUsage = can('usage.view');
+    const canBilling = can('billing.view');
 
     const [selectedBill, setSelectedBill] = useState<Bill | null>(null);
 

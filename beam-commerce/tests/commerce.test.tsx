@@ -215,7 +215,11 @@ describe('BillingSurface — isolation mount', () => {
 
     it('renders usage + bills when can() grants the permissions', async () => {
         const client = fakeClient();
-        mount(<BillingSurface />, client, { can: (p: string) => p === 'view-usage' || p === 'view-billing' });
+        // The SERVER's permission names, verbatim (PermissionsSeeder grants Admin `usage.view` +
+        // `billing.view`). This test previously granted `view-usage`/`view-billing` — the same wrong
+        // pair the component asked for — so it stayed green while the sections never rendered in
+        // production. Granting the real names is what couples this assertion to the server.
+        mount(<BillingSurface />, client, { can: (p: string) => p === 'usage.view' || p === 'billing.view' });
 
         expect(await screen.findByText('Usage summary')).toBeTruthy();
         expect(await screen.findByText('Next bill (estimate)')).toBeTruthy();
