@@ -5,8 +5,8 @@
 // <UxBuilderProvider>; everything else — the react-query data logic, the DTO typing off the
 // generated projection, the presentation — travels inside the package.
 
-// The generated DTO projection (rehome-ui), delivered via @splicewire/_resources.
-export type { BeamUxEntryBodyData } from '@splicewire/_resources/types/beam-ux';
+// The generated DTO projection (rehome-ui), delivered via @splicewire/beam-resources.
+export type { BeamUxEntryBodyData } from '@splicewire/beam-resources/types/beam-ux';
 
 // The injection seams: the provider carrying the transport client + feedback, and the react-query
 // data layer that rides on top of it.

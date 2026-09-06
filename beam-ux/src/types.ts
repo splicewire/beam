@@ -2,7 +2,7 @@
 // delivered as a bundle. This build-time dependency is LOAD-BEARING — the builder's default typing
 // IS the projection, so the PHP source of truth genuinely travels into this package. tsup keeps the
 // `import type` in the shipped `dist/index.d.ts`.
-import type { BeamUxEntryBodyData } from '@splicewire/_resources/types/beam-ux';
+import type { BeamUxEntryBodyData } from '@splicewire/beam-resources/types/beam-ux';
 
 export type { BeamUxEntryBodyData };
 

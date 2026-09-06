@@ -29,9 +29,9 @@ export default defineConfig({
     // the real schema-driven SchemaForm the `form`-kind region editor mounts, a host-provided
     // peer (not a bundled foundation primitive).
     //
-    // @splicewire/_resources (the generated DTO projection, rehome-ui) stays a real dependency,
+    // @splicewire/beam-resources (the generated DTO projection, rehome-ui) stays a real dependency,
     // not bundled: the emitted `dist/index.d.ts` keeps its `import type` from
-    // `@splicewire/_resources/types/beam-ux`, and the dependency edge (see package.json) makes
+    // `@splicewire/beam-resources/types/beam-ux`, and the dependency edge (see package.json) makes
     // the projection TRAVEL with the package so a consumer resolves it transitively. (Type-only,
     // so it never appears in the JS bundle.)
     external: [

@@ -2,7 +2,7 @@
 // Adapted from the throwaway prototype fixture (beamux ticket 04). NOT shipped — never imported by
 // src/index.ts. Models one live tenant page ("Programs") as a tree of REGIONS + the schema/body each
 // region loads.
-import type { BeamUxEntryBodyData } from '@splicewire/_resources/types/beam-ux';
+import type { BeamUxEntryBodyData } from '@splicewire/beam-resources/types/beam-ux';
 import type { PaletteItem, Region, TreeNode } from './types';
 
 /**

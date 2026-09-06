@@ -1,0 +1,34 @@
+{
+  "name": "@splicewire/beam-resources",
+  "version": "0.1.0",
+  "description": "Generated public Beam wire types, projected from PHP declarations by resources:beam.",
+  "license": "MIT",
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    "./types/*": {
+      "types": "./types/*.d.ts"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "types",
+    "README.md"
+  ],
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org",
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/splicewire/beam.git",
+    "directory": "beam-resources"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "prepack": "npm run typecheck"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.0"
+  }
+}
