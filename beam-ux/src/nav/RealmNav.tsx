@@ -14,7 +14,7 @@
 // its router's `<Link>` (`linkComponent`) — the package imports no router. Theme-neutral: the packaged
 // classes are the default look, every one overridable via `classNames`; a host wanting client-side
 // active styling forwards `data-active` (the server-stamped flag) or matches in its own `<Link>`.
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { REALM_NAV_CSS } from './css.js';
 import type {
     LinkComponent,
@@ -41,6 +41,14 @@ export type RealmNavProps = {
     icon?: (node: RealmNavNode, ctx: { className: string; active: boolean }) => ReactNode;
     /** Class overrides; each defaults to the packaged look. */
     classNames?: RealmNavClassNames;
+    /**
+     * The upsell CTA rendered inside a locked row's popover. Receives the node and its OPAQUE
+     * `upsell` token — a plan key, an upgrade href, a feature id; neither PHP nor this component
+     * interprets it, so mapping it to an actual upgrade destination is the host's job and this is the
+     * seam for it. Absent ⇒ a plain "Upgrade" button that closes the popover, which surfaces the lock
+     * without pretending to know where the host sells.
+     */
+    upsellCta?: (node: RealmNavNode, ctx: { upsell: string | null }) => ReactNode;
 };
 
 type RailGroup = {
@@ -119,7 +127,7 @@ function toGroups(items: RealmNavNode[], variant: RealmNavVariant): RailGroup[] 
                 items: (section.children && section.children.length > 0
                     ? section.children
                     : [section]
-                ).filter((node) => node.href),
+                ).filter(isRailable),
             }))
             .filter((group) => group.items.length > 0);
     }
@@ -135,9 +143,9 @@ function toGroups(items: RealmNavNode[], variant: RealmNavVariant): RailGroup[] 
     const groups: RailGroup[] = [];
     let current: RailGroup = { items: [] };
     for (const node of items) {
-        if (!node.href) {
+        if (!node.href && !node.locked) {
             if (current.items.length > 0) groups.push(current);
-            current = { label: node.title, items: (node.children ?? []).filter((child) => child.href) };
+            current = { label: node.title, items: (node.children ?? []).filter(isRailable) };
         } else {
             current.items.push(node);
         }
@@ -146,24 +154,102 @@ function toGroups(items: RealmNavNode[], variant: RealmNavVariant): RailGroup[] 
     return groups;
 }
 
+/**
+ * Whether a node is a rail ITEM rather than a group header.
+ *
+ * An href is what normally makes it one — and a LOCKED node is one too, with or without an href,
+ * because a locked row never navigates. Dropping it for want of a destination would delete the exact
+ * state this projection exists to make visible: a section the principal's plan does not include is
+ * likelier than not to have nothing meaningful to point at.
+ */
+function isRailable(node: RealmNavNode): boolean {
+    return Boolean(node.href || node.locked);
+}
+
+/**
+ * The upsell shown when a locked row is clicked — the rail's counterpart to the desktop chrome's
+ * `UpsellPopover`, pinned there by *"a locked tile opens the upsell popover — never navigates or
+ * opens a window"* (`@schemastud/mainframe` `os/__tests__/desktopChrome.test.tsx`). A locked nav ROW
+ * and a locked desktop TILE are the same soft-gate affordance in two chromes, so they behave the
+ * same: no navigation, a popover carrying the server's reason, a CTA, and a scrim that dismisses.
+ *
+ * The server's `reason` IS the copy. The desktop tile falls back to a fabricated `Unlock {title}`
+ * because its `upsell` bag may carry no title; here the PHP `NavLocked` makes `reason` non-nullable,
+ * so there is nothing to invent and the row says exactly what the projection said.
+ */
+function UpsellPopover({
+    node,
+    cta,
+    onClose,
+}: {
+    node: RealmNavNode;
+    cta?: (node: RealmNavNode, ctx: { upsell: string | null }) => ReactNode;
+    onClose: () => void;
+}) {
+    const upsell = node.locked?.upsell ?? null;
+
+    return (
+        <>
+            <div className="beam-nav-upsell-scrim" onClick={onClose} />
+            <div className="beam-nav-upsell" role="dialog" aria-label={`Unlock ${node.title}`}>
+                <div className="beam-nav-upsell-title">{node.title}</div>
+                <p className="beam-nav-upsell-copy">{node.locked?.reason}</p>
+                {cta ? (
+                    cta(node, { upsell })
+                ) : (
+                    <button type="button" className="beam-nav-upsell-cta" onClick={onClose}>
+                        Upgrade
+                    </button>
+                )}
+            </div>
+        </>
+    );
+}
+
 function RailItem({
     node,
     linkComponent,
     icon,
     classNames,
+    onUpsell,
 }: {
     node: RealmNavNode;
     linkComponent?: LinkComponent;
     icon?: (node: RealmNavNode, ctx: { className: string; active: boolean }) => ReactNode;
     classNames?: RealmNavClassNames;
+    onUpsell: (node: RealmNavNode) => void;
 }) {
-    if (!node.href) return null;
-
     // Server-stamped active/activeTrail is authoritative — read from the node, never recomputed.
     const serverActive = Boolean(node.active || node.activeTrail);
+    const iconClass = resolveClass(classNames?.itemIcon, DEFAULTS.itemIcon, serverActive);
+
+    // A soft-locked row: present, never navigable. It is a `<button>`, not a `<Link>`, so there is no
+    // href to middle-click, copy or prefetch into a page the principal's plan does not include — the
+    // interaction contract the desktop chrome's locked tile already holds. `data-locked` drives the
+    // packaged styling and is what a rendered-output assertion can see.
+    if (node.locked) {
+        return (
+            <button
+                type="button"
+                className={resolveClass(classNames?.item, DEFAULTS.item, false)}
+                data-active={false}
+                data-locked={true}
+                title={node.locked.reason}
+                onClick={() => onUpsell(node)}
+            >
+                {icon ? icon(node, { className: iconClass, active: false }) : null}
+                <span className={classNames?.itemLabel ?? DEFAULTS.itemLabel}>{node.title}</span>
+                <span className="beam-nav-lock" aria-label="locked">
+                    🔒
+                </span>
+            </button>
+        );
+    }
+
+    if (!node.href) return null;
+
     const Link: LinkComponent =
         linkComponent ?? (({ href, ...rest }) => <a href={href} {...rest} />);
-    const iconClass = resolveClass(classNames?.itemIcon, DEFAULTS.itemIcon, serverActive);
 
     return (
         <Link
@@ -184,8 +270,12 @@ export function RealmNav({
     linkComponent,
     icon,
     classNames,
+    upsellCta,
 }: RealmNavProps) {
     const groups = toGroups(items ?? [], variant);
+    // One popover for the whole rail, held here rather than per-row, so two locked rows can never be
+    // open at once — the same placement the desktop chrome's `Dock` uses for its upsell state.
+    const [upsell, setUpsell] = useState<RealmNavNode | null>(null);
 
     return (
         <nav className={classNames?.root ?? DEFAULTS.root}>
@@ -204,10 +294,14 @@ export function RealmNav({
                             linkComponent={linkComponent}
                             icon={icon}
                             classNames={classNames}
+                            onUpsell={setUpsell}
                         />
                     ))}
                 </div>
             ))}
+            {upsell ? (
+                <UpsellPopover node={upsell} cta={upsellCta} onClose={() => setUpsell(null)} />
+            ) : null}
         </nav>
     );
 }

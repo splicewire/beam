@@ -23,9 +23,46 @@
  */
 export const SIDEBAR_ACTIVE_FG = 'var(--sidebar-active-foreground,var(--sidebar-foreground))';
 
+/**
+ * The locked row + its upsell popover carry `beam-nav-`-prefixed class names rather than the
+ * `upsell-*` / `launcher-scrim` names `@schemastud/mainframe/os` uses for the locked DESKTOP TILE.
+ *
+ * The two surfaces match in BEHAVIOUR on purpose — a locked row opens the upsell and never
+ * navigates, exactly as a locked dock tile opens the upsell and never opens a window — and they must
+ * not match in SELECTORS. The desktop chrome deliberately ships no CSS and leaves `.upsell-pop` for
+ * the host to style; this package ships its rules inline. Reusing those names would mean this
+ * package's sheet silently restyling the host's dock popover wherever both are rendered, which is the
+ * class of defect the whole render-time-`<style>` contract exists to avoid.
+ */
 export const REALM_NAV_CSS = `
 .beam-nav-label { letter-spacing: 0.1em; }
 .beam-nav-icon { width: 17px; height: 17px; }
 .beam-nav-item[data-active='true'] { color: ${SIDEBAR_ACTIVE_FG}; }
 .beam-nav-item[data-active='false']:hover { color: ${SIDEBAR_ACTIVE_FG}; }
+.beam-nav-item[data-locked='true'] {
+  width: 100%;
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+  background: none;
+  opacity: var(--beam-nav-locked-opacity, 0.65);
+}
+.beam-nav-item[data-locked='true']:hover { opacity: 1; }
+.beam-nav-lock { flex: none; margin-left: auto; font-size: 0.85em; line-height: 1; }
+.beam-nav-upsell-scrim { position: fixed; inset: 0; z-index: 50; }
+.beam-nav-upsell {
+  position: fixed;
+  z-index: 51;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: min(var(--beam-nav-upsell-width, 22rem), calc(100vw - 2rem));
+  padding: 1.25rem;
+  border-radius: 0.75rem;
+  background: var(--card, var(--background));
+  color: var(--card-foreground, var(--foreground));
+  box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.25);
+}
+.beam-nav-upsell-title { font-weight: 600; margin-bottom: 0.375rem; }
+.beam-nav-upsell-copy { margin: 0 0 1rem; opacity: 0.8; }
 `;

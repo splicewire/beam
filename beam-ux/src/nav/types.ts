@@ -18,7 +18,9 @@ import type { ComponentType, ReactNode } from 'react';
  * its own icon component); `active`/`activeTrail` are STAMPED server-side by `ResolveNav`, so the
  * renderer reads highlight from the node, never re-deriving it. `kind` is the discriminator — the
  * renderer keeps a default arm for unknown host kinds (§7 "tolerate unknown"). `locked` is the
- * wire-visible soft-lock projection (Frame OS ticket 11); tolerated here, rendered by ticket 13.
+ * wire-visible soft-lock projection (Frame OS ticket 11), produced by
+ * `Splicewire\Beam\Ux\Frame\NavSectionProjector` for a seat whose entitlement gate declares a
+ * `NavSeatLock`, and RENDERED by `<RealmNav>` as a non-navigating row that opens an upsell popover.
  */
 export type RealmNavNode = {
     kind?: string;
