@@ -1,11 +1,12 @@
 import type { TestRunnerConfig } from '@storybook/test-runner';
 import { getStoryContext } from '@storybook/test-runner';
+import { applyStoryViewport } from './viewport';
 
 /**
  * Visual-regression SEAM (component-seams tickets 04/08, BASELINED in ticket 14; structural
  * matrix added in ticket 37): self-hosted Storybook test-runner + Playwright, snapshots →
- * `.tests/vr` (no external SaaS; Chromatic rejected). Byte-identical across all three package
- * repos (schemastud / beam / splice), like `scripts/lint-tokens.mjs`.
+ * `.tests/vr` (no external SaaS; Chromatic rejected). Shared ambient and structural pattern across
+ * schemastud / beam / splice; this runner also applies the stories' named viewport globals.
  *
  * TWO AXIS KINDS (treatment-axes ticket 13):
  *
@@ -45,6 +46,10 @@ type StructuralAxes = { canvas?: boolean; density?: boolean };
 type Scheme = 'light' | 'dark';
 
 const config: TestRunnerConfig = {
+    async preVisit(page, context) {
+        const story = await getStoryContext(page, context);
+        await applyStoryViewport(page, story.storyGlobals?.viewport);
+    },
     async postVisit(page, context) {
         if (!process.env.VR_SNAPSHOTS) return;
         const { toMatchImageSnapshot } = await import('jest-image-snapshot');

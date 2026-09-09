@@ -19,7 +19,9 @@
     "beam-market",
     "beam-transforms",
     "beam-calendar",
-    "beam-versioning"
+    "beam-versioning",
+    "beam-ingest",
+    "beam-intake"
   ],
   "scripts": {
     "build": "npm run build --workspaces --if-present",
