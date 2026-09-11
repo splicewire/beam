@@ -76,8 +76,20 @@ const EMPTY_DOC: JsonDoc = [
     { kind: 'block', name: 'div', isComponent: false, props: [], children: [], dynamic: false },
 ];
 
+/**
+ * Is `b` a usable persisted JsonDoc?
+ *
+ * `[]` is deliberately NOT one, and that is the whole point: the server returns `body: []` for an entry
+ * that has never been authored, and `[].every(…)` is vacuously true, so an empty array used to pass as a
+ * document and suppress the seed. The editor then opened on a doc with no root — nothing to render,
+ * nothing to select, and (before `insertRelativeTo` learned to append at the root) nothing insertable.
+ * Measured on beam.test 2026-09-11, G2-BEAM-AUTHOR-EMPTY-ENTRY. "Never authored" must reach the
+ * fallback, which is what `null` here means.
+ */
 const isDoc = (b: unknown): b is JsonDoc =>
-    Array.isArray(b) && b.every((n) => !!n && typeof n === 'object' && 'kind' in (n as object));
+    Array.isArray(b) &&
+    b.length > 0 &&
+    b.every((n) => !!n && typeof n === 'object' && 'kind' in (n as object));
 
 /** Whether `path` resolves to a `block` node the lens parsed from a PascalCase (component) tag —
  * see `CanvasNode`'s `data-bd-component` for the canvas-side half of this same distinction. */

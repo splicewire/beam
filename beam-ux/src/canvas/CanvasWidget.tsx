@@ -101,8 +101,14 @@ export function CanvasWidget({
     const sel = mount?.selectedNodeId ?? null;
     const setSel = (path: string | null) => mount?.selectNode(path);
 
+    // Every doc mutation funnels through here, and a NO-OP must not reach the host or the dirty flag.
+    // Measured 2026-09-11 (G2-BEAM-AUTHOR-EMPTY-ENTRY): "+ Heading" on the empty `/about` document
+    // inserted nothing and still flipped the status bar to "Unsaved", so the editor reported pending
+    // work that did not exist and a Save would have written the same document back. The tree ops here
+    // are immutable and return the SAME object when they change nothing, so reference identity is the
+    // exact, cheap test for "nothing happened" — see `insertRelativeTo`'s unresolvable-selection branch.
     const emit = (next: JsonDoc) => {
-        if (readOnly) return;
+        if (readOnly || next === doc) return;
         onChange?.(next);
         mount?.markDirty(true);
     };

@@ -52,24 +52,41 @@ export type EntryArtifact = {
     version?: string | null;
 };
 
+/**
+ * Why there are FOUR states and not a boolean.
+ *
+ * `unauthored` (the entry has no artifact URL at all, because it has no body yet) used to collapse into
+ * `failed`, and `failed`'s default message is operator-facing: *"run `php artisan
+ * splicewire:beam:ux:compile`"*. Measured on beam.test 2026-09-11 (G2-BEAM-AUTHOR-EMPTY-ENTRY): a GUEST
+ * reading the never-authored `/about` was told to run an artisan command — advice they cannot take, on
+ * a host where that command was already current ("already current 13"). The entry was not uncompiled;
+ * it was empty. Two different conditions had one message, and the message was false for the common one.
+ */
+export type EntryArtifactStatus = 'loading' | 'ready' | 'unauthored' | 'failed';
+
 export type UseEntryArtifactResult = {
-    /** The compiled body, or null while loading — or permanently, if `failed`. */
+    /** The compiled body, or null unless `status === 'ready'`. */
     Body: ComponentType<Record<string, unknown>> | null;
-    /** The artifact is missing or unloadable. Never a reason to fall back to compiling in the browser. */
+    /** See {@link EntryArtifactStatus}. */
+    status: EntryArtifactStatus;
+    /**
+     * The artifact EXISTS and could not be loaded. Never a reason to fall back to compiling in the
+     * browser. Narrowed by this defect: "there is no artifact to load" is `unauthored`, not this.
+     */
     failed: boolean;
 };
 
 export function useEntryArtifact(url: string, version?: string | null): UseEntryArtifactResult {
     const [Body, setBody] = useState<ComponentType<Record<string, unknown>> | null>(null);
-    const [failed, setFailed] = useState(false);
+    const [status, setStatus] = useState<EntryArtifactStatus>('loading');
 
     useEffect(() => {
         let cancelled = false;
         setBody(null);
-        setFailed(false);
+        setStatus('loading');
 
         if (!url) {
-            setFailed(true);
+            setStatus('unauthored');
             return;
         }
 
@@ -79,6 +96,7 @@ export function useEntryArtifact(url: string, version?: string | null): UseEntry
 
                 if (!cancelled) {
                     setBody(() => Component);
+                    setStatus('ready');
                 }
             })
             .catch(() => {
@@ -86,7 +104,7 @@ export function useEntryArtifact(url: string, version?: string | null): UseEntry
                 // artifact is a doctor finding (`BeamUxArtifactAudit`) and a visible empty state —
                 // never a silent regression to shipping an MDX compiler to every reader.
                 if (!cancelled) {
-                    setFailed(true);
+                    setStatus('failed');
                 }
             });
 
@@ -95,7 +113,7 @@ export function useEntryArtifact(url: string, version?: string | null): UseEntry
         };
     }, [url, version]);
 
-    return { Body, failed };
+    return { Body, status, failed: status === 'failed' };
 }
 
 export type EntryBodyProps = {
@@ -107,10 +125,19 @@ export type EntryBodyProps = {
      */
     components?: Record<string, ComponentType<never>>;
     /**
-     * Shown when the artifact cannot be loaded. Defaults to the operator-facing line naming the command
-     * that fixes it, because the overwhelmingly common cause on a fresh host is an uncompiled body.
+     * Shown when an artifact that EXISTS cannot be loaded. Defaults to the operator-facing line naming
+     * the command that fixes it, because that is what a broken artifact usually means.
+     *
+     * It is deliberately no longer the answer for an entry that simply has no body — see
+     * {@link EntryBodyProps.empty} and {@link EntryArtifactStatus}.
      */
     fallback?: ReactNode;
+    /**
+     * Shown when the entry has never been authored (no artifact URL). Defaults to a reader-facing line
+     * that states the fact and nothing else: a guest cannot run an artisan command, and telling them to
+     * is both useless and wrong.
+     */
+    empty?: ReactNode;
     /** Shown while the artifact is in flight. Defaults to nothing — the load is usually imperceptible. */
     loading?: ReactNode;
     /**
@@ -123,6 +150,12 @@ export type EntryBodyProps = {
     bodyProps?: Record<string, unknown>;
 };
 
+const DEFAULT_EMPTY = (
+    <p data-beam-entry-unauthored="" style={{ fontSize: '0.875rem', color: 'var(--beam-muted, #64748b)' }}>
+        This page doesn&rsquo;t have any content yet.
+    </p>
+);
+
 const DEFAULT_FALLBACK = (
     <p data-beam-entry-uncompiled="" style={{ fontSize: '0.875rem', color: 'var(--beam-muted, #64748b)' }}>
         This page&rsquo;s content has not been compiled yet. Run{' '}
@@ -133,10 +166,14 @@ const DEFAULT_FALLBACK = (
     </p>
 );
 
-export function EntryBody({ artifact, components, fallback, loading = null, bodyProps }: EntryBodyProps) {
-    const { Body, failed } = useEntryArtifact(artifact.url, artifact.version);
+export function EntryBody({ artifact, components, fallback, empty, loading = null, bodyProps }: EntryBodyProps) {
+    const { Body, status } = useEntryArtifact(artifact.url, artifact.version);
 
-    if (failed) {
+    if (status === 'unauthored') {
+        return <>{empty ?? DEFAULT_EMPTY}</>;
+    }
+
+    if (status === 'failed') {
         return <>{fallback ?? DEFAULT_FALLBACK}</>;
     }
 

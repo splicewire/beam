@@ -15,9 +15,20 @@ import { defaultTreeFor } from './defaults';
 import { NEUTRAL_THEME } from './theme';
 import { bodyClient } from './transport';
 
-/** A persisted body is a JsonDoc only when it's an array of `{kind}` nodes; anything else → fall back. */
+/**
+ * A persisted body is a JsonDoc only when it's a NON-EMPTY array of `{kind}` nodes; anything else —
+ * including `[]` — returns null so the caller falls back to its seed.
+ *
+ * The empty case is the one that was wrong and the one that mattered. `EntryBodyShowOp` returns
+ * `body: []` for an entry that has never been authored, and `[].every(…)` is vacuously true, so `[]`
+ * passed as a document: `VisualEditorMount` skipped `seedFor(slug)` and opened the editor on a doc with
+ * no root — nothing rendered, nothing was selectable, and "+ Heading" appeared to do nothing while
+ * flipping the status to "Unsaved". Measured on beam.test's `/about` 2026-09-11
+ * (G2-BEAM-AUTHOR-EMPTY-ENTRY). An author's FIRST block is exactly the case this seam must serve.
+ */
 export function asDoc(body: unknown): JsonDoc | null {
     return Array.isArray(body) &&
+        body.length > 0 &&
         body.every(
             (n) => !!n && typeof n === 'object' && 'kind' in (n as object),
         )

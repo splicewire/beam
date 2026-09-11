@@ -56,6 +56,7 @@ export {
     type EntryBodyProps,
     type EntryArtifact,
     type UseEntryArtifactResult,
+    type EntryArtifactStatus,
 } from './EntryBody.js';
 export type {
     SiteNavItem,

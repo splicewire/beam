@@ -4,9 +4,11 @@ import type { JsonBlock, JsonDoc } from '../blockdoc/json.js';
 import { attrsSchemaFor } from './attrsSchema.js';
 import { Breadcrumb } from './Breadcrumb.js';
 import { CanvasNode, edgeAt } from './CanvasNode.js';
+import { CanvasWidget } from './CanvasWidget.js';
 import { ContextMenu } from './ContextMenu.js';
 import { CanvasProvider, isEditGated } from './context.js';
 import type { CanvasConfig } from './context.js';
+import { insertRelativeTo } from './insert.js';
 import { PageEditor } from './PageEditor.js';
 import { EDIT_GATE_ATTR, VIEW_GATE_ATTR } from './props.js';
 import { ClassChipsWidget, StyleRowsWidget } from './widgets.js';
@@ -435,6 +437,26 @@ describe('PageEditor — mode fork + transport', () => {
         expect(container.querySelector('[data-frame-region="inspector"]')?.getAttribute('data-node-type')).toBe('div');
     });
 
+    it('takes its FIRST block on an empty document, from the palette', () => {
+        // G2-BEAM-AUTHOR-EMPTY-ENTRY, measured on beam.test's never-authored /about 2026-09-11:
+        // "+ Heading" flipped the status bar to Unsaved and inserted nothing — the doc stayed at 0
+        // nodes with nothing selectable, so the entry could never take its first block through the UI.
+        // Two causes, both fixed: `[]` passed as a persisted document (so the seed never ran), and
+        // `insertRelativeTo` returned the doc unchanged when there was no root to be relative to.
+        const { container } = render(wrap(<PageEditor slug="blank" body={[]} transport={{ saveBody: vi.fn() }} />));
+        fireEvent(window, new CustomEvent('beam-ux:mode', { detail: { mode: 'window' } }));
+
+        const before = container.querySelectorAll('[data-bd-path]').length;
+        const heading = Array.from(container.querySelectorAll('.pe-panel.pe-left .ve-pal-item')).find(
+            (el) => (el.textContent ?? '').includes('Heading'),
+        )!;
+        expect(heading, 'the palette offers a Heading template').toBeTruthy();
+        fireEvent.click(heading);
+
+        expect(container.querySelectorAll('[data-bd-path]').length).toBeGreaterThan(before);
+        expect(container.querySelector('h2')).not.toBeNull();
+    });
+
     it('insert-palette items are draggable (drag-to-position, alongside click-to-insert)', () => {
         const { container } = render(wrap(<PageEditor slug="home" body={doc()} transport={{ saveBody: vi.fn() }} />));
         fireEvent(window, new CustomEvent('beam-ux:mode', { detail: { mode: 'window' } }));
@@ -532,5 +554,91 @@ describe('ContextMenu', () => {
         fireEvent.click(screen.getByText('Heading'));
         expect(childSelect).toHaveBeenCalled();
         expect(onClose).toHaveBeenCalled();
+    });
+});
+
+
+// ── CanvasWidget: the dirty flag tells the truth ──────────────────────────────────────────────────────
+describe('CanvasWidget — markDirty', () => {
+    // The mount is the shell's channel; a stub is the only way to observe what the widget publishes
+    // into it (PageEditor renders the pill from `@schemastud/frame`, not from this package).
+    const stubMount = () => {
+        let insert: ((candidate: unknown) => void) | null = null;
+        const mount = {
+            selectedNodeId: null,
+            selectNode: vi.fn(),
+            markDirty: vi.fn(),
+            markSaving: vi.fn(),
+            flush: vi.fn(),
+            registerNodeAccess: vi.fn(() => () => {}),
+            publishCandidates: vi.fn(),
+            publishConformance: vi.fn(),
+            registerInsertHandler: vi.fn((fn: (c: unknown) => void) => {
+                insert = fn;
+                return () => {};
+            }),
+        };
+
+        return { mount, insert: (label: string) => insert?.({ nodeType: label }) };
+    };
+
+    it('marks dirty when a palette insert actually changes the document', () => {
+        const { mount, insert } = stubMount();
+        const onChange = vi.fn();
+        render(wrap(<CanvasWidget value={doc()} onChange={onChange} editShellMount={mount as never} />));
+
+        act(() => insert('Heading'));
+
+        expect(onChange).toHaveBeenCalledOnce();
+        expect(mount.markDirty).toHaveBeenCalledWith(true);
+    });
+
+    it('does NOT mark dirty when the insert changes nothing', () => {
+        // G2-BEAM-AUTHOR-EMPTY-ENTRY's second half, measured on beam.test 2026-09-11: "+ Heading"
+        // inserted nothing on the empty /about document and the status bar still said "Unsaved" — the
+        // editor reported pending work that did not exist. A no-op must reach neither the host nor the
+        // flag. The tree ops return the SAME object when they change nothing, so identity is the test.
+        const { mount, insert } = stubMount();
+        const onChange = vi.fn();
+        const leafOnly: JsonDoc = [{ kind: 'text', value: 'bare' }];
+        render(wrap(<CanvasWidget value={leafOnly} onChange={onChange} editShellMount={mount as never} />));
+
+        act(() => insert('Heading'));
+
+        expect(onChange).not.toHaveBeenCalled();
+        expect(mount.markDirty).not.toHaveBeenCalled();
+    });
+});
+
+// ── insertRelativeTo: where a new block lands ─────────────────────────────────────────────────────────
+describe('insertRelativeTo', () => {
+    const make = (): JsonBlock => block({ name: 'h2', children: [{ kind: 'text', value: 'New heading' }] });
+
+    it('appends at the ROOT ARRAY when the document is empty — the first-block case', () => {
+        // Before this, `getAt([], '0')` was null and the function returned the doc unchanged, so a
+        // never-authored entry could not take its first block (G2-BEAM-AUTHOR-EMPTY-ENTRY).
+        const next = insertRelativeTo([], null, make);
+
+        expect(next).toHaveLength(1);
+        expect((next[0] as JsonBlock).name).toBe('h2');
+    });
+
+    it('ignores a selection the empty document cannot resolve rather than refusing the insert', () => {
+        expect(insertRelativeTo([], '3.7', make)).toHaveLength(1);
+    });
+
+    it('still returns the SAME doc when a non-empty document has no insertable target', () => {
+        // The guard's other case is unchanged, and reference identity is what CanvasWidget's no-op
+        // dirty guard reads.
+        const leafOnly: JsonDoc = [{ kind: 'text', value: 'bare' }];
+
+        expect(insertRelativeTo(leafOnly, null, make)).toBe(leafOnly);
+    });
+
+    it('appends inside the root container when the root is selected', () => {
+        const tree: JsonDoc = [block({ name: 'div', children: [] })];
+        const next = insertRelativeTo(tree, '0', make);
+
+        expect((next[0] as JsonBlock).children).toHaveLength(1);
     });
 });
