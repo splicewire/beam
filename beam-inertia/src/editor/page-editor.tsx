@@ -7,8 +7,10 @@ import type { JsonDoc } from '@splicewire/beam-ux/blockdoc/json';
 import {
     CanvasProvider,
     PageEditor as CanvasPageEditor,
+    useEditMode,
 } from '@splicewire/beam-ux/canvas';
 import type { CanvasTheme } from '@splicewire/beam-ux/canvas';
+import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { canvasConfig } from './canvas-config';
 import { defaultTreeFor } from './defaults';
@@ -60,11 +62,52 @@ export function PageEditor({
     const page = usePage<{ theme?: { canvas?: Partial<CanvasTheme> } }>();
     const theme = page.props.theme?.canvas ?? NEUTRAL_THEME;
 
+    // An AUTHOR edits the entry's persisted body, not the frontend seed.
+    //
+    // Without this, a hand-written page's editor always opened on `defaultTreeFor(slug)` — the page
+    // passes `body={null}` because the server shares an entry REF, not a body — so the second authoring
+    // session on `/` would start from the packaged default and overwrite the first one's work on Save.
+    // That was invisible while read mode showed the same default tree; it stops being invisible the
+    // moment the reader renders the real artifact (G2-BEAM-AUTHOR-ENTRY).
+    //
+    // Loaded only while EDITING and only once per entry: `EntryBodyShowOp` declares `ability:
+    // 'ux.author'`, so firing it for a reader is a guaranteed 401 on every public page view, and
+    // re-loading mid-session would overwrite the author's in-progress edits.
+    const editing = useEditMode();
+    const [loaded, setLoaded] = useState<{ body: unknown } | null>(null);
+
+    useEffect(() => {
+        if (!editing || entryId === null || loaded !== null) {
+            return;
+        }
+
+        let live = true;
+        bodyClient
+            .loadBody(entryId)
+            .then((env) => live && setLoaded({ body: (env as { body?: unknown })?.body ?? null }))
+            // A failed load must not silently seed the default over a body that exists: report it and
+            // leave the editor on whatever the page handed it.
+            .catch(() => {
+                if (live) {
+                    toast.error('Could not load this page\u2019s saved content');
+                    setLoaded({ body: null });
+                }
+            });
+
+        return () => {
+            live = false;
+        };
+    }, [editing, entryId, loaded]);
+
     return (
         <CanvasProvider config={canvasConfig}>
             <CanvasPageEditor
                 slug={slug}
-                body={asDoc(body)}
+                body={asDoc(loaded?.body) ?? asDoc(body)}
+                // Bumped exactly once, when the persisted body arrives — `CanvasPageEditor` seeds its doc
+                // on mount and re-seeds only on an explicit token change (never on an incidental prop
+                // identity change, which would discard in-progress edits).
+                reloadToken={loaded === null ? undefined : 'loaded'}
                 transport={{
                     // CanvasPageEditor's transport seam is keyed by its `slug` prop, which stays a slug
                     // — it is the editor's display label and `defaultTreeFor()` key. The BODY transport
