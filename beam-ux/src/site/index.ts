@@ -53,6 +53,7 @@ export {
 export {
     EntryBody,
     useEntryArtifact,
+    componentFromArtifact,
     type EntryBodyProps,
     type EntryArtifact,
     type UseEntryArtifactResult,

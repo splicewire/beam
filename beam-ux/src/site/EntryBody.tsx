@@ -76,6 +76,24 @@ export type UseEntryArtifactResult = {
     failed: boolean;
 };
 
+/**
+ * The component an artifact module yields, or **null when it yields none**.
+ *
+ * An artifact that loads and exports nothing is a failed artifact, not a component. Measured on
+ * beam.test 2026-09-11: a canvas-authored page compiled to a module with an empty `module.exports`;
+ * handing React the resulting `undefined` killed the entire page at render (minified error #130) — a
+ * white screen where the honest answer was the same empty state a missing artifact already gets. A
+ * reader must never lose the page over a build product they cannot fix.
+ *
+ * Extracted so this is testable without a real dynamic import: jsdom cannot `import()` an arbitrary
+ * URL, so a test that goes through {@link useEntryArtifact} passes whether or not this check exists.
+ */
+export function componentFromArtifact(mod: ArtifactModule): ComponentType<Record<string, unknown>> | null {
+    const Component = mod?.default?.(RUNTIME)?.default;
+
+    return typeof Component === 'function' ? Component : null;
+}
+
 export function useEntryArtifact(url: string, version?: string | null): UseEntryArtifactResult {
     const [Body, setBody] = useState<ComponentType<Record<string, unknown>> | null>(null);
     const [status, setStatus] = useState<EntryArtifactStatus>('loading');
@@ -92,12 +110,20 @@ export function useEntryArtifact(url: string, version?: string | null): UseEntry
 
         import(/* @vite-ignore */ url)
             .then((mod: ArtifactModule) => {
-                const { default: Component } = mod.default(RUNTIME);
+                const Component = componentFromArtifact(mod);
 
-                if (!cancelled) {
-                    setBody(() => Component);
-                    setStatus('ready');
+                if (cancelled) {
+                    return;
                 }
+
+                if (Component === null) {
+                    setStatus('failed');
+
+                    return;
+                }
+
+                setBody(() => Component);
+                setStatus('ready');
             })
             .catch(() => {
                 // No client-side compile fallback, deliberately (ADR-0209 §7). A missing or broken
