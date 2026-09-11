@@ -122,6 +122,40 @@ function Titled({ title, children }: { title: string; children: ReactNode }) {
     );
 }
 
+/**
+ * The URL segment that stands in for "no record yet" on the id-addressed record route.
+ *
+ * Frame's list Toolbar calls `onOpen({ id: null })` for its "New …" button — the write leg has always
+ * understood a null id (`transport.save` POSTs to the collection instead of PUTting a record). The
+ * NAVIGATION leg did not: it stringified the id, so "New" went to `/{resource}/null`, the record screen
+ * asked the API for the record literally named `null`, and the server answered 500
+ * (`invalid input syntax for type uuid: "null"`). Measured on beam.test 2026-09-11, G2 defect 5.
+ *
+ * A segment rather than a separate route, because the record route already exists, already mounts the
+ * shell that renders a create form when its id is null, and `:id` matches this just as well. Ids in this
+ * estate are uuids, so `new` cannot collide with one; {@link idFromParam} is the single place that
+ * translation is undone, so the sentinel can never reach the transport.
+ */
+export const CREATE_SEGMENT = 'new';
+
+/**
+ * The href for opening a record from a list — or for creating one, when the list says `id: null`.
+ *
+ * `String(null)` is `'null'`, which is a valid-looking URL segment and an invalid record id: exactly the
+ * kind of failure that survives a type-check and reaches a 500. Null is a real answer here and gets its
+ * own segment.
+ */
+export function recordHref(recordBase: string, id: unknown): string {
+    return id === null || id === undefined || id === ''
+        ? `${recordBase}/${CREATE_SEGMENT}`
+        : `${recordBase}/${String(id)}`;
+}
+
+/** The record id a route param names — `null` for {@link CREATE_SEGMENT}, which is not an id. */
+export function idFromParam(param: string | undefined): string | null {
+    return param === undefined || param === CREATE_SEGMENT ? null : param;
+}
+
 export function FrameRoutes({ manifest }: { manifest: FrameManifest }) {
     const routes = useMemo<RealmRouteObject[]>(() => {
         const declined = new Map<string, string>();
@@ -130,7 +164,7 @@ export function FrameRoutes({ manifest }: { manifest: FrameManifest }) {
             // A hook, called during the dispatched component's render — exactly how the dispatcher
             // documents this seam, and the only reason it can stay react-router-free.
             // eslint-disable-next-line react-hooks/rules-of-hooks
-            resolveId: () => useParams().id ?? null,
+            resolveId: () => idFromParam(useParams().id),
             manifestFor: (resource) => manifest.contexts[resource],
             formFor: (resource) => formFromManifest(manifest, resource),
             onDecline: (entry, reason) => {
@@ -171,9 +205,7 @@ export function FrameRoutes({ manifest }: { manifest: FrameManifest }) {
                     onOpen={
                         recordBase
                             ? (record) =>
-                                  router.visit(
-                                      `${recordBase}/${String(record.id)}`,
-                                  )
+                                  router.visit(recordHref(recordBase, record.id))
                             : undefined
                     }
                     slots={{ Filters: () => null }}
