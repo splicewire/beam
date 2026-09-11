@@ -1,21 +1,26 @@
 import {
-    Badge,
-    Button,
-    Separator,
-    Sheet,
-    SheetContent,
-    SheetDescription,
-    SheetHeader,
-    SheetTitle,
-} from '@schemastud/ui';
-import { Lock } from 'lucide-react';
-import { useConnectionStatus, useExtensionListing, useInstallExtension } from './hooks';
-import { useExtensionsServices } from './provider';
-import { RequiresSplicewireBadge, TrustBadge } from './TrustBadge';
+  Badge,
+  Button,
+  Separator,
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "@schemastud/ui";
+import { Lock } from "lucide-react";
+import { useEffect } from "react";
+import {
+  useConnectionStatus,
+  useExtensionListing,
+  useInstallExtension,
+} from "./hooks";
+import { useExtensionsServices } from "./provider";
+import { RequiresSplicewireBadge, TrustBadge } from "./TrustBadge";
 
 const KIND_LABELS: Record<string, string> = {
-    scaffold_pack: 'Scaffold Pack',
-    beam_extension: 'Beam Extension',
+  scaffold_pack: "Scaffold Pack",
+  beam_extension: "Beam Extension",
 };
 
 /**
@@ -28,117 +33,154 @@ const KIND_LABELS: Record<string, string> = {
  * site-wide fact fetched once.
  */
 export function ExtensionDetailSheet({
-    listingId,
-    onOpenChange,
+  listingId,
+  onOpenChange,
 }: {
-    listingId: number | null;
-    onOpenChange: (open: boolean) => void;
+  listingId: number | null;
+  onOpenChange: (open: boolean) => void;
 }) {
-    const { data } = useExtensionListing(listingId);
-    const { data: connectionStatus } = useConnectionStatus();
-    const install = useInstallExtension();
-    const { renderConnectCta, connectUrl } = useExtensionsServices();
+  const { data, isError } = useExtensionListing(listingId);
+  const { data: connectionStatus } = useConnectionStatus();
+  const install = useInstallExtension();
+  const { renderConnectCta, connectUrl } = useExtensionsServices();
+  const { reset: resetInstall } = install;
+  useEffect(() => {
+    resetInstall();
+  }, [listingId, resetInstall]);
 
-    const gatedAndDisconnected = Boolean(data?.requiresSplicewire) && connectionStatus?.connected === false;
+  const awaitingReview =
+    install.data &&
+    "status" in install.data &&
+    install.data.status === "awaiting_ops_review";
+  const gatedAndDisconnected =
+    Boolean(data?.requiresSplicewire) && connectionStatus?.connected === false;
 
-    return (
-        <Sheet open={listingId !== null} onOpenChange={onOpenChange}>
-            <SheetContent side="right" className="w-full max-w-md overflow-y-auto">
-                {data && (
-                    <>
-                        <SheetHeader>
-                            <div className="flex items-start justify-between gap-2">
-                                <SheetTitle>{data.name}</SheetTitle>
-                                {data.requiresSplicewire && <RequiresSplicewireBadge />}
-                            </div>
-                            <SheetDescription>{data.description}</SheetDescription>
-                        </SheetHeader>
+  return (
+    <Sheet open={listingId !== null} onOpenChange={onOpenChange}>
+      <SheetContent side="right" className="w-full max-w-md overflow-y-auto">
+        {isError && <p role="alert">Could not load this extension.</p>}
+        {data && (
+          <>
+            <SheetHeader>
+              <div className="flex items-start justify-between gap-2">
+                <SheetTitle>{data.name}</SheetTitle>
+                {data.requiresSplicewire && <RequiresSplicewireBadge />}
+              </div>
+              <SheetDescription>{data.description}</SheetDescription>
+            </SheetHeader>
 
-                        <div className="flex flex-col gap-4 px-4 pb-4">
-                            <div className="flex flex-wrap items-center gap-1.5">
-                                <TrustBadge tier={data.trustTier} />
-                                <Badge variant="outline" className="font-normal text-muted-foreground">
-                                    {KIND_LABELS[data.kind] ?? data.kind}
-                                </Badge>
-                                {data.isPlatformTier && (
-                                    <Badge variant="outline" className="font-normal text-muted-foreground">
-                                        Platform Tier
-                                    </Badge>
-                                )}
-                            </div>
-
-                            {gatedAndDisconnected && (
-                                <div className="flex flex-col gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 p-3">
-                                    <p className="flex items-center gap-2 text-sm font-medium">
-                                        <Lock className="size-4 shrink-0" aria-hidden="true" />
-                                        This listing requires a connected Splicewire account.
-                                    </p>
-                                    {connectionStatus?.pairingGuidance && (
-                                        // The guided pairing step (splicewire-marketplace-build ticket 10):
-                                        // `PairingGuidanceData` rode the wire with no consumer until this
-                                        // block — the copy is the DTO's, never authored here.
-                                        <div className="flex flex-col gap-1 text-sm">
-                                            <p className="text-muted-foreground">
-                                                Pair this site from its own terminal, then approve in your browser:
-                                            </p>
-                                            <code className="rounded bg-muted px-2 py-1 font-mono text-xs">
-                                                {connectionStatus.pairingGuidance.connectCommand}
-                                            </code>
-                                            <p className="text-xs text-muted-foreground">
-                                                {connectionStatus.pairingGuidance.manualFallbackHint}{' '}
-                                                (sets <code className="font-mono">{connectionStatus.pairingGuidance.manualTokenEnvVar}</code>).
-                                            </p>
-                                        </div>
-                                    )}
-                                    {renderConnectCta ? (
-                                        renderConnectCta({ connectUrl })
-                                    ) : (
-                                        <Button
-                                            variant="outline"
-                                            size="sm"
-                                            disabled={!connectUrl}
-                                            onClick={() => {
-                                                if (connectUrl && typeof window !== 'undefined') {
-                                                    window.location.href = connectUrl;
-                                                }
-                                            }}
-                                        >
-                                            Connect Splicewire to install
-                                        </Button>
-                                    )}
-                                </div>
-                            )}
-
-                            <div className="flex items-center justify-between">
-                                <span className="text-sm text-muted-foreground">by {data.sellerName}</span>
-                                <span className="font-medium">{data.isFree ? 'Free' : data.priceLabel}</span>
-                            </div>
-
-                            <Button
-                                disabled={data.isInstalled || install.isPending || gatedAndDisconnected}
-                                onClick={() => install.mutate(data.id)}
-                            >
-                                {data.isInstalled ? 'Installed' : 'Install'}
-                            </Button>
-
-                            {data.changelog.length > 0 && (
-                                <>
-                                    <Separator />
-                                    <div className="flex flex-col gap-3">
-                                        <h4 className="text-sm font-semibold">Changelog</h4>
-                                        {data.changelog.map((entry) => (
-                                            <div key={entry.version} className="text-sm">
-                                                <span className="font-medium">v{entry.version}</span>{' '}
-                                                <span className="text-muted-foreground">{entry.notes}</span>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </>
-                            )}
-                        </div>
-                    </>
+            <div className="flex flex-col gap-4 px-4 pb-4">
+              <div className="flex flex-wrap items-center gap-1.5">
+                <TrustBadge tier={data.trustTier} />
+                <Badge
+                  variant="outline"
+                  className="font-normal text-muted-foreground"
+                >
+                  {KIND_LABELS[data.kind] ?? data.kind}
+                </Badge>
+                {data.isPlatformTier && (
+                  <Badge
+                    variant="outline"
+                    className="font-normal text-muted-foreground"
+                  >
+                    Platform Tier
+                  </Badge>
                 )}
-            </SheetContent>
-        </Sheet>
-    );
+              </div>
+
+              {gatedAndDisconnected && (
+                <div className="flex flex-col gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 p-3">
+                  <p className="flex items-center gap-2 text-sm font-medium">
+                    <Lock className="size-4 shrink-0" aria-hidden="true" />
+                    This listing requires a connected Splicewire account.
+                  </p>
+                  {connectionStatus?.pairingGuidance && (
+                    // The guided pairing step (splicewire-marketplace-build ticket 10):
+                    // `PairingGuidanceData` rode the wire with no consumer until this
+                    // block — the copy is the DTO's, never authored here.
+                    <div className="flex flex-col gap-1 text-sm">
+                      <p className="text-muted-foreground">
+                        Pair this site from its own terminal, then approve in
+                        your browser:
+                      </p>
+                      <code className="rounded bg-muted px-2 py-1 font-mono text-xs">
+                        {connectionStatus.pairingGuidance.connectCommand}
+                      </code>
+                      <p className="text-xs text-muted-foreground">
+                        {connectionStatus.pairingGuidance.manualFallbackHint}{" "}
+                        (sets{" "}
+                        <code className="font-mono">
+                          {connectionStatus.pairingGuidance.manualTokenEnvVar}
+                        </code>
+                        ).
+                      </p>
+                    </div>
+                  )}
+                  {renderConnectCta ? (
+                    renderConnectCta({ connectUrl })
+                  ) : (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={!connectUrl}
+                      onClick={() => {
+                        if (connectUrl && typeof window !== "undefined") {
+                          window.location.href = connectUrl;
+                        }
+                      }}
+                    >
+                      Connect Splicewire to install
+                    </Button>
+                  )}
+                </div>
+              )}
+
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">
+                  by {data.sellerName}
+                </span>
+                <span className="font-medium">
+                  {data.isFree ? "Free" : data.priceLabel}
+                </span>
+              </div>
+
+              <Button
+                disabled={
+                  data.isInstalled ||
+                  install.isPending ||
+                  gatedAndDisconnected ||
+                  Boolean(awaitingReview) ||
+                  (data.requiresSplicewire && !connectionStatus)
+                }
+                onClick={() => install.mutate(data.id)}
+              >
+                {awaitingReview
+                  ? "Awaiting review"
+                  : data.isInstalled
+                    ? "Installed"
+                    : "Install"}
+              </Button>
+
+              {data.changelog.length > 0 && (
+                <>
+                  <Separator />
+                  <div className="flex flex-col gap-3">
+                    <h4 className="text-sm font-semibold">Changelog</h4>
+                    {data.changelog.map((entry) => (
+                      <div key={entry.version} className="text-sm">
+                        <span className="font-medium">v{entry.version}</span>{" "}
+                        <span className="text-muted-foreground">
+                          {entry.notes}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
+          </>
+        )}
+      </SheetContent>
+    </Sheet>
+  );
 }

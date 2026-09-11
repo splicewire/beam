@@ -10,14 +10,20 @@
 // there is no server-side summary/detail narrowing any more). `connected`/`pairingGuidance` moved
 // off every row onto their own `ConnectionStatusData`, fetched once (see `useConnectionStatus`).
 import type {
-    ConnectionStatusData,
-    ExtensionChangelogEntryData,
-    InstalledExtensionData,
-    MarketExtensionData,
-    PairingGuidanceData,
-} from '@splicewire/_resources/types/market';
+  ConnectionStatusData,
+  ExtensionChangelogEntryData,
+  InstalledExtensionData,
+  MarketExtensionData,
+  PairingGuidanceData,
+} from "@splicewire/beam-resources/types/market";
 
-export type { ConnectionStatusData, ExtensionChangelogEntryData, InstalledExtensionData, MarketExtensionData, PairingGuidanceData };
+export type {
+  ConnectionStatusData,
+  ExtensionChangelogEntryData,
+  InstalledExtensionData,
+  MarketExtensionData,
+  PairingGuidanceData,
+};
 
 // ── Display-hint unions ─────────────────────────────────────────────────────
 // The DTOs ship these fields as bare `string`; the package narrows them to the vocabulary each
@@ -25,10 +31,10 @@ export type { ConnectionStatusData, ExtensionChangelogEntryData, InstalledExtens
 // projected `_resources` slice.
 
 /** The install-mechanism facet the catalog is filterable by. */
-export type ListingKind = 'scaffold_pack' | 'beam_extension' | string;
+export type ListingKind = "scaffold_pack" | "beam_extension" | string;
 
 /** The Official/Verified/Standard trust badge (ticket 07). */
-export type TrustTier = 'Official' | 'Verified' | 'Standard' | string;
+export type TrustTier = "Official" | "Verified" | "Standard" | string;
 
 // ── Read-models (DTO + narrowed display-hint unions) ─────────────────────────
 
@@ -38,9 +44,12 @@ export type TrustTier = 'Official' | 'Verified' | 'Standard' | string;
  * another, kept as distinct names only so call sites documenting "this is a summary" vs "this is a
  * detail" don't need to rename.
  */
-export type MarketExtension = Omit<MarketExtensionData, 'kind' | 'trustTier'> & {
-    kind: ListingKind;
-    trustTier: TrustTier;
+export type MarketExtension = Omit<
+  MarketExtensionData,
+  "kind" | "trustTier"
+> & {
+  kind: ListingKind;
+  trustTier: TrustTier;
 };
 
 export type ExtensionListingSummary = MarketExtension;
@@ -50,12 +59,15 @@ export type ExtensionChangelogEntry = ExtensionChangelogEntryData;
 
 /** The catalog list — a thin wrapper (not just a bare array) so a future page/cursor fact has somewhere to land. */
 export type ExtensionsCatalog = {
-    listings: MarketExtension[];
+  listings: MarketExtension[];
 };
 
-export type InstalledExtension = Omit<InstalledExtensionData, 'kind' | 'trustTier'> & {
-    kind: ListingKind;
-    trustTier: TrustTier;
+export type InstalledExtension = Omit<
+  InstalledExtensionData,
+  "kind" | "trustTier"
+> & {
+  kind: ListingKind;
+  trustTier: TrustTier;
 };
 
 /**
@@ -71,6 +83,8 @@ export type ConnectionStatus = ConnectionStatusData;
  * implementation maps these onto the data-filters query-param convention
  * (`?filter[category]=…&filter[kind]=…`), not the retired bespoke `?category=&kind=` pair. */
 export interface CatalogFilters {
-    category?: string;
-    kind?: ListingKind;
+  category?: string;
+  kind?: ListingKind;
 }
+
+export type { AwaitingOpsReviewData } from "@splicewire/beam-resources/types/market";

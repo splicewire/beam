@@ -1,6 +1,6 @@
 {
   "name": "@splicewire/beam-resources",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Generated public Beam wire types, projected from PHP declarations by resources:beam.",
   "license": "MIT",
   "type": "module",

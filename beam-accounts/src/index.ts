@@ -6,59 +6,81 @@
 // the react-query data logic, the DTO typing off the generated projection, the presentation —
 // travels inside the package.
 
-export { TokensProvider, useTokensServices, useNotify } from './provider';
-export { TokensPage } from './tokens-page';
+export { TokensProvider, useTokensServices, useNotify } from "./provider";
+export { TokensPage } from "./tokens-page";
 export {
-    useTokens,
-    usePermissions,
-    useCreateToken,
-    useArchiveToken,
-    usePermanentlyDeleteToken,
-    useRenewToken,
-    useRotateToken,
-    useRevokeOtherSessions,
-} from './hooks';
+  useTokens,
+  usePermissions,
+  useCreateToken,
+  useArchiveToken,
+  usePermanentlyDeleteToken,
+  useRenewToken,
+  useRotateToken,
+  useRevokeOtherSessions,
+} from "./hooks";
 export type {
-    ApiTokenData,
-    CreatedTokenData,
-    TokenProvenance,
-    TokensClient,
-    TokensServices,
-    NotifyEvent,
-    CreateTokenInput,
-    LifecycleInput,
-    RevokeOthersResult,
-} from './types';
+  ApiTokenData,
+  CreatedTokenData,
+  TokenProvenance,
+  TokensClient,
+  TokensServices,
+  NotifyEvent,
+  CreateTokenInput,
+  LifecycleInput,
+  RevokeOthersResult,
+} from "./types";
 
 // ── Auth surfaces (login-branding-passkey) ──────────────────────────────────
-export { AuthProvider, useAuthServices } from './auth-provider';
+export { AuthProvider, useAuthServices } from "./auth-provider";
 export {
-    useAuth,
-    useLogin,
-    useRequestPasswordReset,
-    useResetPassword,
-    usePasskey,
-    usePasskeys,
-    useRegisterPasskey,
-    useRenamePasskey,
-    useDeletePasskey,
-} from './auth-hooks';
-export { LoginPanel, type LoginPanelProps } from './login-panel';
-export { ForgotPasswordForm, type ForgotPasswordFormProps } from './forgot-password-form';
-export { ResetPasswordForm, type ResetPasswordFormProps } from './reset-password-form';
-export { PasskeyButton, type PasskeyButtonProps } from './passkey-button';
-export { PasskeysSection } from './passkeys-section';
-export { PasswordInput, AuthError } from './auth-fields';
-export { isWebAuthnSupported, runAssertionCeremony, runAttestationCeremony } from './webauthn';
+  useAuth,
+  useLogin,
+  useRequestPasswordReset,
+  useResetPassword,
+  usePasskey,
+  usePasskeys,
+  useRegisterPasskey,
+  useRenamePasskey,
+  useDeletePasskey,
+} from "./auth-hooks";
+export { LoginPanel, type LoginPanelProps } from "./login-panel";
+export {
+  ForgotPasswordForm,
+  type ForgotPasswordFormProps,
+} from "./forgot-password-form";
+export {
+  ResetPasswordForm,
+  type ResetPasswordFormProps,
+} from "./reset-password-form";
+export { PasskeyButton, type PasskeyButtonProps } from "./passkey-button";
+export { PasskeysSection } from "./passkeys-section";
+export { PasswordInput, AuthError } from "./auth-fields";
+export {
+  isWebAuthnSupported,
+  runAssertionCeremony,
+  runAttestationCeremony,
+} from "./webauthn";
 export type {
-    AuthClient,
-    PasskeyClient,
-    AuthServices,
-    LoginInput,
-    ForgotPasswordInput,
-    ResetPasswordInput,
-    PasskeyChallenge,
-    PasskeyAssertionInput,
-    PasskeyAttestationInput,
-    PasskeyData,
-} from './types';
+  AuthClient,
+  PasskeyClient,
+  AuthServices,
+  LoginInput,
+  ForgotPasswordInput,
+  ResetPasswordInput,
+  PasskeyChallenge,
+  PasskeyAssertionInput,
+  PasskeyAttestationInput,
+  PasskeyData,
+} from "./types";
+
+export { TokensRoster } from "./tokens-roster";
+export { TeamPage } from "./team-page";
+export { TeamProvider } from "./team-provider";
+export type { TeamClient, TeamServices } from "./team-types";
+export {
+  mergeRoster,
+  ownerCount,
+  type RosterRow,
+  type RosterKind,
+  type RosterStatus,
+} from "./team-roster";

@@ -1,5 +1,12 @@
-import { createContext, useContext, type ReactNode } from 'react';
-import type { CatalogFilters, ConnectionStatus, ExtensionListingDetail, ExtensionsCatalog, InstalledExtension } from './types';
+import { createContext, useContext, type ReactNode } from "react";
+import type {
+  AwaitingOpsReviewData,
+  CatalogFilters,
+  ConnectionStatus,
+  ExtensionListingDetail,
+  ExtensionsCatalog,
+  InstalledExtension,
+} from "./types";
 
 // ── The injected transport adapter — the ONE thing a host must implement (kind 1) ──
 //
@@ -21,18 +28,18 @@ import type { CatalogFilters, ConnectionStatus, ExtensionListingDetail, Extensio
 // (`{ data, limit, offset, total }`) — the adapter is also the pagination-unwrap seam for now (this
 // package renders one page, no pager UI yet); only `data` need be resolved.
 export interface ExtensionsClient {
-    getCatalog(filters?: CatalogFilters): Promise<ExtensionsCatalog>;
-    getListing(id: number): Promise<ExtensionListingDetail>;
-    getConnectionStatus(): Promise<ConnectionStatus>;
-    getInstalled(): Promise<InstalledExtension[]>;
-    install(id: number): Promise<InstalledExtension>;
-    update(installId: number): Promise<InstalledExtension>;
-    remove(installId: number): Promise<void>;
+  getCatalog(filters?: CatalogFilters): Promise<ExtensionsCatalog>;
+  getListing(id: number): Promise<ExtensionListingDetail>;
+  getConnectionStatus(): Promise<ConnectionStatus>;
+  getInstalled(): Promise<InstalledExtension[]>;
+  install(id: number): Promise<InstalledExtension | AwaitingOpsReviewData>;
+  update(installId: string): Promise<InstalledExtension>;
+  remove(installId: string): Promise<void | AwaitingOpsReviewData>;
 }
 
 export interface NotifyEvent {
-    type: 'success' | 'error';
-    message: string;
+  type: "success" | "error";
+  message: string;
 }
 
 /**
@@ -42,54 +49,58 @@ export interface NotifyEvent {
  * it is not forced in; the vocabulary is used only where a genuine host-coupling need shows up.
  */
 export interface ExtensionsServices {
-    /** kind 1 — the transport adapter (required). */
-    client: ExtensionsClient;
-    /** kind 2 — feedback sink; a dependency-free console default applies when omitted. */
-    notify?: (event: NotifyEvent) => void;
-    /** kind 2 — mutation-error hook; the host may toast/log/observe. The rejection still propagates. */
-    onError?: (err: unknown) => void;
-    /**
-     * kind 3 — the host-chrome render slot for the `requires_splicewire` "Connect Splicewire to
-     * install" CTA — a rendered host affordance the package can't own (the actual connect flow is
-     * host-specific: a beam site's own account settings page, an OAuth-device-flow command, etc.).
-     * A dependency-free default renders a plain link to `connectUrl` when supplied, or a static
-     * hint when the host injects neither a renderer nor a URL.
-     */
-    renderConnectCta?: (props: { connectUrl?: string }) => ReactNode;
-    /** The URL the default `renderConnectCta` links to, when the host supplies no custom renderer. */
-    connectUrl?: string;
+  /** kind 1 — the transport adapter (required). */
+  client: ExtensionsClient;
+  /** kind 2 — feedback sink; a dependency-free console default applies when omitted. */
+  notify?: (event: NotifyEvent) => void;
+  /** kind 2 — mutation-error hook; the host may toast/log/observe. The rejection still propagates. */
+  onError?: (err: unknown) => void;
+  /**
+   * kind 3 — the host-chrome render slot for the `requires_splicewire` "Connect Splicewire to
+   * install" CTA — a rendered host affordance the package can't own (the actual connect flow is
+   * host-specific: a beam site's own account settings page, an OAuth-device-flow command, etc.).
+   * A dependency-free default renders a plain link to `connectUrl` when supplied, or a static
+   * hint when the host injects neither a renderer nor a URL.
+   */
+  renderConnectCta?: (props: { connectUrl?: string }) => ReactNode;
+  /** The URL the default `renderConnectCta` links to, when the host supplies no custom renderer. */
+  connectUrl?: string;
 }
 
-const ExtensionsServicesContext = createContext<ExtensionsServices | null>(null);
+const ExtensionsServicesContext = createContext<ExtensionsServices | null>(
+  null,
+);
 
 function consoleNotify(event: NotifyEvent): void {
-    if (event.type === 'error') console.error(`[beam-market] ${event.message}`);
-    else console.info(`[beam-market] ${event.message}`);
+  if (event.type === "error") console.error(`[beam-market] ${event.message}`);
+  else console.info(`[beam-market] ${event.message}`);
 }
 
 export function ExtensionsProvider({
-    services,
-    children,
+  services,
+  children,
 }: {
-    services: ExtensionsServices;
-    children: ReactNode;
+  services: ExtensionsServices;
+  children: ReactNode;
 }) {
-    return (
-        <ExtensionsServicesContext.Provider value={services}>
-            {children}
-        </ExtensionsServicesContext.Provider>
-    );
+  return (
+    <ExtensionsServicesContext.Provider value={services}>
+      {children}
+    </ExtensionsServicesContext.Provider>
+  );
 }
 
 export function useExtensionsServices(): ExtensionsServices {
-    const services = useContext(ExtensionsServicesContext);
-    if (!services) {
-        throw new Error('beam-market surfaces must be rendered inside an <ExtensionsProvider>.');
-    }
-    return services;
+  const services = useContext(ExtensionsServicesContext);
+  if (!services) {
+    throw new Error(
+      "beam-market surfaces must be rendered inside an <ExtensionsProvider>.",
+    );
+  }
+  return services;
 }
 
 /** The injected `notify`, or the console default when the host supplied none. */
 export function useExtensionsNotify(): (event: NotifyEvent) => void {
-    return useExtensionsServices().notify ?? consoleNotify;
+  return useExtensionsServices().notify ?? consoleNotify;
 }

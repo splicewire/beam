@@ -21,7 +21,8 @@
     "beam-calendar",
     "beam-versioning",
     "beam-ingest",
-    "beam-intake"
+    "beam-intake",
+    "beam-inertia"
   ],
   "scripts": {
     "build": "npm run build --workspaces --if-present",
