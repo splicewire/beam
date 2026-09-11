@@ -8,7 +8,8 @@ import type {
     HostEntryBody,
     RibbonRender,
 } from '@splicewire/beam-mainframe';
-import { lazy, Suspense } from 'react';
+import { canvasAcceptsFormat, canvasRefusalFor } from '@splicewire/beam-ux/canvas';
+import { lazy, Suspense, type ReactNode } from 'react';
 import { bodyClient } from '../../editor/transport';
 
 /**
@@ -102,6 +103,38 @@ async function loadEntryBody(ref: EntryRef): Promise<HostEntryBody | null> {
     }
 }
 
+/**
+ * The FORMAT gate in front of both authoring renderers: the visual editor mounts only for an entry
+ * whose codec can carry a block document; every other format gets a stated refusal, never the canvas.
+ *
+ * Why a refusal panel and not a missing control: the author DID ask to edit this page, and the dock's
+ * affordance is generic. Rendering nothing would read as "the editor is broken"; rendering the canvas
+ * is what destroyed the mdx `/docs` entry on 2026-09-11. A sentence naming the format is the only one
+ * of the three that is true.
+ *
+ * Why not mount `@splicewire/beam-mdx`'s `MdxDocumentEditor` here instead — measured, not assumed: it
+ * edits a raw MDX STRING, while `beam-ux-entry.save-body` accepts a structured `body` and there is no
+ * source-accepting write on that resource. Wiring it needs a client-side frontmatter split (the exact
+ * mirroring `MdxBody` exists to prevent) or a new declared input on the op. That is a transport change,
+ * not a small one, and it is not this defect's fix — the defect is that the wrong editor opened at all.
+ */
+export function CanvasOrRefusal({ entry, children }: { entry: EntryRef; children: ReactNode }) {
+    if (canvasAcceptsFormat(entry.format)) {
+        return <>{children}</>;
+    }
+
+    return (
+        <div
+            data-beam-ux-editor-refused={entry.format ?? 'unknown'}
+            role="note"
+            className="m-4 rounded-md border border-amber-300 bg-amber-50 p-6 text-sm text-amber-900"
+        >
+            <p className="font-medium">This page cannot be edited here.</p>
+            <p className="mt-2">{canvasRefusalFor(entry.format)}</p>
+        </div>
+    );
+}
+
 export default createMainframeHost({
     // Every starter route page renders its OWN body (its layout chrome + scoped CSS). So read mode must
     // NOT swap the page for the bare entry body. Author (window) mode still opens the in-place editor.
@@ -110,7 +143,7 @@ export default createMainframeHost({
         const page = usePage<{
             auth: { canAuthorUx?: boolean };
             slug?: string;
-            entry?: { id?: string; slug?: string };
+            entry?: { id?: string; slug?: string; format?: string };
         }>();
         currentComponent = page.component;
 
@@ -141,31 +174,41 @@ export default createMainframeHost({
                 typeof entry?.id === 'string' && entry.id !== ''
                     ? entry.id
                     : null,
+            // The BODY LANGUAGE half. `PublicEntryController` has always put it in `props.entry.format`
+            // and `App\\Support\\PageEntryRef` now does too; the host simply never read it, which is
+            // how the JsonDoc canvas came to be offered on the mdx `/docs` entry and blanked it on Save
+            // (G2-BEAM-AUTHOR-ENTRY, 2026-09-11). Null means the page did not say.
+            entryFormat:
+                typeof entry?.format === 'string' && entry.format !== ''
+                    ? entry.format
+                    : null,
         };
     },
     loadEntryBody,
     ribbon,
     renderEditor: ({ ref }: { ref: EntryRef }) =>
-        SELF_MANAGED_COMPONENTS.has(currentComponent) ||
-        ref.id === null ? null : (
-            <Suspense
-                fallback={
-                    <div className="p-6 text-sm text-slate-500">
-                        Loading editor…
-                    </div>
-                }
-            >
-                <VisualEditorMount entryRef={ref} />
-            </Suspense>
+        SELF_MANAGED_COMPONENTS.has(currentComponent) || ref.id === null ? null : (
+            <CanvasOrRefusal entry={ref}>
+                <Suspense
+                    fallback={
+                        <div className="p-6 text-sm text-slate-500">
+                            Loading editor…
+                        </div>
+                    }
+                >
+                    <VisualEditorMount entryRef={ref} />
+                </Suspense>
+            </CanvasOrRefusal>
         ),
     // readMode: 'page' means the read fork renders the real page, never this — so it's a no-op. Kept only
     // to satisfy the factory's renderer contract.
     renderRead: () => null,
     renderInspector: ({ ref }: { ref: EntryRef }) =>
-        SELF_MANAGED_COMPONENTS.has(currentComponent) ||
-        ref.id === null ? null : (
-            <Suspense fallback={null}>
-                <VisualEditorMount entryRef={ref} />
-            </Suspense>
+        SELF_MANAGED_COMPONENTS.has(currentComponent) || ref.id === null ? null : (
+            <CanvasOrRefusal entry={ref}>
+                <Suspense fallback={null}>
+                    <VisualEditorMount entryRef={ref} />
+                </Suspense>
+            </CanvasOrRefusal>
         ),
 });

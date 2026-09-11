@@ -90,3 +90,6 @@ export {
 
 // Insert placement
 export { insertRelativeTo } from './insert.js';
+
+// Which entry formats this canvas may open (the client mirror of the server's `AcceptsJsonDoc`).
+export { CANVAS_FORMATS, canvasAcceptsFormat, canvasRefusalFor } from './format.js';

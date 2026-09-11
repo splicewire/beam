@@ -174,7 +174,7 @@ describe('createMainframeHost — ?beam_entry override + useBeamUxEntry', () => 
         render(<Host>{PAGE}</Host>);
 
         await waitFor(() => expect(seen).toHaveLength(1));
-        expect(seen[0]).toEqual({ id: '01a001bc-0000-7000-8000-000000000001', slug: null });
+        expect(seen[0]).toEqual({ id: '01a001bc-0000-7000-8000-000000000001', slug: null, format: null });
     });
 
     it('a wrapped page reads the loaded entry chrome via useBeamUxEntry', async () => {
@@ -223,7 +223,82 @@ describe('createMainframeHost — the entry REF (ticket 37)', () => {
         render(<Host>{PAGE}</Host>);
 
         await waitFor(() => expect(seen).toHaveLength(1));
-        expect(seen[0]).toEqual({ id: '01a001bc-0000-7000-8000-0000000000aa', slug: 'the-real-entry' });
+        expect(seen[0]).toEqual({
+            id: '01a001bc-0000-7000-8000-0000000000aa',
+            slug: 'the-real-entry',
+            format: null,
+        });
+    });
+
+    it('carries the entry FORMAT from the props branch, so a renderer can refuse the wrong editor', async () => {
+        // G2-BEAM-AUTHOR-ENTRY (2026-09-11, severe): the dock opened the JsonDoc canvas on the mdx
+        // `/docs` entry and one Save replaced the mdx source with a canvas tree — 0-byte mirror, empty
+        // artifact, blank public page. The server refuses that write now; this field is what lets a host
+        // not attempt it. A ref answers WHICH ROW; the format answers WHICH EDITOR MAY OPEN IT.
+        const seen: EntryRef[] = [];
+        const Host = createMainframeHost(
+            stubConfig({
+                usePageContext: () => ({
+                    component: 'site/entry',
+                    canAuthor: true,
+                    slug: 'docs',
+                    entryId: '01a001bc-0000-7000-8000-0000000000bb',
+                    entryFormat: 'mdx',
+                }),
+                loadEntryBody: async (ref) => {
+                    seen.push(ref);
+                    return null;
+                },
+            }),
+        );
+        render(<Host>{PAGE}</Host>);
+
+        await waitFor(() => expect(seen).toHaveLength(1));
+        expect(seen[0].format).toBe('mdx');
+    });
+
+    it('a branch that cannot know the format reports null — unknown, never a guessed default', async () => {
+        // `?beam_entry=<slug>` and the component-name guess carry no format. Defaulting them to the
+        // canvas's own would re-open the hole for exactly the refs nobody verified.
+        const seen: EntryRef[] = [];
+        const Host = createMainframeHost(
+            stubConfig({
+                componentSlugFallback: true,
+                usePageContext: () => ({ component: 'listen', canAuthor: true }),
+                loadEntryBody: async (ref) => {
+                    seen.push(ref);
+                    return null;
+                },
+            }),
+        );
+        render(<Host>{PAGE}</Host>);
+
+        await waitFor(() => expect(seen).toHaveLength(1));
+        expect(seen[0]).toEqual({ id: null, slug: 'listen', format: null });
+    });
+
+    it('broadcasts the format on beam-ux:mode so an external dock can label or disable its Edit control', async () => {
+        const modes: Array<Record<string, unknown>> = [];
+        const listener = (e: Event) => modes.push((e as CustomEvent).detail as Record<string, unknown>);
+        window.addEventListener('beam-ux:mode', listener);
+
+        const Host = createMainframeHost(
+            stubConfig({
+                usePageContext: () => ({
+                    component: 'site/entry',
+                    canAuthor: true,
+                    slug: 'docs',
+                    entryId: '01a001bc-0000-7000-8000-0000000000bb',
+                    entryFormat: 'mdx',
+                }),
+                loadEntryBody: async () => ({ slug: 'docs', schema: null, body: {} }),
+            }),
+        );
+        render(<Host>{PAGE}</Host>);
+
+        await waitFor(() => expect(modes.length).toBeGreaterThan(0));
+        window.removeEventListener('beam-ux:mode', listener);
+        expect(modes[modes.length - 1].format).toBe('mdx');
     });
 
     it('an unmapped component with the guess OFF resolves no ref and never touches the transport', async () => {
@@ -268,7 +343,7 @@ describe('createMainframeHost — the entry REF (ticket 37)', () => {
         render(<Host>{PAGE}</Host>);
 
         await waitFor(() => expect(seen).toHaveLength(1));
-        expect(seen[0]).toEqual({ id: null, slug: 'site-entry' });
+        expect(seen[0]).toEqual({ id: null, slug: 'site-entry', format: null });
     });
 });
 
@@ -315,7 +390,7 @@ describe('createMainframeHost — the reader fetch gate (beam-docs-satellite tic
         render(<Host>{PAGE}</Host>);
 
         await waitFor(() => expect(seen).toHaveLength(1));
-        expect(seen[0]).toEqual({ id: '01a001bc-0000-7000-8000-0000000000aa', slug: null });
+        expect(seen[0]).toEqual({ id: '01a001bc-0000-7000-8000-0000000000aa', slug: null, format: null });
     });
 
     it('a host with a genuinely public read transport opts back in, in one line', async () => {

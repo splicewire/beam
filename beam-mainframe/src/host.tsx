@@ -104,6 +104,23 @@ export interface EntryRef {
     id: string | null;
     /** The domain slug, when known. Null only on an id-only ref (`?beam_entry_id=`). */
     slug: string | null;
+    /**
+     * The entry's **body language** (`'tsx' | 'mdx' | 'css' | …`, beam-ux's `UxFormat`) when the host
+     * could supply one, else null.
+     *
+     * A ref answers *which row*; this answers *which editor may open it*, and a renderer that does not
+     * ask produced the worst defect measured in this journey: the operator dock offered the JsonDoc
+     * canvas on the mdx `/docs` entry, and one Save replaced the mdx source with a canvas tree — the
+     * disk mirror wrote 0 bytes and the public page went blank for every visitor (G2-BEAM-AUTHOR-ENTRY,
+     * 2026-09-11). `EntryBodySaveOp` now refuses that write with a 422; this field is what lets a host
+     * not attempt it, and show the author an honest reason instead of a wrong editor.
+     *
+     * **Null is "unknown", not "any"** — the two branches that cannot carry a format (`?beam_entry=` and
+     * the component-name guess) produce null, and a renderer treats it as unknown rather than assuming
+     * its own. The format is authoritative on the SERVER (`Codec\AcceptsJsonDoc`); this is the hint that
+     * keeps the client from making a request the server will refuse.
+     */
+    format: string | null;
 }
 
 /** Display label for a ref — the slug when there is one, else the id. Never blank for a real ref. */
@@ -180,6 +197,13 @@ export interface HostPageContext {
      * level down, on {@link MainframeHostConfig.loadEntryBody}, whose parameter type changed.
      */
     entryId?: string | null;
+    /**
+     * The entry's **format** off the page's props (`props.entry.format`, emitted by
+     * `PublicEntryController` and by a host's own entry-ref support class). Optional and additive for
+     * the same reason `entryId` is: a host that does not supply it keeps working, and its renderers see
+     * `ref.format === null` (unknown) rather than a wrong answer. See {@link EntryRef.format}.
+     */
+    entryFormat?: string | null;
 }
 
 export interface MainframeHostConfig {
@@ -393,10 +417,10 @@ function componentEntryRef(component: string, map: Record<string, string>, guess
     const mapped = nonEmpty(map[component]);
 
     if (mapped !== null) {
-        return { id: null, slug: mapped };
+        return { id: null, slug: mapped, format: null };
     }
 
-    return guess ? { id: null, slug: component.replace(/\//g, '-') } : null;
+    return guess ? { id: null, slug: component.replace(/\//g, '-'), format: null } : null;
 }
 
 /**
@@ -420,12 +444,12 @@ function overrideEntryRef(): EntryRef | null {
     const id = nonEmpty(params.get('beam_entry_id'));
 
     if (id !== null) {
-        return { id, slug: null };
+        return { id, slug: null, format: null };
     }
 
     const slug = nonEmpty(params.get('beam_entry'));
 
-    return slug === null ? null : { id: null, slug };
+    return slug === null ? null : { id: null, slug, format: null };
 }
 
 // --- The read fork -----------------------------------------------------------------------------
@@ -485,13 +509,14 @@ export function createMainframeHost(config: MainframeHostConfig) {
     const ribbon = config.ribbon ?? defaultRibbon;
 
     return function MainframeHost({ children }: { children: ReactNode }) {
-        const { component, canAuthor, slug, entryId } = config.usePageContext();
+        const { component, canAuthor, slug, entryId, entryFormat } = config.usePageContext();
 
         // A `beam-page` component carries its entry key as explicit props (its component NAME is
         // `beam-page` — or `site/entry` for a rendered entry — for EVERY such page, so the name→slug map
         // cannot distinguish them). Prefer the props, and prefer the id within them.
         const propSlug = nonEmpty(slug);
         const propId = nonEmpty(entryId);
+        const propFormat = nonEmpty(entryFormat);
 
         // The three branches, in order. Only the first can be an id-only ref; only the props branch can
         // carry BOTH — and it is the branch every migrated page lands on, so the common case addresses
@@ -499,9 +524,11 @@ export function createMainframeHost(config: MainframeHostConfig) {
         const entryRef = useMemo<EntryRef | null>(
             () =>
                 overrideEntryRef() ??
-                (propId !== null || propSlug !== null ? { id: propId, slug: propSlug } : null) ??
+                (propId !== null || propSlug !== null
+                    ? { id: propId, slug: propSlug, format: propFormat }
+                    : null) ??
                 componentEntryRef(component, componentToEntry, componentSlugFallback),
-            [component, propSlug, propId],
+            [component, propSlug, propId, propFormat],
         );
         const [entry, setEntry] = useState<HostEntryBody | null>(null);
         const [mode, setMode] = useState<'domain' | 'window'>('domain');
@@ -509,7 +536,10 @@ export function createMainframeHost(config: MainframeHostConfig) {
         // `entryRef === null` is a real, common answer — a page bound to no entry — and it must NOT
         // reach the transport. Probing anyway is what made every rendered entry ask for a `site-entry`
         // row that has never existed.
-        const refKey = entryRef === null ? null : `${entryRef.id ?? ''}\u0000${entryRef.slug ?? ''}`;
+        const refKey =
+            entryRef === null
+                ? null
+                : `${entryRef.id ?? ''}\u0000${entryRef.slug ?? ''}\u0000${entryRef.format ?? ''}`;
 
         // "Not an author" is the OTHER answer that must not reach the transport, and it is the far more
         // common one: it is every anonymous view of every public page. See
@@ -566,6 +596,10 @@ export function createMainframeHost(config: MainframeHostConfig) {
                         editable: canAuthor && entry !== null,
                         slug: entryRef?.slug ?? null,
                         entryId: entryRef?.id ?? entry?.id ?? null,
+                        // The entry's body language, so a dock can label (or disable) its Edit
+                        // affordance for a format its editor cannot open. Additive beside the two
+                        // above, for the same untyped-CustomEvent reason.
+                        format: entryRef?.format ?? null,
                     },
                 }),
             );
