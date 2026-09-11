@@ -1,5 +1,5 @@
 import { act, fireEvent, render, screen } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { JsonBlock, JsonDoc } from '../blockdoc/json.js';
 import { attrsSchemaFor } from './attrsSchema.js';
 import { Breadcrumb } from './Breadcrumb.js';
@@ -9,7 +9,7 @@ import { ContextMenu } from './ContextMenu.js';
 import { CanvasProvider, isEditGated } from './context.js';
 import type { CanvasConfig } from './context.js';
 import { insertRelativeTo } from './insert.js';
-import { PageEditor } from './PageEditor.js';
+import { PageEditor, __resetEditMode, useEditMode } from './PageEditor.js';
 import { EDIT_GATE_ATTR, VIEW_GATE_ATTR } from './props.js';
 import { ClassChipsWidget, StyleRowsWidget } from './widgets.js';
 
@@ -728,5 +728,64 @@ describe('insertRelativeTo', () => {
         const next = insertRelativeTo(tree, '0', make);
 
         expect((next[0] as JsonBlock).children).toHaveLength(1);
+    });
+});
+
+// ── useEditMode: the mode is STATE, and the broadcast is how it changes ────────────────────────────────
+describe('useEditMode', () => {
+    function Probe() {
+        return <span data-testid="mode">{useEditMode() ? 'window' : 'domain'}</span>;
+    }
+
+    afterEach(() => act(() => __resetEditMode()));
+
+    it('reports window mode to a component that mounts AFTER the broadcast', () => {
+        // Measured on beam.test 2026-09-11. `beam-ux:mode` is one-shot, and that was harmless only
+        // while every consumer outlived every broadcast. `site/home` now FORKS on the mode — the
+        // compiled artifact for a reader, the editor for an author — so entering window mode is exactly
+        // what mounts the editor, and the editor subscribed one tick too late and reported read mode
+        // forever: the dock said "Edit content", the page swapped, and the read tree rendered.
+        act(() => {
+            fireEvent(window, new CustomEvent('beam-ux:mode', { detail: { mode: 'window' } }));
+        });
+
+        render(<Probe />);
+
+        expect(screen.getByTestId('mode').textContent).toBe('window');
+    });
+
+    it('still tracks changes for a component mounted before the broadcast', () => {
+        render(<Probe />);
+        expect(screen.getByTestId('mode').textContent).toBe('domain');
+
+        act(() => {
+            fireEvent(window, new CustomEvent('beam-ux:mode', { detail: { mode: 'window' } }));
+        });
+        expect(screen.getByTestId('mode').textContent).toBe('window');
+
+        act(() => {
+            fireEvent(window, new CustomEvent('beam-ux:mode', { detail: { mode: 'domain' } }));
+        });
+        expect(screen.getByTestId('mode').textContent).toBe('domain');
+    });
+
+    it('keeps every consumer in agreement — there is one authoring mode per document', () => {
+        const { rerender } = render(
+            <>
+                <Probe />
+            </>,
+        );
+        act(() => {
+            fireEvent(window, new CustomEvent('beam-ux:mode', { detail: { mode: 'window' } }));
+        });
+
+        rerender(
+            <>
+                <Probe />
+                <Probe />
+            </>,
+        );
+
+        expect(screen.getAllByTestId('mode').map((n) => n.textContent)).toEqual(['window', 'window']);
     });
 });
