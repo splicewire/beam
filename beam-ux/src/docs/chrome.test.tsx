@@ -11,7 +11,7 @@ vi.mock('@inertiajs/react', () => ({
 // An entry-backed chrome (ADR-0213 §7) is a compiled artifact the page IMPORTS by URL. jsdom cannot
 // `import()` a route, so the loader is stubbed at the one seam the page reaches it through: a known
 // address resolves to a body that frames its children, an unknown one fails exactly as the real
-// loader does. `EntryBody`'s own internal call is untouched — the page body still reports uncompiled.
+// loader does. `EntryBody`'s own internal call is untouched — the page body still reports its own state.
 vi.mock('../site/EntryBody.js', async (importOriginal) => {
     const original = await importOriginal<typeof import('../site/EntryBody.js')>();
     const shells: Record<string, string> = {
@@ -27,9 +27,12 @@ vi.mock('../site/EntryBody.js', async (importOriginal) => {
                       Body: ({ children }: { children?: unknown }) => (
                           <div data-entry-chrome={shells[url]}>{children as never}</div>
                       ),
+                      status: 'ready' as const,
                       failed: false,
                   }
-                : { Body: null, failed: true },
+                : // An unknown address fails exactly as the real loader does — `failed`, not
+                  // `unauthored`: the chrome entry HAS an artifact URL, it just cannot be imported here.
+                  { Body: null, status: 'failed' as const, failed: true },
     };
 });
 import { RealmNav } from '../nav/RealmNav.js';
@@ -70,6 +73,11 @@ const entry = {
     template: null as string | null,
 };
 
+// No artifact URL: this page has never been authored, so `<EntryBody>` renders its EMPTY state and
+// `[data-beam-entry-unauthored]` is the probe for "the body slot rendered here". These cases are about
+// chrome COMPOSITION — which shell nests which template nests the body — not about the body's message.
+// (Before G2-BEAM-AUTHOR-EMPTY-ENTRY the probe was `[data-beam-entry-uncompiled]`, because a missing
+// URL and a broken artifact shared one state and one operator-facing message; they no longer do.)
 const artifact = { url: '', version: null };
 
 describe('the chrome registry', () => {
@@ -169,7 +177,7 @@ describe('the packaged entry page', () => {
             />,
         );
 
-        expect(container.querySelector('[data-host-shell] [data-host-tpl] [data-beam-entry-uncompiled]')).not.toBeNull();
+        expect(container.querySelector('[data-host-shell] [data-host-tpl] [data-beam-entry-unauthored]')).not.toBeNull();
         expect(container.querySelector('.beam-tpl-prose')).toBeNull();
     });
 
@@ -184,7 +192,7 @@ describe('the packaged entry page', () => {
             />,
         );
 
-        expect(container.querySelector('[data-beam-prose] [data-beam-entry-uncompiled]')).not.toBeNull();
+        expect(container.querySelector('[data-beam-prose] [data-beam-entry-unauthored]')).not.toBeNull();
     });
 
     it('nests the body in another ENTRY when the declared layout is that entry\'s slug (§7)', () => {
@@ -203,7 +211,7 @@ describe('the packaged entry page', () => {
         const shell = container.querySelector('[data-entry-chrome="site-shell"]');
         expect(shell).not.toBeNull();
         // The page body renders INSIDE the entry-backed layout, still through the packaged loader.
-        expect(shell?.querySelector('[data-beam-entry-uncompiled]')).not.toBeNull();
+        expect(shell?.querySelector('[data-beam-entry-unauthored]')).not.toBeNull();
     });
 
     it('nests the body in an entry-backed TEMPLATE the same way, in place of the prose default', () => {
@@ -216,7 +224,7 @@ describe('the packaged entry page', () => {
             />,
         );
 
-        expect(container.querySelector('[data-entry-chrome="site-tpl"] [data-beam-entry-uncompiled]')).not.toBeNull();
+        expect(container.querySelector('[data-entry-chrome="site-tpl"] [data-beam-entry-unauthored]')).not.toBeNull();
         expect(container.querySelector('.beam-tpl-prose')).toBeNull();
     });
 
@@ -247,16 +255,20 @@ describe('the packaged entry page', () => {
         );
 
         expect(container.querySelector('[data-entry-chrome]')).toBeNull();
-        expect(container.querySelector('[data-beam-entry-uncompiled]')).not.toBeNull();
+        expect(container.querySelector('[data-beam-entry-unauthored]')).not.toBeNull();
     });
 
-    it('renders the uncompiled empty state through the packaged loader, not a host re-derivation', () => {
+    it('renders the packaged empty state through the packaged loader, not a host re-derivation', () => {
         // Three of the five host copies re-derived the artifact loader and two still carried the
         // version that predates <EntryBody>. The packaged page uses the one implementation, so the
-        // operator-facing empty state is the same on every host.
+        // empty state is the same on every host — and since G2-BEAM-AUTHOR-EMPTY-ENTRY there are two
+        // of them: this fixture carries no artifact URL (never authored), which is reader-facing and
+        // says nothing about artisan; the compile advice is reserved for an artifact that exists and
+        // will not load.
         render(<SiteEntry entry={entry} artifact={artifact} nav={null} />);
 
-        expect(screen.getByText(/has not been compiled yet/)).toBeTruthy();
+        expect(screen.getByText(/doesn’t have any content yet/)).toBeTruthy();
+        expect(document.body.textContent).not.toContain('artisan');
     });
 
     it('lets the host wrap the page in its own providers', () => {

@@ -610,6 +610,94 @@ describe('CanvasWidget — markDirty', () => {
     });
 });
 
+// ── CanvasWidget: the registered handlers vs. the inline text commit ──────────────────────────────────
+describe('CanvasWidget — the stale-snapshot race (G2-BEAM-AUTHOR-FIRST-EDIT-LOST)', () => {
+    // Measured three times on beam.test 2026-09-11: the FIRST inline edit after opening the editor
+    // reverts to "New heading" on click-away; the second and third commit. Diagnosed as a race between
+    // the blur commit and the shell Inspector's write-back — `registerNodeAccess` closed over THAT
+    // render's `doc`, and frame's RJSF/ajv `onChange` fires on first mount when normalization differs,
+    // which is both the first selection and the slowest one. Reproduced deterministically here by
+    // capturing the handlers registered at render N and invoking them after a commit at render N+1.
+    const captureMount = () => {
+        const captured: { setNodeAttrs?: (id: string, attrs: unknown) => void } = {};
+        const mount = {
+            selectedNodeId: '0.0',
+            selectNode: vi.fn(),
+            markDirty: vi.fn(),
+            markSaving: vi.fn(),
+            flush: vi.fn(),
+            publishCandidates: vi.fn(),
+            publishConformance: vi.fn(),
+            registerInsertHandler: vi.fn(() => () => {}),
+            registerNodeAccess: vi.fn((access: { setNodeAttrs: (id: string, attrs: unknown) => void }) => {
+                // FIRST registration only — the stale one, exactly what the Inspector holds across the
+                // commit that happens between mount and its first onChange.
+                captured.setNodeAttrs ??= access.setNodeAttrs;
+                return () => {};
+            }),
+        };
+
+        return { mount, captured };
+    };
+
+    const typed = 'Via click-away';
+
+    it('a stale Inspector write-back does not revert the inline text committed after it registered', () => {
+        const { mount, captured } = captureMount();
+        let current: JsonDoc = doc();
+        const onChange = vi.fn((next: JsonDoc) => {
+            current = next;
+        });
+
+        const { rerender } = render(
+            wrap(<CanvasWidget value={current} onChange={onChange} editShellMount={mount as never} />),
+        );
+
+        // 1. The author types into the contenteditable and clicks away: the blur commits the text.
+        const h1 = document.querySelector('h1') as HTMLElement;
+        fireEvent.doubleClick(h1);
+        rerender(wrap(<CanvasWidget value={current} onChange={onChange} editShellMount={mount as never} />));
+        const editable = document.querySelector('h1') as HTMLElement;
+        editable.textContent = typed;
+        fireEvent.blur(editable);
+        expect(onChange).toHaveBeenCalled();
+        rerender(wrap(<CanvasWidget value={current} onChange={onChange} editShellMount={mount as never} />));
+
+        // 2. NOW the Inspector's first-mount onChange lands, through the handler it captured earlier.
+        act(() => captured.setNodeAttrs?.('0.0', { className: 'lead' }));
+        rerender(wrap(<CanvasWidget value={current} onChange={onChange} editShellMount={mount as never} />));
+
+        // The text edit must survive: the attrs write applies to the CURRENT document, not the snapshot
+        // the handler closed over.
+        expect(document.querySelector('h1')?.textContent).toBe(typed);
+    });
+
+    it('an attrs write-back that changes nothing never emits — the first-mount normalization echo', () => {
+        // The trigger itself. RJSF fires onChange on first mount whenever ajv's normalization differs
+        // from the seed, carrying the SAME attrs back. That echo is not an edit and must not reach the
+        // document, the host, or the dirty flag.
+        const { mount, captured } = captureMount();
+        const onChange = vi.fn();
+        render(wrap(<CanvasWidget value={doc()} onChange={onChange} editShellMount={mount as never} />));
+
+        act(() => captured.setNodeAttrs?.('0.0', {}));
+
+        expect(onChange).not.toHaveBeenCalled();
+        expect(mount.markDirty).not.toHaveBeenCalled();
+    });
+
+    it('a REAL attrs change still emits', () => {
+        const { mount, captured } = captureMount();
+        const onChange = vi.fn();
+        render(wrap(<CanvasWidget value={doc()} onChange={onChange} editShellMount={mount as never} />));
+
+        act(() => captured.setNodeAttrs?.('0.0', { className: 'lead' }));
+
+        expect(onChange).toHaveBeenCalledOnce();
+        expect(mount.markDirty).toHaveBeenCalledWith(true);
+    });
+});
+
 // ── insertRelativeTo: where a new block lands ─────────────────────────────────────────────────────────
 describe('insertRelativeTo', () => {
     const make = (): JsonBlock => block({ name: 'h2', children: [{ kind: 'text', value: 'New heading' }] });

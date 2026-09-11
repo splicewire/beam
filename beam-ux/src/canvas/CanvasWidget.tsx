@@ -5,7 +5,7 @@
 // through the shared `editShellMount` instead of local component state, so the shell's Inspector/
 // palette/save-pill drive (and are driven by) the same channel a plain `<VisualEditor>` used to own
 // entirely by itself.
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { EditShellMountValue } from '@schemastud/frame';
 import {
     duplicateAt,
@@ -23,7 +23,7 @@ import {
     updateAt,
 } from '../blockdoc/json.js';
 import type { ContextMenuAction } from './ContextMenu.js';
-import type { JsonDoc, JsonNode } from '../blockdoc/json.js';
+import type { JsonBlock, JsonDoc, JsonNode } from '../blockdoc/json.js';
 import { attrsSchemaFor } from './attrsSchema.js';
 import { Breadcrumb } from './Breadcrumb.js';
 import { CanvasNode } from './CanvasNode.js';
@@ -66,6 +66,23 @@ function siblingPath(path: string, delta: number): string | null {
     const idx = indexOf(path) + delta;
     if (idx < 0) return null;
     return parent === '' ? String(idx) : `${parent}.${idx}`;
+}
+
+/**
+ * Do two prop lists say the same thing? Order-insensitive on NAME, because the shell's schema form
+ * rebuilds the list from an object and JS object key order is not the authored order — comparing the
+ * serialized lists directly would report a difference that does not exist.
+ */
+function samePropList(a: JsonBlock['props'], b: JsonBlock['props']): boolean {
+    if (a.length !== b.length) return false;
+
+    const key = (props: JsonBlock['props']) =>
+        props
+            .map((p) => JSON.stringify([p.name, p.kind, p.value]))
+            .sort()
+            .join('\u0000');
+
+    return key(a) === key(b);
 }
 
 function countNodes(nodes: JsonNode[]): number {
@@ -113,6 +130,34 @@ export function CanvasWidget({
         mount?.markDirty(true);
     };
 
+    // The LATEST document, for the handlers that outlive the render they were registered in.
+    //
+    // `registerNodeAccess` and `registerInsertHandler` hand the shell a closure and the shell keeps it
+    // in a ref; a closure over this render's `doc` is therefore a SNAPSHOT that the shell may invoke
+    // arbitrarily later, overwriting everything committed in between. Measured on beam.test 2026-09-11
+    // (G2-BEAM-AUTHOR-FIRST-EDIT-LOST): the first inline text edit of a session reverted on click-away,
+    // the second and third did not — because the first selection is also frame's Inspector's first
+    // RJSF/ajv mount, which fires `onChange` once when normalization differs from the seed and is the
+    // slowest one. That echo arrived AFTER the blur commit carrying a pre-commit snapshot, and the
+    // typed text was gone. The handlers below read `docRef.current` instead.
+    //
+    // A ref and not a dependency: re-registering on every doc change (which the effects do anyway) does
+    // not help — the shell can invoke a handler between the commit and the re-registration, which is
+    // exactly the window that was measured.
+    //
+    // The other candidate fix — committing the contenteditable's text into the document on `input`
+    // rather than on blur — is deliberately NOT taken. It re-renders the node being typed into on every
+    // keystroke (caret risk), and it does not address the cause: the text was never the thing that got
+    // lost, the COMMIT did, because a later writer rebuilt the tree from a document that predated it.
+    const docRef = useRef(doc);
+    docRef.current = doc;
+
+    const emitFromRef = (next: JsonDoc) => {
+        if (readOnly || next === docRef.current) return;
+        onChange?.(next);
+        mount?.markDirty(true);
+    };
+
     // Node access: the shell's generic Inspector calls getNode(selectedNodeId)/setNodeAttrs(...) —
     // re-registered whenever the doc or the entitlement-key pool changes so these closures are never
     // stale (a registration overwrites the mount's single NodeAccess slot; see EditShellMount).
@@ -120,17 +165,25 @@ export function CanvasWidget({
         if (!mount) return;
         return mount.registerNodeAccess({
             getNode: (nodeId) => {
-                const node = getAt(doc, nodeId);
+                const node = getAt(docRef.current, nodeId);
                 if (!node || !isJsonBlock(node)) return null;
                 const { schema, attrs } = attrsSchemaFor(node, config.entitlementKeys ?? []);
                 return { type: node.name ?? 'fragment', attrsSchema: schema, attrs };
             },
             setNodeAttrs: (nodeId, attrs) => {
-                emit(
-                    updateAt(doc, nodeId, (el) =>
-                        isJsonBlock(el) ? setAttrs(el, attrs as Record<string, string>) : el,
-                    ),
-                );
+                const node = getAt(docRef.current, nodeId);
+                if (!node || !isJsonBlock(node)) return;
+
+                const next = setAttrs(node, attrs as Record<string, string>);
+
+                // The no-op guard, and the reason the race above had anything to race WITH. RJSF fires
+                // `onChange` on first mount whenever ajv's normalization differs from the seed, handing
+                // back the attrs it was given. That echo is not an edit: it must not reach the document,
+                // the host, or the dirty flag. `updateAt` always rebuilds, so identity cannot answer
+                // this — the props themselves are what changed or did not.
+                if (samePropList(node.props, next.props)) return;
+
+                emitFromRef(updateAt(docRef.current, nodeId, () => next));
             },
         });
         // `mount` is deliberately OMITTED — useEditShellMountController() returns a NEW object identity
@@ -154,7 +207,7 @@ export function CanvasWidget({
         return mount.registerInsertHandler((candidate) => {
             const nodeType = (candidate as { nodeType?: string } | null)?.nodeType;
             const template = templates.find((t) => t.label === nodeType);
-            if (template) emit(insertRelativeTo(doc, sel, template.make));
+            if (template) emitFromRef(insertRelativeTo(docRef.current, sel, template.make));
         });
         // `mount` omitted — see the previous effect's comment (this is one of the two that WOULD
         // infinite-loop if it depended on `mount`: publishCandidates changes mount's identity, which
