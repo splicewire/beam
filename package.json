@@ -22,7 +22,8 @@
     "beam-versioning",
     "beam-ingest",
     "beam-intake",
-    "beam-inertia"
+    "beam-inertia",
+    "beam-embed"
   ],
   "scripts": {
     "build": "npm run build --workspaces --if-present",

@@ -1,0 +1,48 @@
+{
+  "name": "@splicewire/beam-embed",
+  "version": "0.1.0",
+  "description": "Portable embed privacy and retention controls.",
+  "license": "MIT",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "src",
+    "README.md"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "build": "tsup",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@splicewire/beam-resources": "^0.1.1"
+  },
+  "peerDependencies": {
+    "@schemastud/ui": "*",
+    "@tanstack/react-query": ">=5",
+    "lucide-react": ">=0.400.0",
+    "react": ">=18",
+    "react-dom": ">=18"
+  },
+  "devDependencies": {
+    "@schemastud/ui": "file:../../schemastud/ui",
+    "@splicewire/beam-resources": "file:../beam-resources",
+    "@testing-library/react": "^16.1.0",
+    "@testing-library/dom": "^10.4.1",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "jsdom": "^25.0.1",
+    "tsup": "^8.5.1",
+    "typescript": "^5.7.2",
+    "vitest": "^4.1.10"
+  }
+}
