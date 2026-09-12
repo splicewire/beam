@@ -45,10 +45,51 @@ import { applyStoryViewport } from './viewport';
 type StructuralAxes = { canvas?: boolean; density?: boolean };
 type Scheme = 'light' | 'dark';
 
+/**
+ * Freeze CSS animations/transitions and clear focus + text selection right before a VR
+ * screenshot — deterministic capture (component-seams ticket 44) for stories that would
+ * otherwise land on a random animation frame or selection-paint state:
+ *
+ *   - `register--processing` and `privacyretentionpage--loading` both render a spinner
+ *     (Tailwind `animate-spin`/pulse); which frame `page.screenshot()` lands on is a race
+ *     against the animation clock, so runs 2/3 diffed against run 1's baseline pixel-for-pixel.
+ *   - `tokenspage--reveal-once-secret` opens a dialog whose readonly secret `<input>`
+ *     `select()`s itself on focus; the browser's selection highlight paints inconsistently
+ *     depending on exact focus/paint timing, same symptom.
+ *
+ * A runner-level fix (applied to every story before every snapshot) rather than a per-story
+ * `parameters`/prop hack: any future animated or self-selecting story gets the same
+ * determinism for free, and no story has to know VR mode exists.
+ */
+async function freezeForSnapshot(page: Parameters<NonNullable<TestRunnerConfig['postVisit']>>[0]) {
+    await page.evaluate(() => {
+        const styleId = '__vr-freeze-motion__';
+        if (!document.getElementById(styleId)) {
+            const style = document.createElement('style');
+            style.id = styleId;
+            style.textContent = `
+                *, *::before, *::after {
+                    animation-play-state: paused !important;
+                    animation-delay: -1ms !important;
+                    transition-duration: 0s !important;
+                    transition-delay: 0s !important;
+                }
+            `;
+            document.head.appendChild(style);
+        }
+        (document.activeElement as HTMLElement | null)?.blur();
+        window.getSelection()?.removeAllRanges();
+    });
+}
+
 const config: TestRunnerConfig = {
     async preVisit(page, context) {
         const story = await getStoryContext(page, context);
         await applyStoryViewport(page, story.storyGlobals?.viewport);
+        // Belt-and-braces alongside the injected animation freeze below: a story that DOES gate
+        // an animation behind `prefers-reduced-motion` (rather than running it unconditionally)
+        // gets the reduced variant from the start.
+        await page.emulateMedia({ reducedMotion: 'reduce' });
     },
     async postVisit(page, context) {
         if (!process.env.VR_SNAPSHOTS) return;
@@ -79,6 +120,7 @@ const config: TestRunnerConfig = {
 
         const snapshot = async (scheme: Scheme, canvas?: string, density?: string) => {
             await applyRoot(scheme, canvas, density);
+            await freezeForSnapshot(page);
             const image = await page.screenshot();
             const identifier = [scheme, canvas && `canvas-${canvas}`, density && `density-${density}`]
                 .filter(Boolean)
@@ -86,6 +128,16 @@ const config: TestRunnerConfig = {
             expect(image).toMatchImageSnapshot({
                 customSnapshotsDir: '.tests/vr',
                 customSnapshotIdentifier: `${context.id}--${identifier}`,
+                // A tiny, fixed pixel-count budget — NOT a percentage (a percentage threshold
+                // scales with image size, hiding more on bigger snapshots) — absorbs headless
+                // Chromium's own sub-pixel font/icon rasterization jitter (measured: 1-2
+                // differing pixels, ~0.0002%, appearing and disappearing across otherwise
+                // byte-identical repeat runs of `accounts-tokenspage--reveal-once-secret`, with
+                // no visible difference in the diff image). This is native rendering noise, not
+                // app nondeterminism — the freeze above already accounts for animation/selection
+                // timing; this accounts for what a real browser still can't guarantee bit-exact.
+                failureThreshold: 4,
+                failureThresholdType: 'pixel',
             });
         };
 

@@ -27,7 +27,11 @@ export const Populated: Story = {
     args: { activity: ACTIVITY_POPULATED },
     play: async ({ canvasElement }) => {
         const canvas = within(canvasElement);
-        await expect(await canvas.findByText('Reloaded')).toBeInTheDocument();
+        // The fixture has TWO succeeded attempts (both render a "Reloaded" badge), so
+        // `findByText` — which requires exactly one match — throws "Found multiple elements".
+        // `findAllByText` is the correct query for a label the fixture legitimately repeats.
+        const badges = await canvas.findAllByText('Reloaded');
+        expect(badges.length).toBeGreaterThan(0);
     },
 };
 

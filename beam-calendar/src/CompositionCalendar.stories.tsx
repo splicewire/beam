@@ -135,7 +135,12 @@ export const AgendaView: Story = {
         const canvas = within(canvasElement);
         await canvas.findByText('Launch: Summer Drop');
         await userEvent.click(await canvas.findByRole('button', { name: /agenda/i }));
-        await canvas.findAllByText('Launch: Summer Drop');
+        // Not `Launch: Summer Drop`: it's anchored 2026-07-03, before `ANCHOR` (2026-07-15),
+        // and RBC's Agenda view defaults to a 30-day forward-looking window from `date` — month
+        // view's full-month grid shows it (checked above), but the agenda's window starts at
+        // the anchor, so it correctly drops out post-switch. `Recurring: Weekly Digest` is
+        // anchored exactly on `ANCHOR`, so it's always inside the agenda window.
+        await canvas.findAllByText('Recurring: Weekly Digest');
     },
 };
 
