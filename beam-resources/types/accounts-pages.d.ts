@@ -20,6 +20,13 @@ url: string,
 export type PageEntryData = {
 id: string,
 slug: string,
+format: string | null,
+artifact: PageEntryArtifactData | null,
+};
+
+export type PageEntryArtifactData = {
+url: string,
+version: string | null,
 };
 
 export type ProfilePageData = {

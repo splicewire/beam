@@ -2,7 +2,7 @@
 // Projected from generated TypeScript via resources:beam.
 
 export type ApiTokenData = {
-id: number,
+id: string,
 name: string,
 provenance: TokenProvenance,
 abilities: string[] | null,
@@ -14,7 +14,7 @@ is_current: boolean,
 };
 
 export type CreatedTokenData = {
-id: number,
+id: string,
 name: string,
 token: string,
 };

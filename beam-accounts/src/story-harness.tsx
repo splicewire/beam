@@ -154,29 +154,36 @@ export interface TokensMockConfig {
     listState?: 'populated' | 'loading' | 'empty';
 }
 
+/**
+ * ⚠️ UUID string ids, deliberately. These were `1..5` while `ApiTokenData.id` was a `number`, and
+ * that is the shape that hid the defect measured 2026-09-12 on a uuid-keyed host: every roster row
+ * claimed the same id and Archive issued `DELETE .../tokens/1` → 500. A fixture keyed on small
+ * integers cannot see a key-shape bug, so these now carry the shape the operated hosts (tower,
+ * satellite, the flagship) actually run.
+ */
 export const SAMPLE_TOKENS: ApiTokenData[] = [
     {
-        id: 1, name: 'CI deploys', provenance: 'api', abilities: null,
+        id: '0f1e2d3c-4b5a-4697-8899-aabbccddee01', name: 'CI deploys', provenance: 'api', abilities: null,
         created_at: '2026-01-10T00:00:00Z', last_used_at: '2026-07-24T09:00:00Z',
         expires_at: '2026-12-31T00:00:00Z', archived_at: null, is_current: false,
     },
     {
-        id: 2, name: 'Read-only metrics', provenance: 'api', abilities: ['metrics.read', 'reports.read'],
+        id: '0f1e2d3c-4b5a-4697-8899-aabbccddee02', name: 'Read-only metrics', provenance: 'api', abilities: ['metrics.read', 'reports.read'],
         created_at: '2026-02-01T00:00:00Z', last_used_at: '2026-07-01T12:00:00Z',
         expires_at: null, archived_at: null, is_current: false,
     },
     {
-        id: 3, name: 'Chrome · macOS', provenance: 'session', abilities: null,
+        id: '0f1e2d3c-4b5a-4697-8899-aabbccddee03', name: 'Chrome · macOS', provenance: 'session', abilities: null,
         created_at: '2026-07-25T08:00:00Z', last_used_at: '2026-07-25T08:05:00Z',
         expires_at: null, archived_at: null, is_current: true,
     },
     {
-        id: 4, name: 'Firefox · Linux', provenance: 'session', abilities: null,
+        id: '0f1e2d3c-4b5a-4697-8899-aabbccddee04', name: 'Firefox · Linux', provenance: 'session', abilities: null,
         created_at: '2026-07-20T08:00:00Z', last_used_at: '2026-07-22T08:00:00Z',
         expires_at: null, archived_at: null, is_current: false,
     },
     {
-        id: 5, name: 'Old staging key', provenance: 'api', abilities: ['deploy.write'],
+        id: '0f1e2d3c-4b5a-4697-8899-aabbccddee05', name: 'Old staging key', provenance: 'api', abilities: ['deploy.write'],
         created_at: '2025-06-01T00:00:00Z', last_used_at: '2025-12-01T00:00:00Z',
         expires_at: '2026-01-01T00:00:00Z', archived_at: '2026-01-02T00:00:00Z', is_current: false,
     },
@@ -188,7 +195,7 @@ export const SAMPLE_PERMISSIONS = [
 
 export function makeTokensClient(config: TokensMockConfig = {}): TokensClient {
     const { tokens = SAMPLE_TOKENS, permissions = SAMPLE_PERMISSIONS, listState = 'populated' } = config;
-    const created: CreatedTokenData = { id: 100, name: 'New token', token: 'sw_live_demo_secret_0123456789abcdef' };
+    const created: CreatedTokenData = { id: '0f1e2d3c-4b5a-4697-8899-aabbccddee64', name: 'New token', token: 'sw_live_demo_secret_0123456789abcdef' };
     return {
         list: () =>
             listState === 'loading' ? never

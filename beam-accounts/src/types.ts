@@ -21,7 +21,15 @@ export interface CreateTokenInput {
 }
 
 export interface LifecycleInput {
-  id: number;
+  /**
+   * The token's id as the wire carries it: a STRING, whatever shape the host's key is.
+   *
+   * ⚠️ Was `number`, mirroring `ApiTokenData.id`'s old `int`. Measured 2026-09-12 on a uuid-keyed
+   * host: every roster row claimed the same id and Archive issued `DELETE .../tokens/1` → 500.
+   * The PHP DTOs are now string-keyed and the generated projection follows; these hand-written
+   * declarations are the half a regeneration cannot reach.
+   */
+  id: string;
   expiresInDays?: number;
 }
 
@@ -43,9 +51,9 @@ export interface TokensClient<TToken = ApiTokenData> {
   renew(input: LifecycleInput): Promise<TToken>;
   rotate(input: LifecycleInput): Promise<CreatedTokenData>;
   /** Archive (soft-revoke): stops the token, retains the row for audit. */
-  archive(id: number): Promise<void>;
+  archive(id: string): Promise<void>;
   /** Permanently delete an archived token (hard delete). */
-  remove(id: number): Promise<void>;
+  remove(id: string): Promise<void>;
   /** "Log out everywhere else" — revoke every session token except the current one. */
   revokeOtherSessions(): Promise<RevokeOthersResult>;
   /** Held permission-names for the scoped-create picker (the `GET me` coupling, ADR-0109). */

@@ -5,7 +5,9 @@ export type BeamUxEntryBodyData = {
 slug: string,
 id: string,
 type: string,
+format: string,
 schema: Record<string, any> | null,
 body: Record<string, any>,
+source: string | null,
 compileError: string | null,
 };

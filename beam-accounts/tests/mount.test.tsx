@@ -23,9 +23,11 @@ beforeAll(() => {
 
 // The §8a bar: a pure generated-DTO fixture so the render can't drift from the real projected
 // shape. `ApiTokenData` is imported straight from the package's public type surface.
+// UUID string ids: the key shape every operated host runs, and the one a `1`/`2` fixture could
+// never have caught (the 2026-09-12 defect collapsed every roster row onto the same id).
 const FIXTURE: ApiTokenData[] = [
     {
-        id: 1,
+        id: 'e3b0c442-98fc-4c14-9afb-f4c8996fb001',
         name: 'ci-deploy',
         provenance: 'api',
         abilities: null,
@@ -36,7 +38,7 @@ const FIXTURE: ApiTokenData[] = [
         is_current: false,
     },
     {
-        id: 2,
+        id: 'e3b0c442-98fc-4c14-9afb-f4c8996fb002',
         name: 'browser-mac',
         provenance: 'session',
         abilities: null,
@@ -101,7 +103,7 @@ describe('TokensPage — isolation mount (no Laravel)', () => {
         function Harness() {
             const archive = useArchiveToken();
             return (
-                <button type="button" onClick={() => archive.mutate(7)}>
+                <button type="button" onClick={() => archive.mutate('e3b0c442-98fc-4c14-9afb-f4c8996fb007')}>
                     archive
                 </button>
             );
@@ -117,7 +119,7 @@ describe('TokensPage — isolation mount (no Laravel)', () => {
         );
 
         fireEvent.click(screen.getByRole('button', { name: 'archive' }));
-        await waitFor(() => expect(client.archive).toHaveBeenCalledWith(7));
+        await waitFor(() => expect(client.archive).toHaveBeenCalledWith('e3b0c442-98fc-4c14-9afb-f4c8996fb007'));
     });
 
     it('delivers feedback through the injected notify sink (contract §3)', () => {
@@ -157,7 +159,7 @@ describe('TokensPage — isolation mount (no Laravel)', () => {
             renderTokenActivity: (token) => <span data-testid="activity">act:{token.id}</span>,
         });
 
-        // The api row carries the host-injected activity affordance.
-        expect(await screen.findByText('act:1')).toBeTruthy();
+        // The api row carries the host-injected activity affordance, keyed on the row's real id.
+        expect(await screen.findByText(`act:${FIXTURE[0].id}`)).toBeTruthy();
     });
 });

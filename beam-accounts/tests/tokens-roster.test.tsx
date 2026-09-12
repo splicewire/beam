@@ -49,7 +49,7 @@ it("renders the promoted roster and sends archive to the injected transport", as
     screen.getByRole("button", { name: "Activity CI deploys" }),
   ).toBeTruthy();
   fireEvent.click(screen.getByRole("button", { name: "Archive CI deploys" }));
-  await waitFor(() => expect(client.archive).toHaveBeenCalledWith(1));
+  await waitFor(() => expect(client.archive).toHaveBeenCalledWith(SAMPLE_TOKENS[0].id));
   await waitFor(() =>
     expect(notify).toHaveBeenCalledWith({
       type: "success",
@@ -60,7 +60,7 @@ it("renders the promoted roster and sends archive to the injected transport", as
 it("preserves service provenance instead of treating a machine token as an API token", async () => {
   const token: ApiTokenData = {
     ...SAMPLE_TOKENS[0],
-    id: 90,
+    id: 'e3b0c442-98fc-4c14-9afb-f4c8996fb090',
     name: "Sync machine",
     provenance: "service",
   };
@@ -74,7 +74,7 @@ it("preserves service provenance instead of treating a machine token as an API t
 it("reveals a rotated secret through the injected client", async () => {
   const client = makeTokensClient({ tokens: [SAMPLE_TOKENS[0]] });
   client.rotate = vi.fn(async () => ({
-    id: 91,
+    id: 'e3b0c442-98fc-4c14-9afb-f4c8996fb091',
     name: "CI deploys",
     token: "fixture-rotated-secret",
   }));
@@ -82,5 +82,5 @@ it("reveals a rotated secret through the injected client", async () => {
   await screen.findByText("CI deploys");
   fireEvent.click(screen.getByRole("button", { name: "Rotate" }));
   expect(await screen.findByText("fixture-rotated-secret")).toBeTruthy();
-  expect(client.rotate).toHaveBeenCalledWith({ id: 1 });
+  expect(client.rotate).toHaveBeenCalledWith({ id: SAMPLE_TOKENS[0].id });
 });

@@ -36,7 +36,7 @@ export function useArchiveToken() {
     const { client, onError } = useTokensServices();
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: (id: number) => client.archive(id),
+        mutationFn: (id: string) => client.archive(id),
         onSuccess: () => queryClient.invalidateQueries({ queryKey: TOKENS_KEY }),
         onError: (err) => onError?.(err),
     });
@@ -46,7 +46,7 @@ export function usePermanentlyDeleteToken() {
     const { client, onError } = useTokensServices();
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: (id: number) => client.remove(id),
+        mutationFn: (id: string) => client.remove(id),
         onSuccess: () => queryClient.invalidateQueries({ queryKey: TOKENS_KEY }),
         onError: (err) => onError?.(err),
     });
