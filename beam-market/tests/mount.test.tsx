@@ -90,6 +90,16 @@ const INSTALLED: InstalledExtension[] = [
     installedVersion: "1.0.0",
     latestVersion: "1.1.0",
     updateAvailable: true,
+    deployment: {
+      state: "detected",
+      package: "splicewire/satellite",
+      requestedVersion: "1.0.0",
+      detectedVersion: "1.0.0",
+      lastVerifiedVersion: "1.0.0",
+      lastVerifiedAt: "2026-08-01T00:00:00Z",
+      instructions: [],
+      error: null,
+    },
   },
 ];
 

@@ -5,6 +5,7 @@ import {
   useRemoveInstalledExtension,
   useUpdateInstalledExtension,
 } from "./hooks";
+import { DeploymentBadge, DeploymentPanel } from "./DeploymentPanel";
 import { TrustBadge } from "./TrustBadge";
 import type { InstalledExtension } from "./types";
 
@@ -18,11 +19,13 @@ function InstalledRow({ installed }: { installed: InstalledExtension }) {
   const remove = useRemoveInstalledExtension();
 
   return (
-    <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border p-3">
+    <div className="flex flex-wrap items-start justify-between gap-3 rounded-lg border p-3">
       <div className="flex min-w-0 flex-col gap-1">
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <span className="truncate font-medium">{installed.name}</span>
           <TrustBadge tier={installed.trustTier} />
+          {/* ux-demo-convergence G5 — the row's honest runtime state, from the host's own probe. */}
+          <DeploymentBadge installed={installed} />
           {installed.isPlatformTier && (
             <Badge
               variant="outline"
@@ -34,6 +37,8 @@ function InstalledRow({ installed }: { installed: InstalledExtension }) {
         </div>
         <p className="text-sm text-muted-foreground">
           {KIND_LABELS[installed.kind] ?? installed.kind}
+          {/* `installedVersion` is the DETECTED version and is null until a probe has seen it, so
+              this line can no longer print a version for code that was never deployed. */}
           {installed.installedVersion
             ? ` · v${installed.installedVersion}`
             : null}
@@ -63,6 +68,16 @@ function InstalledRow({ installed }: { installed: InstalledExtension }) {
           <Trash2 className="size-3.5" aria-hidden="true" />
           Remove
         </Button>
+      </div>
+      {/* Full-width, below the row: the CLI step the operator still owes, the observed failure,
+          and the retained deployment receipt. `Check again` is the same `refresh` op the Update
+          button uses — re-probing IS the documented retry. */}
+      <div className="w-full basis-full">
+        <DeploymentPanel
+          installed={installed}
+          rechecking={update.isPending}
+          onRecheck={() => update.mutate(installed.installId)}
+        />
       </div>
     </div>
   );

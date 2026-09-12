@@ -4,6 +4,8 @@ export { InstalledTab } from "./InstalledTab";
 export { ExtensionDetailSheet } from "./ExtensionDetailSheet";
 export { TrustBadge, RequiresSplicewireBadge } from "./TrustBadge";
 export { DisconnectedBanner } from "./DisconnectedBanner";
+// ux-demo-convergence G5 — the deployment state a host may want to surface outside the tab.
+export { DeploymentBadge, DeploymentPanel, DEPLOYMENT_LABELS } from "./DeploymentPanel";
 
 export {
   ExtensionsProvider,

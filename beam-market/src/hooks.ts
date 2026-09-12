@@ -1,6 +1,33 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useExtensionsNotify, useExtensionsServices } from "./provider";
-import type { CatalogFilters } from "./types";
+import type { CatalogFilters, InstalledExtension } from "./types";
+
+/**
+ * ux-demo-convergence G5 — a mutation's toast reports the OBSERVED runtime state, never the fact
+ * that a row was written. "Installed." after an acquire that deployed nothing is precisely the
+ * claim JOURNEYS.md §G5 forbids ("It cannot label code installed or updated because only a
+ * database row changed"), so the word only ever appears when the host's probe saw the package.
+ */
+function deploymentMessage(
+  installed: InstalledExtension,
+  verb: "Acquired" | "Checked",
+): string {
+  const { state, detectedVersion, requestedVersion } = installed.deployment;
+
+  if (state === "detected") {
+    return `${installed.name} is active${detectedVersion ? ` at v${detectedVersion}` : ""}.`;
+  }
+
+  if (state === "not_applicable") {
+    return `${verb === "Acquired" ? "Installed" : "Updated"}.`;
+  }
+
+  if (state === "removal_pending") {
+    return "Still deployed — run the removal step shown on the row.";
+  }
+
+  return `${verb}. ${requestedVersion ? `v${requestedVersion} is not deployed yet` : "Nothing is deployed yet"} — follow the deployment step shown on the Installed tab.`;
+}
 
 // Query keys are package-namespaced — the host owns the QueryClient; these hooks run on whatever
 // provider wraps the host tree.
@@ -72,7 +99,7 @@ export function useInstallExtension() {
         message:
           "status" in result && result.status === "awaiting_ops_review"
             ? "Install request sent for review."
-            : "Installed.",
+            : deploymentMessage(result as InstalledExtension, "Acquired"),
       });
     },
     onError: (err) => {
@@ -90,9 +117,9 @@ export function useUpdateInstalledExtension() {
 
   return useMutation({
     mutationFn: (installId: string) => client.update(installId),
-    onSuccess: () => {
+    onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: INSTALLED_KEY });
-      notify({ type: "success", message: "Updated." });
+      notify({ type: "success", message: deploymentMessage(result, "Checked") });
     },
     onError: (err) => {
       notify({ type: "error", message: "Update failed." });
@@ -116,7 +143,7 @@ export function useRemoveInstalledExtension() {
         message:
           result?.status === "awaiting_ops_review"
             ? "Removal request sent for review."
-            : "Removed.",
+            : "Removal requested. If the package is still deployed, run the removal step shown on the row.",
       });
     },
     onError: (err) => {
