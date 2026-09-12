@@ -57,6 +57,7 @@ releasedAt: string,
 
 export type MarketListingData = {
 id: number,
+marketId: string | null,
 name: string,
 summary: string | null,
 kind: string,

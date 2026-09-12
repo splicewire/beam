@@ -30,6 +30,9 @@ beforeAll(() => {
 // shape, and no Laravel is involved.
 const LISTING: MarketListingData = {
   id: 7,
+  // The companion row's id — what a reviewer's transition is addressed by. Two ids, not
+  // interchangeable: `id` is Lunar's `Product`, `marketId` is `beam_market_products`.
+  marketId: "01a0-market-7",
   name: "Demo Notes",
   summary: "A package-owned notes screen.",
   kind: "beam_extension",
