@@ -43,8 +43,12 @@ function statusBadge(connection: MarketConnection) {
         </Badge>
       );
     case "refused":
+      // ⚠️ `outline`, not `destructive`. Measured on fresh-market 2026-09-12: the destructive
+      // variant rendered a solid red pill with no legible label at all, so the one badge that has
+      // to be READ was the only one that could not be. An outline badge in the destructive colour
+      // matches the `error` case below and stays readable in both themes.
       return (
-        <Badge variant="destructive" className="font-normal">
+        <Badge variant="outline" className="font-normal text-destructive">
           Credential refused
         </Badge>
       );
@@ -156,11 +160,14 @@ function ConnectionRow({ connection }: { connection: MarketConnection }) {
           className="flex items-start gap-1.5 text-sm text-destructive"
         >
           <AlertTriangle className="mt-0.5 size-3.5 shrink-0" aria-hidden="true" />
+          {/* The server's own sentence already names the refusal and what to do; a local prefix
+              saying the same thing twice is noise, so only the action the server cannot know about
+              — "connect again below", which is a fact about THIS screen — is added. */}
           <span>
-            {connection.status === "refused"
-              ? "This market refused the credential. Ask its operator to issue a new one, then connect again below. "
-              : null}
             {connection.lastSyncError}
+            {connection.status === "refused"
+              ? " Ask its operator to issue a new one, then connect again below."
+              : null}
           </span>
         </p>
       )}
