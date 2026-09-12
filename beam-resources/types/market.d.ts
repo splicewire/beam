@@ -54,3 +54,85 @@ version: string,
 notes: string,
 releasedAt: string,
 };
+
+export type MarketListingData = {
+id: number,
+name: string,
+summary: string | null,
+kind: string,
+status: string,
+reviewStatus: string | null,
+reviewNote: string | null,
+trustTier: string,
+repoFullName: string | null,
+repoAuthorized: boolean,
+installationNotes: string | null,
+compatibility: string | null,
+latestVersion: string | null,
+releases: ExtensionChangelogEntryData[],
+createdAt: string,
+updatedAt: string | null,
+};
+
+export type MarketListingInputData = {
+name: string,
+summary: string | null,
+repoFullName: string | null,
+installationNotes: string | null,
+compatibility: string | null,
+};
+
+export type MarketSellerData = {
+id: string,
+name: string,
+isSystem: boolean,
+payoutStatus: string | null,
+createdAt: string,
+};
+
+export type SellerRepoAuthorizationData = {
+id: string,
+status: string,
+installUrl: string | null,
+repos: SellerRepoData[],
+authorizedAt: string | null,
+createdAt: string,
+simulated: boolean,
+};
+
+export type SellerRepoData = {
+id: number | null,
+full_name: string,
+};
+
+export type ExtensionArtifactData = {
+repoFullName: string,
+available: boolean,
+refs: string[],
+ref: string | null,
+packageName: string | null,
+version: string | null,
+description: string | null,
+suggestedName: string | null,
+valid: boolean,
+problems: string[],
+};
+
+export type InspectArtifactInputData = {
+repoFullName: string,
+ref: string | null,
+};
+
+export type PublishReleaseInputData = {
+ref: string,
+notes: string | null,
+};
+
+export type SimulateProviderCallbackInputData = {
+repos: string[],
+installationId: number | null,
+};
+
+export type ReviewRejectionInputData = {
+reason: string | null,
+};

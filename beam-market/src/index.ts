@@ -41,3 +41,51 @@ export type {
 
 export { createExtensionsClient } from "./http-client";
 export type { ExtensionsRequest, ExtensionsEndpoints } from "./http-client";
+
+// ── The CREATOR half of the marketplace (ux-demo-convergence G4) ───────────────────────────────
+// The same package, the other side of the same rows: `ExtensionsArea` is what a buyer browses;
+// `CreatorWorkspaceArea` is where what they browse comes from. Separate provider and separate
+// query-key namespace deliberately — a catalog invalidation must not claim to have refreshed a
+// creator's workspace, and a creator's draft is not in the catalog at all.
+export { CreatorWorkspaceArea } from "./creator/CreatorWorkspaceArea";
+export { RepositorySection } from "./creator/RepositorySection";
+export { ListingsSection } from "./creator/ListingsSection";
+
+export {
+  CreatorProvider,
+  useCreatorServices,
+  useCreatorNotify,
+  creatorErrorMessage,
+} from "./creator/provider";
+export type {
+  CreatorClient,
+  CreatorServices,
+  CreatorNotifyEvent,
+} from "./creator/provider";
+
+export {
+  useCreatorSeller,
+  useRepoAuthorizations,
+  useCreatorListings,
+  useBeginAuthorization,
+  useSimulateProviderCallback,
+  useInspectArtifact,
+  useSaveListing,
+  usePublishRelease,
+  useSubmitListing,
+  useWithdrawListing,
+} from "./creator/hooks";
+
+export { presentListingStatus, submitBlocker } from "./creator/types";
+export type {
+  ExtensionArtifactData,
+  ListingStatusPresentation,
+  MarketListingData,
+  MarketListingInputData,
+  MarketSellerData,
+  ReviewStatus,
+  SellerRepoAuthorizationData,
+} from "./creator/types";
+
+export { createCreatorClient } from "./creator/http-client";
+export type { CreatorRequest, CreatorEndpoints } from "./creator/http-client";
