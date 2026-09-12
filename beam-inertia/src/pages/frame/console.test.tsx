@@ -22,7 +22,9 @@
 import { cleanup, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-vi.mock('@inertiajs/react', () => ({ Head: () => null }));
+// `usePage` is read by `useFrameRealm` for the LAYOUT-level readers (the rail, the provider), which
+// sit above the page and outside its context. Empty props here: these tests drive the context path.
+vi.mock('@inertiajs/react', () => ({ Head: () => null, usePage: () => ({ props: {} }) }));
 
 // The provider and the route table are exercised by their own tests; here they are witnesses that
 // report what the page handed them.

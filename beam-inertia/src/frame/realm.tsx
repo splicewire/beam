@@ -1,3 +1,4 @@
+import { usePage } from '@inertiajs/react';
 import { createContext, useContext, useMemo, type ReactNode } from 'react';
 
 /**
@@ -65,12 +66,42 @@ export function FrameRealmProvider({
 /**
  * The realm the surrounding console is serving.
  *
- * Defaulted rather than required, deliberately: `components/nav-frame.tsx` and `frame/provider.tsx`
- * both read the manifest and are mounted in layouts OUTSIDE any console. Throwing here would turn a
- * realm-less mount — the only kind that existed before this file — into a crash.
+ * ## Two sources, and the page-prop one is not a fallback for tidiness
+ *
+ * The React context is the authority when a console has mounted one. But the console page is not the
+ * only thing that reads the manifest: `components/nav-frame.tsx` renders the console's own RAIL and
+ * `frame/provider.tsx` supplies its write capabilities, and both are mounted in the LAYOUT — above
+ * the page, therefore outside any provider the page renders. Measured on fresh-tower.test
+ * 2026-09-12, with only the context in place: `/operator/users` served the operator users roster
+ * correctly while the rail beside it listed the TENANT realm's sections (Authoring → Entries,
+ * Schemas; Ops → Files, Git Repos, Sitemap), because `NavFrame` had fetched `/frame/manifest`.
+ *
+ * Inertia's page props reach both levels, and the mount already passes exactly these three values, so
+ * the layout reads them from there. Context first so a nested or test mount can still override.
+ *
+ * Defaulted rather than required throughout: a realm-less mount is the only kind that existed before
+ * this file, and it must keep working.
  */
 export function useFrameRealm(): FrameRealmContext {
-    return useContext(FrameRealmCtx);
+    const context = useContext(FrameRealmCtx);
+    const page = usePage() as { props?: Record<string, unknown> } | undefined;
+    const props = page?.props ?? {};
+
+    return useMemo<FrameRealmContext>(() => {
+        if (context !== DefaultFrameRealm) {
+            return context;
+        }
+
+        const realm = typeof props.realm === 'string' ? props.realm : DefaultFrameRealm.realm;
+        const basename =
+            typeof props.basename === 'string' ? props.basename : DefaultFrameRealm.basename;
+        const manifestUrl =
+            typeof props.manifestUrl === 'string'
+                ? props.manifestUrl
+                : DefaultFrameRealm.manifestUrl;
+
+        return { realm, basename: normalizeBase(basename), manifestUrl };
+    }, [context, props.realm, props.basename, props.manifestUrl]);
 }
 
 /** `/operator/` → `/operator`; `''` → `/`. React Router wants no trailing slash but does want a root. */
