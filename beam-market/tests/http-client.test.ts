@@ -10,6 +10,7 @@ const endpoints: ExtensionsEndpoints = {
   connection: "https://central.example.test/connection",
   installed: "/installed",
   install: (id) => `/catalog/${id}/install`,
+  purchase: (id) => `/catalog/${id}/purchase`,
   update: (id) => `/installed/${id}/refresh`,
   remove: (id) => `/installed/${id}/remove`,
 };

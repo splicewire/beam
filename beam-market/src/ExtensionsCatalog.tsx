@@ -63,6 +63,16 @@ function ListingCard({
               Installed
             </Badge>
           )}
+          {/* ux-demo-convergence G5 — a paid listing this buyer has already bought. Without it the
+              card shows a price for something they own, which reads as "buy it again". */}
+          {!listing.isFree && listing.isEntitled && !listing.isInstalled && (
+            <Badge
+              variant="outline"
+              className="font-normal text-emerald-600 dark:text-emerald-400"
+            >
+              Purchased
+            </Badge>
+          )}
         </div>
       </CardHeader>
       <CardContent className="flex items-center justify-between text-sm text-muted-foreground">

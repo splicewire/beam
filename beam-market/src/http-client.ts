@@ -3,6 +3,7 @@ import type {
   AwaitingOpsReviewData,
   InstalledExtension,
   MarketExtension,
+  MarketPurchase,
 } from "./types";
 
 /** HTTP is injected; this helper owns the Beam envelope and pagination protocol. */
@@ -22,6 +23,8 @@ export interface ExtensionsEndpoints {
   connection: string;
   installed: string;
   install(id: number): string;
+  /** ux-demo-convergence G5 — the `market-extensions.purchase` op, keyed by the LISTING's id. */
+  purchase(id: number): string;
   update(id: string): string;
   remove(id: string): string;
 }
@@ -87,6 +90,8 @@ export function createExtensionsClient(
           endpoints.install(id),
         )
       ).data.data,
+    purchase: async (id) =>
+      (await request<MarketPurchase>("POST", endpoints.purchase(id))).data.data,
     update: async (id) =>
       (await request<InstalledExtension>("POST", endpoints.update(id))).data
         .data,

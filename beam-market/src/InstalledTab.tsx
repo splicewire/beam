@@ -6,6 +6,7 @@ import {
   useUpdateInstalledExtension,
 } from "./hooks";
 import { DeploymentBadge, DeploymentPanel } from "./DeploymentPanel";
+import { EntitlementPanel } from "./EntitlementPanel";
 import { TrustBadge } from "./TrustBadge";
 import type { InstalledExtension } from "./types";
 
@@ -78,6 +79,15 @@ function InstalledRow({ installed }: { installed: InstalledExtension }) {
           rechecking={update.isPending}
           onRecheck={() => update.mutate(installed.installId)}
         />
+        {/* ux-demo-convergence G5 — a PAID listing's deployment step needs a credential, and this
+            is where the buyer reads their own. Present only when the server projected an
+            entitlement for THIS reader; absent for free listings and for anyone else's purchase. */}
+        {installed.entitlement && (
+          <EntitlementPanel
+            entitlement={installed.entitlement}
+            packageName={installed.deployment.package}
+          />
+        )}
       </div>
     </div>
   );

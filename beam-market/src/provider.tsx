@@ -6,6 +6,7 @@ import type {
   ExtensionListingDetail,
   ExtensionsCatalog,
   InstalledExtension,
+  MarketPurchase,
 } from "./types";
 
 // ── The injected transport adapter — the ONE thing a host must implement (kind 1) ──
@@ -32,6 +33,13 @@ export interface ExtensionsClient {
   getListing(id: number): Promise<ExtensionListingDetail>;
   getConnectionStatus(): Promise<ConnectionStatus>;
   getInstalled(): Promise<InstalledExtension[]>;
+  /**
+   * ux-demo-convergence G5 — buy a PAID listing. The host's `market-extensions.purchase` op takes
+   * no payload: the tier and the price are the server's, so a buyer cannot name their own. Rejects
+   * on a declined payment (402) exactly as it rejects on any other refusal — a decline is not a
+   * successful purchase with a sad field, and the surfaces branch on the rejection.
+   */
+  purchase(id: number): Promise<MarketPurchase>;
   install(id: number): Promise<InstalledExtension | AwaitingOpsReviewData>;
   update(installId: string): Promise<InstalledExtension>;
   remove(installId: string): Promise<void | AwaitingOpsReviewData>;
@@ -98,6 +106,24 @@ export function useExtensionsServices(): ExtensionsServices {
     );
   }
   return services;
+}
+
+/**
+ * The server's own refusal text, when there is one (ux-demo-convergence G5). The paid-listing
+ * chain's two refusals are both worth reading verbatim — `403 entitlement_required` names the price
+ * the buyer has to pay, `402 checkout_declined` names the decline code the payment rail returned —
+ * and a generic "Install failed." would throw both away. Mirrors `creatorErrorMessage`, which this
+ * package's creator half already uses for the same reason.
+ */
+export function extensionsErrorMessage(err: unknown, fallback: string): string {
+  const data = (err as { response?: { data?: unknown } })?.response?.data as
+    | { message?: string; errors?: Record<string, string[]> }
+    | undefined;
+
+  const fieldErrors = Object.values(data?.errors ?? {}).flat();
+  if (fieldErrors.length > 0) return fieldErrors.join(" ");
+
+  return data?.message ?? (err as Error)?.message ?? fallback;
 }
 
 /** The injected `notify`, or the console default when the host supplied none. */

@@ -37,6 +37,8 @@ function row(deployment: InstalledExtension["deployment"], overrides: Partial<In
     latestVersion: "2.0.0",
     updateAvailable: deployment.detectedVersion !== "2.0.0",
     deployment,
+    // ux-demo-convergence G5 — free listings (and anyone else's purchase) carry no entitlement.
+    entitlement: null,
     ...overrides,
   };
 }

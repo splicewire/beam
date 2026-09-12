@@ -20,7 +20,7 @@ manualFallbackHint: string,
 
 export type InstalledExtensionData = {
 installId: string,
-productId: number,
+productId: number | null,
 name: string,
 kind: string,
 trustTier: string,
@@ -30,6 +30,7 @@ installedVersion: string | null,
 latestVersion: string | null,
 updateAvailable: boolean,
 deployment: ExtensionDeploymentData,
+entitlement: MarketEntitlementData | null,
 };
 
 export type ExtensionDeploymentData = {
@@ -53,6 +54,7 @@ requiresSplicewire: boolean,
 isPlatformTier: boolean,
 isInstalled: boolean,
 isFree: boolean,
+isEntitled: boolean,
 priceLabel: string | null,
 sellerName: string,
 installCount: number,
@@ -65,6 +67,25 @@ export type ExtensionChangelogEntryData = {
 version: string,
 notes: string,
 releasedAt: string,
+};
+
+export type MarketPurchaseData = {
+productId: number,
+alreadyEntitled: boolean,
+entitlement: MarketEntitlementData,
+};
+
+export type MarketEntitlementData = {
+entitlementId: string,
+productId: number,
+status: string,
+grantedAt: string,
+amountLabel: string | null,
+paymentRef: string | null,
+licenseId: string | null,
+licenseKey: string | null,
+registryUsername: string,
+registryUrl: string | null,
 };
 
 export type MarketListingData = {

@@ -1,5 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useExtensionsNotify, useExtensionsServices } from "./provider";
+import {
+  extensionsErrorMessage,
+  useExtensionsNotify,
+  useExtensionsServices,
+} from "./provider";
 import type { CatalogFilters, InstalledExtension } from "./types";
 
 /**
@@ -84,6 +88,42 @@ export function useInstalledExtensions() {
   });
 }
 
+/**
+ * Buys a PAID listing (ux-demo-convergence G5) — the mutation behind the catalog's Buy control, and
+ * the only path an entitlement is ever created on.
+ *
+ * A DECLINED payment rejects (402), so it lands in `onError` next to every other refusal rather
+ * than in `onSuccess` with a status field — which is what makes "purchase failed, try again" a real
+ * state the surface can render, and makes it impossible for a failed checkout to read as a
+ * purchase. The error message is the SERVER's: it names the decline code the rail returned.
+ */
+export function usePurchaseExtension() {
+  const { client, onError } = useExtensionsServices();
+  const queryClient = useQueryClient();
+  const notify = useExtensionsNotify();
+
+  return useMutation({
+    mutationFn: (id: number) => client.purchase(id),
+    onSuccess: (purchase) => {
+      // Both the catalog (`isEntitled`) and the Installed tab (the delivered credential) change.
+      queryClient.invalidateQueries({ queryKey: ["beam-market"] });
+      notify({
+        type: "success",
+        message: purchase.alreadyEntitled
+          ? "You already own this — nothing was charged."
+          : `Purchased${purchase.entitlement.amountLabel ? ` for ${purchase.entitlement.amountLabel}` : ""}. You can install it now.`,
+      });
+    },
+    onError: (err) => {
+      notify({
+        type: "error",
+        message: extensionsErrorMessage(err, "The payment was not completed."),
+      });
+      onError?.(err);
+    },
+  });
+}
+
 /** Materializes an install — the ONLY path a Listing (any kind, including Platform Tier) ever becomes "installed". */
 export function useInstallExtension() {
   const { client, onError } = useExtensionsServices();
@@ -103,7 +143,12 @@ export function useInstallExtension() {
       });
     },
     onError: (err) => {
-      notify({ type: "error", message: "Install failed." });
+      // The server's own words. A paid listing acquired without an entitlement answers 403 naming
+      // the price; "Install failed." would have hidden the one fact the buyer needs.
+      notify({
+        type: "error",
+        message: extensionsErrorMessage(err, "Install failed."),
+      });
       onError?.(err);
     },
   });

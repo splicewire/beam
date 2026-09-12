@@ -4,7 +4,11 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { userEvent, within, expect } from "storybook/test";
 import { ExtensionsArea } from "./ExtensionsArea";
 import { ExtensionsProvider, type ExtensionsClient } from "./provider";
-import type { MarketExtension, InstalledExtension } from "./types";
+import type {
+  InstalledExtension,
+  MarketEntitlement,
+  MarketExtension,
+} from "./types";
 const listing: MarketExtension = {
   id: 1,
   name: "Team handbook",
@@ -15,6 +19,7 @@ const listing: MarketExtension = {
   isPlatformTier: false,
   isInstalled: false,
   isFree: true,
+  isEntitled: true,
   priceLabel: null,
   sellerName: "Example publisher",
   installCount: 10,
@@ -33,6 +38,7 @@ const installed: InstalledExtension = {
   installedVersion: "1.0.0",
   latestVersion: "1.1.0",
   updateAvailable: true,
+  entitlement: null,
   deployment: {
     state: "detected",
     package: "splicewire/beam-extension-demo",
@@ -44,19 +50,83 @@ const installed: InstalledExtension = {
     error: null,
   },
 };
+/**
+ * ux-demo-convergence G5 — the paid-listing states. A $19.00 listing is the same row with a price,
+ * `isEntitled` false until a purchase captures, and the entitlement (with its registry credential)
+ * once it has.
+ */
+const paidListing: MarketExtension = {
+  ...listing,
+  id: 2,
+  name: "Waveform pro",
+  kind: "beam_extension",
+  isFree: false,
+  isEntitled: false,
+  priceLabel: "$19.00",
+  description: "A paid Beam Extension.",
+};
+
+const entitlement: MarketEntitlement = {
+  entitlementId: "entitlement-uuid",
+  productId: paidListing.id,
+  status: "active",
+  grantedAt: "2026-09-12T00:00:00Z",
+  amountLabel: "$19.00",
+  paymentRef: "fake_ch_1a2b3c",
+  licenseId: "lic_01ab",
+  licenseKey: "LIC-DEMO-KEY-0000-0000",
+  registryUsername: "composer",
+  registryUrl: "https://app.example.test/registry",
+};
+
+/** The paid listing after a purchase: bought, credential delivered, and installed. */
+const paidInstalled: InstalledExtension = {
+  ...installed,
+  installId: "installed-paid-uuid",
+  productId: paidListing.id,
+  name: paidListing.name,
+  kind: paidListing.kind,
+  entitlement,
+  deployment: {
+    ...installed.deployment,
+    state: "instructed",
+    detectedVersion: null,
+    instructions: ["composer require acme/waveform-pro:1.0.0"],
+  },
+};
+
+type StageState =
+  | "populated"
+  | "empty"
+  | "disconnected"
+  | "error"
+  | "loading"
+  // Paid, not entitled — the Buy control is the acquisition path.
+  | "paid"
+  // Paid, purchase rejected by the payment rail — failure + retry on the surface.
+  | "paid-declined"
+  // Paid, bought, installed — the credential the deploy step needs.
+  | "entitled";
+
 function Stage({
   state = "populated",
   gated = false,
 }: {
-  state?: "populated" | "empty" | "disconnected" | "error" | "loading";
+  state?: StageState;
   gated?: boolean;
 }) {
   const [cache] = useState(
     () => new QueryClient({ defaultOptions: { queries: { retry: false } } }),
   );
+  const paidStates: StageState[] = ["paid", "paid-declined", "entitled"];
+  const paid = paidStates.includes(state);
   const activeListing: MarketExtension = gated
     ? { ...listing, requiresSplicewire: true }
-    : listing;
+    : paid
+      ? state === "entitled"
+        ? { ...paidListing, isEntitled: true, isInstalled: true }
+        : paidListing
+      : listing;
   const client: ExtensionsClient = {
     getCatalog: async () => {
       if (state === "error") throw new Error("Catalog unavailable");
@@ -72,8 +142,28 @@ function Stage({
         manualFallbackHint: "Use a personal access token.",
       },
     }),
-    getInstalled: async () => (state === "empty" ? [] : [installed]),
+    getInstalled: async () =>
+      state === "empty"
+        ? []
+        : state === "entitled"
+          ? [paidInstalled]
+          : [installed],
     install: async () => installed,
+    purchase: async () => {
+      // The declined path rejects the way the server does (402 with the rail's own code), so the
+      // story exercises the SAME branch the real client takes — never a story-only failure flag.
+      if (state === "paid-declined") {
+        throw {
+          response: {
+            data: {
+              message:
+                "The payment was not completed (failed: card_declined). Nothing was purchased.",
+            },
+          },
+        };
+      }
+      return { productId: paidListing.id, alreadyEntitled: false, entitlement };
+    },
     update: async () => ({ ...installed, updateAvailable: false }),
     remove: async () => undefined,
   };
@@ -112,6 +202,54 @@ export const UpdateAvailable: Story = {
     await userEvent.click(await canvas.findByRole("button", { name: "Installed" }));
     await expect(await canvas.findByText(/v1\.1\.0 available/i)).toBeInTheDocument();
     await expect(canvas.getByRole("button", { name: /update/i })).toBeInTheDocument();
+  },
+};
+
+/** Paid, not entitled: the catalog card shows the price and the sheet offers Buy, never Install. */
+export const PaidNotEntitled: Story = {
+  render: () => <Stage state="paid" />,
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await userEvent.click(await canvas.findByText("Waveform pro"));
+    const sheet = within(document.body);
+    await expect(await sheet.findByRole("button", { name: "Buy $19.00" })).toBeInTheDocument();
+  },
+};
+
+/** Purchasing: the Buy control is pending while the checkout is in flight. */
+export const Purchasing: Story = {
+  render: () => <Stage state="paid" />,
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await userEvent.click(await canvas.findByText("Waveform pro"));
+    const sheet = within(document.body);
+    await userEvent.click(await sheet.findByRole("button", { name: "Buy $19.00" }));
+    await expect(await sheet.findByText(/purchased|purchasing/i)).toBeInTheDocument();
+  },
+};
+
+/** Purchase failed: the rail's own decline text, and a retry, on the surface. */
+export const PurchaseFailed: Story = {
+  render: () => <Stage state="paid-declined" />,
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await userEvent.click(await canvas.findByText("Waveform pro"));
+    const sheet = within(document.body);
+    await userEvent.click(await sheet.findByRole("button", { name: "Buy $19.00" }));
+    await expect(await sheet.findByRole("alert")).toHaveTextContent(/card_declined/i);
+    await expect(await sheet.findByRole("button", { name: "Try again" })).toBeInTheDocument();
+  },
+};
+
+/** Entitled: the Installed tab carries the licence and the deploy commands it makes runnable. */
+export const Entitled: Story = {
+  render: () => <Stage state="entitled" />,
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await userEvent.click(await canvas.findByRole("button", { name: "Installed" }));
+    await expect(await canvas.findByText("Your licence · $19.00")).toBeInTheDocument();
+    await userEvent.click(await canvas.findByRole("button", { name: "Show key" }));
+    await expect(await canvas.findByText("LIC-DEMO-KEY-0000-0000")).toBeInTheDocument();
   },
 };
 

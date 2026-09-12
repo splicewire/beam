@@ -13,7 +13,9 @@ import type {
   ConnectionStatusData,
   ExtensionChangelogEntryData,
   InstalledExtensionData,
+  MarketEntitlementData,
   MarketExtensionData,
+  MarketPurchaseData,
   PairingGuidanceData,
 } from "@splicewire/beam-resources/types/market";
 
@@ -21,7 +23,9 @@ export type {
   ConnectionStatusData,
   ExtensionChangelogEntryData,
   InstalledExtensionData,
+  MarketEntitlementData,
   MarketExtensionData,
+  MarketPurchaseData,
   PairingGuidanceData,
 };
 
@@ -86,5 +90,16 @@ export interface CatalogFilters {
   category?: string;
   kind?: ListingKind;
 }
+
+/**
+ * ux-demo-convergence G5 — what THIS buyer got for their money on a paid listing: the amount, the
+ * payment reference, and the registry credential the deployment step needs. Projected for its owner
+ * only (the PHP `MarketEntitlementData` docblock states the rule); a surface that has one is looking
+ * at the reader's own purchase, never somebody else's.
+ */
+export type MarketEntitlement = MarketEntitlementData;
+
+/** The answer to a completed purchase — the entitlement, plus whether it was already held. */
+export type MarketPurchase = MarketPurchaseData;
 
 export type { AwaitingOpsReviewData } from "@splicewire/beam-resources/types/market";

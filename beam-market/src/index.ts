@@ -6,11 +6,14 @@ export { TrustBadge, RequiresSplicewireBadge } from "./TrustBadge";
 export { DisconnectedBanner } from "./DisconnectedBanner";
 // ux-demo-convergence G5 — the deployment state a host may want to surface outside the tab.
 export { DeploymentBadge, DeploymentPanel, DEPLOYMENT_LABELS } from "./DeploymentPanel";
+// ux-demo-convergence G5 — the buyer's own licence + the deploy commands it makes runnable.
+export { EntitlementPanel } from "./EntitlementPanel";
 
 export {
   ExtensionsProvider,
   useExtensionsServices,
   useExtensionsNotify,
+  extensionsErrorMessage,
 } from "./provider";
 export type {
   ExtensionsClient,
@@ -24,6 +27,7 @@ export {
   useConnectionStatus,
   useInstalledExtensions,
   useInstallExtension,
+  usePurchaseExtension,
   useUpdateInstalledExtension,
   useRemoveInstalledExtension,
 } from "./hooks";
@@ -37,7 +41,9 @@ export type {
   ExtensionsCatalog as ExtensionsCatalogRead,
   InstalledExtension,
   ListingKind,
+  MarketEntitlement,
   MarketExtension,
+  MarketPurchase,
   TrustTier,
 } from "./types";
 
