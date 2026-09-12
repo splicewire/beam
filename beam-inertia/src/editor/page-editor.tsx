@@ -99,15 +99,20 @@ export function PageEditor({
         };
     }, [editing, entryId, loaded]);
 
+    // Do not mount the canvas until the body is in hand. `CanvasPageEditor` seeds its document ONCE, on
+    // mount, so a body arriving afterwards can only be applied by re-seeding — and a re-seed discards
+    // whatever the author has already done. Measured on beam.test 2026-09-11 (tools/explore-editor.mjs
+    // section A): the FIRST inline edit of a session vanished, because the load landed between the
+    // insert and the commit. Waiting is the fix; re-seeding is the defect wearing a `reloadToken`.
+    if (editing && entryId !== null && loaded === null) {
+        return <div style={{ padding: 24, color: '#64748b', fontSize: 13 }}>Loading editor…</div>;
+    }
+
     return (
         <CanvasProvider config={canvasConfig}>
             <CanvasPageEditor
                 slug={slug}
                 body={asDoc(loaded?.body) ?? asDoc(body)}
-                // Bumped exactly once, when the persisted body arrives — `CanvasPageEditor` seeds its doc
-                // on mount and re-seeds only on an explicit token change (never on an incidental prop
-                // identity change, which would discard in-progress edits).
-                reloadToken={loaded === null ? undefined : 'loaded'}
                 transport={{
                     // CanvasPageEditor's transport seam is keyed by its `slug` prop, which stays a slug
                     // — it is the editor's display label and `defaultTreeFor()` key. The BODY transport

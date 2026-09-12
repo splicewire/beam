@@ -16,8 +16,13 @@ vi.mock('../../layouts/site-layout', () => ({ default: ({ children }: { children
 vi.mock('../../editor/page-editor', () => ({
     default: ({ entryId }: { entryId?: string | null }) => <div data-testid="editor">editor:{String(entryId)}</div>,
 }));
+vi.mock('../../editor/canvas-config', () => ({ canvasConfig: { registry: { DemoHero: () => null } } }));
 vi.mock('@splicewire/beam-ux/site', () => ({
-    EntryBody: ({ artifact }: { artifact: { url: string } }) => <div data-testid="artifact">{artifact.url}</div>,
+    EntryBody: ({ artifact, components }: { artifact: { url: string }; components?: object }) => (
+        <div data-testid="artifact" data-components={Object.keys(components ?? {}).join(',')}>
+            {artifact.url}
+        </div>
+    ),
 }));
 
 const editMode = vi.hoisted(() => ({ value: false }));
@@ -43,6 +48,16 @@ describe('site/home — read fork', () => {
 
         expect(screen.getByTestId('artifact').textContent).toBe(ENTRY.artifact.url);
         expect(screen.queryByTestId('editor')).toBeNull();
+    });
+
+    it('hands the artifact the SAME island registry the canvas edits through', () => {
+        // The default tree seeds a `<DemoHero>` island. The canvas resolves that name through its
+        // CanvasConfig registry; the compiled artifact resolves it through this prop (the compiler runs
+        // without `providerImportSource`). Measured on beam.test 2026-09-11: without it the saved page
+        // threw `DemoHero is not defined` and took the WHOLE page down, not just the body.
+        render(<SiteHome entry={ENTRY} />);
+
+        expect(screen.getByTestId('artifact').getAttribute('data-components')).toContain('DemoHero');
     });
 
     it('falls back to the packaged default tree when the entry has NO artifact', () => {

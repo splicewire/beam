@@ -1,6 +1,8 @@
 import { Head } from '@inertiajs/react';
+import type { ComponentType } from 'react';
 import { useEditMode } from '@splicewire/beam-ux/canvas';
 import { EntryBody } from '@splicewire/beam-ux/site';
+import { canvasConfig } from '../../editor/canvas-config';
 import PageEditor from '../../editor/page-editor';
 import SiteLayout from '../../layouts/site-layout';
 
@@ -32,6 +34,15 @@ import SiteLayout from '../../layouts/site-layout';
  * Author (window) mode always mounts `<PageEditor>`: the editor edits the SOURCE body, never the
  * compiled artifact, and an author who has just saved must see their own document rather than a module
  * compiled from it.
+ *
+ * ## One registry, two lenses
+ *
+ * `components` is the SAME island registry the canvas injects through `CanvasConfig` — it has to be.
+ * The default tree seeds a `<DemoHero>` island; the canvas resolves that name through its registry,
+ * and the compiled artifact resolves it through this prop (the compiler runs without
+ * `providerImportSource`, so a body takes its components as a prop). Pass nothing and the saved page
+ * throws `DemoHero is not defined` at render — measured on beam.test 2026-09-11, and it took the whole
+ * page down, not just the body.
  */
 export default function SiteHome({
     entry = null,
@@ -59,7 +70,13 @@ export default function SiteHome({
                 {!editing && artifact ? (
                     // The reader's path: the compiled body at its version-pinned address, the same one
                     // every rendered entry takes. No client-side compile fallback (ADR-0209 §7).
-                    <EntryBody artifact={artifact} />
+                    <EntryBody
+                        artifact={artifact}
+                        // `EntryBodyProps.components` is declared `ComponentType<never>` (a body's
+                        // props are the artifact's business, not this page's); the canvas registry is
+                        // typed by what it renders. Same map, two vantage points.
+                        components={canvasConfig.registry as Record<string, ComponentType<never>>}
+                    />
                 ) : (
                     /* The editable page body, and the no-artifact default. slug `home` → its default
                        JsonDoc (editor/defaults.ts) until a save persists a real body. `entryId` is the
