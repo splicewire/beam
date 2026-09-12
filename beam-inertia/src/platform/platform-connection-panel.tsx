@@ -71,12 +71,12 @@ const STATE_COPY: Record<PlatformConnectionState, { label: string; tone: string;
     denied: {
         label: 'Denied',
         tone: 'bg-red-100 text-red-900 dark:bg-red-950 dark:text-red-200',
-        blurb: 'The pairing request was refused at the tower. Nothing was issued. You can request a new code.',
+        blurb: 'The pairing request was refused at the tower. Nothing new was issued — any credential this site already held is untouched, and is shown below. You can request a new code.',
     },
     expired: {
         label: 'Expired',
         tone: 'bg-orange-100 text-orange-900 dark:bg-orange-950 dark:text-orange-200',
-        blurb: 'The pairing code ran out before anyone answered it. Nothing was refused — request a new code.',
+        blurb: 'The pairing code ran out before anyone answered it. Nothing was refused, and any credential this site already held is untouched. Request a new code.',
     },
     revoked: {
         label: 'Revoked',
@@ -222,12 +222,19 @@ export function PlatformConnectionPanel({
                             {connection.platformUrl ?? 'Not configured'}
                         </span>
                     </Row>
-                    {connection.state === 'paired' && (
+                    {(connection.state === 'paired' || connection.state === 'revoked') && (
                         <Row label="Paired as">
                             <span data-testid="platform-identity">
                                 {connection.identity
                                     ? `${connection.identity.name ?? 'Unknown'} (${connection.identity.email ?? '—'})`
-                                    : (connection.identityError ?? 'Not yet confirmed')}
+                                    : (connection.identityError ??
+                                      // A revoked pairing cannot name its other end: the probe that
+                                      // would is the same call the platform is refusing. "Not yet
+                                      // confirmed" would read as "still checking" for something that
+                                      // will never resolve while the credential stands.
+                                      (connection.state === 'revoked'
+                                          ? 'Cannot be confirmed — the platform refuses this credential'
+                                          : 'Not yet confirmed'))}
                             </span>
                         </Row>
                     )}
