@@ -16,6 +16,7 @@ export const entryIds = {
     card: '0193b1e0-card-0000-0000-000000000002',
     roster: '0193b1e0-rost-0000-0000-000000000003',
     list: '0193b1e0-list-0000-0000-000000000004',
+    theme: '0193b1e0-thme-0000-0000-000000000005',
 } as const;
 
 /** The live page's editable regions, top-to-bottom as they render on the canvas. */
@@ -81,6 +82,65 @@ export const cardEntryBody: BeamUxEntryBodyData = {
         seatsShown: true,
         ctaLabel: 'Enroll',
     },
+    compileError: null,
+};
+
+/**
+ * The THEME entry's loaded body — trimmed from a real `GET /beam-ux-entries/{id}/op/body` answer on
+ * beam.test (2026-09-12), so the fixture's SHAPE is the server's, not an invention.
+ *
+ * Two facts about that shape are what {@link ThemeEditor} exists to handle and are therefore kept
+ * exactly as measured, rather than tidied into symmetry:
+ *
+ *  - the `schema` describes `canvas` + `site` ONLY — `EntryBodyEnvelope::schemaFor()` omits `shell`
+ *    on purpose;
+ *  - the `body` carries `shell` anyway, because `ThemeResolver` resolves all three namespaces.
+ *
+ * A form driven by that schema therefore cannot be committed verbatim without dropping `shell`, which
+ * is the round-trip `ThemeEditor.test.tsx` pins. Colors are a 3-token slice of each namespace, not the
+ * full token set: the point of the fixture is the namespace structure, not the palette.
+ */
+export const themeEntryBody: BeamUxEntryBodyData = {
+    slug: 'default',
+    id: entryIds.theme,
+    type: 'theme',
+    format: 'css',
+    schema: {
+        type: 'object',
+        title: 'Theme',
+        properties: {
+            canvas: {
+                $id: 'theme.canvas',
+                type: 'object',
+                title: 'Canvas theme',
+                additionalProperties: false,
+                properties: {
+                    accent: { type: 'string', format: 'color', title: 'Accent', default: '#4F7CFF' },
+                    ink: { type: 'string', format: 'color', title: 'Ink', default: '#1A1A1A' },
+                },
+            },
+            site: {
+                $id: 'theme.site',
+                type: 'object',
+                title: 'Site theme',
+                additionalProperties: false,
+                properties: {
+                    background: { type: 'string', format: 'color', title: 'Background', default: '#FFFFFF' },
+                    accent: { type: 'string', format: 'color', title: 'Accent', default: '#4F7CFF' },
+                    accentHover: { type: 'string', format: 'color', title: 'Accent hover', default: '#3A63E0' },
+                },
+            },
+        },
+    },
+    body: {
+        canvas: { accent: '#0f172a', ink: '#0f172a' },
+        // NOT in the schema above — the namespace whose survival across a save is the whole test.
+        shell: { surface: '#0f172a', accent: '#3b82f6' },
+        site: { background: '#f8fafc', accent: '#0f172a', accentHover: '#1e293b' },
+    },
+    // A theme body is a token object, not a canvas document, so the read op decodes no source text
+    // for it (`EntryBodyEnvelope::sourceFor()` answers null for every non-JsonDoc body).
+    source: null,
     compileError: null,
 };
 

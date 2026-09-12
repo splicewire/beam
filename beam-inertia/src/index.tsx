@@ -144,6 +144,19 @@ export type {
 export { Button } from "./components/ui/button";
 
 /**
+ * The host's ONE entry-body transport — the same `UxBuilderClient` the promoted in-place editor and
+ * the Mainframe host already load and save through (`./editor/transport`), exported so a host can hand
+ * it to any OTHER `@splicewire/beam-ux` surface it mounts on a page of its own.
+ *
+ * Exported for the theme editor's seat (G2-BEAM-THEME-NAV): `<ThemeEditor>` is a connected component
+ * and needs a client, and a host writing its own `fetch` wrapper for that page would be a SECOND
+ * transport — a second place for the load-bearing URL literals this file's docblock warns about to
+ * drift, and a second thing to fix when `config.entryClient` is overridden. There is one transport;
+ * this makes it reachable.
+ */
+export { bodyClient } from "./editor/transport";
+
+/**
  * The platform-connection surface, exported so a host can compose the panel somewhere other than the
  * `operator/platform-connection` route the page map ships (an OS float, an account-realm page), and
  * so a host with its own client runtime can substitute the transport.

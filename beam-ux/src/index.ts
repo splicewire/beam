@@ -27,6 +27,9 @@ export type {
 // Surface components — the docked inspector, the floating overlay, the live canvas, the composition
 // structure panel, and the root that composes them.
 export { RegionInspector, type RegionEditorProps } from './RegionInspector';
+// The theme entry's editor seat — the same three parts (useEntryBody → RegionInspector's
+// `form` body → useSaveEntryBody) wired to one entry id. G2-BEAM-THEME-NAV.
+export { ThemeEditor } from './ThemeEditor';
 export { RegionOverlay } from './RegionOverlay';
 export { UX_BUILDER_CSS } from './css';
 export { RegionCanvas, RegionBlock } from './RegionCanvas';
