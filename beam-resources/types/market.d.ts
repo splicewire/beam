@@ -29,6 +29,18 @@ installedAt: string,
 installedVersion: string | null,
 latestVersion: string | null,
 updateAvailable: boolean,
+deployment: ExtensionDeploymentData,
+};
+
+export type ExtensionDeploymentData = {
+state: string,
+package: string,
+requestedVersion: string | null,
+detectedVersion: string | null,
+lastVerifiedVersion: string | null,
+lastVerifiedAt: string | null,
+instructions: string[],
+error: string | null,
 };
 
 export type MarketExtensionData = {

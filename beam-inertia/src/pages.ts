@@ -18,6 +18,7 @@ const defaults: Record<string, PageLoader> = {
     'site/home': () => import('./pages/site/home') as unknown as Promise<PageModule>,
     'account/home': () => import('./pages/account/home') as unknown as Promise<PageModule>,
     'operator/dashboard': () => import('./pages/operator/dashboard') as unknown as Promise<PageModule>,
+    'operator/platform-connection': () => import('./pages/operator/platform-connection') as unknown as Promise<PageModule>,
 };
 const pageFeatures = {
     'auth/register': 'registration',

@@ -142,3 +142,20 @@ export type {
 } from "./config";
 
 export { Button } from "./components/ui/button";
+
+/**
+ * The platform-connection surface, exported so a host can compose the panel somewhere other than the
+ * `operator/platform-connection` route the page map ships (an OS float, an account-realm page), and
+ * so a host with its own client runtime can substitute the transport.
+ */
+export { PlatformConnectionPanel } from "./platform/platform-connection-panel";
+export { createPlatformConnectionClient } from "./platform/client";
+export type { PlatformConnectionClient } from "./platform/client";
+export type {
+  PlatformConnection,
+  PlatformConnectionEndpoints,
+  PlatformConnectionState,
+  PlatformCapability,
+  PlatformCapabilityRead,
+  PlatformIdentity,
+} from "./platform/types";
