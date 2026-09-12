@@ -1,6 +1,147 @@
 import { describe, expect, it, vi, afterEach } from 'vitest';
-import { renderHook, act } from '@testing-library/react';
+import { renderHook, act, cleanup } from '@testing-library/react';
 import { useSseStream } from './useSseStream';
+
+describe('useSseStream request ownership', () => {
+    afterEach(() => {
+        cleanup();
+        vi.unstubAllGlobals();
+    });
+
+    function streamResponse() {
+        let controller!: ReadableStreamDefaultController<Uint8Array>;
+        const body = new ReadableStream<Uint8Array>({
+            start(stream) { controller = stream; },
+        });
+        return {
+            response: new Response(body, { headers: { 'Content-Type': 'text/event-stream' } }),
+            emit(value: string) {
+                controller.enqueue(new TextEncoder().encode(`event: progress\ndata: ${JSON.stringify(value)}\n\n`));
+            },
+            close() { controller.close(); },
+            fail(error: Error) { controller.error(error); },
+        };
+    }
+
+    it('keeps buffered frames and completion from a replaced request out of the current stream', async () => {
+        const previous = streamResponse();
+        const current = streamResponse();
+        const fetchMock = vi.fn<typeof fetch>()
+            .mockResolvedValueOnce(previous.response)
+            .mockResolvedValueOnce(current.response);
+        vi.stubGlobal('fetch', fetchMock);
+        const { result } = renderHook(() => useSseStream({ defaults: {} }, '/run'));
+
+        await act(async () => { result.current.start(); });
+        await act(async () => { previous.emit('previous before replacement'); });
+        expect(result.current.events).toEqual([{ event: 'progress', data: 'previous before replacement' }]);
+
+        await act(async () => { result.current.start(); });
+        expect(fetchMock.mock.calls[0][1]?.signal?.aborted).toBe(true);
+        expect(result.current.events).toEqual([]);
+        await act(async () => {
+            previous.emit('buffered previous frame');
+            previous.close();
+            current.emit('current frame');
+        });
+
+        expect(result.current.events).toEqual([{ event: 'progress', data: 'current frame' }]);
+        expect(result.current.status).toBe('streaming');
+        expect(result.current.error).toBeNull();
+        await act(async () => { current.close(); });
+        expect(result.current.status).toBe('done');
+    });
+
+    it.each(['fetch', 'reader'])('ignores a replaced request\'s late %s failure', async (stage) => {
+        const previous = streamResponse();
+        const current = streamResponse();
+        let rejectFetch!: (error: Error) => void;
+        const previousResponse = new Promise<Response>((resolve, reject) => {
+            rejectFetch = reject;
+            if (stage === 'reader') resolve(previous.response);
+        });
+        const fetchMock = vi.fn<typeof fetch>()
+            .mockReturnValueOnce(previousResponse)
+            .mockResolvedValueOnce(current.response);
+        vi.stubGlobal('fetch', fetchMock);
+        const { result } = renderHook(() => useSseStream({ defaults: {} }, '/run'));
+
+        await act(async () => { result.current.start(); });
+        await act(async () => { result.current.start(); });
+        await act(async () => { current.emit('current frame'); });
+        const failure = new Error('previous connection failed');
+        await act(async () => {
+            if (stage === 'reader') previous.fail(failure);
+            else rejectFetch(failure);
+        });
+
+        expect(result.current.events).toEqual([{ event: 'progress', data: 'current frame' }]);
+        expect(result.current.status).toBe('streaming');
+        expect(result.current.error).toBeNull();
+        await act(async () => { current.close(); });
+        expect(result.current.status).toBe('done');
+    });
+
+    it('aborts the owned request when the hook unmounts', async () => {
+        const stream = streamResponse();
+        const fetchMock = vi.fn<typeof fetch>().mockImplementation(async (_url, init) => {
+            init?.signal?.addEventListener('abort', () => {
+                stream.fail(new DOMException('request aborted', 'AbortError'));
+            });
+            return stream.response;
+        });
+        vi.stubGlobal('fetch', fetchMock);
+        const { result, unmount } = renderHook(() => useSseStream({ defaults: {} }, '/run'));
+
+        await act(async () => { result.current.start(); });
+        await act(async () => { stream.emit('partial progress'); });
+        expect(result.current.events).toEqual([{ event: 'progress', data: 'partial progress' }]);
+        const signal = fetchMock.mock.calls[0][1]?.signal;
+        expect(signal?.aborted).toBe(false);
+
+        await act(async () => { unmount(); });
+        expect(signal?.aborted).toBe(true);
+    });
+
+    it.each(['frame', 'error', 'completion'])('keeps reset state clear after a late %s', async (delivery) => {
+        const stream = streamResponse();
+        const fetchMock = vi.fn<typeof fetch>().mockResolvedValueOnce(stream.response);
+        vi.stubGlobal('fetch', fetchMock);
+        const { result } = renderHook(() => useSseStream({ defaults: {} }, '/run'));
+
+        await act(async () => { result.current.start(); });
+        await act(async () => { stream.emit('previous progress'); });
+        expect(result.current.events).toHaveLength(1);
+        act(() => { result.current.reset(); });
+        expect(fetchMock.mock.calls[0][1]?.signal?.aborted).toBe(true);
+
+        await act(async () => {
+            if (delivery === 'error') stream.fail(new Error('late reader failure'));
+            else {
+                if (delivery === 'frame') stream.emit('buffered progress');
+                stream.close();
+            }
+        });
+        expect(result.current.events).toEqual([]);
+        expect(result.current.status).toBe('idle');
+        expect(result.current.error).toBeNull();
+    });
+
+    it('reports the current request\'s failure and retains its partial frames', async () => {
+        const stream = streamResponse();
+        vi.stubGlobal('fetch', vi.fn<typeof fetch>().mockResolvedValueOnce(stream.response));
+        const { result } = renderHook(() => useSseStream({ defaults: {} }, '/run'));
+
+        await act(async () => { result.current.start(); });
+        await act(async () => { stream.emit('partial progress'); });
+        const failure = new Error('current connection failed');
+        await act(async () => { stream.fail(failure); });
+
+        expect(result.current.events).toEqual([{ event: 'progress', data: 'partial progress' }]);
+        expect(result.current.status).toBe('error');
+        expect(result.current.error).toBe(failure);
+    });
+});
 
 /**
  * G6-BEAM-UX-SSE-URL-JOIN: the stream URL was built as `${baseURL ?? ''}${path}`, a raw

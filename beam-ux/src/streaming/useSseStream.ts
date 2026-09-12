@@ -10,7 +10,7 @@
  * concern (chat keeps its `foldEvent`; a simpler consumer like circuits writes its own), per
  * ticket 27's finding that only the low-level parsing generalizes, not the reducer.
  */
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { readSse } from '@schemastud/chat/core';
 
 /** The minimal shape this hook needs from an injected HTTP client (axios-compatible, duck-typed — no axios dependency). */
@@ -101,6 +101,11 @@ export function useSseStream<TEvent extends { event: string; data: unknown }>(
     const [error, setError] = useState<unknown>(null);
     const abortRef = useRef<AbortController | null>(null);
 
+    useEffect(() => () => {
+        abortRef.current?.abort();
+        abortRef.current = null;
+    }, []);
+
     const reset = useCallback(() => {
         abortRef.current?.abort();
         abortRef.current = null;
@@ -143,6 +148,9 @@ export function useSseStream<TEvent extends { event: string; data: unknown }>(
                     }
 
                     for await (const frame of readSse(response)) {
+                        if (abortRef.current !== controller || controller.signal.aborted) {
+                            return;
+                        }
                         setEvents((prev) => [...prev, frame as unknown as TEvent]);
                     }
 
@@ -150,7 +158,11 @@ export function useSseStream<TEvent extends { event: string; data: unknown }>(
                         setStatus('done');
                     }
                 } catch (err) {
-                    if ((err as { name?: string } | undefined)?.name === 'AbortError') {
+                    if (
+                        abortRef.current !== controller ||
+                        controller.signal.aborted ||
+                        (err as { name?: string } | undefined)?.name === 'AbortError'
+                    ) {
                         return;
                     }
                     setError(err);
