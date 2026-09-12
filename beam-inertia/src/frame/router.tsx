@@ -13,6 +13,7 @@ import { useMemo } from 'react';
 import { useParams, useRoutes } from 'react-router';
 import { frameIcon } from './icons';
 import type { FrameManifest, FrameNavNode } from './manifest';
+import { realmHref, realmRelative, useFrameRealm } from './realm';
 import { formFromManifest, labelFromManifest } from './manifest';
 
 /**
@@ -157,6 +158,10 @@ export function idFromParam(param: string | undefined): string | null {
 }
 
 export function FrameRoutes({ manifest }: { manifest: FrameManifest }) {
+    // The realm's routeBase. Two path shapes ride the manifest and this is what tells them apart —
+    // see the two comments below; both were correct only while every console's base was `/`.
+    const { basename } = useFrameRealm();
+
     const routes = useMemo<RealmRouteObject[]>(() => {
         const declined = new Map<string, string>();
 
@@ -193,8 +198,12 @@ export function FrameRoutes({ manifest }: { manifest: FrameManifest }) {
                     candidate.resource === resource &&
                     candidate.path.endsWith('/:id'),
             );
+            // REALM-PREFIXED, because this feeds `router.visit()` — an INERTIA visit, which goes to
+            // the server and is not rewritten by React Router's basename. The hardcoded leading `/`
+            // this replaces assumed the realm's routeBase was `/`, true of the tenant realm and of
+            // nothing else.
             const recordBase = twin
-                ? `/${twin.path.replace(/\/:id$/, '')}`
+                ? realmHref(basename, twin.path.replace(/\/:id$/, ''))
                 : null;
 
             routeRegistry.registerRoute(entry.routeName, () => (
@@ -264,12 +273,18 @@ export function FrameRoutes({ manifest }: { manifest: FrameManifest }) {
                     typeof item.href === 'string',
             )
             .map((item) => ({
-                path: item.href.replace(/^\//, ''),
+                // REALM-RELATIVE, because this one is matched BY React Router under the basename.
+                // `nav[].href` is realm-PREFIXED (`RouteContextProjector::hrefs()` joins `routeBase`
+                // + shell + path) while `routeContext[].path` beside it is realm-relative; stripping
+                // only the leading slash produced `operator/…` paths a `/operator` basename could
+                // never match. The two shapes coincide in the tenant realm, which is why the
+                // difference was invisible while tenant was the only servable realm.
+                path: realmRelative(basename, item.href),
                 element: <SectionIndex node={item} />,
             }));
 
         return [...sections, ...titled, { path: '*', element: <NotFound /> }];
-    }, [manifest]);
+    }, [manifest, basename]);
 
     return useRoutes(routes);
 }

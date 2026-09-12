@@ -3,6 +3,7 @@ import type {
     FormMode,
     RouteContextEntry,
 } from '@schemastud/frame';
+import { useFrameRealm } from './realm';
 import { useQuery } from '@tanstack/react-query';
 import { jsonHeaders } from './xsrf';
 
@@ -47,14 +48,17 @@ export interface FrameManifest {
     routeContext: RouteContextEntry[];
 }
 
-async function fetchManifest(): Promise<FrameManifest> {
-    const res = await fetch('/frame/manifest', {
+async function fetchManifest(url: string): Promise<FrameManifest> {
+    const res = await fetch(url, {
         headers: jsonHeaders(),
         credentials: 'same-origin',
     });
 
     if (!res.ok) {
-        throw new Error(`manifest ${res.status}`);
+        // Names the URL, not just the status. With one manifest per realm, `manifest 403` no longer
+        // identifies WHICH manifest refused — and a 403 here is now an expected answer (a member
+        // reaching an operator-realm console), so the message is the only thing that tells them apart.
+        throw new Error(`GET ${url} failed (${res.status}).`);
     }
 
     const body = (await res.json()) as Partial<FrameManifest>;
@@ -67,11 +71,28 @@ async function fetchManifest(): Promise<FrameManifest> {
     };
 }
 
-/** The registered-resource roster, the nav tree and the router table — one fetch, shared by all three. */
+/**
+ * The registered-resource roster, the nav tree and the router table — one fetch, shared by all three.
+ *
+ * Realm-scoped through {@see useFrameRealm}. Both halves matter and neither is decoration:
+ *
+ *  - the URL, because a host mounts `FrameManifestController` ONCE PER REALM (`NavManifest::realmFor()`
+ *    reads the route's `defaults['realm']`), so the realm is carried by WHICH route you call, not by a
+ *    parameter on one route;
+ *  - the cache key, because `['frame','manifest']` is one entry for a whole page. An operator console
+ *    opened after a tenant one would have been served the tenant manifest out of cache — the wrong
+ *    surface, with no request to show for it.
+ *
+ * Unwrapped (no console around it) the context defaults to `/frame/manifest` and a null realm, which
+ * is exactly what this hook did before, so `components/nav-frame.tsx` and `frame/provider.tsx` in a
+ * layout outside any console are unchanged.
+ */
 export function useFrameManifest() {
+    const { realm, manifestUrl } = useFrameRealm();
+
     return useQuery({
-        queryKey: ['frame', 'manifest'],
-        queryFn: fetchManifest,
+        queryKey: ['frame', 'manifest', ...(realm === null ? [] : [realm])],
+        queryFn: () => fetchManifest(manifestUrl),
         staleTime: 60_000,
     });
 }
