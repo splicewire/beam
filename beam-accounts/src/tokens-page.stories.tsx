@@ -105,6 +105,28 @@ export const WithArchived: Story = {
 };
 
 /**
+ * Reveal-once — `play` drives the create flow to completion: name the token, submit, and
+ * land on the plaintext secret panel (FC-17 escape hatch) that is shown exactly once and
+ * never retrievable again.
+ */
+export const RevealOnceSecret: Story = {
+    render: () => (
+        <MockTokensProvider config={{ tokens: SAMPLE_TOKENS }}>
+            <TokensPage />
+        </MockTokensProvider>
+    ),
+    play: async ({ canvasElement }) => {
+        const canvas = within(canvasElement);
+        await userEvent.click(await canvas.findByRole('button', { name: /new token/i }));
+        const dialog = within(document.body);
+        await userEvent.type(await dialog.findByLabelText(/name/i), 'CI deploys v2');
+        await userEvent.click(dialog.getByRole('button', { name: /^create token$/i }));
+        await expect(await dialog.findByText(/shown once and cannot be retrieved/i)).toBeInTheDocument();
+        await expect(dialog.getByDisplayValue(/sw_live_demo_secret/)).toBeInTheDocument();
+    },
+};
+
+/**
  * Create dialog open — `play` opens the "New token" dialog so VR captures the mint form
  * (name + full/scoped access toggle + lifetime select).
  */

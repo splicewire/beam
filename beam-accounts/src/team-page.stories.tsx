@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
+import { userEvent, within, expect } from "storybook/test";
 import { TeamPage } from "./team-page";
-import { makeTeamClient, MockTeamProvider } from "./team-story-harness";
+import { makeTeamClient, MockTeamProvider, TEAM_INVITATIONS } from "./team-story-harness";
 const meta = {
   title: "Accounts/TeamPage",
   component: TeamPage,
@@ -44,4 +45,35 @@ export const Failed: Story = {
       <TeamPage {...args} />
     </MockTeamProvider>
   ),
+};
+
+/** Invite pending — the default fixture already carries one unaccepted invitation row. */
+export const InvitePending: Story = {
+  render: (args) => (
+    <MockTeamProvider>
+      <TeamPage {...args} />
+    </MockTeamProvider>
+  ),
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await expect((await canvas.findAllByText(TEAM_INVITATIONS[0].email)).length).toBeGreaterThan(0);
+  },
+};
+
+/** Invite cancel — `play` opens the revoke confirm dialog for the pending invitation. */
+export const InviteCancel: Story = {
+  render: (args) => (
+    <MockTeamProvider>
+      <TeamPage {...args} />
+    </MockTeamProvider>
+  ),
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await userEvent.click(
+      await canvas.findByRole("button", { name: `Revoke invitation for ${TEAM_INVITATIONS[0].email}` }),
+    );
+    const dialog = within(document.body);
+    await expect(await dialog.findByText(/revoke the pending invitation for/i)).toBeInTheDocument();
+    await expect(dialog.getByRole("button", { name: "Revoke invitation" })).toBeInTheDocument();
+  },
 };
