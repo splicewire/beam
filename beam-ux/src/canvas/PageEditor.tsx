@@ -41,6 +41,12 @@ import { createCanvasWidgetRegistry } from './widgetRegistry.js';
  * draft button is broken" the same picture.
  */
 export interface PageEditorTransport {
+    /**
+     * Persist the document. The RESPONSE is read, not discarded: a host whose save op answers with a
+     * `compileError` (the beam-ux entry envelope does) has stored the body but produced no artifact for
+     * a reader, and {@link compileErrorOf} turns that into the same error the publish path reports.
+     * Still typed `unknown` — a host is free to answer with anything, including nothing.
+     */
     saveBody: (slug: string, body: JsonDoc) => Promise<unknown>;
     loadBody?: (slug: string) => Promise<{ body?: unknown } | unknown>;
     /** Record the document as a draft: versioned, not published — readers keep the published body. */
@@ -108,6 +114,23 @@ const isDoc = (b: unknown): b is JsonDoc =>
     Array.isArray(b) &&
     b.length > 0 &&
     b.every((n) => !!n && typeof n === 'object' && 'kind' in (n as object));
+
+/**
+ * The compile diagnostic carried on a save response, or `null` when there is none.
+ *
+ * Read defensively rather than typed, because {@link PageEditorTransport.saveBody} promises `unknown`:
+ * a host may answer with the beam-ux entry envelope (`BeamUxEntryBodyData`, which carries
+ * `compileError: string | null`), with some shape of its own, or with nothing at all, and only the
+ * first of those has anything to say. An empty string is not a diagnostic — it would toast a blank
+ * error, which is worse than the silence it replaced.
+ */
+const compileErrorOf = (response: unknown): string | null => {
+    if (!response || typeof response !== 'object') return null;
+
+    const value = (response as { compileError?: unknown }).compileError;
+
+    return typeof value === 'string' && value !== '' ? value : null;
+};
 
 /** Whether `path` resolves to a `block` node the lens parsed from a PascalCase (component) tag —
  * see `CanvasNode`'s `data-bd-component` for the canvas-side half of this same distinction. */
@@ -261,13 +284,26 @@ export function PageEditor({
         return <TreeRender tree={doc} />;
     }
 
+    /**
+     * Write the canvas document — the immediate-publish path, and on this host a save IS a publish
+     * (`EntryBodySaveOp` records the version, moves the pin and compiles the artifact).
+     *
+     * So it reports a compile diagnostic exactly the way {@link publish} does: the write LANDED — the
+     * body is stored and the canvas is no longer dirty — but the compile that follows the pin did not,
+     * which means there is no artifact at the new address and a reader is served the packaged default
+     * over a body that is perfectly intact. Saying "Saved" to that is the one sentence an author can
+     * act on and would be wrong: the document they are looking at is not the document anyone else can
+     * see until it compiles. A thrown failure would be the wrong shape for the same reason it is wrong
+     * for publish — nothing was lost, one step of three did not finish.
+     */
     const save = async () => {
         mount.markSaving(true);
         try {
             await mount.flush();
-            await transport.saveBody(slug, doc);
+            const compileError = compileErrorOf(await transport.saveBody(slug, doc));
             mount.markDirty(false);
-            notify?.success('Saved');
+            if (compileError) notify?.error(compileError);
+            else notify?.success('Saved');
         } catch {
             notify?.error('Save failed');
         } finally {

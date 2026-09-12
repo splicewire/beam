@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import type { JsonDoc } from '../blockdoc/json.js';
 import type { EntryPublicationState, EntryVersion } from '../types.js';
 import { CanvasProvider } from './context.js';
@@ -110,8 +110,19 @@ const transportFor = (state: EntryPublicationState): PageEditorTransport => ({
 /**
  * The dock only renders in window (authoring) mode, which the host broadcasts — so a story has to
  * broadcast it too, and reset it on unmount or the next story inherits it.
+ *
+ * It also stands in for the HOST'S TOAST SURFACE. `notify` is an injected seam (the package never
+ * imports a toast library), so a story without one would show nothing when an operation reports
+ * something — and what an operation reports is half of what these stories are about: a publish and a
+ * save both answer with a compile diagnostic, and the dock itself stays clean either way.
  */
 function InEditMode({ transport }: { transport: PageEditorTransport }) {
+    const [toasts, setToasts] = useState<{ kind: 'success' | 'error'; msg: string }[]>([]);
+    const notify = {
+        success: (msg: string) => setToasts((t) => [...t, { kind: 'success' as const, msg }]),
+        error: (msg: string) => setToasts((t) => [...t, { kind: 'error' as const, msg }]),
+    };
+
     useEffect(() => {
         window.dispatchEvent(new CustomEvent('beam-ux:mode', { detail: { mode: 'window' } }));
         return () => __resetEditMode();
@@ -120,7 +131,40 @@ function InEditMode({ transport }: { transport: PageEditorTransport }) {
     return (
         <CanvasProvider config={config}>
             <div style={{ paddingTop: 56, minHeight: 320 }}>
-                <PageEditor slug="home" body={body} transport={transport} brand="beam-starter · editor" />
+                <PageEditor
+                    slug="home"
+                    body={body}
+                    transport={transport}
+                    notify={notify}
+                    brand="beam-starter · editor"
+                />
+            </div>
+            <div
+                style={{
+                    position: 'fixed',
+                    right: 16,
+                    bottom: 16,
+                    display: 'grid',
+                    gap: 8,
+                    justifyItems: 'end',
+                }}
+            >
+                {toasts.map((toast, i) => (
+                    <div
+                        key={i}
+                        data-toast={toast.kind}
+                        style={{
+                            padding: '8px 12px',
+                            borderRadius: 6,
+                            font: '500 13px/1.4 system-ui, sans-serif',
+                            color: '#fff',
+                            maxWidth: 360,
+                            background: toast.kind === 'error' ? '#b42318' : '#067647',
+                        }}
+                    >
+                        {toast.msg}
+                    </div>
+                ))}
             </div>
         </CanvasProvider>
     );
@@ -171,6 +215,30 @@ export const VersionsPanel: Story = {
     args: { transport: transportFor(DRAFT_PENDING) },
     play: async ({ canvasElement }) => {
         await click(canvasElement, 'Versions');
+    },
+};
+
+/**
+ * SAVED, BUT NOT COMPILED — the state an author used to be told was a clean "Saved".
+ *
+ * A Save is its own publish here: the body is written, a version recorded, the pin moved, and only
+ * then is the artifact compiled. When that last step fails there is no artifact at the new address and
+ * a reader is served the packaged default over a body that is perfectly intact — so the dock is clean,
+ * the canvas is not dirty, and the ONE thing that is wrong is invisible from the canvas. The server
+ * already answers with the diagnostic (`BeamUxEntryBodyData.compileError`); this is what reading it
+ * looks like, and it is the same error surface a failed `Publish` uses.
+ */
+export const SavedWithACompileError: Story = {
+    args: {
+        transport: {
+            ...transportFor(PUBLISHED),
+            saveBody: async () => ({
+                compileError: 'Unclosed <Card> on line 12 — readers still see the last good version.',
+            }),
+        },
+    },
+    play: async ({ canvasElement }) => {
+        await click(canvasElement, 'Save');
     },
 };
 

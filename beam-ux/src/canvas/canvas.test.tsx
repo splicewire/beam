@@ -371,6 +371,41 @@ describe('PageEditor — mode fork + transport', () => {
         expect(notify.success).toHaveBeenCalledWith('Saved');
     });
 
+    // ── a save that stored but did NOT compile ──────────────────────────────────────────────────────
+    //
+    // A Save through `save-body` is its own publish: the body is written, a version recorded, the pin
+    // moved, and only THEN is the artifact compiled. When that compile fails there is no artifact at
+    // the freshly-pinned address, `PageEntryRef::artifactFor()` returns null and the reader is served
+    // the packaged default tree — over a body that is perfectly intact. The server already says so:
+    // `EntryBodySaveOp` returns `compileError` on its response envelope precisely so the editor can
+    // (splicewire/laravel-beam-ux src/Particle/EntryBodySaveOp.php:120, carried across by
+    // `respond()` into `BeamUxEntryBodyData.compileError`). `publish()` has always surfaced it;
+    // `save()` discarded the response and said "Saved" regardless, so the one person who could fix the
+    // document was the one person not told. Nominated by the live measurement in
+    // `harness/evidence/g2-double-save.log`; this is the claim it left open.
+    //
+    // The affordance is deliberately the SAME one publish uses — the error toast over a write that
+    // really did land — not a thrown failure: the body IS stored, so the dock stays clean and the
+    // canvas is not dirty; what is missing is the reader's copy.
+    it('a Save whose response carries a compileError says so, and does NOT claim "Saved"', async () => {
+        const saveBody = vi.fn().mockResolvedValue({ compileError: 'Unclosed <Card> on line 12' });
+        const notify = { success: vi.fn(), error: vi.fn() };
+        const { container } = render(
+            wrap(<PageEditor slug="home" body={doc()} transport={{ saveBody }} notify={notify} />),
+        );
+        fireEvent(window, new CustomEvent('beam-ux:mode', { detail: { mode: 'window' } }));
+        await act(async () => {
+            fireEvent.click(dockButton(container, 'Save')!);
+            await Promise.resolve();
+        });
+
+        expect(saveBody).toHaveBeenCalledWith('home', expect.any(Array));
+        // The diagnostic itself, not a generic failure: it names what to fix.
+        expect(notify.error).toHaveBeenCalledWith('Unclosed <Card> on line 12');
+        // And the success claim is withheld — "Saved" to an author means "readers have it".
+        expect(notify.success).not.toHaveBeenCalled();
+    });
+
     it('Exit dispatches beam-ux:exit', () => {
         const onExit = vi.fn();
         window.addEventListener('beam-ux:exit', onExit);
