@@ -47,7 +47,9 @@ const CATALOG: ExtensionsCatalogRead = {
       installCount: 4,
       description: "A test listing.",
       changelog: [],
-      createdAt: "2026-08-01T00:00:00Z",
+      marketName: null,
+    syncedAt: null,
+    createdAt: "2026-08-01T00:00:00Z",
     },
     {
       id: 2,
@@ -65,7 +67,9 @@ const CATALOG: ExtensionsCatalogRead = {
       installCount: 1,
       description: null,
       changelog: [],
-      createdAt: "2026-08-01T00:00:00Z",
+      marketName: null,
+    syncedAt: null,
+    createdAt: "2026-08-01T00:00:00Z",
     },
   ],
 };
@@ -78,6 +82,8 @@ const DISCONNECTED_STATUS = {
     manualFallbackHint:
       "Paste a Personal Access Token directly: php artisan splicewire:connect --token=<pat>",
   },
+  // ux-demo-convergence G5 — no market connection: this site's catalog is its own.
+  markets: [],
 };
 
 const INSTALLED: InstalledExtension[] = [
@@ -113,6 +119,13 @@ function fakeClient(
     getCatalog: vi.fn(async () => CATALOG),
     getListing: vi.fn(async () => CATALOG.listings[0]),
     getConnectionStatus: vi.fn(async () => DISCONNECTED_STATUS),
+    connectMarket: vi.fn(async () => {
+      throw new Error("not used in this fixture");
+    }),
+    syncMarket: vi.fn(async () => {
+      throw new Error("not used in this fixture");
+    }),
+    disconnectMarket: vi.fn(async () => undefined),
     getInstalled: vi.fn(async () => INSTALLED),
     install: vi.fn(async () => INSTALLED[0]),
     purchase: vi.fn(async () => ({

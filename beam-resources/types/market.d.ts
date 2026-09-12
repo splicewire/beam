@@ -10,6 +10,7 @@ action: string,
 export type ConnectionStatusData = {
 connected: boolean,
 pairingGuidance: PairingGuidanceData,
+markets: MarketConnectionData[],
 };
 
 export type PairingGuidanceData = {
@@ -61,6 +62,8 @@ installCount: number,
 description: string | null,
 changelog: ExtensionChangelogEntryData[],
 createdAt: string,
+marketName: string | null,
+syncedAt: string | null,
 };
 
 export type ExtensionChangelogEntryData = {
@@ -169,4 +172,23 @@ installationId: number | null,
 
 export type ReviewRejectionInputData = {
 reason: string | null,
+};
+
+export type MarketConnectionData = {
+id: string,
+marketUrl: string,
+marketName: string | null,
+status: string,
+registryUrl: string | null,
+registryUsername: string | null,
+lastSyncedAt: string | null,
+lastSyncError: string | null,
+listingCount: number,
+credentialHint: string | null,
+createdAt: string,
+};
+
+export type MarketConnectionInputData = {
+marketUrl: string,
+credential: undefined | string,
 };

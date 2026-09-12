@@ -3,8 +3,9 @@ import { useState } from 'react';
 import { ExtensionDetailSheet } from './ExtensionDetailSheet';
 import { ExtensionsCatalog } from './ExtensionsCatalog';
 import { InstalledTab } from './InstalledTab';
+import { MarketConnectionPanel } from './MarketConnectionPanel';
 
-type Tab = 'browse' | 'installed';
+type Tab = 'browse' | 'installed' | 'market';
 
 /**
  * The beam-core Extensions area (ticket 08) — the whole `/extensions` surface a beam host mounts
@@ -25,13 +26,20 @@ export function ExtensionsArea({ className }: { className?: string }) {
                 <TabButton active={tab === 'installed'} onClick={() => setTab('installed')}>
                     Installed
                 </TabButton>
+                {/* ux-demo-convergence G5 (G5-CATALOG-FEDERATION) — a third seat, because "where
+                    does this catalog come from" is a question about the SITE, not about any
+                    listing in it. Putting it inside Browse would have made the connection state
+                    something you can only see while looking at the thing it explains, and would
+                    have left a site with no catalog at all (disconnected, or refused) with nowhere
+                    to go. */}
+                <TabButton active={tab === 'market'} onClick={() => setTab('market')}>
+                    Market
+                </TabButton>
             </div>
 
-            {tab === 'browse' ? (
-                <ExtensionsCatalog onSelect={setSelectedListingId} />
-            ) : (
-                <InstalledTab />
-            )}
+            {tab === 'browse' && <ExtensionsCatalog onSelect={setSelectedListingId} />}
+            {tab === 'installed' && <InstalledTab />}
+            {tab === 'market' && <MarketConnectionPanel />}
 
             <ExtensionDetailSheet
                 listingId={selectedListingId}

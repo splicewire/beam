@@ -6,6 +6,7 @@ import { ExtensionsArea } from "./ExtensionsArea";
 import { ExtensionsProvider, type ExtensionsClient } from "./provider";
 import type {
   InstalledExtension,
+  MarketConnection,
   MarketEntitlement,
   MarketExtension,
 } from "./types";
@@ -26,6 +27,9 @@ const listing: MarketExtension = {
   description: "A reusable team handbook.",
   changelog: [],
   createdAt: "2026-09-01T00:00:00Z",
+  // ux-demo-convergence G5 — no provenance: a listing this host published itself.
+  marketName: null,
+  syncedAt: null,
 };
 const installed: InstalledExtension = {
   installId: "installed-uuid",
@@ -95,6 +99,59 @@ const paidInstalled: InstalledExtension = {
   },
 };
 
+/**
+ * ux-demo-convergence G5 (G5-CATALOG-FEDERATION) — the four connection states, as four fixtures.
+ * They exist separately because they are four different SCREENS: a site with no market, one that
+ * is current, one whose credential the market refused, and one that could not reach its market.
+ * The last two are the pair JOURNEYS §G5 forbids collapsing.
+ */
+const connectedMarket: MarketConnection = {
+  id: "connection-uuid",
+  marketUrl: "https://market.example.test",
+  marketName: "Splicewire Market",
+  status: "connected",
+  registryUrl: "https://market.example.test/registry",
+  registryUsername: "composer",
+  lastSyncedAt: "2026-09-12T12:00:00Z",
+  lastSyncError: null,
+  listingCount: 1,
+  credentialHint: "9f2c",
+  createdAt: "2026-09-12T11:00:00Z",
+};
+
+const refusedMarket: MarketConnection = {
+  ...connectedMarket,
+  status: "refused",
+  lastSyncError:
+    "The market refused this connection credential. Reconnect with a credential issued by https://market.example.test.",
+};
+
+const unreachableMarket: MarketConnection = {
+  ...connectedMarket,
+  status: "error",
+  lastSyncError:
+    "Could not reach https://market.example.test: cURL error 28: Operation timed out",
+};
+
+/** A catalog row that came FROM a market — the provenance line a locally-published row has not. */
+const federatedListing: MarketExtension = {
+  ...listing,
+  id: 3,
+  name: "Demo Notes",
+  kind: "beam_extension",
+  sellerName: "Splicewire",
+  marketName: "Splicewire Market",
+  syncedAt: new Date(Date.now() - 4 * 60_000).toISOString(),
+};
+
+function marketsFor(state: StageState): MarketConnection[] {
+  if (state === "federated") return [connectedMarket];
+  if (state === "market-refused") return [refusedMarket];
+  if (state === "market-unreachable") return [unreachableMarket];
+
+  return [];
+}
+
 type StageState =
   | "populated"
   | "empty"
@@ -106,7 +163,13 @@ type StageState =
   // Paid, purchase rejected by the payment rail — failure + retry on the surface.
   | "paid-declined"
   // Paid, bought, installed — the credential the deploy step needs.
-  | "entitled";
+  | "entitled"
+  // ux-demo-convergence G5 — connected to a market: the catalog is the market's, with provenance.
+  | "federated"
+  // Connected, credential revoked at the market — reconnect, not retry.
+  | "market-refused"
+  // Connected, market unreachable — the last good catalog still renders, stamped with its age.
+  | "market-unreachable";
 
 function Stage({
   state = "populated",
@@ -120,7 +183,14 @@ function Stage({
   );
   const paidStates: StageState[] = ["paid", "paid-declined", "entitled"];
   const paid = paidStates.includes(state);
-  const activeListing: MarketExtension = gated
+  const federatedStates: StageState[] = [
+    "federated",
+    "market-refused",
+    "market-unreachable",
+  ];
+  const activeListing: MarketExtension = federatedStates.includes(state)
+    ? federatedListing
+    : gated
     ? { ...listing, requiresSplicewire: true }
     : paid
       ? state === "entitled"
@@ -141,6 +211,9 @@ function Stage({
         manualTokenEnvVar: "SPLICEWIRE_TOKEN",
         manualFallbackHint: "Use a personal access token.",
       },
+      // ⚠️ A DIFFERENT fact from `connected` above, on the same endpoint. `connected` is the
+      // Splicewire antenna; this is where the catalog comes from. See ConnectionStatusData.
+      markets: marketsFor(state),
     }),
     getInstalled: async () =>
       state === "empty"
@@ -166,6 +239,9 @@ function Stage({
     },
     update: async () => ({ ...installed, updateAvailable: false }),
     remove: async () => undefined,
+    connectMarket: async () => connectedMarket,
+    syncMarket: async () => connectedMarket,
+    disconnectMarket: async () => undefined,
   };
   return (
     <QueryClientProvider client={cache}>
@@ -266,5 +342,85 @@ export const DeploymentInstructions: Story = {
     const sheet = within(document.body);
     await expect(await sheet.findByText(/requires a connected splicewire account/i)).toBeInTheDocument();
     await expect(await sheet.findByText("php artisan splicewire:connect")).toBeInTheDocument();
+  },
+};
+
+/**
+ * Connected to a market: the catalog is the market's, and every card says so.
+ */
+export const FederatedCatalog: Story = {
+  render: () => <Stage state="federated" />,
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await expect(
+      await canvas.findByTestId("listing-provenance"),
+    ).toHaveTextContent(/From Splicewire Market/);
+  },
+};
+
+/** The connection screen itself, connected and current. */
+export const MarketConnected: Story = {
+  render: () => <Stage state="federated" />,
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await userEvent.click(await canvas.findByRole("button", { name: "Market" }));
+    const row = await canvas.findByTestId("market-connection");
+    await expect(row).toHaveAttribute("data-status", "connected");
+    await expect(row).toHaveTextContent(/1 listing/);
+    await expect(
+      await canvas.findByRole("button", { name: /re-sync/i }),
+    ).toBeInTheDocument();
+  },
+};
+
+/** No market: the honest empty state, with the connect form under it. */
+export const MarketDisconnected: Story = {
+  render: () => <Stage />,
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await userEvent.click(await canvas.findByRole("button", { name: "Market" }));
+    await expect(
+      await canvas.findByTestId("market-disconnected"),
+    ).toBeInTheDocument();
+    await expect(
+      await canvas.findByTestId("market-connect-form"),
+    ).toBeInTheDocument();
+  },
+};
+
+/**
+ * Credential refused — distinct from unreachable, and the message says what to do about it.
+ */
+export const MarketCredentialRefused: Story = {
+  render: () => <Stage state="market-refused" />,
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await userEvent.click(await canvas.findByRole("button", { name: "Market" }));
+    await expect(await canvas.findByTestId("market-connection")).toHaveAttribute(
+      "data-status",
+      "refused",
+    );
+    await expect(
+      await canvas.findByTestId("market-connection-error"),
+    ).toHaveTextContent(/issue a new one/i);
+  },
+};
+
+/** Sync failed — the last good catalog still renders, and the row says how old it is. */
+export const MarketSyncFailed: Story = {
+  render: () => <Stage state="market-unreachable" />,
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await userEvent.click(await canvas.findByRole("button", { name: "Market" }));
+    await expect(await canvas.findByTestId("market-connection")).toHaveAttribute(
+      "data-status",
+      "error",
+    );
+    await expect(
+      await canvas.findByTestId("market-connection-error"),
+    ).toHaveTextContent(/Could not reach/i);
+    // The catalog it last saw is still there — "sync failed" is not "catalog empty".
+    await userEvent.click(await canvas.findByRole("button", { name: "Browse" }));
+    await expect(await canvas.findByText("Demo Notes")).toBeInTheDocument();
   },
 };

@@ -13,6 +13,10 @@ const endpoints: ExtensionsEndpoints = {
   purchase: (id) => `/catalog/${id}/purchase`,
   update: (id) => `/installed/${id}/refresh`,
   remove: (id) => `/installed/${id}/remove`,
+  // ux-demo-convergence G5 — the `market-connections` resource and its `sync` op.
+  connections: "/market-connections",
+  connectionRow: (id) => `/market-connections/${id}`,
+  syncConnection: (id) => `/market-connections/${id}/sync`,
 };
 // Generic transport fixture: actual consumers supply axios/fetch; this test verifies the protocol.
 function transport(

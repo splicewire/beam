@@ -45,7 +45,9 @@ const PAID: MarketExtension = {
   installCount: 0,
   description: "A paid Beam Extension.",
   changelog: [],
-  createdAt: "2026-09-01T00:00:00Z",
+  marketName: null,
+    syncedAt: null,
+    createdAt: "2026-09-01T00:00:00Z",
 };
 
 const ENTITLEMENT: MarketEntitlement = {

@@ -4,6 +4,8 @@ export { InstalledTab } from "./InstalledTab";
 export { ExtensionDetailSheet } from "./ExtensionDetailSheet";
 export { TrustBadge, RequiresSplicewireBadge } from "./TrustBadge";
 export { DisconnectedBanner } from "./DisconnectedBanner";
+// ux-demo-convergence G5 — the connection screen: which market this site's catalog comes from.
+export { MarketConnectionPanel } from "./MarketConnectionPanel";
 // ux-demo-convergence G5 — the deployment state a host may want to surface outside the tab.
 export { DeploymentBadge, DeploymentPanel, DEPLOYMENT_LABELS } from "./DeploymentPanel";
 // ux-demo-convergence G5 — the buyer's own licence + the deploy commands it makes runnable.
@@ -25,6 +27,10 @@ export {
   useExtensionsCatalog,
   useExtensionListing,
   useConnectionStatus,
+  useMarketConnections,
+  useConnectMarket,
+  useSyncMarket,
+  useDisconnectMarket,
   useInstalledExtensions,
   useInstallExtension,
   usePurchaseExtension,
@@ -41,6 +47,9 @@ export type {
   ExtensionsCatalog as ExtensionsCatalogRead,
   InstalledExtension,
   ListingKind,
+  MarketConnection,
+  MarketConnectionInput,
+  MarketConnectionStatus,
   MarketEntitlement,
   MarketExtension,
   MarketPurchase,

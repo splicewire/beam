@@ -4,7 +4,12 @@ import {
   useExtensionsNotify,
   useExtensionsServices,
 } from "./provider";
-import type { CatalogFilters, InstalledExtension } from "./types";
+import type {
+  CatalogFilters,
+  InstalledExtension,
+  MarketConnection,
+  MarketConnectionInput,
+} from "./types";
 
 /**
  * ux-demo-convergence G5 — a mutation's toast reports the OBSERVED runtime state, never the fact
@@ -45,6 +50,7 @@ const catalogKey = (filters?: CatalogFilters) =>
 const listingKey = (id: number) => ["beam-market", "listing", id] as const;
 const INSTALLED_KEY = ["beam-market", "installed"] as const;
 const CONNECTION_STATUS_KEY = ["beam-market", "connection"] as const;
+const MARKETS_KEY = ["beam-market", "markets"] as const;
 
 /** The unified `/extensions` catalog — one query for both listing kinds, filterable by category/kind. */
 export function useExtensionsCatalog(filters?: CatalogFilters) {
@@ -76,6 +82,121 @@ export function useConnectionStatus() {
     queryKey: CONNECTION_STATUS_KEY,
     queryFn: () => client.getConnectionStatus(),
     staleTime: 60_000,
+  });
+}
+
+/**
+ * ux-demo-convergence G5 (G5-CATALOG-FEDERATION) — the markets this site reads its catalog from.
+ *
+ * Served off the SAME site-wide endpoint as the Splicewire-antenna fact (they arrive together;
+ * see `ConnectionStatusData`), so the connection screen costs no extra request — but kept under
+ * its own query key, because a re-sync invalidates the market list and has nothing to say about
+ * the antenna.
+ */
+export function useMarketConnections() {
+  const { client } = useExtensionsServices();
+
+  return useQuery({
+    queryKey: MARKETS_KEY,
+    queryFn: async () => (await client.getConnectionStatus()).markets ?? [],
+  });
+}
+
+/**
+ * Connect this site to a market.
+ *
+ * The server verifies the credential against that market BEFORE writing, so a refusal rejects
+ * here with the market's own words — a revoked key, a URL that is not a Splicewire market — and
+ * the operator is told which of the two it was rather than being handed a row that claims to be
+ * connected.
+ */
+export function useConnectMarket() {
+  const { client, onError } = useExtensionsServices();
+  const queryClient = useQueryClient();
+  const notify = useExtensionsNotify();
+
+  return useMutation({
+    mutationFn: (input: MarketConnectionInput) => client.connectMarket(input),
+    onSuccess: (connection) => {
+      // The CATALOG changes too, not just the market list: a connected site's catalog is its
+      // market's, so every catalog query is stale the instant this lands.
+      queryClient.invalidateQueries({ queryKey: ["beam-market"] });
+      notify({
+        type: "success",
+        message: `Connected to ${connection.marketName || connection.marketUrl}. ${connection.listingCount} ${connection.listingCount === 1 ? "listing" : "listings"} synced.`,
+      });
+    },
+    onError: (err) => {
+      notify({
+        type: "error",
+        message: extensionsErrorMessage(err, "Could not connect to that market."),
+      });
+      onError?.(err);
+    },
+  });
+}
+
+/**
+ * Re-sync one connection.
+ *
+ * ⚠️ A FAILED sync resolves here, it does not reject — the server answers 200 carrying the
+ * connection's new state, because the operator asked "try again", the host tried, and the answer
+ * is the row. Rejecting would render a generic transport error in place of the one field that
+ * explains the failure. So this branches on the resolved status instead of on a rejection.
+ */
+export function useSyncMarket() {
+  const { client, onError } = useExtensionsServices();
+  const queryClient = useQueryClient();
+  const notify = useExtensionsNotify();
+
+  return useMutation({
+    mutationFn: (connectionId: string) => client.syncMarket(connectionId),
+    onSuccess: (connection: MarketConnection) => {
+      queryClient.invalidateQueries({ queryKey: ["beam-market"] });
+
+      if (connection.status === "connected") {
+        notify({
+          type: "success",
+          message: `${connection.marketName || connection.marketUrl}: ${connection.listingCount} ${connection.listingCount === 1 ? "listing" : "listings"}.`,
+        });
+
+        return;
+      }
+
+      notify({
+        type: "error",
+        message:
+          connection.lastSyncError ??
+          "The sync did not complete. The catalog below is the last one this site saw.",
+      });
+    },
+    onError: (err) => {
+      notify({ type: "error", message: "Re-sync failed." });
+      onError?.(err);
+    },
+  });
+}
+
+/** Disconnect a market: its listings leave this catalog; installs and their rows survive. */
+export function useDisconnectMarket() {
+  const { client, onError } = useExtensionsServices();
+  const queryClient = useQueryClient();
+  const notify = useExtensionsNotify();
+
+  return useMutation({
+    mutationFn: (connectionId: string) => client.disconnectMarket(connectionId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["beam-market"] });
+      notify({
+        type: "success",
+        message:
+          "Disconnected. Its listings have left this catalog; anything already deployed here is untouched.",
+      });
+    },
+    onError: (err) => {
+      notify({ type: "error", message: "Could not disconnect." });
+      onError?.(err);
+    },
   });
 }
 

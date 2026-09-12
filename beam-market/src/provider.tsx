@@ -6,6 +6,8 @@ import type {
   ExtensionListingDetail,
   ExtensionsCatalog,
   InstalledExtension,
+  MarketConnection,
+  MarketConnectionInput,
   MarketPurchase,
 } from "./types";
 
@@ -41,6 +43,19 @@ export interface ExtensionsClient {
    */
   purchase(id: number): Promise<MarketPurchase>;
   install(id: number): Promise<InstalledExtension | AwaitingOpsReviewData>;
+  /**
+   * ux-demo-convergence G5 (G5-CATALOG-FEDERATION) — connect this site to a market host.
+   *
+   * The server VERIFIES the credential against that market before it writes anything, so this
+   * rejects with the market's own refusal on a bad URL or a revoked key. That is what lets the
+   * form put the message on the field that caused it instead of leaving a row claiming
+   * "connected" beside a catalog that never arrived.
+   */
+  connectMarket(input: MarketConnectionInput): Promise<MarketConnection>;
+  /** Re-sync one connection now. Resolves with its NEW state, including a failed one — see the hook. */
+  syncMarket(connectionId: string): Promise<MarketConnection>;
+  /** Disconnect: the market's listings leave this catalog, installs and their rows survive. */
+  disconnectMarket(connectionId: string): Promise<void>;
   update(installId: string): Promise<InstalledExtension>;
   remove(installId: string): Promise<void | AwaitingOpsReviewData>;
 }

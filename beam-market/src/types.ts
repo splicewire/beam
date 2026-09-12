@@ -13,6 +13,8 @@ import type {
   ConnectionStatusData,
   ExtensionChangelogEntryData,
   InstalledExtensionData,
+  MarketConnectionData,
+  MarketConnectionInputData,
   MarketEntitlementData,
   MarketExtensionData,
   MarketPurchaseData,
@@ -23,6 +25,8 @@ export type {
   ConnectionStatusData,
   ExtensionChangelogEntryData,
   InstalledExtensionData,
+  MarketConnectionData,
+  MarketConnectionInputData,
   MarketEntitlementData,
   MarketExtensionData,
   MarketPurchaseData,
@@ -103,3 +107,29 @@ export type MarketEntitlement = MarketEntitlementData;
 export type MarketPurchase = MarketPurchaseData;
 
 export type { AwaitingOpsReviewData } from "@splicewire/beam-resources/types/market";
+
+// ── Market connections (ux-demo-convergence G5, G5-CATALOG-FEDERATION) ───────────────────────
+
+/**
+ * The four states a connection can be in, narrowed from the DTO's bare `string` the same way
+ * `ListingKind`/`TrustTier` are.
+ *
+ * ⚠️ Four, not a boolean, and the surface renders four different things. A site that has never
+ * synced, one that is current, one whose credential the market REFUSED, and one that could not
+ * REACH its market need different next steps — reconnect with a new credential vs. retry. JOURNEYS
+ * §G5 names collapsing the last two as the thing to avoid ("disconnected and sync failed states
+ * are honest").
+ */
+export type MarketConnectionStatus =
+  | "pending"
+  | "connected"
+  | "refused"
+  | "error"
+  | string;
+
+export type MarketConnection = Omit<MarketConnectionData, "status"> & {
+  status: MarketConnectionStatus;
+};
+
+/** What the connect form submits: a market URL and the credential its operator issued. */
+export type MarketConnectionInput = MarketConnectionInputData;

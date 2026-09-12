@@ -25,6 +25,26 @@ function kindLabel(kind: string): string {
   return KIND_LABELS[kind] ?? kind;
 }
 
+/**
+ * How stale the provenance claim is, in words. Deliberately coarse: the useful question on a
+ * catalog card is "is this roughly current or clearly old", and a precise timestamp there invites
+ * a reader to treat a synced copy as a live one.
+ */
+function syncedAgo(iso: string): string {
+  const when = new Date(iso).getTime();
+
+  if (Number.isNaN(when)) return "at an unknown time";
+
+  const minutes = Math.max(0, Math.round((Date.now() - when) / 60_000));
+
+  if (minutes < 1) return "just now";
+  if (minutes < 60) return `${minutes}m ago`;
+
+  const hours = Math.round(minutes / 60);
+
+  return hours < 24 ? `${hours}h ago` : `${Math.round(hours / 24)}d ago`;
+}
+
 function ListingCard({
   listing,
   onSelect,
@@ -36,6 +56,10 @@ function ListingCard({
     <Card
       role="button"
       tabIndex={0}
+      // A stable handle for one offering in the catalog. "Is this listing offered / no longer
+      // offered" is the assertion the whole withdrawal and takedown policy turns on, and a text
+      // probe over the page would also match a toast or an open detail sheet.
+      data-testid="extension-card"
       onClick={() => onSelect(listing.id)}
       onKeyDown={(e) => {
         if (e.key === "Enter" || e.key === " ") onSelect(listing.id);
@@ -75,11 +99,22 @@ function ListingCard({
           )}
         </div>
       </CardHeader>
-      <CardContent className="flex items-center justify-between text-sm text-muted-foreground">
-        <span>{listing.sellerName}</span>
-        <span className="font-medium text-foreground">
-          {listing.isFree ? "Free" : listing.priceLabel}
-        </span>
+      <CardContent className="flex flex-col gap-1 text-sm text-muted-foreground">
+        <div className="flex items-center justify-between">
+          <span>{listing.sellerName}</span>
+          <span className="font-medium text-foreground">
+            {listing.isFree ? "Free" : listing.priceLabel}
+          </span>
+        </div>
+        {/* ux-demo-convergence G5 (G5-CATALOG-FEDERATION) — WHERE this offering came from.
+            Absent on a listing this host published itself, which is the only visible difference
+            between a real federated row and a locally-seeded fixture. */}
+        {listing.marketName && (
+          <span className="text-xs" data-testid="listing-provenance">
+            From {listing.marketName}
+            {listing.syncedAt ? ` · synced ${syncedAgo(listing.syncedAt)}` : null}
+          </span>
+        )}
       </CardContent>
     </Card>
   );
