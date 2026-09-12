@@ -17,11 +17,20 @@ import {
     SheetTitle,
 } from '@schemastud/ui';
 import type { ColumnDef } from '@tanstack/react-table';
-import { AlertCircle, ArrowDownRight, ArrowUpRight, Loader2, Plus } from 'lucide-react';
+import {
+    AlertCircle,
+    ArrowDownRight,
+    ArrowUpRight,
+    CheckCircle2,
+    Loader2,
+    Plus,
+    RotateCcw,
+} from 'lucide-react';
 import { useState } from 'react';
 import { errorMessage, formatDate, formatUsd } from './format';
-import { useCreditTopupCheckout, useWallet } from './commerce-hooks';
-import type { CreditLedgerEntry, WalletBalance } from './commerce-types';
+import { useCreditTopupCheckout, useReloadCredits, useWallet } from './commerce-hooks';
+import { useCommerceServices } from './commerce-provider';
+import type { CreditLedgerEntry, CreditReloadResult, WalletBalance } from './commerce-types';
 
 /**
  * Prepaid credits & wallet (Frame OS ticket 21 — promoted from the app's `features/credits`). The
@@ -179,7 +188,73 @@ function CreditLedger({ data, loading }: { data: CreditLedgerEntry[]; loading: b
     );
 }
 
-// ── Top-up overlay — embedded Stripe Checkout. A plain amount field for the amount step. ──
+// ── The direct-rail outcome panel — captured / declined + retry. ──
+//
+// Only rendered on the DIRECT-RAIL custody path (`client.reloadCredits`), where funding is settled
+// by the time the response returns. The hosted-checkout path has no such moment: its wallet is
+// funded later by a webhook, which is what the `crediting` window below exists for.
+function ReloadOutcome({
+    result,
+    onRetry,
+    onDone,
+}: {
+    result: CreditReloadResult;
+    onRetry: () => void;
+    onDone: () => void;
+}) {
+    if (result.captured) {
+        return (
+            <div className="mt-6 space-y-4">
+                <div
+                    role="status"
+                    className="flex items-start gap-3 rounded-md border border-primary/30 bg-primary/5 p-4 text-sm"
+                >
+                    <CheckCircle2 className="mt-0.5 size-4 flex-none text-primary" />
+                    <div className="space-y-1">
+                        <div className="font-medium">Credits added.</div>
+                        <p className="text-muted-foreground">
+                            {formatUsd(result.amountUsd)} captured on the{' '}
+                            <span className="font-mono">{result.driver}</span> rail. Your balance is{' '}
+                            {formatUsd(result.wallet.balanceUsd)}.
+                        </p>
+                    </div>
+                </div>
+                <Button className="w-full" variant="outline" onClick={onDone}>
+                    Done
+                </Button>
+            </div>
+        );
+    }
+
+    return (
+        <div className="mt-6 space-y-4">
+            <div
+                role="alert"
+                className="flex items-start gap-3 rounded-md border border-destructive/40 bg-destructive/5 p-4 text-sm"
+            >
+                <AlertCircle className="mt-0.5 size-4 flex-none text-destructive" />
+                <div className="space-y-1">
+                    <div className="font-medium">
+                        Declined
+                        {result.declineCode ? (
+                            <span className="font-mono font-normal"> ({result.declineCode})</span>
+                        ) : null}
+                    </div>
+                    <p className="text-muted-foreground">
+                        {formatUsd(result.amountUsd)} was not charged. Your balance is unchanged at{' '}
+                        {formatUsd(result.wallet.balanceUsd)}.
+                    </p>
+                </div>
+            </div>
+            <Button className="w-full" onClick={onRetry}>
+                <RotateCcw className="size-4" /> Try again
+            </Button>
+        </div>
+    );
+}
+
+// ── Top-up overlay — the amount step, then either the hosted-checkout hand-off or the direct-rail
+// outcome above. ──
 function TopUpSheet({
     open,
     onOpenChange,
@@ -189,6 +264,9 @@ function TopUpSheet({
     onPay,
     submitting,
     error,
+    outcome,
+    onRetry,
+    onDone,
 }: {
     open: boolean;
     onOpenChange: (open: boolean) => void;
@@ -198,6 +276,9 @@ function TopUpSheet({
     onPay: () => void;
     submitting: boolean;
     error: string | null;
+    outcome: CreditReloadResult | null;
+    onRetry: () => void;
+    onDone: () => void;
 }) {
     return (
         <Sheet
@@ -217,7 +298,9 @@ function TopUpSheet({
                     </SheetDescription>
                 </SheetHeader>
 
-                {crediting ? (
+                {outcome ? (
+                    <ReloadOutcome result={outcome} onRetry={onRetry} onDone={onDone} />
+                ) : crediting ? (
                     // The non-dismissable post-return poll state.
                     <div className="mt-6 space-y-4">
                         <div className="flex items-start gap-3 rounded-md border border-warning/40 bg-warning/10 p-4 text-sm text-warning-foreground">
@@ -286,17 +369,43 @@ function TopUpSheet({
 export function CreditsSurface() {
     const wallet = useWallet();
     const topup = useCreditTopupCheckout();
+    const reload = useReloadCredits();
+    // WHICH CUSTODY MODEL this host has, read off the injected adapter rather than off a prop or a
+    // second component: a host declares `reloadCredits` when its server collects on a configured
+    // money-in rail, and omits it when its credits are bought through hosted Stripe Checkout.
+    const directRail = useCommerceServices().client.reloadCredits !== undefined;
 
     const [sheetOpen, setSheetOpen] = useState(false);
     const [amountUsd, setAmountUsd] = useState(100);
     // The webhook-async funding window: set once a top-up Checkout returns but the credit hasn't
-    // settled — BalanceHeadline shows the pending badge and the overlay owns dismissal.
+    // settled — BalanceHeadline shows the pending badge and the overlay owns dismissal. Hosted
+    // custody only; a direct-rail reload is already settled when it answers.
     const [pendingCreditUsd, setPendingCreditUsd] = useState<number | null>(null);
+    const [outcome, setOutcome] = useState<CreditReloadResult | null>(null);
 
     const onPay = () => {
+        if (directRail) {
+            // A DECLINE resolves here, with `captured: false` — the rail answered. Only a transport
+            // failure lands in `reload.isError`, and only that one has no retry to offer.
+            reload.mutate(amountUsd, { onSuccess: setOutcome });
+
+            return;
+        }
+
         topup.mutate(amountUsd, {
             onSuccess: () => setPendingCreditUsd(amountUsd),
         });
+    };
+
+    const onRetry = () => {
+        setOutcome(null);
+        reload.reset();
+    };
+
+    const onDone = () => {
+        setOutcome(null);
+        reload.reset();
+        setSheetOpen(false);
     };
 
     return (
@@ -328,13 +437,27 @@ export function CreditsSurface() {
 
             <TopUpSheet
                 open={sheetOpen || pendingCreditUsd !== null}
-                onOpenChange={setSheetOpen}
+                onOpenChange={(next) => {
+                    setSheetOpen(next);
+                    if (!next) onRetry();
+                }}
                 crediting={pendingCreditUsd !== null}
                 amountUsd={amountUsd}
                 onAmountChange={setAmountUsd}
                 onPay={onPay}
-                submitting={topup.isPending}
-                error={topup.isError ? errorMessage(topup.error, 'Could not start checkout.') : null}
+                submitting={directRail ? reload.isPending : topup.isPending}
+                error={
+                    directRail
+                        ? reload.isError
+                            ? errorMessage(reload.error, 'Could not reach the payment rail.')
+                            : null
+                        : topup.isError
+                          ? errorMessage(topup.error, 'Could not start checkout.')
+                          : null
+                }
+                outcome={outcome}
+                onRetry={onRetry}
+                onDone={onDone}
             />
         </div>
     );

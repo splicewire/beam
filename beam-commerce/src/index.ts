@@ -34,6 +34,7 @@ export {
 export {
     useWallet,
     useCreditTopupCheckout,
+    useReloadCredits,
     useBudget,
     useUsageSummary,
     useBills,
@@ -74,6 +75,8 @@ export type {
     BudgetOffer,
     BudgetVerdict,
     BudgetOfferAction,
+    CreditReloadResult,
+    CreditReloadPaymentStatus,
     UsageSummary,
     UsageModelBreakdown,
     Bill,

@@ -1,6 +1,8 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useMemo, type ReactNode } from 'react';
+import { CommerceProvider, type CommerceClient, type CommerceServices } from './commerce-provider';
 import { AutoReloadProvider } from './provider';
+import type { CreditReloadResult, WalletBalance } from './commerce-types';
 import type {
     AutoReloadActivity,
     AutoReloadClient,
@@ -170,6 +172,156 @@ export function MockAutoReloadProvider({
     return (
         <QueryClientProvider client={queryClient}>
             <AutoReloadProvider services={{ client, ...services }}>{children}</AutoReloadProvider>
+        </QueryClientProvider>
+    );
+}
+
+// ── Credits / wallet fixtures (ux-demo-convergence G3) ──────────────────────
+//
+// Shaped as the STANDALONE host's wallet: a credit-only ledger with the running balance walked back
+// from the current one, and a `debitedUsd` of zero because a host that meters nothing has no debit
+// ledger. That is the honest shape `SiteWallet::balance()` returns, not a trimmed one.
+
+/** Nothing bought yet — the state a fresh commerce host opens on. */
+export const WALLET_EMPTY: WalletBalance = {
+    creditedUsd: 0,
+    debitedUsd: 0,
+    balanceUsd: 0,
+    unit: 'usd',
+    ledger: [],
+};
+
+/** One captured reload behind it. */
+export const WALLET_FUNDED: WalletBalance = {
+    creditedUsd: 100,
+    debitedUsd: 0,
+    balanceUsd: 100,
+    unit: 'usd',
+    ledger: [
+        {
+            id: 'c1',
+            at: '2026-09-12T12:00:00Z',
+            type: 'credit',
+            amountUsd: 100,
+            runningUsd: 100,
+            reason: 'topup:fake_9f21c0a3',
+            purchaseRef: null,
+        },
+    ],
+};
+
+export const RELOAD_CAPTURED: CreditReloadResult = {
+    paymentStatus: 'succeeded',
+    captured: true,
+    amountUsd: 100,
+    driver: 'fake',
+    declineCode: null,
+    providerRef: 'fake_9f21c0a3',
+    wallet: WALLET_FUNDED,
+};
+
+/**
+ * The fake rail's MAGIC DECLINE AMOUNT — an Order totalling exactly
+ * `commerce.fake.decline_minor_units` (66602 ⇒ $666.02) comes back Failed with
+ * `commerce.fake.decline_code`. The wallet rides along unchanged, which is the whole point.
+ */
+export const RELOAD_DECLINED: CreditReloadResult = {
+    paymentStatus: 'failed',
+    captured: false,
+    amountUsd: 666.02,
+    driver: 'fake',
+    declineCode: 'card_declined',
+    providerRef: 'fake_5b0e77d2',
+    wallet: WALLET_EMPTY,
+};
+
+export interface CommerceMockConfig {
+    /** The wallet `getWallet()` resolves with. Defaults to the funded fixture. */
+    wallet?: WalletBalance;
+    /** `getWallet()` never settles — the loading state. */
+    walletPending?: boolean;
+    /** `getWallet()` rejects with this message — the read-failure state. */
+    walletError?: string;
+    /** Successive `reloadCredits()` outcomes, consumed in order; the last one repeats. */
+    reloads?: CreditReloadResult[];
+    /** Omit the direct rail entirely — the hosted Stripe Checkout custody model. */
+    hostedCheckout?: boolean;
+}
+
+/**
+ * A fake {@link CommerceClient} over the fixtures. Only the credits half is exercised by the credits
+ * stories; the remaining methods answer inert shapes so the ONE adapter contract stays whole (a
+ * partial client would type-check by cast and then explode in a story that grew).
+ */
+export function makeCommerceClient(mock: CommerceMockConfig = {}): CommerceClient {
+    const wallet = mock.wallet ?? WALLET_FUNDED;
+    const reloads = [...(mock.reloads ?? [RELOAD_CAPTURED])];
+
+    const client: CommerceClient = {
+        getWallet: async () => {
+            if (mock.walletPending) return new Promise<WalletBalance>(() => {});
+            if (mock.walletError) throw new Error(mock.walletError);
+
+            return wallet;
+        },
+        startTopupCheckout: async () => ({ clientSecret: 'cs_test_story' }),
+        getBudget: async () => ({
+            allowed: true,
+            reason: null,
+            stop: null,
+            source: null,
+            limitUsd: null,
+            spentUsd: 0,
+            remainingUsd: null,
+            fraction: 0,
+            offer: null,
+        }) as unknown as Awaited<ReturnType<CommerceClient['getBudget']>>,
+        getUsageSummary: async () =>
+            ({}) as unknown as Awaited<ReturnType<CommerceClient['getUsageSummary']>>,
+        getBills: async () => [],
+        getBillPreview: async () => null,
+        getSubscription: async () => ({
+            subscription: null,
+            hasStripeId: false,
+            stripePriceId: null,
+            capabilityLabels: {},
+        }),
+        getEntitlements: async () => [],
+        startSubscriptionCheckout: async () => ({ url: '#' }),
+        getSubscriptionPortal: async () => ({ url: '#' }),
+    };
+
+    if (mock.hostedCheckout) return client;
+
+    return {
+        ...client,
+        reloadCredits: async () => (reloads.length > 1 ? reloads.shift()! : reloads[0]),
+    };
+}
+
+/** Wrap children in a fresh QueryClient + a mocked CommerceProvider. */
+export function MockCommerceProvider({
+    children,
+    mock,
+    services,
+}: {
+    children: ReactNode;
+    mock?: CommerceMockConfig;
+    services?: Partial<Omit<CommerceServices, 'client'>>;
+}) {
+    const key = JSON.stringify(mock ?? {});
+    const client = useMemo(() => makeCommerceClient(mock), [key]);
+    const queryClient = useMemo(
+        () =>
+            new QueryClient({
+                defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+            }),
+        [key],
+    );
+
+    return (
+        <QueryClientProvider client={queryClient}>
+            <CommerceProvider services={{ client, ...services }}>{children}</CommerceProvider>
         </QueryClientProvider>
     );
 }

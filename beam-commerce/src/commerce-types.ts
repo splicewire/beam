@@ -82,6 +82,41 @@ export type UsageSummary = UsageSummaryData;
 export type Bill = BillData;
 export type BillLineItem = BillLineItemData;
 
+// ── The direct-rail credit reload (ux-demo-convergence G3) ──────────────────
+//
+// Mirrors PHP `Splicewire\Beam\Commerce\Data\CreditReloadResultData`, and is declared HERE rather
+// than imported from the `_resources` projection for one honest reason: that bundle is generated at
+// splicewire-app, and splicewire-app is TENANTED — it mounts the Stripe-custody top-up, never this
+// standalone surface, so its projection does not carry the DTO. When a projecting host mounts the
+// standalone surface this moves up into the import block above, unchanged in shape.
+
+/** The engine's own money-in outcome. Only `succeeded` funded the wallet. */
+export type CreditReloadPaymentStatus =
+    | 'succeeded'
+    | 'failed'
+    | 'requires_action'
+    | 'pending'
+    | string;
+
+/**
+ * One reload attempt's outcome on the host's configured money-in rail.
+ *
+ * `wallet` is the authoritative balance AFTER the attempt — unchanged on a decline. It rides the
+ * result deliberately: a client that has to re-read the wallet to discover a decline changed
+ * nothing has a window in which it renders a wrong number.
+ */
+export interface CreditReloadResult {
+    paymentStatus: CreditReloadPaymentStatus;
+    captured: boolean;
+    amountUsd: number;
+    /** The rail that answered — `fake` on a sandbox host, `stripe` in production. */
+    driver: string;
+    /** The rail's normalized decline code; null on a captured payment. */
+    declineCode: string | null;
+    providerRef: string | null;
+    wallet: WalletBalance;
+}
+
 // ── Client-only wire shapes (no server DTO — write/preview shapes, not read-models) ──
 
 /**

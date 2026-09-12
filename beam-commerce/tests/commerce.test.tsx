@@ -15,6 +15,7 @@ import type {
     BillPreview,
     BudgetVerdict,
     CommerceClient,
+    CreditReloadResult,
     EntitlementRecord,
     SubscriptionView,
     UsageSummary,
@@ -129,7 +130,14 @@ const SUBSCRIPTION: SubscriptionView = {
         active: true,
         pausedAt: null,
         pausedUntil: null,
-        plan: { id: 'p1', slug: 'songwriter', name: 'Songwriter', description: 'The pro plan', components: [] },
+        plan: {
+            id: 'p1',
+            slug: 'songwriter',
+            name: 'Songwriter',
+            description: 'The pro plan',
+            components: [],
+            entitlements: {},
+        },
         earliestBillablePeriod: '2026-01',
         latestBillablePeriod: '2026-08',
     },
@@ -146,7 +154,7 @@ const ENTITLEMENTS: EntitlementRecord[] = [
 function fakeClient(overrides: Partial<CommerceClient> = {}): CommerceClient {
     return {
         getWallet: vi.fn(async () => WALLET),
-        startTopupCheckout: vi.fn(async () => ({ client_secret: 'cs_test' })),
+        startTopupCheckout: vi.fn(async () => ({ clientSecret: 'cs_test' })),
         getBudget: vi.fn(async () => BUDGET),
         getUsageSummary: vi.fn(async () => USAGE),
         getBills: vi.fn(async () => BILLS),
@@ -190,6 +198,182 @@ describe('CreditsSurface — isolation mount (no Laravel)', () => {
         fireEvent.click(await screen.findByRole('button', { name: /pay & add credits/i }));
 
         await waitFor(() => expect(client.startTopupCheckout).toHaveBeenCalledWith(100));
+    });
+});
+
+// ── The DIRECT-RAIL reload (ux-demo-convergence G3) ─────────────────────────
+//
+// A host that collects on a configured money-in rail declares `reloadCredits`, and the surface takes
+// the synchronous path: captured / declined + retry, settled by the time the response returns. A
+// host that omits it keeps the hosted Stripe Checkout path above, unchanged — which is what the two
+// `startTopupCheckout` tests already assert.
+
+const EMPTY_WALLET: WalletBalance = {
+    creditedUsd: 0,
+    debitedUsd: 0,
+    balanceUsd: 0,
+    unit: 'usd',
+    ledger: [],
+};
+
+const FUNDED_WALLET: WalletBalance = {
+    creditedUsd: 100,
+    debitedUsd: 0,
+    balanceUsd: 100,
+    unit: 'usd',
+    ledger: [
+        {
+            id: 'c1',
+            at: '2026-09-12T12:00:00Z',
+            type: 'credit',
+            amountUsd: 100,
+            runningUsd: 100,
+            reason: 'topup:fake_abc',
+            purchaseRef: null,
+        },
+    ],
+};
+
+const CAPTURED: CreditReloadResult = {
+    paymentStatus: 'succeeded',
+    captured: true,
+    amountUsd: 100,
+    driver: 'fake',
+    declineCode: null,
+    providerRef: 'fake_abc',
+    wallet: FUNDED_WALLET,
+};
+
+/** The fake rail's magic decline amount ($666.02) — `commerce.fake.decline_minor_units`. */
+const DECLINED: CreditReloadResult = {
+    paymentStatus: 'failed',
+    captured: false,
+    amountUsd: 666.02,
+    driver: 'fake',
+    declineCode: 'card_declined',
+    providerRef: 'fake_def',
+    wallet: EMPTY_WALLET,
+};
+
+describe('CreditsSurface — the direct-rail reload', () => {
+    it('renders the empty wallet with a next step rather than a blank table', async () => {
+        mount(<CreditsSurface />, fakeClient({ getWallet: vi.fn(async () => EMPTY_WALLET) }));
+
+        expect(await screen.findByText('Prepaid balance')).toBeTruthy();
+        expect(await screen.findByText(/No credit activity yet/i)).toBeTruthy();
+    });
+
+    it('shows a loading state while the wallet is in flight', async () => {
+        mount(
+            <CreditsSurface />,
+            fakeClient({ getWallet: vi.fn(() => new Promise<WalletBalance>(() => {})) }),
+        );
+
+        expect(await screen.findByText('Loading wallet…')).toBeTruthy();
+    });
+
+    it('reports a wallet read failure instead of rendering a zero balance', async () => {
+        mount(
+            <CreditsSurface />,
+            fakeClient({
+                getWallet: vi.fn(async () => {
+                    throw new Error('Wallet is unavailable.');
+                }),
+            }),
+        );
+
+        expect(await screen.findByText('Wallet is unavailable.')).toBeTruthy();
+    });
+
+    it('captures a reload through the injected rail and shows the funded balance', async () => {
+        const client = fakeClient({
+            getWallet: vi.fn(async () => EMPTY_WALLET),
+            reloadCredits: vi.fn(async () => CAPTURED),
+        });
+        mount(<CreditsSurface />, client);
+
+        fireEvent.click(await screen.findByRole('button', { name: /add credits/i }));
+        fireEvent.click(await screen.findByRole('button', { name: /pay & add credits/i }));
+
+        await waitFor(() => expect(client.reloadCredits).toHaveBeenCalledWith(100));
+
+        expect(await screen.findByText('Credits added.')).toBeTruthy();
+        expect(await screen.findByText(/captured on the/i)).toBeTruthy();
+        // The wallet query was SEEDED from the result — the headline reads the new balance with no
+        // second round trip, and getWallet was called exactly once (the initial read).
+        expect(client.getWallet).toHaveBeenCalledTimes(1);
+        await waitFor(() => expect(screen.getAllByText('$100.00').length).toBeGreaterThan(0));
+    });
+
+    it('shows a decline with its code, the unchanged balance, and a retry path', async () => {
+        const client = fakeClient({
+            getWallet: vi.fn(async () => EMPTY_WALLET),
+            reloadCredits: vi.fn(async () => DECLINED),
+        });
+        mount(<CreditsSurface />, client);
+
+        fireEvent.click(await screen.findByRole('button', { name: /add credits/i }));
+        fireEvent.click(await screen.findByRole('button', { name: /pay & add credits/i }));
+
+        const alert = await screen.findByRole('alert');
+        expect(alert.textContent).toContain('Declined');
+        expect(alert.textContent).toContain('card_declined');
+        expect(alert.textContent).toContain('Your balance is unchanged');
+        expect(await screen.findByRole('button', { name: /try again/i })).toBeTruthy();
+        // A decline is NOT an error — the mutation resolved, so nothing renders the transport-failure
+        // copy, and the balance is still the pre-attempt one.
+        expect(screen.queryByText(/Could not reach the payment rail/i)).toBeNull();
+    });
+
+    it('retries after a decline and captures on the second attempt', async () => {
+        const reloadCredits = vi
+            .fn<(amountUsd: number) => Promise<CreditReloadResult>>()
+            .mockResolvedValueOnce(DECLINED)
+            .mockResolvedValueOnce(CAPTURED);
+
+        mount(<CreditsSurface />, fakeClient({ getWallet: vi.fn(async () => EMPTY_WALLET), reloadCredits }));
+
+        fireEvent.click(await screen.findByRole('button', { name: /add credits/i }));
+        fireEvent.click(await screen.findByRole('button', { name: /pay & add credits/i }));
+
+        fireEvent.click(await screen.findByRole('button', { name: /try again/i }));
+
+        // Retry returns to the amount step, not to a dead end.
+        fireEvent.click(await screen.findByRole('button', { name: /pay & add credits/i }));
+
+        expect(await screen.findByText('Credits added.')).toBeTruthy();
+        expect(reloadCredits).toHaveBeenCalledTimes(2);
+    });
+
+    it('reports a transport failure separately from a decline', async () => {
+        mount(
+            <CreditsSurface />,
+            fakeClient({
+                getWallet: vi.fn(async () => EMPTY_WALLET),
+                reloadCredits: vi.fn(async () => {
+                    throw new Error('Network unreachable.');
+                }),
+            }),
+        );
+
+        fireEvent.click(await screen.findByRole('button', { name: /add credits/i }));
+        fireEvent.click(await screen.findByRole('button', { name: /pay & add credits/i }));
+
+        expect(await screen.findByText('Network unreachable.')).toBeTruthy();
+        expect(screen.queryByRole('alert')).toBeNull();
+    });
+
+    it('keeps the hosted-checkout path for a host that declares no direct rail', async () => {
+        const client = fakeClient();
+        expect(client.reloadCredits).toBeUndefined();
+
+        mount(<CreditsSurface />, client);
+
+        fireEvent.click(await screen.findByRole('button', { name: /add credits/i }));
+        fireEvent.click(await screen.findByRole('button', { name: /pay & add credits/i }));
+
+        await waitFor(() => expect(client.startTopupCheckout).toHaveBeenCalledWith(100));
+        expect(await screen.findByText(/crediting your wallet/i)).toBeTruthy();
     });
 });
 

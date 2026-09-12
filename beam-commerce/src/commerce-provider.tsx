@@ -3,6 +3,7 @@ import type {
     Bill,
     BillPreview,
     BudgetVerdict,
+    CreditReloadResult,
     EntitlementRecord,
     SubscriptionView,
     UsageSummary,
@@ -20,6 +21,24 @@ export interface CommerceClient {
     getWallet(): Promise<WalletBalance>;
     /** Start an embedded Stripe Checkout top-up; returns the clientSecret the element mounts on. */
     startTopupCheckout(amountUsd: number): Promise<{ clientSecret: string }>;
+    /**
+     * OPTIONAL — the DIRECT-RAIL reload (`site-credits.reload`). The two credit-purchase custody
+     * models the engine supports, and a host implements the one it has:
+     *
+     *  - **hosted custody** (`startTopupCheckout`): the browser collects the instrument, Stripe
+     *    captures, a verified webhook funds the wallet later. Funding is ASYNC, so the surface shows
+     *    the non-dismissable "crediting…" window;
+     *  - **direct rail** (this): the server places a CreditTopup Order through the money-in driver
+     *    the host has configured and the wallet is funded (or not) before the response returns.
+     *    Funding is SYNCHRONOUS, so the surface can show captured / declined + retry immediately.
+     *
+     * Declare it and `CreditsSurface` takes the direct path; omit it and the surface keeps the
+     * hosted-checkout path exactly as before — which is why this is optional rather than a second
+     * component. ⚠️ A DECLINE IS A RESOLVED VALUE, not a rejection: the adapter resolves with
+     * `captured: false` and the rail's code. Rejecting would collapse "the rail said no" into "the
+     * request failed", and only the first one has a retry path.
+     */
+    reloadCredits?(amountUsd: number): Promise<CreditReloadResult>;
 
     // Billing / spend control
     getBudget(): Promise<BudgetVerdict>;
