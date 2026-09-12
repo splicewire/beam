@@ -50,6 +50,28 @@ function joinUrl(baseURL: string | undefined, path: string): string {
     return `${baseURL.replace(/\/+$/, '')}/${path.replace(/^\/+/, '')}`;
 }
 
+/**
+ * What axios itself sends for a stateful (session-cookie) SPA call that a raw `fetch` does not
+ * get for free: the `XSRF-TOKEN` cookie, URL-decoded, as `X-XSRF-TOKEN`. Mirrors
+ * `ui/src/lib/api.ts`'s `xsrfHeaders()` — every tenant subdomain is a Sanctum stateful domain and
+ * the `api` group runs `EnsureFrontendRequestsAreStateful` first, so a same-origin POST that
+ * carries the session cookie but not this header is refused with a 419. Empty when there is no
+ * cookie (a token-only client never had one), so the caller can spread it unconditionally.
+ * Surfaced by G6-FLAGSHIP-PLAYWRIGHT once the URL join above stopped masking it: fixing the join
+ * let the request reach the route for the first time, exposing that this raw fetch — unlike the
+ * bespoke chat transport it was generalized from — never carried the XSRF header or credentials.
+ */
+function xsrfHeader(): Record<string, string> {
+    if (typeof document === 'undefined') {
+        return {};
+    }
+    const match = document.cookie.match(/(?:^|;\s*)XSRF-TOKEN=([^;]*)/);
+    if (!match || match[1] === '') {
+        return {};
+    }
+    return { 'X-XSRF-TOKEN': decodeURIComponent(match[1]) };
+}
+
 export type SseStreamStatus = 'idle' | 'streaming' | 'done' | 'error';
 
 export interface UseSseStreamResult<TEvent> {
@@ -109,7 +131,9 @@ export function useSseStream<TEvent extends { event: string; data: unknown }>(
                             Accept: 'text/event-stream',
                             'Content-Type': 'application/json',
                             Authorization: auth,
+                            ...xsrfHeader(),
                         },
+                        credentials: 'same-origin',
                         body: body !== undefined ? JSON.stringify(body) : undefined,
                         signal: controller.signal,
                     });
