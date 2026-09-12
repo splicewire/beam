@@ -30,6 +30,26 @@ export interface UseSseStreamOptions {
     method?: string;
 }
 
+/**
+ * Joins an axios-style `baseURL` and a route `path` the way axios itself composes them
+ * (`buildFullPath`): an absolute `path` (has a scheme, e.g. `https://…`) is used as-is —
+ * `baseURL` never applies. Otherwise exactly one `/` sits between them regardless of
+ * whether `baseURL` carries a trailing slash or `path` carries a leading one. G6-BEAM-UX-SSE-URL-JOIN:
+ * the previous raw `${baseURL ?? ''}${path}` template had no separator handling at all, so a
+ * baseURL of `.../api/v1` (no trailing slash — the normal axios shape) and a `route()`-generated
+ * path of `circuits/{id}/run` (no leading slash — those paths are written relative to the axios
+ * baseURL) collapsed to `.../api/v1circuits/{id}/run`, a 404.
+ */
+function joinUrl(baseURL: string | undefined, path: string): string {
+    if (/^[a-zA-Z][a-zA-Z\d+\-.]*:\/\//.test(path)) {
+        return path;
+    }
+    if (!baseURL) {
+        return path;
+    }
+    return `${baseURL.replace(/\/+$/, '')}/${path.replace(/^\/+/, '')}`;
+}
+
 export type SseStreamStatus = 'idle' | 'streaming' | 'done' | 'error';
 
 export interface UseSseStreamResult<TEvent> {
@@ -77,7 +97,7 @@ export function useSseStream<TEvent extends { event: string; data: unknown }>(
             setStatus('streaming');
             setError(null);
 
-            const url = `${client.defaults.baseURL ?? ''}${path}`;
+            const url = joinUrl(client.defaults.baseURL, path);
             const authHeader = client.defaults.headers?.common?.['Authorization'];
             const auth = typeof authHeader === 'string' ? authHeader : '';
 
