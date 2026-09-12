@@ -26,6 +26,7 @@ export function EntitlementPanel({
 }) {
   const [revealed, setRevealed] = useState(false);
   const registryHost = hostOf(entitlement.registryUrl);
+  const repositoryKey = repositoryKeyFor(entitlement.registryUrl);
   const key = entitlement.licenseKey;
 
   return (
@@ -53,7 +54,7 @@ export function EntitlementPanel({
             <pre className="mt-2 overflow-x-auto rounded bg-background p-2 text-xs leading-relaxed">
               <code>
                 {[
-                  `composer config repositories.splicewire composer ${entitlement.registryUrl}`,
+                  `composer config repositories.${repositoryKey} composer ${entitlement.registryUrl}`,
                   `composer config --global --auth http-basic.${registryHost} ${entitlement.registryUsername} ${revealed && key ? key : "<your key>"}`,
                   packageName ? `composer require ${packageName}` : null,
                 ]
@@ -75,13 +76,25 @@ export function EntitlementPanel({
             )}
             {/* Licensing and payment are distinct records, and the panel says so rather than
                 implying one is the other: a licence id you can quote to support, a payment
-                reference you can quote to finance. */}
-            <span className="text-xs text-muted-foreground">
-              {entitlement.licenseId
-                ? `Licence ${entitlement.licenseId}`
-                : "No licence recorded"}
-              {entitlement.paymentRef ? ` · payment ${entitlement.paymentRef}` : null}
-            </span>
+                reference you can quote to finance.
+
+                ⚠️ "No licence recorded" is shown only when there is NOTHING — not merely when
+                there is no licence ID. A federated site acquisition carries a real, working
+                credential and no licence uid (the market keeps that), and printing "No licence
+                recorded" directly above the key it just handed over is the panel contradicting
+                itself. Measured on fresh-market 2026-09-12. */}
+            {(entitlement.licenseId || entitlement.paymentRef || !key) && (
+              <span className="text-xs text-muted-foreground">
+                {entitlement.licenseId
+                  ? `Licence ${entitlement.licenseId}`
+                  : key
+                    ? null
+                    : "No licence recorded"}
+                {entitlement.paymentRef
+                  ? `${entitlement.licenseId ? " · " : ""}payment ${entitlement.paymentRef}`
+                  : null}
+              </span>
+            )}
           </div>
 
           {revealed && key && (
@@ -96,6 +109,30 @@ export function EntitlementPanel({
       </div>
     </div>
   );
+}
+
+/**
+ * The `repositories.<key>` name, derived from the registry's HOSTNAME.
+ *
+ * ⚠️ It must agree with what the server prints in the deployment step
+ * (`ObserveDeployment::repositoryKey()`, `parse_url(..., PHP_URL_HOST)`), because an operator runs
+ * both blocks: two different keys for one registry leaves Composer with two repository entries for
+ * the same URL. A fixed `splicewire` also collided outright when a consumer connected to two
+ * markets — the second `composer config` silently replaced the first. Measured on fresh-market
+ * 2026-09-12, where this panel said `repositories.splicewire` and the step above it said
+ * `repositories.e2e.app.splicewire.test`.
+ *
+ * ⚠️ `hostname`, not `host`: the KEY takes no port (it is a name), while the HTTP-Basic entry
+ * below must carry one, because Composer's own auth origin includes a non-default port.
+ */
+function repositoryKeyFor(url: string | null): string {
+  if (!url) return "market";
+
+  try {
+    return new URL(url).hostname.replace(/[^a-z0-9._-]+/gi, "-") || "market";
+  } catch {
+    return "market";
+  }
 }
 
 function hostOf(url: string | null): string {
