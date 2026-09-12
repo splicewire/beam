@@ -556,6 +556,78 @@ describe('PageEditor — mode fork + transport', () => {
         expect(transport.loadBody).toHaveBeenCalledWith('home');
     });
 
+    // ── two Saves in ONE session, no remount (the G2 double-save observation) ────────────────────────
+    //
+    // Observed live on beam.test 2026-09-12 (harness/evidence/g2-beam-author-entry-fix.log, "one false
+    // start"): authoring a baseline heading, Saving, then editing again and Saving a SECOND time in the
+    // same dock session — no reload between the two clicks — left the page showing the packaged default
+    // afterwards, as if neither heading had been written. Reloading between the two Saves avoided it, so
+    // the authoring spec carries a reload as a workaround. This is the client half of that observation,
+    // asked as the only question this package can answer: WHAT DOES THE SECOND SAVE POST? A save is the
+    // only thing the canvas sends, so if the document it sends carries both edits, nothing was lost here
+    // and the loss is downstream (the version pin, the compile, or the artifact address a reader reads).
+    //
+    // Deliberately on the FULL publication transport (the shape the live host mounts since
+    // splicewire/laravel-beam-ux d13bb15): entering edit mode then also fetches `listVersions` and the
+    // dock holds publication state beside the document, so the draft/pin flow is inside the window this
+    // test covers rather than outside it.
+    //
+    // It PASSES, and it was written before anything was changed, so that is a measurement and not a
+    // regression test: the canvas does not lose the first save. Discriminating — re-seeding `doc` from
+    // the `body` prop at the end of `save()` fails it on the first assertion.
+    it('a SECOND Save in the same session posts the first save’s content AND the new edit', async () => {
+        const transport = publishingTransport();
+        const { container } = await enterEditMode(transport);
+
+        /** Insert a heading from the palette and commit typed text into it the way an author does. */
+        const authorHeading = async (text: string) => {
+            const palette = Array.from(
+                container.querySelectorAll('.pe-panel.pe-left .ve-pal-item'),
+            ).find((el) => (el.textContent ?? '').includes('Heading')) as HTMLElement;
+            await act(async () => {
+                fireEvent.click(palette);
+            });
+
+            const inserted = Array.from(container.querySelectorAll('h2')).pop() as HTMLElement;
+            await act(async () => {
+                fireEvent.doubleClick(inserted);
+            });
+
+            // Re-query: the node re-renders as contenteditable once `editing` is set.
+            const editable = Array.from(container.querySelectorAll('h2')).pop() as HTMLElement;
+            editable.textContent = text;
+            await act(async () => {
+                fireEvent.blur(editable);
+            });
+        };
+
+        const save = async () => {
+            await act(async () => {
+                fireEvent.click(dockButton(container, 'Save')!);
+                await Promise.resolve();
+            });
+        };
+
+        await authorHeading('Baseline');
+        await save();
+
+        // No reload, no remount, no re-seed — the same mounted editor takes its second edit.
+        await authorHeading('Marker');
+        await save();
+
+        expect(transport.saveBody).toHaveBeenCalledTimes(2);
+        const text = (call: number) => JSON.stringify(transport.saveBody.mock.calls[call][1]);
+        expect(text(0)).toContain('Baseline');
+        // The claim: the second save is the WHOLE document, not the delta and not a re-seeded snapshot.
+        expect(text(1)).toContain('Baseline');
+        expect(text(1)).toContain('Marker');
+        // And the canvas still shows both, so the document the author sees is the one that was posted.
+        expect(Array.from(container.querySelectorAll('h2')).map((h) => h.textContent)).toEqual([
+            'Baseline',
+            'Marker',
+        ]);
+    });
+
     // These three all SELECT a node, which renders frame's Inspector -> SchemaForm -> an @rjsf/shadcn
     // field with a lucide-react icon. @rjsf/shadcn depends on lucide-react@^1.x, which npm nests
     // separately (schemastud/node_modules/@rjsf/shadcn/node_modules/lucide-react) since the workspace
