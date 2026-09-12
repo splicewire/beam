@@ -52,6 +52,18 @@ export interface PageEditorProps {
     entryId?: string | null;
 }
 
+/** The entry id, or the same honest failure the body transport has always raised without one. */
+function addressed(entryId: string | null): string {
+    if (entryId === null) {
+        throw new Error('no entry id — nothing to save against');
+    }
+
+    return entryId;
+}
+
+/** The canvas document as the wire shape the entry-body operations declare. */
+const asBody = (doc: JsonDoc): Record<string, unknown> => doc as unknown as Record<string, unknown>;
+
 export function PageEditor({
     slug,
     body = null,
@@ -118,18 +130,26 @@ export function PageEditor({
                     // — it is the editor's display label and `defaultTreeFor()` key. The BODY transport
                     // underneath is addressed by the entry ID (ADR-0214 §2). So the incoming `s` is
                     // deliberately unused: it names the page, not the row.
-                    saveBody: (_s, doc) => {
-                        if (entryId === null) {
-                            throw new Error(
-                                'no entry id — nothing to save against',
-                            );
-                        }
-
-                        return bodyClient.saveBody(
-                            entryId,
-                            doc as unknown as Record<string, unknown>,
-                        );
-                    },
+                    saveBody: (_s, doc) => bodyClient.saveBody(addressed(entryId), asBody(doc)),
+                    // The publication seam (G2-BEAM-DRAFT-PUBLISH), spread in only when there IS a row
+                    // to address. The dock renders the draft/publish/versions affordance iff all four
+                    // arrive, so a page whose entry is absent (a database that was never seeded) keeps
+                    // the plain Save dock and the honest error it already gives, rather than growing
+                    // buttons that cannot resolve an id.
+                    ...(entryId === null
+                        ? {}
+                        : {
+                              saveDraft: (_s: string, doc: JsonDoc) =>
+                                  bodyClient.saveDraft!(entryId, asBody(doc)),
+                              publish: () => bodyClient.publish!(entryId),
+                              listVersions: () => bodyClient.listVersions!(entryId),
+                              restoreVersion: (_s: string, ref: string) =>
+                                  bodyClient.restoreVersion!(entryId, ref),
+                              // The canvas re-seeds itself from this after a restore; without it an
+                              // author would keep editing the pre-restore document and Save it back
+                              // over the version they just restored.
+                              loadBody: () => bodyClient.loadBody(entryId),
+                          }),
                 }}
                 notify={{
                     success: (m) => toast.success(m),

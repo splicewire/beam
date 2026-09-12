@@ -29,7 +29,7 @@ import { getBeamInertiaConfig } from '../config';
 // So: **if the editor 404s on load or save, check this URL against `php artisan route:list` for
 // `beam-ux-entry.op.body` / `.op.save-body` before looking anywhere else.** That is the whole failure
 // mode, and it is the first thing to rule out.
-import type { UxBuilderClient } from '@splicewire/beam-ux';
+import type { EntryPublicationState, UxBuilderClient } from '@splicewire/beam-ux';
 /** Read the Laravel `XSRF-TOKEN` cookie for the stateful mutating POST. */
 function csrfToken(): string {
     const m = document.cookie.match(/(?:^|;\s*)XSRF-TOKEN=([^;]+)/);
@@ -79,7 +79,58 @@ const defaultBodyClient: UxBuilderClient = {
     },
 };
 
+// ── the PUBLICATION seam (G2-BEAM-DRAFT-PUBLISH) ─────────────────────────────────────────────────
+//
+// Four more id-addressed operations on the same resource, mounted by the host beside `save-body`
+// (`save-draft` / `publish` / `versions` / `restore`, all `ability: 'ux.author'`). They are OPTIONAL on
+// `UxBuilderClient` because a host mounts them deliberately; this default implements them because the
+// starters do, and a host that has not simply gets 404s it never calls — the dock renders the
+// affordance only when the whole seam is present.
+//
+// The same literal-URL hazard the block above describes applies verbatim: if a draft or publish 404s,
+// check these four against `php artisan route:list` before looking anywhere else.
+const publicationClient = {
+    listVersions: async (id: string) => {
+        const res = await fetch(`/beam-ux-entries/${id}/versions`, {
+            headers: { Accept: 'application/json' },
+            credentials: 'same-origin',
+        });
+
+        return (await readData(res, 'versions')) as EntryPublicationState;
+    },
+    saveDraft: async (id: string, body: Record<string, unknown>, label?: string) =>
+        (await publicationPost(id, 'save-draft', { body, label })) as EntryPublicationState,
+    publish: async (id: string, label?: string) =>
+        (await publicationPost(id, 'publish', { label })) as EntryPublicationState,
+    restoreVersion: async (id: string, ref: string, label?: string) =>
+        (await publicationPost(id, 'restore', { ref, label })) as EntryPublicationState,
+};
+
+/** The shared write leg: a stateful, cookie-authed POST carrying the XSRF header axios would add. */
+async function publicationPost(id: string, op: string, payload: Record<string, unknown>): Promise<unknown> {
+    const res = await fetch(`/beam-ux-entries/${id}/${op}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-XSRF-TOKEN': csrfToken(),
+            Accept: 'application/json',
+        },
+        credentials: 'same-origin',
+        body: JSON.stringify(payload),
+    });
+
+    return readData(res, op);
+}
+
 export const bodyClient: UxBuilderClient = {
     loadBody: (id) => (getBeamInertiaConfig().entryClient ?? defaultBodyClient).loadBody(id),
     saveBody: (id, body) => (getBeamInertiaConfig().entryClient ?? defaultBodyClient).saveBody(id, body),
+    // A host-supplied `entryClient` may implement these or not; falling through to the default keeps a
+    // host that only overrode the body transport from silently losing the publication affordance.
+    listVersions: (id) => (getBeamInertiaConfig().entryClient?.listVersions ?? publicationClient.listVersions)(id),
+    saveDraft: (id, body, label) =>
+        (getBeamInertiaConfig().entryClient?.saveDraft ?? publicationClient.saveDraft)(id, body, label),
+    publish: (id, label) => (getBeamInertiaConfig().entryClient?.publish ?? publicationClient.publish)(id, label),
+    restoreVersion: (id, ref, label) =>
+        (getBeamInertiaConfig().entryClient?.restoreVersion ?? publicationClient.restoreVersion)(id, ref, label),
 };

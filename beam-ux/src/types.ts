@@ -32,6 +32,65 @@ export interface UxBuilderClient<TBody = BeamUxEntryBodyData> {
      * (`POST .../beam-ux-entries/{id}/op/save-body`). Addressed by id, same as {@link loadBody}.
      */
     saveBody(id: string, body: Record<string, unknown>): Promise<TBody>;
+
+    /* ── the OPTIONAL publication seam (G2-BEAM-DRAFT-PUBLISH) ───────────────────────────────── */
+    // Four methods, all optional, because a host mounts the draft/publish operations deliberately
+    // (`splicewire/laravel-beam-ux`'s `save-draft` / `publish` / `versions` / `restore`) and a host
+    // that has not is not broken — it has the immediate-publish write it always had. The surfaces
+    // render the affordance only when the methods are supplied, so "this host does not do drafts" and
+    // "this host's draft button is broken" are never the same picture.
+
+    /** Record a body as a DRAFT: written and versioned, NOT published — readers keep the published body. */
+    saveDraft?(id: string, body: Record<string, unknown>, label?: string): Promise<EntryPublicationState>;
+    /** Publish the working copy: move the publication pin, mirror to disk, compile the artifact. */
+    publish?(id: string, label?: string): Promise<EntryPublicationState>;
+    /** The recorded version history plus both pins. */
+    listVersions?(id: string): Promise<EntryPublicationState>;
+    /** Roll forward to a recorded version (a uuid or a readable handle like `v2`) and publish it. */
+    restoreVersion?(id: string, ref: string, label?: string): Promise<EntryPublicationState>;
+}
+
+/**
+ * One recorded version of an entry body — the projection of
+ * `Splicewire\Beam\Ux\Data\EntryVersionData`.
+ *
+ * ⚠️ **Hand-declared here, unlike {@link BeamUxEntryBodyData}, and that is a known gap rather than a
+ * design.** The generated projection travels through `@splicewire/beam-resources`, whose `types/` are
+ * emitted by the flagship's `resources:beam` pipeline from its own `typescript:transform` run — a
+ * regeneration this pass did not run. The fields below are the PHP DTO's fields and nothing else; the
+ * first `resources:beam` run after this lands should emit them and these two declarations should be
+ * re-exported from the bundle instead of written here.
+ */
+export interface EntryVersion {
+    id: string;
+    version: number;
+    readable: string;
+    label: string | null;
+    createdBy: string | null;
+    createdAt: string | null;
+    /** The working HEAD — the body an author currently edits. */
+    isHead: boolean;
+    /** The published body — the one a guest reader is served. */
+    isPublished: boolean;
+}
+
+/**
+ * An entry's publication state — the projection of
+ * `Splicewire\Beam\Ux\Data\EntryPublicationData`, and the ONE shape all four publication operations
+ * return, so a surface re-seeds its whole affordance from whatever the server actually did.
+ *
+ * `draftPending` is derived server-side from the two pins disagreeing; it is never a stored flag, so a
+ * client must not compute or cache its own.
+ */
+export interface EntryPublicationState {
+    id: string;
+    draftPending: boolean;
+    publishedVersion: string | null;
+    publishedReadable: string | null;
+    headVersion: string | null;
+    headReadable: string | null;
+    versions: EntryVersion[];
+    compileError: string | null;
 }
 
 export interface NotifyEvent {

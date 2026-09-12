@@ -13,6 +13,8 @@ export type { BeamUxEntryBodyData } from '@splicewire/beam-resources/types/beam-
 export { UxBuilderProvider, useUxBuilderServices, useNotify } from './provider';
 export { useEntryBody, useSaveEntryBody } from './hooks';
 export type {
+    EntryPublicationState,
+    EntryVersion,
     UxBuilderClient,
     UxBuilderServices,
     NotifyEvent,

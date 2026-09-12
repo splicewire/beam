@@ -16,11 +16,12 @@
 // that provider itself (window mode gets it for free); PageEditor has no such shell, so it provides
 // the SAME canvas widget registry (class-chips/style-rows) itself, or className/style would silently
 // fall back to plain text inputs instead of the chip/row UX.
-import { useEffect, useMemo, useState, useSyncExternalStore } from 'react';
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import { EditShellMountProvider, Inspector as FrameInspector, useEditShellMountController } from '@schemastud/frame';
 import { WidgetRegistryContext } from '@schemastud/seam';
 import { getAt, isJsonBlock } from '../blockdoc/json.js';
 import type { JsonDoc } from '../blockdoc/json.js';
+import type { EntryPublicationState, EntryVersion } from '../types.js';
 import { Breadcrumb } from './Breadcrumb.js';
 import { CanvasPalette } from './CanvasPalette.js';
 import { CanvasWidget } from './CanvasWidget.js';
@@ -29,10 +30,27 @@ import type { CanvasTheme } from './css.js';
 import { TreeRender } from './TreeRender.js';
 import { createCanvasWidgetRegistry } from './widgetRegistry.js';
 
-/** The persistence seam — the host injects load/save (audiostud routes them through puckClient). */
+/**
+ * The persistence seam — the host injects load/save (audiostud routes them through puckClient).
+ *
+ * The four PUBLICATION methods are OPTIONAL and travel together: supply them and the dock grows the
+ * draft/publish affordance, omit them and it is exactly the Save/Exit dock it has always been. That is
+ * deliberate — a host mounts `save-draft` / `publish` / `versions` / `restore` on purpose, and one that
+ * has not is not broken, it has the immediate-publish write it always had. Rendering the buttons
+ * unconditionally and letting them 404 would make "this host does not do drafts" and "this host's
+ * draft button is broken" the same picture.
+ */
 export interface PageEditorTransport {
     saveBody: (slug: string, body: JsonDoc) => Promise<unknown>;
     loadBody?: (slug: string) => Promise<{ body?: unknown } | unknown>;
+    /** Record the document as a draft: versioned, not published — readers keep the published body. */
+    saveDraft?: (slug: string, body: JsonDoc) => Promise<EntryPublicationState>;
+    /** Publish the working copy through the real compile path. */
+    publish?: (slug: string) => Promise<EntryPublicationState>;
+    /** The recorded history plus both pins — refetched whenever the panel opens. */
+    listVersions?: (slug: string) => Promise<EntryPublicationState>;
+    /** Roll forward to a recorded version and publish it. */
+    restoreVersion?: (slug: string, ref: string) => Promise<EntryPublicationState>;
 }
 
 /** Optional toast seam (host injects; the package never imports a toast lib). */
@@ -201,6 +219,43 @@ export function PageEditor({
         if (mount.selectedNodeId) setRightOpen(true);
     }, [mount.selectedNodeId]);
 
+    // ── Publication: draft / publish / versions / restore ─────────────────────────────────────────
+    // The whole affordance is gated on the transport actually carrying the seam. All four or none:
+    // a dock offering Save draft with no Publish would strand an author's work where no reader can
+    // reach it, which is worse than not offering drafts at all.
+    const publishable = !!(
+        transport.saveDraft &&
+        transport.publish &&
+        transport.listVersions &&
+        transport.restoreVersion
+    );
+    const [publication, setPublication] = useState<EntryPublicationState | null>(null);
+    const [versionsOpen, setVersionsOpen] = useState(false);
+    const [pendingRestore, setPendingRestore] = useState<EntryVersion | null>(null);
+    const [busy, setBusy] = useState(false);
+    // One attempt, not one per render: `transport` is an object literal at most call sites, so a
+    // dependency on it re-runs every render, and a FAILED load would then retry forever. The ref is
+    // what makes "we asked and it did not answer" a terminal state rather than a loop.
+    const askedForPublication = useRef(false);
+
+    useEffect(() => {
+        if (!editing || !publishable || askedForPublication.current) return;
+        askedForPublication.current = true;
+
+        let live = true;
+        transport
+            .listVersions?.(slug)
+            .then((state) => live && setPublication(state))
+            // Silent: the draft badge is an enrichment of a dock that works without it, and a toast on
+            // every editor open would be noise on a host mid-migration.
+            .catch(() => {});
+
+        return () => {
+            live = false;
+        };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [editing, publishable, slug]);
+
     // Read mode: the plain page (correct chrome + styles), no editing overhead.
     if (!editing) {
         return <TreeRender tree={doc} />;
@@ -220,6 +275,97 @@ export function PageEditor({
         }
     };
     const exit = () => window.dispatchEvent(new CustomEvent('beam-ux:exit'));
+
+    /**
+     * Record the canvas document as a DRAFT. Same flush-then-write as {@link save}, and deliberately
+     * the same "the document is no longer dirty" outcome — a draft IS persisted; what it is not is
+     * published.
+     */
+    const saveDraft = async () => {
+        if (!transport.saveDraft) return;
+        setBusy(true);
+        try {
+            await mount.flush();
+            setPublication(await transport.saveDraft(slug, doc));
+            mount.markDirty(false);
+            notify?.success('Draft saved');
+        } catch {
+            notify?.error('Draft save failed');
+        } finally {
+            setBusy(false);
+        }
+    };
+
+    /**
+     * Publish the working copy. It sends no document: what it publishes is what the server already
+     * holds, which is the distinction between this and Save.
+     *
+     * A compile diagnostic comes back on the state rather than as a thrown failure — the publish has
+     * landed by then — so it is reported as an error toast over a publication that really did happen.
+     */
+    const publish = async () => {
+        if (!transport.publish) return;
+        setBusy(true);
+        try {
+            const next = await transport.publish(slug);
+            setPublication(next);
+            if (next.compileError) notify?.error(next.compileError);
+            else notify?.success('Published');
+        } catch {
+            notify?.error('Publish failed');
+        } finally {
+            setBusy(false);
+        }
+    };
+
+    /** Open/close the history panel, refetching on every open so it can never show a stale HEAD. */
+    const toggleVersions = async () => {
+        const opening = !versionsOpen;
+        setVersionsOpen(opening);
+        setPendingRestore(null);
+        if (!opening) return;
+        // One panel at a time on the right edge; they occupy the same strip.
+        setRightOpen(false);
+        setBusy(true);
+        try {
+            if (transport.listVersions) setPublication(await transport.listVersions(slug));
+        } catch {
+            notify?.error('Could not load the version history');
+        } finally {
+            setBusy(false);
+        }
+    };
+
+    /**
+     * Roll forward to a recorded version — and RE-SEED THE CANVAS from what the server now holds.
+     *
+     * Without the re-seed the author would be looking at the document they had before the restore,
+     * and the next Save would write it straight back over the version they just restored. The editor
+     * cannot re-seed from the publication state (a version list deliberately carries no bodies), so it
+     * re-reads through the same `loadBody` seam the host already supplies; a transport without one
+     * says so rather than leaving a stale canvas looking authoritative.
+     */
+    const restore = async (version: EntryVersion) => {
+        if (!transport.restoreVersion) return;
+        setBusy(true);
+        try {
+            setPublication(await transport.restoreVersion(slug, version.readable));
+            setPendingRestore(null);
+
+            if (transport.loadBody) {
+                const restored = (await transport.loadBody(slug)) as { body?: unknown } | undefined;
+                if (isDoc(restored?.body)) setDoc(restored.body);
+                mount.markDirty(false);
+                notify?.success(`Restored ${version.readable}`);
+            } else {
+                notify?.success(`Restored ${version.readable} — reload to edit it`);
+            }
+        } catch {
+            notify?.error(`Could not restore ${version.readable}`);
+        } finally {
+            setBusy(false);
+        }
+    };
 
     return (
         <WidgetRegistryContext.Provider value={registry}>
@@ -257,6 +403,34 @@ export function PageEditor({
                     <button className="pe-btn" onClick={() => setRightOpen((v) => !v)}>
                         Inspector
                     </button>
+                    {publishable && (
+                        <>
+                            {/* The one piece of state an author cannot infer from the canvas: their
+                                working copy is ahead of what readers are being served. Named, with the
+                                version readers are actually on, because "unpublished changes" without
+                                saying what is live is the half of the sentence that matters. */}
+                            {publication?.draftPending && (
+                                <span className="pe-draft">
+                                    Draft pending
+                                    {publication.publishedReadable
+                                        ? ` · readers see ${publication.publishedReadable}`
+                                        : ''}
+                                </span>
+                            )}
+                            <button className="pe-btn" onClick={saveDraft} disabled={busy}>
+                                Save draft
+                            </button>
+                            <button className="pe-btn" onClick={publish} disabled={busy}>
+                                Publish
+                            </button>
+                            <button className="pe-btn" onClick={toggleVersions} disabled={busy}>
+                                Versions
+                            </button>
+                        </>
+                    )}
+                    {/* Save stays the IMMEDIATE-PUBLISH affordance it has always been, label included:
+                        it is what `g2-beam-author-entry` proves and what an author who never opens the
+                        draft door expects. The pair above is additive, never a re-spelling of this. */}
                     <button className="pe-btn primary" onClick={save}>
                         Save
                     </button>
@@ -274,7 +448,68 @@ export function PageEditor({
                 {/* Closed by default; the Inspector button opens it (empty hint until you select
                     something), and selecting an element auto-opens it with that element's properties.
                     frame's own Inspector already renders its own empty state when nothing is selected. */}
-                {rightOpen && (
+                {/* The version history — the same right-hand strip as the Inspector, so they toggle
+                    each other rather than stacking. Restore is CONFIRMED, never one click: it changes
+                    what every reader of the page is served, which is not an undoable local edit. */}
+                {versionsOpen && (
+                    <aside className="pe-panel pe-versions" aria-label="Versions">
+                        <h3>Versions</h3>
+
+                        {pendingRestore && (
+                            <div className="pe-confirm" role="alertdialog" aria-label="Confirm restore">
+                                <span>
+                                    Restore {pendingRestore.readable}? It becomes the published body
+                                    every reader is served.
+                                </span>
+                                <div className="pe-confirm-actions">
+                                    <button
+                                        className="pe-btn primary"
+                                        onClick={() => restore(pendingRestore)}
+                                        disabled={busy}
+                                    >
+                                        Confirm restore
+                                    </button>
+                                    <button className="pe-btn" onClick={() => setPendingRestore(null)}>
+                                        Cancel
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+
+                        {publication === null && <div className="pe-version">Loading…</div>}
+                        {publication !== null && publication.versions.length === 0 && (
+                            <div className="pe-version">
+                                Nothing recorded yet — a draft, a publish or a save records the first
+                                version.
+                            </div>
+                        )}
+
+                        {publication?.versions.map((version) => (
+                            <div className="pe-version" key={version.id}>
+                                <span className="pe-version-ref">{version.readable}</span>
+                                <span className="pe-version-label">{version.label ?? ''}</span>
+                                {version.isPublished && (
+                                    <span className="pe-version-tag published">published</span>
+                                )}
+                                {version.isHead && !version.isPublished && (
+                                    <span className="pe-version-tag head">draft</span>
+                                )}
+                                {!version.isPublished && (
+                                    <button
+                                        className="pe-btn"
+                                        aria-label={`Restore ${version.readable}`}
+                                        onClick={() => setPendingRestore(version)}
+                                        disabled={busy}
+                                    >
+                                        Restore
+                                    </button>
+                                )}
+                            </div>
+                        ))}
+                    </aside>
+                )}
+
+                {rightOpen && !versionsOpen && (
                     <aside className="pe-panel pe-right">
                         {mount.selectedNodeId && (
                             <>

@@ -10,6 +10,7 @@ import { CanvasProvider, isEditGated } from './context.js';
 import type { CanvasConfig } from './context.js';
 import { insertRelativeTo } from './insert.js';
 import { PageEditor, __resetEditMode, useEditMode } from './PageEditor.js';
+import type { EntryPublicationState, EntryVersion } from '../types.js';
 import { EDIT_GATE_ATTR, VIEW_GATE_ATTR } from './props.js';
 import { ClassChipsWidget, StyleRowsWidget } from './widgets.js';
 
@@ -379,6 +380,180 @@ describe('PageEditor — mode fork + transport', () => {
         fireEvent.click(exitBtn);
         expect(onExit).toHaveBeenCalled();
         window.removeEventListener('beam-ux:exit', onExit);
+    });
+
+    // ── the publication affordance (G2-BEAM-DRAFT-PUBLISH) ───────────────────────────────────────────
+    //
+    // The dock's contract here is a gate and a seam, not a workflow: it renders the draft/publish/
+    // versions controls ONLY when the transport carries all four publication methods, and every
+    // control forwards to the injected one rather than deciding anything itself. What a draft MEANS
+    // — versioned, uncompiled, invisible to a reader — is the server's, proved at package tier in
+    // `splicewire/laravel-beam-ux`'s EntryPublicationTest and end-to-end in g2-beam-draft-publish.
+
+    const version = (over: Partial<EntryVersion> = {}): EntryVersion => ({
+        id: 'v-' + (over.readable ?? 'v1'),
+        version: 1,
+        readable: 'v1',
+        label: null,
+        createdBy: null,
+        createdAt: null,
+        isHead: false,
+        isPublished: false,
+        ...over,
+    });
+
+    const state = (over: Partial<EntryPublicationState> = {}): EntryPublicationState => ({
+        id: 'entry-1',
+        draftPending: false,
+        publishedVersion: 'v-v1',
+        publishedReadable: 'v1',
+        headVersion: 'v-v1',
+        headReadable: 'v1',
+        versions: [version({ isHead: true, isPublished: true })],
+        compileError: null,
+        ...over,
+    });
+
+    /** A transport carrying the whole publication seam, with each method spied. */
+    const publishingTransport = (over: Partial<EntryPublicationState> = {}) => {
+        const settled = state(over);
+        return {
+            saveBody: vi.fn().mockResolvedValue({}),
+            loadBody: vi.fn().mockResolvedValue({ body: doc() }),
+            saveDraft: vi.fn().mockResolvedValue(state({ draftPending: true, headVersion: 'v-v2', headReadable: 'v2' })),
+            publish: vi.fn().mockResolvedValue(state()),
+            listVersions: vi.fn().mockResolvedValue(settled),
+            restoreVersion: vi.fn().mockResolvedValue(settled),
+        };
+    };
+
+    const enterEditMode = async (transport: object) => {
+        const rendered = render(wrap(<PageEditor slug="home" body={doc()} transport={transport as never} />));
+        await act(async () => {
+            fireEvent(window, new CustomEvent('beam-ux:mode', { detail: { mode: 'window' } }));
+            await Promise.resolve();
+        });
+        return rendered;
+    };
+
+    const dockButton = (container: HTMLElement, label: string) =>
+        Array.from(container.querySelectorAll('.pe-btn')).find((b) => b.textContent === label) as
+            | HTMLElement
+            | undefined;
+
+    it('offers NO draft/publish controls when the transport does not carry the seam', async () => {
+        // The gate, asserted from the negative side: a host that has not mounted the operations gets
+        // the dock it always had, rather than buttons that 404. Save is still there — that is the
+        // point of the degrade, not an accident of it.
+        const { container } = await enterEditMode({ saveBody: vi.fn().mockResolvedValue({}) });
+
+        expect(dockButton(container, 'Save draft')).toBeUndefined();
+        expect(dockButton(container, 'Publish')).toBeUndefined();
+        expect(dockButton(container, 'Versions')).toBeUndefined();
+        expect(dockButton(container, 'Save')).toBeDefined();
+    });
+
+    it('a partial seam is treated as no seam, so Save draft is never offered without Publish', async () => {
+        const { container } = await enterEditMode({
+            saveBody: vi.fn(),
+            saveDraft: vi.fn(),
+            listVersions: vi.fn(),
+            // no publish, no restoreVersion
+        });
+
+        expect(dockButton(container, 'Save draft')).toBeUndefined();
+    });
+
+    it('Save draft sends the canvas document and reports the pending draft with what readers still see', async () => {
+        const transport = publishingTransport();
+        const { container } = await enterEditMode(transport);
+
+        await act(async () => {
+            fireEvent.click(dockButton(container, 'Save draft')!);
+            await Promise.resolve();
+        });
+
+        expect(transport.saveDraft).toHaveBeenCalledWith('home', expect.any(Array));
+        // The one thing an author cannot read off the canvas: their copy is ahead of the readers'.
+        expect(container.querySelector('.pe-draft')?.textContent).toContain('Draft pending');
+        expect(container.querySelector('.pe-draft')?.textContent).toContain('readers see v1');
+    });
+
+    it('Publish sends no document and clears the pending-draft badge', async () => {
+        const transport = publishingTransport();
+        const { container } = await enterEditMode(transport);
+        await act(async () => {
+            fireEvent.click(dockButton(container, 'Save draft')!);
+            await Promise.resolve();
+        });
+        expect(container.querySelector('.pe-draft')).not.toBeNull();
+
+        await act(async () => {
+            fireEvent.click(dockButton(container, 'Publish')!);
+            await Promise.resolve();
+        });
+
+        // No body argument: what a publish publishes is what the server already holds.
+        expect(transport.publish).toHaveBeenCalledWith('home');
+        expect(container.querySelector('.pe-draft')).toBeNull();
+    });
+
+    it('the Versions panel lists the history, flags both pins, and offers Restore only off the published one', async () => {
+        const transport = publishingTransport({
+            draftPending: true,
+            headVersion: 'v-v2',
+            headReadable: 'v2',
+            versions: [
+                version({ id: 'v-v2', readable: 'v2', version: 2, label: 'draft', isHead: true }),
+                version({ id: 'v-v1', readable: 'v1', label: 'baseline', isPublished: true }),
+            ],
+        });
+        const { container } = await enterEditMode(transport);
+
+        await act(async () => {
+            fireEvent.click(dockButton(container, 'Versions')!);
+            await Promise.resolve();
+        });
+
+        const rows = Array.from(container.querySelectorAll('.pe-version'));
+        expect(rows.map((r) => r.querySelector('.pe-version-ref')?.textContent)).toEqual(['v2', 'v1']);
+        expect(container.querySelector('.pe-version-tag.published')?.textContent).toBe('published');
+        expect(container.querySelector('.pe-version-tag.head')?.textContent).toBe('draft');
+        // The published row has nothing to restore TO; every other row does.
+        expect(container.querySelectorAll('[aria-label^="Restore "]').length).toBe(1);
+        expect(container.querySelector('[aria-label="Restore v2"]')).not.toBeNull();
+    });
+
+    it('Restore is confirmed, and only then re-reads the body so the canvas is not left stale', async () => {
+        const transport = publishingTransport({
+            versions: [
+                version({ id: 'v-v2', readable: 'v2', version: 2, isHead: true, isPublished: true }),
+                version({ id: 'v-v1', readable: 'v1', label: 'baseline' }),
+            ],
+        });
+        const { container } = await enterEditMode(transport);
+        await act(async () => {
+            fireEvent.click(dockButton(container, 'Versions')!);
+            await Promise.resolve();
+        });
+
+        // One click ARMS it: restoring changes what every reader of the page is served, which is not
+        // an undoable local edit.
+        await act(async () => {
+            fireEvent.click(container.querySelector('[aria-label="Restore v1"]') as HTMLElement);
+            await Promise.resolve();
+        });
+        expect(transport.restoreVersion).not.toHaveBeenCalled();
+        expect(container.querySelector('.pe-confirm')).not.toBeNull();
+
+        await act(async () => {
+            fireEvent.click(dockButton(container, 'Confirm restore')!);
+            await Promise.resolve();
+        });
+
+        expect(transport.restoreVersion).toHaveBeenCalledWith('home', 'v1');
+        // The re-read is what stops the next Save writing the pre-restore document back over it.
+        expect(transport.loadBody).toHaveBeenCalledWith('home');
     });
 
     // These three all SELECT a node, which renders frame's Inspector -> SchemaForm -> an @rjsf/shadcn
