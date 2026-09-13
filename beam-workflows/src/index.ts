@@ -109,3 +109,6 @@ export {
     type MigrationReport,
     type PlaceMap,
 } from './migratePlan';
+
+export { WorkflowActionForm, type WorkflowActionSelection } from './WorkflowActionForm';
+export { workflowActionInstants } from './workflowActionTime';

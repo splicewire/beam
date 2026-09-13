@@ -62,3 +62,40 @@ lineages, a save routes through the injected client, and the Stepper's `subscrib
 
 `npm run lint:imports` enforces the deny-list; `npm test` runs the logic-module suites + the barrel
 isolation bar off the pure DTO projection with no Laravel backend.
+
+## Schedule a workflow transition
+
+`WorkflowActionForm` extends the runtime workflow tools with a scheduled intent. Pass a generated
+`WorkflowProjectionData`, optional subject label/picker, and an async `onSchedule` callback. The
+callback receives local form selection `{ transition, dueAt, timezone }`; the host combines it with
+its selected subject and the backend's declared calendar-action input. The component has no HTTP,
+calendar-storage, composition or tenant dependency.
+
+```tsx
+<WorkflowActionForm
+    projection={projection}
+    subjectLabel={selectedSubject.title}
+    onSchedule={async ({ transition, dueAt, timezone }) => {
+        await scheduleSelectedSubject({ transition, dueAt, timezone });
+    }}
+/>
+```
+
+The selector includes every named transition in the definition, including transitions that may
+become available later. It never substitutes scheduling for approval: authorization and workflow
+checks still run on the server at execution. A rejected save retains the draft and displays the
+error. Disable or replace a stale subject projection while the host loads another subject; key the
+form by subject/action identity when switching drafts.
+
+`workflowActionInstants(localTime, timezone)` resolves minute-precision wall time using the runtime's
+IANA timezone data. Missing times are rejected; repeated times require an explicit occurrence
+choice. The callback carries a UTC ISO instant and the original timezone. Ordinary calendar day
+anchors are unaffected. The timezone data must be current on the browser and server.
+
+The Storybook stories cover future transitions, missing/repeated hours and refused saves. Run the
+package unit suite with `npm test --workspace @splicewire/beam-workflows`. For real Chromium checks,
+start the repository Storybook with `npm run storybook -- --ci --no-open --port 6019`, then run
+`node beam-workflows/scripts/verify-action-form.mjs` from the repository root. Set
+`WORKFLOW_STORY_URL` for a different server and `WORKFLOW_SCREENSHOTS` to retain desktop/mobile
+screenshots. This checks the portable form against synthetic fixtures; host API acceptance is a
+separate integration gate.
