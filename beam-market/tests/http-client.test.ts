@@ -41,6 +41,37 @@ function transport(
     };
 }
 describe("Extensions wire adapter", () => {
+  it.each(["syncMarket", "disconnectMarket"] as const)(
+    "preserves endpoint method receivers for %s",
+    async (operation) => {
+      const receiverEndpoints: ExtensionsEndpoints = {
+        ...endpoints,
+        connections: "/host/market-connections",
+        syncConnection(id) {
+          return `${this.connections}/${id}/sync`;
+        },
+        connectionRow(id) {
+          return `${this.connections}/${id}`;
+        },
+      };
+      const request = vi.fn(() => ({ status: 200, data: { data: undefined } }));
+      const client = createExtensionsClient(
+        transport(request),
+        receiverEndpoints,
+      );
+      const mutate = client[operation];
+      if (!mutate) throw new Error("Expected connection support");
+      await mutate("connection-id");
+      expect(request).toHaveBeenCalledWith(
+        operation === "syncMarket" ? "POST" : "DELETE",
+        `/host/market-connections/connection-id${
+          operation === "syncMarket" ? "/sync" : ""
+        }`,
+        undefined,
+      );
+    },
+  );
+
   it("omits market mutations when the host supplies no connection endpoints", async () => {
     const { connections, connectionRow, syncConnection, ...publisher } =
       endpoints;

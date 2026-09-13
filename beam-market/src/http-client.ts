@@ -130,14 +130,21 @@ export function createExtensionsClient(
     ...(syncConnection
       ? {
           syncMarket: async (id: string) =>
-            (await request<MarketConnection>("POST", syncConnection(id))).data
-              .data,
+            (
+              await request<MarketConnection>(
+                "POST",
+                syncConnection.call(endpoints, id),
+              )
+            ).data.data,
         }
       : {}),
     ...(connectionRow
       ? {
           disconnectMarket: async (id: string) => {
-            await request<undefined>("DELETE", connectionRow(id));
+            await request<undefined>(
+              "DELETE",
+              connectionRow.call(endpoints, id),
+            );
           },
         }
       : {}),
