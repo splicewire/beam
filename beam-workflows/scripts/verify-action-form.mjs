@@ -19,11 +19,18 @@ try {
         assert.equal(await page.getByRole('button', { name: 'Schedule transition' }).isEnabled(), true);
         assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), true, `${name} overflow`);
         if (output) await page.screenshot({ path: `${output}/workflow-action-${name}.png`, fullPage: true });
+        await page.goto(`${base}/iframe.html?id=workflows-workflowactiondetail--blocked&viewMode=story`);
+        await page.getByRole('button', { name: 'Retry now' }).waitFor();
+        assert.equal(await page.getByText('Review is incomplete.').isVisible(), true);
+        assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), true, `${name} detail overflow`);
+        if (output) await page.screenshot({ path: `${output}/workflow-action-detail-${name}.png`, fullPage: true });
+        await page.getByRole('button', { name: 'Retry now' }).click();
+        await page.getByRole('alert').filter({ hasText: 'Refresh its details' }).waitFor();
     }
     await page.goto(`${base}/iframe.html?id=workflows-workflowactionform--refused-save&viewMode=story`);
     await page.getByRole('button', { name: 'Schedule transition' }).click();
     await page.getByRole('alert').filter({ hasText: 'Permission to schedule' }).waitFor();
     assert.equal(await page.getByLabel('Date and time').inputValue(), '2026-09-15T09:30');
     assert.deepEqual(errors, []);
-    console.log('Workflow action browser checks passed: desktop/mobile fold choice, no horizontal overflow, refused-save recovery, no page errors.');
+    console.log('Workflow action browser checks passed: desktop/mobile fold choice, no horizontal overflow, refused-save/retry recovery, attempt history, no page errors.');
 } finally { await browser.close(); }

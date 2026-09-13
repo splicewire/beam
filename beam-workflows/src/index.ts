@@ -112,3 +112,4 @@ export {
 
 export { WorkflowActionForm, type WorkflowActionSelection } from './WorkflowActionForm';
 export { workflowActionInstants } from './workflowActionTime';
+export { WorkflowActionDetail } from './WorkflowActionDetail';

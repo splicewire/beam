@@ -99,3 +99,12 @@ start the repository Storybook with `npm run storybook -- --ci --no-open --port 
 `WORKFLOW_STORY_URL` for a different server and `WORKFLOW_SCREENSHOTS` to retain desktop/mobile
 screenshots. This checks the portable form against synthetic fixtures; host API acceptance is a
 separate integration gate.
+
+`WorkflowActionDetail` consumes the public `CalendarActionRecordData` from
+`@splicewire/beam-resources/types/calendar-actions`. It renders intended, started and completed
+instants separately, keeps earlier attempt blockers visible after a retry, and labels application
+only when the recorded outcome is applied. Hosts inject subject links, optional result rendering
+and async cancel/retry callbacks. Supply rescheduling only for subject kinds the host can edit.
+The host carries the displayed revision and retains a retry idempotency key through transport
+failures. A missing callback leaves that operation unavailable; the server remains the authority.
+The Chromium script also covers outcome history and retry-error recovery.
