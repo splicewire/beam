@@ -108,3 +108,19 @@ and async cancel/retry callbacks. Supply rescheduling only for subject kinds the
 The host carries the displayed revision and retains a retry idempotency key through transport
 failures. A missing callback leaves that operation unavailable; the server remains the authority.
 The Chromium script also covers outcome history and retry-error recovery.
+
+The `WorkflowActionStandalone/LiveFixture` story connects this same form/detail to a real,
+Tower-free PHP host. In `splicewire/laravel-beam-calendars`, start the committed test-only router:
+
+```sh
+BEAM_CALENDAR_FIXTURE_DB=/tmp/calendar-workflow-your-session.sqlite XDEBUG_MODE=off herd php -S 127.0.0.1:8767 tests/Browser/standalone-router.php
+```
+
+Its `tests/Browser/README.md` documents the optional sibling workflows development dependency and
+fixed loopback fixture authority. Start this repository's Storybook on localhost:6019, then run
+`node beam-workflows/scripts/verify-action-standalone.mjs`. The script schedules a managed Article
+through the mounted particle API, reloads pending history, invokes the fixture scheduler, and
+reloads applied history. It checks the actual portable surface at a 390px viewport with no overflow
+or page errors. `WORKFLOW_SCREENSHOTS` retains the screenshot. Stop the test server and remove only
+your session's SQLite file afterward. The story is development evidence; deployed hosts supply
+their own transport, subject resolver and principal/tenant authority.
