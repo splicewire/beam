@@ -663,16 +663,7 @@ describe('PageEditor — mode fork + transport', () => {
         ]);
     });
 
-    // These three all SELECT a node, which renders frame's Inspector -> SchemaForm -> an @rjsf/shadcn
-    // field with a lucide-react icon. @rjsf/shadcn depends on lucide-react@^1.x, which npm nests
-    // separately (schemastud/node_modules/@rjsf/shadcn/node_modules/lucide-react) since the workspace
-    // otherwise hoists lucide-react@0.x — under vitest specifically that nested copy's React import
-    // resolves null ("Cannot read properties of null (reading 'useContext')"), even with this
-    // package's existing single-React vitest aliases (vitest.config.ts). Confirmed NOT reproducible in
-    // a real browser (Vite's dev/build dependency pre-bundling handles the nested version correctly) —
-    // see the splicewire live verification in this migration's commit. Left skipped rather than faked
-    // green; a real fix needs a vitest-specific resolution for this one nested dependency.
-    it.skip('right-click opens a context menu; Duplicate clones the node, Delete removes it', async () => {
+    it('right-click opens a context menu; Duplicate clones the node, Delete removes it', async () => {
         const saveBody = vi.fn().mockResolvedValue({});
         const { container } = render(wrap(<PageEditor slug="home" body={doc()} transport={{ saveBody }} />));
         fireEvent(window, new CustomEvent('beam-ux:mode', { detail: { mode: 'window' } }));
@@ -690,8 +681,7 @@ describe('PageEditor — mode fork + transport', () => {
         expect(container.querySelectorAll('h1')).toHaveLength(1);
     });
 
-    // Same nested lucide-react/vitest issue as above (this test also selects a node).
-    it.skip('the context menu closes on outside click without acting', () => {
+    it('the context menu closes on outside click without acting', () => {
         const { container } = render(wrap(<PageEditor slug="home" body={doc()} transport={{ saveBody: vi.fn() }} />));
         fireEvent(window, new CustomEvent('beam-ux:mode', { detail: { mode: 'window' } }));
         const h1 = container.querySelector('h1') as HTMLElement;
@@ -701,8 +691,7 @@ describe('PageEditor — mode fork + transport', () => {
         expect(document.querySelector('.ve-menu')).toBeNull();
     });
 
-    // Same nested lucide-react/vitest issue as above (selecting a node renders the Inspector).
-    it.skip('shows a breadcrumb for the selection, and clicking an ancestor crumb re-selects it', () => {
+    it('shows a breadcrumb for the selection, and clicking an ancestor crumb re-selects it', () => {
         const { container } = render(wrap(<PageEditor slug="home" body={doc()} transport={{ saveBody: vi.fn() }} />));
         fireEvent(window, new CustomEvent('beam-ux:mode', { detail: { mode: 'window' } }));
         const h1 = container.querySelector('h1') as HTMLElement;

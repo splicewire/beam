@@ -16,6 +16,20 @@ const reactDom = pkgDir('react-dom');
 const self = dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
+    // RJSF's nested lucide-react CJS entry bypasses Vite's React aliases. Resolve only
+    // that dependency's installed ESM entry so its hooks use this suite's renderer;
+    // direct lucide imports retain their independently resolved version.
+    plugins: [{
+        name: 'rjsf-lucide-esm',
+        enforce: 'pre',
+        resolveId(source, importer) {
+            if (source !== 'lucide-react' || !importer?.includes('/@rjsf/shadcn/')) return;
+            const fromImporter = createRequire(importer);
+            const iconPackage = fromImporter.resolve('lucide-react/package.json');
+            const iconManifest = fromImporter(iconPackage) as { module: string };
+            return join(dirname(iconPackage), iconManifest.module);
+        },
+    }],
     resolve: {
         alias: {
             'react/jsx-runtime': join(react, 'jsx-runtime.js'),
