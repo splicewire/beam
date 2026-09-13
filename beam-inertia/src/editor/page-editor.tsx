@@ -31,9 +31,7 @@ import { bodyClient } from './transport';
 export function asDoc(body: unknown): JsonDoc | null {
     return Array.isArray(body) &&
         body.length > 0 &&
-        body.every(
-            (n) => !!n && typeof n === 'object' && 'kind' in (n as object),
-        )
+        body.every((n) => !!n && typeof n === 'object' && 'kind' in (n as object))
         ? (body as JsonDoc)
         : null;
 }
@@ -64,11 +62,7 @@ function addressed(entryId: string | null): string {
 /** The canvas document as the wire shape the entry-body operations declare. */
 const asBody = (doc: JsonDoc): Record<string, unknown> => doc as unknown as Record<string, unknown>;
 
-export function PageEditor({
-    slug,
-    body = null,
-    entryId = null,
-}: PageEditorProps) {
+export function PageEditor({ slug, body = null, entryId = null }: PageEditorProps) {
     // theme-entries-and-authoring ticket `str-01`: server-resolved theme, NEUTRAL_THEME as the
     // degrade-safe fallback (mirrors mount.tsx's VisualEditorMount).
     const page = usePage<{ theme?: { canvas?: Partial<CanvasTheme> } }>();
@@ -86,65 +80,84 @@ export function PageEditor({
     // 'ux.author'`, so firing it for a reader is a guaranteed 401 on every public page view, and
     // re-loading mid-session would overwrite the author's in-progress edits.
     const editing = useEditMode();
-    const [loaded, setLoaded] = useState<{ body: unknown } | null>(null);
+    const [loaded, setLoaded] = useState<{
+        entryId: string;
+        body: unknown;
+        failed?: boolean;
+    } | null>(null);
+
+    const current = loaded?.entryId === entryId ? loaded : null;
 
     useEffect(() => {
-        if (!editing || entryId === null || loaded !== null) {
+        if (!editing || entryId === null || current !== null) {
             return;
         }
 
         let live = true;
         bodyClient
             .loadBody(entryId)
-            .then((env) => live && setLoaded({ body: (env as { body?: unknown })?.body ?? null }))
-            // A failed load must not silently seed the default over a body that exists: report it and
-            // leave the editor on whatever the page handed it.
+            .then(
+                (env) =>
+                    live && setLoaded({ entryId, body: (env as { body?: unknown })?.body ?? null }),
+            )
+            // A refused read is not an empty body: keep replacement writes unavailable.
             .catch(() => {
                 if (live) {
                     toast.error('Could not load this page\u2019s saved content');
-                    setLoaded({ body: null });
+                    setLoaded({ entryId, body: null, failed: true });
                 }
             });
 
         return () => {
             live = false;
         };
-    }, [editing, entryId, loaded]);
+    }, [editing, entryId, current]);
 
     // Do not mount the canvas until the body is in hand. `CanvasPageEditor` seeds its document ONCE, on
     // mount, so a body arriving afterwards can only be applied by re-seeding — and a re-seed discards
     // whatever the author has already done. Measured on beam.test 2026-09-11 (tools/explore-editor.mjs
     // section A): the FIRST inline edit of a session vanished, because the load landed between the
     // insert and the commit. Waiting is the fix; re-seeding is the defect wearing a `reloadToken`.
-    if (editing && entryId !== null && loaded === null) {
+    if (editing && entryId !== null && current === null) {
         return <div style={{ padding: 24, color: '#64748b', fontSize: 13 }}>Loading editor…</div>;
     }
+
+    if (editing && current?.failed) {
+        return <div role="alert">Could not load this page’s saved content.</div>;
+    }
+
+    const { saveDraft, publish, listVersions, restoreVersion } = bodyClient;
 
     return (
         <CanvasProvider config={canvasConfig}>
             <CanvasPageEditor
+                key={entryId ?? slug}
                 slug={slug}
-                body={asDoc(loaded?.body) ?? asDoc(body)}
+                body={asDoc(current?.body) ?? asDoc(body)}
                 transport={{
                     // CanvasPageEditor's transport seam is keyed by its `slug` prop, which stays a slug
                     // — it is the editor's display label and `defaultTreeFor()` key. The BODY transport
                     // underneath is addressed by the entry ID (ADR-0214 §2). So the incoming `s` is
                     // deliberately unused: it names the page, not the row.
                     saveBody: (_s, doc) => bodyClient.saveBody(addressed(entryId), asBody(doc)),
-                    // The publication seam (G2-BEAM-DRAFT-PUBLISH), spread in only when there IS a row
-                    // to address. The dock renders the draft/publish/versions affordance iff all four
-                    // arrive, so a page whose entry is absent (a database that was never seeded) keeps
+                    // The publication seam (G2-BEAM-DRAFT-PUBLISH), spread in only when there is a row
+                    // to address and the client supplies all four operations. A page whose entry is absent
+                    // (a database that was never seeded) keeps
                     // the plain Save dock and the honest error it already gives, rather than growing
                     // buttons that cannot resolve an id.
-                    ...(entryId === null
+                    ...(entryId === null ||
+                    !saveDraft ||
+                    !publish ||
+                    !listVersions ||
+                    !restoreVersion
                         ? {}
                         : {
                               saveDraft: (_s: string, doc: JsonDoc) =>
-                                  bodyClient.saveDraft!(entryId, asBody(doc)),
-                              publish: () => bodyClient.publish!(entryId),
-                              listVersions: () => bodyClient.listVersions!(entryId),
+                                  saveDraft(entryId, asBody(doc)),
+                              publish: () => publish(entryId),
+                              listVersions: () => listVersions(entryId),
                               restoreVersion: (_s: string, ref: string) =>
-                                  bodyClient.restoreVersion!(entryId, ref),
+                                  restoreVersion(entryId, ref),
                               // The canvas re-seeds itself from this after a restore; without it an
                               // author would keep editing the pre-restore document and Save it back
                               // over the version they just restored.

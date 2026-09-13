@@ -35,7 +35,7 @@ const EMPTY: JsonDoc = [
  * default, not an address — a ref carrying no slug simply gets the empty root.
  */
 function seedFor(slug: string | null): JsonDoc {
-    return slug === null ? EMPTY : (defaultTreeFor(slug) ?? EMPTY);
+    return slug === null ? EMPTY : defaultTreeFor(slug) ?? EMPTY;
 }
 
 export function VisualEditorMount({ entryRef }: { entryRef: EntryRef }) {
@@ -44,9 +44,14 @@ export function VisualEditorMount({ entryRef }: { entryRef: EntryRef }) {
     // With no id there is nothing to load, so the seed IS the initial state — no effect, no loading
     // flash. Reachable only for a ref that genuinely has no id (a hand-typed `?beam_entry=<slug>`,
     // which this starter deliberately does not resolve — see mainframe-host.tsx).
-    const [doc, setDoc] = useState<JsonDoc | null>(() =>
-        entryId === null ? seedFor(slug) : null,
-    );
+    const [loaded, setLoaded] = useState<{
+        entryId: string | null;
+        slug: string | null;
+        doc: JsonDoc | null;
+        failed?: boolean;
+    } | null>(null);
+    const current = loaded?.entryId === entryId && loaded.slug === slug ? loaded : null;
+    const doc = current?.doc ?? (entryId === null ? seedFor(slug) : null);
     // theme-entries-and-authoring ticket `str-01`: the server-resolved theme (ThemeResolver cascade)
     // replaces the static NEUTRAL_THEME import — NEUTRAL_THEME stays as the degrade-safe fallback for
     // when the prop is absent (a stale build, or a request that never reached HandleInertiaRequests).
@@ -66,22 +71,22 @@ export function VisualEditorMount({ entryRef }: { entryRef: EntryRef }) {
                 const body = (env as { body?: unknown })?.body;
 
                 if (live) {
-                    setDoc(asDoc(body) ?? fallback());
+                    setLoaded({ entryId, slug, doc: asDoc(body) ?? fallback() });
                 }
             })
-            .catch(() => live && setDoc(fallback()));
+            .catch(() => live && setLoaded({ entryId, slug, doc: null, failed: true }));
 
         return () => {
             live = false;
         };
     }, [entryId, slug]);
 
+    if (current?.failed) {
+        return <div role="alert">Could not load this page’s saved content.</div>;
+    }
+
     if (!doc) {
-        return (
-            <div style={{ padding: 24, color: '#64748b', fontSize: 13 }}>
-                Loading editor…
-            </div>
-        );
+        return <div style={{ padding: 24, color: '#64748b', fontSize: 13 }}>Loading editor…</div>;
     }
 
     const save = async () => {
@@ -94,10 +99,7 @@ export function VisualEditorMount({ entryRef }: { entryRef: EntryRef }) {
         }
 
         try {
-            await bodyClient.saveBody(
-                entryId,
-                doc as unknown as Record<string, unknown>,
-            );
+            await bodyClient.saveBody(entryId, doc as unknown as Record<string, unknown>);
             toast.success('Saved');
         } catch {
             toast.error('Save failed');
@@ -107,8 +109,9 @@ export function VisualEditorMount({ entryRef }: { entryRef: EntryRef }) {
     return (
         <CanvasProvider config={canvasConfig}>
             <VisualEditor
+                key={entryId ?? slug}
                 value={doc}
-                onChange={setDoc}
+                onChange={(doc) => setLoaded({ entryId, slug, doc })}
                 onSave={save}
                 theme={theme}
                 brand="beam-starter · visual editor"

@@ -57,9 +57,7 @@ const defaultBodyClient: UxBuilderClient = {
             credentials: 'same-origin',
         });
 
-        return (await readData(res, 'load')) as Awaited<
-            ReturnType<UxBuilderClient['loadBody']>
-        >;
+        return (await readData(res, 'load')) as Awaited<ReturnType<UxBuilderClient['loadBody']>>;
     },
     saveBody: async (id, body) => {
         const res = await fetch(`/beam-ux-entries/${id}/op/save-body`, {
@@ -73,9 +71,7 @@ const defaultBodyClient: UxBuilderClient = {
             body: JSON.stringify({ body }),
         });
 
-        return (await readData(res, 'save')) as Awaited<
-            ReturnType<UxBuilderClient['saveBody']>
-        >;
+        return (await readData(res, 'save')) as Awaited<ReturnType<UxBuilderClient['saveBody']>>;
     },
 };
 
@@ -84,7 +80,7 @@ const defaultBodyClient: UxBuilderClient = {
 // Four more id-addressed operations on the same resource, mounted by the host beside `save-body`
 // (`save-draft` / `publish` / `versions` / `restore`, all `ability: 'ux.author'`). They are OPTIONAL on
 // `UxBuilderClient` because a host mounts them deliberately; this default implements them because the
-// starters do, and a host that has not simply gets 404s it never calls — the dock renders the
+// starters do. An injected client supplies only the operations its host mounts; the dock renders the
 // affordance only when the whole seam is present.
 //
 // The same literal-URL hazard the block above describes applies verbatim: if a draft or publish 404s,
@@ -107,7 +103,11 @@ const publicationClient = {
 };
 
 /** The shared write leg: a stateful, cookie-authed POST carrying the XSRF header axios would add. */
-async function publicationPost(id: string, op: string, payload: Record<string, unknown>): Promise<unknown> {
+async function publicationPost(
+    id: string,
+    op: string,
+    payload: Record<string, unknown>,
+): Promise<unknown> {
     const res = await fetch(`/beam-ux-entries/${id}/${op}`, {
         method: 'POST',
         headers: {
@@ -124,13 +124,24 @@ async function publicationPost(id: string, op: string, payload: Record<string, u
 
 export const bodyClient: UxBuilderClient = {
     loadBody: (id) => (getBeamInertiaConfig().entryClient ?? defaultBodyClient).loadBody(id),
-    saveBody: (id, body) => (getBeamInertiaConfig().entryClient ?? defaultBodyClient).saveBody(id, body),
-    // A host-supplied `entryClient` may implement these or not; falling through to the default keeps a
-    // host that only overrode the body transport from silently losing the publication affordance.
-    listVersions: (id) => (getBeamInertiaConfig().entryClient?.listVersions ?? publicationClient.listVersions)(id),
-    saveDraft: (id, body, label) =>
-        (getBeamInertiaConfig().entryClient?.saveDraft ?? publicationClient.saveDraft)(id, body, label),
-    publish: (id, label) => (getBeamInertiaConfig().entryClient?.publish ?? publicationClient.publish)(id, label),
-    restoreVersion: (id, ref, label) =>
-        (getBeamInertiaConfig().entryClient?.restoreVersion ?? publicationClient.restoreVersion)(id, ref, label),
+    saveBody: (id, body) =>
+        (getBeamInertiaConfig().entryClient ?? defaultBodyClient).saveBody(id, body),
+    // Configuration is read at use time, as for load/save. An injected client's missing methods
+    // stay absent; only the default starter client supplies the default publication routes.
+    get listVersions() {
+        const client = getBeamInertiaConfig().entryClient ?? publicationClient;
+        return client.listVersions?.bind(client);
+    },
+    get saveDraft() {
+        const client = getBeamInertiaConfig().entryClient ?? publicationClient;
+        return client.saveDraft?.bind(client);
+    },
+    get publish() {
+        const client = getBeamInertiaConfig().entryClient ?? publicationClient;
+        return client.publish?.bind(client);
+    },
+    get restoreVersion() {
+        const client = getBeamInertiaConfig().entryClient ?? publicationClient;
+        return client.restoreVersion?.bind(client);
+    },
 };
