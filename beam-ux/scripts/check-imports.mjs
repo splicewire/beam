@@ -1,80 +1,60 @@
 #!/usr/bin/env node
-/**
- * Static import-boundary gate (rehome-ui §8b — the deny-list enforcer).
- *
- * A rehomed component is "portable" only if it reaches for NOTHING app-local: no `@/…`
- * path, no direct toast lib (feedback is injected), no named-route resolver, no Inertia.
- * This scans every source file and FAILS THE BUILD on any forbidden import, so a coupling
- * can never silently creep back in. Deliberately dependency-free (plain Node, no eslint) so
- * it runs anywhere. Twin of the gate in @splicewire/beam-workflows and @schemastud/ui.
- */
+/** Import-boundary gate: inspect TypeScript syntax, not comments or generated code strings. */
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { dirname, join } from 'node:path';
+import { dirname, join, relative } from 'node:path';
+import ts from 'typescript';
 
 const SRC = join(dirname(fileURLToPath(import.meta.url)), '..', 'src');
-
-// The deny-list: app-local paths, in-app singletons, and host-only libs a portable
-// component must never reach for. Mirrors the rehome-ui contract §6.
-const FORBIDDEN = [
-    { re: /from\s+['"]@\//, why: "app-local '@/…' import" },
-    { re: /import\s+['"]@\//, why: "app-local '@/…' side-effect import" },
-    { re: /from\s+['"]sonner['"]/, why: 'direct toast lib (feedback is injected, not imported)' },
-    { re: /from\s+['"]axios['"]/, why: 'transport lib (the client is injected, not imported)' },
-    { re: /from\s+['"]ziggy-js['"]/, why: 'named-route resolution has no place in a portable component' },
-    { re: /from\s+['"]@inertiajs\//, why: 'Inertia coupling' },
-];
-
+const violations = [];
 function* walk(dir) {
     for (const name of readdirSync(dir)) {
         const path = join(dir, name);
         if (statSync(path).isDirectory()) yield* walk(path);
-        // Test files legitimately carry `@/…` strings as FIXTURES — they assert on the codegen's
-        // generated `import { … } from '@/puck/blocks'` output (the bridge + manifest generator tests).
-        // Those are expected-output literals, not real package imports; the boundary applies to SHIPPED
-        // source only, so skip `*.test.ts(x)`.
         else if (/\.tsx?$/.test(path) && !/\.test\.tsx?$/.test(path)) yield path;
     }
 }
-
-/**
- * The ONE sanctioned Inertia coupling (ADR-0213 §2/§3, beam-docs-satellite ticket 26).
- *
- * §6 of ADR-0209 — "no beam package ships a rendered page" — is withdrawn, and what replaced it is two
- * narrower invariants: a package ships no palette, fonts, or wordmark, and **a package imports no
- * router**. `src/pages/` is the page map: the Inertia pages this package contributes to a host's
- * resolver. It cannot be Inertia-free and still be an Inertia page.
- *
- * So the exemption is scoped to that directory and to the head manager only — `router`, `Link`,
- * `useForm` and `usePage` stay forbidden everywhere, including here, because THOSE are the router and
- * the invariant that survived. A host still injects its `<Link>` through `linkComponent`.
- */
-const PAGE_MAP_DIR = join(SRC, 'pages');
-const ROUTER_BINDINGS = /\b(router|Link|useForm|usePage|useRemember)\b/;
-
-function isSanctionedPageMapImport(file, line) {
-    return file.startsWith(PAGE_MAP_DIR) && /@inertiajs\//.test(line) && !ROUTER_BINDINGS.test(line);
+function violationFor(module) {
+    if (module.startsWith('@/')) return "app-local '@/…' import";
+    if (module === 'sonner') return 'direct toast lib (feedback is injected, not imported)';
+    if (module === 'axios') return 'transport lib (the client is injected, not imported)';
+    if (module === 'ziggy-js') return 'named-route resolution has no place in a portable component';
+    if (module.startsWith('@inertiajs/')) return 'Inertia coupling';
 }
-
-const violations = [];
+function sanctionedHead(file, node, module) {
+    // ADR-0213 permits the page-map's head manager, never router/Link/usePage.
+    const inPages = relative(join(SRC, 'pages'), file);
+    if (inPages.startsWith('..') || module !== '@inertiajs/react' || !ts.isImportDeclaration(node)) return false;
+    const clause = node.importClause;
+    return !clause?.name && clause?.namedBindings && ts.isNamedImports(clause.namedBindings)
+        && clause.namedBindings.elements.length > 0
+        && clause.namedBindings.elements.every((binding) => (binding.propertyName ?? binding.name).text === 'Head');
+}
 for (const file of walk(SRC)) {
-    const lines = readFileSync(file, 'utf8').split('\n');
-    lines.forEach((line, i) => {
-        for (const { re, why } of FORBIDDEN) {
-            if (re.test(line)) {
-                if (isSanctionedPageMapImport(file, line)) {
-                    continue;
-                }
-
-                violations.push(`  ${file}:${i + 1} — ${why}\n    ${line.trim()}`);
+    const source = ts.createSourceFile(file, readFileSync(file, 'utf8'), ts.ScriptTarget.Latest, true);
+    for (const diagnostic of source.parseDiagnostics) {
+        violations.push(`  ${file}: ${ts.flattenDiagnosticMessageText(diagnostic.messageText, '\n')}`);
+    }
+    function visit(node) {
+        let specifier;
+        if (ts.isImportDeclaration(node) || ts.isExportDeclaration(node)) specifier = node.moduleSpecifier;
+        else if (ts.isImportTypeNode(node) && ts.isLiteralTypeNode(node.argument)) specifier = node.argument.literal;
+        else if (ts.isImportEqualsDeclaration(node) && ts.isExternalModuleReference(node.moduleReference)) specifier = node.moduleReference.expression;
+        else if (ts.isCallExpression(node) && (node.expression.kind === ts.SyntaxKind.ImportKeyword
+            || (ts.isIdentifier(node.expression) && node.expression.text === 'require'))) specifier = node.arguments[0];
+        if (specifier && ts.isStringLiteralLike(specifier)) {
+            const why = violationFor(specifier.text);
+            if (why && !sanctionedHead(file, node, specifier.text)) {
+                const line = source.getLineAndCharacterOfPosition(node.getStart(source)).line + 1;
+                violations.push(`  ${file}:${line} — ${why}\n    ${node.getText(source)}`);
             }
         }
-    });
+        ts.forEachChild(node, visit);
+    }
+    visit(source);
 }
-
 if (violations.length) {
     console.error('✗ import-boundary check FAILED — @splicewire/beam-ux must stay host-agnostic:\n');
     console.error(violations.join('\n'));
-    process.exit(1);
-}
-console.log('✓ import-boundary check passed — no forbidden imports in src/.');
+    process.exitCode = 1;
+} else console.log('✓ import-boundary check passed — no forbidden imports in src/.');

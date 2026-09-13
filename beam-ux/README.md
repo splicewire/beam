@@ -91,3 +91,15 @@ const osInjection = buildDesktopChrome({ apps, brand: <Wordmark />, status: <Clo
 The chrome bakes in **no** palette, fonts, or wordmark — it is structural class names (`os-*`, `op-*`)
 + the `--shell-*` token contract. The Analog-Studio ember look is applied host-side — see audiostud's
 dev `/os` route for a full worked example. A second host restyles the same structure with its own tokens.
+
+### Optional Inertia desktop adapter
+
+`DefaultOsDesktop` and `DefaultOsDesktopProps` are exported by `@splicewire/beam-inertia`.
+Move those imports from `@splicewire/beam-ux/shell` to the Inertia adapter package; mounting
+`<DefaultOsDesktop />` there retains its zero-prop server-manifest and navigation behavior.
+The default host `/os` and operator overlay continue to use the existing Beam Inertia page map.
+
+The portable `defaultGenericBinding` and `defaultSurfaceInjection` helpers remain in this subpath.
+`defaultSurfaceInjection(title, route, render, linkComponent?)` uses a native anchor for its error
+fallback by default. Existing direct consumers needing Inertia SPA navigation pass Inertia's `Link`
+as the fourth argument. The desktop adapter supplies it automatically.

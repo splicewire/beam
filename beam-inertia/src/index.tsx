@@ -172,3 +172,5 @@ export type {
   PlatformCapabilityRead,
   PlatformIdentity,
 } from "./platform/types";
+
+export { DefaultOsDesktop, type DefaultOsDesktopProps } from './os/default-desktop';

@@ -34,3 +34,12 @@ host can select a different combination using the same installed version.
 
 Run `npm run lint:imports`, `npm run typecheck`, `npm test`, and `npm run build` from this package.
 A host must additionally build its actual application and exercise direct routes, authoring and authentication.
+
+## Optional zero-prop desktop
+
+`DefaultOsDesktop` is the optional manifest-driven desktop adapter, separate from the default `/os`
+page and operator overlay. Import it and `DefaultOsDesktopProps` from `@splicewire/beam-inertia`
+(previously exported from `@splicewire/beam-ux/shell`). It reads the current Inertia realm manifest,
+opens the first three unlocked apps, and supplies Inertia navigation/error links to the portable
+realm/window helpers. Its existing surfaceMap, exclude, brand, status, backdrop, onNavigate and
+chrome overrides remain available.

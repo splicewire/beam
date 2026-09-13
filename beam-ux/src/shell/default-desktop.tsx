@@ -1,31 +1,10 @@
-/**
- * `DefaultOsDesktop` — a ready-to-mount OS desktop, no host wiring required. Reads the
- * server-resolved `realmManifest` Inertia prop, builds the app roster with an EMPTY `surfaceMap` by
- * default (every realm auto-surfaces — see {@see defaultGenericBinding}), and mounts the generic
- * `@schemastud/mainframe/os` chrome (dock, launcher, window manager). A host with zero bindings still
- * gets a real, working desktop the moment `laravel-beam-accounts`' default `/operator` route renders
- * this; a host that wants a REAL surface for a realm passes its own `surfaceMap` entry — the auto-
- * surface placeholder for that key just stops appearing.
- *
- * This is the package-shipped counterpart to what every consuming host (audiostud, most notably)
- * previously hand-authored from scratch as its own `shell-config.tsx` — the SAME
- * `buildAppsFromManifest`/`buildDesktopChrome`/`MainframeProvider`+`MainframeOutlet` wiring, promoted
- * here as an importable default instead of being re-derived per host.
- *
- * Deliberately minimal next to a bespoke host desktop: no mobile-narrow collapse, no app-first
- * unentitled fallback, no route-staging of the current page, no workspace persistence. Those are real,
- * legitimate host customizations layered ON TOP of this base (a host can always drop straight to
- * `buildAppsFromManifest`/`buildDesktopChrome` directly, as this component does, and add them) — this
- * component's whole job is "renders a working desktop with zero configuration," not "replaces a
- * product's bespoke OS shell."
- */
-import { createMainframeRegistry, createSlotRegistry, MainframeOutlet, MainframeProvider } from '@schemastud/mainframe';
+/** Portable default realm bindings and window framing. Inertia desktop adapter: beam-inertia. */
+import { createMainframeRegistry, createSlotRegistry } from '@schemastud/mainframe';
 import type { Mainframe, MainframeInjection } from '@schemastud/mainframe';
 import '@schemastud/mainframe/os/shell.css';
-import { Link, router, usePage } from '@inertiajs/react';
 import { Component, type ErrorInfo, type ReactNode } from 'react';
-import { buildAppsFromManifest, buildDesktopChrome } from './realm';
-import type { DesktopChromeConfig, RealmManifestEntry, RealmSurfaceBinding } from './realm';
+import type { LinkComponent } from '../site/types';
+import type { RealmManifestEntry, RealmSurfaceBinding } from './realm';
 
 /**
  * The generic placeholder surface for a realm key with no `surfaceMap` binding — the auto-surface
@@ -74,7 +53,7 @@ export function defaultGenericBinding(entry: RealmManifestEntry): RealmSurfaceBi
  * page-specific Inertia props the desktop only threads shared props for) degrades to a legible notice
  * INSIDE its window, with a link to the live route — never a silent blank window.
  */
-class SurfaceBoundary extends Component<{ title: string; route: string; children: ReactNode }, { error: Error | null }> {
+class SurfaceBoundary extends Component<{ title: string; route: string; children: ReactNode; linkComponent?: LinkComponent }, { error: Error | null }> {
     state = { error: null as Error | null };
     static getDerivedStateFromError(error: Error) {
         return { error };
@@ -84,6 +63,7 @@ class SurfaceBoundary extends Component<{ title: string; route: string; children
     }
     render() {
         if (this.state.error) {
+            const Link: LinkComponent = this.props.linkComponent ?? (({ href, ...rest }) => <a href={href} {...rest} />);
             return (
                 <div
                     style={{
@@ -121,7 +101,7 @@ const surfaceMainframe: Mainframe = ({ slots }) => (
 );
 
 /** The default nested-window fill: frames `render()` in a `SurfaceBoundary`, no other chrome. */
-export function defaultSurfaceInjection(title: string, route: string, render: () => ReactNode): MainframeInjection {
+export function defaultSurfaceInjection(title: string, route: string, render: () => ReactNode, linkComponent?: LinkComponent): MainframeInjection {
     const slots = createSlotRegistry();
     const mainframes = createMainframeRegistry();
     mainframes.register('surface', surfaceMainframe);
@@ -129,67 +109,11 @@ export function defaultSurfaceInjection(title: string, route: string, render: ()
         slot: 'main',
         key: `surface:${title}`,
         render: () => (
-            <SurfaceBoundary title={title} route={route}>
+            <SurfaceBoundary title={title} route={route} linkComponent={linkComponent}>
                 {render()}
             </SurfaceBoundary>
         ),
     });
 
     return { slots, mainframes };
-}
-
-export interface DefaultOsDesktopProps {
-    /** Realm-key → surface binding overrides. Unbound keys fall through to the auto-surface placeholder. */
-    surfaceMap?: Record<string, RealmSurfaceBinding>;
-    /** Realm keys to omit from the roster entirely. */
-    exclude?: Set<string>;
-    /** Menu-bar brand node. Defaults to a plain "beam" wordmark. */
-    brand?: ReactNode;
-    /** Menu-bar status node (clock, realm pill, …). */
-    status?: ReactNode;
-    /** Desktop backdrop node, rendered behind the window layer. */
-    backdrop?: ReactNode;
-    /** Realm key to navigate to on dock-tile click, e.g. `(app) => router.visit(app.route)`. */
-    onNavigate?: DesktopChromeConfig['onNavigate'];
-    /** Additional `buildDesktopChrome` overrides (launcher heading, launch label, persist, …). */
-    chrome?: Partial<DesktopChromeConfig>;
-}
-
-function DefaultBrand() {
-    return <span style={{ fontWeight: 600, fontSize: 14, letterSpacing: '-0.01em' }}>beam</span>;
-}
-
-/** Mounts `DefaultOsDesktop` with everything wired: manifest read, roster build, chrome, window host. */
-export function DefaultOsDesktop({ surfaceMap = {}, exclude, brand, status, backdrop, onNavigate, chrome }: DefaultOsDesktopProps) {
-    const manifest = (usePage<{ realmManifest?: RealmManifestEntry[] }>().props.realmManifest as RealmManifestEntry[] | undefined) ?? [];
-
-    const apps = buildAppsFromManifest(manifest, {
-        surfaceMap,
-        exclude,
-        genericBinding: defaultGenericBinding,
-        surfaceInjection: defaultSurfaceInjection,
-    });
-
-    const osInjection = buildDesktopChrome({
-        apps,
-        brand: brand ?? <DefaultBrand />,
-        status,
-        backdrop,
-        launcherHeading: 'Realms',
-        onNavigate: onNavigate ?? ((app) => router.visit(app.route ?? '/')),
-        ...chrome,
-    });
-
-    const initialOpen = apps
-        .filter((a) => !a.locked)
-        .slice(0, 3)
-        .map((a) => a.key);
-
-    return (
-        <MainframeProvider injection={osInjection}>
-            <div style={{ position: 'fixed', inset: 0, overflow: 'hidden' }}>
-                <MainframeOutlet mode="os" ctx={{ os: { apps, initialOpen } }} />
-            </div>
-        </MainframeProvider>
-    );
 }
