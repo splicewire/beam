@@ -40,7 +40,7 @@ const CATALOG: ExtensionsCatalogRead = {
       isPlatformTier: false,
       isInstalled: false,
       isFree: false,
-    isEntitled: false,
+      isEntitled: false,
       priceLabel: "$19.99",
       categories: ["Productivity"],
       sellerName: "Acme",
@@ -48,8 +48,8 @@ const CATALOG: ExtensionsCatalogRead = {
       description: "A test listing.",
       changelog: [],
       marketName: null,
-    syncedAt: null,
-    createdAt: "2026-08-01T00:00:00Z",
+      syncedAt: null,
+      createdAt: "2026-08-01T00:00:00Z",
     },
     {
       id: 2,
@@ -60,7 +60,7 @@ const CATALOG: ExtensionsCatalogRead = {
       isPlatformTier: true,
       isInstalled: true,
       isFree: true,
-    isEntitled: true,
+      isEntitled: true,
       priceLabel: null,
       categories: ["Platform Tier"],
       sellerName: "Splicewire",
@@ -68,8 +68,8 @@ const CATALOG: ExtensionsCatalogRead = {
       description: null,
       changelog: [],
       marketName: null,
-    syncedAt: null,
-    createdAt: "2026-08-01T00:00:00Z",
+      syncedAt: null,
+      createdAt: "2026-08-01T00:00:00Z",
     },
   ],
 };
@@ -172,6 +172,28 @@ function mount(
 }
 
 describe("ExtensionsCatalog — isolation mount (no Laravel)", () => {
+  it("keeps the Market seat and connection form for a host with connection support", async () => {
+    mount(<ExtensionsArea />, fakeClient());
+    fireEvent.click(screen.getByRole("button", { name: "Market" }));
+    expect(await screen.findByLabelText("Market URL")).toBeTruthy();
+    expect(screen.getByLabelText("Connection credential")).toBeTruthy();
+  });
+
+  it("keeps publisher browse and installed seats while omitting unsupported Market management", async () => {
+    const client = fakeClient({
+      connectMarket: undefined,
+      syncMarket: undefined,
+      disconnectMarket: undefined,
+    });
+    mount(<ExtensionsArea />, client);
+    expect(await screen.findByText("Acme Waveform")).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Market" })).toBeNull();
+    expect(screen.queryByLabelText("Market URL")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Installed" }));
+    await waitFor(() => expect(client.getInstalled).toHaveBeenCalledTimes(1));
+    expect(screen.getByRole("button", { name: "Browse" })).toBeTruthy();
+  });
+
   it("renders both listing kinds off a pure generated-DTO fixture, with trust + lock badges", async () => {
     const client = fakeClient();
     mount(<ExtensionsCatalog onSelect={() => {}} />, client);

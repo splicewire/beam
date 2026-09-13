@@ -40,16 +40,18 @@ export interface ExtensionsEndpoints {
    * site-wide Splicewire-antenna fact from `laravel-beam-market`'s own self-registered mount. Two
    * fields spelled the same in one endpoint map is a name collision TypeScript catches and a
    * reader would not.
+   * Omit endpoints the host does not mount; the client omits the corresponding mutation.
    */
-  connections: string;
-  connectionRow(id: string): string;
-  syncConnection(id: string): string;
+  connections?: string;
+  connectionRow?(id: string): string;
+  syncConnection?(id: string): string;
 }
 
 export function createExtensionsClient(
   request: ExtensionsRequest,
   endpoints: ExtensionsEndpoints,
 ): ExtensionsClient {
+  const { connections, connectionRow, syncConnection } = endpoints;
   async function collect<T>(
     url: string,
     filters: Record<string, string | number> = {},
@@ -112,21 +114,33 @@ export function createExtensionsClient(
     update: async (id) =>
       (await request<InstalledExtension>("POST", endpoints.update(id))).data
         .data,
-    connectMarket: async (input: MarketConnectionInput) =>
-      (
-        await request<MarketConnection>(
-          "POST",
-          endpoints.connections,
-          undefined,
-          input as unknown as Record<string, unknown>,
-        )
-      ).data.data,
-    syncMarket: async (id: string) =>
-      (await request<MarketConnection>("POST", endpoints.syncConnection(id)))
-        .data.data,
-    disconnectMarket: async (id: string) => {
-      await request<undefined>("DELETE", endpoints.connectionRow(id));
-    },
+    ...(connections
+      ? {
+          connectMarket: async (input: MarketConnectionInput) =>
+            (
+              await request<MarketConnection>(
+                "POST",
+                connections,
+                undefined,
+                input as unknown as Record<string, unknown>,
+              )
+            ).data.data,
+        }
+      : {}),
+    ...(syncConnection
+      ? {
+          syncMarket: async (id: string) =>
+            (await request<MarketConnection>("POST", syncConnection(id))).data
+              .data,
+        }
+      : {}),
+    ...(connectionRow
+      ? {
+          disconnectMarket: async (id: string) => {
+            await request<undefined>("DELETE", connectionRow(id));
+          },
+        }
+      : {}),
     remove: async (id) => {
       const response = await request<AwaitingOpsReviewData | undefined>(
         "POST",

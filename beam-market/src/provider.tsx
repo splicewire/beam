@@ -50,12 +50,14 @@ export interface ExtensionsClient {
    * rejects with the market's own refusal on a bad URL or a revoked key. That is what lets the
    * form put the message on the field that caused it instead of leaving a row claiming
    * "connected" beside a catalog that never arrived.
+   * Omit unsupported market mutations: a publisher can expose its own catalog without
+   * supporting connections to other markets. UI actions follow method presence.
    */
-  connectMarket(input: MarketConnectionInput): Promise<MarketConnection>;
+  connectMarket?(input: MarketConnectionInput): Promise<MarketConnection>;
   /** Re-sync one connection now. Resolves with its NEW state, including a failed one — see the hook. */
-  syncMarket(connectionId: string): Promise<MarketConnection>;
+  syncMarket?(connectionId: string): Promise<MarketConnection>;
   /** Disconnect: the market's listings leave this catalog, installs and their rows survive. */
-  disconnectMarket(connectionId: string): Promise<void>;
+  disconnectMarket?(connectionId: string): Promise<void>;
   update(installId: string): Promise<InstalledExtension>;
   remove(installId: string): Promise<void | AwaitingOpsReviewData>;
 }

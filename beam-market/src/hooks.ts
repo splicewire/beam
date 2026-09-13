@@ -24,7 +24,9 @@ function deploymentMessage(
   const { state, detectedVersion, requestedVersion } = installed.deployment;
 
   if (state === "detected") {
-    return `${installed.name} is active${detectedVersion ? ` at v${detectedVersion}` : ""}.`;
+    return `${installed.name} is active${
+      detectedVersion ? ` at v${detectedVersion}` : ""
+    }.`;
   }
 
   if (state === "not_applicable") {
@@ -35,7 +37,11 @@ function deploymentMessage(
     return "Still deployed — run the removal step shown on the row.";
   }
 
-  return `${verb}. ${requestedVersion ? `v${requestedVersion} is not deployed yet` : "Nothing is deployed yet"} — follow the deployment step shown on the Installed tab.`;
+  return `${verb}. ${
+    requestedVersion
+      ? `v${requestedVersion} is not deployed yet`
+      : "Nothing is deployed yet"
+  } — follow the deployment step shown on the Installed tab.`;
 }
 
 // Query keys are package-namespaced — the host owns the QueryClient; these hooks run on whatever
@@ -116,20 +122,31 @@ export function useConnectMarket() {
   const notify = useExtensionsNotify();
 
   return useMutation({
-    mutationFn: (input: MarketConnectionInput) => client.connectMarket(input),
+    mutationFn: async (input: MarketConnectionInput) => {
+      if (!client.connectMarket)
+        throw new Error("This host does not support connecting to a market.");
+      return client.connectMarket(input);
+    },
     onSuccess: (connection) => {
       // The CATALOG changes too, not just the market list: a connected site's catalog is its
       // market's, so every catalog query is stale the instant this lands.
       queryClient.invalidateQueries({ queryKey: ["beam-market"] });
       notify({
         type: "success",
-        message: `Connected to ${connection.marketName || connection.marketUrl}. ${connection.listingCount} ${connection.listingCount === 1 ? "listing" : "listings"} synced.`,
+        message: `Connected to ${
+          connection.marketName || connection.marketUrl
+        }. ${connection.listingCount} ${
+          connection.listingCount === 1 ? "listing" : "listings"
+        } synced.`,
       });
     },
     onError: (err) => {
       notify({
         type: "error",
-        message: extensionsErrorMessage(err, "Could not connect to that market."),
+        message: extensionsErrorMessage(
+          err,
+          "Could not connect to that market.",
+        ),
       });
       onError?.(err);
     },
@@ -150,14 +167,20 @@ export function useSyncMarket() {
   const notify = useExtensionsNotify();
 
   return useMutation({
-    mutationFn: (connectionId: string) => client.syncMarket(connectionId),
+    mutationFn: async (connectionId: string) => {
+      if (!client.syncMarket)
+        throw new Error("This host does not support re-syncing a market.");
+      return client.syncMarket(connectionId);
+    },
     onSuccess: (connection: MarketConnection) => {
       queryClient.invalidateQueries({ queryKey: ["beam-market"] });
 
       if (connection.status === "connected") {
         notify({
           type: "success",
-          message: `${connection.marketName || connection.marketUrl}: ${connection.listingCount} ${connection.listingCount === 1 ? "listing" : "listings"}.`,
+          message: `${connection.marketName || connection.marketUrl}: ${
+            connection.listingCount
+          } ${connection.listingCount === 1 ? "listing" : "listings"}.`,
         });
 
         return;
@@ -184,7 +207,11 @@ export function useDisconnectMarket() {
   const notify = useExtensionsNotify();
 
   return useMutation({
-    mutationFn: (connectionId: string) => client.disconnectMarket(connectionId),
+    mutationFn: async (connectionId: string) => {
+      if (!client.disconnectMarket)
+        throw new Error("This host does not support disconnecting a market.");
+      return client.disconnectMarket(connectionId);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["beam-market"] });
       notify({
@@ -232,7 +259,11 @@ export function usePurchaseExtension() {
         type: "success",
         message: purchase.alreadyEntitled
           ? "You already own this — nothing was charged."
-          : `Purchased${purchase.entitlement.amountLabel ? ` for ${purchase.entitlement.amountLabel}` : ""}. You can install it now.`,
+          : `Purchased${
+              purchase.entitlement.amountLabel
+                ? ` for ${purchase.entitlement.amountLabel}`
+                : ""
+            }. You can install it now.`,
       });
     },
     onError: (err) => {
@@ -285,7 +316,10 @@ export function useUpdateInstalledExtension() {
     mutationFn: (installId: string) => client.update(installId),
     onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: INSTALLED_KEY });
-      notify({ type: "success", message: deploymentMessage(result, "Checked") });
+      notify({
+        type: "success",
+        message: deploymentMessage(result, "Checked"),
+      });
     },
     onError: (err) => {
       notify({ type: "error", message: "Update failed." });

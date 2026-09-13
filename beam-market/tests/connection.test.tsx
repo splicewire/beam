@@ -55,7 +55,9 @@ function client(overrides: Partial<ExtensionsClient> = {}): ExtensionsClient {
 }
 
 function mount(services: ExtensionsClient, notify = vi.fn()) {
-  const cache = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  const cache = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
 
   render(
     <QueryClientProvider client={cache}>
@@ -81,6 +83,31 @@ function statusFixture(over: Partial<MarketConnection>) {
 }
 
 describe("the market connection screen", () => {
+  it("omits unsupported connection actions while preserving an available re-sync", async () => {
+    const syncMarket = vi.fn(async () => connected);
+    mount(
+      client({
+        getConnectionStatus: statusFixture({
+          status: "refused",
+          lastSyncError: "Credential refused.",
+        }),
+        connectMarket: undefined,
+        disconnectMarket: undefined,
+        syncMarket,
+      }),
+    );
+    expect(
+      await screen.findByRole("button", { name: /re-sync/i }),
+    ).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Disconnect" })).toBeNull();
+    expect(screen.queryByTestId("market-connect-form")).toBeNull();
+    expect(
+      screen.getByTestId("market-connection-error").textContent,
+    ).not.toContain("connect again below");
+    await userEvent.click(screen.getByRole("button", { name: /re-sync/i }));
+    await waitFor(() => expect(syncMarket).toHaveBeenCalledWith("conn-1"));
+  });
+
   it("says a site with no market has its own catalog, and offers the form", async () => {
     mount(client());
 
@@ -125,7 +152,8 @@ describe("the market connection screen", () => {
       client({
         getConnectionStatus: statusFixture({
           status: "error",
-          lastSyncError: "Could not reach https://market.example.test: timed out",
+          lastSyncError:
+            "Could not reach https://market.example.test: timed out",
           // ⚠️ Still 2. A failed sync does not zero the catalog it last saw — "we could not
           // refresh" is not "there is nothing here".
           listingCount: 2,
@@ -139,9 +167,9 @@ describe("the market connection screen", () => {
     expect(screen.getByTestId("market-connection-error").textContent).toMatch(
       /Could not reach/,
     );
-    expect(screen.getByTestId("market-connection-error").textContent).not.toMatch(
-      /issue a new one/i,
-    );
+    expect(
+      screen.getByTestId("market-connection-error").textContent,
+    ).not.toMatch(/issue a new one/i);
   });
 
   it("sends the URL and credential the operator typed, and nothing else", async () => {
@@ -177,13 +205,16 @@ describe("the market connection screen", () => {
         syncMarket: vi.fn(async () => ({
           ...connected,
           status: "error",
-          lastSyncError: "Could not reach https://market.example.test: timed out",
+          lastSyncError:
+            "Could not reach https://market.example.test: timed out",
         })) as never,
       }),
       notify,
     );
 
-    await userEvent.click(await screen.findByRole("button", { name: /re-sync/i }));
+    await userEvent.click(
+      await screen.findByRole("button", { name: /re-sync/i }),
+    );
 
     await waitFor(() =>
       expect(notify).toHaveBeenCalledWith({

@@ -24,19 +24,56 @@ function transport(
     method: string,
     url: string,
     params?: Record<string, string | number>,
+    body?: Record<string, unknown>,
   ) => unknown,
 ): ExtensionsRequest {
   return async <T>(
     method: "GET" | "POST" | "DELETE",
     url: string,
     params?: Record<string, string | number>,
+    body?: Record<string, unknown>,
   ) =>
-    respond(method, url, params) as {
+    (body === undefined
+      ? respond(method, url, params)
+      : respond(method, url, params, body)) as {
       status: number;
       data: { data: T; limit?: number; offset?: number; total?: number };
     };
 }
 describe("Extensions wire adapter", () => {
+  it("omits market mutations when the host supplies no connection endpoints", async () => {
+    const { connections, connectionRow, syncConnection, ...publisher } =
+      endpoints;
+    const respond = vi.fn(() => ({ status: 200, data: { data: [] } }));
+    const client = createExtensionsClient(transport(respond), publisher);
+
+    expect(client.connectMarket).toBeUndefined();
+    expect(client.syncMarket).toBeUndefined();
+    expect(client.disconnectMarket).toBeUndefined();
+    await client.getCatalog();
+    expect(respond).toHaveBeenCalledTimes(1);
+    expect(respond).toHaveBeenCalledWith("GET", "/catalog", { page: 1 });
+  });
+
+  it("preserves supported connection request bodies and disconnect status", async () => {
+    const request = vi.fn(() => ({ status: 204, data: { data: undefined } }));
+    const client = createExtensionsClient(transport(request), endpoints);
+    const input = {
+      marketUrl: "https://market.example.test",
+      credential: "credential",
+    };
+    if (!client.connectMarket || !client.syncMarket || !client.disconnectMarket)
+      throw new Error("Expected connection support");
+    await client.connectMarket(input);
+    await client.syncMarket("connection-id");
+    await client.disconnectMarket("connection-id");
+    expect(request.mock.calls).toEqual([
+      ["POST", "/market-connections", undefined, input],
+      ["POST", "/market-connections/connection-id/sync", undefined],
+      ["DELETE", "/market-connections/connection-id", undefined],
+    ]);
+  });
+
   it("drains every installed page using page, preserving opaque UUID identifiers", async () => {
     const respond = vi.fn(
       (

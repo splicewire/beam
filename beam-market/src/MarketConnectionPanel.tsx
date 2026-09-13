@@ -1,10 +1,4 @@
-import {
-  Badge,
-  Button,
-  Input,
-  ListSkeleton,
-  ListState,
-} from "@schemastud/ui";
+import { Badge, Button, Input, ListSkeleton, ListState } from "@schemastud/ui";
 import { AlertTriangle, Link2, Link2Off, RefreshCw, Store } from "lucide-react";
 import { useState } from "react";
 import {
@@ -14,6 +8,7 @@ import {
   useSyncMarket,
 } from "./hooks";
 import type { MarketConnection } from "./types";
+import { useExtensionsServices } from "./provider";
 
 /**
  * The connection screen (ux-demo-convergence G5, G5-CATALOG-FEDERATION) — where this site says
@@ -54,7 +49,10 @@ function statusBadge(connection: MarketConnection) {
       );
     case "error":
       return (
-        <Badge variant="outline" className="font-normal text-amber-600 dark:text-amber-400">
+        <Badge
+          variant="outline"
+          className="font-normal text-amber-600 dark:text-amber-400"
+        >
           Sync failed
         </Badge>
       );
@@ -78,6 +76,7 @@ function syncedLabel(connection: MarketConnection): string {
 }
 
 function ConnectionRow({ connection }: { connection: MarketConnection }) {
+  const { client } = useExtensionsServices();
   const sync = useSyncMarket();
   const disconnect = useDisconnectMarket();
 
@@ -117,24 +116,28 @@ function ConnectionRow({ connection }: { connection: MarketConnection }) {
         </div>
 
         <div className="flex shrink-0 items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={sync.isPending}
-            onClick={() => sync.mutate(connection.id)}
-          >
-            <RefreshCw className="size-3.5" aria-hidden="true" />
-            Re-sync
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            disabled={disconnect.isPending}
-            onClick={() => disconnect.mutate(connection.id)}
-          >
-            <Link2Off className="size-3.5" aria-hidden="true" />
-            Disconnect
-          </Button>
+          {client.syncMarket && (
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={sync.isPending}
+              onClick={() => sync.mutate(connection.id)}
+            >
+              <RefreshCw className="size-3.5" aria-hidden="true" />
+              Re-sync
+            </Button>
+          )}
+          {client.disconnectMarket && (
+            <Button
+              variant="ghost"
+              size="sm"
+              disabled={disconnect.isPending}
+              onClick={() => disconnect.mutate(connection.id)}
+            >
+              <Link2Off className="size-3.5" aria-hidden="true" />
+              Disconnect
+            </Button>
+          )}
         </div>
       </div>
 
@@ -159,13 +162,16 @@ function ConnectionRow({ connection }: { connection: MarketConnection }) {
           data-testid="market-connection-error"
           className="flex items-start gap-1.5 text-sm text-destructive"
         >
-          <AlertTriangle className="mt-0.5 size-3.5 shrink-0" aria-hidden="true" />
+          <AlertTriangle
+            className="mt-0.5 size-3.5 shrink-0"
+            aria-hidden="true"
+          />
           {/* The server's own sentence already names the refusal and what to do; a local prefix
               saying the same thing twice is noise, so only the action the server cannot know about
               — "connect again below", which is a fact about THIS screen — is added. */}
           <span>
             {connection.lastSyncError}
-            {connection.status === "refused"
+            {connection.status === "refused" && client.connectMarket
               ? " Ask its operator to issue a new one, then connect again below."
               : null}
           </span>
@@ -239,6 +245,7 @@ function ConnectForm() {
  * The Market tab's body: every connection this site holds, and the form to add one.
  */
 export function MarketConnectionPanel() {
+  const { client } = useExtensionsServices();
   const { data, isPending, isError } = useMarketConnections();
 
   if (isError) {
@@ -271,7 +278,7 @@ export function MarketConnectionPanel() {
         )}
       </ListState>
 
-      <ConnectForm />
+      {client.connectMarket && <ConnectForm />}
     </div>
   );
 }

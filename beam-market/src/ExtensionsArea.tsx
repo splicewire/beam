@@ -4,6 +4,7 @@ import { ExtensionDetailSheet } from './ExtensionDetailSheet';
 import { ExtensionsCatalog } from './ExtensionsCatalog';
 import { InstalledTab } from './InstalledTab';
 import { MarketConnectionPanel } from './MarketConnectionPanel';
+import { useExtensionsServices } from './provider';
 
 type Tab = 'browse' | 'installed' | 'market';
 
@@ -16,11 +17,14 @@ type Tab = 'browse' | 'installed' | 'market';
 export function ExtensionsArea({ className }: { className?: string }) {
     const [tab, setTab] = useState<Tab>('browse');
     const [selectedListingId, setSelectedListingId] = useState<number | null>(null);
+    const { client } = useExtensionsServices();
+    const hasMarketActions = Boolean(client.connectMarket || client.syncMarket || client.disconnectMarket);
+    const activeTab = tab === 'market' && !hasMarketActions ? 'browse' : tab;
 
     return (
         <div className={cn('flex flex-col gap-4', className)}>
             <div className="flex items-center gap-1 border-b">
-                <TabButton active={tab === 'browse'} onClick={() => setTab('browse')}>
+                <TabButton active={activeTab === 'browse'} onClick={() => setTab('browse')}>
                     Browse
                 </TabButton>
                 <TabButton active={tab === 'installed'} onClick={() => setTab('installed')}>
@@ -32,14 +36,16 @@ export function ExtensionsArea({ className }: { className?: string }) {
                     something you can only see while looking at the thing it explains, and would
                     have left a site with no catalog at all (disconnected, or refused) with nowhere
                     to go. */}
-                <TabButton active={tab === 'market'} onClick={() => setTab('market')}>
-                    Market
-                </TabButton>
+                {hasMarketActions && (
+                    <TabButton active={tab === 'market'} onClick={() => setTab('market')}>
+                        Market
+                    </TabButton>
+                )}
             </div>
 
-            {tab === 'browse' && <ExtensionsCatalog onSelect={setSelectedListingId} />}
-            {tab === 'installed' && <InstalledTab />}
-            {tab === 'market' && <MarketConnectionPanel />}
+            {activeTab === 'browse' && <ExtensionsCatalog onSelect={setSelectedListingId} />}
+            {activeTab === 'installed' && <InstalledTab />}
+            {activeTab === 'market' && <MarketConnectionPanel />}
 
             <ExtensionDetailSheet
                 listingId={selectedListingId}
