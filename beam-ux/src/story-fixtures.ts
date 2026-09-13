@@ -60,6 +60,7 @@ export const cardEntryBody: BeamUxEntryBodyData = {
     slug: 'program-card',
     id: entryIds.card,
     type: 'form',
+    format: 'tsx',
     schema: {
         type: 'object',
         properties: {
@@ -82,6 +83,8 @@ export const cardEntryBody: BeamUxEntryBodyData = {
         seatsShown: true,
         ctaLabel: 'Enroll',
     },
+    // TsxBodyCodec decodes an object body without a source key to an empty string.
+    source: '',
     compileError: null,
 };
 
@@ -150,7 +153,16 @@ export const themeEntryBody: BeamUxEntryBodyData = {
  * has no slug for it.
  */
 export function plainEntryBody(id: string, slug: string = id): BeamUxEntryBodyData {
-    return { slug, id, type: 'richtext', schema: null, body: {}, compileError: null };
+    return {
+        slug,
+        id,
+        type: 'richtext',
+        format: 'tsx',
+        schema: null,
+        body: {},
+        source: null,
+        compileError: null,
+    };
 }
 
 /** Structure-mode tree: layout → template → page → the region placements above. */

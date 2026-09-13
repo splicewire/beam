@@ -179,27 +179,6 @@ describe('useSseStream URL join', () => {
         return () => capturedUrl;
     }
 
-    function captureFetchedInit(client: { defaults: { baseURL?: string } }, path: string) {
-        let capturedInit: RequestInit | undefined;
-        const fetchMock = vi.fn().mockImplementation((_url: string, init: RequestInit) => {
-            capturedInit = init;
-            return Promise.resolve({
-                ok: true,
-                body: null,
-                [Symbol.asyncIterator]: async function* () {},
-            } as unknown as Response);
-        });
-        vi.stubGlobal('fetch', fetchMock);
-
-        const { result } = renderHook(() =>
-            useSseStream<{ event: string; data: unknown }>(client, path),
-        );
-        act(() => {
-            result.current.start();
-        });
-        return () => capturedInit;
-    }
-
     it('joins a baseURL with no trailing slash and a path with no leading slash', () => {
         const getUrl = captureFetchedUrl({ defaults: { baseURL: 'https://beam.test/api/v1' } }, 'circuits/1/run');
         expect(getUrl()).toBe('https://beam.test/api/v1/circuits/1/run');

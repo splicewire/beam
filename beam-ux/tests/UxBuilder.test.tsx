@@ -69,6 +69,7 @@ const cardBody: BeamUxEntryBodyData = {
     slug: 'program-card',
     id: CARD_ID,
     type: 'form',
+    format: 'tsx',
     schema: {
         type: 'object',
         properties: {
@@ -78,6 +79,7 @@ const cardBody: BeamUxEntryBodyData = {
         required: ['title'],
     },
     body: { title: 'Frontend Foundations', ctaLabel: 'Enroll' },
+    source: '',
     compileError: null,
 };
 
@@ -88,7 +90,16 @@ function makeClient(saveBody: UxBuilderClient['saveBody']): UxBuilderClient {
             Promise.resolve<BeamUxEntryBodyData>(
                 id === CARD_ID
                     ? cardBody
-                    : { slug: id, id, type: 'richtext', schema: null, body: {}, compileError: null },
+                    : {
+                        slug: id,
+                        id,
+                        type: 'richtext',
+                        format: 'tsx',
+                        schema: null,
+                        body: {},
+                        source: null,
+                        compileError: null,
+                    },
             ),
         saveBody,
     };
