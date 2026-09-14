@@ -75,21 +75,29 @@ export function AppSidebar({ realm }: { realm?: FrameRealmContext } = {}) {
             </SidebarHeader>
 
             <SidebarContent>
-                <NavMain items={mainNavItems(railRealm)} />
                 {/*
                  * The frame nav — projected server-side and, until now, rendered nowhere. It is
                  * mounted HERE rather than inside the console page so the seats are reachable from
                  * ordinary app chrome instead of only from a surface you must already be on.
                  *
                  * A layout that names a realm (`OperatorLayout`) scopes ONLY this rail to it, so the
-                 * rail reads that realm's manifest while the page keeps its own.
+                 * rail reads that realm's manifest while the page keeps its own. There the starter-kit
+                 * "Platform → Dashboard" group is only the FALLBACK: a realm that seats a section
+                 * heads it with its own home link, and keeping both put two "Platform" headings and
+                 * two links to `/operator` on every starter.
                  */}
                 {realm ? (
                     <FrameRealmProvider {...realm}>
-                        <NavFrame />
+                        <NavFrame fallback={<NavMain items={mainNavItems(railRealm)} />} />
                     </FrameRealmProvider>
+                ) : railRealm.realm !== null ? (
+                    // A realm console page (`/operator/users`) scopes the rail through its own props.
+                    <NavFrame fallback={<NavMain items={mainNavItems(railRealm)} />} />
                 ) : (
-                    <NavFrame />
+                    <>
+                        <NavMain items={mainNavItems(railRealm)} />
+                        <NavFrame />
+                    </>
                 )}
             </SidebarContent>
 

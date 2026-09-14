@@ -189,6 +189,54 @@ describe('the operator rail', () => {
         expect(users.closest('a')?.getAttribute('href')).toBe('/operator/users');
     });
 
+    it("drops the starter-kit Platform group once the realm's manifest supplies sections", async () => {
+        // Every starter's operator seat is headed "Platform" and links to `/operator`, so keeping the
+        // hardcoded group beside it rendered two "Platform" headings and two links to the same landing.
+        // The group stays only as the fallback for a realm whose manifest seats nothing.
+        fetchMock.mockResolvedValue({
+            ok: true,
+            status: 200,
+            json: async () => ({
+                resources: [],
+                contexts: {},
+                routeContext: [],
+                nav: {
+                    items: [
+                        {
+                            kind: 'section',
+                            title: 'Platform',
+                            href: '/operator',
+                            icon: null,
+                            routeName: 'platform.section',
+                            locked: null,
+                            children: [
+                                {
+                                    kind: 'resource',
+                                    title: 'Users',
+                                    href: '/operator/users',
+                                    icon: null,
+                                    routeName: 'users.index',
+                                    locked: null,
+                                    children: [],
+                                },
+                            ],
+                        },
+                    ],
+                },
+            }),
+        });
+
+        mount(
+            <OperatorLayout>
+                <p>operator page</p>
+            </OperatorLayout>,
+        );
+
+        await screen.findByText('Users');
+        expect(screen.getAllByText('Platform')).toHaveLength(1);
+        expect(screen.queryByText('Dashboard')).toBeNull();
+    });
+
     it('does not hand the operator realm to the PAGE — only the rail is scoped', async () => {
         function Witness() {
             return <p data-testid="page-realm">{String(useFrameRealm().realm)}</p>;
@@ -237,5 +285,57 @@ describe('the tenant rail', () => {
         await waitFor(() => expect(fetchMock).toHaveBeenCalled());
         expect(requestedUrls()).toEqual(['/operator/frame/manifest']);
         expect(screen.getByText('Dashboard').closest('a')?.getAttribute('href')).toBe('/operator');
+    });
+
+    it("drops the starter-kit Platform group on a realm console too, once the manifest seats a section", async () => {
+        page.url = '/operator/users';
+        page.props = {
+            ...page.props,
+            realm: 'operator',
+            basename: '/operator',
+            manifestUrl: '/operator/frame/manifest',
+        };
+        fetchMock.mockResolvedValue({
+            ok: true,
+            status: 200,
+            json: async () => ({
+                resources: [],
+                contexts: {},
+                routeContext: [],
+                nav: {
+                    items: [
+                        {
+                            kind: 'section',
+                            title: 'Platform',
+                            href: '/operator',
+                            icon: null,
+                            routeName: 'platform.section',
+                            locked: null,
+                            children: [
+                                {
+                                    kind: 'resource',
+                                    title: 'Teams',
+                                    href: '/operator/teams',
+                                    icon: null,
+                                    routeName: 'teams.index',
+                                    locked: null,
+                                    children: [],
+                                },
+                            ],
+                        },
+                    ],
+                },
+            }),
+        });
+
+        mount(
+            <AppLayout>
+                <p>console</p>
+            </AppLayout>,
+        );
+
+        await screen.findByText('Teams');
+        expect(screen.getAllByText('Platform')).toHaveLength(1);
+        expect(screen.queryByText('Dashboard')).toBeNull();
     });
 });

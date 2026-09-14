@@ -1,4 +1,5 @@
 import { Link } from '@inertiajs/react';
+import type { ReactNode } from 'react';
 import {
     SidebarGroup,
     SidebarGroupLabel,
@@ -23,13 +24,13 @@ import { useCurrentUrl } from '../hooks/use-current-url';
  * Each `href` comes from the SAME derivation as the route it points at
  * (`RouteContextProjector::hrefs()`), so a nav row and its destination cannot drift apart.
  */
-export function NavFrame() {
+export function NavFrame({ fallback = null }: { fallback?: ReactNode } = {}) {
     const { data: manifest } = useFrameManifest();
     const { isCurrentUrl } = useCurrentUrl();
     const sections = manifest?.nav.items ?? [];
 
     if (sections.length === 0) {
-        return null;
+        return <>{fallback}</>;
     }
 
     return (
