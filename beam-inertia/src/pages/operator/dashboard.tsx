@@ -1,4 +1,5 @@
 import { Head, Link } from '@inertiajs/react';
+import { StatTile } from '@schemastud/ui';
 
 /**
  * The operator back-office landing — a cross-model stats roll-up. An ordinary Inertia page the host owns
@@ -24,17 +25,6 @@ type Props = {
     surfaces?: { title: string; href: string; blurb?: string | null }[];
 };
 
-function Stat({ label, value }: { label: string; value: number }) {
-    return (
-        <div className="rounded-xl border border-border bg-card p-5">
-            <div className="font-mono text-3xl font-semibold">{value}</div>
-            <div className="mt-1 text-xs tracking-wide text-muted-foreground uppercase">
-                {label}
-            </div>
-        </div>
-    );
-}
-
 export default function OperatorDashboard({ staff, stats, surfaces }: Props) {
     const s = staff ?? { name: 'Operator', email: 'operator@example.test' };
     const st = stats ?? { users: 0, sitemaps: 0, entries: 0 };
@@ -47,10 +37,13 @@ export default function OperatorDashboard({ staff, stats, surfaces }: Props) {
                 Signed in as {s.name} ({s.email})
             </p>
 
+            {/* `@schemastud/ui`'s StatTile — the same tile frame's `stat-row` card draws, so this
+                landing and the `{realm}-dashboard` leaf that supersedes it (realm-dashboards ticket
+                05) read as one system. The `stats` prop itself is retired in that ticket. */}
             <div className="mt-6 grid grid-cols-3 gap-4">
-                <Stat label="Users" value={st.users} />
-                <Stat label="Sitemaps" value={st.sitemaps} />
-                <Stat label="UX entries" value={st.entries} />
+                <StatTile label="Users" value={st.users} />
+                <StatTile label="Sitemaps" value={st.sitemaps} />
+                <StatTile label="UX entries" value={st.entries} />
             </div>
 
             {surfaces && surfaces.length > 0 && (

@@ -14,7 +14,7 @@ import { useParams, useRoutes } from 'react-router';
 import { frameIcon } from './icons';
 import type { FrameManifest, FrameNavNode } from './manifest';
 import { realmHref, realmRelative, useFrameRealm } from './realm';
-import { formFromManifest, labelFromManifest } from './manifest';
+import { formFromManifest, labelFromManifest, manifestLookup } from './manifest';
 
 /**
  * The tenant realm's CLIENT router — the half `/frame/manifest`'s `routeContext` has always been
@@ -170,7 +170,7 @@ export function FrameRoutes({ manifest }: { manifest: FrameManifest }) {
             // documents this seam, and the only reason it can stay react-router-free.
             // eslint-disable-next-line react-hooks/rules-of-hooks
             resolveId: () => idFromParam(useParams().id),
-            manifestFor: (resource) => manifest.contexts[resource],
+            manifestFor: manifestLookup(manifest),
             formFor: (resource) => formFromManifest(manifest, resource),
             onDecline: (entry, reason) => {
                 declined.set(entry.routeName, reason);

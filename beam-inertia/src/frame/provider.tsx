@@ -1,6 +1,7 @@
 import {
     createWidgetRegistry,
     FrameProvider,
+    registerCardWidgets,
     registerResourceRefWidget,
 } from '@schemastud/frame';
 import type { FrameAction, FrameInjection } from '@schemastud/frame';
@@ -8,7 +9,8 @@ import { shadcnEditSlots, shadcnListSlots } from '@schemastud/frame/shadcn';
 import type { SchemaNode } from '@schemastud/seam';
 import { useCallback, useMemo } from 'react';
 import type { ReactNode } from 'react';
-import { useFrameManifest } from './manifest';
+import { frameIcon } from './icons';
+import { manifestLookup, useFrameManifest } from './manifest';
 import { framePrimitives } from './primitives';
 import { frameTransport } from './transport';
 import { useFrameUrlState } from './use-url-state';
@@ -46,6 +48,15 @@ import { useFrameUrlState } from './use-url-state';
  *
  * No QueryClientProvider here: `app.tsx`'s `withApp` provides one at the Inertia root, and frame
  * fetches rows/records/schemas through react-query internally.
+ *
+ * ## The cards path (realm-dashboards ticket 04)
+ *
+ * A `{realm}-dashboard` resource's rows name OTHER resources (`{ resource: 'users', context:
+ * 'summary', … }`), and its root `list-item` binds `dashboard-card`. Two things on this injection
+ * make that leaf render through the ordinary `ListShell` with no bespoke page: `registerCardWidgets`
+ * installs the card set into the registry (with this host's icon map as the glyph resolver), and
+ * `manifestFor` lets a card resolve its target's `summary`/`overview` entry. Both come from the same
+ * manifest the mount dispatcher reads, through the one `manifestLookup` definition.
  */
 export function TenantFrameProvider({ children }: { children: ReactNode }) {
     const { data: manifest } = useFrameManifest();
@@ -69,6 +80,11 @@ export function TenantFrameProvider({ children }: { children: ReactNode }) {
         // splicewire measured that side-effecting memo failing to run for its registry. Calling
         // registerWidget twice is safe.
         registerResourceRefWidget(registry);
+        // The dashboard card set — context defaults for `summary`/`overview` plus the five named
+        // widgets. Guarded per registry inside, so a re-run of this memo cannot stack a second copy.
+        // TODO(realm-dashboards 03 review): also pass `renderLink` backed by Inertia's `Link` once
+        // `RegisterCardWidgetsOptions.renderLink` lands in @schemastud/frame, so cards navigate client-side.
+        registerCardWidgets(registry, { iconFor: frameIcon });
 
         return {
             transport: frameTransport,
@@ -79,10 +95,11 @@ export function TenantFrameProvider({ children }: { children: ReactNode }) {
             schemaFetcher: async (ref: string): Promise<SchemaNode> =>
                 ({ $id: ref }) as SchemaNode,
             can,
+            manifestFor: manifestLookup(manifest),
             listSlots: shadcnListSlots,
             editSlots: shadcnEditSlots,
         };
-    }, [can]);
+    }, [can, manifest]);
 
     return <FrameProvider value={injection}>{children}</FrameProvider>;
 }

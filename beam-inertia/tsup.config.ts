@@ -26,6 +26,7 @@ export default defineConfig({
     "@schemastud/frame",
     "@schemastud/mainframe",
     "@schemastud/seam",
+    "@schemastud/ui",
     "@splicewire/beam-mainframe",
     "@splicewire/beam-ux",
     "@tanstack/react-query",

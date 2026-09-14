@@ -1,6 +1,7 @@
 import type {
     ContextManifest,
     FormMode,
+    ManifestLookup,
     RouteContextEntry,
 } from '@schemastud/frame';
 import { useFrameRealm } from './realm';
@@ -95,6 +96,18 @@ export function useFrameManifest() {
         queryFn: () => fetchManifest(manifestUrl),
         staleTime: 60_000,
     });
+}
+
+/**
+ * Another resource's context manifest, by key — frame's `ManifestLookup`, built ONCE here and handed
+ * to both of its consumers: the mount dispatcher's `manifestFor` option (`router.tsx`) and the
+ * injection's `manifestFor` (`provider.tsx`, realm-dashboards ticket 04). One definition, so a
+ * `dashboard-card` resolving a row's TARGET resource and a dispatched leaf resolving its OWN read the
+ * same table. `undefined` is the ordinary answer while the manifest is in flight and for a resource
+ * this host does not mount — the card drops, never throws.
+ */
+export function manifestLookup(manifest: FrameManifest | undefined): ManifestLookup {
+    return (resource) => manifest?.contexts[resource];
 }
 
 /** A resource's declared `form` mode, for the mount dispatcher's `formFor` lookup. */
