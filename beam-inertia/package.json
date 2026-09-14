@@ -18,11 +18,21 @@
     "src",
     "README.md"
   ],
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org",
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/splicewire/beam.git",
+    "directory": "beam-inertia"
+  },
   "scripts": {
     "build": "tsup",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "lint:imports": "node scripts/check-imports.mjs"
+    "lint:imports": "node scripts/check-imports.mjs",
+    "prepublishOnly": "npm run build"
   },
   "peerDependencies": {
     "@inertiajs/core": "^3.0.0",
@@ -44,8 +54,8 @@
     "@schemastud/frame": "0.1.0",
     "@schemastud/mainframe": "0.1.0",
     "@schemastud/seam": "0.2.1",
-    "@splicewire/beam-mainframe": "0.1.0",
-    "@splicewire/beam-ux": "0.1.0",
+    "@splicewire/beam-mainframe": "0.1.1",
+    "@splicewire/beam-ux": "0.1.1",
     "@tanstack/react-query": "^5.0.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
