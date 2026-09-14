@@ -1,10 +1,16 @@
 import {
+    Activity,
+    Bot,
+    Building,
+    Cable,
     Circle,
     FileJson,
     FileText,
+    Gauge,
     GitBranch,
     Globe,
     KeyRound,
+    LayoutDashboard,
     Link2,
     Map,
     Server,
@@ -47,6 +53,19 @@ const ICONS: Record<string, LucideIcon> = {
     KeyRound,
     link: Link2,
     Link2,
+    // The operator rail's seat (laravel-tower-starter's `platform` section).
+    activity: Activity,
+    Activity,
+    bot: Bot,
+    Bot,
+    building: Building,
+    Building,
+    cable: Cable,
+    Cable,
+    gauge: Gauge,
+    Gauge,
+    'layout-dashboard': LayoutDashboard,
+    LayoutDashboard,
 };
 
 export function frameIcon(name: string | null | undefined): LucideIcon {
