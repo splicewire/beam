@@ -20,15 +20,14 @@ import type { ChromeSlots, EntryPayload } from './types.js';
  * ```
  *
  * Everything is optional and the unconfigured defaults are the ones a fresh starter wants: no
- * providers, a plain `<a>`, and the two contributed reference components already mapped. That is what
+ * providers, a plain `<a>`, and generic site components already mapped. That is what
  * makes *deleting* `pages/site/entry.tsx` the way a host takes the default (§3) rather than a
  * migration.
  */
 export type EntryPageConfig = {
     /**
-     * What a body may reach for — the contribution contract from the docs side (ADR-0210 §5). The
-     * package merges its own two contributed surfaces (`ApiReference`, `ManifestTable`) UNDER this, so
-     * a host overrides either by name (a themed `ApiReference`, say) without losing the other.
+     * Components an authored body may name. Host entries override the generic defaults. Optional
+     * capabilities contribute their components here after the host configures the page.
      */
     components?: Record<string, ComponentType<never>>;
     /** The host's router link. Absent ⇒ a plain `<a>`; the package imports no router (§2 invariant ii). */

@@ -6,7 +6,7 @@ import type { ChromeComponent } from './types.js';
  *
  * An entry's `layout`/`template` column holds a NAME. Resolution order is *registered component
  * first, then another entry's slug* (§7), and this is the registered half: a plain module-scope map a
- * package populates at import time and a host adds to in one line. The entry half is
+ * host or capability package populates explicitly before the first render. The entry half is
  * `ArtifactChrome`, which the page reaches for only when this map answers null.
  *
  * ## Why a mutable module registry rather than a prop
@@ -53,9 +53,8 @@ export function registerChrome(chrome: {
 }
 
 /**
- * A host registration wins over the packaged one, so overriding `DocsLayout` is one `registerLayout`
- * call and never a de-registration. The packaged map is consulted HERE rather than registered at
- * import time — see `builtins.ts` for the tree-shaking failure that forced it.
+ * Explicit registrations win over generic builtins. Capability packages register their own layouts;
+ * this resolver never imports optional presentation packages.
  */
 export function resolveLayout(name: string | null | undefined): ChromeComponent | null {
     return name ? (layouts.get(name) ?? BUILTIN_LAYOUTS[name] ?? null) : null;

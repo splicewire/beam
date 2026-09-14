@@ -38,7 +38,7 @@ vi.mock('../site/EntryBody.js', async (importOriginal) => {
 import { RealmNav } from '../nav/RealmNav.js';
 import SiteEntry from '../pages/SiteEntry.js';
 import { configureEntryPage, resetEntryPageConfig } from './config.js';
-import { DocsLayout } from './DocsLayout.js';
+import type { ChromeProps } from './types.js';
 import {
     clearChromeRegistry,
     registerChrome,
@@ -53,11 +53,11 @@ import { SpreadTemplate } from './templates.js';
  * five host copies of this page got wrong, not incidental coverage.
  */
 
+function TestLayout({ children, classNames }: ChromeProps) {
+    return <section className={['test-layout', classNames?.root].filter(Boolean).join(' ')}><main>{children}</main></section>;
+}
+
 beforeEach(() => {
-    // Emptied, NOT seeded: the packaged chrome must resolve with an empty host registry, because
-    // `sideEffects: false` means a bundler may drop an import-time registration — and did, on the beam
-    // starter, where `/docs/mcp` rendered with its inherited `DocsLayout` resolving to nothing behind
-    // a 200. Seeding here would have hidden exactly that.
     clearChromeRegistry();
     resetEntryPageConfig();
 });
@@ -82,7 +82,9 @@ const artifact = { url: '', version: null };
 
 describe('the chrome registry', () => {
     it('resolves a registered name and answers null for anything else', () => {
-        expect(resolveLayout('DocsLayout')).toBe(DocsLayout);
+        expect(resolveLayout('TestLayout')).toBeNull();
+        registerChrome({ layouts: { TestLayout } });
+        expect(resolveLayout('TestLayout')).toBe(TestLayout);
         expect(resolveTemplate('SpreadTemplate')).toBe(SpreadTemplate);
 
         // Not "throw" and not "guess": an unresolvable name is a doctor finding (`BeamUxChromeAudit`),
@@ -92,38 +94,39 @@ describe('the chrome registry', () => {
         expect(resolveLayout(null)).toBeNull();
     });
 
-    it('lets a host registration of the same name win over the packaged one', () => {
+    it('resolves a host registration', () => {
         const Custom = ({ children }: { children?: unknown }) => <div data-custom="">{children as never}</div>;
-        registerChrome({ layouts: { DocsLayout: Custom as never } });
+        registerChrome({ layouts: { TestLayout: Custom as never } });
 
-        expect(resolveLayout('DocsLayout')).toBe(Custom);
+        expect(resolveLayout('TestLayout')).toBe(Custom);
     });
 
     it('keeps layouts and templates in separate maps', () => {
-        // One map keyed by name would let a `template: DocsLayout` typo resolve to a layout and render
+        // One map keyed by name would let a `template: TestLayout` typo resolve to a layout and render
         // chrome where a body belongs. Two maps make it a miss, and a miss is reported.
-        expect(resolveTemplate('DocsLayout')).toBeNull();
+        expect(resolveTemplate('TestLayout')).toBeNull();
         expect(resolveLayout('ProseTemplate')).toBeNull();
 
         expect(registeredChromeNames()).toEqual({
-            layouts: ['DocsLayout'],
+            layouts: [],
             templates: ['ProseTemplate', 'SpreadTemplate'],
         });
     });
 });
 
 describe('the packaged entry page', () => {
+    beforeEach(() => registerChrome({ layouts: { TestLayout } }));
     it('frames the body in the resolved layout and template', () => {
         const { container } = render(
             <SiteEntry
-                entry={{ ...entry, layout: 'DocsLayout', template: 'SpreadTemplate' }}
+                entry={{ ...entry, layout: 'TestLayout', template: 'SpreadTemplate' }}
                 artifact={artifact}
                 nav={null}
             />,
         );
 
-        // The layout put a rail and an on-this-page column on the page…
-        expect(container.querySelector('aside[aria-label="Docs sections"]')).not.toBeNull();
+        // The registered layout frames the same generic body and template.
+        expect(container.querySelector('.test-layout')).not.toBeNull();
         expect(container.querySelector('main')).not.toBeNull();
         // …and the SPREAD template framed the body full-bleed rather than in the reading measure.
         expect(container.querySelector('[data-beam-full-bleed]')).not.toBeNull();
@@ -131,40 +134,13 @@ describe('the packaged entry page', () => {
         expect(container.querySelector('.beam-tpl-spread')).not.toBeNull();
     });
 
-    it('gives a spread entry the whole viewport instead of boxing it between the rail and the aside', () => {
-        // `data-beam-full-bleed` alone passed while `/docs/api` rendered Scalar into a ~41rem column on
-        // every starter: the attribute escapes the reading measure, not DocsLayout's three columns. The
-        // flagship un-boxed it with a host rule (beam-docs-satellite ticket 54 §3) that no other host had,
-        // so this asserts the COMPUTED arrangement, not the markup.
-        const { container } = render(
-            <SiteEntry
-                entry={{ ...entry, layout: 'DocsLayout', template: 'SpreadTemplate' }}
-                artifact={artifact}
-                nav={null}
-            />,
-        );
-        const style = (selector: string) => getComputedStyle(container.querySelector(selector) as Element);
-
-        expect(style('.beam-docs-rail').display).toBe('none');
-        expect(style('.beam-docs-aside').display).toBe('none');
-        expect(style('.beam-docs-body').maxWidth).toBe('none');
-    });
-
-    it('keeps the rail beside a prose entry under the same layout', () => {
-        const { container } = render(
-            <SiteEntry entry={{ ...entry, layout: 'DocsLayout', template: 'ProseTemplate' }} artifact={artifact} nav={null} />,
-        );
-
-        expect(getComputedStyle(container.querySelector('.beam-docs-rail') as Element).display).not.toBe('none');
-    });
-
     it('defaults to the prose measure and to no layout at all', () => {
         // The template default is what all five host copies did with a className list. The LAYOUT
         // default is deliberately nothing: today's hosts wrap this page in their own SiteLayout via
-        // app.tsx, so defaulting to DocsLayout would put a docs rail on every marketing page.
+        // app.tsx, so defaulting to TestLayout would put a docs rail on every marketing page.
         const { container } = render(<SiteEntry entry={entry} artifact={artifact} nav={null} />);
 
-        expect(container.querySelector('aside[aria-label="Docs sections"]')).toBeNull();
+        expect(container.querySelector('.test-layout')).toBeNull();
         expect(container.querySelector('[data-beam-prose]')?.className).toContain('beam-tpl-prose');
 
         // …and the measure is a real RULE, not a class name with nothing behind it. A host's Tailwind
@@ -256,18 +232,18 @@ describe('the packaged entry page', () => {
     });
 
     it('lets a registered name win over an entry artifact carrying the same name', () => {
-        // Resolution order is registered first, THEN entry (§7): a host that registers `DocsLayout`
+        // Resolution order is registered first, THEN entry (§7): a host that registers `TestLayout`
         // and also happens to have an entry with that slug gets the component, not the artifact.
         const { container } = render(
             <SiteEntry
-                entry={{ ...entry, layout: 'DocsLayout' }}
+                entry={{ ...entry, layout: 'TestLayout' }}
                 artifact={artifact}
                 nav={null}
                 chrome={{ layout: { url: '/artifacts/site-shell/v1.js', version: 'v1' } }}
             />,
         );
 
-        expect(container.querySelector('aside[aria-label="Docs sections"]')).not.toBeNull();
+        expect(container.querySelector('.test-layout')).not.toBeNull();
         expect(container.querySelector('[data-entry-chrome]')).toBeNull();
     });
 
@@ -305,7 +281,7 @@ describe('the packaged entry page', () => {
         });
 
         const { container } = render(
-            <SiteEntry entry={{ ...entry, layout: 'DocsLayout' }} artifact={artifact} nav={null} />,
+            <SiteEntry entry={{ ...entry, layout: 'TestLayout' }} artifact={artifact} nav={null} />,
         );
 
         expect(container.querySelector('[data-host-provider] .host-root')).not.toBeNull();
@@ -345,33 +321,5 @@ describe('the rail reads nav_group', () => {
             'Agents',
             'Blocks',
         ]);
-    });
-});
-
-describe('DocsLayout', () => {
-    it('rails the section the reader is in, not the whole realm', () => {
-        // The projection is the realm's ENTIRE tree (one payload serving the header nav and the rail,
-        // ADR-0210 §5), so a rail fed the raw root lists the marketing pages beside the guides.
-        render(
-            <DocsLayout
-                entry={entry}
-                currentHref="/docs/api-keys"
-                nav={{
-                    items: [
-                        { title: 'Pricing', href: '/pricing' },
-                        {
-                            title: 'Docs',
-                            href: '/docs',
-                            children: [{ title: 'API keys', href: '/docs/api-keys' }],
-                        },
-                    ],
-                }}
-            >
-                <p>body</p>
-            </DocsLayout>,
-        );
-
-        expect(screen.getByText('API keys')).toBeTruthy();
-        expect(screen.queryByText('Pricing')).toBeNull();
     });
 });

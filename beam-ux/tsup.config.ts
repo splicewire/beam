@@ -53,8 +53,5 @@ export default defineConfig({
         // readSse() — the generic SSE frame parser the /streaming entry builds on. Only that
         // entry touches it; a consumer using other subpaths never needs it installed.
         '@schemastud/chat',
-        // The nav primitives the `/docs` layout composes (OnThisPage). Host owns the single instance;
-        // an optional peer, so a consumer using no other subpath never needs it installed.
-        '@schemastud/nav',
     ],
 });

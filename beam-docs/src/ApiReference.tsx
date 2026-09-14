@@ -1,4 +1,4 @@
-// @splicewire/beam-ux/site — the OpenAPI reference surface (ADR-0210 §5), named for its ROLE and not
+// @splicewire/beam-docs — the OpenAPI reference surface (ADR-0210 §5), named for its ROLE and not
 // its vendor. Scalar is today's renderer; swapping it is an edit inside THIS file rather than an edit
 // to every seeded page body, which is the entire reason the component is not called `<Scalar>`.
 //
@@ -23,8 +23,10 @@
 // baked in is the curation, not a look: `.scalar-mcp-layer { display: none }`, because a beam site's
 // MCP surface has its OWN docs page (the `<ManifestTable>` one) and Scalar's auto "Generate MCP"
 // affordance would compete with it. `hideMcpLayer={false}` opts out.
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
+import { docsConfiguration } from './config.js';
+import { fetchDocs, fetchRegistryLink, scalarRegistryUrl, type DocsTransport } from './publications.js';
 
 /** The Scalar entry point this component drives. Structural — we never import the package. */
 export type ApiReferenceFactory = (
@@ -52,7 +54,7 @@ function loadScript(url: string): Promise<void> {
         script.addEventListener('load', () => resolve());
         script.addEventListener('error', () => {
             scriptLoads.delete(url);
-            reject(new Error(`beam-ux ApiReference: failed to load the spec renderer from ${url}.`));
+            reject(new Error(`beam-docs ApiReference: failed to load the spec renderer from ${url}.`));
         });
         document.head.appendChild(script);
     });
@@ -86,6 +88,12 @@ export type ApiReferenceProps = {
     configuration?: Record<string, unknown>;
     /** Called when the renderer cannot be loaded, so a host can log or swap in a fallback. */
     onError?: (error: unknown) => void;
+    /** A successful, server-selected Registry link. Explicit null suppresses link discovery. */
+    registryUrl?: string | null;
+    /** Optional server-policy endpoint. configureDocs() supplies the package endpoint. */
+    registryLinkEndpoint?: string | null;
+    /** Decoded-JSON transport used only for the Registry link, never for the Scalar renderer. */
+    transport?: DocsTransport;
     className?: string;
     style?: CSSProperties;
 };
@@ -99,10 +107,34 @@ export function ApiReference({
     hideMcpLayer = true,
     configuration,
     onError,
+    registryUrl,
+    registryLinkEndpoint,
+    transport,
     className,
     style,
 }: ApiReferenceProps) {
     const mount = useRef<HTMLDivElement | null>(null);
+    const docs = docsConfiguration();
+    const endpoint = registryLinkEndpoint === undefined ? docs.registryLinkEndpoint : registryLinkEndpoint;
+    const fetcher = transport ?? docs.transport ?? fetchDocs;
+    const [loadedLink, setLoadedLink] = useState<{ endpoint: string; transport: DocsTransport; url: string | null } | null>(null);
+    const link = registryUrl !== undefined ? scalarRegistryUrl(registryUrl)
+        : loadedLink?.endpoint === endpoint && loadedLink.transport === fetcher ? loadedLink.url : null;
+
+    useEffect(() => {
+        if (registryUrl !== undefined || !endpoint) return;
+        const controller = new AbortController();
+        setLoadedLink(null);
+        fetchRegistryLink(endpoint, fetcher, controller.signal)
+            .then((url) => {
+                if (!controller.signal.aborted) setLoadedLink({ endpoint, transport: fetcher, url });
+            })
+            .catch(() => {
+                // An optional publication link never replaces or blocks the local reference.
+                if (!controller.signal.aborted) setLoadedLink(null);
+            });
+        return () => controller.abort();
+    }, [endpoint, fetcher, registryUrl]);
 
     useEffect(() => {
         let cancelled = false;
@@ -132,7 +164,7 @@ export function ApiReference({
                     const factory = globalFactory();
                     if (!factory) {
                         throw new Error(
-                            'beam-ux ApiReference: the renderer script loaded but exposed no factory.',
+                            'beam-docs ApiReference: the renderer script loaded but exposed no factory.',
                         );
                     }
                     render(factory);
@@ -167,12 +199,13 @@ export function ApiReference({
     // everywhere was being restated per host (beam-docs-satellite ticket 11). A host still decides what
     // full-bleed MEANS — the attribute is only the declaration.
     return (
-        <div
-            ref={mount}
-            className={className}
-            style={style}
-            data-beam-ux-api-reference={specUrl}
-            data-beam-full-bleed=""
-        />
+        <div data-beam-full-bleed="">
+            {link && (
+                <p data-beam-docs-registry-link="" style={{ margin: 0, padding: '0.75rem 1rem' }}>
+                    <a href={link} target="_blank" rel="noopener noreferrer">View published API in Scalar Registry</a>
+                </p>
+            )}
+            <div ref={mount} className={className} style={style} data-beam-ux-api-reference={specUrl} />
+        </div>
     );
 }

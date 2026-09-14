@@ -1,0 +1,50 @@
+{
+    "name": "@splicewire/beam-docs",
+    "version": "0.1.0",
+    "description": "Optional Beam documentation, Scalar API reference and release publication controls.",
+    "license": "MIT",
+    "type": "module",
+    "main": "dist/index.js",
+    "types": "dist/index.d.ts",
+    "exports": {
+        ".": { "types": "./dist/index.d.ts", "import": "./dist/index.js" },
+        "./pages": { "types": "./dist/pages.d.ts", "import": "./dist/pages.js" }
+    },
+    "sideEffects": false,
+    "files": ["dist", "src", "README.md"],
+    "publishConfig": { "registry": "https://registry.npmjs.org", "access": "public" },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/splicewire/beam.git",
+        "directory": "beam-docs"
+    },
+    "scripts": {
+        "build": "tsup",
+        "dev": "tsup --watch",
+        "test": "vitest run",
+        "typecheck": "tsc --noEmit",
+        "prepublishOnly": "npm run build"
+    },
+    "peerDependencies": {
+        "@inertiajs/react": ">=2",
+        "@schemastud/nav": "*",
+        "@splicewire/beam-ux": ">=0.2.1",
+        "react": ">=18"
+    },
+    "peerDependenciesMeta": { "@inertiajs/react": { "optional": true } },
+    "devDependencies": {
+        "@inertiajs/react": "^3.0.0",
+        "@schemastud/nav": "file:../../schemastud/nav",
+        "@splicewire/beam-ux": "^0.2.1",
+        "@testing-library/react": "^16.1.0",
+        "@testing-library/user-event": "^14.5.2",
+        "@types/node": "^22.20.1",
+        "@types/react": "^19.0.0",
+        "jsdom": "^25.0.1",
+        "react": "^19.2.0",
+        "react-dom": "^19.2.0",
+        "tsup": "^8.5.1",
+        "typescript": "^5.7.2",
+        "vitest": "^4.1.10"
+    }
+}

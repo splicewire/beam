@@ -1,6 +1,5 @@
 import { Head } from '@inertiajs/react';
 import { useMemo, type ReactNode } from 'react';
-import { ApiReference } from '../site/ApiReference.js';
 import { EntryBody } from '../site/EntryBody.js';
 import { ManifestTable } from '../site/ManifestTable.js';
 import { SiteNav } from '../site/SiteNav.js';
@@ -89,11 +88,9 @@ export default function SiteEntry(props: SiteEntryProps) {
     // reads an absent `nav` and renders nothing at all — which is what beam-ux's own seeded docs index
     // did, silently, on every host until ticket 08 caught it.
     //
-    // The host's map is spread LAST so a host overrides `ApiReference` (with its own themed, patched,
-    // locally-bundled one) without having to re-supply `ManifestTable`.
+    // Host and capability components are spread last, preserving generic defaults not overridden.
     const components = useMemo(
         () => ({
-            ApiReference,
             ManifestTable,
             SiteNav: (navProps: Parameters<typeof SiteNav>[0]) => (
                 <SiteNav nav={nav} linkComponent={config.linkComponent} {...navProps} />

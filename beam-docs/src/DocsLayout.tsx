@@ -1,8 +1,7 @@
 import { OnThisPage } from '@schemastud/nav';
-import { RealmNav } from '../nav/RealmNav.js';
-import type { RealmNavNode } from '../nav/types.js';
-import { DOCS_LAYOUT_CSS } from './css.js';
-import type { ChromeProps } from './types.js';
+import { RealmNav, type RealmNavNode } from '@splicewire/beam-ux/nav';
+import { DOCS_LAYOUT_CSS } from './layout-css.js';
+import type { ChromeProps } from '@splicewire/beam-ux/docs';
 
 /**
  * `DocsLayout` — the docs chrome, out of the box: header slot · breadcrumb slot · rail · main ·

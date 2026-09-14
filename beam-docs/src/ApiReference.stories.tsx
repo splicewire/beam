@@ -12,7 +12,7 @@ import type { ApiReferenceFactory } from './ApiReference';
  * that reports the configuration it was handed. That configuration IS the contract this component owns.
  */
 const meta = {
-    title: 'BeamUx/Site/ApiReference',
+    title: 'BeamDocs/ApiReference',
     component: ApiReference,
     parameters: { layout: 'padded' },
 } satisfies Meta<typeof ApiReference>;

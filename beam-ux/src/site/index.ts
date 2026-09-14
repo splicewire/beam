@@ -9,14 +9,8 @@
  *     `nav` prop, ADR-0165): flat by default, nested under `rootPath` / `maxDepth` so a docs sidebar
  *     and the header nav come out of one payload.
  *
- * …and the two docs surfaces a contributed page renders (beam-docs-satellite ticket 20, ADR-0210 §5).
- * A contributing PHP package ships a seed row and a JSON endpoint and NO frontend, because these are
- * generic:
- *   - {@link ManifestTable} — renders a declared `{name, title, description}` shape from a URL, with
- *     an optional per-caller availability overlay and a loud "not installed" state on 404.
- *   - {@link ApiReference} — the OpenAPI reference surface, named for its ROLE so the renderer behind
- *     it can be swapped in one file. Loads from a CDN by default; takes an injected factory for
- *     air-gapped / CSP-strict installs.
+ * The generic ManifestTable renders a declared manifest from an endpoint. API reference rendering
+ * is supplied separately by @splicewire/beam-docs.
  *
  * …and the typographic scale a rendered entry body reads at (beam-docs-satellite ticket 07):
  *   - {@link Prose} — the SCALE only (rhythm, measure, headings, code, tables), every value a
@@ -44,12 +38,6 @@ export {
     type ManifestTableViewProps,
     type ManifestTableClassNames,
 } from './ManifestTable.js';
-export {
-    ApiReference,
-    SCALAR_CDN_URL,
-    type ApiReferenceProps,
-    type ApiReferenceFactory,
-} from './ApiReference.js';
 export {
     EntryBody,
     useEntryArtifact,

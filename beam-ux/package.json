@@ -115,7 +115,6 @@
         "@schemastud/chat": "*",
         "@schemastud/frame": "*",
         "@schemastud/mainframe": "*",
-        "@schemastud/nav": "*",
         "@schemastud/seam": "*",
         "@schemastud/ui": "*",
         "@tanstack/react-query": ">=5",
@@ -129,9 +128,6 @@
         },
         "@schemastud/mainframe": {
             "optional": true
-        },
-        "@schemastud/nav": {
-            "optional": true
         }
     },
     "devDependencies": {
@@ -139,7 +135,6 @@
         "@schemastud/chat": "file:../../schemastud/chat",
         "@schemastud/frame": "file:../../schemastud/frame",
         "@schemastud/mainframe": "file:../../schemastud/mainframe",
-        "@schemastud/nav": "file:../../schemastud/nav",
         "@schemastud/seam": "file:../../schemastud/seam",
         "@schemastud/ui": "file:../../schemastud/ui",
         "@tanstack/react-query": "^5.62.0",

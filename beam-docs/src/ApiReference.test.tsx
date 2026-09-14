@@ -1,8 +1,12 @@
-import { render, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { ApiReference, SCALAR_CDN_URL } from './ApiReference.js';
+import { setDocsConfiguration } from './config.js';
+import { configureDocs } from './configure.js';
+import type { DocsTransport } from './publications.js';
 
 afterEach(() => {
+    setDocsConfiguration({ registryLinkEndpoint: null });
     vi.unstubAllGlobals();
     document.head.querySelectorAll('script').forEach((s) => s.remove());
 });
@@ -10,6 +14,8 @@ afterEach(() => {
 describe('ApiReference', () => {
     it('drives the injected factory and never touches the network', () => {
         const createApiReference = vi.fn();
+        const fetch = vi.fn();
+        vi.stubGlobal('fetch', fetch);
         render(<ApiReference specUrl="/beam/openapi.json" createApiReference={createApiReference} />);
 
         expect(createApiReference).toHaveBeenCalledTimes(1);
@@ -18,6 +24,7 @@ describe('ApiReference', () => {
         expect(config.url).toBe('/beam/openapi.json');
         expect(config.theme).toBe('default');
         expect(document.head.querySelector('script')).toBeNull();
+        expect(fetch).not.toHaveBeenCalled();
     });
 
     it('bakes in the MCP-layer curation and appends host theme css after it', () => {
@@ -71,5 +78,48 @@ describe('ApiReference', () => {
         expect(mount.childElementCount).toBe(1);
         unmount();
         expect(mount.childElementCount).toBe(0);
+    });
+
+    it('passes hierarchical tags and all host Scalar options through the injected factory', () => {
+        const factory = vi.fn();
+        const configuration = { showSidebar: true, content: { 'x-tagGroups': [{ name: 'Accounts', tags: ['Teams'] }] } };
+        render(<ApiReference specUrl="/beam/openapi.yaml" createApiReference={factory} configuration={configuration} />);
+        expect(factory.mock.calls[0][1]).toMatchObject(configuration);
+        expect(factory.mock.calls[0][1].url).toBe('/beam/openapi.yaml');
+    });
+
+    it('loads the server-selected successful link when docs integration is configured', async () => {
+        const transport = vi.fn<DocsTransport>().mockResolvedValue({ data: { url: 'https://registry.scalar.com/@beam/apis/api/1.0.0' } });
+        configureDocs({ transport });
+        const factory = vi.fn();
+        render(<ApiReference specUrl="/beam/openapi.yaml" createApiReference={factory} />);
+        const link = await screen.findByRole('link', { name: 'View published API in Scalar Registry' });
+        expect(link.getAttribute('href')).toBe('https://registry.scalar.com/@beam/apis/api/1.0.0');
+        expect(transport.mock.calls[0][0]).toBe('/beam/docs/registry-link');
+        expect(factory).toHaveBeenCalledTimes(1);
+    });
+
+    it('honors an explicitly hidden link without fetching, and rejects an unsafe explicit link', () => {
+        const transport = vi.fn<DocsTransport>();
+        configureDocs({ transport });
+        const factory = vi.fn();
+        const { rerender } = render(<ApiReference specUrl="/spec" createApiReference={factory} registryUrl={null} />);
+        expect(transport).not.toHaveBeenCalled();
+        expect(screen.queryByRole('link')).toBeNull();
+        rerender(<ApiReference specUrl="/spec" createApiReference={factory} registryUrl="javascript:alert(1)" />);
+        expect(screen.queryByRole('link')).toBeNull();
+    });
+
+    it('keeps the local reference when link display is disabled or the endpoint fails', async () => {
+        const transport = vi.fn<DocsTransport>().mockResolvedValueOnce({ data: { url: null } })
+            .mockRejectedValueOnce(new Error('unavailable'));
+        const factory = vi.fn();
+        const { rerender } = render(<ApiReference specUrl="/spec" createApiReference={factory} registryLinkEndpoint="/first" transport={transport} />);
+        await waitFor(() => expect(transport).toHaveBeenCalledTimes(1));
+        expect(screen.queryByRole('link')).toBeNull();
+        rerender(<ApiReference specUrl="/spec" createApiReference={factory} registryLinkEndpoint="/second" transport={transport} />);
+        await waitFor(() => expect(transport).toHaveBeenCalledTimes(2));
+        expect(screen.queryByRole('link')).toBeNull();
+        expect(factory).toHaveBeenCalledTimes(1);
     });
 });
