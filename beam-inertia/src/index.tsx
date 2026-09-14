@@ -12,6 +12,7 @@ import AppLayout from "./layouts/app-layout";
 import AuthLayout from "./layouts/auth-layout";
 import BeamAccountLayout from "./layouts/beam-account-layout";
 import MainframeHost from "./layouts/beam-ux/mainframe-host";
+import OperatorLayout from "./layouts/operator-layout";
 import OsLayout from "./layouts/os-layout";
 import SettingsLayout from "./layouts/settings/layout";
 import SiteLayout from "./layouts/site-layout";
@@ -74,7 +75,10 @@ export function beamInertiaOptions(config: BeamInertiaConfig = {}) {
         // `os.enter` principal gets the persistent operator dock overlay on top of the real page.
         case name.startsWith("site/"):
           return [OsLayout, MainframeHost];
-        // The OPERATOR front-end realm — framed by the promoted <MainframeHost> (beam-mainframe).
+        // The OPERATOR front-end realm — the ordinary app sidebar with its rail read from the
+        // operator realm's manifest (<OperatorLayout>, `/operator/frame/manifest`), framed by the
+        // promoted <MainframeHost> (beam-mainframe). Until otb-ui-frontier-sidebar DESIGN-01 "Want 2"
+        // this was `[OsLayout, MainframeHost]`: the only realm with no chrome of any kind.
         //
         // ⚠️ INVARIANT: operator chrome belongs in THIS switch and never inside a page component.
         //
@@ -82,9 +86,10 @@ export function beamInertiaOptions(config: BeamInertiaConfig = {}) {
         // no page chrome" true, and it is true BY CONSTRUCTION rather than by any check — which is
         // why it is written down. Chrome is applied here, at the Inertia `layout:` boundary; a
         // float never crosses that boundary, because `os/operator-desk.tsx` opens its tools via
-        // `lazy(() => import('./pages/operator/dashboard'))` — importing the page MODULE directly —
-        // and `os/shell-config.tsx`'s SURFACE_MAP does the same. So a layout added here cannot leak
-        // into a float, and a layout moved INTO the page silently would.
+        // `lazy(async () => ({ default: await resolveBeamPage('operator/dashboard') }))` — resolving
+        // the page MODULE, never this `layout` callback — and `os/shell-config.tsx`'s SURFACE_MAP
+        // does the same. So <OperatorLayout> here cannot leak into a float, and a layout moved INTO
+        // the page silently would.
         //
         // `site/` deliberately breaks the shape (its pages carry <SiteLayout> internally), which is
         // correct for site and would be a bug copied here: a self-chroming operator page renders its
@@ -96,7 +101,7 @@ export function beamInertiaOptions(config: BeamInertiaConfig = {}) {
         // <BeamAccountLayout> — a per-surface choice already made twice, differently. Decide those
         // two together if either moves.
         case name.startsWith("operator/"):
-          return [OsLayout, MainframeHost];
+          return [OsLayout, OperatorLayout, MainframeHost];
         // Account-realm pages mount the OOTB <AccountShell> via BeamAccountLayout, MainframeHost
         // INNERMOST (wraps just the page content, inside the AccountShell chrome) so every account
         // page is editable too — matches rushing/audiostud's own layout switch, which includes

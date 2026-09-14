@@ -11,7 +11,9 @@ import { useFrameManifest } from '../frame/manifest';
 import { useCurrentUrl } from '../hooks/use-current-url';
 
 /**
- * The TENANT frame nav, rendered from `/frame/manifest`'s `nav` block.
+ * The frame nav, rendered from the surrounding realm's manifest `nav` block — `/frame/manifest` (the
+ * tenant realm) unless a realm is in scope: a console's page props, or `OperatorLayout`'s
+ * `/operator/frame/manifest` via `AppSidebar`.
  *
  * Entirely data-driven: a seat exists here because a `#[ParticleResource]` declares one and this host
  * placed the resource in `config('frame.realms')['tenant']`. There is no row list in this file, by
