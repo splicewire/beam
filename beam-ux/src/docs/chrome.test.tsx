@@ -131,6 +131,33 @@ describe('the packaged entry page', () => {
         expect(container.querySelector('.beam-tpl-spread')).not.toBeNull();
     });
 
+    it('gives a spread entry the whole viewport instead of boxing it between the rail and the aside', () => {
+        // `data-beam-full-bleed` alone passed while `/docs/api` rendered Scalar into a ~41rem column on
+        // every starter: the attribute escapes the reading measure, not DocsLayout's three columns. The
+        // flagship un-boxed it with a host rule (beam-docs-satellite ticket 54 §3) that no other host had,
+        // so this asserts the COMPUTED arrangement, not the markup.
+        const { container } = render(
+            <SiteEntry
+                entry={{ ...entry, layout: 'DocsLayout', template: 'SpreadTemplate' }}
+                artifact={artifact}
+                nav={null}
+            />,
+        );
+        const style = (selector: string) => getComputedStyle(container.querySelector(selector) as Element);
+
+        expect(style('.beam-docs-rail').display).toBe('none');
+        expect(style('.beam-docs-aside').display).toBe('none');
+        expect(style('.beam-docs-body').maxWidth).toBe('none');
+    });
+
+    it('keeps the rail beside a prose entry under the same layout', () => {
+        const { container } = render(
+            <SiteEntry entry={{ ...entry, layout: 'DocsLayout', template: 'ProseTemplate' }} artifact={artifact} nav={null} />,
+        );
+
+        expect(getComputedStyle(container.querySelector('.beam-docs-rail') as Element).display).not.toBe('none');
+    });
+
     it('defaults to the prose measure and to no layout at all', () => {
         // The template default is what all five host copies did with a className list. The LAYOUT
         // default is deliberately nothing: today's hosts wrap this page in their own SiteLayout via

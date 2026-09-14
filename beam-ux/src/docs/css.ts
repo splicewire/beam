@@ -66,4 +66,18 @@ export const DOCS_LAYOUT_CSS = `
    reachable — it is the same projection the site nav renders from (ADR-0210 §5, one payload). */
 @media (max-width: 80rem) { .beam-docs-aside { display: none; } }
 @media (max-width: 60rem) { .beam-docs-rail { display: none; } }
+
+/* A SpreadTemplate entry is a whole application rather than an article (the API reference, the MCP
+   catalogue) and brings its own sidebar and search, so the layout gives it the viewport instead of a
+   main column between the rail and the on-this-page column. \`data-beam-full-bleed\` only escapes the
+   reading measure; without this, Scalar rendered into ~41rem on every host but the flagship, which
+   carried the rule itself (beam-docs-satellite ticket 54 §3). */
+.beam-docs:has(.beam-tpl-spread) .beam-docs-body {
+  max-width: none;
+  padding-inline: 0;
+  padding-block: 0;
+  gap: 0;
+}
+.beam-docs:has(.beam-tpl-spread) .beam-docs-rail,
+.beam-docs:has(.beam-tpl-spread) .beam-docs-aside { display: none; }
 `;
