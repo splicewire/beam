@@ -164,13 +164,16 @@ export function FrameRoutes({ manifest }: { manifest: FrameManifest }) {
 
     const routes = useMemo<RealmRouteObject[]>(() => {
         const declined = new Map<string, string>();
+        // The ONE lookup, built once per manifest: the dispatcher's `manifestFor`, the list leaves'
+        // own context block below, and the provider's injection all read the same table.
+        const manifestFor = manifestLookup(manifest);
 
         const dispatch = createMountDispatcher({
             // A hook, called during the dispatched component's render — exactly how the dispatcher
             // documents this seam, and the only reason it can stay react-router-free.
             // eslint-disable-next-line react-hooks/rules-of-hooks
             resolveId: () => idFromParam(useParams().id),
-            manifestFor: manifestLookup(manifest),
+            manifestFor,
             formFor: (resource) => formFromManifest(manifest, resource),
             onDecline: (entry, reason) => {
                 declined.set(entry.routeName, reason);
@@ -210,7 +213,7 @@ export function FrameRoutes({ manifest }: { manifest: FrameManifest }) {
                 <ListShell
                     resource={resource}
                     columns={[]}
-                    manifest={manifest.contexts[resource]}
+                    manifest={manifestFor(resource)}
                     onOpen={
                         recordBase
                             ? (record) =>
@@ -267,10 +270,18 @@ export function FrameRoutes({ manifest }: { manifest: FrameManifest }) {
         // The HAND-WRITTEN half. `routeContext` is flat by hard guardrail and carries resource leaves
         // only; a nav SECTION parent is a nav seat with no route leaf behind it, so its landing lives
         // here — which is where the projector documents such routes belong.
+        //
+        // A top-level nav item whose `routeName` IS bound in `routeContext` is a leaf, not a section:
+        // the realm's dashboard (`/operator/dashboard`, realm-dashboards 04) sits at the top level with
+        // an href and no children, and these landings are matched BEFORE the generated leaves — so
+        // without this exclusion `SectionIndex` won the match and rendered "0 surfaces in this
+        // section" where the cards belonged (measured at beam.test 2026-09-14).
+        const bound = new Set(manifest.routeContext.map((entry) => entry.routeName));
         const sections: RealmRouteObject[] = manifest.nav.items
             .filter(
                 (item): item is FrameNavNode & { href: string } =>
-                    typeof item.href === 'string',
+                    typeof item.href === 'string' &&
+                    !(item.routeName !== null && bound.has(item.routeName)),
             )
             .map((item) => ({
                 // REALM-RELATIVE, because this one is matched BY React Router under the basename.

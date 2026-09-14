@@ -15,8 +15,8 @@
  *  - a `summary` row of a resource that participates in `summary` ⇒ a stat-row;
  *  - an `overview` row whose target inherits `overview ← summary` ⇒ a figure-card;
  *  - a `nav` row ⇒ a nav tile, no manifest lookup at all;
- *  - a row naming a resource this host does NOT mount ⇒ nothing rendered, nothing thrown, and every
- *    other card still on screen (nav-contribution PLAN: contributed nodes drop).
+ *  - a row naming a resource this host does NOT mount ⇒ nothing rendered, no cell kept for it,
+ *    nothing thrown, and every other card still on screen (nav-contribution PLAN: contributed nodes drop).
  */
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { cleanup, render, screen, waitFor } from '@testing-library/react';
@@ -37,11 +37,27 @@ import { TenantFrameProvider } from './provider';
 import { FrameRoutes } from './router';
 
 // `usePage` is read by `useFrameRealm` below the explicit realm provider these tests mount, so
-// empty props are never consulted; `Link`/`router` are what the router file imports.
+// empty props are never consulted; `Link`/`router` are what the router file imports. The `Link`
+// stand-in stamps `data-inertia-link` so an anchor that went through Inertia is telling from one
+// frame drew itself — a card link that full-page-reloads is the regression this guards.
 vi.mock('@inertiajs/react', () => ({
     Head: () => null,
     usePage: () => ({ props: {} }),
-    Link: ({ href, children }: { href: string; children?: ReactNode }) => <a href={href}>{children}</a>,
+    Link: ({
+        href,
+        className,
+        children,
+        'aria-label': ariaLabel,
+    }: {
+        href: string;
+        className?: string;
+        children?: ReactNode;
+        'aria-label'?: string;
+    }) => (
+        <a href={href} className={className} aria-label={ariaLabel} data-inertia-link="">
+            {children}
+        </a>
+    ),
     router: { visit: vi.fn() },
 }));
 
@@ -125,7 +141,32 @@ const MANIFEST: FrameManifest = {
         seat('teams', 'Teams', 'building'),
     ],
     contexts: { 'operator-dashboard': DASHBOARD, users: USERS, teams: TEAMS },
-    nav: { items: [] },
+    // The dashboard leaf is ALSO a top-level nav item with an href (the section-less realm-level leaf
+    // the server projects). The router builds a hand-written section landing per top-level item with
+    // an href, matched ahead of the generated leaves — so this entry is what once turned the cards
+    // path into "0 surfaces in this section" (measured at beam.test 2026-09-14).
+    nav: {
+        items: [
+            {
+                kind: 'link',
+                title: 'Dashboard',
+                href: '/operator/dashboard',
+                icon: 'layout-dashboard',
+                routeName: 'operator-dashboard.index',
+                locked: null,
+                children: [],
+            },
+            {
+                kind: 'section',
+                title: 'Platform',
+                href: '/operator/platform',
+                icon: 'server',
+                routeName: 'platform.section',
+                locked: null,
+                children: [],
+            },
+        ],
+    },
     routeContext: [
         {
             routeName: 'operator-dashboard.index',
@@ -219,6 +260,12 @@ function mountLeaf(rows: DashboardRow[]) {
 
 const cells = (container: HTMLElement) => container.querySelectorAll('[data-frame-slot="Cards"] [data-frame-card-cell]');
 
+/** The nav tile: the whole tile is one anchor, and it carries the row's label. */
+const navTile = (container: HTMLElement) =>
+    Array.from(container.querySelectorAll<HTMLAnchorElement>('[data-frame-card-cell] a')).find((a) =>
+        a.textContent?.includes('Manage users'),
+    ) ?? null;
+
 describe('the {realm}-dashboard leaf through the manifest router', () => {
     it('renders one card per row through the list shell — no table, no bespoke page', async () => {
         const { container } = mountLeaf(ROWS);
@@ -226,8 +273,10 @@ describe('the {realm}-dashboard leaf through the manifest router', () => {
         await waitFor(() => expect(cells(container)).toHaveLength(ROWS.length));
         expect(transport.list).toHaveBeenCalledWith('operator-dashboard', expect.anything());
 
-        // The leaf is titled from the manifest, like every other dispatched list leaf.
+        // The leaf is titled from the manifest, like every other dispatched list leaf — and it is the
+        // LEAF that mounted, not the hand-written section landing its top-level nav item also matches.
         expect(screen.getByRole('heading', { name: 'Dashboard' })).toBeTruthy();
+        expect(screen.queryByText(/surfaces? in this section/)).toBeNull();
 
         // Cards, not rows: the table path was never taken.
         expect(container.querySelector('table')).toBeNull();
@@ -251,7 +300,9 @@ describe('the {realm}-dashboard leaf through the manifest router', () => {
 
         await waitFor(() => expect(cells(container)).toHaveLength(ROWS.length));
 
-        const tile = container.querySelector<HTMLAnchorElement>('a[data-frame-card="nav-tile"]');
+        // The whole tile is the link, and the link is Inertia's (frame's own `data-frame-card="nav-tile"`
+        // marker rides only the plain-anchor fallback this host no longer takes).
+        const tile = navTile(container);
         expect(tile?.getAttribute('href')).toBe('/operator/users');
         expect(tile?.textContent).toContain('Manage users');
         expect(tile?.textContent).toContain('Every account on the platform');
@@ -264,13 +315,33 @@ describe('the {realm}-dashboard leaf through the manifest router', () => {
         const ghost: DashboardRow = { ...ROWS[0], resource: 'ghost', label: 'Ghost', summary: { ...ROWS[0].summary!, key: 'ghost', label: 'Ghost' } };
         const { container } = mountLeaf([...ROWS, ghost]);
 
-        // Four cells mounted (the shell drew a cell per row) …
-        await waitFor(() => expect(cells(container)).toHaveLength(ROWS.length + 1));
-        // … but the ghost's cell is empty, and the other three are intact.
+        // Three cells, not four: a row that draws nothing takes its cell with it (schemastud a95d932,
+        // "no ghost cell") — and the other three are intact.
+        await waitFor(() => expect(cells(container)).toHaveLength(ROWS.length));
         expect(container.querySelectorAll('[data-frame-card="dashboard-card"]')).toHaveLength(2);
         expect(container.querySelector('[data-frame-card-resource="ghost"]')).toBeNull();
         expect(screen.queryByText('Ghost')).toBeNull();
         expect(screen.getByText('42')).toBeTruthy();
-        expect(container.querySelector('a[data-frame-card="nav-tile"]')).toBeTruthy();
+        expect(navTile(container)).toBeTruthy();
+    });
+
+    it('a card’s heading link — and every other card anchor — renders through Inertia’s Link', async () => {
+        const { container } = mountLeaf(ROWS);
+
+        await waitFor(() => expect(cells(container)).toHaveLength(ROWS.length));
+
+        // The users card's heading is a link to the row's stamped href, and it is Inertia's.
+        const users = container.querySelector('[data-frame-card-resource="users"]');
+        const heading = Array.from(users?.querySelectorAll<HTMLAnchorElement>('a') ?? []).find(
+            (a) => a.textContent?.trim() === 'Users',
+        );
+        expect(heading?.getAttribute('href')).toBe('/operator/users');
+        expect(heading?.hasAttribute('data-inertia-link')).toBe(true);
+
+        // No card anchor took frame's plain-`<a>` fallback: every one is Inertia's.
+        const anchors = Array.from(container.querySelectorAll<HTMLAnchorElement>('[data-frame-card-cell] a'));
+        expect(anchors.length).toBeGreaterThan(1);
+        expect(anchors.every((a) => a.hasAttribute('data-inertia-link'))).toBe(true);
+        expect(navTile(container)?.hasAttribute('data-inertia-link')).toBe(true);
     });
 });

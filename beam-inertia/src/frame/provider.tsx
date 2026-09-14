@@ -1,10 +1,11 @@
+import { Link } from '@inertiajs/react';
 import {
     createWidgetRegistry,
     FrameProvider,
     registerCardWidgets,
     registerResourceRefWidget,
 } from '@schemastud/frame';
-import type { FrameAction, FrameInjection } from '@schemastud/frame';
+import type { CardLinkRenderer, FrameAction, FrameInjection } from '@schemastud/frame';
 import { shadcnEditSlots, shadcnListSlots } from '@schemastud/frame/shadcn';
 import type { SchemaNode } from '@schemastud/seam';
 import { useCallback, useMemo } from 'react';
@@ -54,10 +55,24 @@ import { useFrameUrlState } from './use-url-state';
  * A `{realm}-dashboard` resource's rows name OTHER resources (`{ resource: 'users', context:
  * 'summary', … }`), and its root `list-item` binds `dashboard-card`. Two things on this injection
  * make that leaf render through the ordinary `ListShell` with no bespoke page: `registerCardWidgets`
- * installs the card set into the registry (with this host's icon map as the glyph resolver), and
- * `manifestFor` lets a card resolve its target's `summary`/`overview` entry. Both come from the same
- * manifest the mount dispatcher reads, through the one `manifestLookup` definition.
+ * installs the card set into the registry (with this host's icon map as the glyph resolver, and
+ * Inertia's `Link` as every card anchor — a heading, "View all", a whole nav tile — so a card
+ * navigates client-side instead of full-page-reloading the console), and `manifestFor` lets a card
+ * resolve its target's `summary`/`overview` entry. Both come from the same manifest the mount
+ * dispatcher reads, through the one `manifestLookup` definition.
  */
+
+/**
+ * Frame's `CardLinkRenderer` over Inertia's `Link` — the same seam `@schemastud/nav`'s rail takes
+ * from `router.tsx`. Frame hands over exactly `href`, `className`, `children` and an optional
+ * `aria-label`; nothing else is invented here.
+ */
+const renderCardLink: CardLinkRenderer = ({ href, className, children, 'aria-label': ariaLabel }) => (
+    <Link href={href} className={className} aria-label={ariaLabel}>
+        {children}
+    </Link>
+);
+
 export function TenantFrameProvider({ children }: { children: ReactNode }) {
     const { data: manifest } = useFrameManifest();
 
@@ -82,9 +97,7 @@ export function TenantFrameProvider({ children }: { children: ReactNode }) {
         registerResourceRefWidget(registry);
         // The dashboard card set — context defaults for `summary`/`overview` plus the five named
         // widgets. Guarded per registry inside, so a re-run of this memo cannot stack a second copy.
-        // TODO(realm-dashboards 03 review): also pass `renderLink` backed by Inertia's `Link` once
-        // `RegisterCardWidgetsOptions.renderLink` lands in @schemastud/frame, so cards navigate client-side.
-        registerCardWidgets(registry, { iconFor: frameIcon });
+        registerCardWidgets(registry, { iconFor: frameIcon, renderLink: renderCardLink });
 
         return {
             transport: frameTransport,
