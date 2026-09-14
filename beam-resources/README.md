@@ -1,6 +1,8 @@
 # @splicewire/beam-resources
 
-Public Beam wire types, generated from the public PHP packages. This bundle contains no app-private DTOs. Its first consumer is `@splicewire/beam-ux`; `BeamUxEntryBodyData` is declared by `splicewire/laravel-beam-ux`.
+Public Beam wire types, generated from declarations in the `splicewire/laravel-beam-*` PHP packages. Some of those packages are private; publishing a projection of their wire shapes is a deliberate choice. This bundle contains no app-private or host-tier DTOs. Its first consumer is `@splicewire/beam-ux`; `BeamUxEntryBodyData` is declared by `splicewire/laravel-beam-ux`.
+
+`types/auto-reload.d.ts` and `types/commerce.d.ts` carry exactly the `splicewire/laravel-beam-commerce` shapes that `@splicewire/beam-commerce` imports, plus the types they reference (`PlanComponentData`, and `Cadence` from `rushing/laravel-commerce`).
 
 Regenerate in the flagship after `typescript:transform`, using its existing projection pipeline:
 

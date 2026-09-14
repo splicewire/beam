@@ -10,9 +10,9 @@ export default defineConfig({
     // React (+ its JSX runtime) and react-query for shared context/hooks identity; the
     // @schemastud/ui foundation and lucide icons the host already has.
     //
-    // @splicewire/_resources (the generated DTO projection, rehome-components 01/08) stays a
+    // @splicewire/beam-resources (the generated public DTO projection) stays a
     // real dependency, not bundled: the emitted `dist/index.d.ts` keeps its `import type` from
-    // `@splicewire/_resources/types/tokens`, and the dependency edge (see package.json) makes
+    // `@splicewire/beam-resources/types/{auto-reload,commerce}`, and the dependency edge (see package.json) makes
     // the projection TRAVEL with the package so a consumer resolves it transitively. This is
     // the publish path made concrete — the resources bundle delivered as a package dependency,
     // the shape decision 01 chose. (Type-only, so it never appears in the JS bundle.)

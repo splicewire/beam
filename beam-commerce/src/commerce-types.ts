@@ -1,5 +1,6 @@
 // The generated commerce DTO projection (rehome-ui / ADR-0116): the PHP `#[TypeScript]` billing
-// read-models, sliced off the app's single `generated.d.ts` and delivered as the `commerce` bundle.
+// read-models, sliced off the app's single `generated.d.ts` and delivered as the public
+// `@splicewire/beam-resources` `commerce` bundle.
 // This build-time dependency is LOAD-BEARING — each surface's default typing IS the projection, so
 // the PHP source of truth genuinely travels into this package. tsup inlines these into the shipped
 // `dist/index.d.ts`, so a consumer resolves them transitively via the package dep.
@@ -20,7 +21,7 @@ import type {
     UsageModelBreakdownData,
     UsageSummaryData,
     WalletBalanceData,
-} from '@splicewire/_resources/types/commerce';
+} from '@splicewire/beam-resources/types/commerce';
 
 export type {
     BillData,
@@ -40,7 +41,7 @@ export type {
 // ── Display-hint unions ─────────────────────────────────────────────────────
 // The DTOs ship these fields as bare `string`; the package narrows them to the one vocabulary each
 // surface renders (the trailing `string` keeps an unknown future value assignable). These are
-// TS-only — NOT PHP `#[TypeScript]` types — so they live here, not in the projected `_resources` slice.
+// TS-only — NOT PHP `#[TypeScript]` types — so they live here, not in the projected `beam-resources` slice.
 
 /** The credit-ledger entry kind the ledger badges switch on. */
 export type CreditEntryType = 'credit' | 'debit' | string;
@@ -85,7 +86,7 @@ export type BillLineItem = BillLineItemData;
 // ── The direct-rail credit reload (ux-demo-convergence G3) ──────────────────
 //
 // Mirrors PHP `Splicewire\Beam\Commerce\Data\CreditReloadResultData`, and is declared HERE rather
-// than imported from the `_resources` projection for one honest reason: that bundle is generated at
+// than imported from the `beam-resources` projection for one honest reason: that bundle is generated at
 // splicewire-app, and splicewire-app is TENANTED — it mounts the Stripe-custody top-up, never this
 // standalone surface, so its projection does not carry the DTO. When a projecting host mounts the
 // standalone surface this moves up into the import block above, unchanged in shape.
@@ -122,7 +123,7 @@ export interface CreditReloadResult {
 /**
  * The bill-preview line item — snake_case (a raw generator array, not a projected DTO). The
  * preview endpoint returns this un-DTO'd shape, so the package narrows it here rather than off the
- * `_resources` projection.
+ * `beam-resources` projection.
  */
 export interface BillPreviewLineItem {
     component_type: string;

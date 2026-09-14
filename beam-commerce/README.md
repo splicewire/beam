@@ -8,7 +8,7 @@ Customer-zero: the **prepaid-credit auto-reload** config + activity surface — 
 tenancy-agnostic component. It owns its react-query data logic and presentation; the host supplies
 **one transport adapter** (plus optional feedback and the Stripe SetupIntent host slot) through
 `<AutoReloadProvider>`. It is typed off the generated `AutoReloadConfigData` / `AutoReloadActivityData`
-projection delivered via `@splicewire/_resources`, so the PHP source of truth travels into the
+projection delivered via the public `@splicewire/beam-resources`, so the PHP source of truth travels into the
 package as a real build dependency.
 
 ```tsx
@@ -52,6 +52,6 @@ const client: AutoReloadClient = {
   "Save / Update card" affordances invoke. Omitted → a no-op. There is deliberately **no subscribe
   kind**.
 
-Generic UI comes from the `@schemastud/ui` foundation; the DTO typing from `@splicewire/_resources`.
+Generic UI comes from the `@schemastud/ui` foundation; the DTO typing from `@splicewire/beam-resources`.
 Frame `EditShell` / `SchemaForm` graduation is a deferred follow-up — this ships the hand-authored
 injectable card.
