@@ -1,5 +1,5 @@
 // The generated DTO projection (rehome-ui / ADR-0116): the PHP `#[TypeScript]` auto-reload
-// types, sliced off the app's single `generated.d.ts` and delivered as a bundle. This
+// types, sliced off the app's single `generated.d.ts` and delivered by the public @splicewire/beam-resources. This
 // build-time dependency is LOAD-BEARING — the component's default typing IS the projection,
 // so the PHP source of truth genuinely travels into this package. tsup inlines these into the
 // shipped `dist/index.d.ts`, so a consumer resolves them transitively via the package dep.
@@ -8,7 +8,7 @@ import type {
     AutoReloadAttemptData,
     AutoReloadClampsData,
     AutoReloadConfigData,
-} from '@splicewire/_resources/types/auto-reload';
+} from '@splicewire/beam-resources/types/auto-reload';
 
 export type {
     AutoReloadActivityData,
@@ -21,7 +21,7 @@ export type {
 // The DTOs ship these fields as bare `string`; the package narrows them to the one
 // vocabulary the surface renders (the trailing `string` keeps an unknown future value
 // assignable). These are TS-only — NOT PHP `#[TypeScript]` types — so they live here, not in
-// the projected `_resources` slice.
+// the projected `beam-resources` slice.
 
 /** The derived lifecycle status the status pill + failure banner switch on. */
 export type AutoReloadStatus = 'off' | 'active' | 'suspended' | 'needs_payment_method' | string;
