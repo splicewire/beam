@@ -25,7 +25,7 @@ describe('DocsPublishingPanel', () => {
         render(<DocsPublishingPanel transport={transport} pollIntervalMs={250} />);
         await screen.findByText(/No releases have been published/);
         vi.useFakeTimers();
-        fireEvent.change(screen.getByLabelText('Release version'), { target: { value: ' v1.0.0 ' } });
+        fireEvent.change(screen.getByRole('textbox', { name: /Release version/ }), { target: { value: ' v1.0.0 ' } });
         await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Publish release' })));
         expect(transport.mock.calls[1][0]).toBe('/beam/docs/publications');
         expect(JSON.parse(String(transport.mock.calls[1][1]?.body))).toEqual({ version: 'v1.0.0' });
@@ -92,7 +92,7 @@ describe('DocsPublishingPanel', () => {
             .mockImplementationOnce(() => new Promise((resolve) => { finishList = resolve; }))
             .mockImplementationOnce(() => new Promise((resolve) => { finishPublish = resolve; }));
         const { container } = render(<DocsPublishingPanel transport={transport} />);
-        fireEvent.change(screen.getByLabelText('Release version'), { target: { value: 'v1.0.0' } });
+        fireEvent.change(screen.getByRole('textbox', { name: /Release version/ }), { target: { value: 'v1.0.0' } });
         fireEvent.click(screen.getByRole('button', { name: 'Publish release' }));
         fireEvent.submit(container.querySelector('form')!);
         expect(transport).toHaveBeenCalledTimes(2);
@@ -110,5 +110,21 @@ describe('DocsPublishingPanel', () => {
         rerender(<DocsPublishingPanel endpoint="/second/publications" transport={transport} />);
         await screen.findByText(/No releases have been published/);
         expect(screen.queryByText('v1.0.0')).toBeNull();
+    });
+
+    it('validates the generated release schema before submitting to the server', async () => {
+        const transport = vi.fn<DocsTransport>().mockResolvedValue({ data: [] });
+        render(<DocsPublishingPanel transport={transport} />);
+        await screen.findByText(/No releases have been published/);
+        const input = screen.getByRole('textbox', { name: /Release version/ });
+        fireEvent.change(input, { target: { value: 'bad release' } });
+        fireEvent.click(screen.getByRole('button', { name: 'Publish release' }));
+        await screen.findByText('Enter a release version such as v1.2.3 or 1.2.3+build.4.');
+        expect(transport).toHaveBeenCalledTimes(1);
+
+        fireEvent.change(input, { target: { value: 'a'.repeat(129) } });
+        fireEvent.click(screen.getByRole('button', { name: 'Publish release' }));
+        await screen.findByText(/must NOT have more than 128 characters/);
+        expect(transport).toHaveBeenCalledTimes(1);
     });
 });

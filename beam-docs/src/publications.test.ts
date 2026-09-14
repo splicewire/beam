@@ -45,6 +45,22 @@ describe('default Laravel transport', () => {
         const client = createDocsPublicationsClient('/beam/docs/publications', async () => ({ items: [] }));
         await expect(client.list()).rejects.toThrow('unreadable response');
     });
+
+    it('validates response nullability and status against the generated producer schema', async () => {
+        const row = {
+            id: 'release-1', version: 'v1', status: 'queued', sha256: 'a'.repeat(64),
+            namespace: 'beam', slug: 'api', isPrivate: true, registryUrl: null, error: null,
+            createdAt: null, startedAt: null, finishedAt: null, retryOf: null,
+        };
+        const transport = vi.fn()
+            .mockResolvedValueOnce({ data: [row] })
+            .mockResolvedValueOnce({ data: [{ ...row, status: 'unknown-state' }] })
+            .mockResolvedValueOnce({ data: [{ ...row, isPrivate: 'false' }] });
+        const client = createDocsPublicationsClient('/beam/docs/publications', transport);
+        await expect(client.list()).resolves.toEqual([row]);
+        await expect(client.list()).rejects.toThrow('unreadable status');
+        await expect(client.list()).rejects.toThrow('unreadable status');
+    });
 });
 
 describe('Scalar Registry links', () => {

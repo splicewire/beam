@@ -1,0 +1,92 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "title": "PublicationData",
+    "properties": {
+        "id": {
+            "type": "string"
+        },
+        "version": {
+            "type": "string"
+        },
+        "status": {
+            "$ref": "#/$defs/PublicationStatus"
+        },
+        "sha256": {
+            "type": "string"
+        },
+        "namespace": {
+            "type": "string"
+        },
+        "slug": {
+            "type": "string"
+        },
+        "isPrivate": {
+            "type": "boolean"
+        },
+        "registryUrl": {
+            "type": [
+                "string",
+                "null"
+            ]
+        },
+        "error": {
+            "type": [
+                "string",
+                "null"
+            ]
+        },
+        "createdAt": {
+            "type": [
+                "string",
+                "null"
+            ]
+        },
+        "startedAt": {
+            "type": [
+                "string",
+                "null"
+            ]
+        },
+        "finishedAt": {
+            "type": [
+                "string",
+                "null"
+            ]
+        },
+        "retryOf": {
+            "type": [
+                "string",
+                "null"
+            ]
+        }
+    },
+    "required": [
+        "id",
+        "version",
+        "status",
+        "sha256",
+        "namespace",
+        "slug",
+        "isPrivate",
+        "registryUrl",
+        "error",
+        "createdAt",
+        "startedAt",
+        "finishedAt",
+        "retryOf"
+    ],
+    "$id": "PublicationData",
+    "$defs": {
+        "PublicationStatus": {
+            "type": "string",
+            "title": "PublicationStatus",
+            "enum": [
+                "queued",
+                "running",
+                "succeeded",
+                "failed"
+            ]
+        }
+    }
+}

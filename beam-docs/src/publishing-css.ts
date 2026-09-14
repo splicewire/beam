@@ -11,6 +11,7 @@ export const PUBLISHING_CSS = `
 .beam-docs-help { color: var(--muted-foreground, CanvasText); font-size: 0.875rem; }
 .beam-docs-publish-form { padding-bottom: 2rem; }
 .beam-docs-publish-controls { display: flex; align-items: end; flex-wrap: wrap; gap: 0.75rem; margin-block: 1.25rem 0.75rem; }
+.beam-docs-publish-controls > .rjsf-field { flex: 1 1 16rem; max-width: 25rem; }
 .beam-docs-version-field { flex: 1 1 16rem; max-width: 25rem; }
 .beam-docs-version-field label { display: block; margin-bottom: 0.375rem; font-size: 0.875rem; font-weight: 600; }
 .beam-docs-publishing input { width: 100%; min-height: 2.75rem; box-sizing: border-box; border: 1px solid var(--input, currentColor); border-radius: var(--radius, 0.375rem); padding: 0.625rem 0.75rem; color: inherit; background: var(--background, Canvas); font: inherit; }
@@ -35,7 +36,7 @@ export const PUBLISHING_CSS = `
 .beam-docs-attempt-error { grid-column: 1 / -1; overflow-wrap: anywhere; }
 .beam-docs-empty { padding-block: 1.25rem; }
 @media (max-width: 36rem) {
-  .beam-docs-version-field { max-width: none; }
+  .beam-docs-version-field, .beam-docs-publish-controls > .rjsf-field { max-width: none; }
   .beam-docs-publish-controls > button { width: 100%; }
   .beam-docs-attempt { grid-template-columns: minmax(0,1fr); }
   .beam-docs-attempt-actions { flex-direction: row; align-items: center; flex-wrap: wrap; justify-content: space-between; }

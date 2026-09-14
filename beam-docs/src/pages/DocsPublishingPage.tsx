@@ -1,10 +1,8 @@
 import { Head } from '@inertiajs/react';
 import { DocsPublishingPanel } from '../DocsPublishingPanel.js';
+import type { DocsPublishingPageData } from '../generated/types.js';
 
-export type DocsPublishingPageProps = {
-    publicationsEndpoint?: string;
-    docsUrl?: string | null;
-};
+export type DocsPublishingPageProps = Partial<DocsPublishingPageData>;
 
 export default function DocsPublishingPage({ publicationsEndpoint, docsUrl }: DocsPublishingPageProps) {
     const back = docsUrl?.startsWith('/') && !docsUrl.startsWith('//') ? docsUrl : null;

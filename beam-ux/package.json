@@ -1,6 +1,6 @@
 {
     "name": "@splicewire/beam-ux",
-    "version": "0.2.1",
+    "version": "0.3.0",
     "description": "The beam UX-builder surfaces, authored pre-packaged and DTO-first (rehome-ui, ADR-0116). Mirrors the PHP splicewire/laravel-beam-ux package by domain. Ships the in-app visual editing surface for a beam site's OWN front-end — the docked region inspector, the floating in-context overlay editor, the live region canvas, and the layout›template›page composition structure panel with its component palette — as portable, tenancy-agnostic components: they own their react-query data logic, take their transport + feedback as injected services (never app-local imports), and type off the generated BeamUxEntryBody projection delivered via @splicewire/beam-resources. Generic UI comes from the @schemastud/ui foundation; the schema-driven form editor is the real @schemastud/seam SchemaForm, a host-provided peer.",
     "license": "MIT",
     "type": "module",

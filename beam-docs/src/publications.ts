@@ -1,21 +1,9 @@
-export type PublicationStatus = 'queued' | 'running' | 'succeeded' | 'failed';
+import { createFormValidator } from '@schemastud/seam';
+import type { RJSFSchema } from '@rjsf/utils';
+import publicationSchema from './generated/publication.schema.json';
+import type { PublicationData, PublishInputData } from './generated/types.js';
 
-/** The public projection of a persisted docs publication attempt. Credentials never belong here. */
-export type PublicationData = {
-    id: string;
-    version: string;
-    status: PublicationStatus;
-    sha256: string;
-    namespace: string;
-    slug: string;
-    isPrivate: boolean;
-    registryUrl: string | null;
-    error: string | null;
-    createdAt: string;
-    startedAt: string | null;
-    finishedAt: string | null;
-    retryOf: string | null;
-};
+export type { PublicationData, PublicationStatus, PublishInputData } from './generated/types.js';
 
 /** Return decoded JSON, retaining the server's `{ data: ... }` envelope. */
 export type DocsTransport = (url: string, init?: RequestInit) => Promise<unknown>;
@@ -68,16 +56,13 @@ function record(value: unknown): value is Record<string, unknown> {
     return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
+let validator: ReturnType<typeof createFormValidator> | undefined;
+// JSON imports widen keyword strings; the producer emits a JSON Schema, validated by AJV here.
+const schema: RJSFSchema = publicationSchema as RJSFSchema;
+
 function publication(value: unknown): PublicationData {
-    const strings = ['id', 'version', 'sha256', 'namespace', 'slug', 'createdAt'];
-    const nullable = ['registryUrl', 'error', 'startedAt', 'finishedAt', 'retryOf'];
-    if (
-        !record(value)
-        || strings.some((key) => typeof value[key] !== 'string')
-        || nullable.some((key) => value[key] !== null && typeof value[key] !== 'string')
-        || typeof value.isPrivate !== 'boolean'
-        || !['queued', 'running', 'succeeded', 'failed'].includes(String(value.status))
-    ) {
+    validator ??= createFormValidator();
+    if (!validator.isValid(schema, value, schema)) {
         throw new DocsRequestError('The publishing service returned an unreadable status. Refresh and try again.');
     }
     return value as PublicationData;
@@ -104,7 +89,7 @@ export function createDocsPublicationsClient(
         async get(id: string, signal?: AbortSignal): Promise<PublicationData> {
             return publication(data(await transport(`${base}/${encodeURIComponent(id)}`, { signal })));
         },
-        async publish(version: string, signal?: AbortSignal): Promise<PublicationData> {
+        async publish(version: PublishInputData['version'], signal?: AbortSignal): Promise<PublicationData> {
             return publication(data(await transport(base, {
                 method: 'POST', body: JSON.stringify({ version }), signal,
             })));

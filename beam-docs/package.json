@@ -21,21 +21,27 @@
     "scripts": {
         "build": "tsup",
         "dev": "tsup --watch",
-        "test": "vitest run",
+        "test": "npm run contracts:check && vitest run",
+        "contracts:generate": "node scripts/generate-contracts.mjs",
+        "contracts:check": "node --test scripts/contracts.test.mjs",
         "typecheck": "tsc --noEmit",
-        "prepublishOnly": "npm run build"
+        "prepublishOnly": "npm run contracts:check && npm run build"
     },
     "peerDependencies": {
         "@inertiajs/react": ">=2",
         "@schemastud/nav": "*",
-        "@splicewire/beam-ux": ">=0.2.1",
+        "@schemastud/seam": "*",
+        "@rjsf/utils": ">=6",
+        "@splicewire/beam-ux": ">=0.3.0",
         "react": ">=18"
     },
     "peerDependenciesMeta": { "@inertiajs/react": { "optional": true } },
     "devDependencies": {
         "@inertiajs/react": "^3.0.0",
         "@schemastud/nav": "file:../../schemastud/nav",
-        "@splicewire/beam-ux": "^0.2.1",
+        "@schemastud/seam": "file:../../schemastud/seam",
+        "@rjsf/utils": "^6.0.0",
+        "@splicewire/beam-ux": "^0.3.0",
         "@testing-library/react": "^16.1.0",
         "@testing-library/user-event": "^14.5.2",
         "@types/node": "^22.20.1",

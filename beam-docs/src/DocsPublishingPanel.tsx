@@ -1,10 +1,13 @@
-import { useEffect, useId, useMemo, useRef, useState, type FormEvent } from 'react';
+import { SchemaForm } from '@schemastud/seam';
+import type { ObjectFieldTemplateProps } from '@rjsf/utils';
+import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { docsConfiguration } from './config.js';
 import {
     createDocsPublicationsClient, fetchDocs, publicationRequestMessage, scalarRegistryUrl,
-    type DocsTransport, type PublicationData,
+    type DocsTransport, type PublicationData, type PublishInputData,
 } from './publications.js';
 import { PUBLISHING_CSS } from './publishing-css.js';
+import publishInputSchema from './generated/publish-input.schema.json';
 
 export type DocsPublishingPanelProps = {
     endpoint?: string;
@@ -23,7 +26,11 @@ function mergeAttempts(current: PublicationData[], incoming: PublicationData[]):
         if (previous && (!active(previous) || (previous.status === 'running' && row.status === 'queued'))) continue;
         rows.set(row.id, row);
     }
-    return [...rows.values()].sort((a, b) => b.createdAt.localeCompare(a.createdAt) || b.id.localeCompare(a.id));
+    return [...rows.values()].sort((a, b) => (b.createdAt ?? '').localeCompare(a.createdAt ?? '') || b.id.localeCompare(a.id));
+}
+
+function PublishFields({ properties }: ObjectFieldTemplateProps) {
+    return <div className="beam-docs-version-field">{properties.map((property) => property.content)}</div>;
 }
 
 /** Mount only for an authorized operator; the server independently authorizes every request. */
@@ -33,7 +40,7 @@ export function DocsPublishingPanel({
     const fetcher = transport ?? docsConfiguration().transport ?? fetchDocs;
     const client = useMemo(() => createDocsPublicationsClient(endpoint, fetcher), [endpoint, fetcher]);
     const inputId = useId();
-    const [version, setVersion] = useState('');
+    const [version, setVersion] = useState<PublishInputData['version']>('');
     const [attempts, setAttempts] = useState<PublicationData[]>([]);
     const [loading, setLoading] = useState(true);
     const [loadError, setLoadError] = useState<string | null>(null);
@@ -124,34 +131,36 @@ export function DocsPublishingPanel({
         }
     };
 
-    const onSubmit = (event: FormEvent<HTMLFormElement>) => {
-        event.preventDefault();
-        void submit();
-    };
-
     return (
         <section className={['beam-docs-publishing', className].filter(Boolean).join(' ')} aria-label="Documentation publishing">
             <style>{PUBLISHING_CSS}</style>
-            <form onSubmit={onSubmit} className="beam-docs-publish-form">
+            <div className="beam-docs-publish-form">
                 <h2>Publish a release</h2>
                 <p className="beam-docs-help">Publish the current API specification to Scalar Registry under a release version.</p>
-                <div className="beam-docs-publish-controls">
-                    <div className="beam-docs-version-field">
-                        <label htmlFor={inputId}>Release version</label>
-                        <input
-                            id={inputId} value={version} onChange={(event) => setVersion(event.target.value)}
-                            placeholder="e.g. v1.2.0" autoComplete="off" maxLength={128} required
-                            aria-describedby={`${inputId}-help`} disabled={submitting}
-                        />
-                    </div>
+                <SchemaForm
+                    idPrefix={inputId}
+                    className="beam-docs-publish-controls"
+                    schema={publishInputSchema}
+                    formData={{ version }}
+                    uiSchema={{ version: { 'ui:placeholder': 'e.g. v1.2.0', 'ui:autocomplete': 'off' } }}
+                    templates={{ ObjectFieldTemplate: PublishFields }}
+                    disabled={submitting}
+                    showErrorList={false}
+                    noHtml5Validate
+                    transformErrors={(errors) => errors.map((error) => error.name === 'pattern'
+                        ? { ...error, message: 'Enter a release version such as v1.2.3 or 1.2.3+build.4.' }
+                        : error)}
+                    onChange={({ formData }) => setVersion(String(formData.version ?? '').trim())}
+                    onSubmit={() => void submit()}
+                >
                     <button type="submit" disabled={submitting || !version.trim()}>
                         {submitting ? 'Submitting…' : 'Publish release'}
                     </button>
-                </div>
-                <p id={`${inputId}-help`} className="beam-docs-help">Existing Registry versions are never overwritten.</p>
+                </SchemaForm>
+                <p className="beam-docs-help">Existing Registry versions are never overwritten.</p>
                 {actionError && <p role="alert" className="beam-docs-error">{actionError}</p>}
                 <p role="status" className="beam-docs-announcement">{announcement}</p>
-            </form>
+            </div>
 
             <div className="beam-docs-attempts-heading">
                 <h2>Recent publications</h2>
@@ -174,7 +183,7 @@ export function DocsPublishingPanel({
                                 <p className="beam-docs-help">{attempt.namespace} / {attempt.slug}</p>
                                 <p className="beam-docs-attempt-meta">
                                     <span>{attempt.isPrivate ? 'Private' : 'Public'}</span>
-                                    <time dateTime={attempt.createdAt}>{formatDate(attempt.createdAt)}</time>
+                                    {attempt.createdAt && <time dateTime={attempt.createdAt}>{formatDate(attempt.createdAt)}</time>}
                                     <code title={`SHA-256: ${attempt.sha256}`}>{attempt.sha256.slice(0, 12)}</code>
                                 </p>
                             </div>

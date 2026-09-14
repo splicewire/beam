@@ -46,3 +46,17 @@ must already be sanitized by the server.
 
 Run `npm run test --workspace @splicewire/beam-docs`, `npm run typecheck --workspace
 @splicewire/beam-docs`, and `npm run build --workspace @splicewire/beam-docs` from the workspace root.
+
+## Generated contracts
+
+The publishing form uses `@schemastud/seam`'s `SchemaForm` with the PHP `PublishInputData` schema. Types and publication response validation also consume the committed producer output under `src/generated`; do not edit that directory by hand.
+
+With `splicewire/laravel-beam-docs` development dependencies installed, point the wrapper at its package runner (or a prepared host's `artisan`):
+
+```sh
+export BEAM_DOCS_ARTISAN="$HOME/Workspaces/php/packages/splicewire/laravel-beam-docs/vendor/bin/testbench"
+npm run contracts:generate --workspace @splicewire/beam-docs -- --write
+npm run contracts:check --workspace @splicewire/beam-docs
+```
+
+`BEAM_DOCS_PHP` optionally selects a PHP executable. Generation without `--write` only prints the proposed artifacts. The check calls the producer without writing and compares exact bytes; missing producer configuration, missing artifacts and stale artifacts all fail. Both `test` and `prepublishOnly` run this check, so CI and publishing must install the matching PHP package revision and set the producer path.
