@@ -1,6 +1,6 @@
 {
     "name": "@splicewire/beam-docs",
-    "version": "0.1.0",
+    "version": "0.1.1",
     "description": "Optional Beam documentation, Scalar API reference and release publication controls.",
     "license": "MIT",
     "type": "module",
@@ -19,12 +19,13 @@
         "directory": "beam-docs"
     },
     "scripts": {
-        "build": "tsup",
+        "build": "tsup && npm run test:types",
         "dev": "tsup --watch",
         "test": "npm run contracts:check && vitest run",
         "contracts:generate": "node scripts/generate-contracts.mjs",
         "contracts:check": "node --test scripts/contracts.test.mjs",
         "typecheck": "tsc --noEmit",
+        "test:types": "tsc --project tests/consumer/tsconfig.json",
         "prepublishOnly": "npm run contracts:check && npm run build"
     },
     "peerDependencies": {
@@ -41,12 +42,14 @@
         "@schemastud/nav": "file:../../schemastud/nav",
         "@schemastud/seam": "file:../../schemastud/seam",
         "@rjsf/utils": "^6.0.0",
+        "@splicewire/beam-inertia-contract": "npm:@splicewire/beam-inertia@0.1.2",
         "@splicewire/beam-ux": "^0.3.0",
         "@testing-library/react": "^16.1.0",
         "@testing-library/user-event": "^14.5.2",
         "@types/node": "^22.20.1",
         "@types/react": "^19.0.0",
         "jsdom": "^25.0.1",
+        "lucide-react": "^0.475.0",
         "react": "^19.2.0",
         "react-dom": "^19.2.0",
         "tsup": "^8.5.1",

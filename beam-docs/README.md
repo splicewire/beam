@@ -46,6 +46,8 @@ must already be sanitized by the server.
 
 Run `npm run test --workspace @splicewire/beam-docs`, `npm run typecheck --workspace
 @splicewire/beam-docs`, and `npm run build --workspace @splicewire/beam-docs` from the workspace root.
+The build also compiles a consumer fixture against the emitted Docs page map and the published
+Inertia 0.1.2 contract. Its pinned development alias keeps later workspace changes out of that check.
 
 ## Generated contracts
 
