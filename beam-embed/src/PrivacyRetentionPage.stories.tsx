@@ -11,8 +11,8 @@ import { PrivacyRetentionPage, RetentionProvider, type RetentionClient } from '@
  * real dist export), never a deep `src` path.
  */
 const CHATS = [
-    { id: 1, title: 'Support bot', retention_days: 90, corpus_optin: false },
-    { id: 2, title: 'Sales assistant', retention_days: 30, corpus_optin: true },
+    { id: '1', title: 'Support bot', retention_days: 90, corpus_optin: false },
+    { id: '2', title: 'Sales assistant', retention_days: 30, corpus_optin: true },
 ];
 
 function makeClient(overrides: Partial<RetentionClient> = {}): RetentionClient {
