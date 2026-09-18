@@ -16,6 +16,42 @@ describe('frameIcon', () => {
         },
     );
 
+    // The names every other live `#[ParticleResource]` declaration in the estate carries (beam-accounts,
+    // beam-calendars, beam-commerce, beam-notifications, beam-workflows, satellite-composition, tower,
+    // beam-extension-demo). The Bills and Declarations tiles drew the dot at every host before
+    // `receipt` and `shield-check` joined.
+    it.each([
+        'Receipt',
+        'ShieldCheck',
+        'Calendar',
+        'CalendarDays',
+        'Clapperboard',
+        'FileBadge',
+        'FileCode',
+        'IdCard',
+        'Inbox',
+        'Key',
+        'Layers',
+        'ListChecks',
+        'Mail',
+        'MessagesSquare',
+        'NotebookPen',
+        'Package',
+        'Repeat',
+        'Scale',
+        'Send',
+        'Shapes',
+        'Sliders',
+        'Target',
+        'UserCog',
+        'Workflow',
+    ])('maps the declared resource icon %s in both casings', (name) => {
+        const kebab = name.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
+
+        expect(frameIcon(name)).not.toBe(Circle);
+        expect(frameIcon(kebab)).toBe(frameIcon(name));
+    });
+
     it('falls back to the neutral dot for an unmapped or missing name', () => {
         expect(frameIcon('not-an-icon')).toBe(Circle);
         expect(frameIcon(null)).toBe(Circle);
