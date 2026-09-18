@@ -22,6 +22,8 @@ describe('frameIcon', () => {
     // `receipt` and `shield-check` joined.
     it.each([
         'Receipt',
+        'Mic',
+        'mic',
         'ShieldCheck',
         'Calendar',
         'CalendarDays',
