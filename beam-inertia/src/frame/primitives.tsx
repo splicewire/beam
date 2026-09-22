@@ -1,4 +1,5 @@
 import type { FramePrimitives } from '@schemastud/frame';
+import { Popover, PopoverContent, PopoverTrigger, SimpleSelect } from '@schemastud/ui';
 import type { ReactNode } from 'react';
 import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/button';
@@ -11,9 +12,8 @@ import { Skeleton } from '../components/ui/skeleton';
 // This host's binding of frame's FramePrimitives seam to its own shadcn kit — the same seam
 // rushing/audiostud and splicewire bind, against the same component set.
 //
-// The facets primitives (Popover*, SimpleSelect) are passthrough stubs: no tenant-realm resource
-// declares facets today, and the console renders `Filters: () => null`, so the facets bar never
-// mounts. They stay present so the contract is complete rather than partially satisfied.
+// Filter controls use the shared UI kit; each resource's advertised capability decides
+// whether Frame renders them. Table rendering is supplied by the list slots.
 const Passthrough = ({ children }: { children?: ReactNode }) => <>{children}</>;
 
 function FrameSidePanel({
@@ -40,10 +40,10 @@ export const framePrimitives: FramePrimitives = {
     Label,
     Badge,
     Skeleton,
-    Popover: Passthrough,
-    PopoverTrigger: Passthrough,
-    PopoverContent: Passthrough,
-    SimpleSelect: Passthrough,
+    Popover,
+    PopoverTrigger,
+    PopoverContent,
+    SimpleSelect,
     Table: Passthrough,
     Dialog: ({
         open,

@@ -220,7 +220,6 @@ export function FrameRoutes({ manifest }: { manifest: FrameManifest }) {
                                   router.visit(recordHref(recordBase, record.id))
                             : undefined
                     }
-                    slots={{ Filters: () => null }}
                 />
             ));
         }

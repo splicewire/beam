@@ -26,10 +26,10 @@ const config: StorybookConfig = {
         // supplies the Tailwind + token layer so `bg-primary` etc. render skinned. Per-package
         // self-contained token defaults (ticket 07's aspiration) can graduate later.
         cfg.plugins.push(tailwindcss());
-        // Dedupe React so any cross-package story binds a single React instance (belt-and-braces;
-        // within one repo the workspace already hoists a single copy).
+        // Linked Frame/facets must share both React and the QueryClient context with
+        // this workbench's providers, matching beam-inertia's mounted test harness.
         cfg.resolve ??= {};
-        cfg.resolve.dedupe = [...(cfg.resolve.dedupe ?? []), 'react', 'react-dom'];
+        cfg.resolve.dedupe = [...(cfg.resolve.dedupe ?? []), 'react', 'react-dom', '@tanstack/react-query'];
         cfg.resolve.alias = {
             ...(cfg.resolve.alias as Record<string, string> | undefined),
             // Stub `@inertiajs/react` (component-seams ticket 40). beam-mdx is the ONLY Inertia
