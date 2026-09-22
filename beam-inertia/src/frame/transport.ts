@@ -71,16 +71,12 @@ export const frameTransport: FrameTransport = createResourceTransport(
         async getFormSchema(resource): Promise<SchemaNode> {
             return fetchJson<SchemaNode>(`${FRAME}/resources/${resource}/schema`);
         },
+        async create<Result>(resource: string, data: unknown): Promise<Result> {
+            const body = await writeJson<{ data: Result }>('POST', `${FRAME}/resources/${resource}`, data);
+            return body.data;
+        },
         async save(resource, id, data): Promise<Row> {
-            const body =
-                id === null
-                    ? await writeJson<{ data: Row }>('POST', `${FRAME}/resources/${resource}`, data)
-                    : await writeJson<{ data: Row }>(
-                          'PUT',
-                          `${FRAME}/resources/${resource}/records/${id}`,
-                          data,
-                      );
-
+            const body = await writeJson<{ data: Row }>('PUT', `${FRAME}/resources/${resource}/records/${id}`, data);
             return body.data;
         },
         async remove(resource, id): Promise<void> {

@@ -86,7 +86,8 @@ vi.mock('./transport', () => {
         list: transport.list,
         get: vi.fn(async (_r: string, id: string) => ({ id })),
         getFormSchema: vi.fn(async () => ({ type: 'object', properties: {} })),
-        save: vi.fn(async (_r: string, id: string | null, data: unknown) => ({ id: id ?? '3', ...(data as Row) })),
+        create: vi.fn(async (_resource: string, data: unknown) => Response.json({ id: '3', ...(data as object) }).json()),
+        save: vi.fn(async (_r: string, id: string, data: unknown) => ({ id, ...(data as Row) })),
         remove: vi.fn(async () => undefined),
     } as unknown as FrameTransport;
 

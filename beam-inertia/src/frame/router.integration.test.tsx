@@ -144,7 +144,7 @@ function mount(data = fixture(), path = '/operator/catalog') {
 describe('explicit Frame creation destinations', () => {
     it.each([false, true])('New opens and POSTs a null-ID form with show=%s', async (show) => {
         const data = fixture({ show });
-        const save = vi.spyOn(frameTransport, 'save');
+        const create = vi.spyOn(frameTransport, 'create');
         mount(data);
         fireEvent.click(await screen.findByRole('button', { name: 'New document' }));
         expect(router.visit).toHaveBeenLastCalledWith('/operator/catalog/new');
@@ -153,7 +153,7 @@ describe('explicit Frame creation destinations', () => {
         });
         fireEvent.click(screen.getByRole('button', { name: 'Save' }));
         await waitFor(() =>
-            expect(save).toHaveBeenCalledWith('documents', null, { name: 'Created document' })
+            expect(create).toHaveBeenCalledWith('documents', { name: 'Created document' })
         );
         expect(data.requests.filter(({ method }) => method === 'POST')).toEqual([
             {
@@ -251,7 +251,7 @@ describe('explicit Frame creation destinations', () => {
             widget: 'document-editor',
         };
         vi.stubGlobal('fetch', data.fetch);
-        const save = vi.spyOn(frameTransport, 'save');
+        const create = vi.spyOn(frameTransport, 'create');
         const registry = createWidgetRegistry();
         registry.registerWidget(
             'document-editor',
@@ -285,7 +285,7 @@ describe('explicit Frame creation destinations', () => {
         );
         fireEvent.click(await screen.findByRole('button', { name: 'Create widget draft' }));
         await waitFor(() =>
-            expect(save).toHaveBeenCalledWith('documents', null, { name: 'Widget draft' })
+            expect(create).toHaveBeenCalledWith('documents', { name: 'Widget draft' })
         );
         expect(data.requests.some(({ path }) => path.includes('/records/'))).toBe(false);
     });

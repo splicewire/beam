@@ -4,6 +4,23 @@ import { frameTransport } from './transport';
 
 afterEach(() => vi.unstubAllGlobals());
 
+it('preserves a declared creation result and keeps row updates separate', async () => {
+    const created = { hook: { id: 'hook-1' }, secret: 'one-time-secret', pinged: false };
+    const fetch = vi.fn(async (_input: string, init: RequestInit) =>
+        Response.json({ data: init.method === 'POST' ? created : { id: 'hook-1', paused: true } }),
+    );
+    vi.stubGlobal('fetch', fetch);
+
+    expect(await frameTransport.create<typeof created>('hooks', { endpoint: '/receiver' })).toEqual(created);
+    expect(fetch).toHaveBeenNthCalledWith(1, '/frame/resources/hooks', expect.objectContaining({
+        method: 'POST', credentials: 'same-origin', body: JSON.stringify({ endpoint: '/receiver' }),
+    }));
+    expect(await frameTransport.save('hooks', 'hook-1', { paused: true })).toEqual({ id: 'hook-1', paused: true });
+    expect(fetch).toHaveBeenNthCalledWith(2, '/frame/resources/hooks/records/hook-1', expect.objectContaining({
+        method: 'PUT', body: JSON.stringify({ paused: true }),
+    }));
+});
+
 it('uses resource-scoped filter HTTP and all saved-view CRUD pages with session credentials', async () => {
     let stored = Array.from({ length: 29 }, (_, index) => ({
         id: String(index),
