@@ -123,38 +123,14 @@ function Titled({ title, children }: { title: string; children: ReactNode }) {
     );
 }
 
-/**
- * The URL segment that stands in for "no record yet" on the id-addressed record route.
- *
- * Frame's list Toolbar calls `onOpen({ id: null })` for its "New …" button — the write leg has always
- * understood a null id (`transport.save` POSTs to the collection instead of PUTting a record). The
- * NAVIGATION leg did not: it stringified the id, so "New" went to `/{resource}/null`, the record screen
- * asked the API for the record literally named `null`, and the server answered 500
- * (`invalid input syntax for type uuid: "null"`). Measured on beam.test 2026-09-11, G2 defect 5.
- *
- * A segment rather than a separate route, because the record route already exists, already mounts the
- * shell that renders a create form when its id is null, and `:id` matches this just as well. Ids in this
- * estate are uuids, so `new` cannot collide with one; {@link idFromParam} is the single place that
- * translation is undone, so the sentinel can never reach the transport.
- */
-export const CREATE_SEGMENT = 'new';
-
-/**
- * The href for opening a record from a list — or for creating one, when the list says `id: null`.
- *
- * `String(null)` is `'null'`, which is a valid-looking URL segment and an invalid record id: exactly the
- * kind of failure that survives a type-check and reaches a 500. Null is a real answer here and gets its
- * own segment.
- */
+/** The href for an existing record; creation resolves its own declared route. */
 export function recordHref(recordBase: string, id: unknown): string {
-    return id === null || id === undefined || id === ''
-        ? `${recordBase}/${CREATE_SEGMENT}`
-        : `${recordBase}/${String(id)}`;
+    return `${recordBase}/${String(id)}`;
 }
 
-/** The record id a route param names — `null` for {@link CREATE_SEGMENT}, which is not an id. */
+/** Static create leaves have no id parameter; record parameters remain literal. */
 export function idFromParam(param: string | undefined): string | null {
-    return param === undefined || param === CREATE_SEGMENT ? null : param;
+    return param ?? null;
 }
 
 export function FrameRoutes({ manifest }: { manifest: FrameManifest }) {
@@ -187,7 +163,7 @@ export function FrameRoutes({ manifest }: { manifest: FrameManifest }) {
         });
 
         // The list OVERRIDE, registered per list leaf: resource-blind, and supplying only the record
-        // route the foundation cannot know.
+        // and create destinations the foundation cannot know.
         const routeRegistry = createRouteRegistry();
 
         for (const entry of manifest.routeContext) {
@@ -199,7 +175,17 @@ export function FrameRoutes({ manifest }: { manifest: FrameManifest }) {
             const twin = manifest.routeContext.find(
                 (candidate) =>
                     candidate.resource === resource &&
+                    candidate.shell === entry.shell &&
                     candidate.path.endsWith('/:id'),
+            );
+            const stem = entry.routeName.endsWith('.index')
+                ? entry.routeName.slice(0, -'.index'.length)
+                : resource;
+            const create = manifest.routeContext.find(
+                (candidate) =>
+                    candidate.resource === resource &&
+                    candidate.shell === entry.shell &&
+                    candidate.routeName === `${stem}.create`,
             );
             // REALM-PREFIXED, because this feeds `router.visit()` — an INERTIA visit, which goes to
             // the server and is not rewritten by React Router's basename. The hardcoded leading `/`
@@ -208,6 +194,7 @@ export function FrameRoutes({ manifest }: { manifest: FrameManifest }) {
             const recordBase = twin
                 ? realmHref(basename, twin.path.replace(/\/:id$/, ''))
                 : null;
+            const createHref = create ? realmHref(basename, create.path) : null;
 
             routeRegistry.registerRoute(entry.routeName, () => (
                 <ListShell
@@ -215,9 +202,15 @@ export function FrameRoutes({ manifest }: { manifest: FrameManifest }) {
                     columns={[]}
                     manifest={manifestFor(resource)}
                     onOpen={
-                        recordBase
-                            ? (record) =>
-                                  router.visit(recordHref(recordBase, record.id))
+                        recordBase || createHref
+                            ? (record) => {
+                                  const href = record.id === null
+                                      ? createHref
+                                      : recordBase
+                                        ? recordHref(recordBase, record.id)
+                                        : null;
+                                  if (href) router.visit(href);
+                              }
                             : undefined
                     }
                 />
