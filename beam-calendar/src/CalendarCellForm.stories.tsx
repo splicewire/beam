@@ -181,6 +181,7 @@ export const ResolvedThroughFrame: Story = {
                     intentBus={createFormIntentBus()}
                     readOnly={false}
                     form="bare"
+                    registerSubmit={() => {}}
                     onChange={() => {}}
                     onSubmit={fn()}
                 />

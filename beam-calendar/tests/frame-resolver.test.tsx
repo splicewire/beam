@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import {
@@ -69,7 +70,9 @@ function fakeClient(over: Partial<CalendarCellClient> = {}): CalendarCellClient 
 }
 
 /** The FormBodySlotProps adapter — the same shape the app root + story-harness register. */
-function CellFormBody({ formData, onSubmit }: FormBodySlotProps) {
+function CellFormBody({ formData, onSubmit, registerSubmit }: FormBodySlotProps) {
+    // This form persists through its own validated multi-step Save control.
+    useEffect(() => registerSubmit(null), [registerSubmit]);
     const record = formData as unknown as CalendarCell & { compositionId?: string };
     return (
         <CalendarCellForm
@@ -101,6 +104,7 @@ function mountThroughResolver(services: CalendarCellFormServices, kindUrl: strin
                         intentBus={createFormIntentBus()}
                         readOnly={false}
                         form="bare"
+                        registerSubmit={() => {}}
                         onChange={() => {}}
                         onSubmit={() => {}}
                     />

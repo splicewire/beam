@@ -49,7 +49,7 @@ import 'react-big-calendar/lib/addons/dragAndDrop/styles.css';
 
 import type { LaneAxis } from '@schemastud/big-calendar';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { useMemo, type ReactNode } from 'react';
+import { useEffect, useMemo, type ReactNode } from 'react';
 import { FrameProvider, createFormResolver, type FormBodySlotProps, type FrameInjection } from '@schemastud/frame';
 import { CalendarCellForm } from './CalendarCellForm';
 import type { CalendarCell } from './cell-types';
@@ -183,7 +183,9 @@ export function WithQuery({ children }: { children: ReactNode }) {
  * mounts it; it derives the form's props from `formData` (a cell record: `compositionId` + optional
  * `id`/`slots`) and threads the bespoke form's own `onSaved` back out through the frame `onSubmit`.
  */
-function StoryCellFormBody({ formData, onSubmit }: FormBodySlotProps) {
+function StoryCellFormBody({ formData, onSubmit, registerSubmit }: FormBodySlotProps) {
+    // This form persists through its own validated multi-step Save control.
+    useEffect(() => registerSubmit(null), [registerSubmit]);
     const cell = formData as unknown as CalendarCell & { compositionId?: string };
     const compositionId = String(cell?.compositionId ?? 'cal-demo');
     const initialCell = cell?.id ? (cell as CalendarCell) : null;
