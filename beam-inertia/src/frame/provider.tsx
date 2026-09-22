@@ -14,7 +14,7 @@ import { frameIcon } from './icons';
 import { manifestLookup, useFrameManifest } from './manifest';
 import { framePrimitives } from './primitives';
 import { frameTransport } from './transport';
-import { useFrameUrlState } from './use-url-state';
+import { useBrowserUrlState } from '@schemastud/frame';
 
 /**
  * Binds this host's transport / primitives / URL-state / widget registry to `@schemastud/frame`.
@@ -67,7 +67,12 @@ import { useFrameUrlState } from './use-url-state';
  * from `router.tsx`. Frame hands over exactly `href`, `className`, `children` and an optional
  * `aria-label`; nothing else is invented here.
  */
-const renderCardLink: CardLinkRenderer = ({ href, className, children, 'aria-label': ariaLabel }) => (
+const renderCardLink: CardLinkRenderer = ({
+    href,
+    className,
+    children,
+    'aria-label': ariaLabel,
+}) => (
     <Link href={href} className={className} aria-label={ariaLabel}>
         {children}
     </Link>
@@ -97,16 +102,18 @@ export function TenantFrameProvider({ children }: { children: ReactNode }) {
         registerResourceRefWidget(registry);
         // The dashboard card set — context defaults for `summary`/`overview` plus the five named
         // widgets. Guarded per registry inside, so a re-run of this memo cannot stack a second copy.
-        registerCardWidgets(registry, { iconFor: frameIcon, renderLink: renderCardLink });
+        registerCardWidgets(registry, {
+            iconFor: frameIcon,
+            renderLink: renderCardLink,
+        });
 
         return {
             transport: frameTransport,
             primitives: framePrimitives,
-            useUrlState: useFrameUrlState,
+            useUrlState: useBrowserUrlState,
             registry,
             // Tenant-realm request schemas are self-contained (forRequest()); no $refs to resolve.
-            schemaFetcher: async (ref: string): Promise<SchemaNode> =>
-                ({ $id: ref }) as SchemaNode,
+            schemaFetcher: async (ref: string): Promise<SchemaNode> => ({ $id: ref }) as SchemaNode,
             can,
             manifestFor: manifestLookup(manifest),
             listSlots: shadcnListSlots,

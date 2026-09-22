@@ -1,5 +1,5 @@
-import type { FrameTransport, Paginated, Row } from '@schemastud/frame';
-import { createResourceTransport } from '@schemastud/frame';
+import type { FrameTransport, ResourcePage, Row } from '@schemastud/frame';
+import { createResourceTransport, parseResourcePage } from '@schemastud/frame';
 import type { SchemaNode } from '@schemastud/seam';
 import { jsonHeaders } from './xsrf';
 
@@ -46,20 +46,11 @@ async function writeJson<T = unknown>(method: string, url: string, body?: unknow
  */
 export const frameTransport: FrameTransport = createResourceTransport(
     {
-        async list(resource, params): Promise<Paginated<Row>> {
+        async list(resource, params): Promise<ResourcePage<Row>> {
             const query = new URLSearchParams(params).toString();
             const listUrl = `${FRAME}/resources/${resource}`;
-            const body = await fetchJson<Partial<Paginated<Row>>>(
-                query ? `${listUrl}?${query}` : listUrl,
-            );
-            const rows = (body.data ?? []) as Row[];
-
-            return {
-                data: rows,
-                total: body.total ?? rows.length,
-                page: body.page ?? 1,
-                perPage: body.perPage ?? (rows.length || 1),
-            };
+            const body = await fetchJson<unknown>(query ? `${listUrl}?${query}` : listUrl);
+            return parseResourcePage(body);
         },
         async get(resource, id): Promise<Row> {
             const body = await fetchJson<{ data: Row }>(
@@ -72,11 +63,19 @@ export const frameTransport: FrameTransport = createResourceTransport(
             return fetchJson<SchemaNode>(`${FRAME}/resources/${resource}/schema`);
         },
         async create<Result>(resource: string, data: unknown): Promise<Result> {
-            const body = await writeJson<{ data: Result }>('POST', `${FRAME}/resources/${resource}`, data);
+            const body = await writeJson<{ data: Result }>(
+                'POST',
+                `${FRAME}/resources/${resource}`,
+                data,
+            );
             return body.data;
         },
         async save(resource, id, data): Promise<Row> {
-            const body = await writeJson<{ data: Row }>('PUT', `${FRAME}/resources/${resource}/records/${id}`, data);
+            const body = await writeJson<{ data: Row }>(
+                'PUT',
+                `${FRAME}/resources/${resource}/records/${id}`,
+                data,
+            );
             return body.data;
         },
         async remove(resource, id): Promise<void> {

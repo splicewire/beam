@@ -5,20 +5,44 @@ import { frameTransport } from './transport';
 afterEach(() => vi.unstubAllGlobals());
 
 it('preserves a declared creation result and keeps row updates separate', async () => {
-    const created = { hook: { id: 'hook-1' }, secret: 'one-time-secret', pinged: false };
+    const created = {
+        hook: { id: 'hook-1' },
+        secret: 'one-time-secret',
+        pinged: false,
+    };
     const fetch = vi.fn(async (_input: string, init: RequestInit) =>
-        Response.json({ data: init.method === 'POST' ? created : { id: 'hook-1', paused: true } }),
+        Response.json({
+            data: init.method === 'POST' ? created : { id: 'hook-1', paused: true },
+        }),
     );
     vi.stubGlobal('fetch', fetch);
 
-    expect(await frameTransport.create<typeof created>('hooks', { endpoint: '/receiver' })).toEqual(created);
-    expect(fetch).toHaveBeenNthCalledWith(1, '/frame/resources/hooks', expect.objectContaining({
-        method: 'POST', credentials: 'same-origin', body: JSON.stringify({ endpoint: '/receiver' }),
-    }));
-    expect(await frameTransport.save('hooks', 'hook-1', { paused: true })).toEqual({ id: 'hook-1', paused: true });
-    expect(fetch).toHaveBeenNthCalledWith(2, '/frame/resources/hooks/records/hook-1', expect.objectContaining({
-        method: 'PUT', body: JSON.stringify({ paused: true }),
-    }));
+    expect(
+        await frameTransport.create<typeof created>('hooks', {
+            endpoint: '/receiver',
+        }),
+    ).toEqual(created);
+    expect(fetch).toHaveBeenNthCalledWith(
+        1,
+        '/frame/resources/hooks',
+        expect.objectContaining({
+            method: 'POST',
+            credentials: 'same-origin',
+            body: JSON.stringify({ endpoint: '/receiver' }),
+        }),
+    );
+    expect(await frameTransport.save('hooks', 'hook-1', { paused: true })).toEqual({
+        id: 'hook-1',
+        paused: true,
+    });
+    expect(fetch).toHaveBeenNthCalledWith(
+        2,
+        '/frame/resources/hooks/records/hook-1',
+        expect.objectContaining({
+            method: 'PUT',
+            body: JSON.stringify({ paused: true }),
+        }),
+    );
 });
 
 it('uses resource-scoped filter HTTP and all saved-view CRUD pages with session credentials', async () => {
@@ -56,6 +80,8 @@ it('uses resource-scoped filter HTTP and all saved-view CRUD pages with session 
                 return Response.json({ data: saved });
             }
             expect(url.searchParams.get('filter[resource]')).toBe('articles');
+            expect(url.searchParams.get('per_page')).toBe('25');
+            expect(url.searchParams.has('perPage')).toBe(false);
             const page = Number(url.searchParams.get('page'));
             return Response.json({
                 data: stored.slice((page - 1) * 25, page * 25),
@@ -108,4 +134,30 @@ it('does not invent saved-view persistence for a resource without support', asyn
     expect(fetch.mock.calls.every((call) => String(call[0]).endsWith('/filters/schema'))).toBe(
         true,
     );
+});
+
+it.each([
+    { data: [{ id: 'first' }], perPage: 50, nextCursor: 'opaque+/=' },
+    { data: [], perPage: 50, nextCursor: null },
+])('preserves cursor responses without fabricated totals', async (page) => {
+    const fetch = vi.fn(async (_input: string) => Response.json(page));
+    vi.stubGlobal('fetch', fetch);
+    expect(
+        await frameTransport.list('events', {
+            cursor: 'previous+/=',
+            per_page: '50',
+        }),
+    ).toEqual(page);
+    const url = new URL(String(fetch.mock.calls[0]?.[0]), 'https://host.test');
+    expect(url.searchParams.get('cursor')).toBe('previous+/=');
+    expect(url.searchParams.get('per_page')).toBe('50');
+    expect(url.searchParams.has('perPage')).toBe(false);
+});
+
+it('rejects an incomplete list envelope instead of inventing offset metadata', async () => {
+    vi.stubGlobal(
+        'fetch',
+        vi.fn(async () => Response.json({ data: [] })),
+    );
+    await expect(frameTransport.list('events', {})).rejects.toThrow('pagination');
 });
