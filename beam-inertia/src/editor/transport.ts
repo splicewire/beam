@@ -6,8 +6,8 @@ import { getBeamInertiaConfig } from '../config';
 //
 // ## Addressed by ID, as of beam-docs-satellite ticket 40
 //
-// It loads/saves over the id-addressed particle operations `beam-ux-entry.op.body` /
-// `beam-ux-entry.op.save-body` (ADR-0214 §1). It used to fetch the LITERAL
+// It loads/saves over the id-addressed particle operations `beam-ux-entry.body` /
+// `beam-ux-entry.save-body` (ADR-0214 §1). It used to fetch the LITERAL
 // `/beam/ux/entries/${slug}/body` — the `Route::beamUxEntries()` macro — and that was wrong twice over:
 //
 //  - **Slug-addressed.** `UxBuilderClient.loadBody` has taken an ID since ADR-0214 §2, and this file
@@ -27,7 +27,7 @@ import { getBeamInertiaConfig } from '../config';
 // by a click or a test, not a build error.
 //
 // So: **if the editor 404s on load or save, check this URL against `php artisan route:list` for
-// `beam-ux-entry.op.body` / `.op.save-body` before looking anywhere else.** That is the whole failure
+// `beam-ux-entry.body` / `.save-body` before looking anywhere else.** That is the whole failure
 // mode, and it is the first thing to rule out.
 import type { EntryPublicationState, UxBuilderClient } from '@splicewire/beam-ux';
 /** Read the Laravel `XSRF-TOKEN` cookie for the stateful mutating POST. */
@@ -52,7 +52,7 @@ const defaultBodyClient: UxBuilderClient = {
      * `?namespace=` disambiguator is therefore not merely ignored — appending one fails loudly.
      */
     loadBody: async (id) => {
-        const res = await fetch(`/beam-ux-entries/${id}/op/body`, {
+        const res = await fetch(`/beam-ux-entries/${id}/body`, {
             headers: { Accept: 'application/json' },
             credentials: 'same-origin',
         });
@@ -60,7 +60,7 @@ const defaultBodyClient: UxBuilderClient = {
         return (await readData(res, 'load')) as Awaited<ReturnType<UxBuilderClient['loadBody']>>;
     },
     saveBody: async (id, body) => {
-        const res = await fetch(`/beam-ux-entries/${id}/op/save-body`, {
+        const res = await fetch(`/beam-ux-entries/${id}/save-body`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

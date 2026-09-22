@@ -22,6 +22,33 @@ afterEach(() => {
     vi.unstubAllGlobals();
 });
 
+it('loads and saves the default body through canonical ID routes with stateful request envelopes', async () => {
+    const fetch = vi.fn().mockResolvedValue(Response.json({ data: envelope }));
+    vi.stubGlobal('fetch', fetch);
+    vi.stubGlobal('document', { cookie: 'XSRF-TOKEN=csrf%20token' });
+    configureBeamInertia({});
+
+    expect(await bodyClient.loadBody('entry-uuid')).toEqual(envelope);
+    expect(fetch).toHaveBeenNthCalledWith(1, '/beam-ux-entries/entry-uuid/body', {
+        headers: { Accept: 'application/json' },
+        credentials: 'same-origin',
+    });
+
+    fetch.mockResolvedValueOnce(Response.json({ data: envelope }));
+    const body = { content: 'Retain this draft' };
+    expect(await bodyClient.saveBody('entry-uuid', body)).toEqual(envelope);
+    expect(fetch).toHaveBeenNthCalledWith(2, '/beam-ux-entries/entry-uuid/save-body', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-XSRF-TOKEN': 'csrf token',
+            Accept: 'application/json',
+        },
+        credentials: 'same-origin',
+        body: JSON.stringify({ body }),
+    });
+});
+
 it('preserves publication absence on an injected body-only client without using default HTTP', async () => {
     const fetch = vi.fn();
     vi.stubGlobal('fetch', fetch);
