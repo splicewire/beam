@@ -46,10 +46,15 @@ async function writeJson<T = unknown>(method: string, url: string, body?: unknow
  */
 export const frameTransport: FrameTransport = createResourceTransport(
     {
-        async list(resource, params): Promise<ResourcePage<Row>> {
+        async list<Result>(
+            resource: string,
+            params: Record<string, string>,
+        ): Promise<ResourcePage<Result>> {
             const query = new URLSearchParams(params).toString();
             const listUrl = `${FRAME}/resources/${resource}`;
-            const body = await fetchJson<unknown>(query ? `${listUrl}?${query}` : listUrl);
+            const body = await fetchJson<ResourcePage<Result>>(
+                query ? `${listUrl}?${query}` : listUrl,
+            );
             return parseResourcePage(body);
         },
         async get(resource, id): Promise<Row> {

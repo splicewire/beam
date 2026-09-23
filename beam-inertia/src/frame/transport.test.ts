@@ -161,3 +161,39 @@ it('rejects an incomplete list envelope instead of inventing offset metadata', a
     );
     await expect(frameTransport.list('events', {})).rejects.toThrow('pagination');
 });
+
+it('preserves declared grouped rows and the raw summary over canonical resource GETs', async () => {
+    const unit = {
+        id: 'group-1',
+        count: 35,
+        preview: [{ id: 'item-1', label: 'Awaiting' }],
+    };
+    const page = { data: [unit], perPage: 25, nextCursor: null };
+    const summary = {
+        key: 'review-units',
+        label: 'Review',
+        figures: [{ key: 'total-items', label: 'Pending', value: 35 }],
+    };
+    const fetch = vi.fn(async (input: string) =>
+        Response.json(input.includes('/summary') ? summary : page),
+    );
+    vi.stubGlobal('fetch', fetch);
+    expect(await frameTransport.list<typeof unit>('review-units', { per_page: '25' })).toEqual(
+        page,
+    );
+    expect(
+        await frameTransport.summary('review-units', {
+            'filter[source]': 'workflow',
+        }),
+    ).toEqual(summary);
+    expect(fetch).toHaveBeenNthCalledWith(
+        1,
+        '/frame/resources/review-units?per_page=25',
+        expect.objectContaining({ credentials: 'same-origin' }),
+    );
+    expect(fetch).toHaveBeenNthCalledWith(
+        2,
+        '/frame/resources/review-units/summary?filter%5Bsource%5D=workflow',
+        expect.objectContaining({ credentials: 'same-origin' }),
+    );
+});
