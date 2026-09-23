@@ -1,5 +1,5 @@
-import { Link } from '@inertiajs/react';
-import { BookOpen, FolderGit2, LayoutGrid } from 'lucide-react';
+import { Link, usePage } from '@inertiajs/react';
+import { BookOpen, FolderGit2, LayoutGrid, Settings } from 'lucide-react';
 import AppLogo from './app-logo';
 import { NavFooter } from './nav-footer';
 import { NavFrame } from './nav-frame';
@@ -42,6 +42,19 @@ function mainNavItems(realm: FrameRealmContext): NavItem[] {
     ];
 }
 
+/**
+ * The `account` realm's seats (nav.yml `realm: account` rows, shared as the `accountNav` prop) for the
+ * TENANT rail. `/dashboard` renders the packaged frame console under this layout since starter
+ * de4f17b; before that it was `account/home` inside AccountShell, the only chrome that read the prop,
+ * so Billing, API tokens and Team were left reachable only by a typed URL. The Dashboard row is
+ * dropped because the Platform group above already links it.
+ */
+function accountNavItems(accountNav: { items?: { title: string; href: string | null }[] } | undefined): NavItem[] {
+    return (accountNav?.items ?? [])
+        .filter((item): item is { title: string; href: string } => !!item.href && item.href !== '/dashboard')
+        .map((item) => ({ title: item.title, href: item.href, icon: Settings }));
+}
+
 const footerNavItems: NavItem[] = [
     {
         title: 'Repository',
@@ -59,6 +72,9 @@ export function AppSidebar({ realm }: { realm?: FrameRealmContext } = {}) {
     // Always called (hook order); an explicit `realm` from the layout wins over the page's props.
     const pageRealm = useFrameRealm();
     const railRealm = realm ?? pageRealm;
+    const accountItems = accountNavItems(
+        usePage<{ accountNav?: { items?: { title: string; href: string | null }[] } }>().props.accountNav,
+    );
 
     return (
         <Sidebar collapsible="icon" variant="inset">
@@ -97,6 +113,7 @@ export function AppSidebar({ realm }: { realm?: FrameRealmContext } = {}) {
                     <>
                         <NavMain items={mainNavItems(railRealm)} />
                         <NavFrame />
+                        {accountItems.length > 0 && <NavMain label="Account" items={accountItems} />}
                     </>
                 )}
             </SidebarContent>

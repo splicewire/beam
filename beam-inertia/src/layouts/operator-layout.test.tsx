@@ -339,3 +339,52 @@ describe('the tenant rail', () => {
         expect(screen.queryByText('Dashboard')).toBeNull();
     });
 });
+
+describe("the tenant rail's account seats", () => {
+    // Starter commit de4f17b (2026-09-14) moved `/dashboard` from `account/home` (AccountShell, which
+    // reads `accountNav`) to the packaged `frame/console` under AppLayout, which never read it. The
+    // replay of 2026-09-23 caught it: Billing, API tokens and Team were reachable only by typed URL.
+    const accountNav = {
+        items: [
+            { title: 'Dashboard', href: '/dashboard' },
+            { title: 'API tokens', href: '/account/tokens' },
+            { title: 'Team', href: '/account/team' },
+            { title: 'Billing', href: '/account/billing' },
+            { title: 'A heading with no page', href: null },
+        ],
+    };
+
+    it('renders the account realm seats beside the tenant rail, without a second Dashboard', async () => {
+        page.url = '/dashboard';
+        page.props = { ...page.props, accountNav };
+
+        mount(
+            <AppLayout>
+                <p>tenant page</p>
+            </AppLayout>,
+        );
+
+        await waitFor(() => expect(fetchMock).toHaveBeenCalled());
+        expect(screen.getByText('Account')).toBeTruthy();
+        expect(screen.getByText('Billing').closest('a')?.getAttribute('href')).toBe('/account/billing');
+        expect(screen.getByText('API tokens').closest('a')?.getAttribute('href')).toBe('/account/tokens');
+        expect(screen.getByText('Team').closest('a')?.getAttribute('href')).toBe('/account/team');
+        expect(screen.getAllByText('Dashboard')).toHaveLength(1);
+        expect(screen.queryByText('A heading with no page')).toBeNull();
+    });
+
+    it('keeps them off a realm-scoped rail, which shows only its own realm', async () => {
+        page.url = '/operator';
+        page.props = { ...page.props, accountNav };
+
+        mount(
+            <OperatorLayout>
+                <p>operator page</p>
+            </OperatorLayout>,
+        );
+
+        await waitFor(() => expect(fetchMock).toHaveBeenCalled());
+        expect(screen.queryByText('Billing')).toBeNull();
+        expect(screen.queryByText('Account')).toBeNull();
+    });
+});
