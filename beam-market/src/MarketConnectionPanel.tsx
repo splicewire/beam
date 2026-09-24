@@ -221,7 +221,7 @@ function ConnectForm() {
           value={marketUrl}
           onChange={(e) => {
             setMarketUrl(e.target.value);
-            connect.reset();
+            if (connect.isError) connect.reset();
           }}
           className="sm:flex-1"
         />
@@ -232,7 +232,7 @@ function ConnectForm() {
           value={credential}
           onChange={(e) => {
             setCredential(e.target.value);
-            connect.reset();
+            if (connect.isError) connect.reset();
           }}
           className="sm:flex-1"
         />

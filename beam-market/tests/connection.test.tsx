@@ -216,6 +216,25 @@ describe("the market connection screen", () => {
     await waitFor(() => expect(within(form).queryByRole("alert")).toBeNull());
   });
 
+  it("keeps a pending connect pending while the operator types", async () => {
+    // Clearing a shown refusal must not reset an IN-FLIGHT connect: that re-enabled the button (double
+    // submit) and dropped the per-call field clear (build.qa and review-r1 on cacbf8c).
+    let settle: (value: MarketConnection) => void = () => {};
+    const connectMarket = vi.fn(() => new Promise<MarketConnection>((resolve) => (settle = resolve)));
+    mount(client({ connectMarket: connectMarket as never }));
+
+    await userEvent.type(await screen.findByLabelText("Market URL"), "https://market.example.test");
+    await userEvent.type(screen.getByLabelText("Connection credential"), "a-real-credential");
+    await userEvent.click(screen.getByRole("button", { name: "Connect" }));
+    expect(await screen.findByRole("button", { name: "Connecting…" })).toBeTruthy();
+
+    await userEvent.type(screen.getByLabelText("Connection credential"), "x");
+    expect(screen.getByRole("button", { name: "Connecting…" })).toBeTruthy();
+
+    settle(connected);
+    await waitFor(() => expect((screen.getByLabelText("Market URL") as HTMLInputElement).value).toBe(""));
+  });
+
   it("reports a failed re-sync as an error even though the call resolved", async () => {
     // ⚠️ The server answers 200 with the connection's NEW state — the operator asked to try
     // again, the host tried, and the row is the answer. A surface that only branched on rejection
