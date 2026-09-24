@@ -119,7 +119,7 @@ export function veCss(t?: Partial<CanvasTheme>): string {
 .ve-insp-h{font-family:${c.fontMono};font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:${c.muted}}
 .ve-src{margin-top:auto;border-top:1px solid rgba(255,255,255,.08);padding:12px 16px}
 .ve-src pre{margin:6px 0 0;font-family:${c.fontMono};font-size:10px;line-height:1.5;color:${c.muted};white-space:pre-wrap;max-height:180px;overflow:auto}
-${inspectorCss}
+${inspectorCss(c)}
 `;
 }
 
@@ -133,8 +133,37 @@ ${inspectorCss}
  * (`--border`/`--foreground`/`--muted`/etc, bridged dark for the editor by the
  * consuming app's stud-tokens.css) rather than hardcoded rgba values, so they read as
  * ONE form, not a denser hand-rolled section bolted onto lighter shadcn fields.
+ *
+ * The panel palette is re-pointed HERE, inside the region, rather than left to a host bridge: a host's
+ * light theme defines `--foreground` as near-black, so without this every property name and value in the
+ * dark panel rendered dark-on-dark (ux-demo screenshot review 2026-09-24). Both the bare tokens and
+ * Tailwind's `--color-*` aliases are set, because a host's `@theme` (not `inline`) resolves the aliases at
+ * :root and a bare-token override alone never reaches the utilities.
  */
-const inspectorCss = `
+const inspectorPalette = (c: CanvasTheme): string => {
+    const tokens: Record<string, string> = {
+        background: c.panelBg,
+        foreground: c.panelFg,
+        card: c.panelBg,
+        'card-foreground': c.panelFg,
+        muted: 'rgba(255,255,255,.06)',
+        'muted-foreground': c.muted,
+        accent: 'rgba(255,255,255,.08)',
+        'accent-foreground': c.panelFg,
+        secondary: 'rgba(255,255,255,.08)',
+        'secondary-foreground': c.panelFg,
+        border: 'rgba(255,255,255,.14)',
+        input: 'rgba(255,255,255,.18)',
+        ring: c.accent,
+    };
+    const vars = Object.entries(tokens)
+        .map(([name, value]) => `--${name}:${value};--color-${name}:${value}`)
+        .join(';');
+    return `[data-frame-region="inspector"]{${vars};color:${c.panelFg}}`;
+};
+
+const inspectorCss = (c: CanvasTheme): string => `
+${inspectorPalette(c)}
 [data-frame-region="inspector"]{padding:16px}
 [data-frame-region="inspector"][data-frame-inspector-empty]{padding:0}
 .ve-chips{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
@@ -184,6 +213,6 @@ export function peCss(t?: Partial<CanvasTheme>): string {
 .pe-version-tag.head{border-color:${c.editAccent};color:${c.editAccent}}
 .pe-confirm{display:flex;flex-direction:column;gap:8px;padding:10px;border:1px solid ${c.editAccent};border-radius:10px;font-family:${c.fontMono};font-size:11px;color:${c.panelFg}}
 .pe-confirm-actions{display:flex;gap:8px}
-${inspectorCss}
+${inspectorCss(c)}
 `;
 }
