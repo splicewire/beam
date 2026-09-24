@@ -17,8 +17,8 @@ import { resolveBeamPage } from '../pages';
 //      it), so `usePage()`, `router.post('/logout')` and the `router.on('before', …)` GET-cancel are
 //      supplied from here.
 //   3. THE PAGE-PROPERTIES BODY. `./page-properties.tsx` is genuinely divergent across hosts (this
-//      one is presentational; audiostud's is a live form against `/beam/ux/meta`), so it stays local
-//      behind `renderPageProperties`.
+//      one is Frame's form on the `beam-ux-entry` ParticleResource; audiostud's is a live form against
+//      its bespoke `/beam/ux/meta`), so it stays local behind `renderPageProperties`.
 //   4. THE BRAND. A package ships no wordmark — `BeamMark` and the "beam" label are ours.
 import { router, usePage } from '@inertiajs/react';
 import { OperatorDesk as Desk } from '@splicewire/beam-ux/desk';
@@ -87,7 +87,16 @@ function BeamMark({ className }: { className?: string }) {
 }
 
 export default function OperatorDesk() {
-    const component = usePage().component;
+    const page = usePage<{ entry?: { id?: string; slug?: string } | null }>();
+    const component = page.component;
+    // The entry the page under the desk renders — shared as `props.entry` by `PageEntryRef` (a
+    // hand-written page) and `PublicEntryController` (a rendered entry) alike. A properties window is
+    // keyed by SLUG; it gets this id only while the page beneath it is that slug's page.
+    const pageEntry = page.props.entry ?? null;
+    const entryIdFor = (slug: string): string | null =>
+        pageEntry?.slug === slug && typeof pageEntry.id === 'string' && pageEntry.id !== ''
+            ? pageEntry.id
+            : null;
 
     return (
         <Desk
@@ -104,6 +113,9 @@ export default function OperatorDesk() {
                 control: { href: '/operator' },
                 signOut: () => router.post('/logout'),
             }}
+            // Sized for the entry FORM it now carries (./entry-properties-form.tsx), not the two-line
+            // stub the desk's 380x220 default was chosen for.
+            pageWindow={{ size: { width: 520, height: 640 } }}
             // "Edit this page" opens the PAGE PROPERTIES float for the current slug (keyed
             // `page:{slug}` by the desk) — its own dock item, same as every other tool window.
             // `close()` MINIMIZES it, which is the handoff into the in-place editor: you leave the
@@ -111,6 +123,7 @@ export default function OperatorDesk() {
             renderPageProperties={({ slug, editable, editing, close }) => (
                 <PageProperties
                     slug={slug}
+                    entryId={entryIdFor(slug)}
                     editable={editable}
                     editing={editing}
                     onEditContent={() => {
