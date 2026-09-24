@@ -15,6 +15,21 @@
 @source '../node_modules/@schemastud/*/src';
 
 /*
+ * …and the RJSF shadcn theme `SchemaForm` renders through, whose classes live in neither. Without it
+ * a class only that theme uses was never generated: the checked checkbox's
+ * `dark:data-[state=checked]:bg-primary` was missing, so in dark the theme's `dark:bg-input/30` won
+ * and a checked box drew as an empty outline. Hosts get the same from `familySources()` in
+ * `@schemastud/seam/vite`. Two copies: seam's own (linked source resolves from its real path in the
+ * sibling schemastud workspace) and beam's (beam-mdx imports the theme directly).
+ */
+@source '../../schemastud/node_modules/@rjsf/shadcn/lib';
+@source not '../../schemastud/node_modules/@rjsf/shadcn/lib/**/*.d.ts';
+@source not '../../schemastud/node_modules/@rjsf/shadcn/lib/**/*.map';
+@source '../node_modules/@rjsf/shadcn/lib';
+@source not '../node_modules/@rjsf/shadcn/lib/**/*.d.ts';
+@source not '../node_modules/@rjsf/shadcn/lib/**/*.map';
+
+/*
  * `dark:` follows the `.dark` class the colorScheme toolbar / VR runner set on the preview root,
  * exactly as every host declares it (splicewire-app ui/src/index.css, laravel-beam-starter app.css).
  * Without it Tailwind v4's default `dark:` is the OS `prefers-color-scheme` media query, so a
@@ -299,8 +314,10 @@
 
 [data-canvas='dotted'] {
     /* The dot grid is a treatment, not a color literal — its dot tone rides a token
-       (`--canvas-dot`) so it re-skins with the tier and re-treats under `.dark`. */
-    --canvas-dot: var(--border);
+       (`--canvas-dot`) so it re-skins with the tier and re-treats under `.dark`. `--border` was
+       nearly the paper tone in light, so the light grid painted no visible dots; the ink ramp
+       step reads on both schemes (it flips with the `.dark` tier). */
+    --canvas-dot: var(--beam-ink-15);
     --canvas-bg: radial-gradient(var(--canvas-dot) 1px, transparent 1px);
 }
 
