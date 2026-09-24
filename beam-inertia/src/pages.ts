@@ -17,6 +17,10 @@ const defaults: Record<string, PageLoader> = {
     'frame/console': () => import('./pages/frame/console') as unknown as Promise<PageModule>,
     'site/home': () => import('./pages/site/home') as unknown as Promise<PageModule>,
     'account/home': () => import('./pages/account/home') as unknown as Promise<PageModule>,
+    // Getting onto a team (splicewire/laravel-beam-accounts `routes/teams.php`): `teams.create` renders
+    // the first, the emailed `invitations.accept` link the second. Bodies are @splicewire/beam-accounts'.
+    'account/create-team': () => import('./pages/account/create-team') as unknown as Promise<PageModule>,
+    'auth/accept-invitation': () => import('./pages/auth/accept-invitation') as unknown as Promise<PageModule>,
     'operator/dashboard': () => import('./pages/operator/dashboard') as unknown as Promise<PageModule>,
     'operator/platform-connection': () => import('./pages/operator/platform-connection') as unknown as Promise<PageModule>,
 };

@@ -15,6 +15,12 @@ describe('package default page resolution', () => {
         expect(local).toHaveBeenCalledOnce();
         expect(packaged).not.toBe(Override);
     });
+    it.each(['account/create-team', 'auth/accept-invitation'])(
+        'ships the team-onboarding page %s that beam-accounts renders',
+        async (page) => {
+            expect(typeof (await resolveBeamPage(page))).toBe('function');
+        },
+    );
     it('reports an unknown page instead of producing a blank surface', async () => {
         await expect(resolveBeamPage('missing/page')).rejects.toThrow('Page not found: missing/page');
     });

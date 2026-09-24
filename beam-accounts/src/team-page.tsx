@@ -3,6 +3,7 @@ import {
   Check,
   Info,
   Mail,
+  Plus,
   RotateCcw,
   ShieldAlert,
   UserMinus,
@@ -13,6 +14,7 @@ import { useMemo, useState } from "react";
 import {
   Badge,
   Button,
+  buttonVariants,
   Input,
   Label,
   Dialog,
@@ -56,13 +58,28 @@ function apiErrorMessage(error: unknown, fallback: string): string {
 const FACETS = ["All", "Members", "Pending"] as const;
 type Facet = (typeof FACETS)[number];
 
-export function TeamPage({ currentUserId }: { currentUserId: string | null }) {
-  return <TeamInner currentUserId={currentUserId} />;
+export function TeamPage({
+  currentUserId,
+  createTeamHref,
+}: {
+  currentUserId: string | null;
+  /** The host's `teams.create` page. Given ⇒ a "New team" link beside the invite control. */
+  createTeamHref?: string | null;
+}) {
+  return (
+    <TeamInner currentUserId={currentUserId} createTeamHref={createTeamHref} />
+  );
 }
 
 type ConfirmIntent = { kind: "remove" | "revoke" | "transfer"; row: RosterRow };
 
-function TeamInner({ currentUserId }: { currentUserId: string | null }) {
+function TeamInner({
+  currentUserId,
+  createTeamHref,
+}: {
+  currentUserId: string | null;
+  createTeamHref?: string | null;
+}) {
   // Generated SDK reads (client-sdk-codegen 05). The role vocabulary is server-derived from the
   // beam-accounts Role enum and never changes within a session, so `staleTime: Infinity` rides the
   // generated hook's options passthrough exactly as the hand-written hook set it.
@@ -311,11 +328,21 @@ function TeamInner({ currentUserId }: { currentUserId: string | null }) {
             People and pending invitations for this workspace.
           </p>
         </div>
-        {canInvite && (
-          <Button onClick={() => setInviting(true)}>
-            <UserPlus className="size-4" /> Invite member
-          </Button>
-        )}
+        <div className="flex flex-wrap items-center gap-2">
+          {createTeamHref ? (
+            <a
+              href={createTeamHref}
+              className={buttonVariants({ variant: "outline" })}
+            >
+              <Plus className="size-4" /> New team
+            </a>
+          ) : null}
+          {canInvite && (
+            <Button onClick={() => setInviting(true)}>
+              <UserPlus className="size-4" /> Invite member
+            </Button>
+          )}
+        </div>
       </div>
 
       <div className="flex flex-wrap items-center justify-between gap-3">

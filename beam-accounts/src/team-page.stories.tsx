@@ -86,3 +86,17 @@ export const InviteCancel: Story = {
     await expect(dialog.getByRole("button", { name: "Revoke invitation" })).toBeInTheDocument();
   },
 };
+
+/** Owner with the host's "New team" door (`createTeamHref`), as the beam starters mount it. */
+export const WithCreateTeam: Story = {
+  args: { createTeamHref: "/teams/create" },
+  render: (args) => (
+    <MockTeamProvider client={makeTeamClient(TEAM_MEMBERS, [])}>
+      <TeamPage {...args} />
+    </MockTeamProvider>
+  ),
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await expect(await canvas.findByRole("link", { name: /new team/i })).toHaveAttribute("href", "/teams/create");
+  },
+};

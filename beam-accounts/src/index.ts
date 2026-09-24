@@ -84,3 +84,11 @@ export {
   type RosterKind,
   type RosterStatus,
 } from "./team-roster";
+
+// ── Getting onto a team (team onboarding) ───────────────────────────────────
+export { CreateTeamForm, type CreateTeamFormProps } from "./create-team-form";
+export {
+  AcceptInvitationPanel,
+  type AcceptInvitationPanelProps,
+  type InvitationState,
+} from "./accept-invitation-panel";
