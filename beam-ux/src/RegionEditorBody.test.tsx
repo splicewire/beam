@@ -48,6 +48,12 @@ describe('the richtext editor is bound to the body', () => {
         expect(screen.queryByText(/Build things that ship/)).toBeNull();
     });
 
+    it('an empty body shows an empty value with a writing prompt, not a blank box', () => {
+        mount('richtext', {});
+        expect(source().value).toBe('');
+        expect(source().placeholder).toMatch(/no content yet/);
+    });
+
     it('edits `content` and spreads every other key through untouched', async () => {
         const { onChange } = mount('richtext', MDX_BODY);
         await userEvent.type(source(), '!');

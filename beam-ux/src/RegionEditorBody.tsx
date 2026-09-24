@@ -174,6 +174,7 @@ function RichtextEditor({
                 rows={18}
                 spellCheck={false}
                 aria-label="MDX source"
+                placeholder={'# Heading\n\nThis region has no content yet. Write MDX here, then Save.'}
                 className="font-mono text-xs"
             />
             <div className="flex flex-wrap items-center gap-1.5 rounded-md border border-dashed px-3 py-2 text-xs text-muted-foreground">
@@ -215,11 +216,11 @@ function FrameEditor() {
                     </div>
                 ))}
             </div>
-            {/* the "opaque island" scrim — you cannot reach into its buffer */}
-            <div className="beam-ux-scrim pointer-events-none absolute inset-0 flex items-end justify-center p-2">
-                <span className="rounded bg-foreground/80 px-2 py-1 font-mono text-[10px] text-background">
-                    opaque EditShell island &middot; self-loads/saves via FrameProvider
-                </span>
+            {/* the "opaque island" scrim — you cannot reach into its buffer. It fades the rows only;
+                the caption sits in flow beneath them so it never covers a row. */}
+            <div className="beam-ux-scrim pointer-events-none absolute inset-0" />
+            <div className="relative border-t bg-muted/40 px-3 py-1.5 text-center font-mono text-[10px] text-muted-foreground">
+                opaque EditShell island &middot; self-loads/saves via FrameProvider
             </div>
         </div>
     );
