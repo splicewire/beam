@@ -8,7 +8,7 @@ import {
     SidebarMenuItem,
 } from './ui/sidebar';
 import { frameIcon } from '../frame/icons';
-import { useFrameManifest } from '../frame/manifest';
+import { useFrameManifest, type FrameNavNode } from '../frame/manifest';
 import { useCurrentUrl } from '../hooks/use-current-url';
 
 /**
@@ -24,6 +24,15 @@ import { useCurrentUrl } from '../hooks/use-current-url';
  * Each `href` comes from the SAME derivation as the route it points at
  * (`RouteContextProjector::hrefs()`), so a nav row and its destination cannot drift apart.
  */
+/**
+ * A childless linked node — the realm's `{realm}-dashboard` leaf, which the server emits top-level with no
+ * children (laravel-beam-ux `NavSectionProjector::dashboardLeaf`). It is drawn as its own single menu row:
+ * drawn as a group, it was an empty "Dashboard" heading over an empty menu.
+ */
+function isLeaf(node: FrameNavNode): boolean {
+    return node.children.length === 0 && node.href !== null;
+}
+
 export function NavFrame({ fallback = null }: { fallback?: ReactNode } = {}) {
     const { data: manifest } = useFrameManifest();
     const { isCurrentUrl } = useCurrentUrl();
@@ -40,15 +49,17 @@ export function NavFrame({ fallback = null }: { fallback?: ReactNode } = {}) {
                     key={section.routeName ?? section.title}
                     className="px-2 py-0"
                 >
-                    <SidebarGroupLabel>
-                        {section.href ? (
-                            <Link href={section.href}>{section.title}</Link>
-                        ) : (
-                            section.title
-                        )}
-                    </SidebarGroupLabel>
+                    {!isLeaf(section) && (
+                        <SidebarGroupLabel>
+                            {section.href ? (
+                                <Link href={section.href}>{section.title}</Link>
+                            ) : (
+                                section.title
+                            )}
+                        </SidebarGroupLabel>
+                    )}
                     <SidebarMenu>
-                        {section.children.map((item) =>
+                        {(isLeaf(section) ? [section] : section.children).map((item) =>
                             item.href ? (
                                 <SidebarMenuItem
                                     key={item.routeName ?? item.href}
