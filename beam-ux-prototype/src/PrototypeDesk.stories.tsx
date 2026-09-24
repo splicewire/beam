@@ -111,6 +111,8 @@ export const NoBrand: Story = {
     args: {
         nav: SAMPLE_NAV,
         active: 'circuits',
+        // The desk still has its section bar: only the rail's brand slot is absent.
+        breadcrumb: <Crumb trail={['Circuits', 'Overview']} />,
         canvas: 'dotted',
         children: <SampleMain heading="No host brand" />,
     },

@@ -137,15 +137,26 @@ export function PrototypeDesk({
             <Rail groups={nav} active={active} BrandComponent={BrandComponent} cn={cn} />
 
             <div className="flex min-w-0 flex-1 flex-col">
-                {/* white hairline top bar */}
-                <div className="flex flex-none items-center gap-3 border-b border-border bg-card px-6 py-2">
+                {/* white hairline top bar — a fixed-height chrome row (`min-h-12`, the height it has
+                    with its `h-8` actions), so a desk with no breadcrumb or actions keeps a real bar
+                    instead of collapsing to its 16px of padding. */}
+                <div
+                    data-testid="desk-topbar"
+                    className="flex min-h-12 flex-none items-center gap-3 border-b border-border bg-card px-6 py-2"
+                >
                     <div className="min-w-0 flex-1 text-sm">{breadcrumb}</div>
                     <div className="flex items-center gap-2">{actions}</div>
                 </div>
 
+                {/* The canvas rides the structural cascade: `data-canvas` selects the treatment and
+                    `canvas-surface` paints `--canvas-bg` off it, so a deployment root re-treats it and
+                    the dot tone follows the tier (`--canvas-dot`). `dotted-bg` stays for hosts that
+                    only define the older utility (the documented token contract, README); where both
+                    exist they paint the same grid. */}
                 <main
+                    data-canvas={canvas}
                     className={cn(
-                        'flex-1 overflow-y-auto px-6 py-6',
+                        'canvas-surface flex-1 overflow-y-auto px-6 py-6',
                         canvas === 'flat' ? 'bg-background' : 'dotted-bg',
                     )}
                 >

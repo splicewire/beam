@@ -58,9 +58,15 @@ export function Gallery({ glob, namespace = NAMESPACE_DEFAULT, cn = defaultCn }:
 
     return (
         <div className="min-h-screen bg-background">
-            <header className="border-b border-border px-8 py-6">
-                <div className="mx-auto flex max-w-5xl flex-wrap items-end justify-between gap-4">
-                    <div>
+            {/* The header's inset lives INSIDE the max-width box, as `main`'s does: with `px-8` on the
+                full-width header instead, the title sat 32px left of the group sections below. */}
+            <header className="border-b border-border py-6">
+                <div
+                    data-testid="gallery-header"
+                    className="mx-auto flex max-w-5xl flex-wrap items-end justify-between gap-4 px-8"
+                >
+                    {/* `min-w-0 flex-1`: the copy yields width so the Filter keeps its seat at the right. */}
+                    <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-3">
                             <h1 className="text-2xl font-semibold tracking-tight">Prototype gallery</h1>
                             <Badge variant="outline" className="font-mono text-[10px] uppercase">
@@ -94,7 +100,7 @@ export function Gallery({ glob, namespace = NAMESPACE_DEFAULT, cn = defaultCn }:
                 </div>
             </header>
 
-            <main className="mx-auto max-w-5xl space-y-10 px-8 py-8">
+            <main data-testid="gallery-main" className="mx-auto max-w-5xl space-y-10 px-8 py-8">
                 {shownDirs.map((dir) => {
                     const rows = entries.filter((e) => e.dir === dir);
                     if (!rows.length) return null;
