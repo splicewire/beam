@@ -15,6 +15,14 @@
 @source '../node_modules/@schemastud/*/src';
 
 /*
+ * `dark:` follows the `.dark` class the colorScheme toolbar / VR runner set on the preview root,
+ * exactly as every host declares it (splicewire-app ui/src/index.css, laravel-beam-starter app.css).
+ * Without it Tailwind v4's default `dark:` is the OS `prefers-color-scheme` media query, so a
+ * component's own `dark:` classes (delete-user's warning card, for one) never fired in a dark story.
+ */
+@custom-variant dark (&:is(.dark *));
+
+/*
  * ─────────────────────────────────────────────────────────────────────────────
  * Workbench token layer (seeded, self-contained).
  *
@@ -173,10 +181,16 @@
     --input: oklch(0.33 0.02 165);
     --ring: oklch(0.75 0.18 155);
 
-    /* Signal + status — brightened so they read against the dark canvas. */
+    /* Native controls (checkbox, date picker, scrollbars) take the dark UA palette. */
+    color-scheme: dark;
+
+    /* Signal + status — brightened so they read against the dark canvas.
+     * `--warning-foreground` is WARNING TEXT in this family (light: `--beam-warn-deep`, amber ink on
+     * a `bg-warning/10` tint or the page) — no surface pairs it with a solid `bg-warning`. A dark ink
+     * here left every tinted warning (privacy callout, Pending badge, Needs-a-card) dark-on-dark. */
     --signal: oklch(0.78 0.17 155);
     --warning: oklch(0.78 0.14 75);
-    --warning-foreground: oklch(0.22 0.04 75);
+    --warning-foreground: oklch(0.82 0.13 78);
     --info: oklch(0.68 0.13 245);
 
     /* The rail — a distinct deep tone below the raised surfaces. */
@@ -188,6 +202,55 @@
     --sidebar-accent: oklch(0.78 0.17 155 / 0.16);
     --sidebar-border: oklch(0.78 0.17 155 / 0.22);
     --sidebar-avatar: oklch(0.28 0.03 160);
+
+    /*
+     * Brand primitives (--beam-*) — the dark half of beam's tier. Components that read the raw
+     * tier keys (beam-workflows / beam-content / beam-calendar chrome, the beam-mdx kit sheet)
+     * never see the semantic overrides above, so each key flips here too: surfaces take the
+     * card/muted tones, ink becomes the dark foreground, and the ink ramp keeps the light ramp's
+     * alphas over that foreground. `--beam-surface` aliases `--beam-paper-raised` on `:root`,
+     * so it follows. Same palette the flagship's `--splice-*` dark overrides use.
+     */
+    --beam-paper: oklch(0.2 0.02 165);
+    --beam-paper-raised: oklch(0.24 0.022 165);
+    --beam-muted: oklch(0.28 0.02 165);
+    --beam-ink: oklch(0.93 0.015 160);
+    --beam-ink-muted: oklch(0.93 0.015 160 / 0.6);
+    --beam-ink-18: oklch(0.93 0.015 160 / 0.18);
+    --beam-line: oklch(0.32 0.02 165);
+    --beam-green: oklch(0.78 0.17 155);
+    --beam-green-deep: oklch(0.82 0.15 155);
+    --beam-green-tint: oklch(0.78 0.17 155 / 0.16);
+    --beam-signal: oklch(0.78 0.17 155);
+    --beam-signal-13: oklch(0.78 0.17 155 / 0.16);
+    --beam-signal-18: oklch(0.78 0.17 155 / 0.22);
+    --beam-warn: oklch(0.8 0.14 75);
+    --beam-warn-deep: oklch(0.82 0.13 78);
+    --beam-info: oklch(0.72 0.13 245);
+    --beam-danger: oklch(0.72 0.18 25);
+    --beam-amber: oklch(0.8 0.14 75);
+    --beam-warn-tint: oklch(0.8 0.14 75 / 0.16);
+    --beam-info-tint: oklch(0.72 0.13 245 / 0.16);
+    --beam-danger-tint: oklch(0.72 0.18 25 / 0.16);
+
+    --beam-ink-03: oklch(0.93 0.015 160 / 0.03);
+    --beam-ink-04: oklch(0.93 0.015 160 / 0.04);
+    --beam-ink-05: oklch(0.93 0.015 160 / 0.05);
+    --beam-ink-08: oklch(0.93 0.015 160 / 0.08);
+    --beam-ink-10: oklch(0.93 0.015 160 / 0.1);
+    --beam-ink-12: oklch(0.93 0.015 160 / 0.12);
+    --beam-ink-15: oklch(0.93 0.015 160 / 0.15);
+    --beam-ink-20: oklch(0.93 0.015 160 / 0.2);
+    --beam-ink-22: oklch(0.93 0.015 160 / 0.22);
+    --beam-ink-30: oklch(0.93 0.015 160 / 0.3);
+    --beam-ink-35: oklch(0.93 0.015 160 / 0.35);
+    --beam-ink-40: oklch(0.93 0.015 160 / 0.4);
+    --beam-ink-45: oklch(0.93 0.015 160 / 0.45);
+    --beam-ink-50: oklch(0.93 0.015 160 / 0.5);
+    --beam-ink-55: oklch(0.93 0.015 160 / 0.55);
+    --beam-ink-60: oklch(0.93 0.015 160 / 0.6);
+    --beam-ink-70: oklch(0.93 0.015 160 / 0.7);
+    --beam-ink-80: oklch(0.93 0.015 160 / 0.8);
 }
 
 /*
@@ -263,6 +326,28 @@
     background-size: 16px 16px;
 }
 
+/*
+ * xyflow canvas (beam-workflows WorkflowGraph / WorkflowMigrate) — its own `--xy-*` defaults are a
+ * fixed light palette, so the zoom controls and edge labels stayed white/black under `.dark`. Mapped
+ * onto the semantic set as the flagship does (splicewire-app ui/src/index.css, UI-16) — but through
+ * the un-suffixed override keys: xyflow's sheet loads after this one and re-declares every `-default`
+ * key on `.react-flow` at equal specificity, and the flagship drives `colorMode` where this seed can't.
+ */
+.react-flow {
+    --xy-background-color: var(--card);
+    --xy-background-pattern-dots-color: var(--beam-ink-18);
+    --xy-edge-stroke: var(--muted-foreground);
+    --xy-edge-stroke-selected: var(--primary);
+    --xy-edge-label-color: var(--foreground);
+    --xy-connectionline-stroke: var(--primary);
+    --xy-controls-button-background-color: var(--card);
+    --xy-controls-button-background-color-hover: var(--accent);
+    --xy-controls-button-color: var(--foreground);
+    --xy-controls-button-color-hover: var(--accent-foreground);
+    --xy-controls-button-border-color: var(--border);
+    --xy-attribution-background-color: transparent;
+}
+
 /* Semantic → Tailwind color/token bridge (the neutral interface Tailwind consumes) */
 @theme inline {
     --color-background: var(--background);
@@ -305,6 +390,12 @@
 }
 
 @layer base {
+    /* Tailwind v4 dropped v3's default border colour: a bare `border` paints in currentColor, which
+       is full-strength ink (the harsh outlines on versions-list and the dialogs). Every host sets
+       this base rule (`* { @apply border-border }`); the workbench now does too. */
+    * {
+        border-color: var(--border);
+    }
     body {
         background: var(--background);
         color: var(--foreground);
