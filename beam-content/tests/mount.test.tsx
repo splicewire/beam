@@ -48,6 +48,12 @@ describe('ContentOutlineNodeView', () => {
         expect((screen.getByLabelText('Section heading 2') as HTMLInputElement).value).toBe('Two');
     });
 
+    it('prompts for sections when the outline plans none', () => {
+        render(<ContentOutlineNodeView {...makeNodeProps({ title: '', excerpt: '', sectionHeadings: [] })} />);
+        expect(screen.getByText(/No sections planned yet/)).toBeDefined();
+        expect(screen.getByRole('button', { name: 'Add section' })).toBeDefined();
+    });
+
     it('adds and removes section headings through updateAttrs', () => {
         const updateAttrs = vi.fn();
         render(

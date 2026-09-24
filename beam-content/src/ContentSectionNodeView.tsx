@@ -36,7 +36,9 @@ export function ContentSectionNodeView({
     return (
         <div className="blockdoc-content-section rounded-lg border border-[var(--beam-ink-10)] bg-background">
             {/* Chrome — non-editable so PM leaves these inputs alone. */}
-            <div contentEditable={false}>
+            {/* Without child prose (a leaf mount) the chrome is the whole card, so it carries the
+                bottom inset itself; with prose, the contentRef below supplies it. */}
+            <div contentEditable={false} className={contentRef === null ? 'pb-2.5' : undefined}>
                     <div className="flex items-center gap-2 px-3.5 pt-2.5">
                         <span className="font-mono text-[9px] font-medium tracking-[0.14em] text-[var(--beam-ink-40)] uppercase">
                             Section

@@ -44,6 +44,11 @@ export function ContentOutlineNodeView({ node, updateAttrs }: NodeViewComponentP
             />
 
             <ol className="space-y-1 px-3.5 pb-3">
+                {headings.length === 0 && (
+                    <li className="ml-7 text-[12px] text-[var(--beam-ink-45)]">
+                        No sections planned yet. Add the headings this article will expand into.
+                    </li>
+                )}
                 {headings.map((heading, index) => (
                     <li key={index} className="flex items-center gap-2">
                         <span className="w-5 shrink-0 text-right font-mono text-[11px] text-[var(--beam-ink-35)]">
