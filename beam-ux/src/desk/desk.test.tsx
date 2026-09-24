@@ -267,3 +267,27 @@ describe('OperatorDesk — the router seam', () => {
         expect(screen.getAllByText('Overridden').length).toBe(2);
     });
 });
+
+describe('OperatorDesk — the orb yields to a modal', () => {
+    // The orb sits at z-index 2000 in the desk overlay, above any app Sheet or Dialog (z-50), so it covered a
+    // sheet's bottom-right controls (e.g. the commerce "Add credits" sheet). Radix's scroll lock marks <body>
+    // with `data-scroll-locked` exactly while such a modal is open (launch ticket 00, overnight-ui2 06).
+    it('hides the orb while a modal holds the scroll lock, and only then', () => {
+        const style = document.createElement('style');
+        style.textContent = OPERATOR_DESK_CSS;
+        document.head.appendChild(style);
+        const orb = document.createElement('button');
+        orb.className = 'op-orb';
+        document.body.appendChild(orb);
+
+        try {
+            expect(getComputedStyle(orb).visibility).not.toBe('hidden');
+            document.body.setAttribute('data-scroll-locked', '1');
+            expect(getComputedStyle(orb).visibility).toBe('hidden');
+        } finally {
+            document.body.removeAttribute('data-scroll-locked');
+            orb.remove();
+            style.remove();
+        }
+    });
+});

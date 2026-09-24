@@ -61,6 +61,7 @@ export const OPERATOR_DESK_CSS = `
 .op-orb:hover{border-color:var(--op-edge, var(--beam-line, #1b2e2a))}
 .op-orb.is-open{border-color:var(--op-accent, var(--beam-accent, #00b3c8));background:var(--op-edge, var(--beam-line, #1b2e2a))}
 .op-orb .mark{width:16px;height:16px;flex:none;color:var(--op-fg, var(--beam-ink, #dcede8))}
+body[data-scroll-locked] .op-orb{visibility:hidden}
 .op-scrim{position:absolute;inset:0;background:transparent}
 .op-menu{position:absolute;right:16px;bottom:66px;width:240px;padding:7px;border-radius:14px;border:1px solid rgba(255,255,255,.1);background:color-mix(in srgb, var(--op-surface-raised, var(--beam-paper-raised, #0e1b18)) 97%, transparent);backdrop-filter:blur(16px);box-shadow:0 26px 70px -18px rgba(0,0,0,.65);display:flex;flex-direction:column;gap:2px}
 .op-menu-brand{display:flex;align-items:center;gap:8px;padding:9px 10px 11px;margin-bottom:3px;border-bottom:1px solid rgba(255,255,255,.08);color:var(--op-fg, var(--beam-ink, #dcede8));font-family:var(--op-font-mono, ui-monospace, monospace);font-size:13px;font-weight:600;letter-spacing:.02em}
