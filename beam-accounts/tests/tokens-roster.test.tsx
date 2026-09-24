@@ -84,3 +84,12 @@ it("reveals a rotated secret through the injected client", async () => {
   expect(await screen.findByText("fixture-rotated-secret")).toBeTruthy();
   expect(client.rotate).toHaveBeenCalledWith({ id: SAMPLE_TOKENS[0].id });
 });
+it("caps the Name column so a long session name truncates instead of pushing every other column out of view", async () => {
+  // A browser session's name is its whole user-agent string. With only `truncate` and no width cap, the
+  // auto-layout table grew the Name column to the full string and scrolled every other column away
+  // (launch ticket 00, overnight-ui2 06).
+  mount({ client: makeTokensClient(), notify: vi.fn() });
+  const name = await screen.findByText("CI deploys");
+  expect(name.className).toContain("truncate");
+  expect(name.closest("div.space-y-0\\.5")?.className).toMatch(/\bmax-w-\[/);
+});

@@ -555,7 +555,9 @@ function buildColumns(
       cell: ({ row }) => {
         const t = row.original;
         return (
-          <div className="min-w-0 space-y-0.5">
+          // Capped so a long name (a browser session's whole user-agent string) truncates: the table is
+          // auto-layout, so an uncapped cell grew to the full string and pushed every other column away.
+          <div className="min-w-0 max-w-[24rem] space-y-0.5">
             <div className="flex items-center gap-2">
               <span className="truncate text-[13px] font-medium" title={t.name}>
                 {t.name}
