@@ -112,7 +112,8 @@ export function AppSidebar({ realm }: { realm?: FrameRealmContext } = {}) {
                 ) : (
                     <>
                         <NavMain items={mainNavItems(railRealm)} />
-                        <NavFrame />
+                        {/* NavMain already links /dashboard, the tenant realm's dashboard leaf. */}
+                        <NavFrame omitHrefs={['/dashboard']} />
                         {accountItems.length > 0 && <NavMain label="Account" items={accountItems} />}
                     </>
                 )}

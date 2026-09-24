@@ -75,3 +75,17 @@ it("draws a childless linked node as a menu row, not an empty group heading", ()
     screen.getByText("Platform").closest('[data-slot="group-label"]')
   ).not.toBeNull();
 });
+
+it('skips a leaf whose href the rail already links (the tenant rail Platform → Dashboard)', () => {
+    // The tenant rail renders NavMain's "Platform → Dashboard" (/dashboard) above NavFrame, and the tenant
+    // realm's dashboard leaf is also /dashboard, so drawing the leaf would add a second "Dashboard" row.
+    nav.items = [
+        node({ title: 'Platform', children: [node({ title: 'Entries', href: '/entries' })] }),
+        node({ title: 'Dashboard', href: '/dashboard', routeName: 'tenant-dashboard.index' }),
+    ];
+
+    render(<NavFrame omitHrefs={['/dashboard']} />);
+
+    expect(screen.queryByRole('link', { name: 'Dashboard' })).toBeNull();
+    expect(screen.getByRole('link', { name: 'Entries' })).toBeTruthy();
+});

@@ -33,10 +33,19 @@ function isLeaf(node: FrameNavNode): boolean {
     return node.children.length === 0 && node.href !== null;
 }
 
-export function NavFrame({ fallback = null }: { fallback?: ReactNode } = {}) {
+export function NavFrame({
+    fallback = null,
+    omitHrefs = [],
+}: {
+    fallback?: ReactNode;
+    /** Hrefs the surrounding rail already links: a leaf pointing at one is skipped, not drawn twice. */
+    omitHrefs?: string[];
+} = {}) {
     const { data: manifest } = useFrameManifest();
     const { isCurrentUrl } = useCurrentUrl();
-    const sections = manifest?.nav.items ?? [];
+    const sections = (manifest?.nav.items ?? []).filter(
+        (section) => !(isLeaf(section) && section.href !== null && omitHrefs.includes(section.href)),
+    );
 
     if (sections.length === 0) {
         return <>{fallback}</>;
