@@ -345,4 +345,36 @@ describe('the {realm}-dashboard leaf through the manifest router', () => {
         expect(anchors.every((a) => a.hasAttribute('data-inertia-link'))).toBe(true);
         expect(navTile(container)?.hasAttribute('data-inertia-link')).toBe(true);
     });
+
+    /**
+     * ux-demo-convergence replay 9: a freshly registered, teamless user's dashboard had no card and no
+     * tile, and the leaf showed frame's bare "No records.". The backing now answers ONE `welcome` row
+     * there (laravel-beam-ux `DashboardWelcome`); this is that row through the real provider and router.
+     */
+    it('a welcome row draws the first-run panel in place of "No records.", its steps through Inertia', async () => {
+        const welcome: DashboardRow = {
+            resource: null,
+            context: 'welcome',
+            label: 'Welcome, Probe User',
+            href: '',
+            summary: null,
+            welcome: {
+                state: 'first-run',
+                heading: 'Welcome, Probe User',
+                body: "You aren't on a team yet, so there's nothing to show here.",
+                actions: [{ key: 'settings', label: 'Account settings', href: '/settings/profile' }],
+                hint: null,
+            },
+        };
+        const { container } = mountLeaf([welcome]);
+
+        await waitFor(() => expect(cells(container)).toHaveLength(1));
+        expect(screen.getByRole('heading', { name: 'Welcome, Probe User' })).toBeTruthy();
+        expect(screen.getByText("You aren't on a team yet, so there's nothing to show here.")).toBeTruthy();
+        expect(screen.queryByText('No records.')).toBeNull();
+
+        const settings = screen.getByRole('link', { name: 'Account settings' });
+        expect(settings.getAttribute('href')).toBe('/settings/profile');
+        expect(settings.hasAttribute('data-inertia-link')).toBe(true);
+    });
 });
