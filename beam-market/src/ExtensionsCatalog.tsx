@@ -147,10 +147,36 @@ export function ExtensionsCatalog({
   onSelect: (id: number) => void;
 }) {
   const [filters, setFilters] = useState<CatalogFilters>({});
-  const { data, isPending, isError } = useExtensionsCatalog(filters);
+  const { data, isPending, isError, isFetching, refetch } = useExtensionsCatalog(filters);
   const { data: connectionStatus } = useConnectionStatus();
 
-  if (isError) return <p role="alert">Could not load extensions. Try again.</p>;
+  // The failure state names the recovery on the surface: the reason, and a Retry that re-runs the
+  // same query. Plain "Try again." copy with nothing to press left the reader nowhere to go.
+  if (isError) {
+    return (
+      <div
+        role="alert"
+        className="flex flex-col items-start gap-3 rounded-md border border-dashed p-6"
+      >
+        <div className="flex flex-col gap-1">
+          <p className="text-sm font-medium">Could not load extensions.</p>
+          <p className="text-sm text-muted-foreground">
+            The catalog did not answer. Check the connection and retry.
+          </p>
+        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          disabled={isFetching}
+          onClick={() => void refetch()}
+        >
+          {isFetching ? "Retrying…" : "Retry"}
+        </Button>
+      </div>
+    );
+  }
+
+  const filtered = Boolean(filters.category || filters.kind);
 
   const listings = data?.listings ?? [];
   const platformTier = listings.filter((l) => l.isPlatformTier);
@@ -183,7 +209,7 @@ export function ExtensionsCatalog({
           options={KIND_OPTIONS}
           placeholder="All kinds"
         />
-        {(filters.category || filters.kind) && (
+        {filtered && (
           <Button variant="ghost" size="sm" onClick={() => setFilters({})}>
             Clear filters
           </Button>
@@ -196,6 +222,25 @@ export function ExtensionsCatalog({
         skeleton={<ListSkeleton variant="grid" />}
       >
         <div className="flex flex-col gap-6">
+          {listings.length === 0 && (
+            // The empty state says WHICH empty it is: a filter that matched nothing is recoverable
+            // from right here, a catalog with no listings at all is not.
+            <div
+              data-testid="catalog-empty"
+              className="flex flex-col items-start gap-1 rounded-md border border-dashed p-6 text-sm"
+            >
+              <p className="font-medium">
+                {filtered
+                  ? "No extensions match these filters."
+                  : "No extensions are available yet."}
+              </p>
+              <p className="text-muted-foreground">
+                {filtered
+                  ? "Clear the filters to see the whole catalog."
+                  : "Listings appear here once this site publishes or connects to a market."}
+              </p>
+            </div>
+          )}
           {platformTier.length > 0 && (
             <section className="flex flex-col gap-3">
               <h3 className="text-sm font-semibold text-muted-foreground">

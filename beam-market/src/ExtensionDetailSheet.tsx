@@ -87,7 +87,9 @@ export function ExtensionDetailSheet({
               <SheetDescription>{data.description}</SheetDescription>
             </SheetHeader>
 
-            <div className="flex flex-col gap-4 px-4 pb-4">
+            {/* No inset of its own: SheetContent already pads the panel (p-6), so an extra
+                px-4 set the body 16px right of the title and description above it. */}
+            <div className="flex flex-col gap-4">
               <div className="flex flex-wrap items-center gap-1.5">
                 <TrustBadge tier={data.trustTier} />
                 <Badge
