@@ -16,7 +16,8 @@ export default function AccountHome() {
                     Account home
                 </h1>
                 <p style={{ color: '#64748b', maxWidth: 560, lineHeight: 1.6 }}>
-                    The sidebar to the left is the promoted{' '}
+                    The account sidebar (behind the menu button on a narrow
+                    screen) is the promoted{' '}
                     <code>@splicewire/beam-ux/account</code>
                     <code> AccountShell</code>. Its nav rows come from the{' '}
                     <code>account</code> sitemap; the Plan + Profile blocks come

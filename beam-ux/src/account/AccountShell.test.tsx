@@ -117,4 +117,51 @@ describe('AccountShell', () => {
         expect(screen.getByRole('button', { name: 'New song' })).toBeTruthy();
         expect(container.querySelector('[data-slot="sidebar-header"]')).toBeNull();
     });
+
+    it('renders a mobile bar whose trigger opens the drawer the rail becomes on a narrow screen', () => {
+        const { container } = render(
+            <AccountShell nav={nav} brand={<span>Studio</span>} brandHref="/account">
+                <p>body</p>
+            </AccountShell>,
+        );
+        const bar = container.querySelector('[data-account-mobilebar]');
+        expect(bar).not.toBeNull();
+        expect(bar?.className).toContain('beam-ux-account-mobilebar');
+        const trigger = screen.getByRole('button', { name: 'Open navigation' });
+        expect(trigger.getAttribute('data-sidebar')).toBe('trigger');
+        expect(bar?.contains(trigger)).toBe(true);
+        expect(bar?.textContent).toContain('Studio');
+    });
+
+    it('names the mobile bar by the nav label when there is no brand, and can be turned off', () => {
+        const first = render(
+            <AccountShell nav={nav} navLabel="Your account" menuLabel="Menu">
+                <p>body</p>
+            </AccountShell>,
+        );
+        const bar = first.container.querySelector('[data-account-mobilebar]');
+        expect(bar?.textContent).toContain('Your account');
+        expect(screen.getByRole('button', { name: 'Menu' })).toBeTruthy();
+        first.unmount();
+
+        const { container } = render(
+            <AccountShell nav={nav} mobileBar={false}>
+                <p>body</p>
+            </AccountShell>,
+        );
+        expect(container.querySelector('[data-account-mobilebar]')).toBeNull();
+    });
+
+    it('sets secondary sidebar lines in the sidebar ink, not the page-muted ink', () => {
+        render(
+            <AccountShell nav={nav} shell={shell} sections={{ plan: true, account: true }}>
+                <p>body</p>
+            </AccountShell>,
+        );
+        for (const text of ['None on file', '6 / 8']) {
+            const line = screen.getByText(text);
+            expect(line.className).toContain('beam-ux-account-secondary');
+            expect(line.className).not.toContain('text-muted-foreground');
+        }
+    });
 });

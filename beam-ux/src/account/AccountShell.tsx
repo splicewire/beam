@@ -26,6 +26,7 @@ import {
     SidebarMenuButton,
     SidebarMenuItem,
     SidebarProvider,
+    SidebarTrigger,
     TooltipProvider,
 } from '@schemastud/ui';
 import { AccountNav, type AccountNavProps } from './AccountNav.js';
@@ -80,6 +81,16 @@ export type AccountShellProps = {
     /** Initial open state handed to the provider (host reads its persisted cookie). */
     defaultOpen?: boolean;
 
+    /**
+     * Below the Sidebar's mobile breakpoint the rail is an off-canvas drawer; the shell renders a bar
+     * atop the page with the trigger that opens it, plus the brand (or the nav label). On by default:
+     * without it a narrow screen has no way to reach the account nav. Pass `false` only when the host
+     * renders its own `SidebarTrigger` inside the page.
+     */
+    mobileBar?: boolean;
+    /** Accessible name of the mobile bar's drawer trigger (host copy). */
+    menuLabel?: string;
+
     // Theme hooks — the shell wrapper, inset, and each opt-in section take class + style.
     className?: string;
     style?: CSSProperties;
@@ -106,6 +117,8 @@ export function AccountShell({
     collapsible = 'icon',
     variant = 'inset',
     defaultOpen = true,
+    mobileBar = true,
+    menuLabel = 'Open navigation',
     className,
     style,
     insetClassName,
@@ -202,6 +215,12 @@ export function AccountShell({
                 </Sidebar>
 
                 <SidebarInset className={insetClassName} style={insetStyle}>
+                    {mobileBar && (
+                        <header className="beam-ux-account-mobilebar" data-account-mobilebar="">
+                            <SidebarTrigger aria-label={menuLabel} />
+                            {brandHeader ?? <span>{navLabel}</span>}
+                        </header>
+                    )}
                     {children}
                 </SidebarInset>
             </TooltipProvider>
@@ -217,7 +236,7 @@ function PlanMeter({ shell }: { shell: AccountShellData }) {
         <div data-account-section="plan" className="px-2 py-1.5 text-xs">
             <div className="font-medium">{label}</div>
             {hasGauge && (
-                <div className="text-muted-foreground mt-1 tabular-nums">
+                <div className="beam-ux-account-secondary mt-1 tabular-nums">
                     {credits} / {max}
                 </div>
             )}
@@ -232,7 +251,7 @@ function ProfileBlock({ shell }: { shell: AccountShellData }) {
         <div data-account-section="profile" className="px-2 py-1.5 text-xs">
             <div className="font-medium">{handle}</div>
             {metrics.length > 0 && (
-                <div className="beam-ux-account-metrics text-muted-foreground mt-1 flex flex-wrap gap-x-3">
+                <div className="beam-ux-account-metrics beam-ux-account-secondary mt-1 flex flex-wrap gap-x-3">
                     {metrics.map((metric) => (
                         <span key={metric.label}>
                             <span className="font-medium">{metric.value}</span> {metric.label}
@@ -250,7 +269,7 @@ function AccountBlock({ shell }: { shell: AccountShellData }) {
     return (
         <div data-account-section="account" className="px-2 py-1.5 text-xs">
             <div className="truncate">{email}</div>
-            <div className="text-muted-foreground mt-0.5">{paymentMethodLabel ?? 'None on file'}</div>
+            <div className="beam-ux-account-secondary mt-0.5">{paymentMethodLabel ?? 'None on file'}</div>
         </div>
     );
 }
