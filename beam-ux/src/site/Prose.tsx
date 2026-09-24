@@ -18,7 +18,10 @@
 //
 // ## Theme-neutral by the same contract as the rest of /site
 //
-// Every value below is a `--beam-*` custom property with a plain fallback. The package chooses the
+// Every value below is a `--beam-*` custom property with a plain fallback. Dimmed text reads
+// `--beam-fg-muted` (the text partner of `--beam-fg`), never `--beam-muted`, which is a SURFACE tone in
+// the beam tier (`tokens.css`, the mdx kit's fills); reading a surface as ink came out pale-on-pale.
+// The package chooses the
 // SCALE (relative sizes, rhythm, measure, code treatment); the host chooses the palette and the fonts,
 // exactly as it does for `SiteLayout` and `ApiReference`. Nothing here names a colour that isn't a
 // token, so a beam site that is not Splicewire cannot inherit Splicewire's look.
@@ -78,7 +81,7 @@ export const PROSE_CSS = `
 [data-beam-prose] ul { list-style: disc; }
 [data-beam-prose] ol { list-style: decimal; }
 [data-beam-prose] li + li { margin-block-start: 0.4em; }
-[data-beam-prose] li::marker { color: var(--beam-muted, currentColor); }
+[data-beam-prose] li::marker { color: var(--beam-fg-muted, currentColor); }
 
 [data-beam-prose] :not(pre) > code {
   background: var(--beam-surface-2, color-mix(in srgb, currentColor 8%, transparent));
@@ -102,7 +105,7 @@ export const PROSE_CSS = `
 
 [data-beam-prose] blockquote {
   border-inline-start: 2px solid var(--beam-accent, currentColor);
-  color: var(--beam-muted, inherit);
+  color: var(--beam-fg-muted, inherit);
   padding-inline-start: 1em;
 }
 

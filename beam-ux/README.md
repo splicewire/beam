@@ -18,6 +18,29 @@ CSS-vars).
 | `./docs` | Generic chrome registry, reading templates and entry-page configuration. `@splicewire/beam-docs` explicitly registers its optional documentation layout. |
 | `./account` | Generic authed-account chrome — `AccountShell` + `AccountNav` (ticket 13). |
 | `./shell` | The **realm-aware OS-shell layer** — `buildAppsFromManifest` over the canonical `@schemastud/mainframe/os` chrome (ADR-0017). |
+| `./theme.css` · `./tokens.css` | The **opt-in beam token layer** — every `--beam-*` colour primitive and the status semantics, light and `.dark` (ADR 0002). Stylesheets only; nothing in the JS imports them. |
+
+## `@splicewire/beam-ux/theme.css` — the opt-in token layer
+
+Beam chrome reads the beam tier's raw keys (`--beam-paper`, `--beam-ink-45`, `--beam-warn-deep`, …) and
+four status semantics shadcn lacks (`--signal`, `--warning`, `--warning-foreground`, `--info`). A host
+that defines none of them imports the defaults from its own stylesheet:
+
+```css
+@import 'tailwindcss';
+@import '@splicewire/beam-ux/theme.css'; /* tokens + the Tailwind bridge for bg-warning, text-info, … */
+
+/* Override by re-declaring the beam key after the import — light on :root, dark on .dark. */
+:root { --beam-green: #0b6bcb; }
+.dark { --beam-green: oklch(0.75 0.14 250); }
+```
+
+`tokens.css` is the same without the `@theme inline` bridge, for a host without Tailwind. A host with its
+own palette may instead bind the keys itself (the flagship maps them onto `--splice-*`). Fonts and the
+site-content hooks `<Prose>` reads (`--beam-fg`, `--beam-fg-muted`, `--beam-heading`, `--beam-accent`,
+`--beam-border`, `--beam-surface-2`) are not shipped: they fall back to the surrounding ink so a site
+keeps its own theme. `--beam-muted` is a surface; dimmed prose text is `--beam-fg-muted`.
+See [ADR 0002](../docs/adr/0002-beam-ux-ships-an-opt-in-token-layer.md).
 
 ## `@splicewire/beam-ux/blockdoc/json` — the visual-editor runtime shape
 

@@ -70,7 +70,9 @@
         "./admin": {
             "types": "./dist/admin.d.ts",
             "import": "./dist/admin.js"
-        }
+        },
+        "./tokens.css": "./dist/tokens.css",
+        "./theme.css": "./dist/theme.css"
     },
     "sideEffects": false,
     "bin": {

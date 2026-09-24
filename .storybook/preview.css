@@ -1,6 +1,14 @@
 @import 'tailwindcss';
 
 /*
+ * The beam tier's token layer is the SHIPPED file (`@splicewire/beam-ux/theme.css`, ADR 0002), imported
+ * from source so the workbench renders exactly what a host that opts in gets: every `--beam-*`
+ * primitive, the status semantics and their Tailwind bridge, light and `.dark`. This sheet adds only
+ * what a HOST owns — the semantic mapping onto those primitives, the structural axes, the fonts.
+ */
+@import '../beam-ux/src/theme/theme.css';
+
+/*
  * Scan the whole beam estate (every workspace's src + colocated stories) for utility
  * classes. node_modules / .gitignore'd paths are auto-excluded by Tailwind v4.
  */
@@ -39,92 +47,22 @@
 
 /*
  * ─────────────────────────────────────────────────────────────────────────────
- * Workbench token layer (seeded, self-contained).
+ * Workbench host layer.
  *
- * The beam packages are headless — they ship NO CSS; the app owns the token layer
- * (splicewire-app: resources/css/brand-tokens.css + ui/src/index.css). This file is the
- * workbench's standalone copy so components render skinned in isolation. It is a BASELINE,
- * not the source of truth: when packages ship their own token defaults (component-seams
- * ticket 07's aspiration — beam ships `--beam-*` raw + passthroughs), this seed shrinks
- * to just the semantic → Tailwind bridge.
- *
- * TOKEN PREFIX = `beam-` (component-seams ticket 07 decision 1: vendor-axis prefixes
- * stud- / beam- / splice-). This is beam's tier. Values mirror the shared Splicewire
- * visual family (beam is the free-tier arm of Splicewire) so isolation renders match the
- * app; a downstream tier re-binds semantics through its own owned keys, never these.
+ * The beam tier's primitives now ship with the package (`beam-ux/src/theme/tokens.css`, imported
+ * above) — component-seams ticket 07 decision 5, "packages ship self-contained token defaults".
+ * What stays here is the workbench playing HOST: the neutral semantic interface (ticket 07
+ * decision 2) mapped onto those primitives, the fonts, and the structural axes.
  * ─────────────────────────────────────────────────────────────────────────────
  */
 
-/* Brand primitives (--beam-*) — beam's tier defaults, in the Splicewire visual family */
+/* Fonts — brand layer 1, a host concern (the tier file ships none). */
 :root {
-    /* Surfaces */
-    --beam-paper: #eef1ee;
-    --beam-paper-raised: #ffffff;
-    --beam-muted: #e6eae5;
-
-    /* Ink */
-    --beam-ink: #2e2c26;
-    --beam-ink-muted: rgba(17, 32, 26, 0.5);
-    --beam-ink-18: rgba(17, 32, 26, 0.18);
-    --beam-line: #e3e6e2;
-
-    /* Green — primary */
-    --beam-green: #14803f;
-    --beam-green-deep: #0f5f2e;
-    --beam-green-tint: #eaf6ee;
-
-    /* Signal + status */
-    --beam-signal: #35d07a;
-    --beam-warn: #e8a13a;
-    --beam-warn-deep: #9a6608;
-    --beam-info: #2b63a7;
-    --beam-danger: #a3271b;
-
-    /* The rail — deep green-black */
-    --beam-rail: #11201a;
-    --beam-rail-deep: #0d1a14;
-    --beam-rail-fg: rgba(207, 233, 216, 0.6);
-    --beam-rail-active: #eaf6ee;
-    --beam-rail-avatar: #1d3527;
-    --beam-signal-13: rgba(53, 208, 122, 0.13);
-    --beam-signal-18: rgba(53, 208, 122, 0.18);
-
-    /* Type */
     --beam-font-sans:
         'Space Grotesk', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji',
         'Segoe UI Emoji', 'Segoe UI Symbol';
     --beam-font-mono:
         ui-monospace, 'IBM Plex Mono', SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace;
-
-    /* Ink opacity ramp — steps of the ink base (rgb 17 32 26); consumed as hairlines,
-     * faint fills and dimmed text by beam-workflows / beam-content / beam-calendar chrome.
-     * (Migrated off the retired `--swc-ink-NN` / wrong-tier `--splice-ink-NN` ramp — ticket 35.) */
-    --beam-ink-03: rgba(17, 32, 26, 0.03);
-    --beam-ink-04: rgba(17, 32, 26, 0.04);
-    --beam-ink-05: rgba(17, 32, 26, 0.05);
-    --beam-ink-08: rgba(17, 32, 26, 0.08);
-    --beam-ink-10: rgba(17, 32, 26, 0.1);
-    --beam-ink-12: rgba(17, 32, 26, 0.12);
-    --beam-ink-15: rgba(17, 32, 26, 0.15);
-    --beam-ink-20: rgba(17, 32, 26, 0.2);
-    --beam-ink-22: rgba(17, 32, 26, 0.22);
-    --beam-ink-30: rgba(17, 32, 26, 0.3);
-    --beam-ink-35: rgba(17, 32, 26, 0.35);
-    --beam-ink-40: rgba(17, 32, 26, 0.4);
-    --beam-ink-45: rgba(17, 32, 26, 0.45);
-    --beam-ink-50: rgba(17, 32, 26, 0.5);
-    --beam-ink-55: rgba(17, 32, 26, 0.55);
-    --beam-ink-60: rgba(17, 32, 26, 0.6);
-    --beam-ink-70: rgba(17, 32, 26, 0.7);
-    --beam-ink-80: rgba(17, 32, 26, 0.8);
-
-    /* Surface alias (paper-raised) + amber accent + status tints — beam's own-tier
-     * defaults for the workflow/calendar/content chrome migrated in ticket 35. */
-    --beam-surface: var(--beam-paper-raised);
-    --beam-amber: #d97706;
-    --beam-warn-tint: #fdf3e3;
-    --beam-info-tint: #e8eff8;
-    --beam-danger-tint: #f8e9e7;
 }
 
 /* Semantic interface (--primary etc.) mapped onto the beam primitives — the neutral,
@@ -150,10 +88,6 @@
     --input: var(--beam-ink-18);
     --ring: var(--beam-green);
     --radius: 0.5rem;
-    --signal: var(--beam-signal);
-    --warning: var(--beam-warn);
-    --warning-foreground: var(--beam-warn-deep);
-    --info: var(--beam-info);
     --sidebar: var(--beam-rail);
     --sidebar-deep: var(--beam-rail-deep);
     --sidebar-foreground: var(--beam-rail-fg);
@@ -199,14 +133,7 @@
     /* Native controls (checkbox, date picker, scrollbars) take the dark UA palette. */
     color-scheme: dark;
 
-    /* Signal + status — brightened so they read against the dark canvas.
-     * `--warning-foreground` is WARNING TEXT in this family (light: `--beam-warn-deep`, amber ink on
-     * a `bg-warning/10` tint or the page) — no surface pairs it with a solid `bg-warning`. A dark ink
-     * here left every tinted warning (privacy callout, Pending badge, Needs-a-card) dark-on-dark. */
-    --signal: oklch(0.78 0.17 155);
-    --warning: oklch(0.78 0.14 75);
-    --warning-foreground: oklch(0.82 0.13 78);
-    --info: oklch(0.68 0.13 245);
+    /* Status semantics and every `--beam-*` primitive flip in the shipped tokens.css `.dark`. */
 
     /* The rail — a distinct deep tone below the raised surfaces. */
     --sidebar: oklch(0.17 0.02 165);
@@ -217,55 +144,6 @@
     --sidebar-accent: oklch(0.78 0.17 155 / 0.16);
     --sidebar-border: oklch(0.78 0.17 155 / 0.22);
     --sidebar-avatar: oklch(0.28 0.03 160);
-
-    /*
-     * Brand primitives (--beam-*) — the dark half of beam's tier. Components that read the raw
-     * tier keys (beam-workflows / beam-content / beam-calendar chrome, the beam-mdx kit sheet)
-     * never see the semantic overrides above, so each key flips here too: surfaces take the
-     * card/muted tones, ink becomes the dark foreground, and the ink ramp keeps the light ramp's
-     * alphas over that foreground. `--beam-surface` aliases `--beam-paper-raised` on `:root`,
-     * so it follows. Same palette the flagship's `--splice-*` dark overrides use.
-     */
-    --beam-paper: oklch(0.2 0.02 165);
-    --beam-paper-raised: oklch(0.24 0.022 165);
-    --beam-muted: oklch(0.28 0.02 165);
-    --beam-ink: oklch(0.93 0.015 160);
-    --beam-ink-muted: oklch(0.93 0.015 160 / 0.6);
-    --beam-ink-18: oklch(0.93 0.015 160 / 0.18);
-    --beam-line: oklch(0.32 0.02 165);
-    --beam-green: oklch(0.78 0.17 155);
-    --beam-green-deep: oklch(0.82 0.15 155);
-    --beam-green-tint: oklch(0.78 0.17 155 / 0.16);
-    --beam-signal: oklch(0.78 0.17 155);
-    --beam-signal-13: oklch(0.78 0.17 155 / 0.16);
-    --beam-signal-18: oklch(0.78 0.17 155 / 0.22);
-    --beam-warn: oklch(0.8 0.14 75);
-    --beam-warn-deep: oklch(0.82 0.13 78);
-    --beam-info: oklch(0.72 0.13 245);
-    --beam-danger: oklch(0.72 0.18 25);
-    --beam-amber: oklch(0.8 0.14 75);
-    --beam-warn-tint: oklch(0.8 0.14 75 / 0.16);
-    --beam-info-tint: oklch(0.72 0.13 245 / 0.16);
-    --beam-danger-tint: oklch(0.72 0.18 25 / 0.16);
-
-    --beam-ink-03: oklch(0.93 0.015 160 / 0.03);
-    --beam-ink-04: oklch(0.93 0.015 160 / 0.04);
-    --beam-ink-05: oklch(0.93 0.015 160 / 0.05);
-    --beam-ink-08: oklch(0.93 0.015 160 / 0.08);
-    --beam-ink-10: oklch(0.93 0.015 160 / 0.1);
-    --beam-ink-12: oklch(0.93 0.015 160 / 0.12);
-    --beam-ink-15: oklch(0.93 0.015 160 / 0.15);
-    --beam-ink-20: oklch(0.93 0.015 160 / 0.2);
-    --beam-ink-22: oklch(0.93 0.015 160 / 0.22);
-    --beam-ink-30: oklch(0.93 0.015 160 / 0.3);
-    --beam-ink-35: oklch(0.93 0.015 160 / 0.35);
-    --beam-ink-40: oklch(0.93 0.015 160 / 0.4);
-    --beam-ink-45: oklch(0.93 0.015 160 / 0.45);
-    --beam-ink-50: oklch(0.93 0.015 160 / 0.5);
-    --beam-ink-55: oklch(0.93 0.015 160 / 0.55);
-    --beam-ink-60: oklch(0.93 0.015 160 / 0.6);
-    --beam-ink-70: oklch(0.93 0.015 160 / 0.7);
-    --beam-ink-80: oklch(0.93 0.015 160 / 0.8);
 }
 
 /*
@@ -386,10 +264,6 @@
     --color-border: var(--border);
     --color-input: var(--input);
     --color-ring: var(--ring);
-    --color-signal: var(--signal);
-    --color-warning: var(--warning);
-    --color-warning-foreground: var(--warning-foreground);
-    --color-info: var(--info);
     --color-sidebar: var(--sidebar);
     --color-sidebar-deep: var(--sidebar-deep);
     --color-sidebar-foreground: var(--sidebar-foreground);

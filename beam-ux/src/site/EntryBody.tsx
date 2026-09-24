@@ -176,17 +176,18 @@ export type EntryBodyProps = {
     bodyProps?: Record<string, unknown>;
 };
 
-// The placeholder copy is dimmed off the surrounding ink, not a palette key: it renders inside whatever
-// realm the host mounts (a light site chrome under a dark app, a dark shell), and `--beam-muted` is a
-// SURFACE tone in the beam tier (the mdx kit fills with it), so reading it as text came out pale-on-pale.
+// The placeholder copy is dimmed off the surrounding ink unless the host names a dimmed ink: it renders
+// inside whatever realm the host mounts (a light site chrome under a dark app, a dark shell). It reads
+// `--beam-fg-muted`, the prose text token, never `--beam-muted`, which is a SURFACE tone in the beam tier
+// (the mdx kit fills with it), so reading it as text came out pale-on-pale.
 const DEFAULT_EMPTY = (
-    <p data-beam-entry-unauthored="" style={{ fontSize: '0.875rem', color: 'color-mix(in oklab, currentColor 62%, transparent)' }}>
+    <p data-beam-entry-unauthored="" style={{ fontSize: '0.875rem', color: 'var(--beam-fg-muted, color-mix(in oklab, currentColor 62%, transparent))' }}>
         This page doesn&rsquo;t have any content yet.
     </p>
 );
 
 const DEFAULT_FALLBACK = (
-    <p data-beam-entry-uncompiled="" style={{ fontSize: '0.875rem', color: 'color-mix(in oklab, currentColor 62%, transparent)' }}>
+    <p data-beam-entry-uncompiled="" style={{ fontSize: '0.875rem', color: 'var(--beam-fg-muted, color-mix(in oklab, currentColor 62%, transparent))' }}>
         This page&rsquo;s content has not been compiled yet. Run{' '}
         <code style={{ fontFamily: 'var(--beam-font-mono, ui-monospace, monospace)' }}>
             php artisan splicewire:beam:ux:compile

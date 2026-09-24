@@ -1,3 +1,5 @@
+import { copyFileSync } from 'node:fs';
+
 import { defineConfig } from 'tsup';
 
 export default defineConfig({
@@ -23,6 +25,13 @@ export default defineConfig({
     dts: true,
     sourcemap: true,
     clean: true,
+    // The opt-in token layer (ADR 0002) rides alongside the JS as two plain stylesheets a host imports
+    // from its OWN CSS (`@splicewire/beam-ux/theme.css` / `tokens.css`). Nothing in the JS imports them,
+    // so the package stays `sideEffects: false`; they are copied, never bundled.
+    onSuccess: async () => {
+        copyFileSync('src/theme/tokens.css', 'dist/tokens.css');
+        copyFileSync('src/theme/theme.css', 'dist/theme.css');
+    },
     // The host owns the single instance of each of these — never bundled into dist.
     // React (+ its JSX runtime) and react-query for shared context/hooks identity; the
     // @schemastud/ui foundation and lucide icons the host already has; and @schemastud/seam —
