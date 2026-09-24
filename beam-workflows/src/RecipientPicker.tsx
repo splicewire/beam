@@ -44,108 +44,112 @@ export function RecipientPicker({
 
     return (
         <div className="space-y-1">
-            <span className="text-sm text-[var(--beam-ink-60)]">{label}</span>
-            <Popover>
-                <PopoverTrigger asChild>
-                    <div
-                        role="button"
-                        tabIndex={0}
-                        className="flex min-h-9 w-full cursor-pointer flex-wrap items-center gap-1.5 rounded-md border border-input bg-transparent px-2 py-1.5 text-left text-sm shadow-sm focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none"
-                    >
-                        {chips.length === 0 ? (
-                            <span className="text-[var(--beam-ink-45)]">Choose recipients…</span>
-                        ) : (
-                            chips.map((chip) => (
-                                <span
-                                    key={chip.token}
-                                    className={`inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-xs ${
-                                        chip.known
-                                            ? 'border-[var(--beam-ink-15)] bg-[var(--beam-ink-05)]'
-                                            : 'border-dashed border-destructive/50 bg-destructive/5'
-                                    }`}
-                                >
-                                    {!chip.known && (
-                                        <TriangleAlert
-                                            className="size-3 text-destructive"
-                                            aria-label="Undeclared token"
-                                        />
-                                    )}
+            <span className="block text-sm text-[var(--beam-ink-60)]">{label}</span>
+            {/* The shared Popover roots in an `inline-block` wrapper, which left the field shrink-wrapped
+                on the label's line with no gap; the label is a block and the field spans the column. */}
+            <div className="*:w-full">
+                <Popover>
+                    <PopoverTrigger asChild>
+                        <div
+                            role="button"
+                            tabIndex={0}
+                            className="flex min-h-9 w-full cursor-pointer flex-wrap items-center gap-1.5 rounded-md border border-input bg-transparent px-2 py-1.5 text-left text-sm shadow-sm focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none"
+                        >
+                            {chips.length === 0 ? (
+                                <span className="text-[var(--beam-ink-45)]">Choose recipients…</span>
+                            ) : (
+                                chips.map((chip) => (
                                     <span
-                                        className={`font-mono text-[9px] tracking-[0.06em] uppercase ${
+                                        key={chip.token}
+                                        className={`inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-xs ${
                                             chip.known
-                                                ? 'text-[var(--beam-ink-45)]'
-                                                : 'text-destructive'
+                                                ? 'border-[var(--beam-ink-15)] bg-[var(--beam-ink-05)]'
+                                                : 'border-dashed border-destructive/50 bg-destructive/5'
                                         }`}
                                     >
-                                        {chip.kind}
+                                        {!chip.known && (
+                                            <TriangleAlert
+                                                className="size-3 text-destructive"
+                                                aria-label="Undeclared token"
+                                            />
+                                        )}
+                                        <span
+                                            className={`font-mono text-[9px] tracking-[0.06em] uppercase ${
+                                                chip.known
+                                                    ? 'text-[var(--beam-ink-45)]'
+                                                    : 'text-destructive'
+                                            }`}
+                                        >
+                                            {chip.kind}
+                                        </span>
+                                        {chip.known
+                                            ? chip.label
+                                            : chip.token.slice(chip.kind.length + 1) || chip.token}
+                                        <span
+                                            role="button"
+                                            tabIndex={-1}
+                                            aria-label={`Remove ${chip.label}`}
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                toggle(chip.token);
+                                            }}
+                                            className="flex size-3.5 items-center justify-center rounded hover:bg-[var(--beam-ink-08)]"
+                                        >
+                                            <X className="size-2.5" />
+                                        </span>
                                     </span>
-                                    {chip.known
-                                        ? chip.label
-                                        : chip.token.slice(chip.kind.length + 1) || chip.token}
-                                    <span
-                                        role="button"
-                                        tabIndex={-1}
-                                        aria-label={`Remove ${chip.label}`}
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            toggle(chip.token);
-                                        }}
-                                        className="flex size-3.5 items-center justify-center rounded hover:bg-[var(--beam-ink-08)]"
-                                    >
-                                        <X className="size-2.5" />
-                                    </span>
-                                </span>
-                            ))
+                                ))
+                            )}
+                            <Plus className="ml-auto size-3.5 text-[var(--beam-ink-45)]" />
+                        </div>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-64 p-1">
+                        {flatRows.map((row) => (
+                            <ChecklistRow
+                                key={row.token}
+                                label={row.label}
+                                selected={value.includes(row.token)}
+                                onClick={() => toggle(row.token)}
+                            />
+                        ))}
+
+                        {roleRows.length > 0 && (
+                            <>
+                                <div className="px-2 pt-2 pb-1 font-mono text-[9px] tracking-[0.1em] text-[var(--beam-ink-45)] uppercase">
+                                    By role
+                                </div>
+                                {roleRows.map((row) => (
+                                    <ChecklistRow
+                                        key={row.token}
+                                        label={row.label}
+                                        selected={value.includes(row.token)}
+                                        onClick={() => toggle(row.token)}
+                                    />
+                                ))}
+                            </>
                         )}
-                        <Plus className="ml-auto size-3.5 text-[var(--beam-ink-45)]" />
-                    </div>
-                </PopoverTrigger>
-                <PopoverContent className="w-64 p-1">
-                    {flatRows.map((row) => (
-                        <ChecklistRow
-                            key={row.token}
-                            label={row.label}
-                            selected={value.includes(row.token)}
-                            onClick={() => toggle(row.token)}
-                        />
-                    ))}
 
-                    {roleRows.length > 0 && (
-                        <>
-                            <div className="px-2 pt-2 pb-1 font-mono text-[9px] tracking-[0.1em] text-[var(--beam-ink-45)] uppercase">
-                                By role
-                            </div>
-                            {roleRows.map((row) => (
-                                <ChecklistRow
-                                    key={row.token}
-                                    label={row.label}
-                                    selected={value.includes(row.token)}
-                                    onClick={() => toggle(row.token)}
-                                />
-                            ))}
-                        </>
-                    )}
-
-                    <div className="px-2 pt-2 pb-1 font-mono text-[9px] tracking-[0.1em] text-[var(--beam-ink-45)] uppercase">
-                        Advanced
-                    </div>
-                    <div className="flex gap-1 px-1 pb-1">
-                        <Input
-                            value={raw}
-                            onChange={(e) => setRaw(e.target.value)}
-                            onKeyDown={(e) => {
-                                if (e.key === 'Enter') {
-                                    e.preventDefault();
-                                    addRaw();
-                                }
-                            }}
-                            placeholder="kind:selector — e.g. team:eng"
-                            className="h-7 text-xs"
-                            aria-label="Raw principal token"
-                        />
-                    </div>
-                </PopoverContent>
-            </Popover>
+                        <div className="px-2 pt-2 pb-1 font-mono text-[9px] tracking-[0.1em] text-[var(--beam-ink-45)] uppercase">
+                            Advanced
+                        </div>
+                        <div className="flex gap-1 px-1 pb-1">
+                            <Input
+                                value={raw}
+                                onChange={(e) => setRaw(e.target.value)}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter') {
+                                        e.preventDefault();
+                                        addRaw();
+                                    }
+                                }}
+                                placeholder="kind:selector — e.g. team:eng"
+                                className="h-7 text-xs"
+                                aria-label="Raw principal token"
+                            />
+                        </div>
+                    </PopoverContent>
+                </Popover>
+            </div>
         </div>
     );
 }

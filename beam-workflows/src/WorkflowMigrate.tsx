@@ -129,15 +129,17 @@ export function WorkflowMigrate({
                 children (those are a separate cohort). The whole run is all-or-nothing.
             </p>
 
-            {/* Before / after — the read-only graph reused as the migration render. */}
-            <div className="grid grid-cols-2 gap-2">
-                <div>
+            {/* Before / after — the read-only graph reused as the migration render. Stacked, not side by
+                side: each graph renders at a fixed legible zoom, so a half-width pane showed barely two
+                places, and stacking lines up the places the versions share in the same column. */}
+            <div className="grid gap-3">
+                <div className="min-w-0">
                     <div className="mb-1 font-mono text-[10px] text-[var(--beam-ink-45)] uppercase">
                         From
                     </div>
                     <WorkflowGraph blueprint={fromDraft} />
                 </div>
-                <div>
+                <div className="min-w-0">
                     <div className="mb-1 font-mono text-[10px] text-[var(--beam-ink-45)] uppercase">
                         To
                     </div>

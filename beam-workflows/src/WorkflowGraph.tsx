@@ -1,6 +1,5 @@
 import {
     Background,
-    Controls,
     MarkerType,
     Position,
     ReactFlow,
@@ -8,9 +7,9 @@ import {
     type Node,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import { useMemo } from 'react';
+import { useLayoutEffect, useMemo, useRef, useState } from 'react';
 import type { BlueprintDraft } from './blueprint';
-import { layoutBlueprint, NODE_WIDTH } from './workflowLayout';
+import { GRAPH_PADDING, GRAPH_ZOOM, graphCanvasSize, layoutBlueprint, NODE_WIDTH } from './workflowLayout';
 
 /**
  * A READ-ONLY `@xyflow` view of a workflow definition (beam-workflows-ux ticket 18, Surface 1 of the
@@ -23,8 +22,9 @@ import { layoutBlueprint, NODE_WIDTH } from './workflowLayout';
  * wizard (ticket 20) reuses it verbatim as its before/after render.
  */
 export function WorkflowGraph({ blueprint }: { blueprint: BlueprintDraft }) {
-    const { nodes, edges } = useMemo(() => {
+    const { nodes, edges, canvas } = useMemo(() => {
         const layout = layoutBlueprint(blueprint);
+        const canvas = graphCanvasSize(layout.nodes);
 
         const rfNodes: Node[] = layout.nodes.map((n) => ({
             id: n.id,
@@ -59,8 +59,24 @@ export function WorkflowGraph({ blueprint }: { blueprint: BlueprintDraft }) {
             style: e.guarded ? { stroke: 'var(--beam-amber)' } : undefined,
         }));
 
-        return { nodes: rfNodes, edges: rfEdges };
+        return { nodes: rfNodes, edges: rfEdges, canvas };
     }, [blueprint]);
+
+    // Whether the graph is wider than its pane. A headless capture and an overlay-scrollbar OS both
+    // hide the scrollbar, so a clipped graph needs a visible cue that the rest is a scroll away.
+    const pane = useRef<HTMLDivElement>(null);
+    const [overflowing, setOverflowing] = useState(false);
+    useLayoutEffect(() => {
+        const el = pane.current;
+        if (!el) return;
+        // Overflow within the padding clips only empty inset, never a place; don't cue a scroll for it.
+        const measure = () => setOverflowing(el.scrollWidth - el.clientWidth > GRAPH_PADDING);
+        measure();
+        if (typeof ResizeObserver === 'undefined') return;
+        const observer = new ResizeObserver(measure);
+        observer.observe(el);
+        return () => observer.disconnect();
+    }, [canvas.minWidth, nodes.length]);
 
     if (nodes.length === 0) {
         return (
@@ -73,24 +89,48 @@ export function WorkflowGraph({ blueprint }: { blueprint: BlueprintDraft }) {
         );
     }
 
+    // A FIXED, legible zoom on a canvas sized to the laid-out graph (graphCanvasSize): a graph wider
+    // than its pane scrolls horizontally rather than fit-view shrinking it until the labels are ~4px
+    // (a 10-place graph landed at ~0.3x; the migrate wizard's half-width panes smaller still). fitView
+    // with min = max zoom only CENTRES the graph when the pane is wider than it. The canvas is a static
+    // preview, so xyflow's own pan/zoom gestures are off and a wheel scrolls the page or the pane.
     return (
-        <div className="h-[420px] w-full overflow-hidden rounded-md border border-[var(--beam-ink-08)]">
-            <ReactFlow
-                nodes={nodes}
-                edges={edges}
-                fitView
-                // A narrow pane (the migrate wizard's side-by-side TO graph) needs to zoom out past
-                // xyflow's 0.5 default minimum, or fitView clamps and crops the first and last nodes.
-                fitViewOptions={{ padding: 0.12, minZoom: 0.1 }}
-                minZoom={0.1}
-                nodesDraggable={false}
-                nodesConnectable={false}
-                elementsSelectable={false}
-                proOptions={{ hideAttribution: true }}
+        <div className="w-full min-w-0">
+            <div
+                ref={pane}
+                className="w-full overflow-x-auto rounded-md border border-[var(--beam-ink-08)]"
+                data-testid="workflow-graph"
             >
-                <Background />
-                <Controls showInteractive={false} />
-            </ReactFlow>
+                <div style={{ minWidth: canvas.minWidth, height: canvas.height }}>
+                    <ReactFlow
+                        nodes={nodes}
+                        edges={edges}
+                        fitView
+                        fitViewOptions={{ padding: 0, minZoom: GRAPH_ZOOM, maxZoom: GRAPH_ZOOM }}
+                        minZoom={GRAPH_ZOOM}
+                        maxZoom={GRAPH_ZOOM}
+                        nodesDraggable={false}
+                        nodesConnectable={false}
+                        elementsSelectable={false}
+                        panOnDrag={false}
+                        zoomOnScroll={false}
+                        zoomOnPinch={false}
+                        zoomOnDoubleClick={false}
+                        preventScrolling={false}
+                        proOptions={{ hideAttribution: true }}
+                    >
+                        <Background />
+                    </ReactFlow>
+                </div>
+            </div>
+            {overflowing && (
+                <p
+                    className="mt-1 text-right text-[11px] text-muted-foreground"
+                    data-testid="workflow-graph-scroll-hint"
+                >
+                    Scroll sideways to see all {nodes.length} places →
+                </p>
+            )}
         </div>
     );
 }

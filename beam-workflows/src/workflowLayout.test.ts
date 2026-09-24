@@ -1,6 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import type { BlueprintDraft } from './blueprint';
-import { layoutBlueprint, NODE_WIDTH, rankPlaces } from './workflowLayout';
+import {
+    GRAPH_PADDING,
+    GRAPH_ZOOM,
+    graphCanvasSize,
+    layoutBlueprint,
+    layoutBounds,
+    NODE_WIDTH,
+    rankPlaces,
+} from './workflowLayout';
 
 // The pure layering + glyph seam behind the read-only graph preview (ticket 18). Pins the ref-blind
 // definition→graph mapping (places→ranked nodes, transitions→glyphed edges) without a DOM.
@@ -123,5 +131,42 @@ describe('layoutBlueprint', () => {
 
         const { edges } = layoutBlueprint(net);
         expect(edges.map((e) => e.id).sort()).toEqual(['fork:a->a', 'fork:a->b']); // ghost→missing dropped
+    });
+});
+
+describe('graphCanvasSize — a fixed legible zoom, not a fit-to-pane shrink', () => {
+    it('sizes the canvas to the laid-out graph at GRAPH_ZOOM, padded on both sides', () => {
+        const { nodes } = layoutBlueprint(lifecycle);
+        const bounds = layoutBounds(nodes);
+        const canvas = graphCanvasSize(nodes);
+
+        expect(canvas.minWidth).toBe(Math.ceil(bounds.width * GRAPH_ZOOM + GRAPH_PADDING * 2));
+        // A one-row graph is not floated in the old fixed 420px box.
+        expect(canvas.height).toBeLessThan(420);
+    });
+
+    it('grows the canvas with the graph instead of shrinking the zoom', () => {
+        const long: BlueprintDraft = {
+            name: 'long',
+            metadata: null,
+            places: ['a', 'b', 'c', 'd', 'e', 'f', 'g'],
+            initial: ['a'],
+            transitions: ['a', 'b', 'c', 'd', 'e', 'f'].map((from, i) => ({
+                name: `t${i}`,
+                from: [from],
+                to: [String.fromCharCode(from.charCodeAt(0) + 1)],
+                guard: null,
+                effects: [],
+                metadata: null,
+            })),
+        };
+        const short = graphCanvasSize(layoutBlueprint(lifecycle).nodes).minWidth;
+        expect(graphCanvasSize(layoutBlueprint(long).nodes).minWidth).toBeGreaterThan(short);
+        // At the render zoom a 12px node label stays legible (>= 10px).
+        expect(12 * GRAPH_ZOOM).toBeGreaterThanOrEqual(10);
+    });
+
+    it('has no extent for an empty graph', () => {
+        expect(layoutBounds([])).toEqual({ width: 0, height: 0 });
     });
 });

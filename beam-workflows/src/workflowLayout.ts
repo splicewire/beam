@@ -32,8 +32,40 @@ export type GraphEdge = {
  * lane, so labels were clipped by or drawn over the neighbouring nodes.
  */
 export const NODE_WIDTH = 150;
+/** The rendered height of a place node (12px label + 6px vertical padding + border). */
+export const NODE_HEIGHT = 32;
 const X_GAP = NODE_WIDTH + 130;
 const Y_GAP = 90;
+
+/**
+ * The fixed zoom the read-only graph renders at. A fit-to-pane zoom shrank a 10-place graph to ~0.3x
+ * (4px labels) and the migrate wizard's half-width panes further still; a graph wider than its pane
+ * now scrolls instead of shrinking past legibility. 0.9 keeps the 12px node label at ~11px.
+ */
+export const GRAPH_ZOOM = 0.9;
+/** Inset around the laid-out graph, in screen px — room for the back-edge loops that bow past a node. */
+export const GRAPH_PADDING = 28;
+
+/** The laid-out graph's extent in flow coordinates (origin at the first node's top-left). */
+export function layoutBounds(nodes: GraphNode[]): { width: number; height: number } {
+    if (nodes.length === 0) return { width: 0, height: 0 };
+    const width = Math.max(...nodes.map((n) => n.position.x)) + NODE_WIDTH;
+    const height = Math.max(...nodes.map((n) => n.position.y)) + NODE_HEIGHT;
+    return { width, height };
+}
+
+/**
+ * The canvas the graph needs at {@link GRAPH_ZOOM}: the component uses the width as the canvas's
+ * minimum (a wider pane just centres the graph) and the height as-is, so a two-row graph is not
+ * floated in a 420px-tall box and a long graph scrolls horizontally at a readable scale.
+ */
+export function graphCanvasSize(nodes: GraphNode[]): { minWidth: number; height: number } {
+    const { width, height } = layoutBounds(nodes);
+    return {
+        minWidth: Math.ceil(width * GRAPH_ZOOM + GRAPH_PADDING * 2),
+        height: Math.max(120, Math.ceil(height * GRAPH_ZOOM + GRAPH_PADDING * 2)),
+    };
+}
 
 /**
  * Rank every place by BFS distance from the initial marking. Unreachable places are pushed into a

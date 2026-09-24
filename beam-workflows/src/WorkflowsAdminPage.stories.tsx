@@ -21,6 +21,16 @@ const meta = {
     title: 'Workflows/WorkflowsAdminPage',
     component: WorkflowsAdminPage,
     parameters: { layout: 'fullscreen' },
+    // The page is full-bleed by design (admin-redesign ticket 08): the host's desk shell owns the outer
+    // gutter and the flagship mounts it bare inside that framed main. The story stands in for the shell
+    // with the same inset, so the capture shows the page as a host frames it, not flush to the viewport.
+    decorators: [
+        (Story) => (
+            <div className="p-6">
+                <Story />
+            </div>
+        ),
+    ],
 } satisfies Meta<typeof WorkflowsAdminPage>;
 
 export default meta;

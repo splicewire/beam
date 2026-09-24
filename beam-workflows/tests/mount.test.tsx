@@ -72,6 +72,11 @@ describe('@splicewire/beam-workflows read-only leaves mount in isolation', () =>
         expect(screen.getByText('Recipients')).toBeDefined();
         // The selected `owner:` token resolves to its known chip label.
         expect(screen.getByText('Owner')).toBeDefined();
+        // The label sits on its own line above a column-wide field: the shared Popover roots in an
+        // inline-block wrapper, which shrink-wrapped the field beside the label with no gap.
+        expect(screen.getByText('Recipients').className).toContain('block');
+        const field = screen.getAllByRole('button', { name: /Owner/ })[0];
+        expect(field.parentElement?.parentElement?.className).toContain('*:w-full');
     });
 
     it('WorkflowDiff structurally diffs two version DTOs', () => {
