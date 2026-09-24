@@ -523,7 +523,9 @@ export function PageEditor({
                         {publication?.versions.map((version) => (
                             <div className="pe-version" key={version.id}>
                                 <span className="pe-version-ref">{version.readable}</span>
-                                <span className="pe-version-label">{version.label ?? ''}</span>
+                                <span className="pe-version-label" title={version.label ?? undefined}>
+                                    {version.label ?? ''}
+                                </span>
                                 {version.isPublished && (
                                     <span className="pe-version-tag published">published</span>
                                 )}

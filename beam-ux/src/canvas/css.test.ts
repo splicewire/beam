@@ -37,3 +37,16 @@ describe.each([
         expect(rule).toContain('--color-background:#0f172a');
     });
 });
+
+// A version label is generated and can be long ("v272-restore-of-v270-published"). It was ellipsized in the 320px versions
+// panel, which cut off the part that says what it restored (ux-demo screenshot review, replay 5). It wraps instead.
+describe('the versions panel shows a whole version label', () => {
+    const rule = (peCss(theme).match(/\.pe-version-label\{([^}]*)\}/) ?? [])[1] ?? '';
+
+    it('wraps a long label rather than ellipsizing it', () => {
+        expect(rule).not.toContain('text-overflow:ellipsis');
+        expect(rule).not.toContain('white-space:nowrap');
+        expect(rule).toContain('overflow-wrap:anywhere');
+        expect(rule).toContain('min-width:0');
+    });
+});
