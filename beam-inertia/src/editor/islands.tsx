@@ -1,13 +1,14 @@
 // Two tiny DEMO island components for the visual editor's opaque-island registry. A tree node whose
 // `name` is a registered key (PascalCase) renders the REAL component (sealed — select/reorder/delete, no
 // drill-in) instead of an intrinsic element. A fresh host swaps these for its own designed sections; they
-// exist only to prove the island seam renders in place.
+// exist only to prove the island seam renders in place. Their tones read the site layout's `--st-*`
+// variables (light fallbacks inline), so they flip with the site's dark scheme like the chrome does.
 export function DemoHero() {
     return (
         <section
             style={{
                 padding: 'clamp(40px,7vw,84px) clamp(18px,5vw,56px)',
-                background: 'linear-gradient(180deg,#f8fafc,#eef2ff)',
+                background: 'linear-gradient(180deg,var(--st-hero-from, #f8fafc),var(--st-hero-to, #eef2ff))',
                 borderRadius: 16,
                 textAlign: 'center',
             }}
@@ -18,7 +19,7 @@ export function DemoHero() {
                     fontWeight: 700,
                     letterSpacing: '-0.02em',
                     margin: '0 0 12px',
-                    color: '#0f172a',
+                    color: 'var(--st-fg, #0f172a)',
                 }}
             >
                 An editable hero, in place.
@@ -27,7 +28,7 @@ export function DemoHero() {
                 style={{
                     fontSize: 17,
                     lineHeight: 1.55,
-                    color: '#475569',
+                    color: 'var(--st-muted, #475569)',
                     maxWidth: 520,
                     margin: '0 auto',
                 }}
@@ -70,16 +71,16 @@ export function DemoFeatureRow() {
                     key={c.title}
                     style={{
                         padding: 20,
-                        border: '1px solid #e2e8f0',
+                        border: '1px solid var(--st-card-border, #e2e8f0)',
                         borderRadius: 12,
-                        background: '#fff',
+                        background: 'var(--st-card, #fff)',
                     }}
                 >
                     <div
                         style={{
                             fontWeight: 600,
                             marginBottom: 6,
-                            color: '#0f172a',
+                            color: 'var(--st-fg, #0f172a)',
                         }}
                     >
                         {c.title}
@@ -88,7 +89,7 @@ export function DemoFeatureRow() {
                         style={{
                             fontSize: 14,
                             lineHeight: 1.5,
-                            color: '#64748b',
+                            color: 'var(--st-dim, #64748b)',
                         }}
                     >
                         {c.body}

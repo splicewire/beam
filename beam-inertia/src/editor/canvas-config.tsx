@@ -41,7 +41,7 @@ const BLOCK_TEMPLATES: BlockTemplate[] = [
         make: () =>
             el(
                 'h2',
-                [str('style', 'font-size:28px;font-weight:700;color:#0f172a')],
+                [str('style', 'font-size:28px;font-weight:700;color:var(--st-fg,#0f172a)')],
                 [{ kind: 'text', value: 'New heading' }],
             ),
     },
@@ -50,7 +50,7 @@ const BLOCK_TEMPLATES: BlockTemplate[] = [
         make: () =>
             el(
                 'p',
-                [str('style', 'color:#475569;line-height:1.6')],
+                [str('style', 'color:var(--st-muted,#475569);line-height:1.6')],
                 [{ kind: 'text', value: 'New paragraph.' }],
             ),
     },
@@ -62,7 +62,7 @@ const BLOCK_TEMPLATES: BlockTemplate[] = [
                 [
                     str(
                         'style',
-                        'background:#0f172a;color:#fff;border:none;border-radius:10px;padding:11px 18px;cursor:pointer',
+                        'background:var(--st-accent,#0f172a);color:var(--st-accent-fg,#fff);border:none;border-radius:10px;padding:11px 18px;cursor:pointer',
                     ),
                 ],
                 [{ kind: 'text', value: 'Button' }],
@@ -78,7 +78,7 @@ const BLOCK_TEMPLATES: BlockTemplate[] = [
             el('hr', [
                 str(
                     'style',
-                    'border:none;border-top:1px solid #e2e8f0;margin:24px 0',
+                    'border:none;border-top:1px solid var(--st-card-border,#e2e8f0);margin:24px 0',
                 ),
             ]),
     },

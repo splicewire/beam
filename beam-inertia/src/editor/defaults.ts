@@ -74,7 +74,7 @@ export const DEFAULT_TREES: Record<string, JsonDoc> = {
                     props: [
                         str(
                             'style',
-                            'font-size:16px;line-height:1.6;color:#475569;margin:28px 0',
+                            'font-size:16px;line-height:1.6;color:var(--st-muted,#475569);margin:28px 0',
                         ),
                     ],
                     children: [

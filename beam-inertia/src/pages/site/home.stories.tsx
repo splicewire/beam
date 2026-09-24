@@ -11,9 +11,33 @@ import { setStubPage } from '../../story-harness';
  * the same way `EntryBody.test.tsx` does — `artifact.url` unset/unresolvable rather than a
  * mocked network — no app/Laravel coupling either way.
  */
-function SiteHomeStage({ entry }: { entry?: { id: string; slug: string; artifact?: { url: string; version?: string | null } | null } | null }) {
+/** The starters' seeded `theme.site` (light slots only) — the dark slots come from the package defaults. */
+const STARTER_SITE_THEME = {
+    background: '#f8fafc',
+    foreground: '#0f172a',
+    muted: '#475569',
+    accent: '#0f172a',
+    accentHover: '#1e293b',
+    accentForeground: '#FFFFFF',
+    border: 'rgba(15,23,42,.08)',
+    darkBackground: '#0B0F17',
+    darkForeground: '#E5E7EB',
+    darkMuted: '#9CA3AF',
+    darkAccent: '#8AA4FF',
+    darkAccentHover: '#A9BDFF',
+    darkAccentForeground: '#0B0F17',
+    darkBorder: '#262B36',
+};
+
+function SiteHomeStage({
+    entry,
+    theme,
+}: {
+    entry?: { id: string; slug: string; artifact?: { url: string; version?: string | null } | null } | null;
+    theme?: Record<string, string>;
+}) {
     const [Page, setPage] = useState<ComponentType<Record<string, unknown>> | null>(null);
-    setStubPage({ auth: { user: null } });
+    setStubPage({ auth: { user: null }, ...(theme ? { theme: { site: theme } } : {}) });
     useEffect(() => {
         let alive = true;
         resolveBeamPage('site/home').then((C) => alive && setPage(() => C));
@@ -61,4 +85,34 @@ export const DefaultTree: Story = {
 export const NarrowViewport: Story = {
     render: () => <SiteHomeStage entry={null} />,
     globals: { viewport: { value: 'mobile1', isRotated: false } },
+};
+
+/**
+ * The dark variant: the site chrome, the demo hero and feature cards and the default copy re-bind to
+ * the dark `theme.site` slots under `.dark` (the app's stored appearance, else the system scheme).
+ * Pinned dark so the capture is the one the theme was designed for, with the resolved theme present.
+ */
+export const DefaultTreeDark: Story = {
+    render: () => <SiteHomeStage entry={null} theme={STARTER_SITE_THEME} />,
+    globals: { colorScheme: 'dark' },
+    play: async ({ canvasElement }) => {
+        const canvas = within(canvasElement);
+        await expect(
+            await canvas.findByText(/editable in place through the promoted/i, undefined, { timeout: 3000 }),
+        ).toBeInTheDocument();
+        const root = canvasElement.querySelector('.st-site') as HTMLElement;
+        await expect(getComputedStyle(root).backgroundColor).toBe('rgb(11, 15, 23)');
+    },
+};
+
+/** The same page with the theme present, light — the seeded slots paint exactly the pre-theme palette. */
+export const DefaultTreeThemed: Story = {
+    render: () => <SiteHomeStage entry={null} theme={STARTER_SITE_THEME} />,
+    globals: { colorScheme: 'light' },
+    play: async ({ canvasElement }) => {
+        const canvas = within(canvasElement);
+        await canvas.findByText(/editable in place through the promoted/i, undefined, { timeout: 3000 });
+        const root = canvasElement.querySelector('.st-site') as HTMLElement;
+        await expect(getComputedStyle(root).backgroundColor).toBe('rgb(248, 250, 252)');
+    },
 };

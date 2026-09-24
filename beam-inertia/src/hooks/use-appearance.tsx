@@ -13,7 +13,8 @@ const listeners = new Set<() => void>();
 let currentAppearance: Appearance = 'system';
 
 const prefersDark = (): boolean => {
-    if (typeof window === 'undefined') {
+    // No window (SSR) or no matchMedia (a test DOM, an embedded webview): no system preference to read.
+    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
         return false;
     }
 
@@ -61,7 +62,7 @@ const subscribe = (callback: () => void) => {
 const notify = (): void => listeners.forEach((listener) => listener());
 
 const mediaQuery = (): MediaQueryList | null => {
-    if (typeof window === 'undefined') {
+    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
         return null;
     }
 
