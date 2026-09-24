@@ -111,7 +111,7 @@ const fixtureModules: Record<string, ContentModule> = {
     'fragments/callout-note': {
         Component: () => (
             <p>
-                This is an embedded fragment resolved by <code>&lt;Content name&gt;</code>
+                This is an embedded fragment resolved by <code>&lt;Content name&gt;</code>{' '}
                 — a shared block of prose dropped inline, bare, its own layout ignored.
             </p>
         ),

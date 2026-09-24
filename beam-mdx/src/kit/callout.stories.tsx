@@ -30,7 +30,7 @@ type Story = StoryObj<typeof meta>;
 // --- The variant axis, one story per tone ---
 export const Note: Story = { args: { type: 'note' } };
 export const Tip: Story = { args: { type: 'tip', title: 'Tip' } };
-export const Info: Story = { args: { type: 'info', title: 'Note' } };
+export const Info: Story = { args: { type: 'info', title: 'Info' } };
 export const Warning: Story = { args: { type: 'warning', title: 'Careful' } };
 export const Danger: Story = { args: { type: 'danger', title: 'Stop' } };
 

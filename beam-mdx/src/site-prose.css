@@ -139,14 +139,21 @@
     color: var(--primary);
     margin: 0 0 1rem;
 }
+/* The kind column is shared across rows: the list owns the two tracks and each row
+   takes them as a subgrid. A per-row `auto` column sized itself to that row's label, so
+   the titles started at a different x after GUIDE / CUSTOMER STORY / INSIGHT. */
 .site-prose .receipts ul {
     list-style: none;
     margin: 0;
     padding: 0;
+    display: grid;
+    grid-template-columns: max-content 1fr;
+    column-gap: 0.9rem;
 }
 .site-prose .receipts li {
+    grid-column: 1 / -1;
     display: grid;
-    grid-template-columns: auto 1fr;
+    grid-template-columns: subgrid;
     gap: 0.35rem 0.9rem;
     align-items: baseline;
     padding: 0.85rem 0;

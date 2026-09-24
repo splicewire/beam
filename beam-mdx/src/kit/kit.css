@@ -164,9 +164,13 @@
 .bkit-callout-body > :last-child {
     margin-bottom: 0;
 }
+/* Note is the NEUTRAL tone and Tip owns the green. Note used to ride `--beam-signal`, which only
+   differs from Tip's `--beam-green` in a light palette: a dark tier brightens both greens to the same
+   value (beam's own dark seed, the flagship's), so the two callouts rendered identically there. A
+   neutral note is distinct from every status hue in any host's palette, light or dark. */
 .bkit-callout--note {
-    --bkit-callout-accent: var(--beam-signal);
-    --bkit-callout-tint: var(--beam-signal-13, var(--beam-muted));
+    --bkit-callout-accent: var(--muted-foreground);
+    --bkit-callout-tint: var(--beam-muted, var(--muted));
 }
 .bkit-callout--tip {
     --bkit-callout-accent: var(--beam-green);
@@ -322,7 +326,8 @@
 
 /* --- Section landing + card grid ------------------------------------------ */
 /* A scannable gateway: a hero over a responsive grid of full-card links. Tokens
-   only — the signal accent falls back to the brand color on hosts without it. */
+   only — accent ink is `--primary`; the hover glow rides the signal green, falling back to
+   the brand color on hosts without it. */
 .bkit-landing {
     margin-block-end: 2rem;
 }
@@ -336,7 +341,10 @@
     font-weight: 700;
     letter-spacing: 0.08em;
     text-transform: uppercase;
-    color: var(--beam-signal, var(--primary));
+    /* The accent INK is `--primary`, as the Steps marker's: `--beam-signal` is the bright signal
+       green, legible on a dark canvas but about 2:1 on a light one. Signal stays for the hover
+       border/glow, which carries no text. */
+    color: var(--primary);
 }
 .bkit-landing-heading {
     margin-block-end: 0.75rem;
@@ -400,14 +408,14 @@
     box-shadow: 0 6px 20px -12px var(--beam-signal, var(--primary));
 }
 .bkit-card.bkit-card:focus-visible {
-    outline: 2px solid var(--beam-signal, var(--primary));
+    outline: 2px solid var(--primary);
     outline-offset: 2px;
 }
 .bkit-card-icon {
     display: inline-flex;
     width: 1.75rem;
     height: 1.75rem;
-    color: var(--beam-signal, var(--primary));
+    color: var(--primary);
 }
 .bkit-card-icon svg {
     width: 100%;

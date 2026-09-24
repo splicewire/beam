@@ -24,6 +24,11 @@ const stubRenderer: ApiReferenceFactory = (target, configuration) => {
     const element = target as HTMLElement;
     const pre = document.createElement('pre');
     pre.textContent = JSON.stringify(configuration, null, 2);
+    // A config value is one JSON string (the host's `customCss` runs to ~300 characters), so the dump
+    // wraps inside the canvas instead of widening the page past the viewport.
+    pre.style.whiteSpace = 'pre-wrap';
+    pre.style.overflowWrap = 'anywhere';
+    pre.style.margin = '0';
     element.appendChild(pre);
 };
 
