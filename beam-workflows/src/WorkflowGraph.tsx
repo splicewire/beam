@@ -10,7 +10,7 @@ import {
 import '@xyflow/react/dist/style.css';
 import { useMemo } from 'react';
 import type { BlueprintDraft } from './blueprint';
-import { layoutBlueprint } from './workflowLayout';
+import { layoutBlueprint, NODE_WIDTH } from './workflowLayout';
 
 /**
  * A READ-ONLY `@xyflow` view of a workflow definition (beam-workflows-ux ticket 18, Surface 1 of the
@@ -34,6 +34,7 @@ export function WorkflowGraph({ blueprint }: { blueprint: BlueprintDraft }) {
             targetPosition: Position.Left,
             // The initial place gets the accent ring so the entry point reads at a glance.
             style: {
+                width: NODE_WIDTH,
                 borderRadius: 8,
                 padding: '6px 12px',
                 fontSize: 12,
@@ -50,6 +51,10 @@ export function WorkflowGraph({ blueprint }: { blueprint: BlueprintDraft }) {
             target: e.target,
             label: e.label,
             labelStyle: { fontSize: 11 },
+            // A padded chip behind the label so it stays legible where it crosses another edge.
+            labelBgPadding: [4, 2] as [number, number],
+            labelBgBorderRadius: 4,
+            labelBgStyle: { fill: 'var(--beam-surface, #fff)' },
             markerEnd: { type: MarkerType.ArrowClosed },
             style: e.guarded ? { stroke: 'var(--beam-amber)' } : undefined,
         }));
@@ -57,12 +62,27 @@ export function WorkflowGraph({ blueprint }: { blueprint: BlueprintDraft }) {
         return { nodes: rfNodes, edges: rfEdges };
     }, [blueprint]);
 
+    if (nodes.length === 0) {
+        return (
+            <div className="flex h-[420px] w-full flex-col items-center justify-center gap-1 rounded-md border border-dashed border-[var(--beam-ink-08)] p-6 text-center">
+                <p className="text-sm font-medium">No places yet</p>
+                <p className="text-xs text-muted-foreground">
+                    Add a place to the workflow and its graph will draw here.
+                </p>
+            </div>
+        );
+    }
+
     return (
         <div className="h-[420px] w-full overflow-hidden rounded-md border border-[var(--beam-ink-08)]">
             <ReactFlow
                 nodes={nodes}
                 edges={edges}
                 fitView
+                // A narrow pane (the migrate wizard's side-by-side TO graph) needs to zoom out past
+                // xyflow's 0.5 default minimum, or fitView clamps and crops the first and last nodes.
+                fitViewOptions={{ padding: 0.12, minZoom: 0.1 }}
+                minZoom={0.1}
                 nodesDraggable={false}
                 nodesConnectable={false}
                 elementsSelectable={false}

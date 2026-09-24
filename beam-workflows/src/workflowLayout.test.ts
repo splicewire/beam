@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { BlueprintDraft } from './blueprint';
-import { layoutBlueprint, rankPlaces } from './workflowLayout';
+import { layoutBlueprint, NODE_WIDTH, rankPlaces } from './workflowLayout';
 
 // The pure layering + glyph seam behind the read-only graph preview (ticket 18). Pins the ref-blind
 // definition→graph mapping (places→ranked nodes, transitions→glyphed edges) without a DOM.
@@ -70,9 +70,16 @@ describe('layoutBlueprint', () => {
         const { nodes } = layoutBlueprint(lifecycle);
         expect(nodes).toHaveLength(4);
         expect(nodes.find((n) => n.id === 'draft')?.position.x).toBe(0);
-        expect(nodes.find((n) => n.id === 'review')?.position.x).toBe(200);
+        expect(nodes.find((n) => n.id === 'review')?.position.x).toBe(280);
         expect(nodes.find((n) => n.id === 'draft')?.data.initial).toBe(true);
         expect(nodes.find((n) => n.id === 'review')?.data.initial).toBe(false);
+    });
+
+    it('leaves a lane between adjacent columns wide enough for an edge label', () => {
+        const { nodes } = layoutBlueprint(lifecycle);
+        const draft = nodes.find((n) => n.id === 'draft')!;
+        const review = nodes.find((n) => n.id === 'review')!;
+        expect(review.position.x - (draft.position.x + NODE_WIDTH)).toBeGreaterThanOrEqual(120);
     });
 
     it('maps transitions to glyphed edges (🔒 guarded, ⚡ effect)', () => {

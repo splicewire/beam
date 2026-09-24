@@ -26,7 +26,13 @@ export type GraphEdge = {
     hasEffect: boolean;
 };
 
-const X_GAP = 200;
+/**
+ * Column pitch = the rendered node width ({@link NODE_WIDTH}) plus a lane wide enough for an edge
+ * label (`🔒⚡ send_legal` at 11px is ~100px). At a 200px pitch the 150px default node left a 50px
+ * lane, so labels were clipped by or drawn over the neighbouring nodes.
+ */
+export const NODE_WIDTH = 150;
+const X_GAP = NODE_WIDTH + 130;
 const Y_GAP = 90;
 
 /**
