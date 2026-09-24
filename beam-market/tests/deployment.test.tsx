@@ -43,7 +43,7 @@ function row(deployment: InstalledExtension["deployment"], overrides: Partial<In
   };
 }
 
-function mount(installed: InstalledExtension[]) {
+function mount(installed: InstalledExtension[], can?: (ability: string) => boolean) {
   const client = {
     getInstalled: vi.fn(async () => installed),
   } as unknown as ExtensionsClient;
@@ -54,7 +54,7 @@ function mount(installed: InstalledExtension[]) {
 
   const Wrapper = ({ children }: { children: ReactNode }) => (
     <QueryClientProvider client={queryClient}>
-      <ExtensionsProvider services={{ client, notify: () => {} }}>
+      <ExtensionsProvider services={{ client, notify: () => {}, can }}>
         {children}
       </ExtensionsProvider>
     </QueryClientProvider>
@@ -194,5 +194,41 @@ describe("deployment state on the Installed tab", () => {
     expect(
       screen.getByText(/composer remove splicewire\/beam-extension-demo/),
     ).toBeTruthy();
+  });
+});
+
+describe("installed-row actions follow the abilities the server checks", () => {
+  // RefreshInstalledExtension declares installed-extensions.refresh and RemoveInstalledExtension declares
+  // installed-extensions.remove. A member saw both buttons enabled and was refused with 403 (ux-demo screenshot
+  // review, replay 5; 95024bf gated only Install).
+  const pending = {
+    state: "instructed",
+    package: "splicewire/beam-extension-demo",
+    requestedVersion: "2.0.0",
+    detectedVersion: "1.0.0",
+    lastVerifiedVersion: "1.0.0",
+    lastVerifiedAt: "2026-09-12T00:00:00Z",
+    notes: null,
+    instructions: ["composer require splicewire/beam-extension-demo:2.0.0"],
+    error: null,
+  };
+
+  it("disables Update, Remove and Check again, with the reason, when the host denies them", async () => {
+    mount([row(pending, { updateAvailable: true, latestVersion: "2.0.0" })], () => false);
+
+    const update = (await screen.findByRole("button", { name: /Update/ })) as HTMLButtonElement;
+    const remove = screen.getByRole("button", { name: /Remove/ }) as HTMLButtonElement;
+    expect(update.disabled).toBe(true);
+    expect(remove.disabled).toBe(true);
+    expect(screen.queryByRole("button", { name: /Check again/ })).toBeNull();
+    expect(screen.getByText(/don't have permission to update or remove/i)).toBeTruthy();
+  });
+
+  it("leaves them enabled when the host grants them or says nothing", async () => {
+    mount([row(pending, { updateAvailable: true, latestVersion: "2.0.0" })]);
+
+    const update = (await screen.findByRole("button", { name: /Update/ })) as HTMLButtonElement;
+    expect(update.disabled).toBe(false);
+    expect((screen.getByRole("button", { name: /Remove/ }) as HTMLButtonElement).disabled).toBe(false);
   });
 });

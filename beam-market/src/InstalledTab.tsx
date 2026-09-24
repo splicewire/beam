@@ -7,6 +7,7 @@ import {
 } from "./hooks";
 import { DeploymentBadge, DeploymentPanel } from "./DeploymentPanel";
 import { EntitlementPanel } from "./EntitlementPanel";
+import { useExtensionsServices } from "./provider";
 import { TrustBadge } from "./TrustBadge";
 import type { InstalledExtension } from "./types";
 
@@ -18,6 +19,10 @@ const KIND_LABELS: Record<string, string> = {
 function InstalledRow({ installed }: { installed: InstalledExtension }) {
   const update = useUpdateInstalledExtension();
   const remove = useRemoveInstalledExtension();
+  // The abilities RefreshInstalledExtension and RemoveInstalledExtension declare; ask the host first (see `can`).
+  const { can } = useExtensionsServices();
+  const mayRefresh = can?.("installed-extensions.refresh") ?? true;
+  const mayRemove = can?.("installed-extensions.remove") ?? true;
 
   return (
     // A stable handle for the row, because everything the deployment honesty rule is about — the
@@ -59,7 +64,7 @@ function InstalledRow({ installed }: { installed: InstalledExtension }) {
           <Button
             variant="outline"
             size="sm"
-            disabled={update.isPending}
+            disabled={!mayRefresh || update.isPending}
             onClick={() => update.mutate(installed.installId)}
           >
             <RefreshCw className="size-3.5" aria-hidden="true" />
@@ -69,13 +74,18 @@ function InstalledRow({ installed }: { installed: InstalledExtension }) {
         <Button
           variant="ghost"
           size="sm"
-          disabled={remove.isPending}
+          disabled={!mayRemove || remove.isPending}
           onClick={() => remove.mutate(installed.installId)}
         >
           <Trash2 className="size-3.5" aria-hidden="true" />
           Remove
         </Button>
       </div>
+      {(!mayRefresh || !mayRemove) && (
+        <p className="w-full basis-full text-sm text-muted-foreground">
+          You don't have permission to update or remove extensions on this site.
+        </p>
+      )}
       {/* Full-width, below the row: the CLI step the operator still owes, the observed failure,
           and the retained deployment receipt. `Check again` is the same `refresh` op the Update
           button uses — re-probing IS the documented retry. */}
@@ -83,7 +93,7 @@ function InstalledRow({ installed }: { installed: InstalledExtension }) {
         <DeploymentPanel
           installed={installed}
           rechecking={update.isPending}
-          onRecheck={() => update.mutate(installed.installId)}
+          onRecheck={mayRefresh ? () => update.mutate(installed.installId) : undefined}
         />
         {/* ux-demo-convergence G5 — a PAID listing's deployment step needs a credential, and this
             is where the buyer reads their own. Present only when the server projected an
