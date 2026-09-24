@@ -29,3 +29,24 @@ it('shows the deny-by-default effective-grant readout for a floored request', as
     await waitFor(() => expect(screen.getByText('Fetch enrichment')).toBeTruthy());
     expect(screen.getAllByText(/net: none/).length).toBeGreaterThan(0);
 });
+
+it('says there are no transforms yet instead of leaving the list blank', async () => {
+    render(
+        <MockTransformsProvider config={{ transforms: [] }}>
+            <RunnerTransformEditor />
+        </MockTransformsProvider>,
+    );
+
+    await waitFor(() => expect(screen.getByText('No transforms yet')).toBeTruthy());
+});
+
+it('drops the empty-state prompt once transforms exist', async () => {
+    render(
+        <MockTransformsProvider config={{ transforms: SAMPLE_TRANSFORMS }}>
+            <RunnerTransformEditor />
+        </MockTransformsProvider>,
+    );
+
+    await waitFor(() => expect(screen.getByText('Shape payload')).toBeTruthy());
+    expect(screen.queryByText('No transforms yet')).toBeNull();
+});

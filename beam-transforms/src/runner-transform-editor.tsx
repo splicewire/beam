@@ -81,6 +81,14 @@ export function RunnerTransformEditor() {
                     scoped sandbox.
                 </p>
                 {isLoading && <p className="text-sm text-muted-foreground">Loading…</p>}
+                {!isLoading && transforms.length === 0 && (
+                    <div className="rounded-md border border-dashed p-4 text-sm">
+                        <p className="font-medium">No transforms yet</p>
+                        <p className="mt-1 text-muted-foreground">
+                            Write your first one in the editor, then save it to list it here.
+                        </p>
+                    </div>
+                )}
                 <ul className="space-y-2">
                     {transforms.map((t) => (
                         <li key={t.id}>
