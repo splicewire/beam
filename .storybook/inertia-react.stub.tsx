@@ -209,10 +209,11 @@ export function Form({
         >
             {/* The real `disableWhileProcessing` disables every native control in the form while a
              *  submit is in flight — some packaged pages (`auth/register`) rely on it rather than
-             *  wiring `disabled={processing}` on their own submit button. A borderless `<fieldset>`
-             *  reproduces that without changing layout. */}
+             *  wiring `disabled={processing}` on their own submit button. A `display: contents`
+             *  `<fieldset>` reproduces that without changing layout (the form's own flex gap still
+             *  reaches its children). */}
             {disableWhileProcessing ? (
-                <fieldset disabled={processing} style={{ border: 0, margin: 0, padding: 0 }}>
+                <fieldset disabled={processing} style={{ display: 'contents', border: 0, margin: 0, padding: 0 }}>
                     {body}
                 </fieldset>
             ) : (
@@ -272,7 +273,33 @@ export function useForm<T extends Record<string, unknown>>(initial: T = {} as T)
 export function setLayoutProps(_props: Record<string, unknown>) {}
 
 // --- Inert stubs for the rest of the surface — a stray import must still resolve. ---
-export const Link = (props: { children?: ReactNode }) => props.children ?? null;
+/** `<Link>` renders the real package's element — an `<a>` carrying `className`/`href`/aria — so a
+ *  story shows the link's own spacing, size and underline. Inertia-only visit options are dropped;
+ *  a click is prevented so a story never navigates the preview iframe. */
+export const Link = ({
+    children,
+    href,
+    method: _method,
+    as: _as,
+    data: _data,
+    headers: _headers,
+    preserveScroll: _preserveScroll,
+    preserveState: _preserveState,
+    replace: _replace,
+    only: _only,
+    except: _except,
+    prefetch: _prefetch,
+    cacheFor: _cacheFor,
+    ...rest
+}: { children?: ReactNode; href?: string | { url: string } } & Record<string, unknown>) => (
+    <a
+        {...(rest as Record<string, unknown>)}
+        href={typeof href === 'string' ? href : href?.url}
+        onClick={(event) => event.preventDefault()}
+    >
+        {children}
+    </a>
+);
 export const App = (props: { children?: ReactNode }) => props.children ?? null;
 export const router = { visit() {}, get() {}, post() {}, on: () => () => {}, init() {} };
 export const usePoll = () => ({});

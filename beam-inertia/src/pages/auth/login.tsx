@@ -119,13 +119,13 @@ export default function Login() {
             )}
 
             {demoAccounts.length > 0 && (
-                <div className="mt-2 flex flex-col gap-3">
+                <div className="mt-8 flex flex-col gap-3">
                     <div className="relative text-center text-xs text-muted-foreground uppercase">
                         <span className="relative z-10 bg-background px-2">
                             Or try a demo account
                         </span>
                         <span
-                            className="absolute inset-x-0 top-1/2 border-t"
+                            className="absolute inset-x-0 top-1/2 border-t border-border"
                             aria-hidden
                         />
                     </div>
