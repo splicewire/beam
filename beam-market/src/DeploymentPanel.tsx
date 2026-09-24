@@ -92,7 +92,7 @@ export function DeploymentPanel({
           )}
 
           {instructions.length > 0 && (
-            <pre className="mt-2 overflow-x-auto rounded bg-background p-2 text-xs leading-relaxed">
+            <pre className="mt-2 whitespace-pre-wrap break-all rounded bg-background p-2 text-xs leading-relaxed">
               <code>{instructions.join("\n")}</code>
             </pre>
           )}

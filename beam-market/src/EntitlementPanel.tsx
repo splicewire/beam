@@ -51,7 +51,7 @@ export function EntitlementPanel({
           </p>
 
           {entitlement.registryUrl && (
-            <pre className="mt-2 overflow-x-auto rounded bg-background p-2 text-xs leading-relaxed">
+            <pre className="mt-2 whitespace-pre-wrap break-all rounded bg-background p-2 text-xs leading-relaxed">
               <code>
                 {[
                   `composer config repositories.${repositoryKey} composer ${entitlement.registryUrl}`,

@@ -79,7 +79,8 @@ export function ExtensionDetailSheet({
         {data && (
           <>
             <SheetHeader>
-              <div className="flex items-start justify-between gap-2">
+              {/* pr-8 keeps the badge clear of the sheet's absolutely-placed close button. */}
+              <div className="flex items-start justify-between gap-2 pr-8">
                 <SheetTitle>{data.name}</SheetTitle>
                 {data.requiresSplicewire && <RequiresSplicewireBadge />}
               </div>
