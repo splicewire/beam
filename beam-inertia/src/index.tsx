@@ -63,11 +63,10 @@ export function beamInertiaOptions(config: BeamInertiaConfig = {}) {
      * in `./pages` and a package-contributed page is by definition not there.
      */
     resolve: resolveBeamPage,
+    // No prototype case here. The dev-only prototype host page declares its own empty `layout`,
+    // which Inertia prefers over this callback. Naming that page here put its marker into every
+    // production bundle and tripped `beam-verify-prototype-boundary` (prototype-boundary.test.ts).
     layout: (name: string) => {
-      if (name === "_prototype") {
-        return null;
-      }
-
       switch (true) {
         // The OS-shell desktop is fully self-chromed (menu bar + dock + windows) — no wrapping layout,
         // never (re-)wrapped by the persistent OsLayout overlay either (it mounts its OWN operator
