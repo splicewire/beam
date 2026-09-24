@@ -7,6 +7,14 @@
 @source '../';
 
 /*
+ * …which also excludes the linked `@schemastud/*` component sources, so a utility used ONLY
+ * inside one of them (the shared Switch's `data-[state=checked]:translate-x-4`, for one) was never
+ * generated and the component rendered half-styled. A host injects one `@source` per family
+ * package (laravel-beam-starter's app.css); the workbench mirrors that here.
+ */
+@source '../node_modules/@schemastud/*/src';
+
+/*
  * ─────────────────────────────────────────────────────────────────────────────
  * Workbench token layer (seeded, self-contained).
  *
