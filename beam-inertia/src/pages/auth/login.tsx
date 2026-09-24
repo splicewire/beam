@@ -56,12 +56,12 @@ export default function Login() {
                             </div>
 
                             <div className="grid gap-2">
-                                <div className="flex items-center">
+                                <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
                                     <Label htmlFor="password">Password</Label>
                                     {canResetPassword && (
                                         <TextLink
                                             href="/forgot-password"
-                                            className="ml-auto text-sm"
+                                            className="ml-auto whitespace-nowrap text-sm"
                                             tabIndex={5}
                                         >
                                             Forgot your password?
@@ -113,7 +113,7 @@ export default function Login() {
             </Form>
 
             {status && (
-                <div className="mb-4 text-center text-sm font-medium text-green-600">
+                <div className="mb-4 text-center text-sm font-medium text-primary">
                     {status}
                 </div>
             )}

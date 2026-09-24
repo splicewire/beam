@@ -9,8 +9,10 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
+        // Disabled takes the muted surface and ink, not the base `opacity-50`: halving the bright
+        // dark-scheme primary and its dark label over a dark canvas was unreadable (Save while processing).
         default:
-          "bg-primary text-primary-foreground shadow-xs hover:bg-primary/90",
+          "bg-primary text-primary-foreground shadow-xs hover:bg-primary/90 disabled:opacity-100 disabled:bg-muted disabled:text-muted-foreground disabled:shadow-none",
         destructive:
           "bg-destructive text-white shadow-xs hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40",
         outline:
