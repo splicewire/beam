@@ -9,13 +9,18 @@ import { readMeta } from './mapEvent';
  * `@source`-scans the package dist), so no bespoke stylesheet travels.
  */
 
-/** Status → a dot colour utility (editorial cell status; a virtual occurrence ⇒ `upcoming`). */
-const STATUS_TONE: Record<string, string> = {
+/**
+ * Status → a dot utility (editorial cell status; a virtual occurrence ⇒ `upcoming`). `upcoming` is
+ * a hollow ring in the label's own ink (`border-current`) rather than a pale fill: a `bg-slate-300`
+ * dot was all but invisible on a light surface (beam VR pass 2), and the ring reads as "not yet
+ * materialized" on a filled bar, a dashed chip and the page alike.
+ */
+export const STATUS_TONE: Record<string, string> = {
     approved: 'bg-emerald-500',
     generated: 'bg-sky-500',
     needs_review: 'bg-amber-500',
     stale: 'bg-slate-400',
-    upcoming: 'bg-slate-300',
+    upcoming: 'border border-current bg-transparent',
 };
 
 /** renderEventBadge (PRD §4.2): series Repeat badge, Kind chrome (title), status dot. */
@@ -24,19 +29,28 @@ export function EventBadge({ event }: { event: FoundationCalendarEvent }) {
     const isSeries = Boolean(meta.seriesRef);
     return (
         <span className="flex w-full min-w-0 items-center gap-1" title={meta.kind ?? undefined}>
+            {/* `rbc-event-glyph` / `rbc-event-title` are big-calendar theme hooks: at narrow widths the
+                theme wraps the title and sets the glyphs aside so a ~45px month cell stays legible. */}
             <span
-                className={`inline-block size-1.5 shrink-0 rounded-full ${STATUS_TONE[meta.status] ?? 'bg-slate-400'}`}
+                className={`rbc-event-glyph inline-block size-1.5 shrink-0 rounded-full ${STATUS_TONE[meta.status] ?? 'bg-slate-400'}`}
+                data-status={meta.status}
                 aria-hidden
             />
-            {isSeries ? <Repeat className="size-3 shrink-0 opacity-70" aria-label="series occurrence" /> : null}
-            <span className="truncate">{event.title}</span>
+            {isSeries ? (
+                <Repeat className="rbc-event-glyph size-3 shrink-0 opacity-70" aria-label="series occurrence" />
+            ) : null}
+            <span className="rbc-event-title min-w-0 truncate">{event.title}</span>
         </span>
     );
 }
 
-/** renderLaneHeader (PRD §4.2): the channel label per lane. */
+/** renderLaneHeader (PRD §4.2): the channel label per lane, as a legend chip. */
 export function LaneHeader({ lane }: { lane: LaneAxis }) {
-    return <span className="text-xs font-medium text-muted-foreground">{lane.label}</span>;
+    return (
+        <span className="inline-flex items-center rounded-full border border-border bg-card px-2.5 py-0.5 text-xs font-medium text-foreground">
+            {lane.label}
+        </span>
+    );
 }
 
 export interface FacetState {

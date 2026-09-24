@@ -23,11 +23,12 @@ import { EventBadge, Filters, LaneHeader, type FacetState } from './chrome';
  * Ambient token + light⊗dark are wired globally by the beam workbench (ticket 23's `.storybook`
  * preview + `colorScheme` toolbar). **HONEST HEX NOTE (mirrors ticket 22 + ticket 15's Frame
  * hex):** most of this chrome is semantic and re-skins under `.dark` — the badge title,
- * `LaneHeader` (`text-muted-foreground`), and the facet chips (`border-border`/`bg-foreground`/
+ * `LaneHeader` (a `border-border`/`bg-card`/`text-foreground` chip), and the facet chips (`border-border`/`bg-foreground`/
  * `text-background`/`bg-muted`/`bg-background`). The ONE exception is `EventBadge`'s status DOT:
  * `chrome.tsx#STATUS_TONE` maps each status to a fixed-lightness Tailwind palette utility
- * (`bg-emerald-500`/`bg-sky-500`/`bg-amber-500`/`bg-slate-400`/`bg-slate-300`), NOT a semantic
- * token — so the status dots read identically in light and dark. That is a pre-existing property
+ * (`bg-emerald-500`/`bg-sky-500`/`bg-amber-500`/`bg-slate-400`), NOT a semantic
+ * token — so the status dots read identically in light and dark. `upcoming` is the exception to the
+ * exception: a hollow `border-current` ring in the label's own ink. That is a pre-existing property
  * (token-debt for ticket 32), recorded here, not fixed in this ticket.
  */
 
@@ -90,7 +91,7 @@ export const AllStatuses: Story = {
     ),
 };
 
-/** The lane header label (semantic `text-muted-foreground` — re-skins under dark). */
+/** The lane header legend chip (semantic `border-border`/`bg-card`/`text-foreground` — re-skins under dark). */
 export const Lane: Story = {
     render: () => <LaneHeader lane={{ id: 'lane-1', label: '#marketing' } as never} />,
 };
