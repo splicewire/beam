@@ -291,3 +291,27 @@ describe('OperatorDesk — the orb yields to a modal', () => {
         }
     });
 });
+
+describe('OperatorDesk — a minimized window chip stays legible', () => {
+    // A minimized chip ("Page · home/docs") had the muted ink AND opacity .55 on the whole button, about 27%
+    // effective alpha on the dark taskbar (~2.2:1), so its label was dark-on-dark (overnight-polish 03).
+    // The dimming marks the state on the glyph; the label keeps the muted ink at full opacity.
+    it('dims the glyph of a minimized chip, not its label', () => {
+        const style = document.createElement('style');
+        style.textContent = OPERATOR_DESK_CSS;
+        document.head.appendChild(style);
+        const bar = document.createElement('div');
+        bar.className = 'op-taskbar';
+        bar.innerHTML = '<button class="minned"><span class="glyph"></span>Page · home/docs</button>';
+        document.body.appendChild(bar);
+
+        try {
+            const chip = bar.querySelector('button')!;
+            expect(getComputedStyle(chip).opacity).not.toBe('0.55');
+            expect(getComputedStyle(chip.querySelector('.glyph')!).opacity).toBe('0.55');
+        } finally {
+            bar.remove();
+            style.remove();
+        }
+    });
+});

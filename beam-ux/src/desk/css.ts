@@ -55,7 +55,7 @@ export const OPERATOR_DESK_CSS = `
 .op-taskbar button{display:flex;align-items:center;gap:7px;border:none;background:none;color:var(--op-fg-muted, var(--beam-ink-muted, rgba(220, 237, 232, .5)));cursor:pointer;font-family:var(--op-font-mono, ui-monospace, monospace);font-size:11px;letter-spacing:.06em;padding:8px 12px;border-radius:9px}
 .op-taskbar button:hover{color:var(--op-fg, var(--beam-ink, #dcede8));background:rgba(255,255,255,.08)}
 .op-taskbar button.focused{color:var(--op-fg, var(--beam-ink, #dcede8));background:rgba(255,255,255,.12)}
-.op-taskbar button.minned{opacity:.55}
+.op-taskbar button.minned .glyph{opacity:.55}
 .op-taskbar .glyph{width:9px;height:9px;border-radius:30%;flex:none}
 .op-orb{position:absolute;right:16px;bottom:16px;display:flex;align-items:center;gap:9px;padding:9px 15px;border-radius:13px;border:1px solid rgba(255,255,255,.1);background:color-mix(in srgb, var(--op-surface-raised, var(--beam-paper-raised, #0e1b18)) 94%, transparent);backdrop-filter:blur(14px);color:var(--op-fg, var(--beam-ink, #dcede8));cursor:pointer;font-family:var(--op-font-mono, ui-monospace, monospace);font-size:11px;letter-spacing:.14em;text-transform:uppercase;box-shadow:0 18px 55px -14px rgba(0,0,0,.6)}
 .op-orb:hover{border-color:var(--op-edge, var(--beam-line, #1b2e2a))}
