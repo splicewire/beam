@@ -233,6 +233,37 @@ describe("ExtensionsCatalog — isolation mount (no Laravel)", () => {
     expect(screen.queryByText(/isn.t connected to Splicewire/)).toBeNull();
   });
 
+  it("does not tell a site with a connected market that it isn't connected", async () => {
+    // overnight-ui 07: after a federated market connects ("Connected, 1 listing synced"), the Browse
+    // banner still said "This site isn't connected to Splicewire". `connected` is only the Splicewire
+    // ACCOUNT pairing (it gates "Requires Splicewire" listings); `markets` is where the catalog comes
+    // from. They stay separate facts, so the banner keeps its purpose but must not read as "offline".
+    const client = fakeClient({
+      getConnectionStatus: vi.fn(async () => ({
+        ...DISCONNECTED_STATUS,
+        markets: [
+          {
+            id: "conn-1",
+            marketUrl: "https://market.example.test",
+            marketName: "Splicewire Market",
+            status: "connected",
+            registryUrl: "https://market.example.test/registry",
+            registryUsername: "composer",
+            lastSyncedAt: "2026-09-12T12:00:00Z",
+            lastSyncError: null,
+            listingCount: 1,
+            credentialHint: "9f2c",
+            createdAt: "2026-09-12T11:00:00Z",
+          },
+        ],
+      })),
+    });
+    mount(<ExtensionsCatalog onSelect={() => {}} />, client);
+
+    expect(await screen.findByText(/No Splicewire account connected/)).toBeTruthy();
+    expect(screen.queryByText(/isn.t connected to Splicewire/)).toBeNull();
+  });
+
   it("routes card selection to the injected onSelect callback", async () => {
     const client = fakeClient();
     const onSelect = vi.fn();

@@ -159,7 +159,9 @@ export function ExtensionsCatalog({
   return (
     <div className="flex flex-col gap-6">
       {connectionStatus && !connectionStatus.connected && (
-        <DisconnectedBanner />
+        <DisconnectedBanner
+          marketConnected={(connectionStatus.markets ?? []).some((market) => market.status === "connected")}
+        />
       )}
 
       <div className="flex flex-wrap items-center gap-2">
