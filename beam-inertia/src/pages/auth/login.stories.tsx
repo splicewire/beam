@@ -92,6 +92,8 @@ export const Processing: Story = {
 /** Keyboard interaction: tab from email into password without a mouse. */
 export const KeyboardNavigation: Story = {
     render: () => <LoginStage />,
+    // The named state IS the keyboard focus ring on Password; VR otherwise blurs before capture.
+    parameters: { vr: { keepFocus: true } },
     play: async ({ canvasElement }) => {
         const canvas = within(canvasElement);
         const email = await canvas.findByLabelText('Email address');
@@ -104,5 +106,5 @@ export const KeyboardNavigation: Story = {
 
 export const NarrowViewport: Story = {
     render: () => <LoginStage />,
-    parameters: { viewport: { defaultViewport: 'mobile1' } },
+    globals: { viewport: { value: 'mobile1', isRotated: false } },
 };

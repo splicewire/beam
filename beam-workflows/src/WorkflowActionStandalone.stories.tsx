@@ -54,4 +54,8 @@ const meta = { title: 'Workflows/WorkflowActionStandalone', component: Standalon
     parameters: { layout: 'padded' } } satisfies Meta<typeof StandaloneConsumer>;
 export default meta;
 type Story = StoryObj<typeof meta>;
-export const LiveFixture: Story = {};
+/**
+ * Reads the loopback fixture at 127.0.0.1:8767, so it is NOT hermetic: excluded from VR, where a
+ * baseline would record whatever that server answered (usually "Failed to fetch") on capture day.
+ */
+export const LiveFixture: Story = { parameters: { vr: { disable: true } } };

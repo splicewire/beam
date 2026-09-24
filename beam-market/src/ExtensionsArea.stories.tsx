@@ -161,6 +161,8 @@ type StageState =
   | "loading"
   // Paid, not entitled — the Buy control is the acquisition path.
   | "paid"
+  // Paid, checkout in flight — the purchase never settles, so Buy stays pending.
+  | "paid-purchasing"
   // Paid, purchase rejected by the payment rail — failure + retry on the surface.
   | "paid-declined"
   // Paid, bought, installed — the credential the deploy step needs.
@@ -182,7 +184,7 @@ function Stage({
   const [cache] = useState(
     () => new QueryClient({ defaultOptions: { queries: { retry: false } } }),
   );
-  const paidStates: StageState[] = ["paid", "paid-declined", "entitled"];
+  const paidStates: StageState[] = ["paid", "paid-purchasing", "paid-declined", "entitled"];
   const paid = paidStates.includes(state);
   const federatedStates: StageState[] = [
     "federated",
@@ -224,6 +226,8 @@ function Stage({
           : [installed],
     install: async () => installed,
     purchase: async () => {
+      // In flight: a checkout that has not answered yet — the Buy control's pending state.
+      if (state === "paid-purchasing") return new Promise<never>(() => {});
       // The declined path rejects the way the server does (402 with the rail's own code), so the
       // story exercises the SAME branch the real client takes — never a story-only failure flag.
       if (state === "paid-declined") {
@@ -293,15 +297,18 @@ export const PaidNotEntitled: Story = {
   },
 };
 
-/** Purchasing: the Buy control is pending while the checkout is in flight. */
+/**
+ * Purchasing: the Buy control is pending while the checkout is in flight. The stage's purchase
+ * never settles, so the frame holds the in-flight state rather than racing on to Purchased.
+ */
 export const Purchasing: Story = {
-  render: () => <Stage state="paid" />,
+  render: () => <Stage state="paid-purchasing" />,
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
     await userEvent.click(await canvas.findByText("Waveform pro"));
     const sheet = within(document.body);
     await userEvent.click(await sheet.findByRole("button", { name: "Buy $19.00" }));
-    await expect(await sheet.findByText(/purchased|purchasing/i)).toBeInTheDocument();
+    await expect(await sheet.findByRole("button", { name: "Purchasing…" })).toBeDisabled();
   },
 };
 
@@ -412,6 +419,10 @@ export const MarketSyncFailed: Story = {
   render: () => <Stage state="market-unreachable" />,
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
+    // The catalog it last saw is still there — "sync failed" is not "catalog empty". Checked
+    // FIRST, on the default Browse tab, so the play ends on the Market tab: the frame is the
+    // sync error this story is named for, not a copy of FederatedCatalog.
+    await expect(await canvas.findByText("Demo Notes")).toBeInTheDocument();
     await userEvent.click(await canvas.findByRole("button", { name: "Market" }));
     await expect(await canvas.findByTestId("market-connection")).toHaveAttribute(
       "data-status",
@@ -420,8 +431,5 @@ export const MarketSyncFailed: Story = {
     await expect(
       await canvas.findByTestId("market-connection-error"),
     ).toHaveTextContent(/Could not reach/i);
-    // The catalog it last saw is still there — "sync failed" is not "catalog empty".
-    await userEvent.click(await canvas.findByRole("button", { name: "Browse" }));
-    await expect(await canvas.findByText("Demo Notes")).toBeInTheDocument();
   },
 };

@@ -68,5 +68,5 @@ export const Processing: Story = {
 
 export const NarrowViewport: Story = {
     render: () => <SecurityStage />,
-    parameters: { viewport: { defaultViewport: 'mobile1' } },
+    globals: { viewport: { value: 'mobile1', isRotated: false } },
 };

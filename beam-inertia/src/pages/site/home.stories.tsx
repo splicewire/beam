@@ -60,5 +60,5 @@ export const DefaultTree: Story = {
 
 export const NarrowViewport: Story = {
     render: () => <SiteHomeStage entry={null} />,
-    parameters: { viewport: { defaultViewport: 'mobile1' } },
+    globals: { viewport: { value: 'mobile1', isRotated: false } },
 };

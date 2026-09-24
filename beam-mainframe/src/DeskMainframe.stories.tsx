@@ -264,10 +264,8 @@ const CollapsedRailMainframe: Mainframe = ({ slots, ctx }) => (
 
 /** The rail-collapsed shell on a mobile viewport. */
 export const MobileRailCollapsed: Story = {
-    parameters: {
-        viewport: { defaultViewport: 'mobile1' },
-        layout: 'fullscreen',
-    },
+    globals: { viewport: { value: 'mobile1', isRotated: false } },
+    parameters: { layout: 'fullscreen' },
     render: () => {
         const contributions: FixtureContribution[] = [
             { slot: 'topBar.lead', key: 'title', node: topBarLeadFill },

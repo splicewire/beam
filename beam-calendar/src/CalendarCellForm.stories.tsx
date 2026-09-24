@@ -126,16 +126,23 @@ export const CreateRelease: Story = {
     },
 };
 
-/** variant = release + state = edit (an existing resident cell — the Kind is pinned, Save shown). */
+/**
+ * variant = release + state = edit (an existing resident cell — the Kind is pinned, Save shown), on
+ * a ONE-channel calendar — the common case, where the Channel picker stays hidden. (On the demo
+ * corpus's two channels this was pixel-identical to `MultiChannel`.)
+ */
 export const EditRelease: Story = {
     render: () => (
-        <CalendarCellFormProvider services={services()}>
+        <CalendarCellFormProvider
+            services={services({ client: demoClient({ listCells: () => Promise.resolve([cell({ id: 'c1' })]) }) })}
+        >
             <CalendarCellForm compositionId="cal-demo" initialCell={cell()} onSaved={() => {}} />
         </CalendarCellFormProvider>
     ),
     play: async ({ canvasElement }) => {
         const canvas = within(canvasElement);
         await expect(await canvas.findByRole('button', { name: 'Save' })).toBeInTheDocument();
+        await expect(canvas.queryByText('Channel')).not.toBeInTheDocument();
     },
 };
 
@@ -160,6 +167,9 @@ export const MultiChannel: Story = {
             <CalendarCellForm compositionId="cal-demo" initialCell={cell()} onSaved={() => {}} />
         </CalendarCellFormProvider>
     ),
+    play: async ({ canvasElement }) => {
+        await expect(await within(canvasElement).findByText('Channel')).toBeInTheDocument();
+    },
 };
 
 /**
@@ -170,6 +180,9 @@ export const MultiChannel: Story = {
  * a cell record as `formData`, consults the resolver and mounts the bespoke form (the resolver IS the
  * lookup that replaced the app's old `isFriendlyCalendarKind` branch). The pinned "One-off release"
  * chip + Save button prove the resolved form rendered, not a generic schema dump.
+ *
+ * Its baseline is INTENTIONALLY pixel-identical to `MultiChannel` (same cell, same two-channel
+ * corpus, mounted directly): identity with the direct mount is exactly what this story asserts.
  */
 export const ResolvedThroughFrame: Story = {
     render: () => (

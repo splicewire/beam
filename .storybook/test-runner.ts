@@ -10,9 +10,19 @@ import { applyStoryViewport } from './viewport';
  *
  * TWO AXIS KINDS (treatment-axes ticket 13):
  *
- *   • AMBIENT — `colorScheme` = light AND dark, on EVERY story. `.dark` is a pure-CSS scheme
- *     flip (the seed in preview.css overrides the semantic tokens, no React re-render), so we
- *     toggle `.dark` on the preview root and re-screenshot.
+ *   • AMBIENT — `colorScheme` = light AND dark, on every story that does not force one. `.dark`
+ *     is a pure-CSS scheme flip (the seed in preview.css overrides the semantic tokens, no React
+ *     re-render), so we toggle `.dark` on the preview root and re-screenshot. A story that pins
+ *     `globals: { colorScheme }` is captured once, in its own scheme.
+ *
+ * VIEWPORT: Storybook 10 reads a story's viewport from `globals: { viewport: { value, isRotated } }`
+ * (the pre-9 `parameters.viewport.defaultViewport` form is ignored by both the UI and this runner);
+ * `preVisit` applies it. Captures are full-page, so a story taller than its viewport is whole.
+ *
+ * TIMING: the runner's `__test` resolves on STORY_FINISHED, i.e. after `play` has settled, and
+ * `postVisit` runs after that. A play that must reach a state therefore has to WAIT for it
+ * (`findBy*` / `waitFor`) and assert it; a fire-and-forget click that finds nothing passes silently
+ * and leaves the baseline on the pre-play frame.
  *
  *   • STRUCTURAL (ticket 36 authored the cascade; ticket 37 proves it reaches pixels) —
  *     `canvas` ([data-canvas=flat|dotted] → `--canvas-bg`) and `density`
@@ -42,7 +52,17 @@ import { applyStoryViewport } from './viewport';
  * ENV NOTE: baselining is owner-env — the CI sandbox cannot launch Chromium for the runner.
  */
 
-type StructuralAxes = { canvas?: boolean; density?: boolean };
+/**
+ * Per-story VR controls, read from `parameters.vr`:
+ *
+ *   • `canvas` / `density` — opt in to the structural matrix (above).
+ *   • `disable` — no snapshot at all (the story still runs its smoke/play test). For a story that
+ *     is non-hermetic by design, e.g. one that reads a live loopback fixture: a baseline of it
+ *     would record whatever that server happened to answer (or "Failed to fetch") on capture day.
+ *   • `keepFocus` — skip the pre-snapshot blur, for a story whose NAMED state is a focus ring
+ *     (keyboard navigation). Everything else is blurred so a stray focus never lands in a baseline.
+ */
+type VrParameters = { canvas?: boolean; density?: boolean; disable?: boolean; keepFocus?: boolean };
 type Scheme = 'light' | 'dark';
 
 /**
@@ -61,8 +81,11 @@ type Scheme = 'light' | 'dark';
  * `parameters`/prop hack: any future animated or self-selecting story gets the same
  * determinism for free, and no story has to know VR mode exists.
  */
-async function freezeForSnapshot(page: Parameters<NonNullable<TestRunnerConfig['postVisit']>>[0]) {
-    await page.evaluate(() => {
+async function freezeForSnapshot(
+    page: Parameters<NonNullable<TestRunnerConfig['postVisit']>>[0],
+    keepFocus = false,
+) {
+    await page.evaluate((keepFocus) => {
         const styleId = '__vr-freeze-motion__';
         if (!document.getElementById(styleId)) {
             const style = document.createElement('style');
@@ -77,10 +100,18 @@ async function freezeForSnapshot(page: Parameters<NonNullable<TestRunnerConfig['
             `;
             document.head.appendChild(style);
         }
-        (document.activeElement as HTMLElement | null)?.blur();
+        if (!keepFocus) (document.activeElement as HTMLElement | null)?.blur();
         window.getSelection()?.removeAllRanges();
+    }, keepFocus);
+    // Web fonts and one painted frame after the root flip, so the capture is of the settled page.
+    await page.evaluate(async () => {
+        await document.fonts.ready;
+        await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
     });
 }
+
+/** Where baselines live; `VR_SNAPSHOTS_DIR` points a scratch run elsewhere without touching them. */
+const snapshotsDir = process.env.VR_SNAPSHOTS_DIR ?? '.tests/vr';
 
 const config: TestRunnerConfig = {
     async preVisit(page, context) {
@@ -99,7 +130,8 @@ const config: TestRunnerConfig = {
         // Capability-gated axes are opted in per story via `parameters.vr` (absent → ambient-only,
         // preserving every pre-ticket-37 baseline).
         const storyContext = await getStoryContext(page, context);
-        const vr = (storyContext.parameters?.vr ?? {}) as StructuralAxes;
+        const vr = (storyContext.parameters?.vr ?? {}) as VrParameters;
+        if (vr.disable) return;
         const canvasValues = vr.canvas ? (['flat', 'dotted'] as const) : ([undefined] as const);
         const densityValues = vr.density ? (['comfortable', 'compact'] as const) : ([undefined] as const);
 
@@ -120,13 +152,15 @@ const config: TestRunnerConfig = {
 
         const snapshot = async (scheme: Scheme, canvas?: string, density?: string) => {
             await applyRoot(scheme, canvas, density);
-            await freezeForSnapshot(page);
-            const image = await page.screenshot();
+            await freezeForSnapshot(page, vr.keepFocus);
+            // fullPage: a story taller than the viewport is captured whole, not cut at its fold
+            // (720px on the desktop default). A story that fits is the same image as before.
+            const image = await page.screenshot({ fullPage: true });
             const identifier = [scheme, canvas && `canvas-${canvas}`, density && `density-${density}`]
                 .filter(Boolean)
                 .join('--');
             expect(image).toMatchImageSnapshot({
-                customSnapshotsDir: '.tests/vr',
+                customSnapshotsDir: snapshotsDir,
                 customSnapshotIdentifier: `${context.id}--${identifier}`,
                 // A tiny, fixed pixel-count budget — NOT a percentage (a percentage threshold
                 // scales with image size, hiding more on bigger snapshots) — absorbs headless
@@ -141,7 +175,13 @@ const config: TestRunnerConfig = {
             });
         };
 
-        for (const scheme of ['light', 'dark'] as const) {
+        // A story that FORCES a scheme (`globals: { colorScheme: 'dark' }`) is captured once, in
+        // its own scheme: the ambient pass would otherwise flip it and record a duplicate of its
+        // light/dark sibling under a name that promises the opposite.
+        const forced = storyContext.storyGlobals?.colorScheme as Scheme | undefined;
+        const schemes: readonly Scheme[] = forced === 'light' || forced === 'dark' ? [forced] : ['light', 'dark'];
+
+        for (const scheme of schemes) {
             for (const canvas of canvasValues) {
                 for (const density of densityValues) {
                     await snapshot(scheme, canvas, density);

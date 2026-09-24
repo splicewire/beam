@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import { expect, userEvent, within } from 'storybook/test';
 import { WorkflowReactionForm } from './WorkflowReactionForm';
 
 const meta = {
@@ -54,11 +55,27 @@ export const DistributionCircuit: Story = {
             action_payload: { destination: id },
         }),
     },
+    // The Circuit branch is behind the follow-up select; without choosing it the frame is the
+    // default "Schedule another transition" form, identical to ExpireAfterPublication.
+    play: async ({ canvasElement }) => {
+        const canvas = within(canvasElement);
+        await userEvent.selectOptions(canvas.getByLabelText('Follow-up action'), 'circuit');
+        await userEvent.selectOptions(await canvas.findByLabelText('Circuit'), 'distribution');
+        await expect(canvas.getByLabelText('Circuit')).toHaveDisplayValue('Distribute publication');
+        await expect(canvas.getByRole('button', { name: 'Add follow-up' })).toBeEnabled();
+    },
 };
 export const RefusedSave: Story = {
     args: {
         onConfigure: async () => {
             throw new Error('Permission to configure this follow-up was revoked.');
         },
+    },
+    play: async ({ canvasElement }) => {
+        const canvas = within(canvasElement);
+        await userEvent.click(canvas.getByRole('button', { name: 'Add follow-up' }));
+        await expect(await canvas.findByRole('alert')).toHaveTextContent(
+            'Permission to configure this follow-up was revoked.',
+        );
     },
 };

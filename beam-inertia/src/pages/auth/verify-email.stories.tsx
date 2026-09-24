@@ -59,5 +59,5 @@ export const Processing: Story = {
 
 export const NarrowViewport: Story = {
     render: () => <VerifyEmailStage />,
-    parameters: { viewport: { defaultViewport: 'mobile1' } },
+    globals: { viewport: { value: 'mobile1', isRotated: false } },
 };

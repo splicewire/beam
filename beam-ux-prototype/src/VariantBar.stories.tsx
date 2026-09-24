@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
+import { expect, userEvent, within } from 'storybook/test';
 import { VariantBar } from './VariantBar';
 
 /**
@@ -50,10 +51,24 @@ export const CustomHint: Story = {
     args: { variants: VARIANTS, active: 'coexist', hint: 'permission tier', onSelect: () => {} },
 };
 
-/** Live selection — clicking a pill moves the active state. */
+/**
+ * Live selection from the KEYBOARD — the play tabs to the middle pill and presses Enter, so the frame
+ * is the moved active state WITH its focus ring. (Without a play it was a static copy of
+ * `FirstActive`; a mouse click would only reproduce `MiddleActive`.)
+ */
 export const Interactive: StoryObj = {
     render: () => {
         const [active, setActive] = useState('coexist');
         return <VariantBar variants={VARIANTS} active={active} onSelect={setActive} />;
+    },
+    parameters: { vr: { keepFocus: true } },
+    play: async ({ canvasElement }) => {
+        const canvas = within(canvasElement);
+        await userEvent.tab();
+        await userEvent.tab();
+        const middle = canvas.getByRole('button', { name: 'Blockdoc-first' });
+        await expect(middle).toHaveFocus();
+        await userEvent.keyboard('{Enter}');
+        await expect(middle).toHaveClass('bg-primary');
     },
 };

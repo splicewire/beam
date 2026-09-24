@@ -122,7 +122,12 @@ export const ReloadDeclined: Story = {
     },
 };
 
-/** Retry — declined first, captured second. The retry returns to the amount step, not a dead end. */
+/**
+ * Retry — declined first, and Try again returns to the amount step, not a dead end. The play stops
+ * on that returned amount step: the second, captured attempt ends on the same frame as
+ * `ReloadCaptured`, which is not what this story is named for (the captured second attempt is
+ * proven in `tests/commerce.test.tsx`, "retries after a decline and captures on the second attempt").
+ */
 export const ReloadRetriedAfterDecline: Story = {
     render: withProvider({
         wallet: WALLET_EMPTY,
@@ -136,9 +141,9 @@ export const ReloadRetriedAfterDecline: Story = {
         const sheet = within(document.body);
         await userEvent.click(await sheet.findByRole('button', { name: /pay & add credits/i }));
         await userEvent.click(await sheet.findByRole('button', { name: /try again/i }));
-        await userEvent.click(await sheet.findByRole('button', { name: /pay & add credits/i }));
 
-        await expect(await sheet.findByText('Credits added.')).toBeInTheDocument();
+        await expect(await sheet.findByRole('button', { name: /pay & add credits/i })).toBeEnabled();
+        await expect(sheet.queryByRole('alert')).not.toBeInTheDocument();
     },
 };
 

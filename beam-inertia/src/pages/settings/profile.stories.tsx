@@ -83,5 +83,5 @@ export const Confirmation: Story = {
 
 export const NarrowViewport: Story = {
     render: () => <ProfileStage />,
-    parameters: { viewport: { defaultViewport: 'mobile1' } },
+    globals: { viewport: { value: 'mobile1', isRotated: false } },
 };

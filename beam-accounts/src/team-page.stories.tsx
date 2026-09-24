@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { userEvent, within, expect } from "storybook/test";
 import { TeamPage } from "./team-page";
-import { makeTeamClient, MockTeamProvider, TEAM_INVITATIONS } from "./team-story-harness";
+import { makeTeamClient, MockTeamProvider, TEAM_INVITATIONS, TEAM_MEMBERS } from "./team-story-harness";
 const meta = {
   title: "Accounts/TeamPage",
   component: TeamPage,
@@ -10,12 +10,21 @@ const meta = {
 } satisfies Meta<typeof TeamPage>;
 export default meta;
 type Story = StoryObj<typeof meta>;
+/**
+ * The owner's view of a settled roster — members only, no outstanding invitations. The pending row
+ * is `InvitePending`'s state; with it here the two baselines were byte-identical.
+ */
 export const Owner: Story = {
   render: (args) => (
-    <MockTeamProvider>
+    <MockTeamProvider client={makeTeamClient(TEAM_MEMBERS, [])}>
       <TeamPage {...args} />
     </MockTeamProvider>
   ),
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await expect(await canvas.findByText(TEAM_MEMBERS[1].email)).toBeInTheDocument();
+    await expect(canvas.queryByText(TEAM_INVITATIONS[0].email)).not.toBeInTheDocument();
+  },
 };
 export const Member: Story = {
   args: { currentUserId: "member" },
@@ -47,7 +56,7 @@ export const Failed: Story = {
   ),
 };
 
-/** Invite pending — the default fixture already carries one unaccepted invitation row. */
+/** Invite pending — the default fixture's unaccepted invitation row, beside the members (cf. `Owner`). */
 export const InvitePending: Story = {
   render: (args) => (
     <MockTeamProvider>

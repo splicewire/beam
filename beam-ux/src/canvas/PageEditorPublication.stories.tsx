@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useEffect, useState } from 'react';
+import { expect, userEvent, waitFor, within } from 'storybook/test';
 import type { JsonDoc } from '../blockdoc/json.js';
 import type { EntryPublicationState, EntryVersion } from '../types.js';
 import { CanvasProvider } from './context.js';
@@ -179,14 +180,18 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-/** Let the dock's own promises settle before a `play` reads what they rendered. */
-const settle = () => new Promise((resolve) => setTimeout(resolve, 60));
-
-/** Click a dock button by its visible label, then let the state it triggers land. */
+/**
+ * Click a dock button by its visible label once the dock has mounted and the button is enabled.
+ *
+ * The dock only exists after the edit-mode broadcast lands, so a lookup at play start can find
+ * nothing; a play that silently clicked nothing left these stories' baselines showing the state
+ * BEFORE the one they are named for. Waiting for the button (and asserting the result, below) makes
+ * the final frame the named state or fails the story.
+ */
 async function click(root: HTMLElement, label: string): Promise<void> {
-    const button = Array.from(root.querySelectorAll('.pe-btn')).find((b) => b.textContent === label);
-    (button as HTMLElement | undefined)?.click();
-    await settle();
+    const button = await within(root).findByRole('button', { name: label });
+    await waitFor(() => expect(button).toBeEnabled());
+    await userEvent.click(button);
 }
 
 /** NO publication seam — the Save/Exit dock a host that has not mounted the operations still gets. */
@@ -207,6 +212,7 @@ export const DraftPending: Story = {
     args: { transport: transportFor(DRAFT_PENDING) },
     play: async ({ canvasElement }) => {
         await click(canvasElement, 'Save draft');
+        await expect(await within(canvasElement).findByText(/Draft pending/)).toBeVisible();
     },
 };
 
@@ -215,6 +221,8 @@ export const VersionsPanel: Story = {
     args: { transport: transportFor(DRAFT_PENDING) },
     play: async ({ canvasElement }) => {
         await click(canvasElement, 'Versions');
+        const panel = await within(canvasElement).findByRole('complementary', { name: 'Versions' });
+        await expect(await within(panel).findByRole('button', { name: 'Restore v2' })).toBeEnabled();
     },
 };
 
@@ -239,6 +247,7 @@ export const SavedWithACompileError: Story = {
     },
     play: async ({ canvasElement }) => {
         await click(canvasElement, 'Save');
+        await expect(await within(canvasElement).findByText(/Unclosed <Card> on line 12/)).toBeVisible();
     },
 };
 
@@ -250,7 +259,9 @@ export const RestoreConfirm: Story = {
     args: { transport: transportFor(PUBLISHED_WITH_HISTORY) },
     play: async ({ canvasElement }) => {
         await click(canvasElement, 'Versions');
-        (canvasElement.querySelector('[aria-label="Restore v1"]') as HTMLElement | null)?.click();
-        await settle();
+        await click(canvasElement, 'Restore v1');
+        await expect(
+            await within(canvasElement).findByRole('alertdialog', { name: 'Confirm restore' }),
+        ).toBeVisible();
     },
 };

@@ -59,13 +59,22 @@ function RetryStage() {
         </IngestStage>
     );
 }
+/**
+ * The read error with its Retry affordance reached from the keyboard — the state an operator acts
+ * on. The play stops HERE on purpose: after Retry the run completes and the frame is identical to
+ * `Completed`, which is not what this story is named for. Recovery-through-Retry is proven by
+ * `tests/IngestProgress.test.tsx` ("recovers only through Retry"); the in-flight retry is `RetryBusy`.
+ */
 export const ReadErrorAndRetry: Story = {
     render: () => <RetryStage />,
+    parameters: { vr: { keepFocus: true } },
     play: async ({ canvasElement }) => {
         const canvas = within(canvasElement);
         await expect(await canvas.findByRole('alert')).toHaveTextContent('Temporarily unavailable');
-        await userEvent.click(canvas.getByRole('button', { name: 'Retry' }));
-        await expect(await canvas.findByRole('status')).toHaveTextContent('Import completed.');
+        const retry = canvas.getByRole('button', { name: 'Retry' });
+        await userEvent.tab();
+        await expect(retry).toHaveFocus();
+        await expect(retry).toBeEnabled();
     },
 };
 function StateMatrix() {

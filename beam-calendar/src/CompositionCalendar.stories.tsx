@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { within, userEvent, expect } from 'storybook/test';
 import { CompositionCalendar } from './CompositionCalendar';
 import {
@@ -191,26 +192,62 @@ export const Empty: Story = {
 };
 
 /**
+ * The pending read made VISIBLE. The foundation surface marks a pending read only with its
+ * `data-loading` hook (no spinner of its own), so this stage plays the host's part: it watches that
+ * hook and paints a status line while it is set. Without it the loading baseline was pixel-identical
+ * to `Empty` — the one fact the story exists for was invisible.
+ */
+function LoadingStage({ children }: { children: ReactNode }) {
+    const ref = useRef<HTMLDivElement>(null);
+    const [loading, setLoading] = useState(false);
+    useEffect(() => {
+        const root = ref.current;
+        if (!root) return;
+        const read = () => setLoading(Boolean(root.querySelector('.rbc-surface[data-loading]')));
+        read();
+        const observer = new MutationObserver(read);
+        observer.observe(root, { subtree: true, childList: true, attributes: true, attributeFilter: ['data-loading'] });
+        return () => observer.disconnect();
+    }, []);
+    return (
+        <div ref={ref} className="relative" aria-busy={loading}>
+            {loading ? (
+                <p
+                    role="status"
+                    className="absolute inset-x-0 top-1/2 z-10 mx-auto w-fit -translate-y-1/2 rounded-md border border-border bg-background px-4 py-2 text-sm text-muted-foreground shadow-sm"
+                >
+                    Loading events…
+                </p>
+            ) : null}
+            <div className={loading ? 'opacity-50' : undefined}>{children}</div>
+        </div>
+    );
+}
+
+/**
  * state = loading — the injected transport's `listEvents` never resolves, so the foundation's
  * query stays pending and the surface carries its `data-loading` attribute over an event-less
- * grid. (The composed satellite loads exactly as the foundation does — its client is the
- * transport wrapper.)
+ * grid; {@link LoadingStage} paints that hook. (The composed satellite loads exactly as the
+ * foundation does — its client is the transport wrapper.)
  */
 export const Loading: Story = {
     render: () => (
         <WithQuery>
-            <CompositionCalendar
-                mount="single"
-                compositionId="cal-marketing"
-                transport={createMockTransport({ loading: true })}
-                defaultDate={ANCHOR}
-                height={GRID_HEIGHT}
-            />
+            <LoadingStage>
+                <CompositionCalendar
+                    mount="single"
+                    compositionId="cal-marketing"
+                    transport={createMockTransport({ loading: true })}
+                    defaultDate={ANCHOR}
+                    height={GRID_HEIGHT}
+                />
+            </LoadingStage>
         </WithQuery>
     ),
     play: async ({ canvasElement }) => {
         const surface = canvasElement.querySelector('.rbc-surface');
         await expect(surface).toHaveAttribute('data-loading');
+        await expect(await within(canvasElement).findByRole('status')).toHaveTextContent('Loading events…');
     },
 };
 
@@ -219,7 +256,7 @@ export const Loading: Story = {
  * viewport-sensitive structure surface; the grid + toolbar reflow at mobile1).
  */
 export const Mobile: Story = {
-    parameters: { viewport: { defaultViewport: 'mobile1' } },
+    globals: { viewport: { value: 'mobile1', isRotated: false } },
     render: () => (
         <WithQuery>
             <CompositionCalendar

@@ -105,7 +105,7 @@ export const Error: Story = {
 
 /** Mobile viewport. */
 export const Mobile: Story = {
-    parameters: { viewport: { defaultViewport: 'mobile1' } },
+    globals: { viewport: { value: 'mobile1', isRotated: false } },
     render: () => (
         <MockAuthProvider>
             <ResetPasswordForm {...link} onSuccess={done} />

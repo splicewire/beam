@@ -70,7 +70,7 @@ export const SingleCard: Story = {
 
 // Viewport axis: narrow — the 1→2→3 grid collapses to a single column.
 export const MobileViewport: Story = {
-    parameters: { viewport: { defaultViewport: 'mobile1' } },
+    globals: { viewport: { value: 'mobile1', isRotated: false } },
     render: () => (
         <SectionLanding eyebrow="Docs" heading="On mobile" lede="The card grid reflows to one column below 40rem.">
             <CardGrid>

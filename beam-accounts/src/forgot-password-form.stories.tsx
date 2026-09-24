@@ -99,7 +99,7 @@ export const Error: Story = {
 
 /** Mobile viewport — the form on a phone-width canvas. */
 export const Mobile: Story = {
-    parameters: { viewport: { defaultViewport: 'mobile1' } },
+    globals: { viewport: { value: 'mobile1', isRotated: false } },
     render: () => (
         <MockAuthProvider>
             <ForgotPasswordForm onBack={back} />

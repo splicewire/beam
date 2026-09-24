@@ -77,10 +77,6 @@ export const FiltersAndSavedViews: Story = {
     ).toBeVisible();
   },
 };
-export const Dark: Story = {
-  globals: { colorScheme: "dark" },
-  play: FiltersAndSavedViews.play,
-};
 export const ReadOnlyViews: Story = {
   args: { writable: false },
   play: async ({ canvasElement }) => {

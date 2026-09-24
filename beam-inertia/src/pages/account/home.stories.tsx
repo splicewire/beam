@@ -63,5 +63,5 @@ export const Populated: Story = {
 
 export const NarrowViewport: Story = {
     render: () => <AccountHomeStage />,
-    parameters: { viewport: { defaultViewport: 'mobile1' } },
+    globals: { viewport: { value: 'mobile1', isRotated: false } },
 };

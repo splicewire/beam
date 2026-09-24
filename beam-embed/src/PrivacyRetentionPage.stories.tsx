@@ -129,5 +129,5 @@ export const EraseConfirmation: Story = {
 
 export const NarrowViewport: Story = {
     render: () => <Stage />,
-    parameters: { viewport: { defaultViewport: 'mobile1' } },
+    globals: { viewport: { value: 'mobile1', isRotated: false } },
 };
