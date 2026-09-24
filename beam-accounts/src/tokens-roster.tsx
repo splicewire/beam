@@ -114,12 +114,6 @@ const tokenScopeSchema: SchemaNode = {
 
 // ─── small look helpers ──────────────────────────────────────────────────────
 
-function MonoLabel({ label }: { label: string }) {
-  return (
-    <span className="font-mono text-[11px] text-muted-foreground">{label}</span>
-  );
-}
-
 function asProvenance(value: string): TokenProvenance {
   return (FACETS as string[]).includes(value) ||
     value === "federation" ||
@@ -136,6 +130,14 @@ function isExpiring(token: ApiTokenData): boolean {
 
 function fmtDate(value: string | null): string {
   return value ? new Date(value).toLocaleDateString() : "—";
+}
+
+/** The row's subtitle: when the token stops working. (Last used, created and scope have their own
+ *  columns; the subtitle used to print `PersonalAccessToken#<id>`, a server class name.) */
+export function expiryLabel(token: Pick<ApiTokenData, "expires_at">, now: number = Date.now()): string {
+  if (!token.expires_at) return "Never expires";
+  const at = new Date(token.expires_at);
+  return `${at.getTime() < now ? "Expired" : "Expires"} ${at.toLocaleDateString()}`;
 }
 
 function fmtRelative(value: string | null): string {
@@ -590,7 +592,7 @@ function buildColumns(
                 </Badge>
               )}
             </div>
-            <MonoLabel label={`PersonalAccessToken#${t.id}`} />
+            <span className="block text-[11px] text-muted-foreground">{expiryLabel(t)}</span>
           </div>
         );
       },

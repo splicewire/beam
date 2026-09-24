@@ -114,3 +114,19 @@ it("wraps a revealed secret inside the dialog instead of widening it past its ri
   expect(key.className).not.toMatch(/\btruncate\b/);
   expect(key.parentElement?.parentElement?.className).toMatch(/\bmin-w-0\b/);
 });
+it("subtitles a row with its expiry, never the server's PersonalAccessToken#<id> class name", async () => {
+  mount({ client: makeTokensClient(), notify: vi.fn() });
+  await screen.findByText("CI deploys");
+  expect(screen.queryByText(/PersonalAccessToken#/)).toBeNull();
+  expect(
+    screen.getByText(new RegExp(`^Expire[sd] ${new Date("2026-12-31T00:00:00Z").toLocaleDateString()}$`)),
+  ).toBeTruthy();
+  expect(screen.getAllByText("Never expires").length).toBeGreaterThan(0);
+});
+it("labels a past expiry as expired", async () => {
+  const { expiryLabel } = await import("../src/tokens-roster");
+  const now = Date.parse("2026-06-01T00:00:00Z");
+  expect(expiryLabel({ expires_at: null }, now)).toBe("Never expires");
+  expect(expiryLabel({ expires_at: "2026-01-01T00:00:00Z" }, now)).toMatch(/^Expired /);
+  expect(expiryLabel({ expires_at: "2026-12-31T00:00:00Z" }, now)).toMatch(/^Expires /);
+});

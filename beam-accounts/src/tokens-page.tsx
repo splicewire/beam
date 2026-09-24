@@ -125,8 +125,10 @@ export function TokensPage() {
                 header: 'Name',
                 meta: { sortField: 'name', sortAccessor: (t) => t.name.toLowerCase() },
                 cell: ({ row }) => (
-                    <div className="flex max-w-[12rem] items-center gap-2">
-                        <span className="truncate font-medium" title={row.original.name}>
+                    // The cap bounds a session's whole user-agent string, and it holds the badges too:
+                    // at 12rem a short name beside "This session" truncated with the column half empty.
+                    <div className="flex min-w-0 max-w-[24rem] items-center gap-2">
+                        <span className="min-w-0 truncate font-medium" title={row.original.name}>
                             {row.original.name}
                         </span>
                         {row.original.is_current && (
