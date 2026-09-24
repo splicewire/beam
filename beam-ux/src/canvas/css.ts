@@ -206,9 +206,11 @@ export function peCss(t?: Partial<CanvasTheme>): string {
 .pe-versions{right:0;width:320px;padding:14px 14px 20px;border-right:none;border-radius:0 0 0 12px;display:flex;flex-direction:column;gap:10px}
 .pe-versions h3{margin:0;font-family:${c.fontMono};font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:${c.panelFg}}
 .pe-version{display:flex;align-items:baseline;gap:8px;padding:8px 0;border-top:1px solid rgba(255,255,255,.08);font-family:${c.fontMono};font-size:11px;color:${c.panelFg}}
-.pe-version-ref{color:#fff;min-width:34px}
-.pe-version-label{flex:1;min-width:0;opacity:.75;overflow-wrap:anywhere}
-.pe-version-tag{font-size:9px;letter-spacing:.06em;text-transform:uppercase;padding:2px 6px;border-radius:6px;border:1px solid rgba(255,255,255,.2)}
+.pe-version-text{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:2px}
+.pe-version-ref{color:#fff;min-width:0;overflow-wrap:anywhere}
+.pe-version-label{min-width:0;opacity:.75;overflow-wrap:anywhere}
+.pe-version>.pe-btn{flex:none}
+.pe-version-tag{flex:none;white-space:nowrap;font-size:9px;letter-spacing:.06em;text-transform:uppercase;padding:2px 6px;border-radius:6px;border:1px solid rgba(255,255,255,.2)}
 .pe-version-tag.published{border-color:${c.accent};color:${c.accent}}
 .pe-version-tag.head{border-color:${c.editAccent};color:${c.editAccent}}
 .pe-confirm{display:flex;flex-direction:column;gap:8px;padding:10px;border:1px solid ${c.editAccent};border-radius:10px;font-family:${c.fontMono};font-size:11px;color:${c.panelFg}}

@@ -50,3 +50,30 @@ describe('the versions panel shows a whole version label', () => {
         expect(rule).toContain('min-width:0');
     });
 });
+
+// The readable ref is generated too, and can be the long part ("v279-restore-of-v277-published"). As a
+// sibling of the label it kept its full width and squeezed the label into a one-character strip beside the
+// Restore button (replay-6 G2-BEAM-DRAFT-PUBLISH). Ref and label now stack in one shrinkable text column,
+// both wrap, and the status tag and Restore button never shrink.
+describe('the versions panel keeps a long ref from crushing the row', () => {
+    const css = peCss(theme);
+    const ruleOf = (selector: string): string =>
+        (css.match(new RegExp(`${selector.replace(/[.>]/g, '\\$&')}\\{([^}]*)\\}`)) ?? [])[1] ?? '';
+
+    it('stacks ref and label in one shrinkable column', () => {
+        const text = ruleOf('.pe-version-text');
+        expect(text).toContain('min-width:0');
+        expect(text).toContain('flex-direction:column');
+    });
+
+    it('lets the ref wrap instead of holding its full width', () => {
+        const ref = ruleOf('.pe-version-ref');
+        expect(ref).toContain('min-width:0');
+        expect(ref).toContain('overflow-wrap:anywhere');
+    });
+
+    it('keeps the status tag and Restore button at their own width', () => {
+        expect(ruleOf('.pe-version-tag')).toContain('flex:none');
+        expect(ruleOf('.pe-version>.pe-btn')).toContain('flex:none');
+    });
+});

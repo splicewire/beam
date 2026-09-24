@@ -557,6 +557,10 @@ describe('PageEditor — mode fork + transport', () => {
         // The published row has nothing to restore TO; every other row does.
         expect(container.querySelectorAll('[aria-label^="Restore "]').length).toBe(1);
         expect(container.querySelector('[aria-label="Restore v2"]')).not.toBeNull();
+        // Ref and label stack in one text column, so a long ref cannot squeeze the label beside it.
+        const text = rows[1].querySelector('.pe-version-text');
+        expect(text?.querySelector('.pe-version-ref')?.textContent).toBe('v1');
+        expect(text?.querySelector('.pe-version-label')?.textContent).toBe('baseline');
     });
 
     it('Restore is confirmed, and only then re-reads the body so the canvas is not left stale', async () => {

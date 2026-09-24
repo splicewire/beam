@@ -522,9 +522,19 @@ export function PageEditor({
 
                         {publication?.versions.map((version) => (
                             <div className="pe-version" key={version.id}>
-                                <span className="pe-version-ref">{version.readable}</span>
-                                <span className="pe-version-label" title={version.label ?? undefined}>
-                                    {version.label ?? ''}
+                                {/* Ref and label share one shrinkable text column, stacked. As two
+                                    sibling flex items, a long generated ref ("v279-restore-of-v277-
+                                    published") kept its full width and squeezed the label to one
+                                    character per line beside it (replay-6 G2-BEAM-DRAFT-PUBLISH). */}
+                                <span className="pe-version-text">
+                                    <span className="pe-version-ref" title={version.readable}>
+                                        {version.readable}
+                                    </span>
+                                    {version.label && (
+                                        <span className="pe-version-label" title={version.label}>
+                                            {version.label}
+                                        </span>
+                                    )}
                                 </span>
                                 {version.isPublished && (
                                     <span className="pe-version-tag published">published</span>
