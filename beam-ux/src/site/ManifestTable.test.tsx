@@ -39,6 +39,10 @@ describe('ManifestTableView', () => {
         );
         expect(container.querySelector('[data-available="true"]')?.textContent).toBe('available');
         expect(container.querySelector('[data-available="false"]')?.textContent).toBe('Pro');
+        // The mark is separated from the name even with no host styling: never `knowledge_searchavailable`.
+        expect(container.querySelector('[data-available="true"]')?.closest('td')?.textContent).toBe(
+            'knowledge_search available',
+        );
     });
 
     it('distinguishes an uninstalled contributor from an empty catalogue', () => {

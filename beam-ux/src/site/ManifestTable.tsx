@@ -118,6 +118,9 @@ export function ManifestTableView({
                         <tr key={item.name} className={classNames?.row}>
                             <td>
                                 <code className={classNames?.name}>{item.name}</code>
+                                {/* A real space, not a styling hook: the table bakes in no palette or
+                                    spacing, so without it an unstyled host reads `nameavailable`. */}
+                                {mark && ' '}
                                 {mark && (
                                     <span
                                         className={classNames?.mark}

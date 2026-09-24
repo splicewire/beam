@@ -92,6 +92,37 @@ describe('SiteNav — subtree + nesting (ADR-0210 §5)', () => {
         expect(shallow.querySelectorAll('a').length).toBe(2);
     });
 
+    it('withholds every level deeper than maxDepth, counted below rootPath', () => {
+        const deep: SiteNavData = {
+            items: [
+                {
+                    title: 'Docs',
+                    href: '/beam/docs',
+                    children: [
+                        {
+                            title: 'Reference',
+                            href: '/beam/docs/reference',
+                            children: [
+                                {
+                                    title: 'API',
+                                    href: '/beam/docs/reference/api',
+                                    children: [{ title: 'Endpoints', href: '/beam/docs/reference/api/endpoints' }],
+                                },
+                            ],
+                        },
+                    ],
+                },
+            ],
+        };
+        const { unmount } = render(<SiteNav nav={deep} rootPath="/beam/docs" maxDepth={2} />);
+        expect(screen.getByRole('link', { name: 'API' })).toBeTruthy();
+        expect(screen.queryByRole('link', { name: 'Endpoints' })).toBeNull();
+        unmount();
+
+        render(<SiteNav nav={deep} rootPath="/beam/docs" maxDepth={3} />);
+        expect(screen.getByRole('link', { name: 'Endpoints' })).toBeTruthy();
+    });
+
     it('finds a docs root nested at any depth in the sitemap', () => {
         render(<SiteNav nav={treeNav} rootPath="/beam/docs/reference" maxDepth={2} />);
         expect(screen.getByRole('link', { name: 'API' })).toBeTruthy();

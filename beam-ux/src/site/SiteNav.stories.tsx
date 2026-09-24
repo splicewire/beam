@@ -28,7 +28,14 @@ const nav: SiteNavData = {
                     title: 'Reference',
                     href: '/beam/docs/reference',
                     children: [
-                        { title: 'API', href: '/beam/docs/reference/api' },
+                        {
+                            title: 'API',
+                            href: '/beam/docs/reference/api',
+                            children: [
+                                { title: 'Endpoints', href: '/beam/docs/reference/api/endpoints' },
+                                { title: 'Errors', href: '/beam/docs/reference/api/errors' },
+                            ],
+                        },
                         { title: 'MCP', href: '/beam/docs/reference/mcp' },
                     ],
                 },
@@ -52,7 +59,11 @@ export const DocsSidebar: StoryObj = {
     render: () => <SiteNav nav={nav} rootPath="/beam/docs" maxDepth={3} />,
 };
 
-/** `maxDepth` truncates: sections listed, their leaves withheld. */
+/**
+ * `maxDepth` truncates. Depth counts levels BELOW `rootPath` (the matched node is never rendered), so
+ * `2` lists the sections and their pages and withholds the third level (API's Endpoints / Errors)
+ * that {@link DocsSidebar}'s `3` shows. `1` is the flat fragment of section links.
+ */
 export const DocsSidebarSectionsOnly: StoryObj = {
     render: () => <SiteNav nav={nav} rootPath="/beam/docs" maxDepth={2} />,
 };
