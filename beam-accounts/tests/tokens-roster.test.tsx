@@ -130,3 +130,9 @@ it("labels a past expiry as expired", async () => {
   expect(expiryLabel({ expires_at: "2026-01-01T00:00:00Z" }, now)).toMatch(/^Expired /);
   expect(expiryLabel({ expires_at: "2026-12-31T00:00:00Z" }, now)).toMatch(/^Expires /);
 });
+it("labels an unscoped token 'Full access' without leaking the ['*'] wire wildcard", async () => {
+  mount({ client: makeTokensClient(), notify: vi.fn() });
+  await screen.findByText("CI deploys");
+  expect(screen.getAllByText("Full access").length).toBeGreaterThan(0);
+  expect(screen.queryByText(/\['\*'\]/)).toBeNull();
+});

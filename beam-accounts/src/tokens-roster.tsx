@@ -191,10 +191,8 @@ function ScopeChips({ abilities }: { abilities: string[] | null }) {
     return (
       <span className="inline-flex items-center gap-1.5 rounded-md border border-warning/40 bg-warning/10 px-2 py-0.5 text-[11px] text-warning-foreground">
         <span className="size-1.5 rounded-full bg-warning" />
+        {/* The label alone: the `['*']` wildcard is the wire shape, not something a person reads. */}
         Full access
-        <span className="font-mono text-[10px] text-muted-foreground">
-          ['*']
-        </span>
       </span>
     );
   }
@@ -240,7 +238,6 @@ function ScopePicker({
           <span className="inline-flex items-center gap-1 font-mono text-[11px] text-warning-foreground">
             <span className="size-1.5 rounded-full bg-warning" /> Unscoped ·
             Full access
-            <span className="text-muted-foreground">['*']</span>
           </span>
         ) : (
           <button

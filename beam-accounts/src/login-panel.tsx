@@ -103,13 +103,15 @@ export function LoginPanel<TResult = unknown>({
                         </div>
 
                         <div className="space-y-2">
-                            <div className="flex items-center justify-between">
+                            {/* The link never breaks mid-phrase: on a phone-width card it drops whole
+                                onto its own line under the label instead (VR pass 2, 320px). */}
+                            <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
                                 <Label htmlFor="login-password">Password</Label>
                                 {showForgotLink && (
                                     <button
                                         type="button"
                                         onClick={onForgot}
-                                        className="text-sm font-medium text-primary underline-offset-4 hover:underline"
+                                        className="whitespace-nowrap text-sm font-medium text-primary underline-offset-4 hover:underline"
                                     >
                                         Forgot your password?
                                     </button>

@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
+import { Button } from "@schemastud/ui";
 import { TokensRoster } from "./tokens-roster";
 import { MockTokensProvider } from "./story-harness";
 const meta = {
@@ -33,8 +34,12 @@ export const WithActivity: Story = {
   render: () => (
     <MockTokensProvider
       services={{
+        // A host renders its own control here; the fixture stands in with the kit's small outline
+        // button, as a host would, rather than a bare unstyled <button>.
         renderTokenActivity: (token) => (
-          <button>Activity for {token.name}</button>
+          <Button variant="outline" size="sm" aria-label={`Activity for ${token.name}`}>
+            Activity
+          </Button>
         ),
       }}
     >
