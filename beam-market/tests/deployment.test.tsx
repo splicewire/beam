@@ -224,6 +224,15 @@ describe("installed-row actions follow the abilities the server checks", () => {
     expect(screen.getByText(/don't have permission to update or remove/i)).toBeTruthy();
   });
 
+  it("names only the action the host denies", async () => {
+    mount([row(pending, { updateAvailable: true, latestVersion: "2.0.0" })], (ability) => ability !== "installed-extensions.remove");
+
+    await screen.findByRole("button", { name: /Update/ });
+    expect((screen.getByRole("button", { name: /Update/ }) as HTMLButtonElement).disabled).toBe(false);
+    expect((screen.getByRole("button", { name: /Remove/ }) as HTMLButtonElement).disabled).toBe(true);
+    expect(screen.getByText(/don't have permission to remove extensions/i)).toBeTruthy();
+  });
+
   it("leaves them enabled when the host grants them or says nothing", async () => {
     mount([row(pending, { updateAvailable: true, latestVersion: "2.0.0" })]);
 

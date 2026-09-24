@@ -83,7 +83,9 @@ function InstalledRow({ installed }: { installed: InstalledExtension }) {
       </div>
       {(!mayRefresh || !mayRemove) && (
         <p className="w-full basis-full text-sm text-muted-foreground">
-          You don't have permission to update or remove extensions on this site.
+          You don't have permission to{" "}
+          {!mayRefresh && !mayRemove ? "update or remove" : !mayRefresh ? "update" : "remove"} extensions on this
+          site.
         </p>
       )}
       {/* Full-width, below the row: the CLI step the operator still owes, the observed failure,
