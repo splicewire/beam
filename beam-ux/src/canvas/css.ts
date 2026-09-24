@@ -182,7 +182,15 @@ ${inspectorPalette(c)}
 .ve-add:hover{color:var(--foreground);border-color:var(--ring)}
 `;
 
-/** The in-place page-editor floating-panel CSS (host `PE_CSS`), theme-parametrized. */
+/**
+ * The in-place page-editor floating-panel CSS (host `PE_CSS`), theme-parametrized.
+ *
+ * A floating panel stays OPAQUE to its bottom edge. It used to soften that edge with a mask-image on
+ * the whole panel, which faded the panel's own background too: over a light page the dark sidebar
+ * turned into a grey gradient (beam VR pass 2, every light pageeditor capture). The soft lower edge
+ * is now a sticky strip at the scrollport's foot that fades the scrolling CONTENT into the panel
+ * colour, so an overflowing panel still does not cut off hard and a short one looks unchanged.
+ */
 export function peCss(t?: Partial<CanvasTheme>): string {
     const c = theme(t);
     return `
@@ -198,7 +206,8 @@ export function peCss(t?: Partial<CanvasTheme>): string {
 .pe-btn:hover{color:#fff;border-color:${c.accent}80}
 .pe-btn:disabled{opacity:.35;cursor:not-allowed}
 .pe-btn.primary{background:${c.accent};border-color:${c.accent};color:#fff}
-.pe-panel{position:fixed;top:40px;bottom:14px;width:300px;z-index:2147483200;background:${c.panelBg};border:1px solid rgba(255,255,255,.1);border-top:none;overflow:auto;box-shadow:0 24px 60px -18px rgba(0,0,0,.6);mask-image:linear-gradient(to bottom,#000 0%,#000 55%,rgba(0,0,0,.5) 100%);-webkit-mask-image:linear-gradient(to bottom,#000 0%,#000 55%,rgba(0,0,0,.5) 100%)}
+.pe-panel{position:fixed;top:40px;bottom:14px;width:300px;z-index:2147483200;background:${c.panelBg};border:1px solid rgba(255,255,255,.1);border-top:none;overflow:auto;box-shadow:0 24px 60px -18px rgba(0,0,0,.6)}
+.pe-panel::after{content:"";display:block;flex:none;position:sticky;bottom:0;height:28px;margin-top:auto;pointer-events:none;background:linear-gradient(to bottom,transparent,${c.panelBg})}
 .pe-left{left:0;width:200px;padding:14px 12px;display:flex;flex-direction:column;gap:7px;border-left:none;border-radius:0 0 12px 0}
 .pe-right{right:0;border-right:none;border-radius:0 0 0 12px}
 .pe-comp-badge{margin:-6px 16px 6px;font-family:${c.fontMono};font-size:10px;letter-spacing:.08em;color:${c.accent}}

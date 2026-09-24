@@ -77,3 +77,20 @@ describe('the versions panel keeps a long ref from crushing the row', () => {
         expect(ruleOf('.pe-version>.pe-btn')).toContain('flex:none');
     });
 });
+
+describe('peCss floating panels', () => {
+    const css = peCss(theme);
+
+    it('keeps the panel opaque: no mask fades the panel background into the page behind it', () => {
+        const panel = css.match(/\.pe-panel\{([^}]*)\}/)?.[1] ?? '';
+        expect(panel).toContain('background:#0f172a');
+        expect(panel).not.toMatch(/mask-image/);
+    });
+
+    it('softens an overflowing panel with a sticky content fade into the panel colour', () => {
+        const fade = css.match(/\.pe-panel::after\{([^}]*)\}/)?.[1] ?? '';
+        expect(fade).toContain('position:sticky');
+        expect(fade).toContain('bottom:0');
+        expect(fade).toContain('linear-gradient(to bottom,transparent,#0f172a)');
+    });
+});
