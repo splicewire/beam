@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { SchemaForm } from '@schemastud/seam';
 import { Card, CardContent, CardHeader, CardTitle } from '@schemastud/ui';
 import { useIntakeSubmission } from './hooks';
@@ -23,6 +23,13 @@ export function IntakeSectionForm({
     const submit = useIntakeSubmission(section.key);
     const submitting = useRef(false);
     const { renderForm } = useIntakeServices();
+    // The card header already names the section, so the default form drops the schema's root
+    // title (RJSF would print it again as a legend: "Contact details" twice). Memoized: SchemaForm
+    // re-resolves on every new schema identity.
+    const formSchema = useMemo(() => {
+        const { title: _rootTitle, ...untitled } = section.schema;
+        return untitled;
+    }, [section.schema]);
     const form: IntakeFormRenderProps = {
         schema: section.schema,
         formData: fields,
@@ -54,7 +61,9 @@ export function IntakeSectionForm({
                     renderForm(form)
                 ) : (
                     <SchemaForm
-                        schema={form.schema}
+                        schema={formSchema}
+                        // RJSF's form stacks the fields and the Submit row with no gap of its own.
+                        className="rjsf grid gap-4"
                         formData={form.formData}
                         disabled={form.disabled}
                         onChange={({ formData }) =>

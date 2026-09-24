@@ -196,4 +196,10 @@ describe('isolated intake section', () => {
             receipt.submission_id,
         );
     });
+
+    it('names the section once: the default form drops the schema root title the card header already shows', async () => {
+        mount({ client: { submit: vi.fn(async () => receipt) } });
+        await screen.findByLabelText('Name');
+        expect(screen.getAllByText(String(populatedSection.schema.title))).toHaveLength(1);
+    });
 });
