@@ -45,7 +45,9 @@ export function ExtensionDetailSheet({
   const { data: connectionStatus } = useConnectionStatus();
   const install = useInstallExtension();
   const purchase = usePurchaseExtension();
-  const { renderConnectCta, connectUrl } = useExtensionsServices();
+  const { renderConnectCta, connectUrl, can } = useExtensionsServices();
+  // The server refuses an install without `market-extensions.install`; ask the host the same question first.
+  const mayInstall = can?.("market-extensions.install") ?? true;
   const { reset: resetInstall } = install;
   const { reset: resetPurchase } = purchase;
   useEffect(() => {
@@ -187,6 +189,7 @@ export function ExtensionDetailSheet({
               ) : (
                 <Button
                   disabled={
+                    !mayInstall ||
                     data.isInstalled ||
                     install.isPending ||
                     gatedAndDisconnected ||
@@ -201,6 +204,12 @@ export function ExtensionDetailSheet({
                       ? "Installed"
                       : "Install"}
                 </Button>
+              )}
+
+              {!needsPurchase && !mayInstall && !data.isInstalled && (
+                <p className="text-sm text-muted-foreground">
+                  You don't have permission to install extensions on this site.
+                </p>
               )}
 
               {/* The failure state, on the surface rather than only in a toast: a decline is

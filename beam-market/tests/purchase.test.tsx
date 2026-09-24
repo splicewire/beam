@@ -84,13 +84,13 @@ function client(overrides: Partial<ExtensionsClient> = {}): ExtensionsClient {
   } as unknown as ExtensionsClient;
 }
 
-function mount(node: ReactNode, services: ExtensionsClient) {
+function mount(node: ReactNode, services: ExtensionsClient, extra: { can?: (ability: string) => boolean } = {}) {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
   });
   const Wrapper = ({ children }: { children: ReactNode }) => (
     <QueryClientProvider client={queryClient}>
-      <ExtensionsProvider services={{ client: services, notify: () => {} }}>
+      <ExtensionsProvider services={{ client: services, notify: () => {}, ...extra }}>
         {children}
       </ExtensionsProvider>
     </QueryClientProvider>
@@ -210,5 +210,34 @@ describe("a paid listing the buyer owns", () => {
     expect(
       (await screen.findByTestId("entitlement-panel")).textContent,
     ).toContain("http-basic.app.example.test");
+  });
+});
+
+describe("a member without the install ability", () => {
+  // The server refuses an install to anyone without `market-extensions.install` (InstallExtension's declared ability), and a
+  // member used to see an ENABLED Install button that answered 403 (ux-demo screenshot review 2026-09-24,
+  // G4-FLAGSHIP-REVIEW). The host tells the package what the viewer may do; the button follows the same ability.
+  it("sees the Install button disabled, with the reason", async () => {
+    const can = vi.fn((ability: string) => ability !== "market-extensions.install");
+    mount(
+      <ExtensionDetailSheet listingId={PAID.id} onOpenChange={() => {}} />,
+      client({ getListing: vi.fn(async () => ({ ...PAID, isEntitled: true })) }),
+      { can },
+    );
+
+    const button = (await screen.findByRole("button", { name: "Install" })) as HTMLButtonElement;
+    expect(button.disabled).toBe(true);
+    expect(screen.getByText(/don't have permission to install/i)).toBeTruthy();
+    expect(can).toHaveBeenCalledWith("market-extensions.install");
+  });
+
+  it("keeps the Install button enabled when the host grants the ability or says nothing", async () => {
+    mount(
+      <ExtensionDetailSheet listingId={PAID.id} onOpenChange={() => {}} />,
+      client({ getListing: vi.fn(async () => ({ ...PAID, isEntitled: true })) }),
+    );
+
+    const button = (await screen.findByRole("button", { name: "Install" })) as HTMLButtonElement;
+    expect(button.disabled).toBe(false);
   });
 });

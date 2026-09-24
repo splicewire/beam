@@ -81,6 +81,14 @@ export interface ExtensionsServices {
   /** kind 2 — mutation-error hook; the host may toast/log/observe. The rejection still propagates. */
   onError?: (err: unknown) => void;
   /**
+   * kind 2 — what the viewer may do, by the same ability name the server checks (for example
+   * `market-extensions.install`, InstallExtension's declared ability). The package cannot know the
+   * host's permission model, so the host answers. When omitted everything is offered and the server
+   * remains the gate; when given, an action the viewer may not take is shown disabled with the reason,
+   * rather than enabled and refused with a 403.
+   */
+  can?: (ability: string) => boolean;
+  /**
    * kind 3 — the host-chrome render slot for the `requires_splicewire` "Connect Splicewire to
    * install" CTA — a rendered host affordance the package can't own (the actual connect flow is
    * host-specific: a beam site's own account settings page, an OAuth-device-flow command, etc.).
