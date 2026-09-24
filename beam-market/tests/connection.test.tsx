@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { ExtensionsProvider, type ExtensionsClient } from "../src/provider";
@@ -192,6 +192,28 @@ describe("the market connection screen", () => {
         credential: "a-real-credential",
       }),
     );
+  });
+
+  it("shows a refused credential ON the form, not only in a toast, and clears it on edit", async () => {
+    // overnight-ui2 02: a 422 from connect was only a toast, so the refused form showed no refusal at all.
+    const refusal = Object.assign(new Error("Request failed with status code 422"), {
+      response: { data: { message: "The market refused this connection credential." } },
+    });
+    const connectMarket = vi.fn(async () => {
+      throw refusal;
+    });
+    mount(client({ connectMarket: connectMarket as never }));
+
+    await userEvent.type(await screen.findByLabelText("Market URL"), "https://market.example.test");
+    await userEvent.type(screen.getByLabelText("Connection credential"), "wrong");
+    await userEvent.click(screen.getByRole("button", { name: "Connect" }));
+
+    const form = screen.getByTestId("market-connect-form");
+    const alert = await within(form).findByRole("alert");
+    expect(alert.textContent).toContain("The market refused this connection credential.");
+
+    await userEvent.type(screen.getByLabelText("Connection credential"), "x");
+    await waitFor(() => expect(within(form).queryByRole("alert")).toBeNull());
   });
 
   it("reports a failed re-sync as an error even though the call resolved", async () => {

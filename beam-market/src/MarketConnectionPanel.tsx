@@ -8,7 +8,7 @@ import {
   useSyncMarket,
 } from "./hooks";
 import type { MarketConnection } from "./types";
-import { useExtensionsServices } from "./provider";
+import { extensionsErrorMessage, useExtensionsServices } from "./provider";
 
 /**
  * The connection screen (ux-demo-convergence G5, G5-CATALOG-FEDERATION) — where this site says
@@ -219,7 +219,10 @@ function ConnectForm() {
           aria-label="Market URL"
           placeholder="https://market.example.com"
           value={marketUrl}
-          onChange={(e) => setMarketUrl(e.target.value)}
+          onChange={(e) => {
+            setMarketUrl(e.target.value);
+            connect.reset();
+          }}
           className="sm:flex-1"
         />
         <Input
@@ -227,7 +230,10 @@ function ConnectForm() {
           type="password"
           placeholder="Connection credential"
           value={credential}
-          onChange={(e) => setCredential(e.target.value)}
+          onChange={(e) => {
+            setCredential(e.target.value);
+            connect.reset();
+          }}
           className="sm:flex-1"
         />
         <Button
@@ -237,6 +243,12 @@ function ConnectForm() {
           {connect.isPending ? "Connecting…" : "Connect"}
         </Button>
       </div>
+      {/* The refusal belongs on the form it refused, not only in a transient toast. */}
+      {connect.isError && (
+        <p role="alert" className="text-sm text-destructive" data-testid="market-connect-error">
+          {extensionsErrorMessage(connect.error, "Could not connect to that market.")}
+        </p>
+      )}
     </form>
   );
 }
