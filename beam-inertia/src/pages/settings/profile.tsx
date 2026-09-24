@@ -26,7 +26,10 @@ export default function Profile(
     const { auth } = usePage<PageProps>().props;
 
     return (
-        <>
+        // Sections space themselves: the settings layout's `space-y-12` only reaches a page's
+        // direct children when that layout wraps it, so a bare mount put each section's Save
+        // flush against the next heading.
+        <div className="space-y-12">
             <Head title="Profile settings" />
 
             <h1 className="sr-only">Profile settings</h1>
@@ -129,7 +132,7 @@ export default function Profile(
             </div>
 
             <DeleteUser />
-        </>
+        </div>
     );
 }
 

@@ -19,7 +19,10 @@ export default function Security(props: SecurityPageData) {
     const currentPasswordInput = useRef<HTMLInputElement>(null);
 
     return (
-        <>
+        // Sections space themselves: the settings layout's `space-y-12` only reaches a page's
+        // direct children when that layout wraps it, so a bare mount put each section's Save
+        // flush against the next heading.
+        <div className="space-y-12">
             <Head title="Security settings" />
 
             <h1 className="sr-only">Security settings</h1>
@@ -135,7 +138,7 @@ export default function Security(props: SecurityPageData) {
                 passkeys={props.passkeys}
             />
             </>)}
-        </>
+        </div>
     );
 }
 
