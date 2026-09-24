@@ -73,6 +73,7 @@ describe("deployment state on the Installed tab", () => {
         detectedVersion: null,
         lastVerifiedVersion: null,
         lastVerifiedAt: null,
+        notes: null,
         instructions: [
           "composer require splicewire/beam-extension-demo:1.0.0",
           "php artisan splicewire:beam:install --no-interaction",
@@ -94,6 +95,32 @@ describe("deployment state on the Installed tab", () => {
     expect(screen.queryByText(/· v1\.0\.0/)).toBeNull();
   });
 
+  it("shows the creator's installation instructions as prose, outside the command block", async () => {
+    // The creator form asks for free-text "Installation instructions"; a sentence used to be printed as the first
+    // line of the copy-paste shell block (ux-demo screenshot review 2026-09-24, G4-FLAGSHIP-REVIEW).
+    const prose = "composer require splicewire/beam-extension-demo, then php artisan migrate.";
+    mount([
+      row({
+        state: "instructed",
+        package: "splicewire/beam-extension-demo",
+        requestedVersion: "1.0.0",
+        detectedVersion: null,
+        lastVerifiedVersion: null,
+        lastVerifiedAt: null,
+        notes: prose,
+        instructions: ["composer require splicewire/beam-extension-demo:1.0.0"],
+        error: null,
+      }),
+    ]);
+
+    const notes = await screen.findByText(prose);
+    expect(notes.closest("pre")).toBeNull();
+    expect(screen.getByTestId("deployment-notes").textContent).toContain(prose);
+    expect(screen.getByTestId("deployment-panel").querySelector("pre")?.textContent).toBe(
+      "composer require splicewire/beam-extension-demo:1.0.0",
+    );
+  });
+
   it("says Active with the DETECTED version, and shows no instructions", async () => {
     mount([
       row({
@@ -103,6 +130,7 @@ describe("deployment state on the Installed tab", () => {
         detectedVersion: "2.0.0",
         lastVerifiedVersion: "2.0.0",
         lastVerifiedAt: "2026-09-12T00:00:00Z",
+        notes: null,
         instructions: [],
         error: null,
       }),
@@ -123,6 +151,7 @@ describe("deployment state on the Installed tab", () => {
         detectedVersion: "1.0.0",
         lastVerifiedVersion: "1.0.0",
         lastVerifiedAt: "2026-09-11T00:00:00Z",
+        notes: null,
         instructions: ["composer require splicewire/beam-extension-demo:2.0.0"],
         error:
           "This host is running splicewire/beam-extension-demo 1.0.0. Version 2.0.0 is requested but not deployed yet.",
@@ -153,6 +182,7 @@ describe("deployment state on the Installed tab", () => {
         detectedVersion: "2.0.0",
         lastVerifiedVersion: "2.0.0",
         lastVerifiedAt: "2026-09-12T00:00:00Z",
+        notes: null,
         instructions: ["composer remove splicewire/beam-extension-demo"],
         error: null,
       }),

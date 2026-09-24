@@ -54,7 +54,7 @@ export function DeploymentPanel({
   onRecheck?: () => void;
   rechecking?: boolean;
 }) {
-  const { state, instructions, error, lastVerifiedVersion, requestedVersion } =
+  const { state, instructions, error, lastVerifiedVersion, requestedVersion, notes } =
     installed.deployment;
 
   if (state === "detected" || state === "not_applicable") return null;
@@ -82,6 +82,14 @@ export function DeploymentPanel({
             Run these on the host, then check again. Nothing changes here until
             this site can see the package.
           </p>
+
+          {notes && (
+            // The creator's own free-text instructions: prose beside the commands, never a line inside them.
+            <div className="mt-2" data-testid="deployment-notes">
+              <p className="text-xs font-medium text-muted-foreground">From the creator</p>
+              <p className="mt-0.5 whitespace-pre-wrap break-words text-sm">{notes}</p>
+            </div>
+          )}
 
           {instructions.length > 0 && (
             <pre className="mt-2 overflow-x-auto rounded bg-background p-2 text-xs leading-relaxed">

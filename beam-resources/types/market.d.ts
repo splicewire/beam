@@ -43,6 +43,7 @@ lastVerifiedVersion: string | null,
 lastVerifiedAt: string | null,
 instructions: string[],
 error: string | null,
+notes: string | null,
 };
 
 export type MarketExtensionData = {

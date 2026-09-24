@@ -106,6 +106,7 @@ const INSTALLED: InstalledExtension[] = [
       detectedVersion: "1.0.0",
       lastVerifiedVersion: "1.0.0",
       lastVerifiedAt: "2026-08-01T00:00:00Z",
+      notes: null,
       instructions: [],
       error: null,
     },

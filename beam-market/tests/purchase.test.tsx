@@ -196,6 +196,7 @@ describe("a paid listing the buyer owns", () => {
         detectedVersion: null,
         lastVerifiedVersion: null,
         lastVerifiedAt: null,
+        notes: null,
         instructions: ["composer require acme/waveform-pro:1.0.0"],
         error: null,
       },

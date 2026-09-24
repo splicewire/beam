@@ -50,6 +50,7 @@ const installed: InstalledExtension = {
     detectedVersion: "1.0.0",
     lastVerifiedVersion: "1.0.0",
     lastVerifiedAt: "2026-09-01T00:00:00Z",
+    notes: null,
     instructions: [],
     error: null,
   },
