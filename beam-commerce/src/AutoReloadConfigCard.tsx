@@ -371,7 +371,9 @@ export function AutoReloadConfigCard({ config }: { config: AutoReloadConfig }) {
                     {/* Amount mode — a segmented control (fixed ⇄ to_target). */}
                     <div className="space-y-2">
                         <Label>Each time, reload</Label>
-                        <div className="inline-flex rounded-md border p-0.5">
+                        {/* A block-level flex box: an inline one sat on the (inline) label's line,
+                            flush against its text, and `space-y-2` never reached it. */}
+                        <div className="flex w-fit rounded-md border p-0.5" data-testid="reload-amount-mode">
                             <SegBtn
                                 active={fixed}
                                 icon={<ArrowUpCircle className="size-3.5" />}

@@ -94,6 +94,15 @@ describe('AutoReloadConfigCard — isolation mount (no Laravel)', () => {
         expect(screen.getByText('Active')).toBeTruthy();
     });
 
+    it('sets the amount-mode control on its own line under its label (block-level, not inline)', async () => {
+        const client = fakeClient(CONFIG);
+        mount(<AutoReloadConfigCard config={CONFIG} />, client);
+
+        const control = await screen.findByTestId('reload-amount-mode');
+        expect(control.className.split(' ')).toContain('flex');
+        expect(control.className.split(' ')).not.toContain('inline-flex');
+    });
+
     it('routes Save through the injected client.updateConfig (contract kind 1)', async () => {
         const client = fakeClient(CONFIG);
         mount(<AutoReloadConfigCard config={CONFIG} />, client);
