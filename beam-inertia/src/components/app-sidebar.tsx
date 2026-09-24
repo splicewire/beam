@@ -19,6 +19,7 @@ import {
     useFrameRealm,
     type FrameRealmContext,
 } from '../frame/realm';
+import { toUrl } from '../lib/utils';
 import type { NavItem } from '../types';
 
 /**
@@ -113,7 +114,7 @@ export function AppSidebar({ realm }: { realm?: FrameRealmContext } = {}) {
                     <>
                         <NavMain items={mainNavItems(railRealm)} />
                         {/* NavMain already links /dashboard, the tenant realm's dashboard leaf. */}
-                        <NavFrame omitHrefs={['/dashboard']} />
+                        <NavFrame omitHrefs={mainNavItems(railRealm).map((item) => toUrl(item.href))} />
                         {accountItems.length > 0 && <NavMain label="Account" items={accountItems} />}
                     </>
                 )}
