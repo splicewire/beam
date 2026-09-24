@@ -61,7 +61,13 @@ export const Submitting: Story = {
  */
 export const Error: Story = {
     render: () => (
-        <MockAuthProvider config={{ withPasskey: true, passkeyOutcome: 'error' }}>
+        <MockAuthProvider
+            config={{
+                withPasskey: true,
+                passkeyOutcome: 'error',
+                errorMessage: 'Passkey sign-in was cancelled or timed out.',
+            }}
+        >
             <PasskeyButton onSuccess={noop} />
         </MockAuthProvider>
     ),
