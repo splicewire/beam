@@ -84,12 +84,15 @@ describe('isolated intake section', () => {
         expect(screen.getByRole('status').textContent).toContain(
             'Submitting section',
         );
+        // The status line sits in the form's text size, not the 16px body default (VR pass 2).
+        expect(screen.getByRole('status').className).toContain('text-sm');
         resolve(receipt);
         await waitFor(() =>
             expect(screen.getByRole('status').textContent).toContain(
                 receipt.submission_id,
             ),
         );
+        expect(screen.getByRole('status').className).toContain('text-sm');
     });
     it('ignores renderer changes and duplicate submissions while transport is in flight', async () => {
         let reject: (reason: Error) => void = () => {};

@@ -74,20 +74,21 @@ export function IntakeSectionForm({
                         }
                     />
                 )}
+                {/* Status lines sit in the form's text size, not the 16px body default. */}
                 {submit.isPending && (
-                    <p role="status" className="mt-3">
+                    <p role="status" className="mt-3 text-sm text-muted-foreground">
                         Submitting section…
                     </p>
                 )}
                 {submit.isError && (
-                    <p role="alert" className="mt-3 text-destructive">
+                    <p role="alert" className="mt-3 text-sm text-destructive">
                         {submit.error instanceof Error && submit.error.message
                             ? submit.error.message
                             : 'Unable to submit this section.'}
                     </p>
                 )}
                 {submit.isSuccess && (
-                    <p role="status" className="mt-3">
+                    <p role="status" className="mt-3 text-sm">
                         Section received. Reference: {submit.data.submission_id}
                     </p>
                 )}
