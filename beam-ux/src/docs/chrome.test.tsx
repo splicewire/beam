@@ -286,6 +286,44 @@ describe('the packaged entry page', () => {
 
         expect(container.querySelector('[data-host-provider] .host-root')).not.toBeNull();
     });
+
+    it('hands the BODY region to the host editor slot, inside the layout and template', () => {
+        // beam.test `/about`, 2026-09-24: the authoring host mounted its editor BESIDE the page, so
+        // "Edit content" left the read page untouched and stacked an unframed editor under the footer.
+        // The slot puts the host's editor exactly where the compiled body goes, and nowhere else.
+        const seen: string[] = [];
+        configureEntryPage({
+            editableBody: ({ entry: e, children }) => {
+                seen.push(`${e.id}:${e.format}`);
+
+                return (
+                    <div data-host-editor="">
+                        {e.slug === 'api-keys' ? <span data-editor-canvas="" /> : children}
+                    </div>
+                );
+            },
+        });
+
+        const { container } = render(
+            <SiteEntry
+                entry={{ ...entry, layout: 'TestLayout', template: 'SpreadTemplate' }}
+                artifact={artifact}
+                nav={null}
+            />,
+        );
+
+        expect(seen).toEqual(['e1:mdx']);
+        // Inside the layout's <main>, so the author edits the page in its own chrome.
+        expect(container.querySelector('.test-layout main [data-host-editor] [data-editor-canvas]')).not.toBeNull();
+        // In PLACE of the body, not beside it.
+        expect(container.querySelector('[data-beam-entry-unauthored]')).toBeNull();
+    });
+
+    it('renders the body as read when the host declares no editor slot', () => {
+        const { container } = render(<SiteEntry entry={entry} artifact={artifact} nav={null} />);
+
+        expect(container.querySelector('[data-beam-entry-unauthored]')).not.toBeNull();
+    });
 });
 
 describe('the rail reads nav_group', () => {

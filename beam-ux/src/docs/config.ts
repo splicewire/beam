@@ -48,6 +48,20 @@ export type EntryPageConfig = {
     defaultTemplate?: string | null;
     /** The layout used when an entry's chain declares none. Defaults to none — the body renders bare. */
     defaultLayout?: string | null;
+    /**
+     * The host's IN-PLACE EDITOR seam for the body region. The page renders the compiled body as this
+     * component's `children`; a host with an authoring layer returns its editor in their place while an
+     * author is editing, and `children` otherwise. Absent ⇒ the body always renders as read.
+     *
+     * Why a slot and not the authoring host's generic inspector: that inspector is mounted BESIDE the
+     * page, so on a rendered entry the author got the unchanged read page with a second, unframed editor
+     * stacked under the footer — beam.test's `/about`, 2026-09-24 ("Edit Content doesn't work"). A
+     * hand-written page (`site/home`) never had the problem because it puts the editor where its content
+     * goes; this is the same placement for every rendered entry, inside its resolved layout and template.
+     * The package still imports no editor (§2 invariant ii) — which editor, and for which formats, is
+     * the host's call.
+     */
+    editableBody?: ComponentType<{ entry: EntryPayload; children: ReactNode }>;
 };
 
 let config: EntryPageConfig = {};

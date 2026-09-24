@@ -71,7 +71,16 @@ export function useBeamUxEntry() {
 // rushing/audiostud's `os/authoring-context.ts` already uses for an equivalent cross-cutting need -
 // calling `usePage()` again inside renderEditor/renderInspector themselves would violate the rules
 // of hooks (they're plain functions, not components).
-const SELF_MANAGED_COMPONENTS = new Set(['site/home']);
+//
+// `site/entry` joined it on 2026-09-24. Every rendered entry is that one component, and it had no
+// in-place editor of its own, so it fell to the generic branch: the unchanged read page with
+// `VisualEditorMount` appended under it — on beam.test's `/about`, "Edit content" produced an unframed
+// editor below the footer with no draft/publish/versions, which read as "Edit content doesn't work".
+// The packaged page now hands its BODY region to the host (`EntryPageConfig.editableBody`, configured
+// in index.tsx → editor/entry-body-editor.tsx), which mounts the same `PageEditor` `/` uses, inside the
+// entry's own chrome, behind the same format gate. A host that overrides `pages/site/entry.tsx` takes
+// that job over with the page, exactly as it takes over the rest of it.
+const SELF_MANAGED_COMPONENTS = new Set(['site/home', 'site/entry']);
 let currentComponent = '';
 
 // No on-page ribbon by default — authoring is driven from the operator/OS chrome. `() => null` keeps the

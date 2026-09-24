@@ -12,6 +12,7 @@ import AppLayout from "./layouts/app-layout";
 import AuthLayout from "./layouts/auth-layout";
 import BeamAccountLayout from "./layouts/beam-account-layout";
 import MainframeHost from "./layouts/beam-ux/mainframe-host";
+import { EditableEntryBody } from "./editor/entry-body-editor";
 import OperatorLayout from "./layouts/operator-layout";
 import OsLayout from "./layouts/os-layout";
 import SettingsLayout from "./layouts/settings/layout";
@@ -48,6 +49,10 @@ export function beamInertiaOptions(config: BeamInertiaConfig = {}) {
   configureEntryPage({
     linkComponent: Link,
     wrap: (node) => <SiteLayout>{node}</SiteLayout>,
+    // "Edit content" on a rendered entry opens the in-place editor WHERE THE BODY IS, inside the
+    // entry's layout and template — not beside the page (beam.test `/about`, 2026-09-24). The
+    // MainframeHost treats `site/entry` as self-managed accordingly (layouts/beam-ux/mainframe-host).
+    editableBody: EditableEntryBody,
   });
 
   return {

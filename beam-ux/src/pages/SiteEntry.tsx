@@ -148,6 +148,12 @@ export default function SiteEntry(props: SiteEntryProps) {
         return <Fallback {...chrome}>{children}</Fallback>;
     };
 
+    // The body region is where an author's in-place editor goes (`EntryPageConfig.editableBody`): inside
+    // the resolved layout and template, in place of the compiled body, never beside the page.
+    const EditableBody = config.editableBody;
+    const editable = (body: ReactNode) =>
+        EditableBody ? <EditableBody entry={entry}>{body}</EditableBody> : body;
+
     const page = (
         <>
             <Head title={entry.title ?? entry.slug} />
@@ -160,7 +166,7 @@ export default function SiteEntry(props: SiteEntryProps) {
                     Template,
                     templateArtifact,
                     ProseTemplate,
-                    <EntryBody artifact={artifact} components={components} bodyProps={{ page: props }} />,
+                    editable(<EntryBody artifact={artifact} components={components} bodyProps={{ page: props }} />),
                 ),
             )}
         </>
