@@ -125,12 +125,21 @@
     color: var(--muted-foreground);
     letter-spacing: 0.01em;
 }
+/* The body owns the inset: the fenced `<pre>` arrives unstyled (or with a host
+   prose reset that zeroes it), so without this the command text touches the frame
+   edges. A long output line scrolls inside the body instead of being clipped by the
+   frame's `overflow: hidden`. Doubled selectors outrank a host prose `pre` rule. */
 .bkit-terminal-body {
-    padding: 0.25rem 0;
+    padding: 0;
 }
-.bkit-terminal-body pre {
+.bkit-terminal .bkit-terminal-body pre {
     margin: 0;
+    padding: 0.75rem 1rem;
     border-radius: 0;
+    overflow-x: auto;
+    font-size: 0.8125rem;
+    line-height: 1.6;
+    background: transparent;
 }
 
 /* --- Callout --------------------------------------------------------------- */
@@ -246,12 +255,17 @@
     background: var(--beam-paper-raised, var(--beam-paper));
     font-family: var(--font-mono, var(--beam-font-mono));
 }
-.bkit-doctoroutput-list {
+/* The list, rows and summary sit inside article prose, whose `ul` indent, `li`
+   bottom margin and `p` bottom margin (`.site-prose ul`, `ul li`, `p`) outrank a
+   single class. Scoping under the frame restores the flush list, the full-width
+   separators and a footer that closes the card. */
+.bkit-doctoroutput .bkit-doctoroutput-list {
     list-style: none;
     margin: 0;
     padding: 0;
 }
-.bkit-doctoroutput-row {
+.bkit-doctoroutput .bkit-doctoroutput-row {
+    margin: 0;
     display: grid;
     grid-template-columns: 0.65rem auto 1fr;
     align-items: baseline;
@@ -296,7 +310,7 @@
 .bkit-doctoroutput-row--fail {
     --bkit-doctor-accent: var(--beam-danger);
 }
-.bkit-doctoroutput-summary {
+.bkit-doctoroutput .bkit-doctoroutput-summary {
     margin: 0;
     padding: 0.5rem 1rem;
     border-top: 1px solid var(--border);
