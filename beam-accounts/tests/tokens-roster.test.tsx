@@ -93,3 +93,24 @@ it("caps the Name column so a long session name truncates instead of pushing eve
   expect(name.className).toContain("truncate");
   expect(name.closest("div.space-y-0\\.5")?.className).toMatch(/\bmax-w-\[/);
 });
+it("wraps a revealed secret inside the dialog instead of widening it past its right edge", async () => {
+  // DialogContent is a `grid`; its implicit track sizes to the items' min-content. A `truncate`
+  // (nowrap) key made that the whole secret, so the key box, the notice and Done were clipped at
+  // the dialog's right edge (replay-6 G3-BEAM-TOKENS). jsdom has no layout, so pin the classes.
+  const client = makeTokensClient({ tokens: [SAMPLE_TOKENS[0]] });
+  client.rotate = vi.fn(async () => ({
+    id: 'e3b0c442-98fc-4c14-9afb-f4c8996fb092',
+    name: "CI deploys",
+    token: "27|0kanidkPQLdb4KeSh34yHR98HSdifY4iPd8VL9eu2856b0ac",
+  }));
+  mount({ client });
+  await screen.findByText("CI deploys");
+  fireEvent.click(screen.getByRole("button", { name: "Rotate" }));
+  const key = await screen.findByText(
+    "27|0kanidkPQLdb4KeSh34yHR98HSdifY4iPd8VL9eu2856b0ac",
+  );
+  expect(key.className).toMatch(/\bbreak-all\b/);
+  expect(key.className).toMatch(/\bmin-w-0\b/);
+  expect(key.className).not.toMatch(/\btruncate\b/);
+  expect(key.parentElement?.parentElement?.className).toMatch(/\bmin-w-0\b/);
+});

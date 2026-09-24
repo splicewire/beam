@@ -465,14 +465,23 @@ function RevealOnceDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-3">
-          <div className="flex items-center gap-2 rounded-md border bg-muted/50 p-2.5">
-            <code className="min-w-0 flex-1 truncate font-mono text-[12.5px]">
+        {/* The content is a `grid` whose implicit track sizes to its items' min-content. A
+            `truncate` (nowrap) key made that min-content the whole secret, so the track grew past
+            the dialog and clipped the key box, the notice and Done at its right edge (replay-6
+            G3-BEAM-TOKENS). The key now wraps anywhere (`break-all`), and `min-w-0` keeps this
+            block from ever setting the track's floor. */}
+        <div className="min-w-0 space-y-3">
+          <div className="flex min-w-0 items-center gap-2 rounded-md border bg-muted/50 p-2.5">
+            <code
+              data-slot="revealed-token"
+              className="min-w-0 flex-1 break-all whitespace-normal font-mono text-[12.5px]"
+            >
               {created?.token}
             </code>
             <Button
               size="sm"
               variant="outline"
+              className="flex-none"
               onClick={() => {
                 if (created) void navigator.clipboard?.writeText(created.token);
                 setCopied(true);
