@@ -197,7 +197,10 @@ describe('CreditsSurface — isolation mount (no Laravel)', () => {
 
         const reason = await screen.findByText('Generation');
         expect(reason.className).not.toContain('truncate');
-        expect(reason.className).toContain('break-words');
+        // overflow-wrap:anywhere (not break-words) also lowers the table's min-content, so a long unbroken token
+        // (an id, a URL, the mono purchaseRef) cannot widen the column either (review-r1 on 5aaa2f2).
+        expect(reason.className).toContain('[overflow-wrap:anywhere]');
+        expect(screen.getByText('cs_test_123').className).toContain('[overflow-wrap:anywhere]');
         expect(screen.getByText('$149.00').className).toContain('whitespace-nowrap');
     });
 
