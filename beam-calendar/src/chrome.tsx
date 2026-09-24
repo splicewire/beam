@@ -23,7 +23,7 @@ export function EventBadge({ event }: { event: FoundationCalendarEvent }) {
     const meta = readMeta(event);
     const isSeries = Boolean(meta.seriesRef);
     return (
-        <span className="inline-flex min-w-0 items-center gap-1" title={meta.kind ?? undefined}>
+        <span className="flex w-full min-w-0 items-center gap-1" title={meta.kind ?? undefined}>
             <span
                 className={`inline-block size-1.5 shrink-0 rounded-full ${STATUS_TONE[meta.status] ?? 'bg-slate-400'}`}
                 aria-hidden
