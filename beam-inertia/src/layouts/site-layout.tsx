@@ -142,10 +142,17 @@ const nav = (
 );
 
 export default function SiteLayout({ children }: { children: ReactNode }) {
-    const page = usePage<{ auth: { user: unknown } }>();
-    const footerLinks = [
+    const page = usePage<{ auth: { user: unknown }; nav?: { items: { title: string; href?: string | null }[] } }>();
+    // The content links are the SAME `nav` prop the header's SiteNav reads (the `site` sitemap), so a renamed
+    // nav title reaches the footer too. The fixed pair is only the fallback for a host that shares no nav.
+    const contentLinks = page.props.nav?.items
+        .filter((item): item is { title: string; href: string } => Boolean(item.href))
+        .map(({ title, href }) => ({ title, href })) ?? [
         { title: 'Home', href: '/' },
         { title: 'About', href: '/about' },
+    ];
+    const footerLinks = [
+        ...contentLinks,
         page.props.auth.user
             ? { title: 'Dashboard', href: '/dashboard' }
             : { title: 'Sign in', href: '/login' },
