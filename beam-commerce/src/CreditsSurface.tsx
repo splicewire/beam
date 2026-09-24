@@ -129,8 +129,10 @@ const ledgerColumns: ColumnDef<CreditLedgerEntry, unknown>[] = [
     {
         header: 'Reason',
         cell: ({ row }) => (
-            <div className="min-w-0">
-                <div className="truncate">{row.original.reason}</div>
+            // Wraps (two lines at most) instead of `truncate`: the table is auto-layout, so a nowrap Reason
+            // grew its column to the full text and pushed Amount/Balance off-screen at narrow width.
+            <div className="min-w-[8rem]">
+                <div className="line-clamp-2 break-words">{row.original.reason}</div>
                 {row.original.purchaseRef && (
                     <div className="font-mono text-[11px] text-muted-foreground">
                         {row.original.purchaseRef}
@@ -146,7 +148,7 @@ const ledgerColumns: ColumnDef<CreditLedgerEntry, unknown>[] = [
             return (
                 <span
                     className={cn(
-                        'font-mono tabular-nums',
+                        'whitespace-nowrap font-mono tabular-nums',
                         credit ? 'text-foreground' : 'text-muted-foreground',
                     )}
                 >
@@ -159,7 +161,7 @@ const ledgerColumns: ColumnDef<CreditLedgerEntry, unknown>[] = [
     {
         header: 'Balance',
         cell: ({ row }) => (
-            <span className="font-mono tabular-nums text-muted-foreground">
+            <span className="whitespace-nowrap font-mono tabular-nums text-muted-foreground">
                 {formatUsd(row.original.runningUsd)}
             </span>
         ),

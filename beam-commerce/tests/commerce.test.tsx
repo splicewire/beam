@@ -190,6 +190,17 @@ describe('CreditsSurface — isolation mount (no Laravel)', () => {
         expect(client.getWallet).toHaveBeenCalled();
     });
 
+    it('lets a long ledger Reason wrap instead of widening the table past the page', async () => {
+        // `truncate` is nowrap, and the DataTable is auto-layout, so a long Reason grew its column to the full
+        // text and pushed Amount/Balance off-screen at narrow width (G3-COMMERCE-BILLING, overnight-polish 03).
+        mount(<CreditsSurface />, fakeClient());
+
+        const reason = await screen.findByText('Generation');
+        expect(reason.className).not.toContain('truncate');
+        expect(reason.className).toContain('break-words');
+        expect(screen.getByText('$149.00').className).toContain('whitespace-nowrap');
+    });
+
     it('routes the top-up through the injected startTopupCheckout', async () => {
         const client = fakeClient();
         mount(<CreditsSurface />, client);
