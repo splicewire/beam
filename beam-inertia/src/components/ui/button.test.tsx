@@ -12,8 +12,23 @@ it('gives a disabled primary a foreground tint and dimmed label instead of half 
     expect(html).toContain('disabled:opacity-100');
 });
 
-it('leaves the outline variant on the base dimming', () => {
+it('keeps a disabled outline framed by a foreground hairline with a dimmed label', () => {
     const html = renderToStaticMarkup(createElement(Button, { disabled: true, variant: 'outline' }, 'Cancel'));
+    expect(html).toContain('disabled:border-foreground/15');
+    expect(html).toContain('disabled:text-foreground/55');
+    expect(html).toContain('disabled:opacity-100');
+    expect(html).not.toContain('disabled:opacity-50');
+});
+
+it('gives a disabled secondary the tint instead of half opacity', () => {
+    const html = renderToStaticMarkup(createElement(Button, { disabled: true, variant: 'secondary' }, 'Later'));
+    expect(html).toContain('disabled:bg-foreground/10');
+    expect(html).toContain('disabled:text-foreground/55');
+    expect(html).not.toContain('disabled:opacity-50');
+});
+
+it('leaves the ghost variant on the base dimming', () => {
+    const html = renderToStaticMarkup(createElement(Button, { disabled: true, variant: 'ghost' }, 'Skip'));
     expect(html).toContain('disabled:opacity-50');
     expect(html).not.toContain('disabled:bg-foreground/10');
 });
