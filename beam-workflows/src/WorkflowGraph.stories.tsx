@@ -10,12 +10,11 @@ import { emptyBlueprint, largeBlueprint, publishBlueprintV1, singlePlaceBlueprin
  * populated → large.
  *
  * HONEST NOTES:
- *  - **Deterministic layout, non-deterministic viewport.** The node/edge POSITIONS come from the pure
- *    `layoutBlueprint` (BFS rank — fully deterministic, so nodes never jump). But `<ReactFlow fitView>`
- *    then pans/zooms to fit; that transform can differ headless vs. on-screen. The `play` fn below
- *    waits for the `.react-flow__node` elements to settle so a VR baseline captures rendered nodes, but
- *    a graph VR snapshot may still carry viewport jitter — the same class of caveat as ticket 22's RBC
- *    drag note. Prefer asserting node presence over pixel-exact pan.
+ *  - **Deterministic layout, fixed zoom.** The node/edge POSITIONS come from the pure
+ *    `layoutBlueprint` (BFS rank — fully deterministic, so nodes never jump), rendered at the fixed
+ *    `GRAPH_ZOOM` on a canvas sized to the layout; a graph wider than its pane scrolls sideways. The
+ *    `play` fn below waits for the `.react-flow__node` elements to settle so a VR baseline captures
+ *    rendered nodes.
  *  - **Self-contained hex, not semantic tokens (→ ticket 32).** The node borders/background use
  *    `--swc-*` brand vars with hardcoded hex fallbacks (`var(--swc-green)`, `#d4d4d8`, `#fff`), so the
  *    graph chrome does NOT re-skin under `.dark`. This is a *pre-existing* property recorded here, not
@@ -25,9 +24,12 @@ const meta = {
     title: 'Workflows/WorkflowGraph',
     component: WorkflowGraph,
     parameters: { layout: 'fullscreen' },
+    // A 720px pane, as a host's detail column gives it. The graph renders at a fixed legible zoom and
+    // scrolls sideways past that; `parameters.fullGraph` frames a story at the graph's own width
+    // instead, so a large graph's baseline shows every place rather than the first few.
     decorators: [
-        (Story) => (
-            <div className="h-[460px] w-[720px] max-w-full p-4">
+        (Story, { parameters }) => (
+            <div className={parameters.fullGraph ? 'w-max p-4' : 'w-[720px] max-w-full p-4'}>
                 <Story />
             </div>
         ),
@@ -65,5 +67,6 @@ export const Populated: Story = {
 /** A larger editorial pipeline — multiple branches, back-edges, and an unreachable-place trailing column. */
 export const Large: Story = {
     args: { blueprint: largeBlueprint },
+    parameters: { fullGraph: true },
     play: awaitGraph,
 };
