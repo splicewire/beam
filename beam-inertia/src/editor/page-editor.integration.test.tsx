@@ -6,8 +6,10 @@ import { configureBeamInertia } from '../config';
 import { PageEditor } from './page-editor';
 import AuthEntry from '../pages/auth/entry';
 
+const pageProps = vi.hoisted(() => ({ auth: { canAuthorUx: true } }));
+
 vi.mock('@inertiajs/react', () => ({
-    usePage: () => ({ props: { auth: { canAuthorUx: true } } }),
+    usePage: () => ({ props: pageProps }),
     Link: 'a',
     Head: () => null,
 }));
@@ -33,6 +35,7 @@ const envelope = {
 };
 
 afterEach(() => {
+    pageProps.auth.canAuthorUx = true;
     cleanup();
     __resetEditMode();
     configureBeamInertia({});
@@ -135,4 +138,78 @@ it('the existing auth slug remount exits editing before the next page can be aut
     expect(screen.queryByRole('button', { name: 'Save' })).toBeNull();
     // The previous global mode can initiate B's read before the parent's domain-mode effect runs.
     // The existing remount contract resets editing; it does not promise to suppress that read.
+});
+
+const cleared = {
+    id: 'a',
+    draftPending: false,
+    publishedVersion: null,
+    publishedReadable: null,
+    headVersion: null,
+    headReadable: null,
+    versions: [],
+    compileError: null,
+};
+
+it('an author removes the content only after confirming, and the canvas re-seeds to unauthored', async () => {
+    const clearBody = vi.fn(async () => cleared);
+    configureBeamInertia({
+        entryClient: { loadBody: async () => envelope, saveBody: async () => envelope, clearBody },
+    });
+    render(<PageEditor slug="home" entryId="a" />);
+    await act(async () => {
+        window.dispatchEvent(new CustomEvent('beam-ux:mode', { detail: { mode: 'window' } }));
+    });
+
+    await screen.findByText('Saved content');
+    await act(async () => {
+        fireEvent.click(screen.getByRole('button', { name: 'Remove content' }));
+    });
+    // One click opens the confirm step; nothing has been removed yet.
+    expect(clearBody).not.toHaveBeenCalled();
+    expect(screen.getByRole('alertdialog', { name: 'Confirm remove content' })).toBeTruthy();
+
+    await act(async () => {
+        fireEvent.click(screen.getByRole('button', { name: 'Confirm remove' }));
+    });
+
+    expect(clearBody).toHaveBeenCalledWith('a');
+    expect(screen.queryByText('Saved content')).toBeNull();
+    expect(screen.queryByRole('alertdialog', { name: 'Confirm remove content' })).toBeNull();
+});
+
+it('cancelling the confirm removes nothing', async () => {
+    const clearBody = vi.fn(async () => cleared);
+    configureBeamInertia({
+        entryClient: { loadBody: async () => envelope, saveBody: async () => envelope, clearBody },
+    });
+    render(<PageEditor slug="home" entryId="a" />);
+    await act(async () => {
+        window.dispatchEvent(new CustomEvent('beam-ux:mode', { detail: { mode: 'window' } }));
+    });
+
+    await act(async () => {
+        fireEvent.click(await screen.findByRole('button', { name: 'Remove content' }));
+    });
+    await act(async () => {
+        fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+    });
+
+    expect(clearBody).not.toHaveBeenCalled();
+    expect(screen.getByText('Saved content')).toBeTruthy();
+});
+
+it('a viewer without the author ability is not offered Remove content', async () => {
+    pageProps.auth.canAuthorUx = false;
+    const clearBody = vi.fn(async () => cleared);
+    configureBeamInertia({
+        entryClient: { loadBody: async () => envelope, saveBody: async () => envelope, clearBody },
+    });
+    render(<PageEditor slug="home" entryId="a" />);
+    await act(async () => {
+        window.dispatchEvent(new CustomEvent('beam-ux:mode', { detail: { mode: 'window' } }));
+    });
+
+    await screen.findByRole('button', { name: 'Save' });
+    expect(screen.queryByRole('button', { name: 'Remove content' })).toBeNull();
 });

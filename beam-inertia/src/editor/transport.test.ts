@@ -92,3 +92,35 @@ it('retains a supplied method receiver and switches back to starter defaults onl
     expect(bodyClient.listVersions).toBeTypeOf('function');
     expect(bodyClient.restoreVersion).toBeTypeOf('function');
 });
+
+it('clears through the canonical clear-body route, and an injected client without it offers none', async () => {
+    const state = {
+        id: 'e1',
+        draftPending: false,
+        publishedVersion: null,
+        publishedReadable: null,
+        headVersion: null,
+        headReadable: null,
+        versions: [],
+        compileError: null,
+    };
+    const fetch = vi.fn().mockResolvedValue(Response.json({ data: state }));
+    vi.stubGlobal('fetch', fetch);
+    vi.stubGlobal('document', { cookie: 'XSRF-TOKEN=csrf%20token' });
+    configureBeamInertia({});
+
+    expect(await bodyClient.clearBody?.('entry-uuid')).toEqual(state);
+    expect(fetch).toHaveBeenCalledWith('/beam-ux-entries/entry-uuid/clear-body', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-XSRF-TOKEN': 'csrf token',
+            Accept: 'application/json',
+        },
+        credentials: 'same-origin',
+        body: JSON.stringify({}),
+    });
+
+    configureBeamInertia({ entryClient: client });
+    expect(bodyClient.clearBody).toBeUndefined();
+});

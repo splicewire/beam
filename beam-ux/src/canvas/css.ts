@@ -224,6 +224,7 @@ export function peCss(t?: Partial<CanvasTheme>): string {
 .pe-version-tag.head{border-color:${c.editAccent};color:${c.editAccent}}
 .pe-confirm{display:flex;flex-direction:column;gap:8px;padding:10px;border:1px solid ${c.editAccent};border-radius:10px;font-family:${c.fontMono};font-size:11px;color:${c.panelFg}}
 .pe-confirm-actions{display:flex;gap:8px}
+.pe-clear{right:0;bottom:auto;width:320px;padding:14px;border-right:none;border-radius:0 0 0 12px}
 ${inspectorCss(c)}
 `;
 }

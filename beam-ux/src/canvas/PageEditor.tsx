@@ -57,6 +57,14 @@ export interface PageEditorTransport {
     listVersions?: (slug: string) => Promise<EntryPublicationState>;
     /** Roll forward to a recorded version and publish it. */
     restoreVersion?: (slug: string, ref: string) => Promise<EntryPublicationState>;
+    /**
+     * REMOVE the page's content — `beam-ux-entry.clear-body` on a beam-ux host: the stored body, its
+     * mirror file and its compiled artifact go, and the page reads as never authored. Optional and
+     * independent of the four above: a host supplies it only for an author who holds the publish
+     * ability, and the dock renders "Remove content" only when it is supplied. Not the same act as
+     * saving an empty document, which stays an authored (and published) empty body.
+     */
+    clearBody?: (slug: string) => Promise<EntryPublicationState | unknown>;
 }
 
 /** Optional toast seam (host injects; the package never imports a toast lib). */
@@ -255,6 +263,7 @@ export function PageEditor({
     const [publication, setPublication] = useState<EntryPublicationState | null>(null);
     const [versionsOpen, setVersionsOpen] = useState(false);
     const [pendingRestore, setPendingRestore] = useState<EntryVersion | null>(null);
+    const [confirmClear, setConfirmClear] = useState(false);
     const [busy, setBusy] = useState(false);
     // One attempt, not one per render: `transport` is an object literal at most call sites, so a
     // dependency on it re-runs every render, and a FAILED load would then retry forever. The ref is
@@ -403,6 +412,33 @@ export function PageEditor({
         }
     };
 
+    /**
+     * Remove the page's content, after the confirm step — and re-seed the canvas to the UNAUTHORED
+     * document, because that is what the server now holds. Without the re-seed the author would keep
+     * looking at the removed body, and the next Save would put it straight back.
+     *
+     * The response is the publication state when the host returns one (beam-ux does); anything else
+     * leaves the badge as it was rather than guessing.
+     */
+    const clearContent = async () => {
+        if (!transport.clearBody) return;
+        setBusy(true);
+        try {
+            const next = await transport.clearBody(slug);
+            if (next && typeof next === 'object' && 'versions' in next) {
+                setPublication(next as EntryPublicationState);
+            }
+            setDoc(fallbackDoc?.(slug) ?? EMPTY_DOC);
+            mount.markDirty(false);
+            setConfirmClear(false);
+            notify?.success('Content removed');
+        } catch {
+            notify?.error('Could not remove the content');
+        } finally {
+            setBusy(false);
+        }
+    };
+
     return (
         <WidgetRegistryContext.Provider value={registry}>
             <EditShellMountProvider value={mount}>
@@ -464,6 +500,15 @@ export function PageEditor({
                             </button>
                         </>
                     )}
+                    {transport.clearBody && (
+                        <button
+                            className="pe-btn"
+                            onClick={() => setConfirmClear(true)}
+                            disabled={busy}
+                        >
+                            Remove content
+                        </button>
+                    )}
                     {/* Save stays the IMMEDIATE-PUBLISH affordance it has always been, label included:
                         it is what `g2-beam-author-entry` proves and what an author who never opens the
                         draft door expects. The pair above is additive, never a re-spelling of this. */}
@@ -474,6 +519,28 @@ export function PageEditor({
                         Exit
                     </button>
                 </div>
+
+                {/* Removing content is CONFIRMED, never one click, for the same reason restore is:
+                    it changes what every reader of the page is served. */}
+                {confirmClear && (
+                    <div className="pe-panel pe-clear">
+                        <div className="pe-confirm" role="alertdialog" aria-label="Confirm remove content">
+                            <span>
+                                Remove this page’s content? The stored body, its file and its compiled
+                                page are deleted and readers see the page as never authored. The
+                                removed body stays in the version history.
+                            </span>
+                            <div className="pe-confirm-actions">
+                                <button className="pe-btn primary" onClick={clearContent} disabled={busy}>
+                                    Confirm remove
+                                </button>
+                                <button className="pe-btn" onClick={() => setConfirmClear(false)}>
+                                    Cancel
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
 
                 {leftOpen && (
                     <aside className="pe-panel pe-left">

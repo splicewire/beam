@@ -48,6 +48,14 @@ export interface UxBuilderClient<TBody = BeamUxEntryBodyData> {
     listVersions?(id: string): Promise<EntryPublicationState>;
     /** Roll forward to a recorded version (a uuid or a readable handle like `v2`) and publish it. */
     restoreVersion?(id: string, ref: string, label?: string): Promise<EntryPublicationState>;
+    /**
+     * REMOVE the entry's content and return it to the unauthored state
+     * (`POST .../beam-ux-entries/{id}/clear-body`): the stored body, its mirror file and its compiled
+     * artifact are deleted; the removed body stays in the version history. Optional — a host mounts it
+     * deliberately, and it declares the publish gate (`ux.author`). Distinct from saving `[]`, which
+     * is an authored empty body.
+     */
+    clearBody?(id: string, label?: string): Promise<EntryPublicationState>;
 }
 
 /**

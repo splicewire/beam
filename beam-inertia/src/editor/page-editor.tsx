@@ -65,7 +65,10 @@ const asBody = (doc: JsonDoc): Record<string, unknown> => doc as unknown as Reco
 export function PageEditor({ slug, body = null, entryId = null }: PageEditorProps) {
     // theme-entries-and-authoring ticket `str-01`: server-resolved theme, NEUTRAL_THEME as the
     // degrade-safe fallback (mirrors mount.tsx's VisualEditorMount).
-    const page = usePage<{ theme?: { canvas?: Partial<CanvasTheme> } }>();
+    const page = usePage<{
+        theme?: { canvas?: Partial<CanvasTheme> };
+        auth?: { canAuthorUx?: boolean };
+    }>();
     const theme = page.props.theme?.canvas ?? NEUTRAL_THEME;
 
     // An AUTHOR edits the entry's persisted body, not the frontend seed.
@@ -126,7 +129,11 @@ export function PageEditor({ slug, body = null, entryId = null }: PageEditorProp
         return <div role="alert">Could not load this page’s saved content.</div>;
     }
 
-    const { saveDraft, publish, listVersions, restoreVersion } = bodyClient;
+    const { saveDraft, publish, listVersions, restoreVersion, clearBody } = bodyClient;
+    // "Remove content" is offered only to a viewer who holds the ability `clear-body` declares
+    // (`ux.author`, shared as `auth.canAuthorUx`), and only when there is a row to address. The server
+    // refuses everyone else anyway; the gate here keeps the button from being a guaranteed 403.
+    const canClear = entryId !== null && !!clearBody && page.props.auth?.canAuthorUx === true;
 
     return (
         <CanvasProvider config={canvasConfig}>
@@ -163,6 +170,9 @@ export function PageEditor({ slug, body = null, entryId = null }: PageEditorProp
                               // over the version they just restored.
                               loadBody: () => bodyClient.loadBody(entryId),
                           }),
+                    ...(canClear && entryId !== null
+                        ? { clearBody: () => clearBody(entryId) }
+                        : {}),
                 }}
                 notify={{
                     success: (m) => toast.success(m),

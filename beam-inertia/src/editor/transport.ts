@@ -100,6 +100,10 @@ const publicationClient = {
         (await publicationPost(id, 'publish', { label })) as EntryPublicationState,
     restoreVersion: async (id: string, ref: string, label?: string) =>
         (await publicationPost(id, 'restore', { ref, label })) as EntryPublicationState,
+    // `clear-body` — remove the page's content and return the entry to unauthored. Not the same act as
+    // `save-body` with `[]`, which stores an authored empty document. Same ability (`ux.author`).
+    clearBody: async (id: string, label?: string) =>
+        (await publicationPost(id, 'clear-body', { label })) as EntryPublicationState,
 };
 
 /** The shared write leg: a stateful, cookie-authed POST carrying the XSRF header axios would add. */
@@ -143,5 +147,9 @@ export const bodyClient: UxBuilderClient = {
     get restoreVersion() {
         const client = getBeamInertiaConfig().entryClient ?? publicationClient;
         return client.restoreVersion?.bind(client);
+    },
+    get clearBody() {
+        const client = getBeamInertiaConfig().entryClient ?? publicationClient;
+        return client.clearBody?.bind(client);
     },
 };
