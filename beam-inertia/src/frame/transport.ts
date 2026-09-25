@@ -1,5 +1,5 @@
 import type { FrameTransport, ResourcePage, Row } from '@schemastud/frame';
-import { createResourceTransport, parseResourcePage } from '@schemastud/frame';
+import { createResourceTransport, FrameActionError, parseResourcePage } from '@schemastud/frame';
 import type { SchemaNode } from '@schemastud/seam';
 import { jsonHeaders } from './xsrf';
 
@@ -37,6 +37,28 @@ async function writeJson<T = unknown>(method: string, url: string, body?: unknow
     }
 
     return (await res.json().catch(() => null)) as T;
+}
+
+/**
+ * A declared ACTION's request (schemastud/laravel-frame ADR-0005) — sent to the action's OWN URL, which is
+ * the producer's mount (a beam `#[ParticleOp]` route), not the Frame socket. A non-2xx answer rejects with
+ * a {@link FrameActionError} carrying the parsed body, so the action UI can put a 422's field errors on the
+ * form and show any other refusal's `message` (a 402 decline, a 403).
+ */
+async function sendAction<T = unknown>(method: string, url: string, body?: unknown): Promise<T> {
+    const res = await fetch(url, {
+        method,
+        headers: jsonHeaders(),
+        credentials: 'same-origin',
+        ...(body === undefined ? {} : { body: JSON.stringify(body) }),
+    });
+    const parsed = await res.json().catch(() => null);
+
+    if (!res.ok) {
+        throw new FrameActionError(res.status, parsed, `${method} ${url} failed (${res.status}).`);
+    }
+
+    return parsed as T;
 }
 
 /**
@@ -93,5 +115,6 @@ export const frameTransport: FrameTransport = createResourceTransport(
             const query = new URLSearchParams(params).toString();
             return fetchJson(query ? `${url}?${query}` : url);
         },
+        write: sendAction,
     },
 );

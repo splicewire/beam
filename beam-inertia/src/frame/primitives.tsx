@@ -3,7 +3,7 @@ import { Popover, PopoverContent, PopoverTrigger, SimpleSelect } from '@schemast
 import type { ReactNode } from 'react';
 import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/button';
-import { Dialog, DialogContent } from '../components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../components/ui/dialog';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Sheet, SheetContent } from '../components/ui/sheet';
@@ -48,14 +48,24 @@ export const framePrimitives: FramePrimitives = {
     Dialog: ({
         open,
         onOpenChange,
+        title,
         children,
     }: {
         open?: boolean;
         onOpenChange?: (o: boolean) => void;
+        /** A declared action's label (ADR-0005); the accessible name Radix requires of a dialog. */
+        title?: string;
         children?: ReactNode;
     }) => (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent>{children}</DialogContent>
+            <DialogContent>
+                {title ? (
+                    <DialogHeader>
+                        <DialogTitle>{title}</DialogTitle>
+                    </DialogHeader>
+                ) : null}
+                {children}
+            </DialogContent>
         </Dialog>
     ),
     SidePanel: FrameSidePanel,

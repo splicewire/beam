@@ -9,6 +9,7 @@ import type { CardLinkRenderer, FrameAction, FrameInjection } from '@schemastud/
 import { shadcnEditSlots, shadcnListSlots } from '@schemastud/frame/shadcn';
 import type { SchemaNode } from '@schemastud/seam';
 import { useCallback, useMemo } from 'react';
+import { toast } from 'sonner';
 import type { ReactNode } from 'react';
 import { frameIcon } from './icons';
 import { manifestLookup, useFrameManifest } from './manifest';
@@ -118,6 +119,9 @@ export function TenantFrameProvider({ children }: { children: ReactNode }) {
             manifestFor: manifestLookup(manifest),
             listSlots: shadcnListSlots,
             editSlots: shadcnEditSlots,
+            // A declared action's result (ADR-0005) is this host's toast — the same sonner `<Toaster/>`
+            // the flash messages use — rather than frame's inline fallback.
+            notify: ({ tone, message }) => (tone === 'error' ? toast.error(message) : toast.success(message)),
         };
     }, [can, manifest]);
 

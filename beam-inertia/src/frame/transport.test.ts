@@ -197,3 +197,47 @@ it('preserves declared grouped rows and the raw summary over canonical resource 
         expect.objectContaining({ credentials: 'same-origin' }),
     );
 });
+
+it('sends a declared action to its own URL and surfaces a refusal with the server body', async () => {
+    const reload = {
+        key: 'reload',
+        label: 'Reload credits',
+        scope: 'resource' as const,
+        method: 'POST',
+        url: '/api/beam/commerce/credits/reload',
+        input: 'Splicewire.Beam.Commerce.Data.CreditCheckoutInputData',
+        result: 'toast' as const,
+        destructive: false,
+    };
+    const fetch = vi.fn(async (input: string, init: RequestInit) => {
+        if (input.endsWith('/actions/reload/schema')) {
+            return Response.json({ type: 'object', properties: { amount_usd: { type: 'number' } } });
+        }
+        const body = JSON.parse(String(init.body)) as { amount_usd: number };
+        return body.amount_usd === 666.02
+            ? Response.json({ success: false, message: 'The reload was declined (card_declined).' }, { status: 402 })
+            : Response.json({ success: true, message: 'Credits added.', data: { captured: true } });
+    });
+    vi.stubGlobal('fetch', fetch);
+
+    await expect(frameTransport.invoke!(reload, { data: { amount_usd: 25 } })).resolves.toEqual({
+        message: 'Credits added.',
+        data: { captured: true },
+    });
+    expect(fetch).toHaveBeenLastCalledWith(
+        '/api/beam/commerce/credits/reload',
+        expect.objectContaining({ method: 'POST', credentials: 'same-origin', body: '{"amount_usd":25}' }),
+    );
+
+    await expect(frameTransport.invoke!(reload, { data: { amount_usd: 666.02 } })).rejects.toMatchObject({
+        name: 'FrameActionError',
+        status: 402,
+        message: 'The reload was declined (card_declined).',
+    });
+
+    await frameTransport.getActionSchema!('site-credits', 'reload');
+    expect(fetch).toHaveBeenLastCalledWith(
+        '/frame/resources/site-credits/actions/reload/schema',
+        expect.objectContaining({ method: 'GET' }),
+    );
+});
