@@ -191,12 +191,14 @@ const brand = (
 // guest assumption. `AuthNavLinks` is the one piece of the header that reads `usePage()`.
 function AuthNavLinks() {
     const page = usePage<{
-        auth: { user: { name: string } | null };
+        auth?: { user: { name: string } | null };
         can?: Record<string, boolean>;
     }>();
     const { auth, can } = page.props;
 
-    if (!auth.user) {
+    // `auth` is optional: the packaged `error` page renders here for a 404 that never reached the
+    // session middleware, where no shared props exist at all.
+    if (!auth?.user) {
         return (
             <>
                 <a className="navlink" href="/login">
@@ -243,7 +245,7 @@ const nav = (
 
 export default function SiteLayout({ children }: { children: ReactNode }) {
     const dark = useSiteDark();
-    const page = usePage<{ auth: { user: unknown }; nav?: { items: { title: string; href?: string | null }[] } }>();
+    const page = usePage<{ auth?: { user: unknown }; nav?: { items: { title: string; href?: string | null }[] } }>();
     // The content links are the SAME `nav` prop the header's SiteNav reads (the `site` sitemap), so a renamed
     // nav title reaches the footer too. The fixed pair is only the fallback for a host that shares no nav.
     const contentLinks = page.props.nav?.items
@@ -254,7 +256,7 @@ export default function SiteLayout({ children }: { children: ReactNode }) {
     ];
     const footerLinks = [
         ...contentLinks,
-        page.props.auth.user
+        page.props.auth?.user
             ? { title: 'Dashboard', href: '/dashboard' }
             : { title: 'Sign in', href: '/login' },
     ];

@@ -23,6 +23,9 @@ const defaults: Record<string, PageLoader> = {
     'auth/accept-invitation': () => import('./pages/auth/accept-invitation') as unknown as Promise<PageModule>,
     'operator/dashboard': () => import('./pages/operator/dashboard') as unknown as Promise<PageModule>,
     'operator/platform-connection': () => import('./pages/operator/platform-connection') as unknown as Promise<PageModule>,
+    // The branded error page `splicewire/laravel-beam-accounts`' `ErrorPages` renders for a browser's
+    // 403/404/419/500/503. It picks its own chrome (account shell or site shell), see pages/error.tsx.
+    'error': () => import('./pages/error') as unknown as Promise<PageModule>,
 };
 const pageFeatures = {
     'auth/register': 'registration',
