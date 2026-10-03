@@ -77,7 +77,7 @@ export const DefaultTree: Story = {
     play: async ({ canvasElement }) => {
         const canvas = within(canvasElement);
         await expect(
-            await canvas.findByText(/editable in place through the promoted/i, undefined, { timeout: 3000 }),
+            await canvas.findByText(/Edit this page right here/i, undefined, { timeout: 3000 }),
         ).toBeInTheDocument();
     },
 };
@@ -98,7 +98,7 @@ export const DefaultTreeDark: Story = {
     play: async ({ canvasElement }) => {
         const canvas = within(canvasElement);
         await expect(
-            await canvas.findByText(/editable in place through the promoted/i, undefined, { timeout: 3000 }),
+            await canvas.findByText(/Edit this page right here/i, undefined, { timeout: 3000 }),
         ).toBeInTheDocument();
         const root = canvasElement.querySelector('.st-site') as HTMLElement;
         await expect(getComputedStyle(root).backgroundColor).toBe('rgb(11, 15, 23)');
@@ -111,7 +111,7 @@ export const DefaultTreeThemed: Story = {
     globals: { colorScheme: 'light' },
     play: async ({ canvasElement }) => {
         const canvas = within(canvasElement);
-        await canvas.findByText(/editable in place through the promoted/i, undefined, { timeout: 3000 });
+        await canvas.findByText(/Edit this page right here/i, undefined, { timeout: 3000 });
         const root = canvasElement.querySelector('.st-site') as HTMLElement;
         await expect(getComputedStyle(root).backgroundColor).toBe('rgb(248, 250, 252)');
     },
