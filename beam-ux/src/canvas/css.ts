@@ -31,6 +31,8 @@ export interface CanvasTheme {
 // it sits in rather than a third visual language (launch ticket 05 item 4): the accent is the app's primary green and the
 // panels are its dark rail. Hex, not `var(--beam-*)`, because the theme editor's colour fields hold `#rrggbb`; the
 // server-side defaults (laravel-beam-ux ThemeSchemas::canvas) carry the same values, and css.test.ts pins them to tokens.css.
+// Muted text on the CANVAS side (source previews, the MDX handle, content-ref tags) is the canvas ink at 70% over the
+// canvas, not the rail-derived `muted`, which is a panel colour (3:1 on white).
 // Text drawn ON the dark panels in the accent's family uses `editAccent` (the rail's signal green), and accent text on the
 // light canvas uses `accentHover` (the deep green): the primary green itself reads at only 3.4:1 on the rail and 4.47:1
 // on a tinted canvas, so it stays for fills and borders (css.test.ts pins every pair at 4.5:1).
@@ -97,13 +99,13 @@ export function veCss(t?: Partial<CanvasTheme>): string {
 .ve-canvas [contenteditable="true"]{outline:2px solid ${c.editAccent} !important;cursor:text}
 .ve-canvas .ve-island{position:relative}
 .ve-canvas .ve-opaque{position:relative}
-.ve-opaque-src{margin:0;padding:10px 12px;background:rgba(0,0,0,.05);border:1px dashed rgba(0,0,0,.18);border-radius:8px;font-family:${c.fontMono};font-size:11px;white-space:pre-wrap;color:${c.muted};overflow:auto}
+.ve-opaque-src{margin:0;padding:10px 12px;background:rgba(0,0,0,.05);border:1px dashed rgba(0,0,0,.18);border-radius:8px;font-family:${c.fontMono};font-size:11px;white-space:pre-wrap;color:color-mix(in srgb, ${c.ink} 70%, ${c.canvas});overflow:auto}
 .ve-mdx-block{position:relative}
-.ve-mdx-handle{display:inline-flex;align-items:center;gap:6px;cursor:pointer;font:10px ${c.fontMono};letter-spacing:.1em;text-transform:uppercase;color:${c.muted};background:rgba(0,0,0,.05);border:1px solid rgba(0,0,0,.14);border-radius:6px;padding:3px 9px;margin-bottom:8px;user-select:none}
+.ve-mdx-handle{display:inline-flex;align-items:center;gap:6px;cursor:pointer;font:10px ${c.fontMono};letter-spacing:.1em;text-transform:uppercase;color:color-mix(in srgb, ${c.ink} 70%, ${c.canvas});background:rgba(0,0,0,.05);border:1px solid rgba(0,0,0,.14);border-radius:6px;padding:3px 9px;margin-bottom:8px;user-select:none}
 .ve-mdx-handle:hover{color:${c.accentHover};border-color:${c.accent}80}
 .beam-content-ref{border:1px solid rgba(0,0,0,.14);border-radius:10px;overflow:hidden;margin:12px 0;background:#fff}
 .beam-content-ref-bar{display:flex;align-items:center;gap:8px;padding:6px 10px;background:rgba(0,0,0,.04);border-bottom:1px solid rgba(0,0,0,.1)}
-.beam-content-ref-tag{font:10px ${c.fontMono};letter-spacing:.1em;text-transform:uppercase;color:${c.muted}}
+.beam-content-ref-tag{font:10px ${c.fontMono};letter-spacing:.1em;text-transform:uppercase;color:color-mix(in srgb, ${c.ink} 70%, ${c.canvas})}
 .beam-content-ref-pick{margin-left:auto;font:11px ${c.fontMono};color:${c.ink};background:${c.canvas};border:1px solid rgba(0,0,0,.16);border-radius:6px;padding:3px 6px;max-width:220px}
 .beam-content-ref-body{padding:12px 14px;color:${c.ink}}
 /* mdxeditor popups (link dialog, selects) must sit ABOVE the fixed editor panels. */

@@ -161,9 +161,15 @@ describe('the default chrome text reads on its surface (WCAG AA, 4.5:1 for small
     const textColour = (selector: string): string => {
         const at = css.indexOf(`${selector}{`);
         if (at === -1) throw new Error(`no ${selector} rule`);
-        const colour = css.slice(at, css.indexOf('}', at)).match(/(?:^|[;{])color:(#[0-9a-fA-F]{6})/)?.[1];
-        if (!colour) throw new Error(`${selector} sets no hex text colour`);
-        return colour;
+        const rule = css.slice(at, css.indexOf('}', at));
+        const hex = rule.match(/(?:^|[;{])color:(#[0-9a-fA-F]{6})[;}]?/)?.[1];
+        if (hex) return hex;
+        // color-mix(in srgb, A P%, B): the canvas-side muted is the theme's ink over its canvas.
+        const mix = rule.match(/(?:^|[;{])color:color-mix\(in srgb, (#[0-9a-fA-F]{6}) (\d+)%, (#[0-9a-fA-F]{6})\)/);
+        if (!mix) throw new Error(`${selector} sets no hex or color-mix text colour`);
+        const [, a, pct, b] = mix;
+        const ch = (h: string, i: number) => parseInt(h.slice(i, i + 2), 16);
+        return `#${[1, 3, 5].map((i) => Math.round(ch(a, i) * (Number(pct) / 100) + ch(b, i) * (1 - Number(pct) / 100)).toString(16).padStart(2, '0')).join('')}`;
     };
 
     it.each([
@@ -174,6 +180,10 @@ describe('the default chrome text reads on its surface (WCAG AA, 4.5:1 for small
         ['.pe-version-tag.published on the panel', textColour('.pe-version-tag.published'), t.panelBg],
         // The MDX handle sits on the CANVAS (a 5% black tint over it), where the accent reads.
         ['.ve-mdx-handle:hover on the canvas', textColour('.ve-mdx-handle:hover'), '#f2f2f2'],
+        // Canvas-side labels were `muted` (a rail colour, 3.05:1 on white): they take the canvas ink at 70% (review-r1, build.qa).
+        ['.ve-mdx-handle on the canvas', textColour('.ve-mdx-handle'), '#f2f2f2'],
+        ['.beam-content-ref-tag on the canvas', textColour('.beam-content-ref-tag'), '#f2f2f2'],
+        ['.ve-opaque-src on the canvas', textColour('.ve-opaque-src'), '#f2f2f2'],
     ])('%s', (_pair, fg, bg) => {
         expect(ratio(fg, bg)).toBeGreaterThanOrEqual(4.5);
     });
