@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { peCss, veCss } from './css.js';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+import { DEFAULT_CANVAS_THEME, peCss, veCss } from './css.js';
 
 // The inspector's fields (schemastud/frame's shadcn inputs, tabs and group headings, plus the chip and
 // style-row widgets) colour themselves from the host's shadcn variables. A host's light theme defines
@@ -92,5 +94,52 @@ describe('peCss floating panels', () => {
         expect(fade).toContain('position:sticky');
         expect(fade).toContain('bottom:0');
         expect(fade).toContain('linear-gradient(to bottom,transparent,#0f172a)');
+    });
+});
+
+// Launch ticket 05 item 4: the editor read as a third product (a blue accent and monospace chrome) beside the app's Beam
+// green. Its default palette is the app's own tokens, read here from the shipped tokens.css so the two cannot drift: the
+// accent is the app's primary green, the panels are the app's dark rail, and the chrome is set in the body face.
+// The values stay hex because the theme editor's colour fields hold `#rrggbb` (format: color).
+describe('the default editor chrome takes the app tokens', () => {
+    // Read off disk: a `?raw` CSS import is empty under this vitest config.
+    const tokens = readFileSync(resolve(import.meta.dirname, '../theme/tokens.css'), 'utf8');
+    const light = tokens.slice(tokens.indexOf(':root {'), tokens.indexOf('.dark {'));
+    const token = (name: string): string => {
+        const value = light.match(new RegExp(`--${name}:\\s*([^;]+);`))?.[1]?.trim();
+        if (!value) throw new Error(`no --${name} in tokens.css`);
+        return value.toLowerCase();
+    };
+    // --beam-rail-fg is an rgba over the rail; the theme needs it as the opaque colour it reads as.
+    const over = (rgba: string, bg: string): string => {
+        const [r, g, b, a] = rgba.match(/[\d.]+/g)!.map(Number);
+        const base = [1, 3, 5].map((i) => parseInt(bg.slice(i, i + 2), 16));
+        return `#${[r, g, b].map((c, i) => Math.round(c * a + base[i] * (1 - a)).toString(16).padStart(2, '0')).join('')}`;
+    };
+
+    it('uses the app palette: primary green, the dark rail, the app ink', () => {
+        const t = DEFAULT_CANVAS_THEME;
+        expect(t.accent.toLowerCase()).toBe(token('beam-green'));
+        expect(t.accentHover.toLowerCase()).toBe(token('beam-green-deep'));
+        expect(t.panelBg.toLowerCase()).toBe(token('beam-rail'));
+        expect(t.rootBg.toLowerCase()).toBe(token('beam-rail-deep'));
+        expect(t.panelFg.toLowerCase()).toBe(token('beam-rail-active'));
+        expect(t.muted.toLowerCase()).toBe(over(token('beam-rail-fg'), token('beam-rail')));
+        expect(t.ink.toLowerCase()).toBe(token('beam-ink'));
+        expect(t.canvas.toLowerCase()).toBe(token('beam-paper-raised'));
+    });
+
+    it('sets the chrome in the body face; monospace stays for source and code', () => {
+        const css = veCss() + peCss();
+        const rule = (selector: string): string => {
+            const at = css.indexOf(`${selector}{`);
+            if (at === -1) throw new Error(`no ${selector} rule`);
+            return css.slice(at, css.indexOf('}', at));
+        };
+        for (const selector of ['.ve-bar', '.ve-crumbs', '.ve-menu', '.ve-insp-h', '.pe-bar', '.pe-comp-badge', '.pe-versions h3', '.pe-version', '.pe-confirm']) {
+            expect(rule(selector), selector).not.toContain(DEFAULT_CANVAS_THEME.fontMono);
+        }
+        expect(rule('.ve-src pre')).toContain(DEFAULT_CANVAS_THEME.fontMono);
+        expect(rule('.ve-opaque-src')).toContain(DEFAULT_CANVAS_THEME.fontMono);
     });
 });

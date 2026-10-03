@@ -27,16 +27,20 @@ export interface CanvasTheme {
     fontMono: string;
 }
 
+// The app's own tokens (beam-ux/src/theme/tokens.css, light values), so the editor reads as the same product as the app
+// it sits in rather than a third visual language (launch ticket 05 item 4): the accent is the app's primary green and the
+// panels are its dark rail. Hex, not `var(--beam-*)`, because the theme editor's colour fields hold `#rrggbb`; the
+// server-side defaults (laravel-beam-ux ThemeSchemas::canvas) carry the same values, and css.test.ts pins them to tokens.css.
 export const DEFAULT_CANVAS_THEME: CanvasTheme = {
-    accent: '#4F7CFF',
-    accentHover: '#3A63E0',
-    editAccent: '#22C7B8',
-    canvas: '#FFFFFF',
-    ink: '#1A1A1A',
-    panelBg: '#1C1C1E',
-    rootBg: '#131315',
-    panelFg: '#E6E6E6',
-    muted: '#8A8A8A',
+    accent: '#14803f', // --beam-green
+    accentHover: '#0f5f2e', // --beam-green-deep
+    editAccent: '#35d07a', // --beam-signal (inline-edit outline)
+    canvas: '#ffffff', // --beam-paper-raised
+    ink: '#2e2c26', // --beam-ink
+    panelBg: '#11201a', // --beam-rail
+    rootBg: '#0d1a14', // --beam-rail-deep
+    panelFg: '#eaf6ee', // --beam-rail-active
+    muted: '#83998c', // --beam-rail-fg (60% over the rail), as an opaque colour
     fontBody: "system-ui, sans-serif",
     fontMono: "ui-monospace, monospace",
 };
@@ -69,7 +73,7 @@ export function veCss(t?: Partial<CanvasTheme>): string {
     const c = theme(t);
     return `
 .ve-root{position:fixed;inset:0;z-index:2147483100;display:flex;flex-direction:column;background:${c.rootBg};font-family:${c.fontBody}}
-.ve-bar{display:flex;align-items:center;gap:16px;height:40px;flex:none;padding:0 16px;background:${c.panelBg};color:${c.panelFg};border-bottom:1px solid rgba(255,255,255,.08);font-family:${c.fontMono};font-size:11px;letter-spacing:.06em}
+.ve-bar{display:flex;align-items:center;gap:16px;height:40px;flex:none;padding:0 16px;background:${c.panelBg};color:${c.panelFg};border-bottom:1px solid rgba(255,255,255,.08);font-family:${c.fontBody};font-size:11px;letter-spacing:.06em}
 .ve-brand{display:flex;align-items:center;gap:8px;color:#fff}
 .ve-mark{width:15px;height:15px;border-radius:23%;background:${c.accent}}
 .ve-hint{color:${c.muted}}
@@ -105,18 +109,18 @@ export function veCss(t?: Partial<CanvasTheme>): string {
 .ve-canvas .ve-island:hover::before,.pe-canvas .ve-island:hover::before{opacity:.9}
 .ve-canvas .ve-gated::before,.pe-canvas .ve-gated::before{content:"sealed"}
 .ve-canvas .ve-gated::after,.pe-canvas .ve-gated::after{content:"";position:absolute;inset:0;z-index:4;outline:1.5px dashed #E0A030;outline-offset:-1px;pointer-events:none}
-.ve-crumbs{display:flex;flex-wrap:wrap;align-items:center;gap:2px;padding:10px 16px;border-bottom:1px solid rgba(255,255,255,.08);font-family:${c.fontMono};font-size:11px}
+.ve-crumbs{display:flex;flex-wrap:wrap;align-items:center;gap:2px;padding:10px 16px;border-bottom:1px solid rgba(255,255,255,.08);font-family:${c.fontBody};font-size:11px}
 .ve-crumb-seg{display:inline-flex;align-items:center;gap:2px}
 .ve-crumb-sep{color:${c.muted};margin:0 2px}
 .ve-crumb{background:none;border:none;color:${c.muted};cursor:pointer;font:inherit;padding:2px 4px;border-radius:4px}
 .ve-crumb:hover:not(:disabled){color:#fff;background:rgba(255,255,255,.08)}
 .ve-crumb:disabled{color:${c.panelFg};cursor:default}
-.ve-menu{position:fixed;z-index:2147483500;background:${c.panelBg};border:1px solid rgba(255,255,255,.14);border-radius:8px;box-shadow:0 12px 32px -10px rgba(0,0,0,.6);padding:4px;min-width:150px;font-family:${c.fontMono};font-size:12px}
+.ve-menu{position:fixed;z-index:2147483500;background:${c.panelBg};border:1px solid rgba(255,255,255,.14);border-radius:8px;box-shadow:0 12px 32px -10px rgba(0,0,0,.6);padding:4px;min-width:150px;font-family:${c.fontBody};font-size:12px}
 .ve-menu-item{display:block;width:100%;text-align:left;background:none;border:none;color:${c.panelFg};cursor:pointer;padding:7px 10px;border-radius:5px;font:inherit;white-space:nowrap}
 .ve-menu-item:not(:disabled):hover{background:${c.accent}28;color:#fff}
 .ve-menu-item.danger:not(:disabled):hover{background:#e0433033;color:#ff8a7a}
 .ve-menu-item:disabled{opacity:.35;cursor:not-allowed}
-.ve-insp-h{font-family:${c.fontMono};font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:${c.muted}}
+.ve-insp-h{font-family:${c.fontBody};font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:${c.muted}}
 .ve-src{margin-top:auto;border-top:1px solid rgba(255,255,255,.08);padding:12px 16px}
 .ve-src pre{margin:6px 0 0;font-family:${c.fontMono};font-size:10px;line-height:1.5;color:${c.muted};white-space:pre-wrap;max-height:180px;overflow:auto}
 ${inspectorCss(c)}
@@ -199,7 +203,7 @@ export function peCss(t?: Partial<CanvasTheme>): string {
 .pe-canvas [data-bd-component]:hover{outline:1.5px dotted ${c.accent};outline-offset:1px}
 .pe-canvas [contenteditable="true"]{outline:2px solid ${c.editAccent} !important;cursor:text}
 .pe-canvas .ve-island{position:relative}
-.pe-bar{position:fixed;top:0;left:0;right:0;z-index:2147483200;display:flex;align-items:center;gap:8px;height:40px;padding:0 14px;background:${c.panelBg};color:${c.panelFg};border-bottom:1px solid rgba(255,255,255,.1);font-family:${c.fontMono};font-size:11px}
+.pe-bar{position:fixed;top:0;left:0;right:0;z-index:2147483200;display:flex;align-items:center;gap:8px;height:40px;padding:0 14px;background:${c.panelBg};color:${c.panelFg};border-bottom:1px solid rgba(255,255,255,.1);font-family:${c.fontBody};font-size:11px}
 .pe-brand{display:flex;align-items:center;gap:8px;color:#fff}
 .pe-mark{width:14px;height:14px;border-radius:23%;background:${c.accent}}
 .pe-btn{background:none;border:1px solid rgba(255,255,255,.16);border-radius:8px;color:${c.panelFg};cursor:pointer;font:inherit;font-size:11px;padding:5px 12px}
@@ -210,11 +214,11 @@ export function peCss(t?: Partial<CanvasTheme>): string {
 .pe-panel::after{content:"";display:block;flex:none;position:sticky;bottom:0;height:28px;margin-top:auto;pointer-events:none;background:linear-gradient(to bottom,transparent,${c.panelBg})}
 .pe-left{left:0;width:200px;padding:14px 12px;display:flex;flex-direction:column;gap:7px;border-left:none;border-radius:0 0 12px 0}
 .pe-right{right:0;border-right:none;border-radius:0 0 0 12px}
-.pe-comp-badge{margin:-6px 16px 6px;font-family:${c.fontMono};font-size:10px;letter-spacing:.08em;color:${c.accent}}
+.pe-comp-badge{margin:-6px 16px 6px;font-family:${c.fontBody};font-size:10px;letter-spacing:.08em;color:${c.accent}}
 .pe-draft{display:inline-flex;align-items:center;gap:6px;padding:3px 9px;border-radius:999px;border:1px solid ${c.editAccent};color:${c.editAccent};font-size:10px;letter-spacing:.06em;text-transform:uppercase}
 .pe-versions{right:0;width:320px;padding:14px 14px 20px;border-right:none;border-radius:0 0 0 12px;display:flex;flex-direction:column;gap:10px}
-.pe-versions h3{margin:0;font-family:${c.fontMono};font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:${c.panelFg}}
-.pe-version{display:flex;align-items:baseline;gap:8px;padding:8px 0;border-top:1px solid rgba(255,255,255,.08);font-family:${c.fontMono};font-size:11px;color:${c.panelFg}}
+.pe-versions h3{margin:0;font-family:${c.fontBody};font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:${c.panelFg}}
+.pe-version{display:flex;align-items:baseline;gap:8px;padding:8px 0;border-top:1px solid rgba(255,255,255,.08);font-family:${c.fontBody};font-size:11px;color:${c.panelFg}}
 .pe-version-text{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:2px}
 .pe-version-ref{color:#fff;min-width:0;overflow-wrap:anywhere}
 .pe-version-label{min-width:0;opacity:.75;overflow-wrap:anywhere}
@@ -222,7 +226,7 @@ export function peCss(t?: Partial<CanvasTheme>): string {
 .pe-version-tag{flex:none;white-space:nowrap;font-size:9px;letter-spacing:.06em;text-transform:uppercase;padding:2px 6px;border-radius:6px;border:1px solid rgba(255,255,255,.2)}
 .pe-version-tag.published{border-color:${c.accent};color:${c.accent}}
 .pe-version-tag.head{border-color:${c.editAccent};color:${c.editAccent}}
-.pe-confirm{display:flex;flex-direction:column;gap:8px;padding:10px;border:1px solid ${c.editAccent};border-radius:10px;font-family:${c.fontMono};font-size:11px;color:${c.panelFg}}
+.pe-confirm{display:flex;flex-direction:column;gap:8px;padding:10px;border:1px solid ${c.editAccent};border-radius:10px;font-family:${c.fontBody};font-size:11px;color:${c.panelFg}}
 .pe-confirm-actions{display:flex;gap:8px}
 .pe-clear{right:0;bottom:auto;width:320px;padding:14px;border-right:none;border-radius:0 0 0 12px}
 ${inspectorCss(c)}

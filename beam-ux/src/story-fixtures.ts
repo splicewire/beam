@@ -118,8 +118,8 @@ export const themeEntryBody: BeamUxEntryBodyData = {
                 title: 'Canvas theme',
                 additionalProperties: false,
                 properties: {
-                    accent: { type: 'string', format: 'color', title: 'Accent', default: '#4F7CFF' },
-                    ink: { type: 'string', format: 'color', title: 'Ink', default: '#1A1A1A' },
+                    accent: { type: 'string', format: 'color', title: 'Accent', default: '#14803f' },
+                    ink: { type: 'string', format: 'color', title: 'Ink', default: '#2e2c26' },
                 },
             },
             site: {

@@ -1,19 +1,9 @@
-// NEUTRAL theme tokens for the promoted visual-editor canvas (@splicewire/beam-ux/canvas). The package
-// canvas ships GENERIC (neutral) defaults; the host supplies its palette here — the "config, not
-// machinery" boundary (frontend-surfaces.md, editor). This starter keeps a plain slate/neutral set (NOT a
-// brand palette) so a fresh host sees the OOTB shape, then swaps these tokens for its own.
+// The fallback theme for the promoted visual-editor canvas (@splicewire/beam-ux/canvas), used only when the server sends
+// no resolved theme (`page.props.theme.canvas`, the ThemeResolver cascade). It overrides nothing: the package's
+// DEFAULT_CANVAS_THEME is the app's own tokens (the Beam green accent, the dark rail panels, the body face for chrome),
+// so the editor reads as the same product as the app around it (launch ticket 05 item 4). It used to pin a slate palette
+// and monospace chrome here, which made the editor a third visual language. A host with its own palette sets it through
+// a theme entry, or by returning the slots it wants from here.
 import type { CanvasTheme } from '@splicewire/beam-ux/canvas';
 
-export const NEUTRAL_THEME: Partial<CanvasTheme> = {
-    accent: '#0f172a', // slate-900
-    accentHover: '#1e293b', // slate-800
-    editAccent: '#2563eb', // blue-600 (inline-edit outline)
-    canvas: '#ffffff',
-    ink: '#0f172a',
-    panelBg: '#0f172a',
-    rootBg: '#020617',
-    panelFg: '#e2e8f0',
-    muted: '#64748b',
-    fontBody: 'system-ui, sans-serif',
-    fontMono: 'ui-monospace, monospace',
-};
+export const NEUTRAL_THEME: Partial<CanvasTheme> = {};
