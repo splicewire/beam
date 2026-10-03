@@ -29,8 +29,9 @@ export const DOCS_TEMPLATE_CSS = `
 /* The child box IS the text column: the gutter comes off its width rather than going on as padding-inline, because a
    prose block's own padding (a list's indent, a code block's or blockquote's inset) is more specific and would replace
    it, leaving list markers, the quote bar and the code block outside the column (launch ticket 05 item 6). Paragraphs
-   and headings sit exactly where they did. */
-.beam-tpl-prose > * {
+   and headings sit exactly where they did. Scoped with the Prose root's attribute so it outranks a prose element rule
+   that sets its own width (Prose's table rule, width 100%), which would otherwise fill the template, not the column. */
+.beam-tpl-prose[data-beam-prose] > * {
   margin-inline: auto;
   width: calc(100% - 2 * var(--beam-gutter, 1.5rem));
   max-width: calc(var(--beam-measure, 48rem) - 2 * var(--beam-gutter, 1.5rem));

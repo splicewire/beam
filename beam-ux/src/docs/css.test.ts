@@ -14,10 +14,17 @@ const rule = (selector: string): string => {
 
 describe('the prose template column', () => {
     it('sets the gutter on the column box, not as child padding a prose block can override', () => {
-        const column = rule('.beam-tpl-prose > *');
+        const column = rule('.beam-tpl-prose[data-beam-prose] > *');
         expect(column).not.toMatch(/padding-inline/);
         expect(column).toContain('calc(100% - 2 * var(--beam-gutter, 1.5rem))');
         expect(column).toContain('calc(var(--beam-measure, 48rem) - 2 * var(--beam-gutter, 1.5rem))');
+    });
+
+    it('outranks a prose element rule that sets its own width, so a table stays in the column', () => {
+        // Prose's `[data-beam-prose] table { width: 100% }` is (0,1,1); a bare `.beam-tpl-prose > *` (0,1,0) lost to it
+        // and the table filled the whole template once the gutter stopped being padding. The column rule is (0,2,0).
+        expect(DOCS_TEMPLATE_CSS).not.toMatch(/^\.beam-tpl-prose > \* \{/m);
+        expect(DOCS_TEMPLATE_CSS).toMatch(/^\.beam-tpl-prose\[data-beam-prose\] > \* \{/m);
     });
 
     it('lets a full-bleed child span the template', () => {
