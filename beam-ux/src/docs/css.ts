@@ -26,16 +26,19 @@
  */
 export const DOCS_TEMPLATE_CSS = `
 .beam-tpl-prose { width: 100%; }
+/* The child box IS the text column: the gutter comes off its width rather than going on as padding-inline, because a
+   prose block's own padding (a list's indent, a code block's or blockquote's inset) is more specific and would replace
+   it, leaving list markers, the quote bar and the code block outside the column (launch ticket 05 item 6). Paragraphs
+   and headings sit exactly where they did. */
 .beam-tpl-prose > * {
   margin-inline: auto;
-  width: 100%;
-  max-width: var(--beam-measure, 48rem);
-  padding-inline: var(--beam-gutter, 1.5rem);
+  width: calc(100% - 2 * var(--beam-gutter, 1.5rem));
+  max-width: calc(var(--beam-measure, 48rem) - 2 * var(--beam-gutter, 1.5rem));
 }
 /* A full-bleed child is a whole application rather than an article — it owns its own edges. */
 .beam-tpl-prose > [data-beam-full-bleed] {
   max-width: none;
-  padding-inline: 0;
+  width: 100%;
 }
 .beam-tpl-prose > *:first-child { padding-block-start: var(--beam-page-top, 3rem); }
 .beam-tpl-prose > *:last-child { padding-block-end: var(--beam-page-bottom, 4rem); }
