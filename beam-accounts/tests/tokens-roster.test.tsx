@@ -7,6 +7,10 @@ import {
   waitFor,
 } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+vi.mock("@schemastud/seam", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@schemastud/seam")>()),
+  SchemaForm: () => null,
+}));
 import { TokensRoster } from "../src/tokens-roster";
 import { TokensProvider } from "../src/provider";
 import { makeTokensClient, SAMPLE_TOKENS } from "../src/story-harness";
@@ -135,4 +139,20 @@ it("labels an unscoped token 'Full access' without leaking the ['*'] wire wildca
   await screen.findByText("CI deploys");
   expect(screen.getAllByText("Full access").length).toBeGreaterThan(0);
   expect(screen.queryByText(/\['\*'\]/)).toBeNull();
+});
+it("describes the new token and the filter in plain words", async () => {
+  // Launch ticket 05 item 2: "Mint only tokens ⊆ your own permissions" and a "PROVENANCE" filter label. The rules stay
+  // true (a token can't exceed its creator's permissions; its secret shows once) in plain words.
+  mount({ client: makeTokensClient(), notify: vi.fn() });
+  await screen.findByText("CI deploys");
+  // The filter is labelled like the table's own "Type" column, and the sessions note says what it does.
+  expect(screen.getAllByText("Type").length).toBeGreaterThanOrEqual(2);
+  expect(document.body.textContent).not.toMatch(/provenance/i);
+  expect(document.body.textContent).toMatch(/signs out your other browser sessions only/i);
+
+  fireEvent.click(screen.getByRole("button", { name: /new token/i }));
+  const dialog = await screen.findByRole("dialog");
+  expect(dialog.textContent).toMatch(/A token can.t do more than you can/);
+  expect(dialog.textContent).toMatch(/shown only once/);
+  expect(dialog.textContent).not.toMatch(/⊆|plaintext/);
 });

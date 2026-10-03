@@ -80,7 +80,7 @@ export const DEFAULT_TREES: Record<string, JsonDoc> = {
                     children: [
                         {
                             kind: 'text',
-                            value: 'This page is editable in place through the promoted @splicewire/beam-ux/canvas. Everything you see is one JsonDoc body — the same tree the read view renders and the editor edits.',
+                            value: 'Edit this page right here: change the text, move blocks around, and save. Visitors see exactly what you edit.',
                         },
                     ],
                 },

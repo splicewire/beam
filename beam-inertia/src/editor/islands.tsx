@@ -33,9 +33,8 @@ export function DemoHero() {
                     margin: '0 auto',
                 }}
             >
-                This block is a sealed island — the real component renders in
-                the canvas. Reorder or delete it, add blocks around it, and
-                save.
+                This hero is a ready-made block. Move it, remove it, or add your
+                own blocks around it, then save.
             </p>
         </section>
     );
@@ -44,16 +43,16 @@ export function DemoHero() {
 export function DemoFeatureRow() {
     const cells = [
         {
-            title: 'Config, not machinery',
-            body: 'The host writes a registry + defaults; the canvas is packaged.',
+            title: 'Edit in place',
+            body: 'Change text and layout right on the page.',
         },
         {
-            title: 'One body, two lenses',
-            body: 'The editor edits — and the page renders — the same tree.',
+            title: 'What you see is what goes live',
+            body: 'The page visitors see is the one you edited.',
         },
         {
-            title: 'Neutral tokens',
-            body: 'Brand look is host config; the package bakes no palette.',
+            title: 'Your look, your colours',
+            body: 'Set the look in your theme; every block follows it.',
         },
     ];
 

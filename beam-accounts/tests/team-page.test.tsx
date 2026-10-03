@@ -68,3 +68,14 @@ it("excludes accepted invitations from the merged roster", () => {
     ),
   ).toEqual([]);
 });
+
+it("says the owner rule in plain words", async () => {
+  // Launch ticket 05 item 2: "1 owner · min-1-owner enforced" described the invariant, not what it means.
+  const { container } = render(
+    <MockTeamProvider>
+      <TeamPage currentUserId="owner" />
+    </MockTeamProvider>,
+  );
+  await waitFor(() => expect(container.textContent).toMatch(/a team always keeps at least one owner/));
+  expect(container.textContent).not.toMatch(/min-1-owner/);
+});

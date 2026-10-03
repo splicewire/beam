@@ -86,6 +86,17 @@ function mount(node: ReactNode, client: AutoReloadClient, services = {}) {
 }
 
 describe('AutoReloadConfigCard — isolation mount (no Laravel)', () => {
+    it('explains the limits in plain words, not the engine formula', async () => {
+        // Launch ticket 05 item 2: an end user saw "EFFECTIVE = CLAMP(CONFIG, POLICY)" and "the double-fire guard".
+        // The rules stay true (the plan's limits cap the settings; a minimum wait stops a double charge), in plain words.
+        const client = fakeClient(CONFIG);
+        const { container } = mount(<AutoReloadConfigCard config={CONFIG} />, client);
+
+        await screen.findByText(/Your plan's limits always apply/);
+        expect(container.textContent).toMatch(/between top-ups, so one low balance can.t trigger two charges/);
+        expect(container.textContent).not.toMatch(/clamp\(|double-fire/i);
+    });
+
     it('renders the config off a pure generated-DTO fixture', async () => {
         const client = fakeClient(CONFIG);
         mount(<AutoReloadConfigCard config={CONFIG} />, client);

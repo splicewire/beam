@@ -382,8 +382,8 @@ function CreateTokenDialog({
             <KeyRound className="size-4 text-primary" /> New API token
           </DialogTitle>
           <DialogDescription>
-            Mint only tokens ⊆ your own permissions. The plaintext is shown
-            once.
+            A token can&apos;t do more than you can: choose from your own
+            permissions. Its secret is shown only once.
           </DialogDescription>
         </DialogHeader>
 
@@ -518,8 +518,8 @@ function FacetBar({
 }) {
   return (
     <div className="flex flex-wrap items-center gap-1.5">
-      <span className="mr-1 font-mono text-[11px] uppercase tracking-wide text-muted-foreground">
-        provenance
+      <span className="mr-1 text-[12px] text-muted-foreground">
+        Type
       </span>
       {FACETS.map((f) => {
         const on = active.has(f);
@@ -820,7 +820,7 @@ export function TokensRoster() {
               variant="ghost"
               size="sm"
               disabled={busy}
-              title="Session-provenance sweep only"
+              title="Signs out your other browser sessions only"
               onClick={sweepSessions}
             >
               Revoke {otherSessionCount} other session
@@ -879,13 +879,9 @@ export function TokensRoster() {
           sessions
         </span>
         <p>
-          <b className="text-foreground">Revoke other sessions</b> sweeps only{" "}
-          <span className="font-mono">Session</span>-provenance tokens (browser
-          logins) — it never touches your <span className="font-mono">API</span>{" "}
-          / <span className="font-mono">Broker</span> /{" "}
-          <span className="font-mono">Dev</span> /{" "}
-          <span className="font-mono">Passkey</span> tokens. Your current
-          session is never swept.
+          <b className="text-foreground">Revoke other sessions</b> signs out your
+          other browser sessions only. Your API, broker, dev and passkey tokens
+          keep working, and so does this session.
         </p>
       </div>
 

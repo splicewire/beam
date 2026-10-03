@@ -432,8 +432,8 @@ export function AutoReloadConfigCard({ config }: { config: AutoReloadConfig }) {
                     <div className="space-y-3">
                         <div className="flex items-center gap-2">
                             <Label className="text-muted-foreground">Spending limits</Label>
-                            <span className="rounded bg-muted px-1.5 py-0.5 font-mono text-[10px] uppercase text-muted-foreground">
-                                effective = clamp(config, policy)
+                            <span className="rounded bg-muted px-1.5 py-0.5 text-[11px] text-muted-foreground">
+                                Your plan's limits always apply
                             </span>
                         </div>
                         <div className="grid gap-4 sm:grid-cols-2">
@@ -514,8 +514,8 @@ export function AutoReloadConfigCard({ config }: { config: AutoReloadConfig }) {
                                     </span>
                                 </div>
                                 <p className="text-[11px] text-muted-foreground">
-                                    At least {Math.round(clamps.minCooldownSeconds / 60)} min — the
-                                    double-fire guard.
+                                    At least {Math.round(clamps.minCooldownSeconds / 60)} min between
+                                    top-ups, so one low balance can't trigger two charges.
                                     {form.cooldownSeconds != null &&
                                         form.cooldownSeconds < clamps.minCooldownSeconds && (
                                             <span className="font-medium text-warning-foreground">

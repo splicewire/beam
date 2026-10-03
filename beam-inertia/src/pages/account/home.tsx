@@ -16,14 +16,8 @@ export default function AccountHome() {
                     Account home
                 </h1>
                 <p style={{ color: '#64748b', maxWidth: 560, lineHeight: 1.6 }}>
-                    The account sidebar (behind the menu button on a narrow
-                    screen) is the promoted{' '}
-                    <code>@splicewire/beam-ux/account</code>
-                    <code> AccountShell</code>. Its nav rows come from the{' '}
-                    <code>account</code> sitemap; the Plan + Profile blocks come
-                    from the <code>accountShell</code> Inertia share (the
-                    host-bound <code>AccountShellProvider</code>). The host
-                    wrote only config.
+                    Manage your profile, security, API tokens and team from the
+                    sidebar (behind the menu button on a narrow screen).
                 </p>
             </div>
         </>

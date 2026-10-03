@@ -349,7 +349,7 @@ function TeamInner({
         <FacetsBar active={facet} counts={counts} onSelect={setFacet} />
         <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
           <ShieldAlert className="size-3.5" />
-          {owners} owner{owners === 1 ? "" : "s"} · min-1-owner enforced
+          {owners} owner{owners === 1 ? "" : "s"} · a team always keeps at least one owner
         </span>
       </div>
 
