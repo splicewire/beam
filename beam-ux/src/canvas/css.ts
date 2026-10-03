@@ -219,6 +219,8 @@ export function peCss(t?: Partial<CanvasTheme>): string {
 .pe-panel::after{content:"";display:block;flex:none;position:sticky;bottom:0;height:28px;margin-top:auto;pointer-events:none;background:linear-gradient(to bottom,transparent,${c.panelBg})}
 .pe-left{left:0;width:200px;padding:14px 12px;display:flex;flex-direction:column;gap:7px;border-left:none;border-radius:0 0 12px 0}
 .pe-right{right:0;border-right:none;border-radius:0 0 0 12px}
+.pe-group{display:inline-flex;align-items:center;gap:6px;padding:0 4px 0 8px;border:1px solid rgba(255,255,255,.1);border-radius:10px}
+.pe-group-label{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:${c.muted}}
 .pe-comp-badge{margin:-6px 16px 6px;font-family:${c.fontBody};font-size:10px;letter-spacing:.08em;color:${c.editAccent}}
 .pe-draft{display:inline-flex;align-items:center;gap:6px;padding:3px 9px;border-radius:999px;border:1px solid ${c.editAccent};color:${c.editAccent};font-size:10px;letter-spacing:.06em;text-transform:uppercase}
 .pe-versions{right:0;width:320px;padding:14px 14px 20px;border-right:none;border-radius:0 0 0 12px;display:flex;flex-direction:column;gap:10px}

@@ -488,6 +488,22 @@ describe('PageEditor — mode fork + transport', () => {
         expect(dockButton(container, 'Save')).toBeDefined();
     });
 
+    it('sets the draft pair apart from Save and says what each does, without renaming any of them', async () => {
+        // Launch ticket 05 item 6: Save, Save draft and Publish read as three save-like actions. Save publishes at once;
+        // Save draft records a version readers do not see; Publish makes that draft live. Their names are what the
+        // acceptance specs press, so the difference is carried by grouping and a description, not by new labels.
+        const { container } = await enterEditMode(publishingTransport());
+        const group = container.querySelector('[role="group"][aria-label="Draft"]');
+
+        expect(group).not.toBeNull();
+        expect(group!.contains(dockButton(container, 'Save draft')!)).toBe(true);
+        expect(group!.contains(dockButton(container, 'Publish')!)).toBe(true);
+        expect(group!.contains(dockButton(container, 'Save')!)).toBe(false);
+        expect(dockButton(container, 'Save')!.getAttribute('title')).toMatch(/readers see it now/i);
+        expect(dockButton(container, 'Save draft')!.getAttribute('title')).toMatch(/readers do not see/i);
+        expect(dockButton(container, 'Publish')!.getAttribute('title')).toMatch(/draft.*readers/i);
+    });
+
     it('a partial seam is treated as no seam, so Save draft is never offered without Publish', async () => {
         const { container } = await enterEditMode({
             saveBody: vi.fn(),

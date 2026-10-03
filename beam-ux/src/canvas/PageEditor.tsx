@@ -489,12 +489,30 @@ export function PageEditor({
                                         : ''}
                                 </span>
                             )}
-                            <button className="pe-btn" onClick={saveDraft} disabled={busy}>
-                                Save draft
-                            </button>
-                            <button className="pe-btn" onClick={publish} disabled={busy}>
-                                Publish
-                            </button>
+                            {/* Save draft and Publish are one workflow, set apart from Save (which publishes at once)
+                                and labelled as such, so the three no longer read as three ways to save (launch ticket 05
+                                item 6). Their names stay: the acceptance specs press them by name. */}
+                            <span className="pe-group" role="group" aria-label="Draft">
+                                <span className="pe-group-label" aria-hidden="true">
+                                    Draft
+                                </span>
+                                <button
+                                    className="pe-btn"
+                                    onClick={saveDraft}
+                                    disabled={busy}
+                                    title="Save a version that readers do not see yet"
+                                >
+                                    Save draft
+                                </button>
+                                <button
+                                    className="pe-btn"
+                                    onClick={publish}
+                                    disabled={busy}
+                                    title="Make the saved draft the version readers see"
+                                >
+                                    Publish
+                                </button>
+                            </span>
                             <button className="pe-btn" onClick={toggleVersions} disabled={busy}>
                                 Versions
                             </button>
@@ -512,7 +530,7 @@ export function PageEditor({
                     {/* Save stays the IMMEDIATE-PUBLISH affordance it has always been, label included:
                         it is what `g2-beam-author-entry` proves and what an author who never opens the
                         draft door expects. The pair above is additive, never a re-spelling of this. */}
-                    <button className="pe-btn primary" onClick={save}>
+                    <button className="pe-btn primary" onClick={save} title="Save and publish: readers see it now">
                         Save
                     </button>
                     <button className="pe-btn" onClick={exit}>
