@@ -175,12 +175,12 @@ function TeamInner({
         id: "role",
         header: () => (
           <span className="inline-flex items-center gap-1">
-            Workspace role
+            Team role
             <Popover>
               <PopoverTrigger asChild>
                 <button
                   type="button"
-                  aria-label="About workspace roles"
+                  aria-label="About team roles"
                   className="text-muted-foreground hover:text-foreground"
                 >
                   <Info className="size-3.5" />
@@ -190,7 +190,7 @@ function TeamInner({
                 <p className="leading-relaxed text-muted-foreground">
                   <b className="text-foreground">Membership tier</b> (owner /
                   admin / member) — governs who manages the team. Separate from
-                  what you can access inside the workspace.
+                  what you can access inside the team.
                 </p>
               </PopoverContent>
             </Popover>
@@ -325,7 +325,7 @@ function TeamInner({
         <div>
           <h2 className="font-semibold">Team</h2>
           <p className="text-sm text-muted-foreground">
-            People and pending invitations for this workspace.
+            People and pending invitations for this team.
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -412,12 +412,12 @@ function TeamInner({
                     <>
                       Assign <b>Owner</b> to{" "}
                       <b>{confirm.row.name ?? confirm.row.email}</b>? This is a
-                      high-stakes change — they gain full workspace control.
+                      high-stakes change — they gain full control of the team.
                     </>
                   ) : confirm.kind === "remove" ? (
                     <>
                       Remove <b>{confirm.row.name ?? confirm.row.email}</b> from
-                      this workspace?
+                      this team?
                     </>
                   ) : (
                     <>
@@ -503,7 +503,7 @@ function InviteForm({
       </div>
 
       <div className="grid gap-1.5">
-        <Label htmlFor="invite-role">Workspace role</Label>
+        <Label htmlFor="invite-role">Team role</Label>
         <SimpleSelect
           id="invite-role"
           className="capitalize"

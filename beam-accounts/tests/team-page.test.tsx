@@ -79,3 +79,16 @@ it("says the owner rule in plain words", async () => {
   await waitFor(() => expect(container.textContent).toMatch(/a team always keeps at least one owner/));
   expect(container.textContent).not.toMatch(/min-1-owner/);
 });
+
+it("calls the account concept a team everywhere on the page", async () => {
+  // Launch ticket 05 item 3 (integrator-approved noun "team"): the page said "Team" in its heading but
+  // "Workspace role" and "this workspace" in its copy.
+  const { container } = render(
+    <MockTeamProvider>
+      <TeamPage currentUserId="owner" />
+    </MockTeamProvider>,
+  );
+  await waitFor(() => expect(container.textContent).toMatch(/Team role/));
+  expect(container.textContent).not.toMatch(/workspace/i);
+  expect(container.querySelector('[aria-label="About team roles"]')).not.toBeNull();
+});

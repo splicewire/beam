@@ -844,7 +844,7 @@ function CreateTokenDialog() {
                                     </p>
                                 ) : myPermissions.length === 0 ? (
                                     <p className="text-sm text-muted-foreground">
-                                        You hold no scopable permissions in this workspace.
+                                        You hold no scopable permissions on this team.
                                     </p>
                                 ) : (
                                     <div className="flex max-h-48 flex-wrap gap-1.5 overflow-y-auto rounded-md border p-2">

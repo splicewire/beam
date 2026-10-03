@@ -263,7 +263,7 @@ function ScopePicker({
       <div className="max-h-52 space-y-3 overflow-y-auto rounded-md border p-2.5">
         {groups.length === 0 && (
           <p className="text-[12.5px] text-muted-foreground">
-            You hold no scopable permissions in this workspace.
+            You hold no scopable permissions on this team.
           </p>
         )}
         {groups.map((group) => {

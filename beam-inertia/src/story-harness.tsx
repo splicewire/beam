@@ -52,7 +52,7 @@ export function useStubForm(config: StubFormConfig): void {
 
 /** A believable demo-accounts fixture for `auth/login`'s "Or try a demo account" block. */
 export const DEMO_ACCOUNTS = [
-    { key: 'owner', label: 'Workspace owner', url: '#demo-owner' },
+    { key: 'owner', label: 'Team owner', url: '#demo-owner' },
     { key: 'member', label: 'Team member', url: '#demo-member' },
 ];
 
