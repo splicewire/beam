@@ -2,7 +2,7 @@ import { useEffect, useState, type ComponentType } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { userEvent, within, expect } from 'storybook/test';
 import { resolveBeamPage } from '@splicewire/beam-inertia';
-import { setStubPage, setStubForm, DEMO_ACCOUNTS } from '../../story-harness';
+import { AuthStoryFrame, setStubPage, setStubForm, DEMO_ACCOUNTS } from '../../story-harness';
 
 /**
  * Auth / Login — the packaged `auth/login` Inertia page, resolved through the public
@@ -38,13 +38,17 @@ function LoginStage({
         };
     }, []);
     if (!Page) return null;
-    return <Page />;
+    // Framed the way the app renders it: AuthLayout's brand mark, then the entry tree's own heading (ticket 05 item 5).
+    return (
+        <AuthStoryFrame slug="login">
+            <Page />
+        </AuthStoryFrame>
+    );
 }
 
 const meta = {
     title: 'Inertia/Auth/Login',
-    parameters: { layout: 'padded' },
-    decorators: [(Story) => <div className="mx-auto w-full max-w-sm">{Story()}</div>],
+    parameters: { layout: 'fullscreen' },
 } satisfies Meta;
 export default meta;
 type Story = StoryObj;
@@ -54,6 +58,7 @@ export const Populated: Story = {
     play: async ({ canvasElement }) => {
         const canvas = within(canvasElement);
         await expect(await canvas.findByLabelText('Email address')).toBeInTheDocument();
+        await expect(canvas.getByRole('heading', { name: 'Log in to your account' })).toBeInTheDocument();
         await expect(canvas.getByRole('button', { name: /log in/i })).toBeInTheDocument();
     },
 };

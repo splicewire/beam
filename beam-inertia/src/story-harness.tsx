@@ -13,7 +13,9 @@
 // so `setStubForm` is what drives populated / validation-error / processing / confirmation
 // journey states for those pages.
 // =============================================================================
-import { useEffect } from 'react';
+import { useEffect, type ReactNode } from 'react';
+import { DEFAULT_TREES } from './editor/defaults';
+import AuthLayout from './layouts/auth-layout';
 
 const PAGE_KEY = '__beamMdxStubPage__';
 const FORM_KEY = '__beamInertiaStubForm__';
@@ -53,3 +55,27 @@ export const DEMO_ACCOUNTS = [
     { key: 'owner', label: 'Workspace owner', url: '#demo-owner' },
     { key: 'member', label: 'Team member', url: '#demo-member' },
 ];
+
+// The text of a default tree node (the auth trees open with an h1 then a p; editor/defaults.ts authPage).
+function nodeText(slug: string, index: number): string {
+    const node = (DEFAULT_TREES[slug] ?? [])[index] as { children?: { kind: string; value?: string }[] } | undefined;
+    return (node?.children ?? []).map((c) => (c.kind === 'text' ? (c.value ?? '') : '')).join('');
+}
+
+/**
+ * Frames an auth story the way the app renders the page: AuthLayout (the brand mark), then the entry tree's
+ * own heading and description, then the island. The product's heading lives in the entry TREE (AuthPagesSeeder,
+ * or DEFAULT_TREES on an unseeded host), not in the layout, so a story of the island alone showed no heading
+ * (launch ticket 05 item 5). The heading is read from DEFAULT_TREES, never copied, with the same classes.
+ */
+export function AuthStoryFrame({ slug, children }: { slug: string; children: ReactNode }) {
+    return (
+        <AuthLayout>
+            <div className="flex flex-col gap-2">
+                <h1 className="text-center text-xl font-medium">{nodeText(slug, 0)}</h1>
+                <p className="text-center text-sm text-muted-foreground">{nodeText(slug, 1)}</p>
+            </div>
+            {children}
+        </AuthLayout>
+    );
+}

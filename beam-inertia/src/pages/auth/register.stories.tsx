@@ -2,7 +2,7 @@ import { useEffect, useState, type ComponentType } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { within, expect } from 'storybook/test';
 import { resolveBeamPage } from '@splicewire/beam-inertia';
-import { setStubPage, setStubForm } from '../../story-harness';
+import { AuthStoryFrame, setStubPage, setStubForm } from '../../story-harness';
 
 /** Auth / Register — resolved via the public `resolveBeamPage` seam (G6-BUILT-PACKAGE-PROOF). */
 function RegisterStage({
@@ -23,13 +23,17 @@ function RegisterStage({
         };
     }, []);
     if (!Page) return null;
-    return <Page />;
+    // Framed the way the app renders it: AuthLayout's brand mark, then the entry tree's own heading (ticket 05 item 5).
+    return (
+        <AuthStoryFrame slug="register">
+            <Page />
+        </AuthStoryFrame>
+    );
 }
 
 const meta = {
     title: 'Inertia/Auth/Register',
-    parameters: { layout: 'padded' },
-    decorators: [(Story) => <div className="mx-auto w-full max-w-sm">{Story()}</div>],
+    parameters: { layout: 'fullscreen' },
 } satisfies Meta;
 export default meta;
 type Story = StoryObj;
@@ -39,6 +43,7 @@ export const Populated: Story = {
     play: async ({ canvasElement }) => {
         const canvas = within(canvasElement);
         await expect(await canvas.findByLabelText('Name')).toBeInTheDocument();
+        await expect(canvas.getByRole('heading', { name: 'Create an account' })).toBeInTheDocument();
     },
 };
 
