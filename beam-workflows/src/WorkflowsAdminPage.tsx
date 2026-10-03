@@ -223,7 +223,7 @@ export function WorkflowsAdminPage() {
                                 </span>
                                 {lineage.boundTypes.map((type) => (
                                     <span
-                                        key={typeLabel(catalog.data?.types ?? [], type)}
+                                        key={type}
                                         className="rounded bg-[var(--beam-green)]/10 px-1.5 py-0.5 text-[var(--beam-green)]"
                                     >
                                         {typeLabel(catalog.data?.types ?? [], type)}
