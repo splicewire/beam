@@ -47,8 +47,8 @@ export function DemoFeatureRow() {
             body: 'Change text and layout right on the page.',
         },
         {
-            title: 'What you see is what goes live',
-            body: 'The page visitors see is the one you edited.',
+            title: 'Draft, then publish',
+            body: 'Visitors see the page when you publish it.',
         },
         {
             title: 'Your look, your colours',

@@ -30,3 +30,14 @@ it.each([
     expect(container.textContent).not.toMatch(INTERNALS);
     expect(container.textContent?.trim().length).toBeGreaterThan(0);
 });
+
+it('says that visitors see a page once it is published, not as it is edited', () => {
+    // review-r1 on 08b8694: Save is a DRAFT (page-editor.tsx wires saveDraft/publish), so copy must not promise
+    // that visitors see edits as they are made.
+    const home = JSON.stringify(DEFAULT_TREES.home);
+    expect(home).toMatch(/publish/i);
+    expect(home).not.toMatch(/see exactly what you edit/i);
+    const { container } = render(<DemoFeatureRow />);
+    expect(container.textContent).toMatch(/Visitors see the page when you publish it/);
+    expect(container.textContent).not.toMatch(/What you see is what goes live/);
+});

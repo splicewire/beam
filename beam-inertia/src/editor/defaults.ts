@@ -80,7 +80,7 @@ export const DEFAULT_TREES: Record<string, JsonDoc> = {
                     children: [
                         {
                             kind: 'text',
-                            value: 'Edit this page right here: change the text, move blocks around, and save. Visitors see exactly what you edit.',
+                            value: 'Edit this page right here: change the text and move blocks around. Save a draft as you go, and publish when it\u2019s ready.',
                         },
                     ],
                 },
