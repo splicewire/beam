@@ -143,3 +143,38 @@ describe('the default editor chrome takes the app tokens', () => {
         expect(rule('.ve-opaque-src')).toContain(DEFAULT_CANVAS_THEME.fontMono);
     });
 });
+
+// WCAG contrast of the default chrome's TEXT colours on the surface they sit on (build.qa, review-r1 on 14acf37): the
+// app's primary green is a light-surface colour (5:1 on white) and reads at only 3.4:1 as small text on the dark rail, so
+// text drawn on the panels takes the rail's signal green (editAccent) and the accent stays for fills and borders.
+describe('the default chrome text reads on its surface (WCAG AA, 4.5:1 for small text)', () => {
+    const luminance = (hex: string): number => {
+        const [r, g, b] = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255).map((c) => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4));
+        return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+    };
+    const ratio = (a: string, b: string): number => {
+        const [hi, lo] = [luminance(a), luminance(b)].sort((x, y) => y - x);
+        return (hi + 0.05) / (lo + 0.05);
+    };
+    const t = DEFAULT_CANVAS_THEME;
+    const css = veCss() + peCss();
+    const textColour = (selector: string): string => {
+        const at = css.indexOf(`${selector}{`);
+        if (at === -1) throw new Error(`no ${selector} rule`);
+        const colour = css.slice(at, css.indexOf('}', at)).match(/(?:^|[;{])color:(#[0-9a-fA-F]{6})/)?.[1];
+        if (!colour) throw new Error(`${selector} sets no hex text colour`);
+        return colour;
+    };
+
+    it.each([
+        ['panel text', t.panelFg, t.panelBg],
+        ['muted on the panel', t.muted, t.panelBg],
+        ['muted on the backdrop', t.muted, t.rootBg],
+        ['.pe-comp-badge on the panel', textColour('.pe-comp-badge'), t.panelBg],
+        ['.pe-version-tag.published on the panel', textColour('.pe-version-tag.published'), t.panelBg],
+        // The MDX handle sits on the CANVAS (a 5% black tint over it), where the accent reads.
+        ['.ve-mdx-handle:hover on the canvas', textColour('.ve-mdx-handle:hover'), '#f2f2f2'],
+    ])('%s', (_pair, fg, bg) => {
+        expect(ratio(fg, bg)).toBeGreaterThanOrEqual(4.5);
+    });
+});

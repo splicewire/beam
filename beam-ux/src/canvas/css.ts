@@ -31,6 +31,9 @@ export interface CanvasTheme {
 // it sits in rather than a third visual language (launch ticket 05 item 4): the accent is the app's primary green and the
 // panels are its dark rail. Hex, not `var(--beam-*)`, because the theme editor's colour fields hold `#rrggbb`; the
 // server-side defaults (laravel-beam-ux ThemeSchemas::canvas) carry the same values, and css.test.ts pins them to tokens.css.
+// Text drawn ON the dark panels in the accent's family uses `editAccent` (the rail's signal green), and accent text on the
+// light canvas uses `accentHover` (the deep green): the primary green itself reads at only 3.4:1 on the rail and 4.47:1
+// on a tinted canvas, so it stays for fills and borders (css.test.ts pins every pair at 4.5:1).
 export const DEFAULT_CANVAS_THEME: CanvasTheme = {
     accent: '#14803f', // --beam-green
     accentHover: '#0f5f2e', // --beam-green-deep
@@ -97,7 +100,7 @@ export function veCss(t?: Partial<CanvasTheme>): string {
 .ve-opaque-src{margin:0;padding:10px 12px;background:rgba(0,0,0,.05);border:1px dashed rgba(0,0,0,.18);border-radius:8px;font-family:${c.fontMono};font-size:11px;white-space:pre-wrap;color:${c.muted};overflow:auto}
 .ve-mdx-block{position:relative}
 .ve-mdx-handle{display:inline-flex;align-items:center;gap:6px;cursor:pointer;font:10px ${c.fontMono};letter-spacing:.1em;text-transform:uppercase;color:${c.muted};background:rgba(0,0,0,.05);border:1px solid rgba(0,0,0,.14);border-radius:6px;padding:3px 9px;margin-bottom:8px;user-select:none}
-.ve-mdx-handle:hover{color:${c.accent};border-color:${c.accent}80}
+.ve-mdx-handle:hover{color:${c.accentHover};border-color:${c.accent}80}
 .beam-content-ref{border:1px solid rgba(0,0,0,.14);border-radius:10px;overflow:hidden;margin:12px 0;background:#fff}
 .beam-content-ref-bar{display:flex;align-items:center;gap:8px;padding:6px 10px;background:rgba(0,0,0,.04);border-bottom:1px solid rgba(0,0,0,.1)}
 .beam-content-ref-tag{font:10px ${c.fontMono};letter-spacing:.1em;text-transform:uppercase;color:${c.muted}}
@@ -214,7 +217,7 @@ export function peCss(t?: Partial<CanvasTheme>): string {
 .pe-panel::after{content:"";display:block;flex:none;position:sticky;bottom:0;height:28px;margin-top:auto;pointer-events:none;background:linear-gradient(to bottom,transparent,${c.panelBg})}
 .pe-left{left:0;width:200px;padding:14px 12px;display:flex;flex-direction:column;gap:7px;border-left:none;border-radius:0 0 12px 0}
 .pe-right{right:0;border-right:none;border-radius:0 0 0 12px}
-.pe-comp-badge{margin:-6px 16px 6px;font-family:${c.fontBody};font-size:10px;letter-spacing:.08em;color:${c.accent}}
+.pe-comp-badge{margin:-6px 16px 6px;font-family:${c.fontBody};font-size:10px;letter-spacing:.08em;color:${c.editAccent}}
 .pe-draft{display:inline-flex;align-items:center;gap:6px;padding:3px 9px;border-radius:999px;border:1px solid ${c.editAccent};color:${c.editAccent};font-size:10px;letter-spacing:.06em;text-transform:uppercase}
 .pe-versions{right:0;width:320px;padding:14px 14px 20px;border-right:none;border-radius:0 0 0 12px;display:flex;flex-direction:column;gap:10px}
 .pe-versions h3{margin:0;font-family:${c.fontBody};font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:${c.panelFg}}
@@ -224,7 +227,7 @@ export function peCss(t?: Partial<CanvasTheme>): string {
 .pe-version-label{min-width:0;opacity:.75;overflow-wrap:anywhere}
 .pe-version>.pe-btn{flex:none}
 .pe-version-tag{flex:none;white-space:nowrap;font-size:9px;letter-spacing:.06em;text-transform:uppercase;padding:2px 6px;border-radius:6px;border:1px solid rgba(255,255,255,.2)}
-.pe-version-tag.published{border-color:${c.accent};color:${c.accent}}
+.pe-version-tag.published{border-color:${c.accent};color:${c.editAccent}}
 .pe-version-tag.head{border-color:${c.editAccent};color:${c.editAccent}}
 .pe-confirm{display:flex;flex-direction:column;gap:8px;padding:10px;border:1px solid ${c.editAccent};border-radius:10px;font-family:${c.fontBody};font-size:11px;color:${c.panelFg}}
 .pe-confirm-actions{display:flex;gap:8px}
