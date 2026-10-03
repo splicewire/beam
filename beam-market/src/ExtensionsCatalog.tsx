@@ -208,6 +208,8 @@ export function ExtensionsCatalog({
           }
           options={KIND_OPTIONS}
           placeholder="All kinds"
+          // The same width as the category input beside it: the trigger defaults to w-full (launch ticket 05 item 6).
+          className="w-48"
         />
         {filtered && (
           <Button variant="ghost" size="sm" onClick={() => setFilters({})}>

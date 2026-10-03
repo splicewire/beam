@@ -89,3 +89,18 @@ describe("ExtensionsCatalog — empty and failed states (VR pass 2)", () => {
     expect(getCatalog).toHaveBeenCalledTimes(2);
   });
 });
+
+describe("ExtensionsCatalog — the filter row", () => {
+  it("sizes the kind select like the category input instead of letting it run full width", async () => {
+    // Launch ticket 05 item 6: a small category input sat beside a full-width "All kinds" select (the trigger's default
+    // is w-full). The two filters are peers, so they share one width.
+    mount(client(vi.fn(async () => ({ listings: [] }))));
+    await screen.findByTestId("catalog-empty");
+    const category = screen.getByLabelText("Filter by category");
+    const kind = screen.getByLabelText("Filter by kind");
+    const width = (el: HTMLElement) => el.className.split(/\s+/).filter((c) => /^w-/.test(c));
+
+    expect(width(kind)).not.toContain("w-full");
+    expect(width(kind)).toEqual(width(category));
+  });
+});
