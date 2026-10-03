@@ -42,6 +42,15 @@ import { WorkflowMigrate } from './WorkflowMigrate';
 // Aliased to the generated projection DTO — the admin list stays in lockstep with the backend shape.
 type WorkflowLineage = WorkflowLineageData;
 
+/**
+ * A bound type's name for a person: the catalog's label for its key, else the key itself. The wire carries registry
+ * keys only (never a PHP class-string, laravel-frame ADR-0004; launch ticket 05 item 1), and a key is an address,
+ * not a name, so the chip and the type card read the label the server resolved for it.
+ */
+function typeLabel(types: WorkflowTypeOptionData[], key: string): string {
+    return types.find((t) => t.key === key)?.label ?? key;
+}
+
 export function WorkflowsAdminPage() {
     const qc = useQueryClient();
     const { client, onError, onSelectLineage } = useWorkflowsServices();
@@ -214,10 +223,10 @@ export function WorkflowsAdminPage() {
                                 </span>
                                 {lineage.boundTypes.map((type) => (
                                     <span
-                                        key={type}
+                                        key={typeLabel(catalog.data?.types ?? [], type)}
                                         className="rounded bg-[var(--beam-green)]/10 px-1.5 py-0.5 text-[var(--beam-green)]"
                                     >
-                                        {type}
+                                        {typeLabel(catalog.data?.types ?? [], type)}
                                     </span>
                                 ))}
                             </div>
@@ -416,7 +425,13 @@ function BindingPanel({
                             key={type}
                             className="flex items-center justify-between rounded-md bg-[var(--beam-ink-04)] px-3 py-1.5 text-sm"
                         >
-                            <span className="font-mono">{type}</span>
+                            <span className="flex flex-col">
+                                <span>{typeLabel(types, type)}</span>
+                                {/* A schema-driven type keeps its URI as small subtext, as in the type dropdown. */}
+                                {type.includes('://') && (
+                                    <span className="max-w-[260px] truncate text-[10px] text-[var(--beam-ink-45)]">{type}</span>
+                                )}
+                            </span>
                             <Button
                                 size="sm"
                                 variant="ghost"

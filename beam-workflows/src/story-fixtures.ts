@@ -116,7 +116,7 @@ export const publishLineage: WorkflowLineageData = {
     key: 'publish_flow',
     name: 'Publish flow',
     isSystem: false,
-    boundTypes: ['App\\Models\\Post'],
+    boundTypes: ['post'],
     versions: versionsV1V2,
 };
 
@@ -175,8 +175,8 @@ export const principals: PrincipalKindData[] = [
 ];
 
 export const types: WorkflowTypeOptionData[] = [
-    { key: 'App\\Models\\Post', label: 'Post' },
-    { key: 'App\\Models\\Comment', label: 'Comment' },
+    { key: 'post', label: 'Post' },
+    { key: 'comment', label: 'Comment' },
     { key: 'schema://acme.test/page', label: 'Page' },
 ];
 
@@ -205,7 +205,7 @@ export const emptyCoverage: WorkflowCoverageData = {
 };
 
 export const projection: WorkflowProjectionData = {
-    type: 'App\\Models\\Post',
+    type: 'post',
     places: ['draft', 'in_review', 'published', 'archived'],
     transitions: publishBlueprintV2.transitions,
     current: 'in_review',

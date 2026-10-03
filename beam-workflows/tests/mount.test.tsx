@@ -217,6 +217,26 @@ describe('§8a — the full tree mounts off pure generated-DTO fixtures (no Lara
         await waitFor(() => expect(notify).toHaveBeenCalledWith(expect.objectContaining({ type: 'success' })));
     });
 
+    it('names a bound type by its catalog label in the list chip and the type card, never by its raw key', async () => {
+        // Launch ticket 05 item 1: the admin showed a type's raw key (`App\\Models\\Post` in the review's stories).
+        // The server only ever sends registry-legal keys; the label is what a person reads.
+        const version: WorkflowVersionData = { id: 'v1', version: 1, isActive: true, blueprint: blueprint() };
+        const client = fakeClient(() => Promise.reject(new Error('n/a')));
+        client.listLineages = () =>
+            Promise.resolve([
+                { key: 'publish-flow', name: 'Publish flow', isSystem: false, boundTypes: ['blog-post'], versions: [version] },
+            ]);
+        client.catalog = () => Promise.resolve({ ...catalogFixture, types: [{ key: 'blog-post', label: 'Blog post' }] });
+        client.coverage = () => Promise.resolve({ lineageKey: 'publish-flow', total: 0, versions: [] });
+
+        render(<WorkflowsAdminPage />, { wrapper: withProviders({ client }) });
+
+        await waitFor(() => expect(screen.getByText('Blog post')).toBeDefined());
+        fireEvent.click(screen.getByText('Publish flow'));
+        await waitFor(() => expect(screen.getAllByText('Blog post').length).toBe(2));
+        expect(screen.queryByText('blog-post')).toBeNull();
+    });
+
     it("WorkflowActions wires the Stepper's status subscription through the injected subscribe", () => {
         const unsubscribe = vi.fn();
         const subscribe = vi.fn<NonNullable<WorkflowsServices['subscribe']>>(() => unsubscribe);
