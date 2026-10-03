@@ -69,6 +69,9 @@ it('renders in the shell of the realm the refused request was in', () => {
     expect(layout({ realm: 'operator', auth: { user: { id: 1 } } })).toBe(OperatorLayout);
     expect(layout({ realm: 'user', auth: { user: { id: 1 } } })).toBe(BeamAccountLayout);
     expect(layout({ realm: null, auth: { user: null } })).toBe(SiteLayout);
+    // The server names a realm only for a viewer who may enter it; a guest never gets the operator shell
+    // even if one were sent (review-r1).
+    expect(layout({ realm: 'operator', auth: { user: null } })).toBe(SiteLayout);
 });
 
 it('sends an operator back to the operator console, in the app heading font', () => {

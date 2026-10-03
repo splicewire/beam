@@ -16,8 +16,9 @@ import SiteLayout from '../layouts/site-layout';
  * ## Which chrome
  *
  * The page names its own layout, so the host's `layout:` switch (which keys on the page NAME) is not
- * consulted. The server names the realm the request was in (`realm`): a refusal in the operator realm
- * renders in the operator shell, and its way back is the operator console. Any other signed-in viewer gets
+ * consulted. The server names the realm the request was in (`realm`) only when the viewer may enter it: a
+ * refusal there renders in that realm's shell (operator: the operator console is the way back), while a viewer
+ * refused at the realm's door gets the account shell and /dashboard, never a loop back to the refusal. Any other signed-in viewer gets
  * the account shell they were already in (their nav rail is how they get back), and a guest, or a request
  * that never reached the session (an unrouted 404), gets the public site shell. Neither is wrapped in the editor host: an error is not an authorable page.
  */
@@ -30,14 +31,16 @@ export type ErrorPageProps = {
     auth?: { user?: unknown } | null;
 };
 
-// The realm's own shell first, so an operator refused under /operator stays in the operator rail; then the
-// account shell for any other signed-in viewer, and the public site shell for a guest or an unrouted 404.
+// The realm's own shell first: laravel-beam-accounts names a realm only when the viewer may ENTER it, so an
+// operator refused on one resource stays in the operator rail while a member refused at /operator gets null and
+// the account shell with /dashboard (no loop back to the refusal). Then the account shell for any other
+// signed-in viewer, and the public site shell for a guest or an unrouted 404.
 export function errorLayout(props: {
     realm?: string | null;
     auth?: { user?: unknown } | null;
 }): ComponentType<{ children: ReactNode }> {
-    if (props.realm === 'operator') return OperatorLayout;
-    return props.auth?.user ? BeamAccountLayout : SiteLayout;
+    if (!props.auth?.user) return SiteLayout;
+    return props.realm === 'operator' ? OperatorLayout : BeamAccountLayout;
 }
 
 // The site shell's `--st-*` layer first, the app token layer second: both chromes resolve one of them.
@@ -47,7 +50,7 @@ const border = 'var(--st-border, var(--border))';
 export default function ErrorPage({ status, title, message, realm, auth }: ErrorPageProps) {
     const signedIn = Boolean(auth?.user);
     const home =
-        realm === 'operator'
+        realm === 'operator' && signedIn
             ? { href: '/operator', label: 'Go to the operator console' }
             : signedIn
               ? { href: '/dashboard', label: 'Go to your dashboard' }
