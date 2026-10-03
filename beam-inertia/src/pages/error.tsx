@@ -1,6 +1,7 @@
 import { Head, Link } from '@inertiajs/react';
 import type { ComponentType, ReactNode } from 'react';
 import BeamAccountLayout from '../layouts/beam-account-layout';
+import OperatorLayout from '../layouts/operator-layout';
 import SiteLayout from '../layouts/site-layout';
 
 /**
@@ -15,18 +16,27 @@ import SiteLayout from '../layouts/site-layout';
  * ## Which chrome
  *
  * The page names its own layout, so the host's `layout:` switch (which keys on the page NAME) is not
- * consulted: a signed-in viewer gets the account shell they were already in — their nav rail is how
- * they get back — and a guest, or a request that never reached the session (an unrouted 404), gets the
- * public site shell. Neither is wrapped in the editor host: an error is not an authorable page.
+ * consulted. The server names the realm the request was in (`realm`): a refusal in the operator realm
+ * renders in the operator shell, and its way back is the operator console. Any other signed-in viewer gets
+ * the account shell they were already in (their nav rail is how they get back), and a guest, or a request
+ * that never reached the session (an unrouted 404), gets the public site shell. Neither is wrapped in the editor host: an error is not an authorable page.
  */
 export type ErrorPageProps = {
     status: number;
     title: string;
     message: string;
+    /** The realm the refused request was in (laravel-beam-accounts `ErrorPages`), or null outside any realm. */
+    realm?: string | null;
     auth?: { user?: unknown } | null;
 };
 
-export function errorLayout(props: { auth?: { user?: unknown } | null }): ComponentType<{ children: ReactNode }> {
+// The realm's own shell first, so an operator refused under /operator stays in the operator rail; then the
+// account shell for any other signed-in viewer, and the public site shell for a guest or an unrouted 404.
+export function errorLayout(props: {
+    realm?: string | null;
+    auth?: { user?: unknown } | null;
+}): ComponentType<{ children: ReactNode }> {
+    if (props.realm === 'operator') return OperatorLayout;
     return props.auth?.user ? BeamAccountLayout : SiteLayout;
 }
 
@@ -34,11 +44,14 @@ export function errorLayout(props: { auth?: { user?: unknown } | null }): Compon
 const muted = 'var(--st-muted, var(--muted-foreground))';
 const border = 'var(--st-border, var(--border))';
 
-export default function ErrorPage({ status, title, message, auth }: ErrorPageProps) {
+export default function ErrorPage({ status, title, message, realm, auth }: ErrorPageProps) {
     const signedIn = Boolean(auth?.user);
-    const home = signedIn
-        ? { href: '/dashboard', label: 'Go to your dashboard' }
-        : { href: '/', label: 'Go to the home page' };
+    const home =
+        realm === 'operator'
+            ? { href: '/operator', label: 'Go to the operator console' }
+            : signedIn
+              ? { href: '/dashboard', label: 'Go to your dashboard' }
+              : { href: '/', label: 'Go to the home page' };
 
     return (
         <>
@@ -55,7 +68,7 @@ export default function ErrorPage({ status, title, message, auth }: ErrorPagePro
                     Error {status}
                 </p>
                 <h1
-                    className="font-serif text-3xl font-semibold"
+                    className="text-3xl font-semibold tracking-tight"
                     style={{ margin: 0 }}
                 >
                     {title}
