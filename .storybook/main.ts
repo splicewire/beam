@@ -56,15 +56,20 @@ const config: StorybookConfig = {
         // `BigCalendarSurface`'s own `useCalendarEvents`) threw "No QueryClient set, use
         // QueryClientProvider to set one". Scoped to imports FROM big-calendar's own real path
         // so every other resolution in this catalog is untouched.
-        const beamReactQueryEntry = fileURLToPath(
-            new URL('../node_modules/@tanstack/react-query/build/modern/index.js', import.meta.url),
-        );
+        //
+        // The pin resolves the BARE id through Vite's own resolver, as if beam imported it, rather
+        // than returning beam's raw `build/modern/index.js`. Vite serves beam's own imports from its
+        // pre-bundled deps chunk (`sb-vite/deps/@tanstack_react-query.js`), and a raw file path is a
+        // second instance beside that chunk. That happened when a deps re-optimize on 2026-10-03 left
+        // big-calendar on the raw file and every CompositionCalendar story threw again (launch
+        // ticket 05, slice 09).
+        const beamImporter = fileURLToPath(new URL('../package.json', import.meta.url));
         cfg.plugins.push({
             name: 'beam-pin-big-calendar-react-query',
             enforce: 'pre',
-            resolveId(source: string, importer?: string) {
+            async resolveId(source: string, importer?: string) {
                 if (source === '@tanstack/react-query' && importer?.includes('/schemastud/big-calendar/')) {
-                    return beamReactQueryEntry;
+                    return this.resolve(source, beamImporter, { skipSelf: true });
                 }
                 return null;
             },
