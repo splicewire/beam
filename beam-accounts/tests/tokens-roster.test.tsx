@@ -156,3 +156,21 @@ it("describes the new token and the filter in plain words", async () => {
   expect(dialog.textContent).toMatch(/shown only once/);
   expect(dialog.textContent).not.toMatch(/⊆|plaintext/);
 });
+it("keeps the subset symbol and 'plaintext' off the whole page, including the reveal", async () => {
+  // build.qa on 08b8694: the page subtitle still said "Mint only tokens ⊆ your own permissions" and the reveal said
+  // "the only time the plaintext key is shown". Same rules, plain words, page-wide.
+  const client = makeTokensClient({ tokens: [SAMPLE_TOKENS[0]] });
+  client.rotate = vi.fn(async () => ({
+    id: 'e3b0c442-98fc-4c14-9afb-f4c8996fb091',
+    name: "CI deploys",
+    token: "fixture-rotated-secret",
+  }));
+  mount({ client });
+  await screen.findByText("CI deploys");
+  expect(document.body.textContent).not.toMatch(/⊆|plaintext|Mint only/i);
+
+  fireEvent.click(screen.getByRole("button", { name: "Rotate" }));
+  await screen.findByText("fixture-rotated-secret");
+  expect(document.body.textContent).not.toMatch(/⊆|plaintext/i);
+  expect(document.body.textContent).toMatch(/only time you'll see this token/i);
+});

@@ -492,8 +492,8 @@ function RevealOnceDialog({
           </div>
           <div className="flex items-center gap-2 rounded-md border border-warning/40 bg-warning/10 px-3 py-2 text-[12.5px] text-warning-foreground">
             <span className="size-1.5 flex-none rounded-full bg-warning" />
-            This is the only time the plaintext key is shown. Store it in a
-            secret manager now.
+            This is the only time you&apos;ll see this token. Copy it now and
+            keep it somewhere safe, such as a password or secret manager.
           </div>
         </div>
 
@@ -810,8 +810,8 @@ export function TokensRoster() {
             </span>
           </div>
           <p className="text-[13px] text-muted-foreground">
-            Scoped credentials that act as you against the API. Mint only tokens
-            ⊆ your own permissions.
+            Keys that let apps and scripts act on your behalf. A token can&apos;t
+            do more than you can.
           </p>
         </div>
         <div className="flex items-center gap-2">
