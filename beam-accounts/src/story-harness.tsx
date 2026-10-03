@@ -217,10 +217,12 @@ const SAMPLE_TOKENS_AS_OF = Date.parse('2026-10-03T12:00:00Z');
 /**
  * {@link SAMPLE_TOKENS} with each `last_used_at` moved to the same age relative to `now` that it had
  * at `SAMPLE_TOKENS_AS_OF`. The roster prints that column as "Nd ago" from `Date.now()`, so fixed
- * dates made its stories and baselines change every day. Only `last_used_at` moves: `created_at` and
- * `expires_at` render as absolute dates, so they stay fixed. (TokensPage prints `last_used_at` as an
- * absolute date and keeps `SAMPLE_TOKENS`.) Call it once at module scope, because `MockTokensProvider`
- * memoises on its config.
+ * dates made its stories and baselines change every day. A live token's `expires_at` is also read
+ * against the clock: within 14 days it counts as "expiring", and past it the row reads "Expired". So a
+ * live expiry moves to a fixed far-future date, while an archived one stays as it is. `created_at`
+ * renders as an absolute date and stays fixed. (TokensPage prints `last_used_at` as an absolute date
+ * and keeps `SAMPLE_TOKENS`.) Call it once at module scope, because `MockTokensProvider` memoises on
+ * its config.
  */
 export function rosterTokens(now: number = Date.now()): ApiTokenData[] {
     return SAMPLE_TOKENS.map((token) => ({
@@ -228,6 +230,7 @@ export function rosterTokens(now: number = Date.now()): ApiTokenData[] {
         last_used_at: token.last_used_at
             ? new Date(now - (SAMPLE_TOKENS_AS_OF - Date.parse(token.last_used_at))).toISOString()
             : null,
+        expires_at: token.expires_at && !token.archived_at ? '2099-12-31T00:00:00Z' : token.expires_at,
     }));
 }
 
