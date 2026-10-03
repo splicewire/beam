@@ -211,6 +211,26 @@ export function makeTokensClient(config: TokensMockConfig = {}): TokensClient {
 }
 
 /** Wrap children in a fresh QueryClient + a mocked TokensProvider. */
+/** The moment whose "Last used" ages {@link rosterTokens} keeps: 71d and 94d for the two API tokens. */
+const SAMPLE_TOKENS_AS_OF = Date.parse('2026-10-03T12:00:00Z');
+
+/**
+ * {@link SAMPLE_TOKENS} with each `last_used_at` moved to the same age relative to `now` that it had
+ * at `SAMPLE_TOKENS_AS_OF`. The roster prints that column as "Nd ago" from `Date.now()`, so fixed
+ * dates made its stories and baselines change every day. Only `last_used_at` moves: `created_at` and
+ * `expires_at` render as absolute dates, so they stay fixed. (TokensPage prints `last_used_at` as an
+ * absolute date and keeps `SAMPLE_TOKENS`.) Call it once at module scope, because `MockTokensProvider`
+ * memoises on its config.
+ */
+export function rosterTokens(now: number = Date.now()): ApiTokenData[] {
+    return SAMPLE_TOKENS.map((token) => ({
+        ...token,
+        last_used_at: token.last_used_at
+            ? new Date(now - (SAMPLE_TOKENS_AS_OF - Date.parse(token.last_used_at))).toISOString()
+            : null,
+    }));
+}
+
 export function MockTokensProvider({
     children,
     config,
