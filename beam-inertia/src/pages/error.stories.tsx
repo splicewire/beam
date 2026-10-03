@@ -26,7 +26,7 @@ const SIGNED_IN = {
     },
     accountShell: {
         plan: { tier: 'pro', label: 'Pro' },
-        profile: { handle: '@demo-member', metrics: [{ label: 'MEMBERS', value: '1' }] },
+        profile: { handle: '@demo-member', metrics: [{ label: 'MEMBER', value: '1' }] },
         account: { email: 'member@example.test' },
         upsells: [],
     },

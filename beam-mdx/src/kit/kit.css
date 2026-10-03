@@ -157,6 +157,8 @@
     font-size: 0.9375rem;
     color: var(--foreground);
 }
+/* The title takes the heading face and the body INHERITS the article's body face (serif under `.site-prose`), the
+   same serif-body / sans-heading pairing the essay uses everywhere; intended (launch ticket 05 item 6). */
 .bkit-callout-body {
     color: var(--foreground);
     font-size: 0.9375rem;

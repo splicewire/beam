@@ -1,6 +1,6 @@
 import { useEffect, useState, type ComponentType } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { within, expect } from 'storybook/test';
+import { within, expect, userEvent } from 'storybook/test';
 import { resolveBeamPage } from '@splicewire/beam-inertia';
 import { AuthStoryFrame, setStubPage, setStubForm } from '../../story-harness';
 
@@ -56,9 +56,16 @@ export const ValidationErrors: Story = {
             }}
         />
     ),
+    // The real page keeps what was typed: `<Form>` submits through router.post, which preserves the page's state on a
+    // 422, and `resetOnError` is off, so its uncontrolled inputs survive the error. The story used to render the error
+    // over an EMPTY form, which read as the page dropping old input (launch ticket 05 item 6). It types first, as a
+    // user would have, so the shot shows the error beside the kept values.
     play: async ({ canvasElement }) => {
         const canvas = within(canvasElement);
-        await expect(await canvas.findByText('The email has already been taken.')).toBeInTheDocument();
+        await userEvent.type(await canvas.findByLabelText('Name'), 'Ada Lovelace');
+        await userEvent.type(canvas.getByLabelText('Email address'), 'ada@example.test');
+        await expect(canvas.getByText('The email has already been taken.')).toBeInTheDocument();
+        await expect(canvas.getByLabelText('Email address')).toHaveValue('ada@example.test');
     },
 };
 
