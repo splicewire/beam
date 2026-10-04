@@ -218,6 +218,18 @@ export function CanvasWidget({
     // Conformance: an honest PARTIAL readout for the status bar — a real node count, but no
     // required-slot/grammar concept exists for a JsonDoc today, so those report as trivially
     // satisfied (0 of 0, valid) rather than fabricated.
+    // mount.flush() is what every write drains first (Save draft, Publish), but the canvas commits an inline text edit
+    // on BLUR, so an edit still in a focused editor reached no write. Blur the active inline editor inside this canvas on
+    // flush, which commits it through the ordinary blur path (build.qa on 05d10b9: a press that did not blur first).
+    useEffect(() => {
+        if (!mount) return;
+        return mount.registerFlush(async () => {
+            const active = document.activeElement as HTMLElement | null;
+            const editing = active?.isContentEditable || active?.getAttribute('contenteditable') === 'true';
+            if (active && editing && active.closest('[data-bd-path]')) active.blur();
+        });
+    }, [mount]);
+
     useEffect(() => {
         mount?.publishConformance({
             nodes: countNodes(doc),

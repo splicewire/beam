@@ -541,6 +541,43 @@ describe('PageEditor — mode fork + transport', () => {
         expect(notify.success).toHaveBeenCalledWith('Published');
     });
 
+    it('Publish flushes first, so an edit still pending in a widget is published, not dropped (build.qa on 05d10b9)', async () => {
+        // A press that does not blur the inline editor (no mouse click) leaves the edit pending in the widget's flush.
+        // Publish must flush BEFORE choosing, or a clean-looking seam host publishes the older draft without the edit.
+        const transport = publishingTransport();
+        const { container } = render(wrap(<PageEditor slug="home" body={doc()} transport={transport as never} />));
+        await act(async () => {
+            fireEvent(window, new CustomEvent('beam-ux:mode', { detail: { mode: 'window' } }));
+            await Promise.resolve();
+        });
+        const palette = Array.from(container.querySelectorAll('.pe-panel.pe-left .ve-pal-item')).find((el) =>
+            (el.textContent ?? '').includes('Heading'),
+        ) as HTMLElement;
+        await act(async () => {
+            fireEvent.click(palette);
+        });
+        await act(async () => {
+            fireEvent.click(dockButton(container, 'Save draft')!);
+            await Promise.resolve();
+        });
+        const inserted = Array.from(container.querySelectorAll('h2')).pop() as HTMLElement;
+        await act(async () => {
+            fireEvent.doubleClick(inserted);
+        });
+        (Array.from(container.querySelectorAll('h2')).pop() as HTMLElement).textContent = 'Pending edit';
+
+        // No blur: the edit exists only in the widget's pending flush when Publish is pressed.
+        await act(async () => {
+            fireEvent.click(dockButton(container, 'Publish')!);
+            await Promise.resolve();
+            await Promise.resolve();
+        });
+
+        expect(transport.publish).not.toHaveBeenCalled();
+        expect(transport.saveBody).toHaveBeenCalledTimes(1);
+        expect(JSON.stringify(transport.saveBody.mock.calls[0][1])).toContain('Pending edit');
+    });
+
     it('a partial seam is treated as no seam, so Save draft is never offered without Publish', async () => {
         const { container } = await enterEditMode({
             saveBody: vi.fn(),
@@ -898,6 +935,7 @@ describe('CanvasWidget — markDirty', () => {
             markDirty: vi.fn(),
             markSaving: vi.fn(),
             flush: vi.fn(),
+            registerFlush: vi.fn(() => () => {}),
             registerNodeAccess: vi.fn(() => () => {}),
             publishCandidates: vi.fn(),
             publishConformance: vi.fn(),
@@ -957,6 +995,7 @@ describe('CanvasWidget — the stale-snapshot race (G2-BEAM-AUTHOR-FIRST-EDIT-LO
             publishCandidates: vi.fn(),
             publishConformance: vi.fn(),
             registerInsertHandler: vi.fn(() => () => {}),
+            registerFlush: vi.fn(() => () => {}),
             registerNodeAccess: vi.fn((access: { setNodeAttrs: (id: string, attrs: unknown) => void }) => {
                 // FIRST registration only — the stale one, exactly what the Inspector holds across the
                 // commit that happens between mount and its first onChange.

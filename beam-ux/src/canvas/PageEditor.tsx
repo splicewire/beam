@@ -226,6 +226,17 @@ export function PageEditor({
     const editing = useEditMode();
     const initial: JsonDoc = isDoc(body) ? body : fallbackDoc?.(slug) ?? EMPTY_DOC;
     const [doc, setDoc] = useState<JsonDoc>(initial);
+    // The latest document and whether the canvas has edits not yet written, held in refs because a widget's pending
+    // edit arrives through mount.flush() INSIDE a handler whose `doc` / `mount.dirty` closure predates it (build.qa on
+    // 05d10b9). Only canvas edits set `edited`; loads, restores and clears go through setDoc directly.
+    const docRef = useRef<JsonDoc>(doc);
+    docRef.current = doc;
+    const editedRef = useRef(false);
+    const onCanvasChange = (next: JsonDoc) => {
+        docRef.current = next;
+        editedRef.current = true;
+        setDoc(next);
+    };
     // Re-seed on an explicit host-driven reload only (see PageEditorProps.reloadToken) — reading the
     // latest body/fallbackDoc/slug from this render's closure, not from a dependency-tracked value, so
     // an incidental `body` prop identity change (e.g. a host re-render) never overwrites in-progress
@@ -309,8 +320,9 @@ export function PageEditor({
         mount.markSaving(true);
         try {
             await mount.flush();
-            const compileError = compileErrorOf(await transport.saveBody(slug, doc));
+            const compileError = compileErrorOf(await transport.saveBody(slug, docRef.current));
             mount.markDirty(false);
+            editedRef.current = false;
             if (compileError) notify?.error(compileError);
             else notify?.success('Published');
             // A host with the publication seam shows what readers are on; this write just moved it.
@@ -333,8 +345,9 @@ export function PageEditor({
         setBusy(true);
         try {
             await mount.flush();
-            setPublication(await transport.saveDraft(slug, doc));
+            setPublication(await transport.saveDraft(slug, docRef.current));
             mount.markDirty(false);
+            editedRef.current = false;
             notify?.success('Draft saved');
         } catch {
             notify?.error('Draft save failed');
@@ -371,7 +384,11 @@ export function PageEditor({
      * draft + publish in one act, so readers get exactly what is on the canvas. On a clean canvas it publishes the
      * pending draft. The old Publish sent no document, so edits made since the last Save draft were silently left out.
      */
-    const publishNow = () => (publishable && !mount.dirty ? publish() : save());
+    const publishNow = async () => {
+        // Flush FIRST, so an edit still pending in a widget counts (a press that did not blur the inline editor).
+        await mount.flush();
+        return publishable && !mount.dirty && !editedRef.current ? publish() : save();
+    };
 
     /** Open/close the history panel, refetching on every open so it can never show a stale HEAD. */
     const toggleVersions = async () => {
@@ -460,7 +477,7 @@ export function PageEditor({
                     exactly where the floating pe-left/pe-right panels sit, so it was rendering almost
                     entirely behind them (found live: only its LAST segment's last few pixels peeked out
                     past the left panel's edge). */}
-                <CanvasWidget value={doc} onChange={setDoc} editShellMount={mount} theme={theme} hideBreadcrumb />
+                <CanvasWidget value={doc} onChange={onCanvasChange} editShellMount={mount} theme={theme} hideBreadcrumb />
 
                 {/* Floating editor chrome — fixed over the page. */}
                 <div className="pe-bar">
