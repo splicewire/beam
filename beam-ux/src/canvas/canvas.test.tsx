@@ -355,20 +355,20 @@ describe('PageEditor — mode fork + transport', () => {
         expect(container.querySelector('.pe-bar')).not.toBeNull();
     });
 
-    it('Save calls the injected transport.saveBody(slug, doc) and notifies', async () => {
+    it('Publish on a host without the draft seam calls transport.saveBody(slug, doc) and notifies', async () => {
         const saveBody = vi.fn().mockResolvedValue({});
         const notify = { success: vi.fn(), error: vi.fn() };
         const { container } = render(
             wrap(<PageEditor slug="home" body={doc()} transport={{ saveBody }} notify={notify} />),
         );
         fireEvent(window, new CustomEvent('beam-ux:mode', { detail: { mode: 'window' } }));
-        const saveBtn = Array.from(container.querySelectorAll('.pe-btn')).find((b) => b.textContent === 'Save')!;
+        const saveBtn = Array.from(container.querySelectorAll('.pe-btn')).find((b) => b.textContent === 'Publish')!;
         await act(async () => {
             fireEvent.click(saveBtn);
             await Promise.resolve();
         });
         expect(saveBody).toHaveBeenCalledWith('home', expect.any(Array));
-        expect(notify.success).toHaveBeenCalledWith('Saved');
+        expect(notify.success).toHaveBeenCalledWith('Published');
     });
 
     // ── a save that stored but did NOT compile ──────────────────────────────────────────────────────
@@ -387,7 +387,7 @@ describe('PageEditor — mode fork + transport', () => {
     // The affordance is deliberately the SAME one publish uses — the error toast over a write that
     // really did land — not a thrown failure: the body IS stored, so the dock stays clean and the
     // canvas is not dirty; what is missing is the reader's copy.
-    it('a Save whose response carries a compileError says so, and does NOT claim "Saved"', async () => {
+    it('a Publish whose save-body response carries a compileError says so, and does NOT claim "Published"', async () => {
         const saveBody = vi.fn().mockResolvedValue({ compileError: 'Unclosed <Card> on line 12' });
         const notify = { success: vi.fn(), error: vi.fn() };
         const { container } = render(
@@ -395,7 +395,7 @@ describe('PageEditor — mode fork + transport', () => {
         );
         fireEvent(window, new CustomEvent('beam-ux:mode', { detail: { mode: 'window' } }));
         await act(async () => {
-            fireEvent.click(dockButton(container, 'Save')!);
+            fireEvent.click(dockButton(container, 'Publish')!);
             await Promise.resolve();
         });
 
@@ -483,25 +483,62 @@ describe('PageEditor — mode fork + transport', () => {
         const { container } = await enterEditMode({ saveBody: vi.fn().mockResolvedValue({}) });
 
         expect(dockButton(container, 'Save draft')).toBeUndefined();
-        expect(dockButton(container, 'Publish')).toBeUndefined();
         expect(dockButton(container, 'Versions')).toBeUndefined();
-        expect(dockButton(container, 'Save')).toBeDefined();
+        // Ruling 3 (launch ticket 05): the one write a seamless host has is Publish (save-body, live on return).
+        expect(dockButton(container, 'Publish')).toBeDefined();
+        expect(dockButton(container, 'Save')).toBeUndefined();
     });
 
-    it('sets the draft pair apart from Save and says what each does, without renaming any of them', async () => {
-        // Launch ticket 05 item 6: Save, Save draft and Publish read as three save-like actions. Save publishes at once;
-        // Save draft records a version readers do not see; Publish makes that draft live. Their names are what the
-        // acceptance specs press, so the difference is carried by grouping and a description, not by new labels.
+    it('offers exactly Save draft and Publish, and says what each does (launch ticket 05 ruling 3)', async () => {
+        // Save, Save draft and Publish read as three save-like actions. Plain Save was save-body, which is draft + publish
+        // in one act, so it duplicated Publish once Publish publishes what is on the canvas: two actions remain.
         const { container } = await enterEditMode(publishingTransport());
-        const group = container.querySelector('[role="group"][aria-label="Draft"]');
 
-        expect(group).not.toBeNull();
-        expect(group!.contains(dockButton(container, 'Save draft')!)).toBe(true);
-        expect(group!.contains(dockButton(container, 'Publish')!)).toBe(true);
-        expect(group!.contains(dockButton(container, 'Save')!)).toBe(false);
-        expect(dockButton(container, 'Save')!.getAttribute('title')).toMatch(/readers see it now/i);
+        expect(dockButton(container, 'Save')).toBeUndefined();
         expect(dockButton(container, 'Save draft')!.getAttribute('title')).toMatch(/readers do not see/i);
-        expect(dockButton(container, 'Publish')!.getAttribute('title')).toMatch(/draft.*readers/i);
+        expect(dockButton(container, 'Publish')!.getAttribute('title')).toMatch(/readers see it now/i);
+    });
+
+    it('Publish on a clean canvas publishes the pending draft', async () => {
+        const transport = publishingTransport();
+        const { container } = await enterEditMode(transport);
+
+        await act(async () => {
+            fireEvent.click(dockButton(container, 'Publish')!);
+            await Promise.resolve();
+        });
+
+        expect(transport.publish).toHaveBeenCalledWith('home');
+        expect(transport.saveBody).not.toHaveBeenCalled();
+    });
+
+    it('Publish with unsaved edits publishes the canvas itself (save-body), never the older working copy', async () => {
+        // The old Publish sent no document, so edits made since the last Save draft were silently left out of what readers
+        // got. Publish on a dirty canvas is now plain Save's write: save-body, draft + publish in one act.
+        const transport = publishingTransport();
+        const notify = { success: vi.fn(), error: vi.fn() };
+        const { container } = render(wrap(<PageEditor slug="home" body={doc()} transport={transport as never} notify={notify} />));
+        await act(async () => {
+            fireEvent(window, new CustomEvent('beam-ux:mode', { detail: { mode: 'window' } }));
+            await Promise.resolve();
+        });
+        const palette = Array.from(container.querySelectorAll('.pe-panel.pe-left .ve-pal-item')).find((el) =>
+            (el.textContent ?? '').includes('Heading'),
+        ) as HTMLElement;
+        await act(async () => {
+            fireEvent.click(palette);
+        });
+
+        await act(async () => {
+            fireEvent.click(dockButton(container, 'Publish')!);
+            await Promise.resolve();
+            await Promise.resolve();
+        });
+
+        expect(transport.saveBody).toHaveBeenCalledWith('home', expect.any(Array));
+        expect(transport.publish).not.toHaveBeenCalled();
+        expect(transport.listVersions).toHaveBeenCalled();
+        expect(notify.success).toHaveBeenCalledWith('Published');
     });
 
     it('a partial seam is treated as no seam, so Save draft is never offered without Publish', async () => {
@@ -658,7 +695,7 @@ describe('PageEditor — mode fork + transport', () => {
 
         const save = async () => {
             await act(async () => {
-                fireEvent.click(dockButton(container, 'Save')!);
+                fireEvent.click(dockButton(container, 'Publish')!);
                 await Promise.resolve();
             });
         };

@@ -312,9 +312,11 @@ export function PageEditor({
             const compileError = compileErrorOf(await transport.saveBody(slug, doc));
             mount.markDirty(false);
             if (compileError) notify?.error(compileError);
-            else notify?.success('Saved');
+            else notify?.success('Published');
+            // A host with the publication seam shows what readers are on; this write just moved it.
+            if (publishable && transport.listVersions) setPublication(await transport.listVersions(slug));
         } catch {
-            notify?.error('Save failed');
+            notify?.error('Publish failed');
         } finally {
             mount.markSaving(false);
         }
@@ -362,6 +364,14 @@ export function PageEditor({
             setBusy(false);
         }
     };
+
+    /**
+     * The dock's ONE publishing action (launch ticket 05 ruling 3: Save draft and Publish, not three save-like buttons).
+     * With unsaved edits, or on a host without the publication seam, it is the old plain Save: save-body, which is
+     * draft + publish in one act, so readers get exactly what is on the canvas. On a clean canvas it publishes the
+     * pending draft. The old Publish sent no document, so edits made since the last Save draft were silently left out.
+     */
+    const publishNow = () => (publishable && !mount.dirty ? publish() : save());
 
     /** Open/close the history panel, refetching on every open so it can never show a stale HEAD. */
     const toggleVersions = async () => {
@@ -489,30 +499,14 @@ export function PageEditor({
                                         : ''}
                                 </span>
                             )}
-                            {/* Save draft and Publish are one workflow, set apart from Save (which publishes at once)
-                                and labelled as such, so the three no longer read as three ways to save (launch ticket 05
-                                item 6). Their names stay: the acceptance specs press them by name. */}
-                            <span className="pe-group" role="group" aria-label="Draft">
-                                <span className="pe-group-label" aria-hidden="true">
-                                    Draft
-                                </span>
-                                <button
-                                    className="pe-btn"
-                                    onClick={saveDraft}
-                                    disabled={busy}
-                                    title="Save a version that readers do not see yet"
-                                >
-                                    Save draft
-                                </button>
-                                <button
-                                    className="pe-btn"
-                                    onClick={publish}
-                                    disabled={busy}
-                                    title="Make the saved draft the version readers see"
-                                >
-                                    Publish
-                                </button>
-                            </span>
+                            <button
+                                className="pe-btn"
+                                onClick={saveDraft}
+                                disabled={busy}
+                                title="Save a version that readers do not see yet"
+                            >
+                                Save draft
+                            </button>
                             <button className="pe-btn" onClick={toggleVersions} disabled={busy}>
                                 Versions
                             </button>
@@ -527,11 +521,14 @@ export function PageEditor({
                             Remove content
                         </button>
                     )}
-                    {/* Save stays the IMMEDIATE-PUBLISH affordance it has always been, label included:
-                        it is what `g2-beam-author-entry` proves and what an author who never opens the
-                        draft door expects. The pair above is additive, never a re-spelling of this. */}
-                    <button className="pe-btn primary" onClick={save} title="Save and publish: readers see it now">
-                        Save
+                    {/* Publish replaces plain Save (ruling 3): see publishNow. Primary, because it is the act readers see. */}
+                    <button
+                        className="pe-btn primary"
+                        onClick={publishNow}
+                        disabled={busy}
+                        title="Publish what is on the canvas: readers see it now"
+                    >
+                        Publish
                     </button>
                     <button className="pe-btn" onClick={exit}>
                         Exit

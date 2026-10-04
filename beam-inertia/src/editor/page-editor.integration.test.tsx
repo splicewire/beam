@@ -42,7 +42,7 @@ afterEach(() => {
     vi.unstubAllGlobals();
 });
 
-it('the actual inline canvas keeps ordinary Save and omits publication for a body-only host', async () => {
+it('the actual inline canvas offers one Publish (save-body) and no Save draft for a body-only host', async () => {
     const fetch = vi.fn();
     vi.stubGlobal('fetch', fetch);
     configureBeamInertia({
@@ -53,9 +53,10 @@ it('the actual inline canvas keeps ordinary Save and omits publication for a bod
         window.dispatchEvent(new CustomEvent('beam-ux:mode', { detail: { mode: 'window' } }));
     });
 
-    expect(await screen.findByRole('button', { name: 'Save' })).toBeTruthy();
+    // Launch ticket 05 ruling 3: plain Save is gone; a body-only host's one write is Publish, the same save-body.
+    expect(await screen.findByRole('button', { name: 'Publish' })).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'Save draft' })).toBeNull();
-    expect(screen.queryByRole('button', { name: 'Publish' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Save' })).toBeNull();
     expect(fetch).not.toHaveBeenCalled();
 });
 
@@ -105,11 +106,11 @@ it('same-mounted inline navigation reseeds the real canvas only for the replacem
     await act(async () => {
         window.dispatchEvent(new CustomEvent('beam-ux:mode', { detail: { mode: 'window' } }));
     });
-    await screen.findByRole('button', { name: 'Save' });
+    await screen.findByRole('button', { name: 'Publish' });
 
     view.rerender(<PageEditor slug="home" entryId="b" />);
-    expect(screen.queryByRole('button', { name: 'Save' })).toBeNull();
-    const save = await screen.findByRole('button', { name: 'Save' });
+    expect(screen.queryByRole('button', { name: 'Publish' })).toBeNull();
+    const save = await screen.findByRole('button', { name: 'Publish' });
     await act(async () => {
         fireEvent.click(save);
     });
@@ -124,7 +125,7 @@ it('the existing auth slug remount exits editing before the next page can be aut
     await act(async () => {
         fireEvent.click(screen.getByRole('button', { name: 'Edit content' }));
     });
-    await screen.findByRole('button', { name: 'Save' });
+    await screen.findByRole('button', { name: 'Publish' });
 
     view.rerender(
         <AuthEntry
@@ -135,7 +136,7 @@ it('the existing auth slug remount exits editing before the next page can be aut
     );
 
     expect(screen.getByRole('button', { name: 'Edit content' })).toBeTruthy();
-    expect(screen.queryByRole('button', { name: 'Save' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Publish' })).toBeNull();
     // The previous global mode can initiate B's read before the parent's domain-mode effect runs.
     // The existing remount contract resets editing; it does not promise to suppress that read.
 });
@@ -210,6 +211,6 @@ it('a viewer without the author ability is not offered Remove content', async ()
         window.dispatchEvent(new CustomEvent('beam-ux:mode', { detail: { mode: 'window' } }));
     });
 
-    await screen.findByRole('button', { name: 'Save' });
+    await screen.findByRole('button', { name: 'Publish' });
     expect(screen.queryByRole('button', { name: 'Remove content' })).toBeNull();
 });
