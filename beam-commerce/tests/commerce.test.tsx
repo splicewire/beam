@@ -490,7 +490,7 @@ describe('AutoReloadConfigCard — plain end-user copy', () => {
         mountCard();
         expect(
             await screen.findByText(
-                /we charge your saved card automatically when your balance drops below the amount above/i,
+                /we charge your saved card automatically when your balance drops below the amount you set below/i,
             ),
         ).toBeTruthy();
     });
@@ -516,11 +516,17 @@ describe('AutoReloadConfigCard — plain end-user copy', () => {
         expect(screen.queryByText('SAVED CARD')).toBeNull();
     });
 
+    it('asks for a card confirmation in the same words its banner uses (review-r1 on 729ebc9)', async () => {
+        const { container } = mountCard(SCA_CONFIG);
+        expect(await screen.findByRole('button', { name: 'Confirm card' })).toBeTruthy();
+        expect(container.textContent).not.toMatch(/re-?authori[sz]e/i);
+    });
+
     it('describes the automatic reload switch in the ruling\'s words, once', async () => {
         mountCard();
         await screen.findByText('Automatic reload');
         expect(
-            screen.getAllByText(/we charge your saved card automatically when your balance drops below the amount above/i),
+            screen.getAllByText(/we charge your saved card automatically when your balance drops below the amount you set below/i),
         ).toHaveLength(1);
     });
 

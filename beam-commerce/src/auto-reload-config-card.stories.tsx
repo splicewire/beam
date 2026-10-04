@@ -64,7 +64,7 @@ export const SuspendedRepeatedFailure: Story = {
     },
 };
 
-/** SCA required — the bank-authentication banner + "Re-authorize card" CTA. */
+/** SCA required — the bank-authentication banner + "Confirm card" CTA. */
 export const ScaRequired: Story = {
     render: withProvider(SCA_CONFIG),
     play: async ({ canvasElement }) => {

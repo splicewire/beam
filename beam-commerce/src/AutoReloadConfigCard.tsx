@@ -238,7 +238,7 @@ function FailureBanner({
           ? 'Save a card to keep auto-reload on.'
           : 'We stopped retrying to avoid repeated declines. Update the card, then re-enable.';
     // Re-arm CTA per the disabled reason (sca_required → re-authorize; needs-card → save; else update).
-    const cta = isSca ? 'Re-authorize card' : isNoPm ? 'Save a card' : 'Update card';
+    const cta = isSca ? 'Confirm card' : isNoPm ? 'Save a card' : 'Update card';
 
     return (
         <div className="flex items-start gap-3 rounded-md border border-destructive/30 bg-destructive/5 p-4">
@@ -348,7 +348,7 @@ export function AutoReloadConfigCard({ config }: { config: AutoReloadConfig }) {
                     <div>
                         <div className="text-sm font-medium">Reload my credits automatically</div>
                         <div className="text-xs text-muted-foreground">
-                            We charge your saved card automatically when your balance drops below the amount above.
+                            We charge your saved card automatically when your balance drops below the amount you set below.
                         </div>
                     </div>
                     <Switch
