@@ -74,6 +74,27 @@ const config: StorybookConfig = {
                 return null;
             },
         });
+        // Pin every `lucide-react` import to ONE copy: beam-calendar's 0.468, the version most beam
+        // packages declare. beam has three installed (0.468 in nine packages, 0.475 at the root, 0.525 in
+        // beam-ux-prototype; schemastud's dists bring 0.525 too). Vite pre-bundles ONE chunk for the bare
+        // id, built from whichever copy it discovers first, and serves it to every importer. Without
+        // this pin, a deps re-optimize could switch the catalog's icons between versions, and the
+        // glyphs differ (Eraser, Models, Subscription). Every import now resolves as if beam-calendar
+        // imported it, so the scan and the chunk are always 0.468, whatever the cache state (launch
+        // ticket 05 ruling 2, 2026-10-04). The catalog therefore draws beam-ux-prototype with 0.468
+        // icons too, not its declared ^0.525; a host app still gets its own version. Same shape as the
+        // react-query pin above.
+        const lucideImporter = fileURLToPath(new URL('../beam-calendar/package.json', import.meta.url));
+        cfg.plugins.push({
+            name: 'beam-pin-lucide-react',
+            enforce: 'pre',
+            async resolveId(source: string, importer?: string) {
+                if (source === 'lucide-react' && importer !== lucideImporter) {
+                    return this.resolve(source, lucideImporter, { skipSelf: true });
+                }
+                return null;
+            },
+        });
         return cfg;
     },
 };
