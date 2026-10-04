@@ -174,11 +174,10 @@ function CardOnFileRow({
                 </span>
                 <div className="min-w-0 flex-1">
                     <div className="text-sm font-medium">
-                        A card is saved for off-session reloads
+                        Your card is saved for automatic top-ups
                     </div>
                     <div className="text-xs text-muted-foreground">
-                        We charge your saved card automatically when your balance drops below the
-                        amount above.
+                        It's only charged when a top-up runs.
                     </div>
                 </div>
                 <Badge variant="outline" className="text-[11px] font-normal">
@@ -200,11 +199,10 @@ function CardOnFileRow({
             </span>
             <div className="min-w-0 flex-1">
                 <div className="text-sm font-medium text-warning-foreground">
-                    A saved card is required to reload off-session
+                    Save a card to turn on automatic top-ups
                 </div>
                 <div className="text-xs text-warning-foreground/80">
-                    We save your card with Stripe (SetupIntent, off-session) — you're not charged
-                    now.
+                    We save your card securely with Stripe; you're not charged until a top-up runs.
                 </div>
             </div>
             <Button size="sm" onClick={onSaveCard}>
@@ -235,7 +233,7 @@ function FailureBanner({
           ? 'The saved card is no longer available'
           : `Auto-reload paused after ${config.consecutiveFailures} failed charges`;
     const body = isSca
-        ? 'Off-session charges can’t complete a bank authentication challenge — re-authorize the card once and reloads resume.'
+        ? 'Automatic top-ups can’t answer your bank’s security check on their own — confirm the card once and they resume.'
         : isNoPm
           ? 'Save a card to keep auto-reload on.'
           : 'We stopped retrying to avoid repeated declines. Update the card, then re-enable.';
@@ -350,7 +348,7 @@ export function AutoReloadConfigCard({ config }: { config: AutoReloadConfig }) {
                     <div>
                         <div className="text-sm font-medium">Reload my credits automatically</div>
                         <div className="text-xs text-muted-foreground">
-                            Charges the saved card off-session when the balance floor is crossed.
+                            We charge your saved card automatically when your balance drops below the amount above.
                         </div>
                     </div>
                     <Switch

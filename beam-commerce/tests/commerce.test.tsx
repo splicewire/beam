@@ -11,7 +11,16 @@ import {
     CreditsSurface,
     SubscriptionSurface,
 } from '../src/index';
-import { ACTIVE_CONFIG, MockAutoReloadProvider } from '../src/story-harness';
+import {
+    ACTIVE_CONFIG,
+    MockAutoReloadProvider,
+    NEEDS_CARD_CONFIG,
+    OFF_CONFIG,
+    OVER_POLICY_CONFIG,
+    SCA_CONFIG,
+    SUSPENDED_CONFIG,
+    TO_TARGET_CONFIG,
+} from '../src/story-harness';
 import type {
     Bill,
     BillPreview,
@@ -489,6 +498,30 @@ describe('AutoReloadConfigCard — plain end-user copy', () => {
     it('states the cooldown minimum in plain words', async () => {
         mountCard();
         expect(await screen.findByText(/at least .* between top-ups/i)).toBeTruthy();
+    });
+
+    // Ruling 4 (launch ticket 05, finished on the primary): no payments jargon anywhere on the card, in any state.
+    it.each([
+        ['active', ACTIVE_CONFIG],
+        ['suspended', SUSPENDED_CONFIG],
+        ['needs authentication', SCA_CONFIG],
+        ['needs a card', NEEDS_CARD_CONFIG],
+        ['off', OFF_CONFIG],
+        ['top up to target', TO_TARGET_CONFIG],
+        ['over policy', OVER_POLICY_CONFIG],
+    ])('says nothing about off-session, the balance floor or SetupIntent when %s', async (_state, config) => {
+        const { container } = mountCard(config);
+        await screen.findByText('Automatic reload');
+        expect(container.textContent).not.toMatch(/off-session|balance floor|setupintent/i);
+        expect(screen.queryByText('SAVED CARD')).toBeNull();
+    });
+
+    it('describes the automatic reload switch in the ruling\'s words, once', async () => {
+        mountCard();
+        await screen.findByText('Automatic reload');
+        expect(
+            screen.getAllByText(/we charge your saved card automatically when your balance drops below the amount above/i),
+        ).toHaveLength(1);
     });
 
     it('labels the saved-card chip plainly, not as a mono uppercase token', async () => {
