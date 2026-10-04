@@ -177,13 +177,14 @@ function CardOnFileRow({
                         A card is saved for off-session reloads
                     </div>
                     <div className="text-xs text-muted-foreground">
-                        We charge it automatically when your balance crosses the floor.
+                        We charge your saved card automatically when your balance drops below the
+                        amount above.
                     </div>
                 </div>
-                <Badge variant="outline" className="font-mono text-[10px] uppercase">
+                <Badge variant="outline" className="text-[11px] font-normal">
                     {config.paymentMethodSource === 'subscription'
-                        ? 'from subscription'
-                        : 'saved card'}
+                        ? 'From subscription'
+                        : 'Saved card'}
                 </Badge>
                 <Button variant="outline" size="sm" onClick={onSaveCard}>
                     Update card

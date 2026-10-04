@@ -5,11 +5,13 @@ import { beforeAll, describe, expect, it, vi } from 'vitest';
 // Import through the package barrel — the same entry a host consumes. If any coupling had been
 // smuggled in (a `@/…` path, axios, react-router), resolving `../src/index` here would blow up first.
 import {
+    AutoReloadConfigCard,
     BillingSurface,
     CommerceProvider,
     CreditsSurface,
     SubscriptionSurface,
 } from '../src/index';
+import { ACTIVE_CONFIG, MockAutoReloadProvider } from '../src/story-harness';
 import type {
     Bill,
     BillPreview,
@@ -451,5 +453,48 @@ describe('SubscriptionSurface — isolation mount', () => {
         mount(<SubscriptionSurface checkoutSignal="cancelled" />, client);
 
         expect(await screen.findByText(/Checkout was cancelled/i)).toBeTruthy();
+    });
+});
+
+// ── AutoReloadConfigCard — plain end-user copy (launch ticket 05 ruling 4) ────
+//
+// The visual-baseline review flagged developer jargon on this end-user surface: the
+// `effective = clamp(config, policy)` formula chip, the "double-fire guard" cooldown term, and the
+// mono/uppercase "SAVED CARD" token. The card must read in plain words for the tenant.
+describe('AutoReloadConfigCard — plain end-user copy', () => {
+    function mountCard(config = ACTIVE_CONFIG) {
+        return render(
+            <MockAutoReloadProvider config={{ config }}>
+                <AutoReloadConfigCard config={config} />
+            </MockAutoReloadProvider>,
+        );
+    }
+
+    it('keeps the clamp formula and the double-fire term off the surface', async () => {
+        mountCard();
+        await screen.findByText('Automatic reload');
+        expect(screen.queryByText(/clamp\(config, policy\)/i)).toBeNull();
+        expect(screen.queryByText(/double-fire guard/i)).toBeNull();
+    });
+
+    it('explains the saved-card charge in plain words', async () => {
+        mountCard();
+        expect(
+            await screen.findByText(
+                /we charge your saved card automatically when your balance drops below the amount above/i,
+            ),
+        ).toBeTruthy();
+    });
+
+    it('states the cooldown minimum in plain words', async () => {
+        mountCard();
+        expect(await screen.findByText(/at least .* between top-ups/i)).toBeTruthy();
+    });
+
+    it('labels the saved-card chip plainly, not as a mono uppercase token', async () => {
+        mountCard();
+        const chip = await screen.findByText('Saved card');
+        expect(chip.className).not.toContain('uppercase');
+        expect(chip.className).not.toContain('font-mono');
     });
 });
