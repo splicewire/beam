@@ -229,7 +229,7 @@ export const VersionsPanel: Story = {
 /**
  * SAVED, BUT NOT COMPILED — the state an author used to be told was a clean "Saved".
  *
- * A Save is its own publish here: the body is written, a version recorded, the pin moved, and only
+ * Publish is its own write here: the body is written, a version recorded, the pin moved, and only
  * then is the artifact compiled. When that last step fails there is no artifact at the new address and
  * a reader is served the packaged default over a body that is perfectly intact — so the dock is clean,
  * the canvas is not dirty, and the ONE thing that is wrong is invisible from the canvas. The server
@@ -240,13 +240,19 @@ export const SavedWithACompileError: Story = {
     args: {
         transport: {
             ...transportFor(PUBLISHED),
+            // Publish takes save-body with unsaved edits and publish on a clean canvas (launch ticket 05 ruling 3); both
+            // answer a failed compile the same way, so both carry it here.
             saveBody: async () => ({
+                compileError: 'Unclosed <Card> on line 12 — readers still see the last good version.',
+            }),
+            publish: async () => ({
+                ...PUBLISHED,
                 compileError: 'Unclosed <Card> on line 12 — readers still see the last good version.',
             }),
         },
     },
     play: async ({ canvasElement }) => {
-        await click(canvasElement, 'Save');
+        await click(canvasElement, 'Publish');
         await expect(await within(canvasElement).findByText(/Unclosed <Card> on line 12/)).toBeVisible();
     },
 };
