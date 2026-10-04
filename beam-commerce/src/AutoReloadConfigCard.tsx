@@ -177,13 +177,14 @@ function CardOnFileRow({
                         A card is saved for off-session reloads
                     </div>
                     <div className="text-xs text-muted-foreground">
-                        We charge it automatically when your balance crosses the floor.
+                        We charge your saved card automatically when your balance drops below the
+                        amount above.
                     </div>
                 </div>
-                <Badge variant="outline" className="font-mono text-[10px] uppercase">
+                <Badge variant="outline" className="text-[11px] font-normal">
                     {config.paymentMethodSource === 'subscription'
-                        ? 'from subscription'
-                        : 'saved card'}
+                        ? 'From subscription'
+                        : 'Saved card'}
                 </Badge>
                 <Button variant="outline" size="sm" onClick={onSaveCard}>
                     Update card
@@ -432,8 +433,8 @@ export function AutoReloadConfigCard({ config }: { config: AutoReloadConfig }) {
                     <div className="space-y-3">
                         <div className="flex items-center gap-2">
                             <Label className="text-muted-foreground">Spending limits</Label>
-                            <span className="rounded bg-muted px-1.5 py-0.5 font-mono text-[10px] uppercase text-muted-foreground">
-                                effective = clamp(config, policy)
+                            <span className="rounded bg-muted px-1.5 py-0.5 text-[11px] text-muted-foreground">
+                                capped by platform maximums
                             </span>
                         </div>
                         <div className="grid gap-4 sm:grid-cols-2">
@@ -514,8 +515,8 @@ export function AutoReloadConfigCard({ config }: { config: AutoReloadConfig }) {
                                     </span>
                                 </div>
                                 <p className="text-[11px] text-muted-foreground">
-                                    At least {Math.round(clamps.minCooldownSeconds / 60)} min — the
-                                    double-fire guard.
+                                    At least {Math.round(clamps.minCooldownSeconds / 60)} min between
+                                    reloads.
                                     {form.cooldownSeconds != null &&
                                         form.cooldownSeconds < clamps.minCooldownSeconds && (
                                             <span className="font-medium text-warning-foreground">
