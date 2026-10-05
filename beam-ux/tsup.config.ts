@@ -20,6 +20,7 @@ export default defineConfig({
         surgeon: 'src/surgeon/sdkHookMigration.ts',
         streaming: 'src/streaming/index.ts',
         admin: 'src/admin/index.ts',
+        state: 'src/state/index.ts',
     },
     format: ['esm'],
     dts: true,

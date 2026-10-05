@@ -3,8 +3,7 @@
  * Every routed page and every independently loaded card is in exactly one state, exposed as `data-page-state`. A failed
  * read never renders as `empty` or zero, `loading` never outlives its request, and no 4xx is retried.
  *
- * This is DATA, so the module APP-05 builds (M12, `@splicewire/beam-ux/state`) is tested against the same rows the
- * stub beside it is tested against now.
+ * This is DATA: `pageStateOf` (M12, `@splicewire/beam-ux/state`, ticket APP-05) is tested against these rows.
  */
 export type PageState = 'loading' | 'ready' | 'empty' | 'forbidden' | 'not-found' | 'error' | 'upsell';
 
