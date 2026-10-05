@@ -194,12 +194,21 @@ function SiteBrand() {
 // This site's ONE chrome renders for guests AND signed-in principals alike (SiteLayout has no separate
 // authed variant) - the guest "Sign in"/"Dashboard" pair below must reflect real auth state, not a fixed
 // guest assumption. `AuthNavLinks` is the one piece of the header that reads `usePage()`.
+/**
+ * Where "Open app" goes (ux-walkthrough UX-11, IA-5): the tenant realm's home from the shared `realms` prop (HostIa,
+ * UX-05), which carries the host's prefix; `/dashboard` only for a host that shares no realms.
+ */
+function appHref(realms: { realms?: { key: string; href: string }[] } | undefined): string {
+    return realms?.realms?.find((realm) => realm.key === 'tenant')?.href ?? '/dashboard';
+}
+
 function AuthNavLinks() {
     const page = usePage<{
         auth?: { user: { name: string } | null };
         can?: Record<string, boolean>;
+        realms?: { realms?: { key: string; href: string }[] };
     }>();
-    const { auth, can } = page.props;
+    const { auth, can, realms } = page.props;
 
     // `auth` is optional: the packaged `error` page renders here for a 404 that never reached the
     // session middleware, where no shared props exist at all.
@@ -223,8 +232,8 @@ function AuthNavLinks() {
                     Operator
                 </a>
             )}
-            <Link className="navlink" href="/dashboard">
-                Dashboard
+            <Link className="navlink" href={appHref(realms)}>
+                Open app
             </Link>
             <Link className="navlink" href="/logout" method="post" as="button">
                 Log out
@@ -250,7 +259,11 @@ const nav = (
 
 export default function SiteLayout({ children }: { children: ReactNode }) {
     const dark = useSiteDark();
-    const page = usePage<{ auth?: { user: unknown }; nav?: { items: { title: string; href?: string | null }[] } }>();
+    const page = usePage<{
+        auth?: { user: unknown };
+        nav?: { items: { title: string; href?: string | null }[] };
+        realms?: { realms?: { key: string; href: string }[] };
+    }>();
     // The content links are the SAME `nav` prop the header's SiteNav reads (the `site` sitemap), so a renamed
     // nav title reaches the footer too. The fixed pair is only the fallback for a host that shares no nav.
     const contentLinks = page.props.nav?.items
@@ -262,7 +275,7 @@ export default function SiteLayout({ children }: { children: ReactNode }) {
     const footerLinks = [
         ...contentLinks,
         page.props.auth?.user
-            ? { title: 'Dashboard', href: '/dashboard' }
+            ? { title: 'Open app', href: appHref(page.props.realms) }
             : { title: 'Sign in', href: '/login' },
     ];
 

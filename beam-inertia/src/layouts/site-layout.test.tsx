@@ -151,3 +151,19 @@ it('renders dark when the app toggle stored dark on a light system', async () =>
     expect(screen.getByTestId('site-root').className).toBe('st-site dark');
     expect(document.documentElement.classList.contains('dark')).toBe(true);
 });
+
+// ux-walkthrough UX-11 (IA-5): a signed-in visitor on the site gets "Open app", pointing at the tenant realm's home from
+// the shared `realms` prop (HostIa, UX-05), so the link follows the host's prefix rather than a /dashboard literal.
+it('offers a signed-in visitor Open app, at the tenant realm\'s home', () => {
+    props.value = {
+        auth: { user: { name: 'Ada' } },
+        realms: { realms: [{ key: 'site', href: '/' }, { key: 'tenant', label: 'App', href: '/acme/dashboard' }], current: 'site', back: null },
+    };
+
+    const { container } = render(<SiteLayout>page</SiteLayout>);
+    const open = [...container.querySelectorAll('a')].filter((a) => a.textContent === 'Open app');
+
+    expect(open.length).toBeGreaterThan(0);
+    expect(open.every((a) => a.getAttribute('href') === '/acme/dashboard')).toBe(true);
+    expect([...container.querySelectorAll('a')].some((a) => a.textContent === 'Dashboard')).toBe(false);
+});
