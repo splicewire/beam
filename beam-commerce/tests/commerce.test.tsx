@@ -225,8 +225,8 @@ describe('CreditsSurface — isolation mount (no Laravel)', () => {
         await waitFor(() => expect(client.startTopupCheckout).toHaveBeenCalledWith(100));
     });
 
-    it('offers no top-up to a principal without plans.checkout, while still showing the wallet (launch 90ce7f6e)', async () => {
-        mount(<CreditsSurface />, fakeClient(), { can: (permission: string) => permission !== 'plans.checkout' });
+    it('offers no top-up to a principal without billing.manage, while still showing the wallet (launch 90ce7f6e, OQ-A2)', async () => {
+        mount(<CreditsSurface />, fakeClient(), { can: (permission: string) => permission !== 'billing.manage' });
 
         expect(await screen.findByText('Credits')).toBeTruthy();
         await waitFor(() => expect(screen.queryByRole('button', { name: /add credits/i })).toBeNull());
@@ -488,13 +488,20 @@ describe('SubscriptionSurface — isolation mount', () => {
         await waitFor(() => expect(navigate).toHaveBeenCalledWith('https://stripe.test/portal'));
     });
 
-    it('offers no billing write to a principal without plans.checkout, while still reading the plan (launch 90ce7f6e)', async () => {
-        // The server refuses the portal and plan checkout to non-holders (403); the surface does not offer a button that
+    it('offers no portal to a principal without billing.manage, while still reading the plan (launch 90ce7f6e, OQ-A2)', async () => {
+        // The server refuses the portal to non-holders of `billing.manage` (403); the surface does not offer a button that
         // can only fail. The read side stays.
-        mount(<SubscriptionSurface />, fakeClient(), { can: (permission: string) => permission !== 'plans.checkout' });
+        mount(<SubscriptionSurface />, fakeClient(), { can: (permission: string) => permission !== 'billing.manage' });
 
         expect(await screen.findByText('Songwriter')).toBeTruthy();
         expect(screen.queryByRole('button', { name: /manage subscription/i })).toBeNull();
+    });
+
+    it('offers no plan checkout to a principal without plans.checkout, the plan op\'s own gate (launch 90ce7f6e)', async () => {
+        const client = fakeClient({ getSubscription: vi.fn(async () => subscriptionWith({ funding: 'none', awaitingPayment: true })) });
+        mount(<SubscriptionSurface />, client, { can: (permission: string) => permission !== 'plans.checkout' });
+
+        expect((await screen.findAllByText('Awaiting payment')).length).toBeGreaterThan(0);
         expect(screen.queryByRole('button', { name: /subscribe/i })).toBeNull();
     });
 
