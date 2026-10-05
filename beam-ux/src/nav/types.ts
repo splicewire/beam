@@ -34,6 +34,11 @@ export type RealmNavNode = {
     children?: RealmNavNode[];
     /** The soft-lock projection ({ reason, upsell }); present-but-locked when non-null (ticket 11). */
     locked?: { reason: string; upsell?: string | null } | null;
+    /**
+     * The zone a top-level node is drawn in (ux-walkthrough M4): `primary` is the rail, `meta` the Developer zone, whose
+     * children are developer SEATS. Absent on trees a projector did not partition.
+     */
+    zone?: 'primary' | 'meta' | null;
 };
 
 /**

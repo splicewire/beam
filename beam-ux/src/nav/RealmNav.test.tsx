@@ -383,3 +383,56 @@ describe('RealmNav — a locked CHILD with no href (the mutation-found gap)', ()
         expect(container.querySelector('[data-locked="true"]')?.textContent).toContain('Voices');
     });
 });
+
+// ux-walkthrough M4 / M7 (UX-08): a `zone: meta` node is the Developer zone. It never sits in the rail; RealmNav draws it
+// in its meta slot (each developer seat a labeled group of its rows), or hands it to the host's `meta` render prop.
+describe('RealmNav — the Developer zone (zone: meta)', () => {
+    const developer: RealmNavNode = {
+        kind: 'nav/link',
+        title: 'Developer',
+        href: null,
+        routeName: 'developer.section',
+        zone: 'meta',
+        children: [
+            {
+                kind: 'nav/invocable-item',
+                title: 'Ops',
+                href: '/ops',
+                routeName: 'ops.section',
+                children: [node({ title: 'Files', href: '/files' }), node({ title: 'Schemas', href: '/schemas' })],
+            },
+        ],
+    };
+    const items: RealmNavNode[] = [node({ title: 'Home', href: '/', zone: 'primary' }), developer];
+
+    it('keeps the meta node out of the rail and draws it as a Developer zone of seat groups', () => {
+        const { container } = render(<RealmNav items={items} variant="section-groups" />);
+
+        const zone = container.querySelector('[data-zone="meta"]')!;
+        expect(zone).not.toBeNull();
+        expect(zone.textContent).toContain('Developer');
+        expect(zone.textContent).toContain('Ops');
+        for (const name of ['Files', 'Schemas']) {
+            expect(zone.contains(screen.getByRole('link', { name }))).toBe(true);
+        }
+        // The seat is a group label, never a row to its own href.
+        expect(screen.queryByRole('link', { name: 'Ops' })).toBeNull();
+        expect(zone.contains(screen.getByRole('link', { name: 'Home' }))).toBe(false);
+    });
+
+    it('hands the meta nodes to the host meta slot instead, when one is given', () => {
+        const slot = vi.fn((nodes: RealmNavNode[]) => <aside data-testid="system-zone">{nodes.map((n) => n.title).join(',')}</aside>);
+        const { container } = render(<RealmNav items={items} meta={slot} />);
+
+        expect(slot).toHaveBeenCalledWith([developer]);
+        expect(screen.getByTestId('system-zone').textContent).toBe('Developer');
+        expect(container.querySelector('[data-zone="meta"]')).toBeNull();
+        expect(screen.queryByRole('link', { name: 'Files' })).toBeNull();
+    });
+
+    it('draws no zone when the tree has no meta node', () => {
+        const { container } = render(<RealmNav items={[node({ title: 'Home', href: '/' })]} />);
+
+        expect(container.querySelector('[data-zone="meta"]')).toBeNull();
+    });
+});

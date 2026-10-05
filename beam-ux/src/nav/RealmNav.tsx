@@ -49,6 +49,12 @@ export type RealmNavProps = {
      * without pretending to know where the host sells.
      */
     upsellCta?: (node: RealmNavNode, ctx: { upsell: string | null }) => ReactNode;
+    /**
+     * The Developer zone's slot (ux-walkthrough M7). Receives the tree's `zone: meta` nodes, which never sit in the rail,
+     * and renders them where this host keeps its meta zone (the flagship's System zone, a starter's rail footer). Absent
+     * ⇒ RealmNav draws them after the rail, each developer seat a labeled group of its rows.
+     */
+    meta?: (nodes: RealmNavNode[]) => ReactNode;
 };
 
 type RailGroup = {
@@ -271,8 +277,11 @@ export function RealmNav({
     icon,
     classNames,
     upsellCta,
+    meta,
 }: RealmNavProps) {
-    const groups = toGroups(items ?? [], variant);
+    const rail = (items ?? []).filter((node) => node.zone !== 'meta');
+    const zones = (items ?? []).filter((node) => node.zone === 'meta' && (node.children?.length ?? 0) > 0);
+    const groups = toGroups(rail, variant);
     // One popover for the whole rail, held here rather than per-row, so two locked rows can never be
     // open at once — the same placement the desktop chrome's `Dock` uses for its upsell state.
     const [upsell, setUpsell] = useState<RealmNavNode | null>(null);
@@ -299,6 +308,34 @@ export function RealmNav({
                     ))}
                 </div>
             ))}
+            {zones.length > 0
+                ? meta
+                    ? meta(zones)
+                    : zones.map((zone) => (
+                          <div key={zone.routeName ?? zone.title} data-zone="meta">
+                              <div className={classNames?.groupLabel ?? DEFAULTS.groupLabel}>{zone.title}</div>
+                              {toGroups(zone.children ?? [], 'section-groups').map((group, i) => (
+                                  <div key={group.label ?? `seat-${i}`} className={classNames?.group ?? DEFAULTS.group}>
+                                      {group.label ? (
+                                          <div className={classNames?.groupLabel ?? DEFAULTS.groupLabel}>
+                                              {group.label}
+                                          </div>
+                                      ) : null}
+                                      {group.items.map((node) => (
+                                          <RailItem
+                                              key={node.routeName ?? node.href ?? node.title}
+                                              node={node}
+                                              linkComponent={linkComponent}
+                                              icon={icon}
+                                              classNames={classNames}
+                                              onUpsell={setUpsell}
+                                          />
+                                      ))}
+                                  </div>
+                              ))}
+                          </div>
+                      ))
+                : null}
             {upsell ? (
                 <UpsellPopover node={upsell} cta={upsellCta} onClose={() => setUpsell(null)} />
             ) : null}
