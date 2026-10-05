@@ -9,7 +9,7 @@
  *
  * Every field here is a projection of a declared Data class:
  * `Splicewire\Satellite\Pairing\Data\PlatformConnectionData`,
- * `…\PlatformIdentityData`, `…\PlatformCapabilityData` and `…\PlatformCapabilityReadData`.
+ * `…\PlatformIdentityData` and `…\PlatformConnectionHealthData`.
  */
 
 /** Mirrors `Splicewire\Satellite\Pairing\PlatformConnectionState`. */
@@ -27,21 +27,15 @@ export type PlatformIdentity = {
     email: string | null;
 };
 
-export type PlatformCapability = {
-    name: string;
-    label: string | null;
-    binding: string | null;
-    surfaces: string[];
-    requiredEntitlement: string | null;
-};
-
-export type PlatformCapabilityRead = {
-    surface: string;
+/**
+ * Mirrors `PlatformConnectionHealthData`: the satellite's one status line about its pairing (ux-walkthrough UX-04).
+ * It carries no capability rows; the facet listing is the developer command `splicewire:connect --check`.
+ */
+export type PlatformConnectionHealth = {
     ok: boolean;
-    capabilities: PlatformCapability[];
     status: number | null;
+    checkedAt: string;
     error: string | null;
-    invokedAt: string | null;
 };
 
 export type PlatformConnection = {
@@ -74,6 +68,6 @@ export type PlatformConnection = {
 export type PlatformConnectionEndpoints = {
     connect: string;
     poll: string;
-    invokeCapability: string;
+    check: string;
     disconnect: string;
 };

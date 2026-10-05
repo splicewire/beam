@@ -26,7 +26,7 @@ type Props = {
 export default function OperatorPlatformConnection({ connection, endpoints }: Props) {
     return (
         <>
-            <Head title="Platform connection" />
+            <Head title="Splicewire connection" />
             <PlatformConnectionPanel connection={connection} endpoints={endpoints} />
         </>
     );

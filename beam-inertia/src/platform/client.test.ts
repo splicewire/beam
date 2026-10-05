@@ -14,7 +14,7 @@ import type { PlatformConnectionEndpoints } from './types';
 const endpoints: PlatformConnectionEndpoints = {
     connect: '/operator/platform-connection/connect',
     poll: '/operator/platform-connection/poll',
-    invokeCapability: '/operator/platform-connection/invoke-capability',
+    check: '/operator/platform-connection/check',
     disconnect: '/operator/platform-connection/disconnect',
 };
 
@@ -78,18 +78,19 @@ describe('platform connection client', () => {
         await expect(createPlatformConnectionClient(endpoints).poll()).rejects.toThrow('(500)');
     });
 
-    it('sends the surface with the capability invocation, and the label with the pairing', async () => {
+    it('checks the connection with no surface, and sends the label with the pairing', async () => {
         const fetchMock = stubFetch({ ok: true, json: async () => ({ data: { ok: true } }) });
         const client = createPlatformConnectionClient(endpoints);
 
-        await client.invokeCapability('chat-tool');
+        await client.check();
         await client.connect(null);
 
-        const [invokeUrl, invokeInit] = fetchMock.mock.calls[0] as unknown as [string, RequestInit];
+        const [checkUrl, checkInit] = fetchMock.mock.calls[0] as unknown as [string, RequestInit];
         const [connectUrl, connectInit] = fetchMock.mock.calls[1] as unknown as [string, RequestInit];
 
-        expect(invokeUrl).toBe(endpoints.invokeCapability);
-        expect(JSON.parse(invokeInit.body as string)).toEqual({ surface: 'chat-tool' });
+        // ux-walkthrough UX-04: the product check names no surface; the facet listing is `splicewire:connect --check`.
+        expect(checkUrl).toBe(endpoints.check);
+        expect(JSON.parse(checkInit.body as string)).toEqual({});
         expect(connectUrl).toBe(endpoints.connect);
         // Null, not omitted: the server's declared input treats null as "use this host's own name",
         // which is the same default `splicewire:connect` applies.

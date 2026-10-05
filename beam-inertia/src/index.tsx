@@ -189,8 +189,7 @@ export type {
   PlatformConnection,
   PlatformConnectionEndpoints,
   PlatformConnectionState,
-  PlatformCapability,
-  PlatformCapabilityRead,
+  PlatformConnectionHealth,
   PlatformIdentity,
 } from "./platform/types";
 

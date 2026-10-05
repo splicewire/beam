@@ -1,8 +1,8 @@
 import { jsonHeaders } from '../frame/xsrf';
 import type {
-    PlatformCapabilityRead,
     PlatformConnection,
     PlatformConnectionEndpoints,
+    PlatformConnectionHealth,
 } from './types';
 
 /**
@@ -15,7 +15,7 @@ import type {
 export type PlatformConnectionClient = {
     connect(label: string | null): Promise<PlatformConnection>;
     poll(): Promise<PlatformConnection>;
-    invokeCapability(surface: string): Promise<PlatformCapabilityRead>;
+    check(): Promise<PlatformConnectionHealth>;
     disconnect(): Promise<PlatformConnection>;
 };
 
@@ -68,8 +68,7 @@ export function createPlatformConnectionClient(
     return {
         connect: (label) => post<PlatformConnection>(endpoints.connect, { label }),
         poll: () => post<PlatformConnection>(endpoints.poll),
-        invokeCapability: (surface) =>
-            post<PlatformCapabilityRead>(endpoints.invokeCapability, { surface }),
+        check: () => post<PlatformConnectionHealth>(endpoints.check),
         disconnect: () => post<PlatformConnection>(endpoints.disconnect),
     };
 }

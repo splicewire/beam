@@ -8,15 +8,17 @@ import {
     type PlatformConnectionClient,
 } from './client';
 import type {
-    PlatformCapabilityRead,
     PlatformConnection,
     PlatformConnectionEndpoints,
+    PlatformConnectionHealth,
     PlatformConnectionState,
 } from './types';
 
 /**
- * The operator-realm "Platform connection" surface: the whole satellite half of an RFC 8628 pairing,
- * as something an operator can drive without a terminal.
+ * The operator-realm "Splicewire connection" surface: the whole satellite half of an RFC 8628 pairing,
+ * as something an operator can drive without a terminal. Whether the pairing works is one health line
+ * behind "Check connection" (ux-walkthrough UX-04); what it can reach is the developer command
+ * `splicewire:connect --check`, not product.
  *
  * ## What it is NOT
  *
@@ -106,9 +108,8 @@ export function PlatformConnectionPanel({
     );
 
     const [connection, setConnection] = useState<PlatformConnection>(initial);
-    const [capability, setCapability] = useState<PlatformCapabilityRead | null>(null);
+    const [health, setHealth] = useState<PlatformConnectionHealth | null>(null);
     const [label, setLabel] = useState<string>('');
-    const [surface, setSurface] = useState<string>('circuit-node');
     const [busy, setBusy] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);
 
@@ -143,20 +144,20 @@ export function PlatformConnectionPanel({
     const onConnect = () =>
         run('connect', () => client.connect(label.trim() === '' ? null : label.trim()), (next) => {
             setConnection(next);
-            // A fresh pairing invalidates the previous credential's capability read: showing the old
-            // result beside a new pending grant would claim a capability this site cannot yet spend.
-            setCapability(null);
+            // A fresh pairing invalidates the previous credential's check: showing the old result
+            // beside a new pending grant would vouch for a credential this site no longer holds.
+            setHealth(null);
         });
 
     const onDisconnect = () =>
         run('disconnect', () => client.disconnect(), (next) => {
             setConnection(next);
-            setCapability(null);
+            setHealth(null);
         });
 
-    const onInvoke = () =>
-        run('invoke', () => client.invokeCapability(surface), (result) => {
-            setCapability(result);
+    const onCheck = () =>
+        run('check', () => client.check(), (result) => {
+            setHealth(result);
 
             // A 401 is a state change, not just a failed read — the credential has been revoked at
             // the tower. The server has already recorded it; re-reading is what makes the badge
@@ -197,9 +198,9 @@ export function PlatformConnectionPanel({
 
     return (
         <div className="mx-auto max-w-3xl px-6 py-10" data-testid="platform-connection">
-            <h1 className="font-serif text-3xl font-semibold">Platform connection</h1>
+            <h1 className="font-serif text-3xl font-semibold">Splicewire connection</h1>
             <p className="mt-1 text-sm text-muted-foreground">
-                How this site pairs with its Splicewire tower, and what that pairing can do.
+                How this site pairs with Splicewire, and whether the connection works.
             </p>
 
             <div className="mt-6 rounded-xl border border-border bg-card p-5">
@@ -338,86 +339,35 @@ export function PlatformConnectionPanel({
             )}
 
             <div className="mt-4 rounded-xl border border-border bg-card p-5">
-                <h2 className="text-lg font-semibold">Platform capabilities</h2>
+                <h2 className="text-lg font-semibold">Connection check</h2>
                 <p className="mt-1 text-sm text-muted-foreground">
-                    Spend this site’s pairing on a real read: ask the tower which capabilities it
-                    publishes for a surface. This is the credential doing work, not a local echo.
+                    Ask Splicewire to answer with this site’s credential. A refused credential shows
+                    here as revoked.
                 </p>
-                <div className="mt-3 flex flex-wrap items-end gap-3">
-                    <div>
-                        <Label htmlFor="capability-surface">Surface</Label>
-                        <select
-                            id="capability-surface"
-                            data-testid="capability-surface"
-                            className="h-9 rounded-md border border-input bg-transparent px-3 text-sm"
-                            value={surface}
-                            onChange={(e) => setSurface(e.target.value)}
-                        >
-                            <option value="circuit-node">circuit-node</option>
-                            <option value="chat-tool">chat-tool</option>
-                        </select>
-                    </div>
+                <div className="mt-3 flex flex-wrap items-center gap-3">
                     <Button
-                        data-testid="invoke-capability"
+                        data-testid="check-connection"
                         variant="secondary"
                         disabled={busy !== null || !connection.tokenPresent}
-                        onClick={onInvoke}
+                        onClick={onCheck}
                     >
-                        {busy === 'invoke' ? 'Asking…' : 'Read capabilities'}
+                        {busy === 'check' ? 'Checking…' : 'Check connection'}
                     </Button>
+                    {health && (
+                        <p
+                            className={
+                                health.ok
+                                    ? 'text-sm text-muted-foreground'
+                                    : 'text-sm text-red-700 dark:text-red-400'
+                            }
+                            data-testid="connection-health"
+                        >
+                            {health.ok
+                                ? `The connection works. Checked at ${new Date(health.checkedAt).toLocaleTimeString()}.`
+                                : (health.error ?? `Splicewire answered ${health.status ?? 'nothing'}.`)}
+                        </p>
+                    )}
                 </div>
-
-                {capability && (
-                    <div className="mt-4" data-testid="capability-result">
-                        {capability.ok ? (
-                            <>
-                                <p className="text-sm text-muted-foreground">
-                                    <span data-testid="capability-count">
-                                        {capability.capabilities.length}
-                                    </span>{' '}
-                                    capabilities published for{' '}
-                                    <code className="rounded bg-muted px-1 py-0.5">
-                                        {capability.surface}
-                                    </code>
-                                    .
-                                </p>
-                                <ul className="mt-3 divide-y divide-border rounded-lg border border-border">
-                                    {capability.capabilities.map((c) => (
-                                        <li
-                                            key={c.name}
-                                            className="flex flex-wrap items-center gap-x-3 gap-y-1 px-4 py-2.5 text-sm"
-                                            data-testid={`capability-${c.name}`}
-                                        >
-                                            <span className="font-medium">
-                                                {c.label ?? c.name}
-                                            </span>
-                                            <code className="rounded bg-muted px-1 py-0.5 text-xs">
-                                                {c.name}
-                                            </code>
-                                            {c.binding && (
-                                                <span className="text-xs text-muted-foreground">
-                                                    {c.binding}
-                                                </span>
-                                            )}
-                                            {c.requiredEntitlement && (
-                                                <span className="ml-auto text-xs text-amber-700 dark:text-amber-400">
-                                                    needs {c.requiredEntitlement}
-                                                </span>
-                                            )}
-                                        </li>
-                                    ))}
-                                </ul>
-                            </>
-                        ) : (
-                            <p
-                                className="text-sm text-red-700 dark:text-red-400"
-                                data-testid="capability-error"
-                            >
-                                {capability.error}
-                            </p>
-                        )}
-                    </div>
-                )}
             </div>
 
             {connection.tokenPresent && (
