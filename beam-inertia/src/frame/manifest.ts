@@ -39,6 +39,8 @@ export interface FrameNavNode {
     icon: string | null;
     routeName: string | null;
     locked: unknown;
+    /** The zone a top-level node is drawn in (ux-walkthrough M4): `primary` is the rail, `meta` the Developer zone. */
+    zone?: 'primary' | 'meta' | null;
     children: FrameNavNode[];
 }
 

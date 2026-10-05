@@ -89,3 +89,41 @@ it('skips a leaf whose href the rail already links (the tenant rail Platform →
     expect(screen.queryByRole('link', { name: 'Dashboard' })).toBeNull();
     expect(screen.getByRole('link', { name: 'Entries' })).toBeTruthy();
 });
+
+// ux-walkthrough UX-08: the projector gathers every developer seat under ONE top-level node with `zone: meta`. Drawn as an
+// ordinary group, that node showed its seats as single rows (Ops → its own dead href) and hid their resource rows. The
+// Developer zone draws each of its seats as a group, exactly as a top-level seat was drawn before.
+it("draws the meta zone as a Developer zone whose seats keep their rows", () => {
+  nav.items = [
+    node({ title: "Entries", href: "/beam-ux-entry", zone: "primary" }),
+    node({
+      title: "Developer",
+      routeName: "developer.section",
+      zone: "meta",
+      children: [
+        node({
+          title: "Ops",
+          href: "/ops",
+          routeName: "ops.section",
+          children: [
+            node({ title: "Files", href: "/beam-ux-mirror-status" }),
+            node({ title: "Git repos", href: "/git-repo" }),
+          ],
+        }),
+      ],
+    }),
+  ];
+
+  const { container } = render(<NavFrame />);
+
+  const zone = container.querySelector('[data-zone="meta"]');
+  expect(zone).not.toBeNull();
+  expect(zone!.textContent).toContain("Developer");
+  for (const title of ["Files", "Git repos"]) {
+    const link = screen.getByRole("link", { name: title });
+    expect(zone!.contains(link)).toBe(true);
+    expect(link.closest('[data-slot="menu-item"]')).not.toBeNull();
+  }
+  expect(screen.getByText("Ops").closest('[data-slot="group-label"]')).not.toBeNull();
+  expect(zone!.contains(screen.getByRole("link", { name: "Entries" }))).toBe(false);
+});

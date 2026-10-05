@@ -43,57 +43,72 @@ export function NavFrame({
 } = {}) {
     const { data: manifest } = useFrameManifest();
     const { isCurrentUrl } = useCurrentUrl();
-    const sections = (manifest?.nav.items ?? []).filter(
+    const items = (manifest?.nav.items ?? []).filter(
         (section) => !(isLeaf(section) && section.href !== null && omitHrefs.includes(section.href)),
     );
+    // ux-walkthrough UX-08: a `zone: meta` node is the Developer zone. Its children are SEATS, so each is drawn as the
+    // group a top-level seat is, under one "Developer" heading; drawn as an ordinary group it showed each seat as a
+    // single row to its own href and hid the seat's rows.
+    const sections = items.filter((section) => section.zone !== 'meta');
+    const zones = items.filter((section) => section.zone === 'meta' && section.children.length > 0);
 
-    if (sections.length === 0) {
+    if (sections.length === 0 && zones.length === 0) {
         return <>{fallback}</>;
     }
 
+    const drawSection = (section: FrameNavNode) => (
+        <SidebarGroup
+            key={section.routeName ?? section.title}
+            className="px-2 py-0"
+        >
+            {!isLeaf(section) && (
+                <SidebarGroupLabel>
+                    {section.href ? (
+                        <Link href={section.href}>{section.title}</Link>
+                    ) : (
+                        section.title
+                    )}
+                </SidebarGroupLabel>
+            )}
+            <SidebarMenu>
+                {(isLeaf(section) ? [section] : section.children).map((item) =>
+                    item.href ? (
+                        <SidebarMenuItem
+                            key={item.routeName ?? item.href}
+                        >
+                            <SidebarMenuButton
+                                asChild
+                                isActive={isCurrentUrl(item.href)}
+                                tooltip={{ children: item.title }}
+                            >
+                                <Link href={item.href}>
+                                    {(() => {
+                                        const Icon = frameIcon(
+                                            item.icon,
+                                        );
+
+                                        return <Icon />;
+                                    })()}
+                                    <span>{item.title}</span>
+                                </Link>
+                            </SidebarMenuButton>
+                        </SidebarMenuItem>
+                    ) : null,
+                )}
+            </SidebarMenu>
+        </SidebarGroup>
+    );
+
     return (
         <>
-            {sections.map((section) => (
-                <SidebarGroup
-                    key={section.routeName ?? section.title}
-                    className="px-2 py-0"
-                >
-                    {!isLeaf(section) && (
-                        <SidebarGroupLabel>
-                            {section.href ? (
-                                <Link href={section.href}>{section.title}</Link>
-                            ) : (
-                                section.title
-                            )}
-                        </SidebarGroupLabel>
-                    )}
-                    <SidebarMenu>
-                        {(isLeaf(section) ? [section] : section.children).map((item) =>
-                            item.href ? (
-                                <SidebarMenuItem
-                                    key={item.routeName ?? item.href}
-                                >
-                                    <SidebarMenuButton
-                                        asChild
-                                        isActive={isCurrentUrl(item.href)}
-                                        tooltip={{ children: item.title }}
-                                    >
-                                        <Link href={item.href}>
-                                            {(() => {
-                                                const Icon = frameIcon(
-                                                    item.icon,
-                                                );
-
-                                                return <Icon />;
-                                            })()}
-                                            <span>{item.title}</span>
-                                        </Link>
-                                    </SidebarMenuButton>
-                                </SidebarMenuItem>
-                            ) : null,
-                        )}
-                    </SidebarMenu>
-                </SidebarGroup>
+            {sections.map(drawSection)}
+            {zones.map((zone) => (
+                <div key={zone.routeName ?? zone.title} data-zone="meta">
+                    <SidebarGroup className="px-2 py-0">
+                        <SidebarGroupLabel>{zone.title}</SidebarGroupLabel>
+                    </SidebarGroup>
+                    {zone.children.map(drawSection)}
+                </div>
             ))}
         </>
     );
