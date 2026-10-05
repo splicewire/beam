@@ -523,12 +523,23 @@ function subscriptionWith(funding: Record<string, unknown>, stripePriceId: strin
 
 describe('SubscriptionSurface — funding', () => {
     it('reads an unfunded paid plan as Awaiting payment, with the pay action, and never as Free tier', async () => {
-        mount(<SubscriptionSurface />, fakeClient({ getSubscription: vi.fn(async () => subscriptionWith({ funding: 'none', awaitingPayment: true })) }));
+        // BUY-04 (BQ-2): the pay action is a card setup for the plan, offered whenever the plan awaits payment. It needs no
+        // Stripe price id (none is seeded) and comes first even when the org already has a Stripe customer.
+        const client = fakeClient({ getSubscription: vi.fn(async () => subscriptionWith({ funding: 'none', awaitingPayment: true }, null, true)) });
+        mount(<SubscriptionSurface />, client);
 
         expect((await screen.findAllByText('Awaiting payment')).length).toBeGreaterThan(0);
-        expect(screen.getByRole('button', { name: /subscribe/i })).toBeTruthy();
         expect(screen.queryByText(/Free tier/i)).toBeNull();
         expect(screen.queryByText(/^Active$/)).toBeNull();
+        fireEvent.click(screen.getByRole('button', { name: /subscribe/i }));
+        await waitFor(() => expect(client.startSubscriptionCheckout).toHaveBeenCalled());
+    });
+
+    it('offers no pay action for a funded plan, price id or not', async () => {
+        mount(<SubscriptionSurface />, fakeClient({ getSubscription: vi.fn(async () => subscriptionWith({ funding: 'card', awaitingPayment: false })) }));
+
+        expect(await screen.findByText(/Card/)).toBeTruthy();
+        expect(screen.queryByRole('button', { name: /subscribe/i })).toBeNull();
     });
 
     it('states card, invoice and comp funding', async () => {

@@ -360,13 +360,15 @@ export function SubscriptionSurface({
         if (planId) checkout.mutate(planId, { onSuccess: ({ url }) => navigate(url) });
     };
 
-    const actions = data?.hasStripeId ? (canManageBilling ? (
-        <Button variant="outline" size="sm" onClick={onPortal} disabled={portal.isPending}>
-            Manage subscription <ExternalLink className="size-3.5" />
-        </Button>
-    ) : null) : canCheckoutPlan && data?.stripePriceId && data.subscription?.planId ? (
+    // BUY-04 (BQ-2): the pay action is a card setup for a plan that awaits payment (no Stripe price id is involved); it
+    // comes first. Otherwise an org with a Stripe customer manages billing in the portal.
+    const actions = data?.subscription?.awaitingPayment && data.subscription.planId ? (canCheckoutPlan ? (
         <Button size="sm" onClick={onCheckout} disabled={checkout.isPending}>
             Subscribe <ArrowUpRight className="size-3.5" />
+        </Button>
+    ) : null) : data?.hasStripeId && canManageBilling ? (
+        <Button variant="outline" size="sm" onClick={onPortal} disabled={portal.isPending}>
+            Manage subscription <ExternalLink className="size-3.5" />
         </Button>
     ) : null;
 
