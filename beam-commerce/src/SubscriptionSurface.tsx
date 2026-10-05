@@ -16,7 +16,7 @@ import {
     useSubscriptionCheckout,
     useSubscriptionPortal,
 } from './commerce-hooks';
-import { useCommerceNavigate } from './commerce-provider';
+import { useCommerceCan, useCommerceNavigate } from './commerce-provider';
 import type {
     EntitlementRecord,
     LifecycleState,
@@ -325,6 +325,9 @@ export function SubscriptionSurface({
     const checkout = useSubscriptionCheckout();
     const portal = useSubscriptionPortal();
     const navigate = useCommerceNavigate();
+    // The portal and plan checkout are billing WRITES the host gates (`plans.checkout`, Admin-only, launch 90ce7f6e):
+    // a non-holder is not offered a button that can only 403. The plan and entitlements still read.
+    const canManageBilling = useCommerceCan()('plans.checkout');
 
     // Poll on the success signal: after a Stripe round-trip the internal Subscription syncs async, so
     // refetch until the lifecycle flips rather than trusting a confident-but-stale read. Clears the
@@ -354,7 +357,7 @@ export function SubscriptionSurface({
         if (planId) checkout.mutate(planId, { onSuccess: ({ url }) => navigate(url) });
     };
 
-    const actions = data?.hasStripeId ? (
+    const actions = !canManageBilling ? null : data?.hasStripeId ? (
         <Button variant="outline" size="sm" onClick={onPortal} disabled={portal.isPending}>
             Manage subscription <ExternalLink className="size-3.5" />
         </Button>

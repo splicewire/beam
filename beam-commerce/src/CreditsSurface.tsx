@@ -29,7 +29,7 @@ import {
 import { useState } from 'react';
 import { errorMessage, formatDate, formatUsd } from './format';
 import { useCreditTopupCheckout, useReloadCredits, useWallet } from './commerce-hooks';
-import { useCommerceServices } from './commerce-provider';
+import { useCommerceCan, useCommerceServices } from './commerce-provider';
 import type { CreditLedgerEntry, CreditReloadResult, WalletBalance } from './commerce-types';
 
 /**
@@ -376,6 +376,9 @@ export function CreditsSurface() {
     // second component: a host declares `reloadCredits` when its server collects on a configured
     // money-in rail, and omits it when its credits are bought through hosted Stripe Checkout.
     const directRail = useCommerceServices().client.reloadCredits !== undefined;
+    // A top-up is a billing WRITE the host gates (`plans.checkout`, Admin-only, launch 90ce7f6e): a non-holder sees the
+    // wallet and ledger but is not offered a purchase that can only 403.
+    const canBuy = useCommerceCan()('plans.checkout');
 
     const [sheetOpen, setSheetOpen] = useState(false);
     const [amountUsd, setAmountUsd] = useState(100);
@@ -428,9 +431,11 @@ export function CreditsSurface() {
                         Your prepaid generation wallet — balance, ledger, and top-ups.
                     </p>
                 </div>
-                <Button size="sm" onClick={() => setSheetOpen(true)}>
-                    <Plus className="size-4" /> Add credits
-                </Button>
+                {canBuy && (
+                    <Button size="sm" onClick={() => setSheetOpen(true)}>
+                        <Plus className="size-4" /> Add credits
+                    </Button>
+                )}
             </div>
 
             {wallet.isPending && <p className="text-sm text-muted-foreground">Loading wallet…</p>}

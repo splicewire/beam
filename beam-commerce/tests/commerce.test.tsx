@@ -225,6 +225,13 @@ describe('CreditsSurface — isolation mount (no Laravel)', () => {
         await waitFor(() => expect(client.startTopupCheckout).toHaveBeenCalledWith(100));
     });
 
+    it('offers no top-up to a principal without plans.checkout, while still showing the wallet (launch 90ce7f6e)', async () => {
+        mount(<CreditsSurface />, fakeClient(), { can: (permission: string) => permission !== 'plans.checkout' });
+
+        expect(await screen.findByText('Credits')).toBeTruthy();
+        await waitFor(() => expect(screen.queryByRole('button', { name: /add credits/i })).toBeNull());
+    });
+
     it('follows a redirect action to the hosted leg instead of waiting on a client secret (BUY-02)', async () => {
         // The fake rail (and a redirect-mode provider checkout) answers with a URL, not a client secret: the browser must
         // walk there for the leg to settle. An embedded answer keeps today's pending window.
@@ -479,6 +486,16 @@ describe('SubscriptionSurface — isolation mount', () => {
 
         await waitFor(() => expect(client.getSubscriptionPortal).toHaveBeenCalled());
         await waitFor(() => expect(navigate).toHaveBeenCalledWith('https://stripe.test/portal'));
+    });
+
+    it('offers no billing write to a principal without plans.checkout, while still reading the plan (launch 90ce7f6e)', async () => {
+        // The server refuses the portal and plan checkout to non-holders (403); the surface does not offer a button that
+        // can only fail. The read side stays.
+        mount(<SubscriptionSurface />, fakeClient(), { can: (permission: string) => permission !== 'plans.checkout' });
+
+        expect(await screen.findByText('Songwriter')).toBeTruthy();
+        expect(screen.queryByRole('button', { name: /manage subscription/i })).toBeNull();
+        expect(screen.queryByRole('button', { name: /subscribe/i })).toBeNull();
     });
 
     it('surfaces the cancelled checkout signal the host passes down (router-blind)', async () => {
