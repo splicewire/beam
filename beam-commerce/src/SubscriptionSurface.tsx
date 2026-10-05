@@ -37,19 +37,20 @@ import type {
  * the optional post-checkout signal (host-router-owned) through props.
  */
 
-/** Derive the three real lifecycle states from the resolved SubscriptionData's scopeActive window. */
-function lifecycleOf(sub: Subscription | null): LifecycleState {
-    if (!sub) return 'active'; // never-subscribed / free — an Active badge, no CTA (empty-of-actions).
-    if (!sub.active) return 'lapsed';
-    return sub.endedAt ? 'cancels_at_period_end' : 'active';
-}
-
 function LifecycleBadge({ state, endsAt, awaitingPayment }: { state: LifecycleState; endsAt: string | null; awaitingPayment: boolean }) {
     // A paid plan that is unfunded resolves the free plan's entitlements (M14, I1): it is not Active.
     if (awaitingPayment && state !== 'lapsed') {
         return (
             <span className="inline-flex items-center gap-1.5 rounded-md border border-warning/40 bg-warning/10 px-2 py-1 text-xs font-medium text-warning-foreground">
                 <span className="size-1.5 rounded-full bg-warning" /> Awaiting payment
+            </span>
+        );
+    }
+    // No plan subscription at all (APP-10): absence is a declared value, and it is not Active.
+    if (state === 'none') {
+        return (
+            <span className="inline-flex items-center gap-1.5 rounded-md border border-border bg-muted px-2 py-1 text-xs font-medium text-muted-foreground">
+                No plan
             </span>
         );
     }
@@ -97,7 +98,8 @@ function fundingLabel(sub: Subscription | null, stripePriceId: string | null): s
 
 function PlanHeaderCard({ view }: { view: SubscriptionView }) {
     const sub = view.subscription;
-    const state = lifecycleOf(sub);
+    // Declared on the wire (SubscriptionViewData::$lifecycle, APP-10), never derived here.
+    const state = view.lifecycle;
     const lapsed = state === 'lapsed';
     const awaitingPayment = sub?.awaitingPayment === true;
     const plan = sub?.plan;
@@ -350,7 +352,7 @@ export function SubscriptionSurface({
     }, [checkoutSignal, view.data?.subscription?.active]);
 
     const data = view.data;
-    const lapsed = lifecycleOf(data?.subscription ?? null) === 'lapsed';
+    const lapsed = data?.lifecycle === 'lapsed';
 
     const onPortal = () =>
         portal.mutate(undefined, { onSuccess: ({ url }) => navigate(url) });

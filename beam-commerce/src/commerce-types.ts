@@ -50,7 +50,8 @@ export type CreditEntryType = 'credit' | 'debit' | string;
 export type BudgetOfferAction = 'raise_cap' | 'upgrade_plan' | string;
 
 /** The three real subscription lifecycle states the badge renders. */
-export type LifecycleState = 'active' | 'cancels_at_period_end' | 'lapsed';
+/** `SubscriptionViewData::$lifecycle` (beam-commerce `SubscriptionLifecycle`): declared on the wire, `none` included (APP-10). */
+export type LifecycleState = 'active' | 'cancels_at_period_end' | 'lapsed' | 'none';
 
 /** The resolved-entitlement source facet the grid isolates. */
 export type SourceFacet = 'all' | 'default' | 'plan' | 'tenant';
@@ -159,4 +160,5 @@ export interface SubscriptionView {
     hasStripeId: boolean;
     stripePriceId: string | null;
     capabilityLabels: Record<string, string>;
+    lifecycle: LifecycleState;
 }

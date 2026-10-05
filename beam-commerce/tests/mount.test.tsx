@@ -162,3 +162,22 @@ describe('ReloadActivityCard — isolation mount', () => {
         expect(screen.getByText('Reloaded')).toBeTruthy();
     });
 });
+
+// app-walkthrough APP-06 (APP-10): the card reads the declared reason. A party that never saved a card is told to add
+// one; only a saved card that is gone says "no longer available".
+describe('AutoReloadConfigCard — the payment method state is declared', () => {
+    it('tells a fresh tenant to add a card, and never that a card is no longer available', async () => {
+        const fresh = { ...CONFIG, enabled: false, status: 'needs_payment_method', hasPaymentMethod: false, paymentMethodSource: null, disabledReason: 'no_payment_method' };
+        mount(<AutoReloadConfigCard config={fresh} />, fakeClient(fresh));
+
+        expect((await screen.findAllByText('Add a card')).length).toBeGreaterThan(0);
+        expect(screen.queryByText(/no longer available/i)).toBeNull();
+    });
+
+    it('says the saved card is no longer available only when it was saved and is gone', async () => {
+        const gone = { ...CONFIG, status: 'needs_payment_method', hasPaymentMethod: false, paymentMethodSource: null, disabledReason: 'payment_method_unavailable' };
+        mount(<AutoReloadConfigCard config={gone} />, fakeClient(gone));
+
+        expect(await screen.findByText(/no longer available/i)).toBeTruthy();
+    });
+});

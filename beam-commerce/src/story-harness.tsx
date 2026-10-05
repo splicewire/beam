@@ -285,6 +285,7 @@ export function makeCommerceClient(mock: CommerceMockConfig = {}): CommerceClien
             hasStripeId: false,
             stripePriceId: null,
             capabilityLabels: {},
+            lifecycle: 'none',
         }),
         getEntitlements: async () => [],
         startSubscriptionCheckout: async () => ({ url: '#' }),

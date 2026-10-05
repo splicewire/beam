@@ -26,7 +26,7 @@ import { useSavePaymentMethod } from './provider';
 import type { AutoReloadConfig, AutoReloadConfigUpdate, AutoReloadStatus } from './types';
 
 // ── The status pill — auto-reload's own {off|active|suspended|needs_payment_method} vocabulary. ──
-function StatusPill({ status }: { status: AutoReloadStatus }) {
+function StatusPill({ status, disabledReason }: { status: AutoReloadStatus; disabledReason: string | null }) {
     const map: Record<string, { label: string; cls: string; dot: string }> = {
         active: {
             label: 'Active',
@@ -49,7 +49,12 @@ function StatusPill({ status }: { status: AutoReloadStatus }) {
             dot: 'bg-muted-foreground/50',
         },
     };
-    const s = map[status] ?? map.off;
+    // A party that never saved a card is asked to add one; "needs a card" is for a card that was saved and is gone
+    // (the declared reason, APP-10).
+    const s =
+        status === 'needs_payment_method' && disabledReason === 'no_payment_method'
+            ? { ...map.needs_payment_method, label: 'Add a card' }
+            : (map[status] ?? map.off);
     return (
         <span
             className={cn(
@@ -223,9 +228,12 @@ function FailureBanner({
     if (config.status !== 'suspended' && config.status !== 'needs_payment_method') return null;
 
     const reason = config.disabledReason;
+    // Never having saved a card is not a failure: the card-on-file row asks for one (APP-10).
+    if (reason === 'no_payment_method' || (config.status === 'needs_payment_method' && reason === null)) return null;
+
     const isSca = reason === 'sca_required';
-    const isNoPm =
-        config.status === 'needs_payment_method' || reason === 'payment_method_unavailable';
+    // Only a saved card that is gone says "no longer available" (the declared reason, never the status).
+    const isNoPm = reason === 'payment_method_unavailable';
 
     const title = isSca
         ? 'Your bank needs you to confirm this card'
@@ -332,7 +340,7 @@ export function AutoReloadConfigCard({ config }: { config: AutoReloadConfig }) {
                 <div className="flex items-start justify-between gap-3">
                     <div className="flex items-center gap-2">
                         <CardTitle>Automatic reload</CardTitle>
-                        <StatusPill status={config.status} />
+                        <StatusPill status={config.status} disabledReason={config.disabledReason} />
                     </div>
                 </div>
                 <CardDescription>

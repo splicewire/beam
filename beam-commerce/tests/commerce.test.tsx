@@ -155,6 +155,7 @@ const SUBSCRIPTION: SubscriptionView = {
     hasStripeId: true,
     stripePriceId: 'price_1',
     capabilityLabels: { 'generate.song': 'Generate songs' },
+    lifecycle: 'active',
 };
 
 const ENTITLEMENTS: EntitlementRecord[] = [
@@ -634,5 +635,26 @@ describe('AutoReloadConfigCard — plain end-user copy', () => {
         const chip = await screen.findByText('Saved card');
         expect(chip.className).not.toContain('uppercase');
         expect(chip.className).not.toContain('font-mono');
+    });
+});
+
+// app-walkthrough APP-06 (APP-10): the badge renders only from the declared `lifecycle` on the wire, and absence is
+// one of its values. A tenant with no plan subscription reads "No plan", never a fallback "Active".
+describe('SubscriptionSurface — lifecycle is declared', () => {
+    it('reads a missing subscription as No plan, with no Active badge', async () => {
+        const client = fakeClient({
+            getSubscription: vi.fn(async () => ({ ...SUBSCRIPTION, subscription: null, stripePriceId: null, lifecycle: 'none' as const })),
+        });
+        mount(<SubscriptionSurface />, client);
+
+        expect((await screen.findAllByText('No plan')).length).toBeGreaterThan(0);
+        expect(screen.queryByText(/^Active/)).toBeNull();
+    });
+
+    it('renders the lifecycle the wire declares, not one derived from the row', async () => {
+        const client = fakeClient({ getSubscription: vi.fn(async () => ({ ...SUBSCRIPTION, lifecycle: 'lapsed' as const })) });
+        mount(<SubscriptionSurface />, client);
+
+        expect(await screen.findByText('Lapsed')).toBeTruthy();
     });
 });
