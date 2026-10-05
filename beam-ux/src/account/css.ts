@@ -27,5 +27,6 @@ export const ACCOUNT_SHELL_CSS = `
   border-bottom: 1px solid var(--border, currentColor);
   font-weight: 600;
 }
+.beam-ux-account-mobilebar > a { display: flex; align-items: center; gap: 0.5rem; min-width: 0; }
 @media (min-width: 768px) { .beam-ux-account-mobilebar { display: none; } }
 `;

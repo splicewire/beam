@@ -43,10 +43,20 @@ interface GlobalWithPage {
     [PAGE_KEY]?: { props: PageProps; url: string };
 }
 
+/**
+ * Every host shares its brand (laravel-beam M8 through `Brand::for()`; ux-walkthrough UX-03), and the shell renders it
+ * and spells none. The catalogue stands in for the beam starter, so stories get that host's brand ("Beam", its
+ * APP_NAME) unless a story sets its own.
+ */
+const HOST_SHARED = {
+    name: 'Beam',
+    brand: { name: 'Beam', logo: null, titleTemplate: null, legalEntity: null, passkeyCopy: "Passkeys secure your Beam login. They're tied to your account." },
+};
+
 export function usePage<T = PageProps>() {
     const slot = (globalThis as GlobalWithPage)[PAGE_KEY];
     return {
-        props: (slot?.props ?? {}) as T,
+        props: { ...HOST_SHARED, ...(slot?.props ?? {}) } as T,
         url: slot?.url ?? '/',
         component: 'Stub',
         version: null,

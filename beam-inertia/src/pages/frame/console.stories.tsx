@@ -123,7 +123,7 @@ export const Loading: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
     await expect(
-      await canvas.findByText("Loading the frame manifest…")
+      await canvas.findByText("Loading the console…")
     ).toBeVisible();
     await expect(canvas.queryByText("Landing page")).not.toBeInTheDocument();
   },
