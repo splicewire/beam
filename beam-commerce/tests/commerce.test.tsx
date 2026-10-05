@@ -224,6 +224,30 @@ describe('CreditsSurface — isolation mount (no Laravel)', () => {
 
         await waitFor(() => expect(client.startTopupCheckout).toHaveBeenCalledWith(100));
     });
+
+    it('follows a redirect action to the hosted leg instead of waiting on a client secret (BUY-02)', async () => {
+        // The fake rail (and a redirect-mode provider checkout) answers with a URL, not a client secret: the browser must
+        // walk there for the leg to settle. An embedded answer keeps today's pending window.
+        const assign = vi.fn();
+        const original = window.location;
+        Object.defineProperty(window, 'location', { configurable: true, value: { ...original, assign } });
+        const client = fakeClient({
+            startTopupCheckout: vi.fn(async () => ({
+                clientSecret: null,
+                action: { kind: 'redirect' as const, url: 'http://app.test/commerce/fake/confirm/pay_1', clientSecret: null },
+            })),
+        });
+        try {
+            mount(<CreditsSurface />, client);
+
+            fireEvent.click(await screen.findByRole('button', { name: /add credits/i }));
+            fireEvent.click(await screen.findByRole('button', { name: /pay & add credits/i }));
+
+            await waitFor(() => expect(assign).toHaveBeenCalledWith('http://app.test/commerce/fake/confirm/pay_1'));
+        } finally {
+            Object.defineProperty(window, 'location', { configurable: true, value: original });
+        }
+    });
 });
 
 // ── The DIRECT-RAIL reload (ux-demo-convergence G3) ─────────────────────────

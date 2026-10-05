@@ -395,7 +395,16 @@ export function CreditsSurface() {
         }
 
         topup.mutate(amountUsd, {
-            onSuccess: () => setPendingCreditUsd(amountUsd),
+            onSuccess: (checkout) => {
+                // A redirect leg settles only when the browser walks it (the fake rail's confirm page, a redirect-mode
+                // provider checkout); the return URL brings it back here, where the wallet poll shows the credit.
+                if (checkout?.action?.kind === 'redirect' && checkout.action.url) {
+                    window.location.assign(checkout.action.url);
+
+                    return;
+                }
+                setPendingCreditUsd(amountUsd);
+            },
         });
     };
 

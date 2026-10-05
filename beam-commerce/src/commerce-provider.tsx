@@ -16,11 +16,21 @@ import type {
 // the correct tenant + the `beam/commerce/*` endpoints (resolved by route name); the surfaces are
 // tenant- and URL-blind. Every method the three surfaces use is declared here; a host supplies them
 // all through one adapter object.
+/** The hosted leg a top-up still needs (purchase-walkthrough BUY-02): mirrors the server's PaymentActionData. */
+export interface TopupCheckout {
+    clientSecret: string | null;
+    action?: { kind: 'redirect' | 'embedded'; url?: string | null; clientSecret?: string | null };
+}
+
 export interface CommerceClient {
     // Credits / wallet
     getWallet(): Promise<WalletBalance>;
-    /** Start an embedded Stripe Checkout top-up; returns the clientSecret the element mounts on. */
-    startTopupCheckout(amountUsd: number): Promise<{ clientSecret: string }>;
+    /**
+     * Start a hosted top-up. Returns the embedded session's `clientSecret` (null when there is none) and, since BUY-02,
+     * the rail's `action`: a `redirect` leg (the fake rail's confirm page, or a redirect-mode provider checkout) is where
+     * the browser must go for the purchase to settle; an `embedded` leg carries the secret to mount.
+     */
+    startTopupCheckout(amountUsd: number): Promise<TopupCheckout>;
     /**
      * OPTIONAL — the DIRECT-RAIL reload (`site-credits.reload`). The two credit-purchase custody
      * models the engine supports, and a host implements the one it has:

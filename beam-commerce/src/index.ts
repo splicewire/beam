@@ -51,6 +51,7 @@ export type {
     CommerceClient,
     CommerceServices,
     NotifyEvent as CommerceNotifyEvent,
+    TopupCheckout,
 } from './commerce-provider';
 export type {
     WalletBalanceData,
