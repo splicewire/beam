@@ -465,6 +465,46 @@ describe('SubscriptionSurface — isolation mount', () => {
     });
 });
 
+// ── SubscriptionSurface — funding (purchase-walkthrough BUY-03, M14) ────────────
+//
+// The surface states how the subscription is funded and never infers "Free tier" from a missing price id. A paid plan
+// that is unfunded (I1) reads "Awaiting payment" with a pay action when checkout is offerable.
+function subscriptionWith(funding: Record<string, unknown>, stripePriceId: string | null = 'price_1', hasStripeId = false) {
+    return { ...SUBSCRIPTION, hasStripeId, stripePriceId, subscription: { ...SUBSCRIPTION.subscription!, ...funding } } as typeof SUBSCRIPTION;
+}
+
+describe('SubscriptionSurface — funding', () => {
+    it('reads an unfunded paid plan as Awaiting payment, with the pay action, and never as Free tier', async () => {
+        mount(<SubscriptionSurface />, fakeClient({ getSubscription: vi.fn(async () => subscriptionWith({ funding: 'none', awaitingPayment: true })) }));
+
+        expect((await screen.findAllByText('Awaiting payment')).length).toBeGreaterThan(0);
+        expect(screen.getByRole('button', { name: /subscribe/i })).toBeTruthy();
+        expect(screen.queryByText(/Free tier/i)).toBeNull();
+        expect(screen.queryByText(/^Active$/)).toBeNull();
+    });
+
+    it('states card, invoice and comp funding', async () => {
+        const cases: Array<[Record<string, unknown>, RegExp]> = [
+            [{ funding: 'card' }, /Card/],
+            [{ funding: 'invoice' }, /Invoiced/],
+            [{ funding: 'comp', comp: { actor: 'operator-1', reason: 'Design partner', expiresAt: null } }, /Comped: Design partner/],
+        ];
+        for (const [funding, text] of cases) {
+            const view = mount(<SubscriptionSurface />, fakeClient({ getSubscription: vi.fn(async () => subscriptionWith(funding)) }));
+            expect(await screen.findByText(text)).toBeTruthy();
+            view.unmount();
+        }
+    });
+
+    it('never says Free tier for a plan with no price, nor the free/internal banner', async () => {
+        mount(<SubscriptionSurface />, fakeClient({ getSubscription: vi.fn(async () => subscriptionWith({ funding: null }, null)) }));
+
+        expect(await screen.findByText('Songwriter')).toBeTruthy();
+        expect(screen.queryByText(/Free tier/i)).toBeNull();
+        expect(screen.queryByText(/free\/internal plan/i)).toBeNull();
+    });
+});
+
 // ── AutoReloadConfigCard — plain end-user copy (launch ticket 05 ruling 4) ────
 //
 // The visual-baseline review flagged developer jargon on this end-user surface: the

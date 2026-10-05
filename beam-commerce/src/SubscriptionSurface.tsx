@@ -44,7 +44,15 @@ function lifecycleOf(sub: Subscription | null): LifecycleState {
     return sub.endedAt ? 'cancels_at_period_end' : 'active';
 }
 
-function LifecycleBadge({ state, endsAt }: { state: LifecycleState; endsAt: string | null }) {
+function LifecycleBadge({ state, endsAt, awaitingPayment }: { state: LifecycleState; endsAt: string | null; awaitingPayment: boolean }) {
+    // A paid plan that is unfunded resolves the free plan's entitlements (M14, I1): it is not Active.
+    if (awaitingPayment && state !== 'lapsed') {
+        return (
+            <span className="inline-flex items-center gap-1.5 rounded-md border border-warning/40 bg-warning/10 px-2 py-1 text-xs font-medium text-warning-foreground">
+                <span className="size-1.5 rounded-full bg-warning" /> Awaiting payment
+            </span>
+        );
+    }
     if (state === 'lapsed') {
         return (
             <span className="inline-flex items-center gap-1.5 rounded-md border border-destructive/40 bg-destructive/10 px-2 py-1 text-xs font-medium text-destructive">
@@ -67,11 +75,31 @@ function LifecycleBadge({ state, endsAt }: { state: LifecycleState; endsAt: stri
     );
 }
 
+/**
+ * How the subscription is funded, stated from the declared value (purchase-walkthrough M14). Never inferred from a
+ * missing price id: a plan with no price is not thereby a "Free tier".
+ */
+function fundingLabel(sub: Subscription | null, stripePriceId: string | null): string {
+    if (sub?.awaitingPayment) return 'Awaiting payment';
+    switch (sub?.funding) {
+        case 'card':
+            return 'Card · managed in Stripe';
+        case 'invoice':
+            return 'Invoiced';
+        case 'comp':
+            return sub.comp ? `Comped: ${sub.comp.reason}${sub.comp.expiresAt ? ` (until ${sub.comp.expiresAt.slice(0, 10)})` : ''}` : 'Comped';
+        case 'none':
+            return 'Not funded';
+        default:
+            return stripePriceId ? 'Managed in Stripe' : 'No recurring price';
+    }
+}
+
 function PlanHeaderCard({ view }: { view: SubscriptionView }) {
     const sub = view.subscription;
     const state = lifecycleOf(sub);
     const lapsed = state === 'lapsed';
-    const free = view.stripePriceId === null;
+    const awaitingPayment = sub?.awaitingPayment === true;
     const plan = sub?.plan;
     const endsAt = sub?.endedAt ? sub.endedAt.slice(0, 7) : null;
 
@@ -82,7 +110,7 @@ function PlanHeaderCard({ view }: { view: SubscriptionView }) {
                     <div className="space-y-1">
                         <div className="flex items-center gap-2">
                             <CardTitle>{plan?.name ?? 'No plan'}</CardTitle>
-                            <LifecycleBadge state={state} endsAt={endsAt} />
+                            <LifecycleBadge state={state} endsAt={endsAt} awaitingPayment={awaitingPayment} />
                         </div>
                         <CardDescription>
                             {plan?.description ?? 'You have no recurring subscription.'}
@@ -96,13 +124,9 @@ function PlanHeaderCard({ view }: { view: SubscriptionView }) {
             <CardContent>
                 <div className="grid gap-4 sm:grid-cols-3">
                     <div>
-                        <div className="text-xs text-muted-foreground">Recurring price</div>
+                        <div className="text-xs text-muted-foreground">Funding</div>
                         <div className="text-lg font-semibold">
-                            {free ? (
-                                <span className="text-muted-foreground">Free tier</span>
-                            ) : (
-                                <span className="text-muted-foreground">Managed in Stripe</span>
-                            )}
+                            <span className="text-muted-foreground">{fundingLabel(sub, view.stripePriceId)}</span>
                         </div>
                     </div>
                     <div>
@@ -390,20 +414,13 @@ export function SubscriptionSurface({
                 <div className="space-y-4">
                     <PlanHeaderCard view={data} />
 
-                    {data.stripePriceId === null && (
-                        <div className="flex items-start gap-3 rounded-md border border-primary/30 bg-primary/[0.04] p-4">
-                            <Sparkles className="mt-0.5 size-4 flex-none text-primary" />
+                    {data.subscription?.awaitingPayment && (
+                        <div className="flex items-start gap-3 rounded-md border border-warning/40 bg-warning/[0.06] p-4">
+                            <Sparkles className="mt-0.5 size-4 flex-none text-warning" />
                             <div className="space-y-1 text-sm">
-                                <div className="font-medium text-foreground">
-                                    {data.subscription
-                                        ? "You're on a free/internal plan — no recurring subscription."
-                                        : "You have no subscription — you're on the free tier."}
-                                </div>
+                                <div className="font-medium text-foreground">Awaiting payment</div>
                                 <p className="text-muted-foreground">
-                                    Free and internal plans render the resolved grid and an Active
-                                    badge, but carry no Stripe price — so there&apos;s no checkout or
-                                    portal handoff. Paid plans add a{' '}
-                                    <b className="text-foreground">Subscribe</b> CTA.
+                                    This plan is not paid for yet, so the free plan&apos;s features apply until it is.
                                 </p>
                             </div>
                         </div>

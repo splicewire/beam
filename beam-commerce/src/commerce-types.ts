@@ -63,7 +63,18 @@ export type CreditLedgerEntry = Omit<CreditEntryData, 'type'> & {
     type: CreditEntryType;
 };
 
-export type Subscription = SubscriptionData;
+/** How a subscription is funded (purchase-walkthrough M14). Null: no funding recorded (it resolves as it always did). */
+export type Funding = 'card' | 'invoice' | 'comp' | 'none';
+
+/**
+ * The subscription view, with M14's funding fields. Optional until a host regenerates its `beam-resources` projection
+ * from the PHP `SubscriptionData`, which now carries them.
+ */
+export type Subscription = SubscriptionData & {
+    funding?: Funding | null;
+    comp?: { actor: string; reason: string; expiresAt: string | null } | null;
+    awaitingPayment?: boolean;
+};
 export type Plan = PlanData;
 export type EntitlementRecord = EntitlementData;
 export type UpsellOffer = UpsellOfferData;
