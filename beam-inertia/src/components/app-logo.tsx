@@ -1,9 +1,8 @@
-import { usePage } from '@inertiajs/react';
-
+import { useBrand } from '../hooks/use-brand';
 import AppLogoIcon from './app-logo-icon';
 
 export default function AppLogo() {
-    const { name } = usePage().props;
+    const { name } = useBrand();
 
     return (
         <>

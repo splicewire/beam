@@ -1,3 +1,5 @@
+import { brandTitle } from "./hooks/use-brand";
+import type { Brand } from "./types/brand";
 import "./types/global";
 import { Link } from "@inertiajs/react";
 import { configureEntryPage } from "@splicewire/beam-ux/docs";
@@ -44,7 +46,17 @@ const queryClient = new QueryClient();
  */
 export function beamInertiaOptions(config: BeamInertiaConfig = {}) {
   configureBeamInertia(config);
-  const appName = config.name ?? "Beam";
+  // The brand comes from the host's shared `brand` prop (ux-walkthrough M8, IA-14), read off the first page the server
+  // rendered. The package names no brand of its own: a host that sets neither shows the bare page title.
+  const initialBrand = (): Pick<Brand, "name" | "titleTemplate"> => {
+    const page = typeof document !== "undefined" ? document.getElementById("app")?.dataset.page : undefined;
+    try {
+      const shared = page ? (JSON.parse(page).props as { brand?: Brand; name?: string }) : {};
+      return shared.brand ?? { name: config.name ?? shared.name ?? "", titleTemplate: null };
+    } catch {
+      return { name: config.name ?? "", titleTemplate: null };
+    }
+  };
   if (typeof window !== "undefined") initializeTheme();
   configureEntryPage({
     linkComponent: Link,
@@ -56,7 +68,7 @@ export function beamInertiaOptions(config: BeamInertiaConfig = {}) {
   });
 
   return {
-    title: (title: string) => (title ? `${title} - ${appName}` : appName),
+    title: (title: string) => brandTitle(title, initialBrand()),
     /**
      * Own glob first, the package's page map second (ADR-0213 §3). Written out rather than left to
      * `@inertiajs/vite`'s injected resolver, because the injected one throws on a name it cannot find

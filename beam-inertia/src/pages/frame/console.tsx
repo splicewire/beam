@@ -59,7 +59,7 @@ function ConsoleBody() {
         return (
             <div className="px-6 py-8 text-sm text-muted-foreground">
                 <Head title="Console" />
-                Loading the frame manifest…
+                Loading the console…
             </div>
         );
     }

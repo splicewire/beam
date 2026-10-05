@@ -1,4 +1,5 @@
-import { Head, Link, usePage } from '@inertiajs/react';
+import { Link, usePage } from '@inertiajs/react';
+import { useBrand } from '../hooks/use-brand';
 import { SiteLayout as BeamSiteLayout } from '@splicewire/beam-ux/site';
 import { type ReactNode, useEffect, useState } from 'react';
 import AppLogoIcon from '../components/app-logo-icon';
@@ -161,30 +162,34 @@ export function useSiteDark(): boolean {
     return resolvedAppearance === 'dark';
 }
 
-const brand = (
-    <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
-        <AppLogoIcon
-            style={{
-                width: 22,
-                height: 22,
-                display: 'block',
-                color: 'var(--st-fg, #0f172a)',
-                // A host logo is typically an unfilled path (the starters' mark), which paints black.
-                fill: 'var(--st-logo, #000)',
-            }}
-        />
-        <span
-            style={{
-                fontSize: 15,
-                fontWeight: 600,
-                letterSpacing: '-0.01em',
-                color: 'var(--st-fg, #0f172a)',
-            }}
-        >
-            Beam Starter
-        </span>
-    </Link>
-);
+function SiteBrand() {
+    const { name } = useBrand();
+
+    return (
+        <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
+            <AppLogoIcon
+                style={{
+                    width: 22,
+                    height: 22,
+                    display: 'block',
+                    color: 'var(--st-fg, #0f172a)',
+                    // A host logo is typically an unfilled path (the starters' mark), which paints black.
+                    fill: 'var(--st-logo, #000)',
+                }}
+            />
+            <span
+                style={{
+                    fontSize: 15,
+                    fontWeight: 600,
+                    letterSpacing: '-0.01em',
+                    color: 'var(--st-fg, #0f172a)',
+                }}
+            >
+                {name}
+            </span>
+        </Link>
+    );
+}
 
 // This site's ONE chrome renders for guests AND signed-in principals alike (SiteLayout has no separate
 // authed variant) - the guest "Sign in"/"Dashboard" pair below must reflect real auth state, not a fixed
@@ -264,17 +269,16 @@ export default function SiteLayout({ children }: { children: ReactNode }) {
     return (
         <BeamSiteLayout
             linkComponent={Link}
-            brand={brand}
+            brand={<SiteBrand />}
             nav={nav}
             footerLinks={footerLinks}
             head={
                 <>
-                    <Head title="Beam Starter" />
                     <style dangerouslySetInnerHTML={{ __html: CSS }} />
                     <ThemeSiteStyle />
                 </>
             }
-            footerBrand={brand}
+            footerBrand={<SiteBrand />}
             footerStyle={{
                 display: 'flex',
                 flexWrap: 'wrap',
