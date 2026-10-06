@@ -11,7 +11,13 @@ export const DOCS_LAYOUT_CSS = `
   padding-block: var(--beam-docs-pad, 2.5rem);
 }
 .beam-docs-rail { width: var(--beam-docs-rail, 14rem); flex: none; }
-.beam-docs-main { min-width: 0; flex: 1 1 auto; }
+.beam-docs-main { min-width: 0; flex: 1 1 auto; overflow-wrap: break-word; }
+
+/* The page never scrolls sideways (integrator 08:33Z, DOCS-13): a long URL or identifier in inline code breaks, and a
+   code block or table that cannot fit scrolls inside itself, at desktop and at 390px. */
+.beam-docs-main :not(pre) > code { overflow-wrap: anywhere; }
+.beam-docs-main pre { max-width: 100%; overflow-x: auto; }
+.beam-docs-main table { display: block; max-width: 100%; overflow-x: auto; }
 .beam-docs-aside { width: var(--beam-docs-aside, 14rem); flex: none; }
 
 /* The two side columns are the first thing to go on a narrow viewport: a rail and an on-this-page

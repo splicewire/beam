@@ -201,7 +201,8 @@
     position: relative;
     counter-increment: bkit-step;
     display: grid;
-    grid-template-columns: 1.75rem 1fr;
+    /* minmax(0, …): a code block inside a step scrolls in place instead of widening the page (DOCS-13). */
+    grid-template-columns: 1.75rem minmax(0, 1fr);
     gap: 0 0.9rem;
     padding-bottom: 1.5rem;
 }
@@ -273,7 +274,7 @@
 .bkit-doctoroutput .bkit-doctoroutput-row {
     margin: 0;
     display: grid;
-    grid-template-columns: 0.65rem auto 1fr;
+    grid-template-columns: 0.65rem auto minmax(0, 1fr);
     align-items: baseline;
     gap: 0 0.6rem;
     padding: 0.4rem 1rem;
@@ -364,18 +365,18 @@
 /* 1 → 2 → 3 columns; reflows to one column on a narrow viewport. */
 .bkit-card-grid {
     display: grid;
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
     gap: 1rem;
     margin-block: 1.5rem;
 }
 @media (min-width: 40rem) {
     .bkit-card-grid {
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 }
 @media (min-width: 64rem) {
     .bkit-card-grid {
-        grid-template-columns: repeat(3, 1fr);
+        grid-template-columns: repeat(3, minmax(0, 1fr));
     }
 }
 
