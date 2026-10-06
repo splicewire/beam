@@ -102,7 +102,9 @@ export default function OperatorDesk() {
         <Desk
             tools={TOOLS}
             inControlPanel={!!component?.startsWith('operator/')}
-            orbLabel="Operator"
+            // UX-12a: the dock is the in-place editor, so it reads "Edit"; the Operator realm is crossed only
+            // through RealmSwitcher (IA-3).
+            orbLabel="Edit"
             orbIcon={<BeamMark className="mark" />}
             brand={{
                 mark: <BeamMark className="op-menu-brand-mark" />,

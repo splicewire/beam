@@ -12,10 +12,14 @@ import OperatorDesk from '../os/operator-desk';
 
 const OS_ENTER_KEY = 'os.enter';
 
+/**
+ * ux-walkthrough UX-12a, probe PR-1 (2026-10-06, read-only on audiostud): no author had ever edited an APP page in
+ * place, so the in-place editor leaves every non-site case. It overlays `site/*` pages only; app realms get no dock.
+ */
 export default function OsLayout({ children }: { children: ReactNode }) {
     const page = usePage<{ can?: Record<string, boolean> }>();
     const can = (page.props.can as Record<string, boolean> | undefined) ?? {};
-    const entitled = !!can[OS_ENTER_KEY];
+    const entitled = !!can[OS_ENTER_KEY] && (page.component ?? '').startsWith('site/');
 
     return (
         <>
