@@ -362,6 +362,38 @@
     color: var(--beam-fg-muted, var(--beam-ink-muted));
 }
 
+/* Prose a landing carries between its hero and its cards (integrator 11:03Z): a landing is not a prose template, so
+   nothing else sets these, and a section heading read as a bold run-in flush against its list. Direct children only;
+   the hero and the cards keep their own rules. */
+.bkit-landing > h2,
+.bkit-landing > h3 {
+    margin-block: 2rem 0.75rem;
+    font-family: var(--beam-font-sans, inherit);
+    font-weight: 600;
+    line-height: 1.25;
+    color: var(--beam-fg, var(--beam-ink));
+}
+.bkit-landing > h2 {
+    font-size: 1.375rem;
+}
+.bkit-landing > h3 {
+    font-size: 1.125rem;
+}
+.bkit-landing > p,
+.bkit-landing > ul,
+.bkit-landing > ol {
+    margin-block: 0 1rem;
+    line-height: 1.6;
+}
+.bkit-landing > ul,
+.bkit-landing > ol {
+    padding-inline-start: 1.25rem;
+}
+.bkit-landing > ul > li + li,
+.bkit-landing > ol > li + li {
+    margin-block-start: 0.5rem;
+}
+
 /* 1 → 2 → 3 columns; reflows to one column on a narrow viewport. */
 .bkit-card-grid {
     display: grid;
