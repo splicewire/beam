@@ -1,55 +1,10 @@
 import { Link, usePage } from '@inertiajs/react';
 import { AccountShell } from '@splicewire/beam-ux/account';
 import type { AccountNavItem } from '@splicewire/beam-ux/account';
-import { ChevronsUpDown, LayoutGrid, Settings } from 'lucide-react';
+import { LayoutGrid, Settings } from 'lucide-react';
 import type { ReactNode } from 'react';
 import AppLogo from './app-logo';
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuTrigger,
-} from './ui/dropdown-menu';
-import { UserInfo } from './user-info';
-import { UserMenuContent } from './user-menu-content';
-
-/**
- * A context-free user footer for the packaged <AccountShell>.
- *
- * NOTE: the starter's own `<NavUser>` cannot be used here — it calls `useSidebar()` from the host's
- * `@/components/ui/sidebar` (shadcn) SidebarProvider, but <AccountShell> mounts the DIFFERENT
- * @schemastud/ui Sidebar provider, so the host hook throws "useSidebar must be used within a
- * SidebarProvider". This footer uses only a plain dropdown (no sidebar context), so it works inside
- * either shell.
- */
-function BeamNavUser() {
-    const { auth } = usePage().props;
-
-    if (!auth.user) {
-        return null;
-    }
-
-    return (
-        <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-                <button
-                    type="button"
-                    className="flex w-full items-center gap-2 rounded-md p-2 text-left text-sm hover:bg-accent"
-                    data-test="sidebar-menu-button"
-                >
-                    <UserInfo user={auth.user} />
-                    <ChevronsUpDown className="ml-auto size-4" />
-                </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent
-                className="min-w-56 rounded-lg"
-                align="end"
-                side="top"
-            >
-                <UserMenuContent user={auth.user} />
-            </DropdownMenuContent>
-        </DropdownMenu>
-    );
-}
+import { NavUser } from './nav-user';
 
 /**
  * The `account`-realm app shell — a THIN host wrapper over the generic `@splicewire/beam-ux/account`
@@ -112,7 +67,7 @@ export function AppSidebarBeam({ children }: { children: ReactNode }) {
             shell={page.props.accountShell ?? null}
             sections={{ plan: true, profile: true }}
             sectionLabels={{ plan: 'Plan', profile: 'Profile' }}
-            user={<BeamNavUser />}
+            user={<NavUser />}
             defaultOpen={page.props.sidebarOpen ?? true}
         >
             {children}

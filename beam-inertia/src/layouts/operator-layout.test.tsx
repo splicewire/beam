@@ -134,15 +134,15 @@ describe('the operator rail', () => {
         expect(screen.getByText('operator page')).toBeTruthy();
     });
 
-    it("points the rail's Dashboard item at the operator realm's home", async () => {
+    // UX-12a (IA-4): the starter-kit Dashboard fallback item is gone; the BRAND MARK keeps you in the realm.
+    it("points the brand mark at the operator realm's home", async () => {
         mount(
             <OperatorLayout>
                 <p>operator page</p>
             </OperatorLayout>,
         );
 
-        const dashboard = screen.getByText('Dashboard').closest('a');
-        expect(dashboard?.getAttribute('href')).toBe('/operator');
+        expect(document.querySelector('a[data-realm-home]')?.getAttribute('href')).toBe('/operator');
     });
 
     it("renders the operator manifest's sections as the rail", async () => {
@@ -253,7 +253,7 @@ describe('the operator rail', () => {
 });
 
 describe('the tenant rail', () => {
-    it('is unchanged: AppLayout requests /frame/manifest and Dashboard stays /dashboard', async () => {
+    it('is unchanged: AppLayout requests /frame/manifest and the brand mark stays /dashboard', async () => {
         page.url = '/dashboard';
 
         mount(
@@ -264,7 +264,7 @@ describe('the tenant rail', () => {
 
         await waitFor(() => expect(fetchMock).toHaveBeenCalled());
         expect(requestedUrls()).toEqual(['/frame/manifest']);
-        expect(screen.getByText('Dashboard').closest('a')?.getAttribute('href')).toBe('/dashboard');
+        expect(document.querySelector('a[data-realm-home]')?.getAttribute('href')).toBe('/dashboard');
     });
 
     it("follows a frame console's page-prop realm, so /operator/users' rail and home agree", async () => {
@@ -284,7 +284,7 @@ describe('the tenant rail', () => {
 
         await waitFor(() => expect(fetchMock).toHaveBeenCalled());
         expect(requestedUrls()).toEqual(['/operator/frame/manifest']);
-        expect(screen.getByText('Dashboard').closest('a')?.getAttribute('href')).toBe('/operator');
+        expect(document.querySelector('a[data-realm-home]')?.getAttribute('href')).toBe('/operator');
     });
 
     it("drops the starter-kit Platform group on a realm console too, once the manifest seats a section", async () => {
@@ -369,7 +369,8 @@ describe("the tenant rail's account seats", () => {
         expect(screen.getByText('Billing').closest('a')?.getAttribute('href')).toBe('/account/billing');
         expect(screen.getByText('API tokens').closest('a')?.getAttribute('href')).toBe('/account/tokens');
         expect(screen.getByText('Team').closest('a')?.getAttribute('href')).toBe('/account/team');
-        expect(screen.getAllByText('Dashboard')).toHaveLength(1);
+        // The account group never adds a Dashboard row; the realm's own nav links its home.
+        expect(screen.queryAllByText('Dashboard')).toHaveLength(0);
         expect(screen.queryByText('A heading with no page')).toBeNull();
     });
 

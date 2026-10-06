@@ -5,6 +5,8 @@ import { type ReactNode, useEffect, useState } from 'react';
 import AppLogoIcon from '../components/app-logo-icon';
 import SiteNav from '../components/site-nav';
 import { useAppearance } from '../hooks/use-appearance';
+import { RealmSwitcher, type HostRealms } from '@splicewire/beam-ux/nav';
+import { InertiaRailLink } from '../components/frame-rail';
 /**
  * The public-site chrome (header + footer) for the starter, in a NEUTRAL theme. The STRUCTURE comes
  * from the generic package `<SiteLayout>` (`@splicewire/beam-ux/site`); this wrapper supplies only the
@@ -208,7 +210,7 @@ function AuthNavLinks() {
         can?: Record<string, boolean>;
         realms?: { realms?: { key: string; href: string }[] };
     }>();
-    const { auth, can, realms } = page.props;
+    const { auth, realms } = page.props;
 
     // `auth` is optional: the packaged `error` page renders here for a 404 that never reached the
     // session middleware, where no shared props exist at all.
@@ -225,19 +227,21 @@ function AuthNavLinks() {
         );
     }
 
+    // UX-12a (IA-3): the signed-in header has exactly ONE app link, "Open app". Every other realm (Settings,
+    // Operator when the payload offers it), View site and Sign out are crossed through the RealmSwitcher.
     return (
         <>
-            {can?.['app:operator'] && (
-                <a className="navlink" href="/operator">
-                    Operator
-                </a>
-            )}
             <Link className="navlink" href={appHref(realms)}>
                 Open app
             </Link>
-            <Link className="navlink" href="/logout" method="post" as="button">
-                Log out
-            </Link>
+            {realms?.realms && (
+                <RealmSwitcher
+                    realms={realms as HostRealms}
+                    label={auth.user.name}
+                    signOutHref="/logout"
+                    linkComponent={InertiaRailLink}
+                />
+            )}
         </>
     );
 }
