@@ -60,6 +60,13 @@ describe('RealmSwitcher', () => {
         ]);
     });
 
+    // The menu sits on the popover surface, so it carries the popover's foreground: inherited from a dark rail, its
+    // items were near-invisible on the white panel (UX-12a fixture, owner).
+    it('draws the open menu in the popover foreground on the popover surface', () => {
+        render(<RealmSwitcher realms={realms} label="Ada" signOutHref="/logout" defaultOpen />);
+        expect(screen.getByRole('menu').className).toMatch(/\bbg-popover\b.*\btext-popover-foreground\b|\btext-popover-foreground\b.*\bbg-popover\b/);
+    });
+
     it('omits a locked realm and has no View site where no site realm exists', () => {
         const hub: HostRealms = { ...realms, realms: realms.realms.filter((r) => r.surface !== 'site').map((r) => (r.key === 'operator' ? { ...r, locked: true } : r)) };
         const { container } = render(<RealmSwitcher realms={hub} label="Ada" signOutHref="/logout" defaultOpen />);

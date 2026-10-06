@@ -50,7 +50,7 @@ export function RealmSwitcher({
                 {label}
             </button>
             {open && (
-                <div role="menu" className="mt-1 min-w-48 rounded-md border bg-popover p-1 shadow-md">
+                <div role="menu" className="mt-1 min-w-48 rounded-md border bg-popover p-1 text-popover-foreground shadow-md">
                     {workspaces}
                     {appRealms.map((realm) => (
                         <Link
