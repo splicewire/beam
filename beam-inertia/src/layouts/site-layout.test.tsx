@@ -9,6 +9,7 @@ import type { ReactNode } from 'react';
 import { afterEach, expect, it, vi } from 'vitest';
 
 const props = vi.hoisted(() => ({ value: {} as Record<string, unknown> }));
+const footer = vi.hoisted(() => ({ style: undefined as Record<string, unknown> | undefined }));
 
 vi.mock('@inertiajs/react', () => ({
     Head: () => null,
@@ -18,15 +19,19 @@ vi.mock('@inertiajs/react', () => ({
 vi.mock('@splicewire/beam-ux/site', () => ({
     SiteLayout: ({
         footerLinks,
+        footerStyle,
         children,
         className,
         head,
     }: {
         footerLinks: { title: string; href: string }[];
+        footerStyle?: Record<string, unknown>;
         children?: ReactNode;
         className?: string;
         head?: ReactNode;
-    }) => (
+    }) => {
+        footer.style = footerStyle;
+        return (
         <>
             {head}
             <div data-testid="site-root" className={className} />
@@ -39,7 +44,8 @@ vi.mock('@splicewire/beam-ux/site', () => ({
                 ))}
             </footer>
         </>
-    ),
+        );
+    },
     SiteNav: () => null,
 }));
 vi.mock('../components/app-logo-icon', () => ({ default: () => null }));
@@ -63,6 +69,16 @@ it('lists the footer content links from the site nav, so a renamed nav title sho
         'About 1727158000',
         'Sign in',
     ]);
+});
+
+// UX-12a follow-up 2: on a site page the Edit dock floats over the viewport's bottom-right corner, where the footer's
+// last link sat (and could not be clicked). OsLayout publishes the dock's clearance; the footer pads by it, and by
+// nothing where no dock is mounted.
+it('pads the footer by the dock clearance, so the Edit dock never covers a footer link', () => {
+    props.value = { auth: { user: null }, nav: { items: [] } };
+    render(<SiteLayout>page</SiteLayout>);
+
+    expect(String(footer.style?.padding ?? '')).toContain('var(--beam-dock-clearance, 0px)');
 });
 
 /**
