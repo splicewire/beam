@@ -21,11 +21,13 @@ import type { RunnerTransform, RunnerTransformResult } from './types';
 // off the RunnerTransform wire shape, imports only the @schemastud/ui foundation, and takes its
 // transport + feedback as injected services. A host renders it inside <TransformsProvider>.
 
+// Labels say what the author gets (APP-10, FINDINGS 21). Substrate: javy = Javy JS→WASM (the untrusted default),
+// python-wasi = CPython-WASI, node/python = the bubble (escalation).
 const RUNTIMES = [
-    { id: 'javy', label: 'Javy · JS→WASM (untrusted default)' },
-    { id: 'python-wasi', label: 'CPython-WASI · pure Python' },
-    { id: 'node', label: 'Node · bubble (escalation)' },
-    { id: 'python', label: 'Python · bubble (escalation)' },
+    { id: 'javy', label: 'JavaScript (sandboxed, default)' },
+    { id: 'python-wasi', label: 'Python (sandboxed, pure Python)' },
+    { id: 'node', label: 'Node.js (full runtime)' },
+    { id: 'python', label: 'Python (full runtime)' },
 ];
 const NET = ['none', 'scoped', 'open'];
 const VISIBILITY = ['private', 'tenant', 'platform'];
@@ -206,7 +208,7 @@ function TransformEditorPane({
                         />
                     </div>
                     <div className="space-y-1">
-                        <Label htmlFor="rt-runtime">Runtime (picks the substrate)</Label>
+                        <Label htmlFor="rt-runtime">Runtime</Label>
                         <select
                             id="rt-runtime"
                             className={selectClass}

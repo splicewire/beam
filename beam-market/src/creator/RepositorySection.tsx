@@ -53,8 +53,9 @@ export function RepositorySection() {
       <CardHeader>
         <CardTitle>Repositories</CardTitle>
         <CardDescription>
-          A listing is submitted against a repository you have authorized. Until one is authorized,
-          the server refuses the submission — not the button.
+          {/* The server refuses an unauthorized submission; the button does not gate it (APP-10, FINDINGS 21). */}
+          Listings are submitted from a repository you have authorized. Authorize one before you
+          submit.
         </CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
