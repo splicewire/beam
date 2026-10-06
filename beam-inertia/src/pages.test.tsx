@@ -20,6 +20,10 @@ describe('package default page resolution', () => {
         async (page) => {
             expect(typeof (await resolveBeamPage(page))).toBe('function');
         },
+        // The first case is the suite's first cold import of the whole app-layout chain (the rail now includes
+        // beam-ux/nav's RealmNav and RealmSwitcher, UX-12a): about 3s alone, and past the 5s default on a loaded
+        // full run. This asserts the page resolves, not how fast a cold transform is.
+        15_000,
     );
     it('reports an unknown page instead of producing a blank surface', async () => {
         await expect(resolveBeamPage('missing/page')).rejects.toThrow('Page not found: missing/page');
