@@ -17,7 +17,7 @@ function pathOf(href: string): string {
 /**
  * You are here (ux-walkthrough IA-4, M7): which realm `pathname` is in, and where "← Back to {workspace}" goes. The
  * realm is the one whose home is the LONGEST prefix of the path, because an SPA navigates without refetching the
- * payload. It falls back to the server's `current`. `back` exists only outside the default workspace, and prefers the
+ * payload. It falls back to the server's `current`, then to the default workspace. `back` exists only outside the default workspace, and prefers the
  * server's own `back`. This replaces each shell's `startsWith('/operator')` checks.
  */
 export function useCurrentRealm(data: HostRealms | null | undefined, pathname: string) {
@@ -37,7 +37,9 @@ export function useCurrentRealm(data: HostRealms | null | undefined, pathname: s
                 best = home.length;
             }
         }
-        realm ??= data.realms.find((r) => r.key === data.current) ?? null;
+        // No home claims the path: the server's `current`, else the default workspace (an SPA reads the payload once,
+        // without a path, so its `current` is null; a page no realm claims is in the workspace, app-walkthrough APP-14).
+        realm ??= data.realms.find((r) => r.key === data.current) ?? defaultRealm(data) ?? null;
 
         const home = defaultRealm(data);
         const back =

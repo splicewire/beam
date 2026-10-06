@@ -123,6 +123,13 @@ describe('useCurrentRealm', () => {
         return result;
     };
 
+    // app-walkthrough APP-14: an SPA reads the payload once, without a path, so `current` is null; a page no realm's
+    // home claims (`/studio`) is in the workspace, not in no realm, so tenant chrome still knows where it is.
+    it('places a path no realm claims in the default workspace when the payload names no current', () => {
+        expect(read('/studio', { ...realms, current: null }).realm).toBe('tenant');
+        expect(read('/studio', { ...realms, current: null }).back).toBe('');
+    });
+
     it('derives the realm from the path by the longest home prefix', () => {
         expect(read('/operator/tenants').realm).toBe('operator');
         expect(read('/settings/profile').realm).toBe('user');
