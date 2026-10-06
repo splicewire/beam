@@ -411,7 +411,6 @@ describe('RealmNav — the Developer zone (zone: meta)', () => {
         const zone = container.querySelector('[data-zone="meta"]')!;
         expect(zone).not.toBeNull();
         expect(zone.textContent).toContain('Developer');
-        expect(zone.textContent).toContain('Ops');
         for (const name of ['Files', 'Schemas']) {
             expect(zone.contains(screen.getByRole('link', { name }))).toBe(true);
         }
@@ -420,17 +419,18 @@ describe('RealmNav — the Developer zone (zone: meta)', () => {
         expect(zone.contains(screen.getByRole('link', { name: 'Home' }))).toBe(false);
     });
 
-    // build.qa's UX-08b nit (shot 08): the zone's title and its seats' section labels rendered in ONE style, so
-    // "DEVELOPER" and "OPS" stacked as two equal headings and the zone did not read as a container.
-    it('labels the zone apart from the section labels inside it', () => {
+    // Integrator 07:45Z (UX-08b follow-up): the zone's title sat directly above its seat's section label ("DEVELOPER"
+    // over "OPS"), two stacked headers for one group. The zone title stands for its seats: no seat label is drawn inside
+    // the zone, and the seat's rows stay.
+    it('draws only the zone title inside the zone, never a seat label under it', () => {
         const { container } = render(<RealmNav items={items} variant="section-groups" />);
 
         const zone = container.querySelector('[data-zone="meta"]')!;
-        const zoneLabel = zone.querySelector('[data-zone-label]')!;
-        expect(zoneLabel.textContent).toBe('Developer');
-        const sectionLabel = [...zone.querySelectorAll('div')].find((el) => el.textContent === 'Ops' && !el.hasAttribute('data-zone-label'))!;
-        expect(sectionLabel).toBeDefined();
-        expect(zoneLabel.className).not.toBe(sectionLabel.className);
+        expect(zone.querySelector('[data-zone-label]')!.textContent).toBe('Developer');
+        expect(zone.textContent).not.toContain('Ops');
+        for (const name of ['Files', 'Schemas']) {
+            expect(zone.contains(screen.getByRole('link', { name }))).toBe(true);
+        }
     });
 
     it('lets a host restyle the zone label like any other class slot', () => {
