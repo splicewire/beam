@@ -123,6 +123,7 @@ export default function SiteEntry(props: SiteEntryProps) {
         currentHref: entry.url ?? undefined,
         slots,
         classNames: config.classNames,
+        page: props,
     };
 
     const frame = (

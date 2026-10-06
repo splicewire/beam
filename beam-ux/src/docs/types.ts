@@ -51,6 +51,11 @@ export type ChromeProps = {
     slots?: ChromeSlots;
     /** Per-part class overrides. The package names no colour and no font (invariant i). */
     classNames?: Record<string, string | undefined>;
+    /**
+     * The whole page-props object, as the body receives it under `page` (§6): the host's shared props and the props a
+     * package contributed for this layout (laravel-beam-ux `EntryPageProps`; `DocsLayout` reads `docsChrome`, DOCS-12).
+     */
+    page?: Record<string, unknown>;
     children: ReactNode;
 };
 
@@ -61,6 +66,12 @@ export type ChromeSlots = {
     railTop?: ReactNode;
     /** Rendered above the body inside `main` — a breadcrumb is the intended occupant. */
     breadcrumb?: ReactNode;
+    /** Author-only controls in a packaged header (DOCS-12): the one host hole a docs header keeps. */
+    headerActions?: ReactNode;
+    /** The packaged header's search box (filled by DOCS-14's DocsSearch). */
+    search?: ReactNode;
+    /** The packaged header's appearance toggle (filled by DOCS-13's DocsTheme). */
+    appearance?: ReactNode;
 };
 
 export type ChromeComponent = ComponentType<ChromeProps>;
