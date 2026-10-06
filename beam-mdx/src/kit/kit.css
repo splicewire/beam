@@ -27,7 +27,7 @@
 .bkit-figure {
     margin-block: 1.5rem;
     overflow: hidden;
-    border: 1px solid var(--border);
+    border: 1px solid var(--beam-border, var(--beam-line));
     border-radius: 0.5rem;
     background: var(--beam-muted);
 }
@@ -50,23 +50,23 @@
     margin: 0;
 }
 .bkit-figcaption {
-    border-top: 1px solid var(--border);
+    border-top: 1px solid var(--beam-border, var(--beam-line));
     padding: 0.5rem 1rem;
     font-size: 0.875rem;
-    color: var(--muted-foreground);
+    color: var(--beam-fg-muted, var(--beam-ink-muted));
 }
 
 /* --- FileTree -------------------------------------------------------------- */
 .bkit-filetree {
     margin-block: 1.5rem;
     padding: 0.85rem 1.1rem;
-    border: 1px solid var(--border);
+    border: 1px solid var(--beam-border, var(--beam-line));
     border-radius: 0.5rem;
     background: var(--beam-paper-raised, var(--beam-paper));
-    font-family: var(--font-mono, var(--beam-font-mono));
+    font-family: var(--beam-font-mono, ui-monospace, monospace);
     font-size: 0.8125rem;
     line-height: 1.7;
-    color: var(--foreground);
+    color: var(--beam-fg, var(--beam-ink));
     overflow-x: auto;
 }
 .bkit-filetree pre,
@@ -83,31 +83,31 @@
 .bkit-filetree-list .bkit-filetree-list {
     margin: 0;
     padding-left: 1.1rem;
-    border-left: 1px solid var(--border);
+    border-left: 1px solid var(--beam-border, var(--beam-line));
 }
 .bkit-filetree-item {
     margin: 0;
     padding: 0.05rem 0;
 }
 .bkit-filetree-name {
-    color: var(--foreground);
+    color: var(--beam-fg, var(--beam-ink));
 }
 
 /* --- Terminal -------------------------------------------------------------- */
 .bkit-terminal {
     margin-block: 1.5rem;
-    border: 1px solid var(--border);
+    border: 1px solid var(--beam-border, var(--beam-line));
     border-radius: 0.5rem;
     overflow: hidden;
     background: var(--beam-muted);
-    font-family: var(--font-mono, var(--beam-font-mono));
+    font-family: var(--beam-font-mono, ui-monospace, monospace);
 }
 .bkit-terminal-bar {
     display: flex;
     align-items: center;
     gap: 0.65rem;
     padding: 0.5rem 0.85rem;
-    border-bottom: 1px solid var(--border);
+    border-bottom: 1px solid var(--beam-border, var(--beam-line));
     background: var(--beam-paper-raised, var(--beam-paper));
 }
 .bkit-terminal-dots {
@@ -118,11 +118,11 @@
     width: 0.65rem;
     height: 0.65rem;
     border-radius: 50%;
-    background: var(--border);
+    background: var(--beam-border, var(--beam-line));
 }
 .bkit-terminal-title {
     font-size: 0.75rem;
-    color: var(--muted-foreground);
+    color: var(--beam-fg-muted, var(--beam-ink-muted));
     letter-spacing: 0.01em;
 }
 /* The body owns the inset: the fenced `<pre>` arrives unstyled (or with a host
@@ -152,15 +152,15 @@
 }
 .bkit-callout-title {
     margin-block-end: 0.35rem;
-    font-family: var(--font-sans, var(--beam-font-sans));
+    font-family: var(--beam-font-sans, inherit);
     font-weight: 600;
     font-size: 0.9375rem;
-    color: var(--foreground);
+    color: var(--beam-fg, var(--beam-ink));
 }
 /* The title takes the heading face and the body INHERITS the article's body face (serif under `.site-prose`), the
    same serif-body / sans-heading pairing the essay uses everywhere; intended (launch ticket 05 item 6). */
 .bkit-callout-body {
-    color: var(--foreground);
+    color: var(--beam-fg, var(--beam-ink));
     font-size: 0.9375rem;
 }
 .bkit-callout-body > :last-child {
@@ -171,8 +171,8 @@
    value (beam's own dark seed, the flagship's), so the two callouts rendered identically there. A
    neutral note is distinct from every status hue in any host's palette, light or dark. */
 .bkit-callout--note {
-    --bkit-callout-accent: var(--muted-foreground);
-    --bkit-callout-tint: var(--beam-muted, var(--muted));
+    --bkit-callout-accent: var(--beam-fg-muted, var(--beam-ink-muted));
+    --bkit-callout-tint: var(--beam-muted, var(--beam-muted));
 }
 .bkit-callout--tip {
     --bkit-callout-accent: var(--beam-green);
@@ -213,7 +213,7 @@
     top: 1.75rem;
     bottom: 0;
     width: 1px;
-    background: var(--border);
+    background: var(--beam-border, var(--beam-line));
     transform: translateX(-0.5px);
 }
 .bkit-step:last-child {
@@ -228,15 +228,15 @@
     width: 1.75rem;
     height: 1.75rem;
     border-radius: 50%;
-    border: 1px solid var(--border);
+    border: 1px solid var(--beam-border, var(--beam-line));
     background: var(--beam-paper-raised, var(--beam-paper));
     display: flex;
     align-items: center;
     justify-content: center;
-    font-family: var(--font-sans, var(--beam-font-sans));
+    font-family: var(--beam-font-sans, inherit);
     font-size: 0.8125rem;
     font-weight: 600;
-    color: var(--primary);
+    color: var(--beam-accent, var(--beam-green));
 }
 .bkit-step-marker::before {
     content: counter(bkit-step);
@@ -244,9 +244,9 @@
 .bkit-step-title {
     margin-block-end: 0.35rem;
     padding-top: 0.15rem;
-    font-family: var(--font-sans, var(--beam-font-sans));
+    font-family: var(--beam-font-sans, inherit);
     font-weight: 600;
-    color: var(--foreground);
+    color: var(--beam-fg, var(--beam-ink));
 }
 .bkit-step-body > :last-child {
     margin-bottom: 0;
@@ -255,11 +255,11 @@
 /* --- DoctorOutput ---------------------------------------------------------- */
 .bkit-doctoroutput {
     margin-block: 1.5rem;
-    border: 1px solid var(--border);
+    border: 1px solid var(--beam-border, var(--beam-line));
     border-radius: 0.5rem;
     overflow: hidden;
     background: var(--beam-paper-raised, var(--beam-paper));
-    font-family: var(--font-mono, var(--beam-font-mono));
+    font-family: var(--beam-font-mono, ui-monospace, monospace);
 }
 /* The list, rows and summary sit inside article prose, whose `ul` indent, `li`
    bottom margin and `p` bottom margin (`.site-prose ul`, `ul li`, `p`) outrank a
@@ -279,7 +279,7 @@
     padding: 0.4rem 1rem;
     font-size: 0.8125rem;
     line-height: 1.6;
-    border-top: 1px solid var(--border);
+    border-top: 1px solid var(--beam-border, var(--beam-line));
 }
 .bkit-doctoroutput-list > :first-child {
     border-top: none;
@@ -292,7 +292,7 @@
     background: var(--bkit-doctor-accent);
 }
 .bkit-doctoroutput-label {
-    font-family: var(--font-sans, var(--beam-font-sans));
+    font-family: var(--beam-font-sans, inherit);
     font-size: 0.6875rem;
     font-weight: 600;
     letter-spacing: 0.04em;
@@ -300,15 +300,15 @@
     color: var(--bkit-doctor-accent);
 }
 .bkit-doctoroutput-check {
-    color: var(--foreground);
+    color: var(--beam-fg, var(--beam-ink));
     font-weight: 600;
 }
 .bkit-doctoroutput-detail {
     grid-column: 3;
-    color: var(--muted-foreground);
+    color: var(--beam-fg-muted, var(--beam-ink-muted));
 }
 .bkit-doctoroutput-row--pass {
-    --bkit-doctor-accent: var(--beam-green, var(--primary));
+    --bkit-doctor-accent: var(--beam-green, var(--beam-accent, var(--beam-green)));
 }
 .bkit-doctoroutput-row--warn {
     --bkit-doctor-accent: var(--beam-warn);
@@ -319,11 +319,11 @@
 .bkit-doctoroutput .bkit-doctoroutput-summary {
     margin: 0;
     padding: 0.5rem 1rem;
-    border-top: 1px solid var(--border);
+    border-top: 1px solid var(--beam-border, var(--beam-line));
     background: var(--beam-muted);
-    font-family: var(--font-sans, var(--beam-font-sans));
+    font-family: var(--beam-font-sans, inherit);
     font-size: 0.75rem;
-    color: var(--muted-foreground);
+    color: var(--beam-fg-muted, var(--beam-ink-muted));
 }
 
 /* --- Section landing + card grid ------------------------------------------ */
@@ -338,7 +338,7 @@
 }
 .bkit-landing-eyebrow {
     margin-block-end: 0.5rem;
-    font-family: var(--font-sans, var(--beam-font-sans));
+    font-family: var(--beam-font-sans, inherit);
     font-size: 0.75rem;
     font-weight: 700;
     letter-spacing: 0.08em;
@@ -346,19 +346,19 @@
     /* The accent INK is `--primary`, as the Steps marker's: `--beam-signal` is the bright signal
        green, legible on a dark canvas but about 2:1 on a light one. Signal stays for the hover
        border/glow, which carries no text. */
-    color: var(--primary);
+    color: var(--beam-accent, var(--beam-green));
 }
 .bkit-landing-heading {
     margin-block-end: 0.75rem;
     font-size: 2rem;
     line-height: 1.15;
-    color: var(--foreground);
+    color: var(--beam-fg, var(--beam-ink));
 }
 .bkit-landing-lede {
     margin: 0;
     max-width: 48ch;
     font-size: 1.0625rem;
-    color: var(--muted-foreground);
+    color: var(--beam-fg-muted, var(--beam-ink-muted));
 }
 
 /* 1 → 2 → 3 columns; reflows to one column on a narrow viewport. */
@@ -394,7 +394,7 @@
     flex-direction: column;
     gap: 0.4rem;
     padding: 1.1rem 1.25rem;
-    border: 1px solid var(--border);
+    border: 1px solid var(--beam-border, var(--beam-line));
     border-radius: 0.65rem;
     background: var(--beam-paper-raised, var(--beam-paper));
     text-decoration: none;
@@ -405,34 +405,34 @@
         box-shadow 200ms ease;
 }
 .bkit-card.bkit-card:hover {
-    border-color: var(--beam-signal, var(--primary));
+    border-color: var(--beam-signal, var(--beam-accent, var(--beam-green)));
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px -12px var(--beam-signal, var(--primary));
+    box-shadow: 0 6px 20px -12px var(--beam-signal, var(--beam-accent, var(--beam-green)));
 }
 .bkit-card.bkit-card:focus-visible {
-    outline: 2px solid var(--primary);
+    outline: 2px solid var(--beam-accent, var(--beam-green));
     outline-offset: 2px;
 }
 .bkit-card-icon {
     display: inline-flex;
     width: 1.75rem;
     height: 1.75rem;
-    color: var(--primary);
+    color: var(--beam-accent, var(--beam-green));
 }
 .bkit-card-icon svg {
     width: 100%;
     height: 100%;
 }
 .bkit-card-title {
-    font-family: var(--font-sans, var(--beam-font-sans));
+    font-family: var(--beam-font-sans, inherit);
     font-size: 1.0625rem;
     font-weight: 600;
-    color: var(--foreground);
+    color: var(--beam-fg, var(--beam-ink));
 }
 .bkit-card-blurb {
     font-size: 0.9375rem;
     line-height: 1.5;
-    color: var(--muted-foreground);
+    color: var(--beam-fg-muted, var(--beam-ink-muted));
 }
 @media (prefers-reduced-motion: reduce) {
     .bkit-card {
