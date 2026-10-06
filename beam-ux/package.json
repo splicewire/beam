@@ -35,6 +35,10 @@
             "types": "./dist/docs.d.ts",
             "import": "./dist/docs.js"
         },
+        "./appearance": {
+            "types": "./dist/appearance.d.ts",
+            "import": "./dist/appearance.js"
+        },
         "./state": {
             "types": "./dist/state.d.ts",
             "import": "./dist/state.js"

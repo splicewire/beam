@@ -21,6 +21,7 @@ export default defineConfig({
         streaming: 'src/streaming/index.ts',
         admin: 'src/admin/index.ts',
         state: 'src/state/index.ts',
+        appearance: 'src/theme/appearance.ts',
     },
     format: ['esm'],
     dts: true,
