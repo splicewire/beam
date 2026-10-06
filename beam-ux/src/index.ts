@@ -40,3 +40,4 @@ export {
     type BuilderMode,
     type EditorPlacement,
 } from './UxBuilder';
+export { AuthorNote } from './author/AuthorNote';
