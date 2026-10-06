@@ -29,6 +29,25 @@ tagline: string | null,
 href: string,
 docs: string | null,
 };
+export type DocsSearchFallbackData = {
+label: string,
+href: string,
+};
+export type DocsSearchInputData = {
+q: string,
+root: string,
+};
+export type DocsSearchResultData = {
+title: string,
+href: string,
+trail: Array<any>,
+excerpt: string | null,
+kind: string,
+};
+export type DocsSearchResultsData = {
+results: DocsSearchResultData[],
+fallback: DocsSearchFallbackData | null,
+};
 export type DocsSurfaceData = {
 label: string,
 href: string,

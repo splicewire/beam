@@ -85,4 +85,32 @@ export const DOCS_LAYOUT_CSS = `
     border-right: 1px solid var(--beam-border, var(--beam-line));
   }
 }
+
+/* The packaged search box (DOCS-14): a field in the header and a results panel under it. Colours are tokens. */
+.beam-docs-search { position: relative; }
+.beam-docs-search input {
+  width: min(16rem, 60vw);
+  padding: 0.25rem 0.625rem;
+  border: 1px solid var(--beam-border, var(--beam-line));
+  border-radius: var(--beam-radius, 0.5rem);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+}
+.beam-docs-search-results {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 0.5rem);
+  z-index: 30;
+  width: min(26rem, calc(100vw - 2rem));
+  max-height: 70vh;
+  overflow-y: auto;
+  padding: 0.5rem;
+  border: 1px solid var(--beam-border, var(--beam-line));
+  border-radius: var(--beam-radius, 0.5rem);
+  background: var(--beam-paper-raised, Canvas);
+}
+.beam-docs-search-results a { display: block; padding: 0.5rem; text-decoration: none; color: inherit; border-radius: var(--beam-radius, 0.5rem); }
+.beam-docs-search-results a small { display: block; opacity: 0.65; }
+.beam-docs-search-results a p { margin: 0.25rem 0 0; opacity: 0.75; }
 `;

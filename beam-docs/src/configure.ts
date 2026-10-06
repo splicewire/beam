@@ -14,6 +14,8 @@ export type DocsConfig = {
     registryLinkEndpoint?: string | null;
     transport?: DocsTransport;
     layout?: ChromeComponent;
+    /** `docs.search` (DOCS-14, DM6). Null turns the packaged header's search box off; a host `search` slot replaces it. */
+    searchEndpoint?: string | null;
 };
 
 /** Call after host entry-page configuration. Explicit invocation survives tree shaking. */
@@ -21,6 +23,7 @@ export function configureDocs(options: DocsConfig = {}): void {
     setDocsConfiguration({
         registryLinkEndpoint: options.registryLinkEndpoint === undefined
             ? '/beam/docs/registry-link' : options.registryLinkEndpoint,
+        searchEndpoint: options.searchEndpoint === undefined ? '/beam/docs/search' : options.searchEndpoint,
         transport: options.transport,
     });
     if (options.layout || !resolveLayout('DocsLayout')) {
