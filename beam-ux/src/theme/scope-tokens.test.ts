@@ -33,5 +33,8 @@ describe('scopeTokensToDocs', () => {
     it('resets the host hooks onto the family inside docs', () => {
         expect(scoped).toContain('--beam-fg: var(--beam-ink);');
         expect(scoped).toContain('--beam-border: var(--beam-line);');
+        // Normal-size prose links must clear WCAG AA on the docs paper. `--beam-green` measures 4.40:1 in light;
+        // the scheme-specific deep token clears 4.5:1 and also reaches link-wrapped inline code on its tinted fill.
+        expect(scoped).toContain('--beam-accent: var(--beam-green-deep);');
     });
 });

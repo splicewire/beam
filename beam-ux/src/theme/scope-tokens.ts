@@ -11,7 +11,7 @@ export const DOCS_TOKEN_HOOKS = `.beam-docs {
   --beam-fg: var(--beam-ink);
   --beam-fg-muted: var(--beam-ink-70);
   --beam-heading: var(--beam-ink);
-  --beam-accent: var(--beam-green);
+  --beam-accent: var(--beam-green-deep);
   --beam-border: var(--beam-line);
   --beam-surface-2: var(--beam-muted);
 }
