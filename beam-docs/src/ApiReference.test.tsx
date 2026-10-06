@@ -50,13 +50,14 @@ describe('ApiReference', () => {
         expect(css).toContain('.scalar-app aside a[href="https://www.scalar.com"] { display: none !important; }');
     });
 
-    it('omits the curation when the host opts out, and keeps the packaged --beam-* palette', () => {
+    it('omits only the MCP curation when the host opts out, and keeps the vendor and palette rules', () => {
         const createApiReference = vi.fn();
         render(
             <ApiReference specUrl="/s.json" createApiReference={createApiReference} hideMcpLayer={false} />,
         );
         const css = String((createApiReference.mock.calls[0][1] as Record<string, unknown>).customCss);
         expect(css).not.toContain('scalar-mcp-layer');
+        expect(css).toContain('a[href="https://www.scalar.com"]');
         expect(css).toContain('--scalar-background-1: var(--beam-paper-raised');
     });
 
