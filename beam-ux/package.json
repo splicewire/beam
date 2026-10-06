@@ -80,7 +80,8 @@
             "import": "./dist/admin.js"
         },
         "./tokens.css": "./dist/tokens.css",
-        "./theme.css": "./dist/theme.css"
+        "./theme.css": "./dist/theme.css",
+        "./tokens-docs.css": "./dist/tokens-docs.css"
     },
     "sideEffects": false,
     "bin": {

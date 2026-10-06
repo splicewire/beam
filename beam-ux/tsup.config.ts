@@ -1,5 +1,6 @@
-import { copyFileSync } from 'node:fs';
+import { copyFileSync, readFileSync, writeFileSync } from 'node:fs';
 
+import { scopeTokensToDocs } from './src/theme/scope-tokens';
 import { defineConfig } from 'tsup';
 
 export default defineConfig({
@@ -33,6 +34,8 @@ export default defineConfig({
     onSuccess: async () => {
         copyFileSync('src/theme/tokens.css', 'dist/tokens.css');
         copyFileSync('src/theme/theme.css', 'dist/theme.css');
+        // The docs-scoped sheet (DOCS-13): tokens.css scoped to `.beam-docs`, generated so it never drifts.
+        writeFileSync('dist/tokens-docs.css', scopeTokensToDocs(readFileSync('src/theme/tokens.css', 'utf8')));
     },
     // The host owns the single instance of each of these — never bundled into dist.
     // React (+ its JSX runtime) and react-query for shared context/hooks identity; the
