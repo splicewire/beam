@@ -143,8 +143,15 @@ const KIND_OPTIONS = [
  */
 export function ExtensionsCatalog({
   onSelect,
+  plays,
 }: {
   onSelect: (id: number) => void;
+  /**
+   * The cross-instance sides the host plays (APP-11/APP-24, IA-6). The "not connected to Splicewire"
+   * banner is a CLIENT concern — a hub has no upstream to be disconnected from — so it renders only
+   * where `plays` includes `client`. Undefined (a host that does not pass it) keeps prior behavior.
+   */
+  plays?: readonly string[];
 }) {
   const [filters, setFilters] = useState<CatalogFilters>({});
   const { data, isPending, isError, isFetching, refetch } = useExtensionsCatalog(filters);
@@ -184,11 +191,15 @@ export function ExtensionsCatalog({
 
   return (
     <div className="flex flex-col gap-6">
-      {connectionStatus && !connectionStatus.connected && (
-        <DisconnectedBanner
-          marketConnected={(connectionStatus.markets ?? []).some((market) => market.status === "connected")}
-        />
-      )}
+      {connectionStatus &&
+        !connectionStatus.connected &&
+        // APP-24 (host-true): a hub has no upstream, so the disconnected banner is a client-only
+        // surface. Render it only where this host plays `client`; `undefined` keeps prior behavior.
+        (plays === undefined || plays.includes("client")) && (
+          <DisconnectedBanner
+            marketConnected={(connectionStatus.markets ?? []).some((market) => market.status === "connected")}
+          />
+        )}
 
       <div className="flex flex-wrap items-center gap-2">
         <Input
