@@ -159,7 +159,7 @@ describe('CompositionCalendar mounts (aggregate + single)', () => {
 
         // renderFilters (aggregate only): provenance chips (calendar labels) + status chips.
         expect(screen.getByRole('button', { name: 'Calendar A' })).toBeDefined();
-        expect(screen.getByRole('button', { name: 'approved' })).toBeDefined();
+        expect(screen.getByRole('button', { name: 'Approved' })).toBeDefined();
 
         // Clicking a resident event opens the host panel in resident-edit mode.
         fireEvent.click(screen.getByText('A · Digest'));

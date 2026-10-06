@@ -1,6 +1,7 @@
 import { render } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { EventBadge, LaneHeader } from '../src/index';
+import { Filters } from '../src/chrome';
 import { STATUS_TONE } from '../src/chrome';
 
 /**
@@ -45,5 +46,27 @@ describe('LaneHeader', () => {
         expect(chip.className).toContain('rounded-full');
         expect(chip.className).toContain('text-foreground');
         expect(chip.className).not.toContain('text-muted-foreground');
+    });
+});
+
+/** app-walkthrough APP-09b (APP-21, owner-07): the status facets and the event dot name a status in words, never its backing value. */
+describe('status labels', () => {
+    it('the status facet chips read as labels, not backing values', () => {
+        const { container } = render(
+            <Filters
+                calendars={[]}
+                statuses={['approved', 'generated', 'needs_review', 'stale', 'upcoming']}
+                active={{ statuses: new Set(), calendars: new Set() }}
+                onToggleCalendar={() => {}}
+                onToggleStatus={() => {}}
+            />,
+        );
+        const chips = [...container.querySelectorAll('[aria-label="Status"] button')].map((b) => b.textContent);
+        expect(chips).toEqual(['Approved', 'Generated', 'Needs review', 'Stale', 'Upcoming']);
+    });
+
+    it('the event dot carries its status label for a pointer and a screen reader', () => {
+        const dot = badge('needs_review').querySelector('[data-status]')!;
+        expect(dot.getAttribute('title')).toBe('Needs review');
     });
 });

@@ -23,6 +23,25 @@ export const STATUS_TONE: Record<string, string> = {
     upcoming: 'border border-current bg-transparent',
 };
 
+/**
+ * The words for each editorial status (app-walkthrough APP-09b, APP-21; owner-07): a facet chip and the event dot name a
+ * status, never its backing value. This package owns the vocabulary (see STATUS_TONE), so it owns the labels.
+ */
+export const STATUS_LABEL: Record<string, string> = {
+    approved: 'Approved',
+    generated: 'Generated',
+    needs_review: 'Needs review',
+    stale: 'Stale',
+    upcoming: 'Upcoming',
+};
+
+/** A status in words: the declared label, else the value humanized (`awaiting_payment` → "Awaiting payment"). */
+export function statusLabel(status: string): string {
+    if (STATUS_LABEL[status]) return STATUS_LABEL[status];
+    const words = status.split(/[\s_\-.]+/).filter(Boolean).join(' ').toLowerCase();
+    return words.charAt(0).toUpperCase() + words.slice(1);
+}
+
 /** renderEventBadge (PRD §4.2): series Repeat badge, Kind chrome (title), status dot. */
 export function EventBadge({ event }: { event: FoundationCalendarEvent }) {
     const meta = readMeta(event);
@@ -34,7 +53,9 @@ export function EventBadge({ event }: { event: FoundationCalendarEvent }) {
             <span
                 className={`rbc-event-glyph inline-block size-1.5 shrink-0 rounded-full ${STATUS_TONE[meta.status] ?? 'bg-slate-400'}`}
                 data-status={meta.status}
-                aria-hidden
+                role="img"
+                aria-label={statusLabel(meta.status)}
+                title={statusLabel(meta.status)}
             />
             {isSeries ? (
                 <Repeat className="rbc-event-glyph size-3 shrink-0 opacity-70" aria-label="series occurrence" />
@@ -111,7 +132,7 @@ export function Filters({
                         aria-pressed={active.statuses.size === 0 || active.statuses.has(status)}
                         onClick={() => onToggleStatus(status)}
                     >
-                        {status}
+                        {statusLabel(status)}
                     </button>
                 ))}
             </div>
