@@ -94,6 +94,11 @@ const DEFAULTS = {
     root: 'flex-1 space-y-4 overflow-y-auto px-2.5 text-[13px] font-medium',
     group: 'space-y-0.5',
     groupLabel: 'beam-nav-label px-2.5 pb-1 pt-2 text-[10px] font-medium uppercase text-sidebar-foreground/55',
+    // The Developer zone is a container, not one more group (build.qa, UX-08b): a divider above it and a title in
+    // sentence case and heavier than the uppercase section labels inside it, so "Developer" and "Ops" never read as
+    // two equal headings.
+    zone: 'mt-1 space-y-0.5 border-t border-sidebar-border pt-2',
+    zoneLabel: 'beam-nav-zone-label px-2.5 pb-0.5 text-[12px] font-semibold text-sidebar-foreground/80',
     // The active / hover text colour is `.beam-nav-item[data-active=…]` in REALM_NAV_CSS; the
     // utilities here are the ones every host emits for its own sidebar.
     item: (active: boolean) =>
@@ -312,8 +317,10 @@ export function RealmNav({
                 ? meta
                     ? meta(zones)
                     : zones.map((zone) => (
-                          <div key={zone.routeName ?? zone.title} data-zone="meta">
-                              <div className={classNames?.groupLabel ?? DEFAULTS.groupLabel}>{zone.title}</div>
+                          <div key={zone.routeName ?? zone.title} data-zone="meta" className={classNames?.zone ?? DEFAULTS.zone}>
+                              <div data-zone-label className={classNames?.zoneLabel ?? DEFAULTS.zoneLabel}>
+                                  {zone.title}
+                              </div>
                               {toGroups(zone.children ?? [], 'section-groups').map((group, i) => (
                                   <div key={group.label ?? `seat-${i}`} className={classNames?.group ?? DEFAULTS.group}>
                                       {group.label ? (

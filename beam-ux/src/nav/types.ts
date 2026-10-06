@@ -79,6 +79,10 @@ export type RealmNavClassNames = {
     group?: string;
     /** A group's uppercase label. */
     groupLabel?: string;
+    /** The Developer zone's wrapper (`[data-zone="meta"]`), set apart from the rail above it. */
+    zone?: string;
+    /** The Developer zone's own title, styled apart from the section labels inside it. */
+    zoneLabel?: string;
     /** A nav item link — a string, or a fn of the server-stamped active flag (for active styling). */
     item?: string | ((active: boolean) => string);
     /** A nav item's leading icon slot. */

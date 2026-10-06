@@ -420,6 +420,25 @@ describe('RealmNav — the Developer zone (zone: meta)', () => {
         expect(zone.contains(screen.getByRole('link', { name: 'Home' }))).toBe(false);
     });
 
+    // build.qa's UX-08b nit (shot 08): the zone's title and its seats' section labels rendered in ONE style, so
+    // "DEVELOPER" and "OPS" stacked as two equal headings and the zone did not read as a container.
+    it('labels the zone apart from the section labels inside it', () => {
+        const { container } = render(<RealmNav items={items} variant="section-groups" />);
+
+        const zone = container.querySelector('[data-zone="meta"]')!;
+        const zoneLabel = zone.querySelector('[data-zone-label]')!;
+        expect(zoneLabel.textContent).toBe('Developer');
+        const sectionLabel = [...zone.querySelectorAll('div')].find((el) => el.textContent === 'Ops' && !el.hasAttribute('data-zone-label'))!;
+        expect(sectionLabel).toBeDefined();
+        expect(zoneLabel.className).not.toBe(sectionLabel.className);
+    });
+
+    it('lets a host restyle the zone label like any other class slot', () => {
+        const { container } = render(<RealmNav items={items} variant="section-groups" classNames={{ zoneLabel: 'host-zone' }} />);
+
+        expect(container.querySelector('[data-zone-label]')!.className).toBe('host-zone');
+    });
+
     it('hands the meta nodes to the host meta slot instead, when one is given', () => {
         const slot = vi.fn((nodes: RealmNavNode[]) => <aside data-testid="system-zone">{nodes.map((n) => n.title).join(',')}</aside>);
         const { container } = render(<RealmNav items={items} meta={slot} />);
