@@ -23,6 +23,7 @@
 // baked in is the curation, not a look: `.scalar-mcp-layer { display: none }`, because a beam site's
 // MCP surface has its OWN docs page (the `<ManifestTable>` one) and Scalar's auto "Generate MCP"
 // affordance would compete with it. `hideMcpLayer={false}` opts out.
+import { useAppearance } from '@splicewire/beam-ux/appearance';
 import { useEffect, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
 import { docsConfiguration } from './config.js';
@@ -35,7 +36,37 @@ export type ApiReferenceFactory = (
 ) => unknown;
 
 /** The default CDN source — the incumbent's URL. Exported so a host can pin or re-host from it. */
-export const SCALAR_CDN_URL = 'https://cdn.jsdelivr.net/npm/@scalar/api-reference';
+export const SCALAR_CDN_URL = 'https://cdn.jsdelivr.net/npm/@scalar/api-reference@1.65.1';
+
+/** A lazy loader resolving a factory (the flagship code-splits its patched local Scalar). */
+export type ApiReferenceLoader = () => Promise<ApiReferenceFactory>;
+
+/**
+ * The PALETTE (docs-walkthrough DM5, DOCS-13): Scalar's variables read the ONE --beam-* token family, which flips under
+ * `.dark`, so the reference matches the guides in both schemes and no host themes Scalar itself (D-T2). Host hooks come
+ * first, then the defined beam-ux tokens.
+ */
+export const BEAM_SCALAR_CSS = `.scalar-app {
+  --scalar-background-1: var(--beam-paper-raised, var(--beam-paper));
+  --scalar-background-2: var(--beam-surface-2, var(--beam-muted));
+  --scalar-background-3: var(--beam-surface-2, var(--beam-muted));
+  --scalar-color-1: var(--beam-fg, var(--beam-ink));
+  --scalar-color-2: var(--beam-fg-muted, var(--beam-ink-muted));
+  --scalar-color-3: var(--beam-fg-muted, var(--beam-ink-muted));
+  --scalar-color-accent: var(--beam-accent, var(--beam-green));
+  --scalar-border-color: var(--beam-border, var(--beam-line));
+  --scalar-font: var(--beam-font-sans, inherit);
+  --scalar-font-code: var(--beam-font-mono, ui-monospace, monospace);
+  --scalar-sidebar-background-1: var(--beam-paper, var(--beam-paper-raised));
+  --scalar-sidebar-color-1: var(--beam-fg, var(--beam-ink));
+  --scalar-sidebar-color-2: var(--beam-fg-muted, var(--beam-ink-muted));
+  --scalar-sidebar-border-color: var(--beam-border, var(--beam-line));
+  --scalar-sidebar-item-hover-background: var(--beam-surface-2, var(--beam-muted));
+  --scalar-sidebar-item-active-background: var(--beam-surface-2, var(--beam-muted));
+  --scalar-sidebar-color-active: var(--beam-accent, var(--beam-green));
+  --scalar-sidebar-search-background: var(--beam-paper-raised, var(--beam-paper));
+  --scalar-sidebar-search-border-color: var(--beam-border, var(--beam-line));
+}`;
 
 /** Curation, not palette: our MCP server has its own docs page, so hide Scalar's MCP affordance. */
 const HIDE_MCP_LAYER_CSS = '.scalar-mcp-layer { display: none !important; }';
@@ -115,6 +146,8 @@ export function ApiReference({
 }: ApiReferenceProps) {
     const mount = useRef<HTMLDivElement | null>(null);
     const docs = docsConfiguration();
+    // The reference follows the ONE appearance (DM5): Scalar reads its mode once at mount, so a flip remounts it.
+    const { resolvedAppearance } = useAppearance();
     const endpoint = registryLinkEndpoint === undefined ? docs.registryLinkEndpoint : registryLinkEndpoint;
     const fetcher = transport ?? docs.transport ?? fetchDocs;
     const [loadedLink, setLoadedLink] = useState<{ endpoint: string; transport: DocsTransport; url: string | null } | null>(null);
@@ -141,7 +174,7 @@ export function ApiReference({
         const element = mount.current;
         if (!element) return;
 
-        const css = [hideMcpLayer ? HIDE_MCP_LAYER_CSS : null, customCss]
+        const css = [BEAM_SCALAR_CSS, hideMcpLayer ? HIDE_MCP_LAYER_CSS : null, customCss]
             .filter(Boolean)
             .join('\n');
 
@@ -151,11 +184,32 @@ export function ApiReference({
                 url: specUrl,
                 theme,
                 ...(css ? { customCss: css } : {}),
+                // The appearance is OURS (forcing it also hides Scalar's own toggle), and Scalar's Ask AI and developer
+                // toolbar stay off unless a host opts in through `configuration` (DM5; Scalar turns both on for any
+                // `.test`/`localhost` host by itself).
+                forceDarkModeState: resolvedAppearance,
+                agent: { disabled: true },
+                showDeveloperTools: 'never',
                 ...configuration,
             });
         };
 
-        const injected = createApiReference ?? globalFactory();
+        // A configured loader is the host's statement of WHICH Scalar to run; when it fails there is no silent CDN
+        // fallback (the flagship ships a patched build for OpenAPI 3.2 tag parents).
+        const loader = createApiReference ? undefined : docs.loadApiReference;
+        if (loader) {
+            loader()
+                .then(render)
+                .catch((error: unknown) => {
+                    if (!cancelled) onError?.(error);
+                });
+            return () => {
+                cancelled = true;
+                element.replaceChildren();
+            };
+        }
+
+        const injected = createApiReference ?? docs.createApiReference ?? globalFactory();
         if (injected) {
             render(injected);
         } else {
@@ -189,6 +243,9 @@ export function ApiReference({
         hideMcpLayer,
         configuration,
         onError,
+        resolvedAppearance,
+        docs.createApiReference,
+        docs.loadApiReference,
     ]);
 
     // `data-beam-full-bleed` is declared by the COMPONENT, not by each host's wrapper. A reference is a

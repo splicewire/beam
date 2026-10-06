@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { ApiReference, SCALAR_CDN_URL } from './ApiReference.js';
 import { setDocsConfiguration } from './config.js';
@@ -42,12 +42,14 @@ describe('ApiReference', () => {
         expect(css.indexOf('scalar-mcp-layer')).toBeLessThan(css.indexOf('Space Grotesk'));
     });
 
-    it('omits the curation when the host opts out, and ships no palette of its own', () => {
+    it('omits the curation when the host opts out, and keeps the packaged --beam-* palette', () => {
         const createApiReference = vi.fn();
         render(
             <ApiReference specUrl="/s.json" createApiReference={createApiReference} hideMcpLayer={false} />,
         );
-        expect((createApiReference.mock.calls[0][1] as Record<string, unknown>).customCss).toBeUndefined();
+        const css = String((createApiReference.mock.calls[0][1] as Record<string, unknown>).customCss);
+        expect(css).not.toContain('scalar-mcp-layer');
+        expect(css).toContain('--scalar-background-1: var(--beam-paper-raised');
     });
 
     it('falls back to a script load from the configurable url when no factory is injected', async () => {
@@ -56,7 +58,7 @@ describe('ApiReference', () => {
             const script = document.head.querySelector('script');
             expect(script?.getAttribute('src')).toBe('/vendor/scalar.js');
         });
-        expect(SCALAR_CDN_URL).toBe('https://cdn.jsdelivr.net/npm/@scalar/api-reference');
+        expect(SCALAR_CDN_URL).toBe('https://cdn.jsdelivr.net/npm/@scalar/api-reference@1.65.1');
     });
 
     it('uses a factory already on the global when the renderer is present', () => {
@@ -121,5 +123,58 @@ describe('ApiReference', () => {
         await waitFor(() => expect(transport).toHaveBeenCalledTimes(2));
         expect(screen.queryByRole('link')).toBeNull();
         expect(factory).toHaveBeenCalledTimes(1);
+    });
+
+    /*
+     * docs-walkthrough DOCS-13 (DM5, DOC-8): the reference maps --scalar-* onto the --beam-* family itself, follows the
+     * appearance (one remount per flip), and keeps Scalar's Ask AI and developer tools OFF unless a host opts in.
+     */
+    it('defaults Ask AI and the developer tools off, and lets a host opt back in', () => {
+        const createApiReference = vi.fn();
+        const { unmount } = render(<ApiReference specUrl="/s.json" createApiReference={createApiReference} />);
+        const config = createApiReference.mock.calls[0][1] as Record<string, unknown>;
+        expect(config.agent).toEqual({ disabled: true });
+        expect(config.showDeveloperTools).toBe('never');
+        unmount();
+
+        const optIn = vi.fn();
+        render(<ApiReference specUrl="/s.json" createApiReference={optIn} configuration={{ showDeveloperTools: 'always' }} />);
+        expect((optIn.mock.calls[0][1] as Record<string, unknown>).showDeveloperTools).toBe('always');
+    });
+
+    it('follows the appearance, remounting once per flip', async () => {
+        const { initializeTheme, useAppearance } = await import('@splicewire/beam-ux/appearance');
+        localStorage.setItem('appearance', 'light');
+        initializeTheme();
+        let api: ReturnType<typeof useAppearance> | null = null;
+        function Toggle() { api = useAppearance(); return null; }
+        const createApiReference = vi.fn();
+        render(<><Toggle /><ApiReference specUrl="/s.json" createApiReference={createApiReference} /></>);
+        expect((createApiReference.mock.calls.at(-1)![1] as Record<string, unknown>).forceDarkModeState).toBe('light');
+
+        act(() => api!.updateAppearance('dark'));
+        expect((createApiReference.mock.calls.at(-1)![1] as Record<string, unknown>).forceDarkModeState).toBe('dark');
+        expect(createApiReference).toHaveBeenCalledTimes(2);
+        act(() => api!.updateAppearance('light'));
+    });
+
+    it('uses the configured factory or lazy loader, and never falls back to the CDN when the loader fails', async () => {
+        const factory = vi.fn();
+        configureDocs({ createApiReference: factory });
+        const { unmount } = render(<ApiReference specUrl="/s.json" />);
+        await waitFor(() => expect(factory).toHaveBeenCalledTimes(1));
+        unmount();
+
+        const lazy = vi.fn();
+        configureDocs({ loadApiReference: () => Promise.resolve(lazy) });
+        const second = render(<ApiReference specUrl="/s.json" />);
+        await waitFor(() => expect(lazy).toHaveBeenCalledTimes(1));
+        second.unmount();
+
+        const onError = vi.fn();
+        configureDocs({ loadApiReference: () => Promise.reject(new Error('patched build missing')) });
+        render(<ApiReference specUrl="/s.json" onError={onError} />);
+        await waitFor(() => expect(onError).toHaveBeenCalledTimes(1));
+        expect(document.head.querySelector('script')).toBeNull();
     });
 });
