@@ -123,4 +123,7 @@ export const DOCS_LAYOUT_CSS = `
 .beam-docs-rail a:hover { color: var(--beam-fg, var(--beam-ink)); }
 .beam-docs-rail a[aria-current='page'], .beam-docs-rail a[data-active='true'] { color: var(--beam-fg, var(--beam-ink)); font-weight: 600; }
 .beam-docs-appearance { background: none; border: 1px solid var(--beam-border, var(--beam-line)); border-radius: var(--beam-radius, 0.5rem); color: inherit; font: inherit; padding: 0.25rem 0.5rem; cursor: pointer; }
+
+/* A reference on a spread page fills the viewport under the header (it was each host's wrapper's job, DOCS-13). */
+.beam-tpl-spread [data-beam-ux-api-reference] { height: calc(100vh - var(--beam-docs-header-height, 3.25rem)); }
 `;
