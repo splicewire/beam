@@ -8,7 +8,7 @@ import type { ReactNode } from 'react';
  * docblock.
  */
 export function AuthorNote({ children, className }: { children: ReactNode; className?: string }) {
-    if (!import.meta.env.DEV) {
+    if (!import.meta.env?.DEV) {
         return null;
     }
 
