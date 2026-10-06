@@ -32,7 +32,7 @@ export function RealmHeader({
             <div className="text-sm font-semibold" data-realm-label="">
                 {realm.label}
             </div>
-            <Link href={back.href} className="text-xs text-muted-foreground hover:underline" {...{ 'data-realm-back': '' }}>
+            <Link href={back.href} className="text-xs opacity-70 hover:underline hover:opacity-100" {...{ 'data-realm-back': '' }}>
                 ← Back to {back.label}
             </Link>
         </div>

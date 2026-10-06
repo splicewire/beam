@@ -14,6 +14,17 @@ describe('RealmHeader', () => {
         expect(back?.textContent).toBe('← Back to Acme');
     });
 
+    // The header sits on whatever surface the shell's rail is (dark at the flagship, light in beam-inertia), so Back
+    // inherits that surface's foreground and only dims it: a fixed muted colour vanished on the flagship's dark rail.
+    it("draws Back in the rail's own foreground, dimmed, never a fixed colour", () => {
+        const { container } = render(
+            <RealmHeader realm={{ key: 'operator', label: 'Operator', href: '/operator', surface: 'app', locked: false }} back={{ label: 'App', href: '/dashboard' }} />,
+        );
+        const cls = container.querySelector('a[data-realm-back]')?.className ?? '';
+        expect(cls).not.toMatch(/\btext-(muted|foreground|popover|sidebar)[\w-]*/);
+        expect(cls).toMatch(/\bopacity-\d+/);
+    });
+
     it('renders nothing in the default workspace (no back)', () => {
         const { container } = render(
             <RealmHeader realm={{ key: 'tenant', label: 'App', href: '/dashboard', surface: 'app', locked: false }} back={null} />,
