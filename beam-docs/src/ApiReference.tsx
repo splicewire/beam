@@ -35,8 +35,24 @@ export type ApiReferenceFactory = (
     configuration: Record<string, unknown>,
 ) => unknown;
 
-/** The default CDN source — the incumbent's URL. Exported so a host can pin or re-host from it. */
-export const SCALAR_CDN_URL = 'https://cdn.jsdelivr.net/npm/@scalar/api-reference@1.65.1';
+/** The pinned Scalar release the default CDN source serves. */
+const SCALAR_VERSION = '1.65.1';
+
+/**
+ * Subresource Integrity for each pinned release's `dist/browser/standalone.js` (self-contained, no lazy chunks), the
+ * sha384 of the npm tarball's own file, which jsDelivr serves byte for byte. Keyed by version so bumping
+ * {@link SCALAR_VERSION} without adding its hash fails the type check (DOCS-13 review: pinning stops drift, SRI stops a
+ * replaced file).
+ */
+const SCALAR_SRI = {
+    '1.65.1': 'sha384-G6dkutu2k5IYVyNESLoFIpgaHx38IJTZ/HhrwN0fecTle9te75y8Kru3rJEJ0ZJV',
+} as const satisfies Record<typeof SCALAR_VERSION, `sha384-${string}`>;
+
+/** The default CDN source. Exported so a host can pin or re-host from it. */
+export const SCALAR_CDN_URL = `https://cdn.jsdelivr.net/npm/@scalar/api-reference@${SCALAR_VERSION}/dist/browser/standalone.js`;
+
+/** The integrity the default source is loaded with; a host's own `scriptUrl` carries none (its bytes are its own). */
+export const SCALAR_CDN_INTEGRITY: string = SCALAR_SRI[SCALAR_VERSION];
 
 /** A lazy loader resolving a factory (the flagship code-splits its patched local Scalar). */
 export type ApiReferenceLoader = () => Promise<ApiReferenceFactory>;
@@ -82,6 +98,10 @@ function loadScript(url: string): Promise<void> {
         const script = document.createElement('script');
         script.src = url;
         script.async = true;
+        if (url === SCALAR_CDN_URL) {
+            script.setAttribute('integrity', SCALAR_CDN_INTEGRITY);
+            script.setAttribute('crossorigin', 'anonymous');
+        }
         script.addEventListener('load', () => resolve());
         script.addEventListener('error', () => {
             scriptLoads.delete(url);

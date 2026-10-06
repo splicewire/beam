@@ -1,6 +1,6 @@
 import { act, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { ApiReference, SCALAR_CDN_URL } from './ApiReference.js';
+import { ApiReference, SCALAR_CDN_INTEGRITY, SCALAR_CDN_URL } from './ApiReference.js';
 import { setDocsConfiguration } from './config.js';
 import { configureDocs } from './configure.js';
 import type { DocsTransport } from './publications.js';
@@ -58,7 +58,20 @@ describe('ApiReference', () => {
             const script = document.head.querySelector('script');
             expect(script?.getAttribute('src')).toBe('/vendor/scalar.js');
         });
-        expect(SCALAR_CDN_URL).toBe('https://cdn.jsdelivr.net/npm/@scalar/api-reference@1.65.1');
+        // A host's own copy is its own bytes: no integrity the package could know.
+        expect(document.head.querySelector('script')?.hasAttribute('integrity')).toBe(false);
+    });
+
+    it('loads the default CDN renderer with Subresource Integrity, pinned to one self-contained file', async () => {
+        render(<ApiReference specUrl="/s.json" />);
+        await waitFor(() => expect(document.head.querySelector('script')).not.toBeNull());
+        const script = document.head.querySelector('script')!;
+
+        expect(SCALAR_CDN_URL).toBe('https://cdn.jsdelivr.net/npm/@scalar/api-reference@1.65.1/dist/browser/standalone.js');
+        expect(script.getAttribute('src')).toBe(SCALAR_CDN_URL);
+        expect(script.getAttribute('integrity')).toBe(SCALAR_CDN_INTEGRITY);
+        expect(SCALAR_CDN_INTEGRITY).toMatch(/^sha384-[A-Za-z0-9+/]{64}$/);
+        expect(script.getAttribute('crossorigin')).toBe('anonymous');
     });
 
     it('uses a factory already on the global when the renderer is present', () => {
