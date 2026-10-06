@@ -37,9 +37,12 @@ export const STATUS_LABEL: Record<string, string> = {
 
 /** A status in words: the declared label, else the value humanized (`awaiting_payment` → "Awaiting payment"). */
 export function statusLabel(status: string): string {
-    if (STATUS_LABEL[status]) return STATUS_LABEL[status];
-    const words = status.split(/[\s_\-.]+/).filter(Boolean).join(' ').toLowerCase();
-    return words.charAt(0).toUpperCase() + words.slice(1);
+    if (Object.hasOwn(STATUS_LABEL, status)) return STATUS_LABEL[status];
+    // The same rule as seam's humanizeKey (this package does not depend on seam): a trailing `id` is dropped.
+    const words = status.split(/[\s_\-.]+/).filter(Boolean).map((w) => w.toLowerCase());
+    if (words.length > 1 && words[words.length - 1] === 'id') words.pop();
+    const sentence = words.join(' ');
+    return sentence.charAt(0).toUpperCase() + sentence.slice(1);
 }
 
 /** renderEventBadge (PRD §4.2): series Repeat badge, Kind chrome (title), status dot. */

@@ -1,7 +1,7 @@
 import { render } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { EventBadge, LaneHeader } from '../src/index';
-import { Filters } from '../src/chrome';
+import { Filters, statusLabel } from '../src/chrome';
 import { STATUS_TONE } from '../src/chrome';
 
 /**
@@ -68,5 +68,10 @@ describe('status labels', () => {
     it('the event dot carries its status label for a pointer and a screen reader', () => {
         const dot = badge('needs_review').querySelector('[data-status]')!;
         expect(dot.getAttribute('title')).toBe('Needs review');
+    });
+
+    it('never resolves a status to an inherited property', () => {
+        expect(statusLabel('constructor')).toBe('Constructor');
+        expect(statusLabel('awaiting_owner_id')).toBe('Awaiting owner');
     });
 });
