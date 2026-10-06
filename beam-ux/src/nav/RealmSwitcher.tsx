@@ -14,6 +14,8 @@ export type RealmSwitcherProps = {
     workspaces?: ReactNode;
     /** Open on first render (stories, tests). */
     defaultOpen?: boolean;
+    /** The realm the shell is in (useCurrentRealm's), which wins over the payload's `current` (app-walkthrough APP-14). */
+    current?: string | null;
     /** Where the menu opens: below the trigger (a header), or above it (a trigger at the bottom of a rail). */
     side?: 'bottom' | 'top';
     className?: string;
@@ -39,8 +41,10 @@ export function RealmSwitcher({
     workspaces,
     defaultOpen = false,
     side = 'bottom',
+    current,
     className,
 }: RealmSwitcherProps) {
+    const here = current ?? realms.current;
     const [open, setOpen] = useState(defaultOpen);
     const Link = linkComponent ?? PlainLink;
     const appRealms = realms.realms.filter((r) => r.surface === 'app' && !r.locked);
@@ -60,7 +64,7 @@ export function RealmSwitcher({
                             key={realm.key}
                             href={realm.href}
                             className={item}
-                            aria-current={realm.key === realms.current ? 'page' : undefined}
+                            aria-current={realm.key === here ? 'page' : undefined}
                             {...{ 'data-realm-switcher-item': 'realm', role: 'menuitem' }}
                         >
                             {realm.label}

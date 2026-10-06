@@ -79,6 +79,17 @@ describe('RealmSwitcher', () => {
         expect(screen.getByRole('menu').className).toMatch(/\bbottom-full\b/);
     });
 
+    // app-walkthrough APP-14 (APP-5): the switcher follows the realm the shell is in. A shell that navigates without
+    // refetching the payload passes useCurrentRealm's realm; the payload's own `current` is only the fallback.
+    it('marks the realm the shell says it is in, falling back to the payload current', () => {
+        const { container, unmount } = render(<RealmSwitcher realms={realms} label="Ada" signOutHref="/logout" defaultOpen current="operator" />);
+        const marked = () => [...container.querySelectorAll('[aria-current="page"]')].map((el) => el.textContent);
+        expect(marked()).toEqual(['Operator']);
+        unmount();
+        const fallback = render(<RealmSwitcher realms={realms} label="Ada" signOutHref="/logout" defaultOpen />);
+        expect([...fallback.container.querySelectorAll('[aria-current="page"]')].map((el) => el.textContent)).toEqual(['App']);
+    });
+
     it('omits a locked realm and has no View site where no site realm exists', () => {
         const hub: HostRealms = { ...realms, realms: realms.realms.filter((r) => r.surface !== 'site').map((r) => (r.key === 'operator' ? { ...r, locked: true } : r)) };
         const { container } = render(<RealmSwitcher realms={hub} label="Ada" signOutHref="/logout" defaultOpen />);

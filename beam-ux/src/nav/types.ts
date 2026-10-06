@@ -103,6 +103,10 @@ export type HostRealm = {
     surface: 'site' | 'app' | (string & {});
     locked: boolean;
     upsell?: unknown;
+    /** The realm whose manifest this realm reads (app-walkthrough APP-14, M2′); absent from a host on an older payload. */
+    manifest?: string;
+    /** Whether that realm resolves a tenant: the shell shows tenant chrome only where it does (APP-5). */
+    tenantScoped?: boolean;
 };
 
 /** The host IA payload: the realms, the one this request is in, and where "Back" goes (ux-walkthrough M2′). */
