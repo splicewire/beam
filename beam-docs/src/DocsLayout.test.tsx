@@ -141,3 +141,42 @@ describe('configureDocs contributes the guide kit', () => {
         expect(components.Callout).toBe(HostCallout);
     });
 });
+
+/*
+ * docs-walkthrough DOCS-13 (DM5): the header's appearance slot holds the packaged toggle, which drives the ONE appearance
+ * (`.dark` and `color-scheme` on <html>). A host's own `appearance` slot replaces it. The rail reads the --beam-* family,
+ * never the host's dark-rail `--sidebar-*` ink (the invisible rail of shots 23/35).
+ */
+describe('DocsLayout appearance and rail', () => {
+    const docsChrome = {
+        brand: { name: 'Splicewire', logo: null, titleTemplate: null, legalEntity: null, passkeyCopy: '', contact: { sales: null }, home: '/', tagline: null },
+        home: '/docs', back: '/', surfaces: [], related: [],
+    };
+    const withChrome = { ...props, page: { docsChrome } };
+
+    it('toggles the one appearance from the header', () => {
+        localStorage.setItem('appearance', 'light');
+        configureDocs();
+        render(<DocsLayout {...withChrome}><p>Guide</p></DocsLayout>);
+        const toggle = screen.getByRole('button', { name: /appearance/i });
+
+        fireEvent.click(toggle);
+        expect(document.documentElement.classList.contains('dark')).toBe(true);
+        expect(document.documentElement.style.colorScheme).toBe('dark');
+        fireEvent.click(toggle);
+        expect(document.documentElement.classList.contains('dark')).toBe(false);
+    });
+
+    it('yields to a host appearance slot', () => {
+        render(<DocsLayout {...withChrome} slots={{ appearance: <button>Host theme</button> }}><p>Guide</p></DocsLayout>);
+        expect(screen.queryByRole('button', { name: /appearance/i })).toBeNull();
+        expect(screen.getByText('Host theme')).not.toBeNull();
+    });
+
+    it('colours the rail from the --beam-* family', async () => {
+        const { DOCS_LAYOUT_CSS } = await import('./layout-css.js');
+        const rail = DOCS_LAYOUT_CSS.slice(DOCS_LAYOUT_CSS.indexOf('.beam-docs-rail a'));
+        expect(rail).toMatch(/color:\s*var\(--beam-/);
+        expect(DOCS_LAYOUT_CSS).not.toMatch(/var\(--sidebar-/);
+    });
+});

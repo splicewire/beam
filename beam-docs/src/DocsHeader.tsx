@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import type { ChromeProps, ChromeSlots } from '@splicewire/beam-ux/docs';
 import type { DocsChromeData } from './generated/types.js';
 import { docsConfiguration } from './config.js';
+import { AppearanceToggle } from './AppearanceToggle.js';
 import { DocsSearch } from './DocsSearch.js';
 import { ProductSwitcher } from './ProductSwitcher.js';
 
@@ -61,7 +62,7 @@ export function DocsHeader({
             </nav>
             <div className="beam-docs-header-end">
                 {slots?.search ?? (docsConfiguration().searchEndpoint ? <DocsSearch root={chrome.home} /> : null)}
-                {slots?.appearance}
+                {slots?.appearance ?? <AppearanceToggle />}
                 {slots?.headerActions}
                 <ProductSwitcher related={chrome.related} />
                 <a href={chrome.back} className="beam-docs-back" data-docs-back="">

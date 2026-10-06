@@ -113,4 +113,14 @@ export const DOCS_LAYOUT_CSS = `
 .beam-docs-search-results a { display: block; padding: 0.5rem; text-decoration: none; color: inherit; border-radius: var(--beam-radius, 0.5rem); }
 .beam-docs-search-results a small { display: block; opacity: 0.65; }
 .beam-docs-search-results a p { margin: 0.25rem 0 0; opacity: 0.75; }
+
+/* DOCS-13 (DM5): the docs read ONE token family. The rail, header and body take their ink from --beam-* (which flips
+   under .dark), never a host's dark-rail --sidebar-* ink, which drew the invisible rail of shots 23/35. */
+.beam-docs { color: var(--beam-fg, var(--beam-ink)); background: var(--beam-paper); }
+/* --beam-ink-70, not --beam-ink-muted: 5.87:1 on --beam-paper in light and 7.69:1 in dark (ink-muted is 3.19 in light),
+   so rail links clear DOC-8's 4.5:1 in both schemes; no host hook sits in front of it. */
+.beam-docs-rail a { color: var(--beam-ink-70); }
+.beam-docs-rail a:hover { color: var(--beam-fg, var(--beam-ink)); }
+.beam-docs-rail a[aria-current='page'], .beam-docs-rail a[data-active='true'] { color: var(--beam-fg, var(--beam-ink)); font-weight: 600; }
+.beam-docs-appearance { background: none; border: 1px solid var(--beam-border, var(--beam-line)); border-radius: var(--beam-radius, 0.5rem); color: inherit; font: inherit; padding: 0.25rem 0.5rem; cursor: pointer; }
 `;

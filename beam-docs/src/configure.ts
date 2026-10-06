@@ -1,6 +1,7 @@
 import {
     configureEntryPage, entryPageConfig, registerLayout, resolveLayout, type ChromeComponent,
 } from '@splicewire/beam-ux/docs';
+import { initializeTheme } from '@splicewire/beam-ux/appearance';
 import {
     Callout, Card, CardGrid, DoctorOutput, Figure, FileTree, SectionLanding, Step, Steps, Terminal,
 } from '@splicewire/beam-mdx/kit';
@@ -23,6 +24,9 @@ export type DocsConfig = {
 
 /** Call after host entry-page configuration. Explicit invocation survives tree shaking. */
 export function configureDocs(options: DocsConfig = {}): void {
+    // The ONE appearance (DM5): applied at boot from the stored choice, so a host with no controller of its own (the
+    // flagship's docs bundle) follows it too. Idempotent with a host that also initializes it (beam-inertia).
+    initializeTheme();
     setDocsConfiguration({
         registryLinkEndpoint: options.registryLinkEndpoint === undefined
             ? '/beam/docs/registry-link' : options.registryLinkEndpoint,
