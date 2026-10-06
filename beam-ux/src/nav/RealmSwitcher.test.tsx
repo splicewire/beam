@@ -32,6 +32,11 @@ const reactRouter: LinkComponent = ({ href, className, children, ...rest }) => (
         {children}
     </NavLink>
 );
+const markedClientRouter: LinkComponent = ({ href, className, children, ...rest }) => (
+    <a href={href} className={className} data-client-router="" {...rest}>
+        {children}
+    </a>
+);
 
 function structure(container: HTMLElement) {
     return [...container.querySelectorAll('[data-realm-switcher-item]')].map((el) => ({
@@ -107,6 +112,19 @@ describe('RealmSwitcher', () => {
         );
         expect(structure(b.container)).toEqual(viaInertia);
         expect(viaInertia).toHaveLength(5);
+    });
+
+    it('keeps Sign out as a document navigation instead of handing it to the injected client router', () => {
+        const { container } = render(
+            <RealmSwitcher realms={realms} label="Ada" signOutHref="/logout" defaultOpen linkComponent={markedClientRouter} />,
+        );
+        const realm = container.querySelector('[data-realm-switcher-item="realm"]');
+        const signOut = container.querySelector('[data-realm-switcher-item="sign-out"]');
+
+        expect(realm?.hasAttribute('data-client-router')).toBe(true);
+        expect(signOut?.hasAttribute('data-client-router')).toBe(false);
+        expect(signOut?.tagName).toBe('A');
+        expect(signOut?.getAttribute('href')).toBe('/logout');
     });
 });
 

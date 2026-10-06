@@ -6,7 +6,7 @@ export type RealmSwitcherProps = {
     realms: HostRealms;
     /** The trigger's text: the signed-in principal's name. */
     label: ReactNode;
-    /** Where "Sign out" goes: a GET page that confirms and POSTs (ux-walkthrough IA-5). */
+    /** Where "Sign out" goes: a full-page GET that confirms and POSTs (ux-walkthrough IA-5). */
     signOutHref: string;
     /** The host's router link (Inertia `Link`, react-router `NavLink`); defaults to a plain `<a>`. */
     linkComponent?: LinkComponent;
@@ -75,9 +75,9 @@ export function RealmSwitcher({
                             View site
                         </Link>
                     )}
-                    <Link href={signOutHref} className={item} {...{ 'data-realm-switcher-item': 'sign-out', role: 'menuitem' }}>
+                    <a href={signOutHref} className={item} {...{ 'data-realm-switcher-item': 'sign-out', role: 'menuitem' }}>
                         Sign out
-                    </Link>
+                    </a>
                 </div>
             )}
         </div>
