@@ -78,7 +78,7 @@ it('pads the footer by the dock clearance, so the Edit dock never covers a foote
     props.value = { auth: { user: null }, nav: { items: [] } };
     render(<SiteLayout>page</SiteLayout>);
 
-    expect(String(footer.style?.padding ?? '')).toContain('var(--beam-dock-clearance, 0px)');
+    expect(String(footer.style?.padding ?? '')).toContain('var(--beam-page-dock-clearance, 0px)');
 });
 
 /**

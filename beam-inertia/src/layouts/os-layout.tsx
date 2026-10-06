@@ -14,7 +14,7 @@ const OS_ENTER_KEY = 'os.enter';
 
 /**
  * The room the dock takes at the viewport's foot: its orb sits 16px from the bottom and is about 38px tall, plus a gap.
- * Published as `--beam-dock-clearance` while the dock is mounted, so the site footer can pad its links clear of it
+ * Published as `--beam-page-dock-clearance` while the dock is mounted, so the site footer can pad its links clear of it
  * (UX-12a follow-up 2: the orb covered the footer's last link).
  */
 const DOCK_CLEARANCE = '72px';
@@ -31,9 +31,9 @@ export default function OsLayout({ children }: { children: ReactNode }) {
     useEffect(() => {
         if (!entitled) return;
         const root = document.documentElement.style;
-        root.setProperty('--beam-dock-clearance', DOCK_CLEARANCE);
+        root.setProperty('--beam-page-dock-clearance', DOCK_CLEARANCE);
         return () => {
-            root.removeProperty('--beam-dock-clearance');
+            root.removeProperty('--beam-page-dock-clearance');
         };
     }, [entitled]);
 

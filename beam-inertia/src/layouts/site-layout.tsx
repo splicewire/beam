@@ -304,7 +304,7 @@ export default function SiteLayout({ children }: { children: ReactNode }) {
                 gap: 16,
                 marginTop: 48,
                 // The bottom pads by the Edit dock's clearance where OsLayout mounts it, so no footer link sits under it.
-                padding: '28px clamp(18px,5vw,56px) calc(28px + var(--beam-dock-clearance, 0px))',
+                padding: '28px clamp(18px,5vw,56px) calc(28px + var(--beam-page-dock-clearance, 0px))',
                 borderTop: '1px solid var(--st-border)',
                 color: 'var(--st-dim)',
                 fontSize: 13,

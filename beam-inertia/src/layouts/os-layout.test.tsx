@@ -35,7 +35,7 @@ describe('OsLayout', () => {
     // UX-12a follow-up 2: the dock floats over the bottom-right corner, so while it is mounted the layout publishes
     // the room it takes; the site footer pads by it. No dock, no clearance.
     it('publishes the dock clearance only while the dock is mounted', () => {
-        const clearance = () => document.documentElement.style.getPropertyValue('--beam-dock-clearance');
+        const clearance = () => document.documentElement.style.getPropertyValue('--beam-page-dock-clearance');
         page.component = 'site/home';
         const { unmount } = render(<OsLayout><p>page</p></OsLayout>);
         expect(clearance()).not.toBe('');
