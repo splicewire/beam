@@ -321,9 +321,15 @@ export function RealmNav({
                               <div data-zone-label className={classNames?.zoneLabel ?? DEFAULTS.zoneLabel}>
                                   {zone.title}
                               </div>
-                              {/* The zone title stands for its seats (integrator 07:45Z): no seat label under it. */}
-                              {toGroups(zone.children ?? [], 'section-groups').map((group, i) => (
+                              {/* One seat: the zone title stands for it, so no seat label under it (integrator 07:45Z).
+                                  Two or more: each keeps its label, or their rows would run together (review-r1). */}
+                              {toGroups(zone.children ?? [], 'section-groups').map((group, i, seats) => (
                                   <div key={group.label ?? `seat-${i}`} className={classNames?.group ?? DEFAULTS.group}>
+                                      {seats.length > 1 && group.label ? (
+                                          <div className={classNames?.groupLabel ?? DEFAULTS.groupLabel}>
+                                              {group.label}
+                                          </div>
+                                      ) : null}
                                       {group.items.map((node) => (
                                           <RailItem
                                               key={node.routeName ?? node.href ?? node.title}

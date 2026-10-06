@@ -433,6 +433,28 @@ describe('RealmNav — the Developer zone (zone: meta)', () => {
         }
     });
 
+    it('keeps each seat label when the zone holds two or more seats, so their rows stay apart', () => {
+        const twoSeats: RealmNavNode = {
+            ...developer,
+            children: [
+                ...(developer.children ?? []),
+                {
+                    kind: 'nav/invocable-item',
+                    title: 'Agents',
+                    href: '/agents',
+                    routeName: 'agents.section',
+                    children: [node({ title: 'Catalog', href: '/catalog' })],
+                },
+            ],
+        };
+        const { container } = render(<RealmNav items={[items[0], twoSeats]} variant="section-groups" />);
+
+        const zone = container.querySelector('[data-zone="meta"]')!;
+        const labels = [...zone.querySelectorAll('div')].filter((el) => ['Ops', 'Agents'].includes(el.textContent ?? '') && !el.hasAttribute('data-zone-label'));
+        expect(labels.map((el) => el.textContent)).toEqual(['Ops', 'Agents']);
+        expect(zone.querySelector('[data-zone-label]')!.className).not.toBe(labels[0].className);
+    });
+
     it('lets a host restyle the zone label like any other class slot', () => {
         const { container } = render(<RealmNav items={items} variant="section-groups" classNames={{ zoneLabel: 'host-zone' }} />);
 
