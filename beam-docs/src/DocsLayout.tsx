@@ -1,7 +1,10 @@
 import { OnThisPage } from '@schemastud/nav';
+import { useEffect, useState } from 'react';
 import { RealmNav, type RealmNavNode } from '@splicewire/beam-ux/nav';
 import { DOCS_LAYOUT_CSS } from './layout-css.js';
 import type { ChromeProps } from '@splicewire/beam-ux/docs';
+import { DocsHeader } from './DocsHeader.js';
+import type { DocsChromeData } from './generated/types.js';
 
 /**
  * `DocsLayout` — the docs chrome, out of the box: header slot · breadcrumb slot · rail · main ·
@@ -48,7 +51,7 @@ const DEFAULTS = {
     aside: 'beam-docs-aside',
 } as const;
 
-export function DocsLayout({ nav, linkComponent, currentHref, slots, classNames, children }: ChromeProps) {
+export function DocsLayout({ nav, linkComponent, currentHref, slots, classNames, page, children }: ChromeProps) {
     // The rail renders the DOCS subtree, not the whole realm: the projection is the realm's entire
     // tree (one payload serving both the site header nav and this rail, ADR-0210 §5), so a rail fed
     // the raw root would list the marketing pages beside the guides. The docs root is the node whose
@@ -56,10 +59,41 @@ export function DocsLayout({ nav, linkComponent, currentHref, slots, classNames,
     // whole point of ADR-0209 §9 is that re-rooting `/docs` is one row's edit and nothing else's.
     const items = railItemsFor(nav?.items ?? [], currentHref);
 
+    // DOCS-12 (DM4): a page the server sends `docsChrome` for draws the PACKAGED header, and a host's `slots.header`
+    // leaves the docs path. An older server sends none, and the host header still renders, so a host is unchanged
+    // until its server carries the chrome.
+    const docsChrome = (page?.docsChrome ?? null) as DocsChromeData | null;
+    const [drawerOpen, setDrawerOpen] = useState(false);
+
+    // The rail drawer (under 60rem) closes on Escape and on navigation.
+    useEffect(() => setDrawerOpen(false), [currentHref]);
+    useEffect(() => {
+        if (!drawerOpen) return;
+        const onKey = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') setDrawerOpen(false);
+        };
+        document.addEventListener('keydown', onKey);
+        return () => document.removeEventListener('keydown', onKey);
+    }, [drawerOpen]);
+
     return (
-        <div className={[DEFAULTS.root, classNames?.root].filter(Boolean).join(' ')}>
+        <div
+            className={[DEFAULTS.root, classNames?.root].filter(Boolean).join(' ')}
+            {...(drawerOpen ? { 'data-drawer-open': '' } : {})}
+        >
             <style>{DOCS_LAYOUT_CSS}</style>
-            {slots?.header}
+            {docsChrome ? (
+                <DocsHeader
+                    chrome={docsChrome}
+                    currentHref={currentHref}
+                    slots={slots}
+                    linkComponent={linkComponent}
+                    drawerOpen={drawerOpen}
+                    onToggleDrawer={() => setDrawerOpen((v) => !v)}
+                />
+            ) : (
+                slots?.header
+            )}
 
             <div className={[DEFAULTS.body, classNames?.body].filter(Boolean).join(' ')}>
                 <aside className={[DEFAULTS.rail, classNames?.rail].filter(Boolean).join(' ')} aria-label="Docs sections">

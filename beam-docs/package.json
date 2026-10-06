@@ -33,6 +33,7 @@
         "@schemastud/nav": "*",
         "@schemastud/seam": "*",
         "@rjsf/utils": ">=6",
+        "@splicewire/beam-mdx": "*",
         "@splicewire/beam-ux": ">=0.3.0",
         "react": ">=18"
     },

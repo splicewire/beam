@@ -33,4 +33,56 @@ export const DOCS_LAYOUT_CSS = `
 }
 .beam-docs:has(.beam-tpl-spread) .beam-docs-rail,
 .beam-docs:has(.beam-tpl-spread) .beam-docs-aside { display: none; }
+
+/* The packaged header (DOCS-12, DM4). Structure only; colours come from the defined --beam-* tokens or the host hooks,
+   so DOCS-13's theme values reach it without a second rule. It wraps rather than scrolls at 390px (DOC-8). */
+.beam-docs-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--beam-docs-header-gap, 0.75rem 1.5rem);
+  padding: var(--beam-docs-header-pad, 0.75rem var(--beam-gutter, 1.5rem));
+  border-bottom: 1px solid var(--beam-border, var(--beam-line));
+}
+.beam-docs-brand { display: inline-flex; align-items: center; gap: 0.5rem; font-weight: 600; text-decoration: none; color: inherit; }
+.beam-docs-brand img { height: 1.375rem; width: auto; }
+.beam-docs-surfaces { display: flex; flex-wrap: wrap; gap: 1rem; }
+.beam-docs-surfaces a { text-decoration: none; color: inherit; opacity: 0.75; }
+.beam-docs-surfaces a[aria-current='page'] { opacity: 1; font-weight: 600; }
+.beam-docs-header-end { margin-left: auto; display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem; }
+.beam-docs-back { text-decoration: none; color: inherit; opacity: 0.75; white-space: nowrap; }
+.beam-docs-drawer-toggle { display: none; background: none; border: 0; color: inherit; font: inherit; cursor: pointer; }
+
+/* The product switcher (DOC-16): a panel under its trigger, above the page. */
+.beam-docs-switcher { position: relative; }
+.beam-docs-switcher > button { background: none; border: 1px solid var(--beam-border, var(--beam-line)); border-radius: var(--beam-radius, 0.5rem); color: inherit; font: inherit; padding: 0.25rem 0.75rem; cursor: pointer; }
+.beam-docs-switcher-panel {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 0.5rem);
+  z-index: 30;
+  width: min(18rem, calc(100vw - 2rem));
+  padding: 0.75rem;
+  border: 1px solid var(--beam-border, var(--beam-line));
+  border-radius: var(--beam-radius, 0.5rem);
+  background: var(--beam-paper-raised, Canvas);
+}
+.beam-docs-switcher-item { display: flex; flex-direction: column; gap: 0.25rem; }
+.beam-docs-switcher-item p { margin: 0; opacity: 0.75; }
+
+/* Under 60rem the rail is a drawer the header's menu button opens (DOC-8), not a vanished column. */
+@media (max-width: 60rem) {
+  .beam-docs-drawer-toggle { display: inline-flex; }
+  .beam-docs[data-drawer-open] .beam-docs-rail {
+    display: block;
+    position: fixed;
+    inset: 0 auto 0 0;
+    z-index: 40;
+    width: min(20rem, 85vw);
+    overflow-y: auto;
+    padding: 1rem;
+    background: var(--beam-paper, Canvas);
+    border-right: 1px solid var(--beam-border, var(--beam-line));
+  }
+}
 `;

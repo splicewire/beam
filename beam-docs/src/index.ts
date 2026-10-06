@@ -2,6 +2,8 @@ export {
     ApiReference, SCALAR_CDN_URL, type ApiReferenceFactory, type ApiReferenceProps,
 } from './ApiReference.js';
 export { DocsLayout } from './DocsLayout.js';
+export { DocsHeader } from './DocsHeader.js';
+export { ProductSwitcher } from './ProductSwitcher.js';
 export { DOCS_LAYOUT_CSS } from './layout-css.js';
 export { configureDocs, type DocsConfig } from './configure.js';
 export { DocsPublishingPanel, type DocsPublishingPanelProps } from './DocsPublishingPanel.js';
