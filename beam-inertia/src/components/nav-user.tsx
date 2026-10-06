@@ -20,6 +20,8 @@ export function NavUser() {
             label={<UserInfo user={auth.user} />}
             signOutHref="/logout"
             linkComponent={InertiaRailLink}
+            // The user menu sits at the foot of the sidebar, so it opens upward.
+            side="top"
         />
     );
 }
