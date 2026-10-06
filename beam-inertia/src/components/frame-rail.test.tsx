@@ -84,7 +84,10 @@ it('draws the meta zone as a Developer zone whose seats keep their rows', () => 
 
     const zone = container.querySelector('[data-zone="meta"]');
     expect(zone).not.toBeNull();
-    expect(zone!.textContent).toContain('Ops');
+    // One seat: the zone title stands for it, so its 'Ops' label is not drawn (integrator 07:45Z; RealmNav keeps the label
+    // only when the zone holds two or more seats, pinned in beam-ux's RealmNav.test).
+    expect(zone!.querySelector('[data-zone-label]')!.textContent).toBe('Developer');
+    expect(zone!.textContent).not.toContain('Ops');
     for (const title of ['Files', 'Git repos']) {
         expect(zone!.contains(screen.getByRole('link', { name: title }))).toBe(true);
     }
