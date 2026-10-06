@@ -14,7 +14,14 @@ type Tab = 'browse' | 'installed' | 'market';
  * `Installed` (the package-manager-style list). This is the ONE exported top-level component a
  * host wires up; everything else in this package is composed underneath it.
  */
-export function ExtensionsArea({ className }: { className?: string }) {
+export function ExtensionsArea({
+  className,
+  plays,
+}: {
+  className?: string;
+  /** The sides the host plays (APP-11); forwarded to the catalog's host-true banner gate. */
+  plays?: readonly string[];
+}) {
     const [tab, setTab] = useState<Tab>('browse');
     const [selectedListingId, setSelectedListingId] = useState<number | null>(null);
     const { client } = useExtensionsServices();
@@ -43,7 +50,7 @@ export function ExtensionsArea({ className }: { className?: string }) {
                 )}
             </div>
 
-            {activeTab === 'browse' && <ExtensionsCatalog onSelect={setSelectedListingId} />}
+            {activeTab === 'browse' && <ExtensionsCatalog onSelect={setSelectedListingId} plays={plays} />}
             {activeTab === 'installed' && <InstalledTab />}
             {activeTab === 'market' && <MarketConnectionPanel />}
 
