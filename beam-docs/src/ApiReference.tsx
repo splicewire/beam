@@ -20,9 +20,10 @@
 // ── Theme ────────────────────────────────────────────────────────────────────────────────────────
 // The package ships no palette and no fonts. The incumbent's brand block (Space Grotesk / IBM Plex
 // Mono, the two accent colors) is HOST-LOCAL and arrives through `customCss` — a theme prop. What IS
-// baked in is the curation, not a look: `.scalar-mcp-layer { display: none }`, because a beam site's
-// MCP surface has its OWN docs page (the `<ManifestTable>` one) and Scalar's auto "Generate MCP"
-// affordance would compete with it. `hideMcpLayer={false}` opts out.
+// baked in is the curation, not a look: Scalar's vendor badge is removed, and
+// `.scalar-mcp-layer { display: none }` because a beam site's MCP surface has its OWN docs page (the
+// `<ManifestTable>` one) and Scalar's auto "Generate MCP" affordance would compete with it.
+// `hideMcpLayer={false}` opts out of the MCP curation only.
 import { useAppearance } from '@splicewire/beam-ux/appearance';
 import { useEffect, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
@@ -86,6 +87,10 @@ export const BEAM_SCALAR_CSS = `.scalar-app {
 
 /** Curation, not palette: our MCP server has its own docs page, so hide Scalar's MCP affordance. */
 const HIDE_MCP_LAYER_CSS = '.scalar-mcp-layer { display: none !important; }';
+
+/** Third-party vendor chrome is not part of a host's documentation navigation. */
+const HIDE_SCALAR_VENDOR_CHROME_CSS =
+    '.scalar-app aside a[href="https://www.scalar.com"] { display: none !important; }';
 
 /** In-flight/loaded script loads, deduped by URL so N references on a page fetch once. */
 const scriptLoads = new Map<string, Promise<void>>();
@@ -194,7 +199,7 @@ export function ApiReference({
         const element = mount.current;
         if (!element) return;
 
-        const css = [BEAM_SCALAR_CSS, hideMcpLayer ? HIDE_MCP_LAYER_CSS : null, customCss]
+        const css = [BEAM_SCALAR_CSS, HIDE_SCALAR_VENDOR_CHROME_CSS, hideMcpLayer ? HIDE_MCP_LAYER_CSS : null, customCss]
             .filter(Boolean)
             .join('\n');
 

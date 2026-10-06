@@ -42,6 +42,14 @@ describe('ApiReference', () => {
         expect(css.indexOf('scalar-mcp-layer')).toBeLessThan(css.indexOf('Space Grotesk'));
     });
 
+    it('removes Scalar vendor chrome from the hosted reference', () => {
+        const createApiReference = vi.fn();
+        render(<ApiReference specUrl="/beam/openapi.json" createApiReference={createApiReference} />);
+
+        const css = String((createApiReference.mock.calls[0][1] as Record<string, unknown>).customCss);
+        expect(css).toContain('.scalar-app aside a[href="https://www.scalar.com"] { display: none !important; }');
+    });
+
     it('omits the curation when the host opts out, and keeps the packaged --beam-* palette', () => {
         const createApiReference = vi.fn();
         render(
