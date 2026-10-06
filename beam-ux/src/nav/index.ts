@@ -13,10 +13,14 @@
  */
 
 export { RealmNav, type RealmNavProps } from './RealmNav.js';
+export { RealmSwitcher, type RealmSwitcherProps } from './RealmSwitcher.js';
+export { useCurrentRealm } from './useCurrentRealm.js';
 export { REALM_NAV_CSS, SIDEBAR_ACTIVE_FG } from './css.js';
 export type {
     RealmNavNode,
     RealmNavVariant,
     RealmNavClassNames,
     LinkComponent,
+    HostRealm,
+    HostRealms,
 } from './types.js';

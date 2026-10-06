@@ -86,3 +86,25 @@ export type RealmNavClassNames = {
     /** A nav item's title span. */
     itemLabel?: string;
 };
+
+/**
+ * One realm a principal may cross to, as the host's `HostRealmsData` (laravel-beam `src/Ia`) serves it. `surface` is
+ * `site` for the public site and `app` for every signed-in realm; `locked` marks one the principal sees but may not
+ * enter yet.
+ */
+export type HostRealm = {
+    key: string;
+    label: string;
+    href: string;
+    surface: 'site' | 'app' | (string & {});
+    locked: boolean;
+    upsell?: unknown;
+};
+
+/** The host IA payload: the realms, the one this request is in, and where "Back" goes (ux-walkthrough M2′). */
+export type HostRealms = {
+    realms: HostRealm[];
+    current: string | null;
+    back: { label: string; href: string } | null;
+    plays?: string[];
+};
