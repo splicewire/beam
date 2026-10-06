@@ -50,7 +50,7 @@ export function RegionEditorBody({
                         onSave={onSave}
                         onDiscard={onDiscard}
                         saving={saving}
-                        hint="REAL @schemastud/seam SchemaForm → EditShell on ship"
+                        // A real @schemastud/seam SchemaForm; graduates to EditShell (APP-10: author chrome stays out of copy).
                     />
                 </>
             );
@@ -62,7 +62,7 @@ export function RegionEditorBody({
                         onSave={onSave}
                         onDiscard={onDiscard}
                         saving={saving}
-                        hint="MDX source · content + preserved frontmatter"
+                        // MDX source: content plus preserved frontmatter (APP-10).
                     />
                 </>
             );
@@ -78,12 +78,10 @@ function EditorActions({
     onSave,
     onDiscard,
     saving,
-    hint,
 }: {
     onSave: () => void;
     onDiscard?: () => void;
     saving?: boolean;
-    hint: string;
 }) {
     return (
         <div className="mt-4 flex items-center gap-2 border-t pt-4">
@@ -93,7 +91,6 @@ function EditorActions({
             <Button size="sm" variant="ghost" onClick={onDiscard} disabled={saving || !onDiscard}>
                 Discard
             </Button>
-            <span className="ml-auto font-mono text-[10px] text-muted-foreground">{hint}</span>
         </div>
     );
 }
