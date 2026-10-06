@@ -67,6 +67,18 @@ describe('RealmSwitcher', () => {
         expect(screen.getByRole('menu').className).toMatch(/\bbg-popover\b.*\btext-popover-foreground\b|\btext-popover-foreground\b.*\bbg-popover\b/);
     });
 
+    // The menu floats over the page instead of pushing it: opened in a site header it grew the header (UX-12a starter
+    // retake). It drops below the trigger by default and opens above it for a shell whose trigger sits at the bottom.
+    it('floats the open menu, below the trigger by default and above it on side="top"', () => {
+        const { container, unmount } = render(<RealmSwitcher realms={realms} label="Ada" signOutHref="/logout" defaultOpen />);
+        expect(container.querySelector('[data-realm-switcher]')?.className).toMatch(/\brelative\b/);
+        expect(screen.getByRole('menu').className).toMatch(/\babsolute\b/);
+        expect(screen.getByRole('menu').className).toMatch(/\btop-full\b/);
+        unmount();
+        render(<RealmSwitcher realms={realms} label="Ada" signOutHref="/logout" defaultOpen side="top" />);
+        expect(screen.getByRole('menu').className).toMatch(/\bbottom-full\b/);
+    });
+
     it('omits a locked realm and has no View site where no site realm exists', () => {
         const hub: HostRealms = { ...realms, realms: realms.realms.filter((r) => r.surface !== 'site').map((r) => (r.key === 'operator' ? { ...r, locked: true } : r)) };
         const { container } = render(<RealmSwitcher realms={hub} label="Ada" signOutHref="/logout" defaultOpen />);

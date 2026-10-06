@@ -14,6 +14,8 @@ export type RealmSwitcherProps = {
     workspaces?: ReactNode;
     /** Open on first render (stories, tests). */
     defaultOpen?: boolean;
+    /** Where the menu opens: below the trigger (a header), or above it (a trigger at the bottom of a rail). */
+    side?: 'bottom' | 'top';
     className?: string;
 };
 
@@ -36,6 +38,7 @@ export function RealmSwitcher({
     linkComponent,
     workspaces,
     defaultOpen = false,
+    side = 'bottom',
     className,
 }: RealmSwitcherProps) {
     const [open, setOpen] = useState(defaultOpen);
@@ -45,12 +48,12 @@ export function RealmSwitcher({
     const item = 'block rounded px-2 py-1.5 text-sm hover:bg-accent';
 
     return (
-        <div className={className} data-realm-switcher="">
+        <div className={['relative', className].filter(Boolean).join(' ')} data-realm-switcher="">
             <button type="button" aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen((v) => !v)}>
                 {label}
             </button>
             {open && (
-                <div role="menu" className="mt-1 min-w-48 rounded-md border bg-popover p-1 text-popover-foreground shadow-md">
+                <div role="menu" className={`absolute right-0 z-50 min-w-48 rounded-md border bg-popover p-1 text-popover-foreground shadow-md ${side === 'top' ? 'bottom-full mb-1' : 'top-full mt-1'}`}>
                     {workspaces}
                     {appRealms.map((realm) => (
                         <Link
