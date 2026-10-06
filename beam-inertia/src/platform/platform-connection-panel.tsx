@@ -34,7 +34,7 @@ import type {
  * - **denied** — someone said no at the tower. Retry is the move; the satellite is fine.
  * - **expired** — nobody answered in time. Retry is also the move, but nothing was refused, and
  *   saying "denied" here would send an operator to ask a colleague why they rejected it.
- * - **revoked** — a credential that DID work has been archived at the tower. The satellite still
+ * - **revoked** — a credential that DID work has been revoked at the tower. The satellite still
  *   holds it and it still looks valid; only a spent request discovered the refusal. Re-pairing is
  *   the move, and "unpaired" would hide that a stale credential is still sitting in `.env`.
  *
@@ -83,7 +83,7 @@ const STATE_COPY: Record<PlatformConnectionState, { label: string; tone: string;
     revoked: {
         label: 'Revoked',
         tone: 'bg-red-100 text-red-900 dark:bg-red-950 dark:text-red-200',
-        blurb: 'The platform has refused this site’s credential — it was archived at the tower. The stale credential is still stored here; pair again to restore the connection.',
+        blurb: 'The platform has refused this site’s credential — it was revoked at the tower. The stale credential is still stored here; pair again to restore the connection.',
     },
 };
 
@@ -198,7 +198,7 @@ export function PlatformConnectionPanel({
 
     return (
         <div className="mx-auto max-w-3xl px-6 py-10" data-testid="platform-connection">
-            <h1 className="font-serif text-3xl font-semibold">Splicewire connection</h1>
+            <h1 className="text-3xl font-semibold">Splicewire connection</h1>
             <p className="mt-1 text-sm text-muted-foreground">
                 How this site pairs with Splicewire, and whether the connection works.
             </p>
@@ -314,7 +314,7 @@ export function PlatformConnectionPanel({
                     </h2>
                     <p className="mt-1 text-sm text-muted-foreground">
                         The tower names the credential it issues after this label, so make it
-                        something you will recognise when you come to archive it.
+                        something you will recognise when you come to revoke it.
                     </p>
                     <div className="mt-3 flex flex-wrap items-end gap-3">
                         <div className="grow">
@@ -381,7 +381,7 @@ export function PlatformConnectionPanel({
                     */}
                     <p className="mt-1 text-sm text-muted-foreground">
                         Clears the credential stored on this site. It does{' '}
-                        <strong>not</strong> revoke the credential at the tower — archive it there
+                        <strong>not</strong> revoke the credential at the tower — revoke it there
                         too, or anyone holding a copy can still use it.
                     </p>
                     <Button
