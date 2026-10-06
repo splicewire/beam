@@ -49,7 +49,12 @@ export function beamInertiaOptions(config: BeamInertiaConfig = {}) {
   // The brand comes from the host's shared `brand` prop (ux-walkthrough M8, IA-14), read off the first page the server
   // rendered. The package names no brand of its own: a host that sets neither shows the bare page title.
   const initialBrand = (): Pick<Brand, "name" | "titleTemplate"> => {
-    const page = typeof document !== "undefined" ? document.getElementById("app")?.dataset.page : undefined;
+    // Inertia serialises the first page into `<script data-page="app" type="application/json">`; older releases put it
+    // on `#app[data-page]`. Read either (UX-03b: reading only the attribute found nothing, so titles lost the brand).
+    const page =
+      typeof document !== "undefined"
+        ? (document.querySelector('script[data-page="app"]')?.textContent ?? document.getElementById("app")?.dataset.page)
+        : undefined;
     try {
       const shared = page ? (JSON.parse(page).props as { brand?: Brand; name?: string }) : {};
       return shared.brand ?? { name: config.name ?? shared.name ?? "", titleTemplate: null };
