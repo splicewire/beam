@@ -10,6 +10,8 @@ const props = vi.hoisted(() => ({ value: {} as Record<string, unknown> }));
 vi.mock('@inertiajs/react', () => ({ usePage: () => ({ props: props.value }) }));
 
 import AppLogo from './components/app-logo';
+import AppLogoIcon from './components/app-logo-icon';
+import { configureBeamInertia } from './config';
 import { brandTitle } from './hooks/use-brand';
 
 afterEach(cleanup);
@@ -34,4 +36,29 @@ it('falls back to the shared app name when a host does not share a brand yet', (
     const { container } = render(<AppLogo />);
 
     expect(container.textContent).toContain('Acme');
+});
+
+const brand = (name: string, logo: string | null = null) => ({ name, logo, titleTemplate: null, legalEntity: null, passkeyCopy: '' });
+
+/**
+ * UX-03b (integrator 07:45Z): every starter shell showed the Laravel starter kit's logo, because each host passed that
+ * SVG as `logo` and the icon rendered whatever the host passed. The mark is the BRAND's: its `logo` URL when the host
+ * declares one, else a neutral monogram of its name. A host-passed component is the explicit override.
+ */
+it('draws the brand logo URL as the mark when the brand declares one', () => {
+    configureBeamInertia({});
+    props.value = { brand: brand('Acme', '/brand/acme.svg') };
+    const { container } = render(<AppLogoIcon />);
+
+    expect(container.querySelector('img')?.getAttribute('src')).toBe('/brand/acme.svg');
+    expect(container.querySelector('img')?.getAttribute('alt')).toBe('Acme');
+});
+
+it('draws a neutral monogram of the brand name when no logo is declared', () => {
+    configureBeamInertia({});
+    props.value = { brand: brand('Splicewire') };
+    const { container } = render(<AppLogoIcon />);
+
+    expect(container.textContent).toBe('S');
+    expect(container.querySelector('path')).toBeNull();
 });
