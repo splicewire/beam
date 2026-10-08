@@ -12,6 +12,7 @@ export type { BeamUxEntryBodyData } from '@splicewire/beam-resources/types/beam-
 // data layer that rides on top of it.
 export { UxBuilderProvider, useUxBuilderServices, useNotify } from './provider';
 export { useEntryBody, useSaveEntryBody } from './hooks';
+export { useCan } from './useCan';
 export type {
     EntryPublicationState,
     EntryVersion,
