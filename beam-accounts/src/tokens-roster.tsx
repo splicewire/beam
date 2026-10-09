@@ -135,10 +135,15 @@ function fmtDate(value: string | null): string {
 
 /** The row's subtitle: when the token stops working. (Last used, created and scope have their own
  *  columns; the subtitle used to print `PersonalAccessToken#<id>`, a server class name.) */
-export function expiryLabel(token: Pick<ApiTokenData, "expires_at">, now: number = Date.now()): string {
+export function expiryLabel(
+  token: Pick<ApiTokenData, "expires_at">,
+  now: number = Date.now()
+): string {
   if (!token.expires_at) return "Never expires";
   const at = new Date(token.expires_at);
-  return `${at.getTime() < now ? "Expired" : "Expires"} ${at.toLocaleDateString()}`;
+  return `${
+    at.getTime() < now ? "Expired" : "Expires"
+  } ${at.toLocaleDateString()}`;
 }
 
 function fmtRelative(value: string | null): string {
@@ -168,7 +173,7 @@ function groupPermissions(names: string[]): PermissionGroup[] {
   }
   return [...byResource.entries()]
     .sort(([a], [b]) =>
-      a === "general" ? 1 : b === "general" ? -1 : a.localeCompare(b),
+      a === "general" ? 1 : b === "general" ? -1 : a.localeCompare(b)
     )
     .map(([resource, permissions]) => ({
       resource,
@@ -227,7 +232,7 @@ function ScopePicker({
     onChange(
       selected.includes(name)
         ? selected.filter((n) => n !== name)
-        : [...selected, name],
+        : [...selected, name]
     );
   }
 
@@ -269,7 +274,7 @@ function ScopePicker({
         )}
         {groups.map((group) => {
           const perms = group.permissions.filter(
-            (p) => !q || p.toLowerCase().includes(q),
+            (p) => !q || p.toLowerCase().includes(q)
           );
           if (perms.length === 0) return null;
           const allOn = perms.every((p) => selected.includes(p));
@@ -285,7 +290,7 @@ function ScopePicker({
                     onChange(
                       allOn
                         ? selected.filter((p) => !perms.includes(p))
-                        : [...new Set([...selected, ...perms])],
+                        : [...new Set([...selected, ...perms])]
                     )
                   }
                   className="text-[10.5px] text-primary hover:underline"
@@ -305,7 +310,7 @@ function ScopePicker({
                         "inline-flex items-center gap-1 rounded-md border px-2 py-0.5 font-mono text-[11px] transition-colors",
                         on
                           ? "border-primary/50 bg-primary/10 text-foreground"
-                          : "border-border text-muted-foreground hover:bg-muted",
+                          : "border-border text-muted-foreground hover:bg-muted"
                       )}
                     >
                       {on && <Check className="size-3 text-primary" />}
@@ -519,9 +524,7 @@ function FacetBar({
 }) {
   return (
     <div className="flex flex-wrap items-center gap-1.5">
-      <span className="mr-1 text-[12px] text-muted-foreground">
-        Type
-      </span>
+      <span className="mr-1 text-[12px] text-muted-foreground">Type</span>
       {FACETS.map((f) => {
         const on = active.has(f);
         return (
@@ -534,7 +537,7 @@ function FacetBar({
               "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[12px] transition-colors",
               on
                 ? "border-primary/40 bg-primary/10 text-foreground"
-                : "border-border text-muted-foreground hover:bg-muted",
+                : "border-border text-muted-foreground hover:bg-muted"
             )}
           >
             {PROVENANCE_LABEL[f]}
@@ -555,7 +558,7 @@ function buildColumns(
   busy: boolean,
   onRotate: (token: ApiTokenData) => void,
   onArchive: (token: ApiTokenData) => void,
-  onDelete: (token: ApiTokenData) => void,
+  onDelete: (token: ApiTokenData) => void
 ): ColumnDef<ApiTokenData, unknown>[] {
   return [
     {
@@ -590,7 +593,9 @@ function buildColumns(
                 </Badge>
               )}
             </div>
-            <span className="block text-[11px] text-muted-foreground">{expiryLabel(t)}</span>
+            <span className="block text-[11px] text-muted-foreground">
+              {expiryLabel(t)}
+            </span>
           </div>
         );
       },
@@ -665,7 +670,9 @@ function buildColumns(
               size="sm"
               disabled={busy}
               title={archived ? "Delete permanently" : "Archive"}
-              aria-label={`${archived ? "Delete permanently" : "Archive"} ${t.name}`}
+              aria-label={`${archived ? "Delete permanently" : "Archive"} ${
+                t.name
+              }`}
               onClick={() => (archived ? onDelete(t) : onArchive(t))}
             >
               <Trash2 className="size-3.5" />
@@ -690,7 +697,7 @@ export function TokensRoster() {
   const revokeOthers = useRevokeOtherSessions();
 
   const [active, setActive] = useState<Set<TokenProvenance>>(
-    () => new Set<TokenProvenance>(["api"]),
+    () => new Set<TokenProvenance>(["api"])
   );
   const [showArchived, setShowArchived] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
@@ -725,7 +732,7 @@ export function TokensRoster() {
           return false;
         return true;
       }),
-    [all, active, showArchived],
+    [all, active, showArchived]
   );
 
   const health = useMemo(() => {
@@ -740,9 +747,9 @@ export function TokensRoster() {
   const otherSessionCount = useMemo(
     () =>
       all.filter(
-        (t) => t.provenance === "session" && !t.is_current && !t.archived_at,
+        (t) => t.provenance === "session" && !t.is_current && !t.archived_at
       ).length,
-    [all],
+    [all]
   );
 
   async function rotate(token: ApiTokenData) {
@@ -784,7 +791,7 @@ export function TokensRoster() {
   const columns = useMemo(
     () => buildColumns(renderTokenActivity, busy, rotate, archive, remove),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [renderTokenActivity, busy],
+    [renderTokenActivity, busy]
   );
 
   function toggleFacet(facet: TokenProvenance) {
@@ -811,8 +818,8 @@ export function TokensRoster() {
             </span>
           </div>
           <p className="text-[13px] text-muted-foreground">
-            Keys that let apps and scripts act on your behalf. A token can&apos;t
-            do more than you can.
+            Keys that let apps and scripts act on your behalf. A token
+            can&apos;t do more than you can.
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -880,9 +887,9 @@ export function TokensRoster() {
           sessions
         </span>
         <p>
-          <b className="text-foreground">Revoke other sessions</b> signs out your
-          other browser sessions only. Your API, broker, dev and passkey tokens
-          keep working, and so does this session.
+          <b className="text-foreground">Revoke other sessions</b> signs out
+          your other browser sessions only. Your API, broker, dev and passkey
+          tokens keep working, and so does this session.
         </p>
       </div>
 

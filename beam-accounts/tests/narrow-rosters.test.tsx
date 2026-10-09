@@ -47,13 +47,17 @@ beforeAll(() => {
 
 it("stacks each token as a card carrying its dates and its Rotate/Archive actions on a narrow screen", async () => {
   viewport.narrow = true;
-  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  const client = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
   render(
     <QueryClientProvider client={client}>
-      <TokensProvider services={{ client: makeTokensClient({ tokens: [SAMPLE_TOKENS[0]] }) }}>
+      <TokensProvider
+        services={{ client: makeTokensClient({ tokens: [SAMPLE_TOKENS[0]] }) }}
+      >
         <TokensRoster />
       </TokensProvider>
-    </QueryClientProvider>,
+    </QueryClientProvider>
   );
 
   const card = await screen.findByTestId(`stacked-row-${SAMPLE_TOKENS[0].id}`);
@@ -62,7 +66,11 @@ it("stacks each token as a card carrying its dates and its Rotate/Archive action
   expect(within(card).getByText("Last used")).toBeTruthy();
   expect(within(card).getByText("Created")).toBeTruthy();
   expect(within(card).getByRole("button", { name: /Rotate/ })).toBeTruthy();
-  expect(within(card).getByRole("button", { name: `Archive ${SAMPLE_TOKENS[0].name}` })).toBeTruthy();
+  expect(
+    within(card).getByRole("button", {
+      name: `Archive ${SAMPLE_TOKENS[0].name}`,
+    })
+  ).toBeTruthy();
 });
 
 it("stacks each member and invitation as a card carrying its Status and its resend action on a narrow screen", async () => {
@@ -70,7 +78,7 @@ it("stacks each member and invitation as a card carrying its Status and its rese
   render(
     <MockTeamProvider>
       <TeamPage currentUserId="owner" />
-    </MockTeamProvider>,
+    </MockTeamProvider>
   );
 
   const invite = await screen.findByTestId("stacked-row-invite");
@@ -85,7 +93,7 @@ it("keeps the wide table on a desktop screen", async () => {
   render(
     <MockTeamProvider>
       <TeamPage currentUserId="owner" />
-    </MockTeamProvider>,
+    </MockTeamProvider>
   );
 
   expect(await screen.findByRole("table")).toBeTruthy();

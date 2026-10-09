@@ -101,7 +101,7 @@ function TeamInner({
 
   const roster = useMemo(
     () => mergeRoster(memberRows, inviteRows, currentUserId),
-    [memberRows, inviteRows, currentUserId],
+    [memberRows, inviteRows, currentUserId]
   );
 
   const [facet, setFacet] = useState<Facet>("All");
@@ -121,8 +121,8 @@ function TeamInner({
     facet === "All"
       ? true
       : facet === "Members"
-        ? r.kind === "member"
-        : r.kind === "invitation",
+      ? r.kind === "member"
+      : r.kind === "invitation"
   );
 
   const changeRole = (row: RosterRow, next: string) => {
@@ -304,7 +304,7 @@ function TeamInner({
       updateRole.isPending,
       removeMember.isPending,
       revokeInvitation.isPending,
-    ],
+    ]
   );
 
   const readError = membersQuery.error ?? invitationsQuery.error ?? roles.error;
@@ -349,7 +349,8 @@ function TeamInner({
         <FacetsBar active={facet} counts={counts} onSelect={setFacet} />
         <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
           <ShieldAlert className="size-3.5" />
-          {owners} owner{owners === 1 ? "" : "s"} · a team always keeps at least one owner
+          {owners} owner{owners === 1 ? "" : "s"} · a team always keeps at least
+          one owner
         </span>
       </div>
 
@@ -445,8 +446,8 @@ function TeamInner({
                   {confirm.kind === "transfer"
                     ? "Transfer ownership"
                     : confirm.kind === "remove"
-                      ? "Remove member"
-                      : "Revoke invitation"}
+                    ? "Remove member"
+                    : "Revoke invitation"}
                 </Button>
               </DialogFooter>
             </>
@@ -483,7 +484,7 @@ function InviteForm({
           setEmail("");
           onSent();
         },
-      },
+      }
     );
   }
 
@@ -541,13 +542,13 @@ function StatusPill({ status }: { status: RosterRow["status"] }) {
         "inline-flex items-center gap-1.5 rounded-md border px-2 py-0.5 text-[12px]",
         pending
           ? "border-warning/40 bg-warning/10 text-warning-foreground"
-          : "border-primary/25 bg-primary/5 text-foreground",
+          : "border-primary/25 bg-primary/5 text-foreground"
       )}
     >
       <span
         className={cn(
           "size-1.5 rounded-full",
-          pending ? "bg-warning" : "bg-primary",
+          pending ? "bg-warning" : "bg-primary"
         )}
       />
       {status}
@@ -576,7 +577,7 @@ function FacetsBar({
             "rounded px-3 py-1 font-medium transition-colors",
             f === active
               ? "bg-card text-foreground shadow-sm"
-              : "text-muted-foreground hover:text-foreground",
+              : "text-muted-foreground hover:text-foreground"
           )}
         >
           {f}

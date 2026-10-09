@@ -10,7 +10,9 @@ import { tokenScopeSchema } from "../src/tokens-roster";
 // The real SchemaForm cannot render in this package's tests (its RJSF stack resolves a second React from the
 // schemastud workspace; every roster test mocks it), so the contract is pinned on the schema it is given.
 type Choice = { const: number; title: string };
-const expires = (tokenScopeSchema.properties as Record<string, Record<string, unknown>>).expiresInDays;
+const expires = (
+  tokenScopeSchema.properties as Record<string, Record<string, unknown>>
+).expiresInDays;
 
 it("labels every Expires choice through oneOf const/title, so 0 reads 'Never expires'", () => {
   const choices = expires.oneOf as Choice[] | undefined;

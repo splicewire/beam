@@ -79,14 +79,21 @@ function StackedRows<TData extends { id: string }>({
     return (
       <div className="space-y-2" aria-busy="true">
         {[0, 1, 2].map((i) => (
-          <div key={i} className="h-24 animate-pulse rounded-lg border bg-muted/40" />
+          <div
+            key={i}
+            className="h-24 animate-pulse rounded-lg border bg-muted/40"
+          />
         ))}
       </div>
     );
   }
 
   if (rows.length === 0) {
-    return <p className="py-8 text-center text-sm text-muted-foreground">{emptyMessage}</p>;
+    return (
+      <p className="py-8 text-center text-sm text-muted-foreground">
+        {emptyMessage}
+      </p>
+    );
   }
 
   return (
@@ -99,9 +106,14 @@ function StackedRows<TData extends { id: string }>({
           <li
             key={row.id}
             data-testid={`stacked-row-${row.id}`}
-            className={cn("min-w-0 space-y-2.5 rounded-lg border bg-card p-3", rowClassName?.(row.original))}
+            className={cn(
+              "min-w-0 space-y-2.5 rounded-lg border bg-card p-3",
+              rowClassName?.(row.original)
+            )}
           >
-            <div className="min-w-0">{flexRender(heading.column.columnDef.cell, heading.getContext())}</div>
+            <div className="min-w-0">
+              {flexRender(heading.column.columnDef.cell, heading.getContext())}
+            </div>
             {fields.length > 0 && (
               <dl className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-x-3 gap-y-1.5 text-[12.5px]">
                 {fields.map((cell) => {
@@ -111,7 +123,12 @@ function StackedRows<TData extends { id: string }>({
                       <dt className="text-muted-foreground">
                         {typeof header === "string" ? header : cell.column.id}
                       </dt>
-                      <dd className="min-w-0">{flexRender(cell.column.columnDef.cell, cell.getContext())}</dd>
+                      <dd className="min-w-0">
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext()
+                        )}
+                      </dd>
                     </div>
                   );
                 })}
@@ -119,7 +136,10 @@ function StackedRows<TData extends { id: string }>({
             )}
             {actions && (
               <div className="flex flex-wrap items-center justify-end gap-1.5 border-t pt-2">
-                {flexRender(actions.column.columnDef.cell, actions.getContext())}
+                {flexRender(
+                  actions.column.columnDef.cell,
+                  actions.getContext()
+                )}
               </div>
             )}
           </li>
