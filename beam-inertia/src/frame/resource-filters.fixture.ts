@@ -132,7 +132,7 @@ export function resourceFiltersFixture({
           ...body,
           id: `view-${views.length + 1}`,
           visibility: "private",
-          is_default: false,
+          isDefault: false,
           can: permissions,
         };
         views.push(view);

@@ -50,9 +50,9 @@ it('uses resource-scoped filter HTTP and all saved-view CRUD pages with session 
         id: String(index),
         name: `View ${index}`,
         resource: 'articles',
-        query_parameters: {},
+        queryParameters: {},
         visibility: 'private',
-        is_default: false,
+        isDefault: false,
     }));
     const requests: Array<{ url: URL; init: RequestInit }> = [];
     const fetch = vi.fn(async (input: string, init: RequestInit) => {
@@ -73,7 +73,7 @@ it('uses resource-scoped filter HTTP and all saved-view CRUD pages with session 
                 const saved = {
                     id: 'new',
                     visibility: 'private',
-                    is_default: false,
+                    isDefault: false,
                     ...JSON.parse(String(init.body)),
                 };
                 stored.push(saved);
@@ -106,7 +106,7 @@ it('uses resource-scoped filter HTTP and all saved-view CRUD pages with session 
     expect(await frameTransport.getSavedFilters('articles')).toHaveLength(29);
     const payload = {
         name: 'New view',
-        query_parameters: { sort: '-created_at' },
+        queryParameters: { sort: '-created_at' },
     };
     expect(await frameTransport.saveFilter('articles', payload)).toMatchObject({
         id: 'new',
@@ -128,7 +128,7 @@ it('does not invent saved-view persistence for a resource without support', asyn
     await expect(
         frameTransport.saveFilter('unsupported', {
             name: 'Fake',
-            query_parameters: {},
+            queryParameters: {},
         }),
     ).rejects.toThrow('unavailable');
     expect(fetch.mock.calls.every((call) => String(call[0]).endsWith('/filters/schema'))).toBe(
