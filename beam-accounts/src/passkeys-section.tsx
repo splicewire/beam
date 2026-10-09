@@ -19,7 +19,12 @@ import { errorMessage, formatDate } from './utils';
  * injected-transport way as the tokens surface; runs the attestation ceremony on register. Rename
  * lights up only when the host supplies a `passkey.rename` transport.
  */
-export function PasskeysSection() {
+export function PasskeysSection({
+    showHeader = true,
+}: {
+    /** False when the host frames the section under its own heading and copy (TOWER-05: no duplicate "Passkeys"). */
+    showHeader?: boolean;
+} = {}) {
     const [supported] = useState(() => isWebAuthnSupported());
     const [name, setName] = useState('');
     const [editingId, setEditingId] = useState<number | null>(null);
@@ -55,12 +60,14 @@ export function PasskeysSection() {
 
     return (
         <div className="space-y-6">
-            <div className="space-y-1">
-                <h2 className="text-base font-semibold">Passkeys</h2>
-                <p className="text-sm text-muted-foreground">
-                    Sign in without a password using a passkey saved on a trusted device.
-                </p>
-            </div>
+            {showHeader && (
+                <div className="space-y-1">
+                    <h2 className="text-base font-semibold">Passkeys</h2>
+                    <p className="text-sm text-muted-foreground">
+                        Sign in without a password using a passkey saved on a trusted device.
+                    </p>
+                </div>
+            )}
 
             {supported ? (
                 <form className="flex items-end gap-2" onSubmit={submit}>
