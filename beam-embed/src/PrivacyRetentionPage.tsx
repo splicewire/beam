@@ -217,7 +217,7 @@ function PruneCard({ disabled }: { disabled: boolean }) {
 // ── Card 3: Erase a subject (destructive — typed-ERASE confirm Dialog) ─────────────────────────
 function EraseCard({ disabled }: { disabled: boolean }) {
     const erase = useEraseSubject();
-    const [kind, setKind] = useState<EraseSubjectKind>('visitor_id');
+    const [kind, setKind] = useState<EraseSubjectKind>('visitorId');
     const [subjectId, setSubjectId] = useState('');
     const [open, setOpen] = useState(false);
     const [confirmText, setConfirmText] = useState('');
@@ -258,7 +258,7 @@ function EraseCard({ disabled }: { disabled: boolean }) {
             <CardContent className="space-y-4">
                 {/* Radio visitor_id | session_id — the controller's "one required" rule. */}
                 <div className="flex gap-2">
-                    {(['visitor_id', 'session_id'] as EraseSubjectKind[]).map((k) => (
+                    {(['visitorId', 'sessionId'] as EraseSubjectKind[]).map((k) => (
                         <button
                             key={k}
                             type="button"
@@ -286,13 +286,13 @@ function EraseCard({ disabled }: { disabled: boolean }) {
 
                 <div className="grid gap-1.5">
                     <Label htmlFor="subject-id">
-                        {kind === 'visitor_id' ? 'Visitor ID' : 'Session ID'}
+                        {kind === 'visitorId' ? 'Visitor ID' : 'Session ID'}
                     </Label>
                     <Input
                         id="subject-id"
                         value={subjectId}
                         onChange={(e) => setSubjectId(e.target.value)}
-                        placeholder={kind === 'visitor_id' ? 'vis_…' : 'sess_…'}
+                        placeholder={kind === 'visitorId' ? 'vis_…' : 'sess_…'}
                         className="font-mono"
                         disabled={disabled}
                     />
@@ -316,7 +316,7 @@ function EraseCard({ disabled }: { disabled: boolean }) {
                         <div>
                             Erased <b>{receipt.erased}</b> session{receipt.erased === 1 ? '' : 's'} for{' '}
                             <code className="font-mono text-xs">
-                                {receipt.kind === 'visitor_id' ? 'visitor' : 'session'} {receipt.id}
+                                {receipt.kind === 'visitorId' ? 'visitor' : 'session'} {receipt.id}
                             </code>
                             . This cannot be undone.
                         </div>
@@ -343,14 +343,14 @@ function EraseCard({ disabled }: { disabled: boolean }) {
                     <DialogHeader>
                         <DialogTitle className="flex items-center gap-2 text-destructive">
                             <AlertTriangle className="size-5" />{' '}
-                            Erase this {kind === 'visitor_id' ? 'visitor' : 'session'}?
+                            Erase this {kind === 'visitorId' ? 'visitor' : 'session'}?
                         </DialogTitle>
                         <DialogDescription asChild>
                             <div className="space-y-2">
                                 <p>
                                     You are about to erase{' '}
                                     <code className="font-mono text-xs text-foreground">
-                                        {kind === 'visitor_id' ? 'visitor' : 'session'}{' '}
+                                        {kind === 'visitorId' ? 'visitor' : 'session'}{' '}
                                         {subjectId || '—'}
                                     </code>
                                     . You are erasing the <b className="text-foreground">person</b>, not

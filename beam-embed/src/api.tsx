@@ -4,7 +4,7 @@ import type { RetentionPostureData, RetentionPostureChatData, PrunePreviewData, 
 export type RetentionPostureChat = RetentionPostureChatData;
 export type PruneResult = PruneResultData;
 export type EraseResult = EraseResultData;
-export type EraseSubjectKind = 'visitor_id' | 'session_id';
+export type EraseSubjectKind = 'visitorId' | 'sessionId';
 export interface RetentionClient {
     posture(): Promise<RetentionPostureData>;
     preview(): Promise<PrunePreviewData>;
