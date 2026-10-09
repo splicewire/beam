@@ -6,39 +6,39 @@
 // generated projection, the presentation — travels inside the package.
 
 // The generated DTO projection (rehome-ui), delivered via @splicewire/beam-resources.
-export type { BeamUxEntryBodyData } from '@splicewire/beam-resources/types/beam-ux';
+export type { BeamUxEntryBodyData } from "@splicewire/beam-resources/types/beam-ux";
 
 // The injection seams: the provider carrying the transport client + feedback, and the react-query
 // data layer that rides on top of it.
-export { UxBuilderProvider, useUxBuilderServices, useNotify } from './provider';
-export { useEntryBody, useSaveEntryBody } from './hooks';
-export { useCan } from './useCan';
+export { UxBuilderProvider, useUxBuilderServices, useNotify } from "./provider";
+export { useEntryBody, useSaveEntryBody } from "./hooks";
+export { useCan } from "./useCan";
 export type {
-    EntryPublicationState,
-    EntryVersion,
-    UxBuilderClient,
-    UxBuilderServices,
-    NotifyEvent,
-    Region,
-    RegionKind,
-    TreeNode,
-    PaletteItem,
-} from './types';
+  EntryPublicationState,
+  EntryVersion,
+  UxBuilderClient,
+  UxBuilderServices,
+  NotifyEvent,
+  Region,
+  RegionKind,
+  TreeNode,
+  PaletteItem,
+} from "./types";
 
 // Surface components — the docked inspector, the floating overlay, the live canvas, the composition
 // structure panel, and the root that composes them.
-export { RegionInspector, type RegionEditorProps } from './RegionInspector';
+export { RegionInspector, type RegionEditorProps } from "./RegionInspector";
 // The theme entry's editor seat — the same three parts (useEntryBody → RegionInspector's
 // `form` body → useSaveEntryBody) wired to one entry id. G2-BEAM-THEME-NAV.
-export { ThemeEditor } from './ThemeEditor';
-export { RegionOverlay } from './RegionOverlay';
-export { UX_BUILDER_CSS } from './css';
-export { RegionCanvas, RegionBlock } from './RegionCanvas';
-export { StructurePanel } from './StructurePanel';
+export { ThemeEditor } from "./ThemeEditor";
+export { RegionOverlay } from "./RegionOverlay";
+export { UX_BUILDER_CSS } from "./css";
+export { RegionCanvas, RegionBlock } from "./RegionCanvas";
+export { StructurePanel } from "./StructurePanel";
 export {
-    UxBuilder,
-    placementFor,
-    type BuilderMode,
-    type EditorPlacement,
-} from './UxBuilder';
-export { AuthorNote } from './author/AuthorNote';
+  UxBuilder,
+  placementFor,
+  type BuilderMode,
+  type EditorPlacement,
+} from "./UxBuilder";
+export { AuthorNote } from "./author/AuthorNote";

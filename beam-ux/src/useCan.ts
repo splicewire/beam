@@ -1,11 +1,11 @@
-import { useFrameInjection, type FrameAction } from '@schemastud/frame';
+import { useFrameInjection, type FrameAction } from "@schemastud/frame";
 
 const CRUD_OPERATIONS = new Set<string>([
-    'viewAny',
-    'view',
-    'create',
-    'update',
-    'delete',
+  "viewAny",
+  "view",
+  "create",
+  "update",
+  "delete",
 ]);
 
 /**
@@ -16,11 +16,11 @@ const CRUD_OPERATIONS = new Set<string>([
  * deny while the manifest is absent, so a loading or older host never flashes a control that 403s.
  */
 export function useCan(resource: string, operation: string): boolean {
-    const frame = useFrameInjection();
+  const frame = useFrameInjection();
 
-    if (CRUD_OPERATIONS.has(operation)) {
-        return frame.can(operation as FrameAction, resource);
-    }
+  if (CRUD_OPERATIONS.has(operation)) {
+    return frame.can(operation as FrameAction, resource);
+  }
 
-    return frame.manifestFor?.(resource)?.can?.actions?.[operation] === true;
+  return frame.manifestFor?.(resource)?.can?.actions?.[operation] === true;
 }
