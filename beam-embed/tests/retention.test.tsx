@@ -48,7 +48,7 @@ describe('portable privacy and retention', () => {
         expect(confirm.hasAttribute('disabled')).toBe(true);
         fireEvent.change(screen.getByLabelText('Type ERASE to confirm'), {target: {value: 'ERASE'}});
         fireEvent.click(confirm);
-        await waitFor(() => expect(client.erase).toHaveBeenCalledWith({kind: 'visitor_id', subjectId: 'vis_123'}));
+        await waitFor(() => expect(client.erase).toHaveBeenCalledWith({kind: 'visitorId', subjectId: 'vis_123'}));
         await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
         expect(screen.getByText(/This cannot be undone/)).toBeTruthy();
     });
