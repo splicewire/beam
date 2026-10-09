@@ -1,3 +1,4 @@
+import { ResponsiveRoster } from "./responsive-roster";
 import type { ColumnDef } from "@tanstack/react-table";
 import {
   Check,
@@ -32,7 +33,6 @@ import {
   SheetDescription,
   SheetHeader,
   SheetTitle,
-  DataTable,
   cn,
 } from "@schemastud/ui";
 import {
@@ -353,7 +353,7 @@ function TeamInner({
         </span>
       </div>
 
-      <DataTable
+      <ResponsiveRoster
         columns={columns}
         data={rows}
         emptyMessage="No one in this segment yet."
