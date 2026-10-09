@@ -60,7 +60,7 @@ describe('isolated intake section', () => {
         fireEvent.click(screen.getByRole('button', { name: 'Send section' }));
         await waitFor(() =>
             expect(screen.getByRole('status').textContent).toContain(
-                receipt.submission_id,
+                receipt.submissionId,
             ),
         );
         expect(submit).toHaveBeenCalledWith('contact', { name: 'Alex' });
@@ -89,7 +89,7 @@ describe('isolated intake section', () => {
         resolve(receipt);
         await waitFor(() =>
             expect(screen.getByRole('status').textContent).toContain(
-                receipt.submission_id,
+                receipt.submissionId,
             ),
         );
         expect(screen.getByRole('status').className).toContain('text-sm');
@@ -153,7 +153,7 @@ describe('isolated intake section', () => {
         fireEvent.click(screen.getByRole('button'));
         await waitFor(() =>
             expect(screen.getByRole('status').textContent).toContain(
-                receipt.submission_id,
+                receipt.submissionId,
             ),
         );
         expect(submit).toHaveBeenLastCalledWith('contact', { name: 'Sam' });
@@ -196,7 +196,7 @@ describe('isolated intake section', () => {
         fireEvent.click(screen.getByRole('button', { name: /submit/i }));
         await waitFor(() => expect(submit).toHaveBeenCalledWith('contact', {}));
         expect(screen.getByRole('status').textContent).toContain(
-            receipt.submission_id,
+            receipt.submissionId,
         );
     });
 
