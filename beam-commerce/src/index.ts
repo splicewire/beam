@@ -47,6 +47,12 @@ export {
 export { CreditsSurface } from './CreditsSurface';
 export { BillingSurface } from './BillingSurface';
 export { SubscriptionSurface, type CheckoutSignalProps } from './SubscriptionSurface';
+export {
+    CommerceBillingPanel,
+    type CommerceBillingPanelProps,
+    type CommerceBillingPanelSelection,
+    type CommerceCustody,
+} from './CommerceBillingPanel';
 export type {
     CommerceClient,
     CommerceServices,
