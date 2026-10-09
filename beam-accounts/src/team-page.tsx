@@ -173,6 +173,7 @@ function TeamInner({
       },
       {
         id: "role",
+        meta: { label: "Team role" },
         header: () => (
           <span className="inline-flex items-center gap-1">
             Team role

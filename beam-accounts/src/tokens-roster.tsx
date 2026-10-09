@@ -808,11 +808,11 @@ export function TokensRoster() {
       {/* Header: title + inline CTAs + health summary (desk topBar chrome lives inline here). */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5">
             <h2 className="text-[15px] font-semibold tracking-tight">
               Personal access tokens
             </h2>
-            <span className="hidden font-mono text-[11px] text-muted-foreground sm:inline">
+            <span className="font-mono text-[11px] text-muted-foreground">
               {health.active} active · {health.expiring} expiring ·{" "}
               {health.archived} archived
             </span>
