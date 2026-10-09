@@ -24,17 +24,21 @@ it.each([
   async (now) => {
     vi.useFakeTimers({ toFake: ["Date"] });
     vi.setSystemTime(new Date(now));
-    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    const client = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    });
     render(
       <QueryClientProvider client={client}>
-        <TokensProvider services={{ client: makeTokensClient({ tokens: rosterTokens() }) }}>
+        <TokensProvider
+          services={{ client: makeTokensClient({ tokens: rosterTokens() }) }}
+        >
           <TokensRoster />
         </TokensProvider>
-      </QueryClientProvider>,
+      </QueryClientProvider>
     );
     expect(await screen.findByText("71d ago")).toBeTruthy();
     expect(screen.getByText("94d ago")).toBeTruthy();
     expect(screen.getByText(/0 expiring/)).toBeTruthy();
     expect(screen.queryByText(/^Expired /)).toBeNull();
-  },
+  }
 );

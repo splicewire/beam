@@ -25,31 +25,31 @@
 // it imports the foundation directly — so it is a real peer at runtime AND the
 // workbench binding here; no package.json change needed for this ticket).
 // =============================================================================
-import { useMemo, type ReactNode } from 'react';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { AuthProvider } from './auth-provider';
-import { TokensProvider } from './provider';
+import { useMemo, type ReactNode } from "react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { AuthProvider } from "./auth-provider";
+import { TokensProvider } from "./provider";
 import type {
-    ApiTokenData,
-    AuthClient,
-    AuthServices,
-    CreatedTokenData,
-    PasskeyClient,
-    PasskeyData,
-    TokensClient,
-    TokensServices,
-} from './types';
+  ApiTokenData,
+  AuthClient,
+  AuthServices,
+  CreatedTokenData,
+  PasskeyClient,
+  PasskeyData,
+  TokensClient,
+  TokensServices,
+} from "./types";
 
 // ── Fresh QueryClient per mount ─────────────────────────────────────────────────
 // Retries off + gcTime 0 so a story's data state is deterministic (a rejected query
 // stays rejected, an empty list stays empty) and never bleeds between stories.
 function makeQueryClient(): QueryClient {
-    return new QueryClient({
-        defaultOptions: {
-            queries: { retry: false, gcTime: 0, staleTime: Infinity },
-            mutations: { retry: false },
-        },
-    });
+  return new QueryClient({
+    defaultOptions: {
+      queries: { retry: false, gcTime: 0, staleTime: Infinity },
+      mutations: { retry: false },
+    },
+  });
 }
 
 const never = new Promise<never>(() => {});
@@ -57,101 +57,125 @@ const wait = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
 
 // ── Auth transport mock ─────────────────────────────────────────────────────────
 export interface AuthMockConfig {
-    /** How the login/reset/forgot mutations settle. `pending` hangs forever (submitting state). */
-    outcome?: 'success' | 'error' | 'pending';
-    /** Latency before a success/error settles, so `play` can catch the in-flight button. */
-    delayMs?: number;
-    /** The server message an `error` outcome rejects with. */
-    errorMessage?: string;
-    /** Give the client a `passkey` sub-client (turns the PasskeyButton slot on). */
-    withPasskey?: boolean;
-    /** Passkey ceremony outcome, independent of the password outcome. */
-    passkeyOutcome?: 'success' | 'error' | 'pending';
-    /** Rows the passkeys-management list resolves with. */
-    passkeys?: PasskeyData[];
-    /** Hold the passkeys-management `list()` open forever (the loading row). */
-    passkeysLoading?: boolean;
+  /** How the login/reset/forgot mutations settle. `pending` hangs forever (submitting state). */
+  outcome?: "success" | "error" | "pending";
+  /** Latency before a success/error settles, so `play` can catch the in-flight button. */
+  delayMs?: number;
+  /** The server message an `error` outcome rejects with. */
+  errorMessage?: string;
+  /** Give the client a `passkey` sub-client (turns the PasskeyButton slot on). */
+  withPasskey?: boolean;
+  /** Passkey ceremony outcome, independent of the password outcome. */
+  passkeyOutcome?: "success" | "error" | "pending";
+  /** Rows the passkeys-management list resolves with. */
+  passkeys?: PasskeyData[];
+  /** Hold the passkeys-management `list()` open forever (the loading row). */
+  passkeysLoading?: boolean;
 }
 
-const DEMO_RESULT = { id: 1, name: 'Ada Lovelace', email: 'ada@example.com' };
+const DEMO_RESULT = { id: 1, name: "Ada Lovelace", email: "ada@example.com" };
 
 export function makeAuthClient(config: AuthMockConfig = {}): AuthClient {
-    const {
-        outcome = 'success',
-        delayMs = 0,
-        errorMessage = 'Invalid email or password.',
-        withPasskey = false,
-        passkeyOutcome = 'success',
-        passkeys = SAMPLE_PASSKEYS,
-        passkeysLoading = false,
-    } = config;
+  const {
+    outcome = "success",
+    delayMs = 0,
+    errorMessage = "Invalid email or password.",
+    withPasskey = false,
+    passkeyOutcome = "success",
+    passkeys = SAMPLE_PASSKEYS,
+    passkeysLoading = false,
+  } = config;
 
-    async function settle<T>(value: T, kind = outcome): Promise<T> {
-        if (kind === 'pending') return never;
-        await wait(delayMs);
-        if (kind === 'error') throw new Error(errorMessage);
-        return value;
-    }
+  async function settle<T>(value: T, kind = outcome): Promise<T> {
+    if (kind === "pending") return never;
+    await wait(delayMs);
+    if (kind === "error") throw new Error(errorMessage);
+    return value;
+  }
 
-    const passkey: PasskeyClient = {
-        loginOptions: () => settle({ handle: 'h', options: {} }, passkeyOutcome),
-        login: () => settle(DEMO_RESULT as never, passkeyOutcome),
-        registrationOptions: () => settle({ handle: 'h', options: {} }, passkeyOutcome),
-        register: () =>
-            settle<PasskeyData>(
-                { id: 99, name: 'New device', lastUsedAt: null, createdAt: new Date().toISOString() },
-                passkeyOutcome,
-            ),
-        list: () => (passkeysLoading ? never : Promise.resolve(passkeys)),
-        rename: (id, name) =>
-            settle<PasskeyData>(
-                { id, name, lastUsedAt: null, createdAt: new Date().toISOString() },
-                passkeyOutcome,
-            ),
-        remove: async () => settle(undefined),
-    };
+  const passkey: PasskeyClient = {
+    loginOptions: () => settle({ handle: "h", options: {} }, passkeyOutcome),
+    login: () => settle(DEMO_RESULT as never, passkeyOutcome),
+    registrationOptions: () =>
+      settle({ handle: "h", options: {} }, passkeyOutcome),
+    register: () =>
+      settle<PasskeyData>(
+        {
+          id: 99,
+          name: "New device",
+          lastUsedAt: null,
+          createdAt: new Date().toISOString(),
+        },
+        passkeyOutcome
+      ),
+    list: () => (passkeysLoading ? never : Promise.resolve(passkeys)),
+    rename: (id, name) =>
+      settle<PasskeyData>(
+        { id, name, lastUsedAt: null, createdAt: new Date().toISOString() },
+        passkeyOutcome
+      ),
+    remove: async () => settle(undefined),
+  };
 
-    return {
-        login: () => settle(DEMO_RESULT as never),
-        requestPasswordReset: () => settle(undefined),
-        resetPassword: () => settle(undefined),
-        ...(withPasskey ? { passkey } : {}),
-    };
+  return {
+    login: () => settle(DEMO_RESULT as never),
+    requestPasswordReset: () => settle(undefined),
+    resetPassword: () => settle(undefined),
+    ...(withPasskey ? { passkey } : {}),
+  };
 }
 
 export const SAMPLE_PASSKEYS: PasskeyData[] = [
-    { id: 1, name: 'MacBook Pro (Touch ID)', lastUsedAt: '2026-07-20T10:00:00Z', createdAt: '2026-01-01T00:00:00Z' },
-    { id: 2, name: 'iPhone 15', lastUsedAt: '2026-07-24T18:30:00Z', createdAt: '2026-03-15T00:00:00Z' },
-    { id: 3, name: 'YubiKey 5C', lastUsedAt: null, createdAt: '2026-05-01T00:00:00Z' },
+  {
+    id: 1,
+    name: "MacBook Pro (Touch ID)",
+    lastUsedAt: "2026-07-20T10:00:00Z",
+    createdAt: "2026-01-01T00:00:00Z",
+  },
+  {
+    id: 2,
+    name: "iPhone 15",
+    lastUsedAt: "2026-07-24T18:30:00Z",
+    createdAt: "2026-03-15T00:00:00Z",
+  },
+  {
+    id: 3,
+    name: "YubiKey 5C",
+    lastUsedAt: null,
+    createdAt: "2026-05-01T00:00:00Z",
+  },
 ];
 
 /** Wrap children in a fresh QueryClient + a mocked AuthProvider. */
 export function MockAuthProvider({
-    children,
-    config,
-    onError,
+  children,
+  config,
+  onError,
 }: {
-    children: ReactNode;
-    config?: AuthMockConfig;
-    onError?: AuthServices['onError'];
+  children: ReactNode;
+  config?: AuthMockConfig;
+  onError?: AuthServices["onError"];
 }) {
-    const client = useMemo(() => makeAuthClient(config), [JSON.stringify(config)]);
-    const queryClient = useMemo(makeQueryClient, [JSON.stringify(config)]);
-    return (
-        <QueryClientProvider client={queryClient}>
-            <AuthProvider services={{ client, onError }}>{children}</AuthProvider>
-        </QueryClientProvider>
-    );
+  const client = useMemo(
+    () => makeAuthClient(config),
+    [JSON.stringify(config)]
+  );
+  const queryClient = useMemo(makeQueryClient, [JSON.stringify(config)]);
+  return (
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider services={{ client, onError }}>{children}</AuthProvider>
+    </QueryClientProvider>
+  );
 }
 
 // ── Tokens transport mock ───────────────────────────────────────────────────────
 export interface TokensMockConfig {
-    /** Rows `list()` resolves with. */
-    tokens?: ApiTokenData[];
-    /** Held permission-names for the scoped-create picker. */
-    permissions?: string[];
-    /** `pending` hangs `list()` forever (the loading table); `empty` resolves []. */
-    listState?: 'populated' | 'loading' | 'empty';
+  /** Rows `list()` resolves with. */
+  tokens?: ApiTokenData[];
+  /** Held permission-names for the scoped-create picker. */
+  permissions?: string[];
+  /** `pending` hangs `list()` forever (the loading table); `empty` resolves []. */
+  listState?: "populated" | "loading" | "empty";
 }
 
 /**
@@ -162,57 +186,104 @@ export interface TokensMockConfig {
  * satellite, the flagship) actually run.
  */
 export const SAMPLE_TOKENS: ApiTokenData[] = [
-    {
-        id: '0f1e2d3c-4b5a-4697-8899-aabbccddee01', name: 'CI deploys', provenance: 'api', abilities: null,
-        createdAt: '2026-01-10T00:00:00Z', lastUsedAt: '2026-07-24T09:00:00Z',
-        expiresAt: '2026-12-31T00:00:00Z', archivedAt: null, isCurrent: false,
-    },
-    {
-        id: '0f1e2d3c-4b5a-4697-8899-aabbccddee02', name: 'Read-only metrics', provenance: 'api', abilities: ['metrics.read', 'reports.read'],
-        createdAt: '2026-02-01T00:00:00Z', lastUsedAt: '2026-07-01T12:00:00Z',
-        expiresAt: null, archivedAt: null, isCurrent: false,
-    },
-    {
-        id: '0f1e2d3c-4b5a-4697-8899-aabbccddee03', name: 'Chrome · macOS', provenance: 'session', abilities: null,
-        createdAt: '2026-07-25T08:00:00Z', lastUsedAt: '2026-07-25T08:05:00Z',
-        expiresAt: null, archivedAt: null, isCurrent: true,
-    },
-    {
-        id: '0f1e2d3c-4b5a-4697-8899-aabbccddee04', name: 'Firefox · Linux', provenance: 'session', abilities: null,
-        createdAt: '2026-07-20T08:00:00Z', lastUsedAt: '2026-07-22T08:00:00Z',
-        expiresAt: null, archivedAt: null, isCurrent: false,
-    },
-    {
-        id: '0f1e2d3c-4b5a-4697-8899-aabbccddee05', name: 'Old staging key', provenance: 'api', abilities: ['deploy.write'],
-        createdAt: '2025-06-01T00:00:00Z', lastUsedAt: '2025-12-01T00:00:00Z',
-        expiresAt: '2026-01-01T00:00:00Z', archivedAt: '2026-01-02T00:00:00Z', isCurrent: false,
-    },
+  {
+    id: "0f1e2d3c-4b5a-4697-8899-aabbccddee01",
+    name: "CI deploys",
+    provenance: "api",
+    abilities: null,
+    createdAt: "2026-01-10T00:00:00Z",
+    lastUsedAt: "2026-07-24T09:00:00Z",
+    expiresAt: "2026-12-31T00:00:00Z",
+    archivedAt: null,
+    isCurrent: false,
+  },
+  {
+    id: "0f1e2d3c-4b5a-4697-8899-aabbccddee02",
+    name: "Read-only metrics",
+    provenance: "api",
+    abilities: ["metrics.read", "reports.read"],
+    createdAt: "2026-02-01T00:00:00Z",
+    lastUsedAt: "2026-07-01T12:00:00Z",
+    expiresAt: null,
+    archivedAt: null,
+    isCurrent: false,
+  },
+  {
+    id: "0f1e2d3c-4b5a-4697-8899-aabbccddee03",
+    name: "Chrome · macOS",
+    provenance: "session",
+    abilities: null,
+    createdAt: "2026-07-25T08:00:00Z",
+    lastUsedAt: "2026-07-25T08:05:00Z",
+    expiresAt: null,
+    archivedAt: null,
+    isCurrent: true,
+  },
+  {
+    id: "0f1e2d3c-4b5a-4697-8899-aabbccddee04",
+    name: "Firefox · Linux",
+    provenance: "session",
+    abilities: null,
+    createdAt: "2026-07-20T08:00:00Z",
+    lastUsedAt: "2026-07-22T08:00:00Z",
+    expiresAt: null,
+    archivedAt: null,
+    isCurrent: false,
+  },
+  {
+    id: "0f1e2d3c-4b5a-4697-8899-aabbccddee05",
+    name: "Old staging key",
+    provenance: "api",
+    abilities: ["deploy.write"],
+    createdAt: "2025-06-01T00:00:00Z",
+    lastUsedAt: "2025-12-01T00:00:00Z",
+    expiresAt: "2026-01-01T00:00:00Z",
+    archivedAt: "2026-01-02T00:00:00Z",
+    isCurrent: false,
+  },
 ];
 
 export const SAMPLE_PERMISSIONS = [
-    'deploy.write', 'metrics.read', 'reports.read', 'tenants.manage', 'users.invite', 'webhooks.write',
+  "deploy.write",
+  "metrics.read",
+  "reports.read",
+  "tenants.manage",
+  "users.invite",
+  "webhooks.write",
 ];
 
 export function makeTokensClient(config: TokensMockConfig = {}): TokensClient {
-    const { tokens = SAMPLE_TOKENS, permissions = SAMPLE_PERMISSIONS, listState = 'populated' } = config;
-    const created: CreatedTokenData = { id: '0f1e2d3c-4b5a-4697-8899-aabbccddee64', name: 'New token', token: 'sw_live_demo_secret_0123456789abcdef' };
-    return {
-        list: () =>
-            listState === 'loading' ? never
-                : Promise.resolve(listState === 'empty' ? [] : tokens),
-        create: async () => created,
-        renew: async (i) => ({ ...tokens[0], id: i.id }),
-        rotate: async () => created,
-        archive: async () => {},
-        remove: async () => {},
-        revokeOtherSessions: async () => ({ revoked: 1, message: 'Signed out 1 other session.' }),
-        listPermissions: async () => permissions,
-    };
+  const {
+    tokens = SAMPLE_TOKENS,
+    permissions = SAMPLE_PERMISSIONS,
+    listState = "populated",
+  } = config;
+  const created: CreatedTokenData = {
+    id: "0f1e2d3c-4b5a-4697-8899-aabbccddee64",
+    name: "New token",
+    token: "sw_live_demo_secret_0123456789abcdef",
+  };
+  return {
+    list: () =>
+      listState === "loading"
+        ? never
+        : Promise.resolve(listState === "empty" ? [] : tokens),
+    create: async () => created,
+    renew: async (i) => ({ ...tokens[0], id: i.id }),
+    rotate: async () => created,
+    archive: async () => {},
+    remove: async () => {},
+    revokeOtherSessions: async () => ({
+      revoked: 1,
+      message: "Signed out 1 other session.",
+    }),
+    listPermissions: async () => permissions,
+  };
 }
 
 /** Wrap children in a fresh QueryClient + a mocked TokensProvider. */
 /** The moment whose "Last used" ages {@link rosterTokens} keeps: 71d and 94d for the two API tokens. */
-const SAMPLE_TOKENS_AS_OF = Date.parse('2026-10-03T12:00:00Z');
+const SAMPLE_TOKENS_AS_OF = Date.parse("2026-10-03T12:00:00Z");
 
 /**
  * {@link SAMPLE_TOKENS} with each `lastUsedAt` moved to the same age relative to `now` that it had
@@ -225,34 +296,50 @@ const SAMPLE_TOKENS_AS_OF = Date.parse('2026-10-03T12:00:00Z');
  * its config.
  */
 export function rosterTokens(now: number = Date.now()): ApiTokenData[] {
-    return SAMPLE_TOKENS.map((token) => ({
-        ...token,
-        lastUsedAt: token.lastUsedAt
-            ? new Date(now - (SAMPLE_TOKENS_AS_OF - Date.parse(token.lastUsedAt))).toISOString()
-            : null,
-        expiresAt: token.expiresAt && !token.archivedAt ? '2099-12-31T00:00:00Z' : token.expiresAt,
-    }));
+  return SAMPLE_TOKENS.map((token) => ({
+    ...token,
+    lastUsedAt: token.lastUsedAt
+      ? new Date(
+          now - (SAMPLE_TOKENS_AS_OF - Date.parse(token.lastUsedAt))
+        ).toISOString()
+      : null,
+    expiresAt:
+      token.expiresAt && !token.archivedAt
+        ? "2099-12-31T00:00:00Z"
+        : token.expiresAt,
+  }));
 }
 
 export function MockTokensProvider({
-    children,
-    config,
-    services,
+  children,
+  config,
+  services,
 }: {
-    children: ReactNode;
-    config?: TokensMockConfig;
-    services?: Partial<Omit<TokensServices, 'client'>>;
+  children: ReactNode;
+  config?: TokensMockConfig;
+  services?: Partial<Omit<TokensServices, "client">>;
 }) {
-    const client = useMemo(() => makeTokensClient(config), [JSON.stringify(config)]);
-    const queryClient = useMemo(makeQueryClient, [JSON.stringify(config)]);
-    return (
-        <QueryClientProvider client={queryClient}>
-            <TokensProvider services={{ client, ...services }}>{children}</TokensProvider>
-        </QueryClientProvider>
-    );
+  const client = useMemo(
+    () => makeTokensClient(config),
+    [JSON.stringify(config)]
+  );
+  const queryClient = useMemo(makeQueryClient, [JSON.stringify(config)]);
+  return (
+    <QueryClientProvider client={queryClient}>
+      <TokensProvider services={{ client, ...services }}>
+        {children}
+      </TokensProvider>
+    </QueryClientProvider>
+  );
 }
 
 /** A centered, width-bounded stage so auth panels/cards read like the real mounted surface. */
-export function AuthStage({ children, width = 'max-w-sm' }: { children: ReactNode; width?: string }) {
-    return <div className={`mx-auto w-full ${width} p-4`}>{children}</div>;
+export function AuthStage({
+  children,
+  width = "max-w-sm",
+}: {
+  children: ReactNode;
+  width?: string;
+}) {
+  return <div className={`mx-auto w-full ${width} p-4`}>{children}</div>;
 }
