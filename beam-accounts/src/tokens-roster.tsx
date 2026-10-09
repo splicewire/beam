@@ -747,7 +747,7 @@ export function TokensRoster() {
   const otherSessionCount = useMemo(
     () =>
       all.filter(
-        (t) => t.provenance === "session" && !t.isCurrent && !t.archivedAt,
+        (t) => t.provenance === "session" && !t.isCurrent && !t.archivedAt
       ).length,
     [all]
   );

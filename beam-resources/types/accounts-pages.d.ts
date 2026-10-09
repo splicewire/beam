@@ -2,61 +2,61 @@
 // Projected from generated TypeScript via resources:beam.
 
 export type AuthEntryPageData = {
-slug: string,
-entry: PageEntryData | null,
-body: Record<string, any>[] | null,
-canResetPassword: undefined | boolean,
-status: undefined | string | null,
-demoAccounts: DemoAccountLinkData[] | undefined,
-passwordRules: undefined | string,
+  slug: string;
+  entry: PageEntryData | null;
+  body: Record<string, any>[] | null;
+  canResetPassword: undefined | boolean;
+  status: undefined | string | null;
+  demoAccounts: DemoAccountLinkData[] | undefined;
+  passwordRules: undefined | string;
 };
 
 export type DemoAccountLinkData = {
-key: string,
-label: string,
-url: string,
+  key: string;
+  label: string;
+  url: string;
 };
 
 export type PageEntryData = {
-id: string,
-slug: string,
-format: string | null,
-artifact: PageEntryArtifactData | null,
+  id: string;
+  slug: string;
+  format: string | null;
+  artifact: PageEntryArtifactData | null;
 };
 
 export type PageEntryArtifactData = {
-url: string,
-version: string | null,
+  url: string;
+  version: string | null;
 };
 
 export type ProfilePageData = {
-entry: PageEntryData | null,
-mustVerifyEmail: boolean,
-status: string | null,
+  entry: PageEntryData | null;
+  mustVerifyEmail: boolean;
+  status: string | null;
 };
 
 export type ResetPasswordPageData = {
-slug: string,
-entry: PageEntryData | null,
-body: Record<string, any>[] | null,
-email: string | Record<string | number, any> | object | null,
-token: string | null,
-passwordRules: string,
+  slug: string;
+  entry: PageEntryData | null;
+  body: Record<string, any>[] | null;
+  email: string | Record<string | number, any> | object | null;
+  token: string | null;
+  passwordRules: string;
 };
 
 export type SecurityPageData = {
-canManageTwoFactor: boolean,
-canManagePasskeys: boolean,
-passkeys: SecurityPasskeyData[],
-passwordRules: string,
-twoFactorEnabled: undefined | boolean,
-requiresConfirmation: undefined | boolean,
+  canManageTwoFactor: boolean;
+  canManagePasskeys: boolean;
+  passkeys: SecurityPasskeyData[];
+  passwordRules: string;
+  twoFactorEnabled: undefined | boolean;
+  requiresConfirmation: undefined | boolean;
 };
 
 export type SecurityPasskeyData = {
-id: number,
-name: string,
-authenticator: string | null,
-createdAtDiff: string,
-lastUsedAtDiff: string | null,
+  id: number;
+  name: string;
+  authenticator: string | null;
+  createdAtDiff: string;
+  lastUsedAtDiff: string | null;
 };
