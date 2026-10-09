@@ -3,8 +3,16 @@ import {
   getCoreRowModel,
   useReactTable,
   type ColumnDef,
+  type RowData,
 } from "@tanstack/react-table";
 import { cn, DataTable, useIsMobile } from "@schemastud/ui";
+
+declare module "@tanstack/react-table" {
+  interface ColumnMeta<TData extends RowData, TValue> {
+    /** The field label a stacked card shows when the column's header is a component, not a string. */
+    label?: string;
+  }
+}
 
 /**
  * A roster that stays usable on a phone. On a wide screen it is the shared `DataTable`; below the
@@ -14,7 +22,8 @@ import { cn, DataTable, useIsMobile } from "@schemastud/ui";
  * were off-screen, and a pending -> active flip could not be seen on mobile).
  *
  * The first column is the card's heading, a column whose id is `actions` is the card's footer, and every
- * other column is a labelled field (its string header is the label).
+ * other column is a labelled field. Its label is `meta.label` when the column declares one (a column whose
+ * header is a component, e.g. the team role with its info popover), else its string header, else its id.
  */
 export function ResponsiveRoster<TData extends { id: string }>({
   columns,
@@ -118,11 +127,12 @@ function StackedRows<TData extends { id: string }>({
               <dl className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-x-3 gap-y-1.5 text-[12.5px]">
                 {fields.map((cell) => {
                   const header = cell.column.columnDef.header;
+                  const label =
+                    cell.column.columnDef.meta?.label ??
+                    (typeof header === "string" ? header : cell.column.id);
                   return (
                     <div key={cell.id} className="contents">
-                      <dt className="text-muted-foreground">
-                        {typeof header === "string" ? header : cell.column.id}
-                      </dt>
+                      <dt className="text-muted-foreground">{label}</dt>
                       <dd className="min-w-0">
                         {flexRender(
                           cell.column.columnDef.cell,
