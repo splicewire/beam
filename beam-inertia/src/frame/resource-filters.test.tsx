@@ -78,7 +78,7 @@ describe("manifest console resource capabilities", () => {
     ).toMatchObject({
       resource: "files",
       name: "Modified files",
-      query_parameters: { filter: { state: "modified" } },
+      queryParameters: { filter: { state: "modified" } },
     });
     unmount();
     client.clear();
