@@ -130,9 +130,9 @@ it("subtitles a row with its expiry, never the server's PersonalAccessToken#<id>
 it("labels a past expiry as expired", async () => {
   const { expiryLabel } = await import("../src/tokens-roster");
   const now = Date.parse("2026-06-01T00:00:00Z");
-  expect(expiryLabel({ expires_at: null }, now)).toBe("Never expires");
-  expect(expiryLabel({ expires_at: "2026-01-01T00:00:00Z" }, now)).toMatch(/^Expired /);
-  expect(expiryLabel({ expires_at: "2026-12-31T00:00:00Z" }, now)).toMatch(/^Expires /);
+  expect(expiryLabel({ expiresAt: null }, now)).toBe("Never expires");
+  expect(expiryLabel({ expiresAt: "2026-01-01T00:00:00Z" }, now)).toMatch(/^Expired /);
+  expect(expiryLabel({ expiresAt: "2026-12-31T00:00:00Z" }, now)).toMatch(/^Expires /);
 });
 it("labels an unscoped token 'Full access' without leaking the ['*'] wire wildcard", async () => {
   mount({ client: makeTokensClient(), notify: vi.fn() });

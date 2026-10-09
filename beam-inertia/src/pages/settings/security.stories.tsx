@@ -51,7 +51,7 @@ export const Populated: Story = {
 };
 
 export const ValidationErrors: Story = {
-    render: () => <SecurityStage errors={{ current_password: 'The password is incorrect.' }} />,
+    render: () => <SecurityStage errors={{ currentPassword: 'The password is incorrect.' }} />,
     play: async ({ canvasElement }) => {
         const canvas = within(canvasElement);
         await expect(await canvas.findByText('The password is incorrect.')).toBeInTheDocument();

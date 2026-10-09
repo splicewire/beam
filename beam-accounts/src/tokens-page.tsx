@@ -99,7 +99,7 @@ export function TokensPage() {
         () =>
             all.filter(
                 (t) =>
-                    (showArchived || !t.archived_at) &&
+                    (showArchived || !t.archivedAt) &&
                     (active.size === 0 || active.has(asProvenance(t.provenance))),
             ),
         [all, active, showArchived],
@@ -107,10 +107,10 @@ export function TokensPage() {
 
     const otherSessionCount = useMemo(
         () =>
-            all.filter((t) => t.provenance === 'session' && !t.is_current && !t.archived_at).length,
+            all.filter((t) => t.provenance === 'session' && !t.isCurrent && !t.archivedAt).length,
         [all],
     );
-    const archivedCount = useMemo(() => all.filter((t) => !!t.archived_at).length, [all]);
+    const archivedCount = useMemo(() => all.filter((t) => !!t.archivedAt).length, [all]);
 
     const busy =
         archiveToken.isPending ||
@@ -131,12 +131,12 @@ export function TokensPage() {
                         <span className="min-w-0 truncate font-medium" title={row.original.name}>
                             {row.original.name}
                         </span>
-                        {row.original.is_current && (
+                        {row.original.isCurrent && (
                             <Badge variant="outline" className="shrink-0 text-[10px]">
                                 This session
                             </Badge>
                         )}
-                        {row.original.archived_at && (
+                        {row.original.archivedAt && (
                             <Badge variant="outline" className="shrink-0 text-[10px]">
                                 Archived
                             </Badge>
@@ -161,30 +161,30 @@ export function TokensPage() {
             },
             {
                 header: 'Created',
-                meta: { sortField: 'created', sortAccessor: (t) => t.created_at },
+                meta: { sortField: 'created', sortAccessor: (t) => t.createdAt },
                 cell: ({ row }) => (
                     <span className="text-muted-foreground">
-                        {row.original.created_at ? formatDate(row.original.created_at) : '—'}
+                        {row.original.createdAt ? formatDate(row.original.createdAt) : '—'}
                     </span>
                 ),
             },
             {
                 header: 'Last used',
-                meta: { sortField: 'last_used', sortAccessor: (t) => t.last_used_at },
+                meta: { sortField: 'last_used', sortAccessor: (t) => t.lastUsedAt },
                 cell: ({ row }) => (
                     <span className="text-muted-foreground">
-                        {row.original.last_used_at
-                            ? formatDate(row.original.last_used_at)
+                        {row.original.lastUsedAt
+                            ? formatDate(row.original.lastUsedAt)
                             : 'Never'}
                     </span>
                 ),
             },
             {
                 header: 'Expires',
-                meta: { sortField: 'expires', sortAccessor: (t) => t.expires_at },
+                meta: { sortField: 'expires', sortAccessor: (t) => t.expiresAt },
                 cell: ({ row }) => {
                     const token = row.original;
-                    if (!token.expires_at) {
+                    if (!token.expiresAt) {
                         return <span className="text-muted-foreground">Never</span>;
                     }
                     const expired = isExpired(token);
@@ -192,7 +192,7 @@ export function TokensPage() {
                         <span
                             className={cn('text-muted-foreground', expired && 'text-destructive')}
                         >
-                            {formatDate(token.expires_at)}
+                            {formatDate(token.expiresAt)}
                             {expired ? ' · expired' : ''}
                         </span>
                     );
@@ -348,7 +348,7 @@ export function TokensPage() {
                 clientSort={{ sortableFields: SORTABLE_FIELDS, sort, onSortChange: setSort }}
                 clientPageSize={PAGE_SIZE}
                 rowClassName={(token) =>
-                    token.archived_at || isExpired(token) ? 'opacity-60' : undefined
+                    token.archivedAt || isExpired(token) ? 'opacity-60' : undefined
                 }
                 emptyMessage={
                     all.length === 0 ? 'No tokens yet.' : 'No tokens match the selected types.'
@@ -429,11 +429,11 @@ function RowActions({
     const [open, setOpen] = useState(false);
 
     // Never offer a one-click lockout of the session you're using.
-    if (token.is_current) {
+    if (token.isCurrent) {
         return <span className="text-xs text-muted-foreground">—</span>;
     }
 
-    const archived = !!token.archived_at;
+    const archived = !!token.archivedAt;
     // Renew/rotate only make sense for live, deliberate API tokens.
     const canManage = !archived && asProvenance(token.provenance) === 'api';
 
