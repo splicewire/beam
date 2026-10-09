@@ -42,8 +42,8 @@ export default function Security(props: SecurityPageData) {
                     }}
                     resetOnError={[
                         'password',
-                        'password_confirmation',
-                        'current_password',
+                        'passwordConfirmation',
+                        'currentPassword',
                     ]}
                     resetOnSuccess
                     onError={(errors) => {
@@ -51,7 +51,7 @@ export default function Security(props: SecurityPageData) {
                             passwordInput.current?.focus();
                         }
 
-                        if (errors.current_password) {
+                        if (errors.currentPassword) {
                             currentPasswordInput.current?.focus();
                         }
                     }}
@@ -67,13 +67,13 @@ export default function Security(props: SecurityPageData) {
                                 <PasswordInput
                                     id="current_password"
                                     ref={currentPasswordInput}
-                                    name="current_password"
+                                    name="currentPassword"
                                     className="mt-1 block w-full"
                                     autoComplete="current-password"
                                     placeholder="Current password"
                                 />
 
-                                <InputError message={errors.current_password} />
+                                <InputError message={errors.currentPassword} />
                             </div>
 
                             <div className="grid gap-2">
@@ -99,7 +99,7 @@ export default function Security(props: SecurityPageData) {
 
                                 <PasswordInput
                                     id="password_confirmation"
-                                    name="password_confirmation"
+                                    name="passwordConfirmation"
                                     className="mt-1 block w-full"
                                     autoComplete="new-password"
                                     placeholder="Confirm password"
@@ -107,7 +107,7 @@ export default function Security(props: SecurityPageData) {
                                 />
 
                                 <InputError
-                                    message={errors.password_confirmation}
+                                    message={errors.passwordConfirmation}
                                 />
                             </div>
 
