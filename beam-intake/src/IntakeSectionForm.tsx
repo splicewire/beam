@@ -89,7 +89,7 @@ export function IntakeSectionForm({
                 )}
                 {submit.isSuccess && (
                     <p role="status" className="mt-3 text-sm">
-                        Section received. Reference: {submit.data.submission_id}
+                        Section received. Reference: {submit.data.submissionId}
                     </p>
                 )}
             </CardContent>
