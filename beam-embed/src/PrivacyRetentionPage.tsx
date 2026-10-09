@@ -225,7 +225,7 @@ function EraseCard({ disabled }: { disabled: boolean }) {
         null,
     );
 
-    const canOpen = subjectId.trim().length > 0; // controller: "A visitor_id or session_id is required."
+    const canOpen = subjectId.trim().length > 0; // controller: "A visitorId or sessionId is required."
     const canDestroy = confirmText.trim().toUpperCase() === 'ERASE';
 
     function runErase() {
@@ -256,7 +256,7 @@ function EraseCard({ disabled }: { disabled: boolean }) {
                 </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-                {/* Radio visitor_id | session_id — the controller's "one required" rule. */}
+                {/* Radio visitorId | sessionId — the controller's "one required" rule. */}
                 <div className="flex gap-2">
                     {(['visitorId', 'sessionId'] as EraseSubjectKind[]).map((k) => (
                         <button
