@@ -82,7 +82,7 @@ export const Success: Story = {
         const canvas = within(canvasElement);
         await userEvent.click(canvas.getByRole('button', { name: /submit/i }));
         await expect(canvas.findByRole('status')).resolves.toHaveTextContent(
-            receipt.submission_id,
+            receipt.submissionId,
         );
     },
 };
