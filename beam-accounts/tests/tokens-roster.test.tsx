@@ -36,7 +36,7 @@ function mount(services: TokensServices) {
       <TokensProvider services={services}>
         <TokensRoster />
       </TokensProvider>
-    </QueryClientProvider>,
+    </QueryClientProvider>
   );
 }
 it("renders the promoted roster and sends archive to the injected transport", async () => {
@@ -50,21 +50,23 @@ it("renders the promoted roster and sends archive to the injected transport", as
   });
   expect(await screen.findByText("CI deploys")).toBeTruthy();
   expect(
-    screen.getByRole("button", { name: "Activity CI deploys" }),
+    screen.getByRole("button", { name: "Activity CI deploys" })
   ).toBeTruthy();
   fireEvent.click(screen.getByRole("button", { name: "Archive CI deploys" }));
-  await waitFor(() => expect(client.archive).toHaveBeenCalledWith(SAMPLE_TOKENS[0].id));
+  await waitFor(() =>
+    expect(client.archive).toHaveBeenCalledWith(SAMPLE_TOKENS[0].id)
+  );
   await waitFor(() =>
     expect(notify).toHaveBeenCalledWith({
       type: "success",
       message: "Archived “CI deploys”.",
-    }),
+    })
   );
 });
 it("preserves service provenance instead of treating a machine token as an API token", async () => {
   const token: ApiTokenData = {
     ...SAMPLE_TOKENS[0],
-    id: 'e3b0c442-98fc-4c14-9afb-f4c8996fb090',
+    id: "e3b0c442-98fc-4c14-9afb-f4c8996fb090",
     name: "Sync machine",
     provenance: "service",
   };
@@ -78,7 +80,7 @@ it("preserves service provenance instead of treating a machine token as an API t
 it("reveals a rotated secret through the injected client", async () => {
   const client = makeTokensClient({ tokens: [SAMPLE_TOKENS[0]] });
   client.rotate = vi.fn(async () => ({
-    id: 'e3b0c442-98fc-4c14-9afb-f4c8996fb091',
+    id: "e3b0c442-98fc-4c14-9afb-f4c8996fb091",
     name: "CI deploys",
     token: "fixture-rotated-secret",
   }));
@@ -103,7 +105,7 @@ it("wraps a revealed secret inside the dialog instead of widening it past its ri
   // the dialog's right edge (replay-6 G3-BEAM-TOKENS). jsdom has no layout, so pin the classes.
   const client = makeTokensClient({ tokens: [SAMPLE_TOKENS[0]] });
   client.rotate = vi.fn(async () => ({
-    id: 'e3b0c442-98fc-4c14-9afb-f4c8996fb092',
+    id: "e3b0c442-98fc-4c14-9afb-f4c8996fb092",
     name: "CI deploys",
     token: "27|0kanidkPQLdb4KeSh34yHR98HSdifY4iPd8VL9eu2856b0ac",
   }));
@@ -111,7 +113,7 @@ it("wraps a revealed secret inside the dialog instead of widening it past its ri
   await screen.findByText("CI deploys");
   fireEvent.click(screen.getByRole("button", { name: "Rotate" }));
   const key = await screen.findByText(
-    "27|0kanidkPQLdb4KeSh34yHR98HSdifY4iPd8VL9eu2856b0ac",
+    "27|0kanidkPQLdb4KeSh34yHR98HSdifY4iPd8VL9eu2856b0ac"
   );
   expect(key.className).toMatch(/\bbreak-all\b/);
   expect(key.className).toMatch(/\bmin-w-0\b/);
@@ -123,7 +125,11 @@ it("subtitles a row with its expiry, never the server's PersonalAccessToken#<id>
   await screen.findByText("CI deploys");
   expect(screen.queryByText(/PersonalAccessToken#/)).toBeNull();
   expect(
-    screen.getByText(new RegExp(`^Expire[sd] ${new Date("2026-12-31T00:00:00Z").toLocaleDateString()}$`)),
+    screen.getByText(
+      new RegExp(
+        `^Expire[sd] ${new Date("2026-12-31T00:00:00Z").toLocaleDateString()}$`
+      )
+    )
   ).toBeTruthy();
   expect(screen.getAllByText("Never expires").length).toBeGreaterThan(0);
 });
@@ -131,8 +137,12 @@ it("labels a past expiry as expired", async () => {
   const { expiryLabel } = await import("../src/tokens-roster");
   const now = Date.parse("2026-06-01T00:00:00Z");
   expect(expiryLabel({ expiresAt: null }, now)).toBe("Never expires");
-  expect(expiryLabel({ expiresAt: "2026-01-01T00:00:00Z" }, now)).toMatch(/^Expired /);
-  expect(expiryLabel({ expiresAt: "2026-12-31T00:00:00Z" }, now)).toMatch(/^Expires /);
+  expect(expiryLabel({ expiresAt: "2026-01-01T00:00:00Z" }, now)).toMatch(
+    /^Expired /
+  );
+  expect(expiryLabel({ expiresAt: "2026-12-31T00:00:00Z" }, now)).toMatch(
+    /^Expires /
+  );
 });
 it("labels an unscoped token 'Full access' without leaking the ['*'] wire wildcard", async () => {
   mount({ client: makeTokensClient(), notify: vi.fn() });
@@ -148,7 +158,9 @@ it("describes the new token and the filter in plain words", async () => {
   // The filter is labelled like the table's own "Type" column, and the sessions note says what it does.
   expect(screen.getAllByText("Type").length).toBeGreaterThanOrEqual(2);
   expect(document.body.textContent).not.toMatch(/provenance/i);
-  expect(document.body.textContent).toMatch(/signs out your other browser sessions only/i);
+  expect(document.body.textContent).toMatch(
+    /signs out your other browser sessions only/i
+  );
 
   fireEvent.click(screen.getByRole("button", { name: /new token/i }));
   const dialog = await screen.findByRole("dialog");
@@ -161,7 +173,7 @@ it("keeps the subset symbol and 'plaintext' off the whole page, including the re
   // "the only time the plaintext key is shown". Same rules, plain words, page-wide.
   const client = makeTokensClient({ tokens: [SAMPLE_TOKENS[0]] });
   client.rotate = vi.fn(async () => ({
-    id: 'e3b0c442-98fc-4c14-9afb-f4c8996fb091',
+    id: "e3b0c442-98fc-4c14-9afb-f4c8996fb091",
     name: "CI deploys",
     token: "fixture-rotated-secret",
   }));

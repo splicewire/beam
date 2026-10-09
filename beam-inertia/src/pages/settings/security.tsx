@@ -1,152 +1,145 @@
-import { featureEnabled } from '../../config';
-import { Form, Head } from '@inertiajs/react';
-import { useRef } from 'react';
-import Heading from '../../components/heading';
-import InputError from '../../components/input-error';
-import PasswordInput from '../../components/password-input';
-import { Button } from '../../components/ui/button';
-import { Label } from '../../components/ui/label';
+import { featureEnabled } from "../../config";
+import { Form, Head } from "@inertiajs/react";
+import { useRef } from "react";
+import Heading from "../../components/heading";
+import InputError from "../../components/input-error";
+import PasswordInput from "../../components/password-input";
+import { Button } from "../../components/ui/button";
+import { Label } from "../../components/ui/label";
 
-import ManagePasskeys from '../../components/manage-passkeys';
+import ManagePasskeys from "../../components/manage-passkeys";
 
+import ManageTwoFactor from "../../components/manage-two-factor";
 
-import ManageTwoFactor from '../../components/manage-two-factor';
-
-import type { SecurityPageData } from '@splicewire/beam-resources/types/accounts-pages';
+import type { SecurityPageData } from "@splicewire/beam-resources/types/accounts-pages";
 
 export default function Security(props: SecurityPageData) {
-    const passwordInput = useRef<HTMLInputElement>(null);
-    const currentPasswordInput = useRef<HTMLInputElement>(null);
+  const passwordInput = useRef<HTMLInputElement>(null);
+  const currentPasswordInput = useRef<HTMLInputElement>(null);
 
-    return (
-        // Sections space themselves: the settings layout's `space-y-12` only reaches a page's
-        // direct children when that layout wraps it, so a bare mount put each section's Save
-        // flush against the next heading.
-        <div className="space-y-12">
-            <Head title="Security settings" />
+  return (
+    // Sections space themselves: the settings layout's `space-y-12` only reaches a page's
+    // direct children when that layout wraps it, so a bare mount put each section's Save
+    // flush against the next heading.
+    <div className="space-y-12">
+      <Head title="Security settings" />
 
-            <h1 className="sr-only">Security settings</h1>
+      <h1 className="sr-only">Security settings</h1>
 
-            <div className="space-y-6">
-                <Heading
-                    variant="small"
-                    title="Update password"
-                    description="Ensure your account is using a long, random password to stay secure"
+      <div className="space-y-6">
+        <Heading
+          variant="small"
+          title="Update password"
+          description="Ensure your account is using a long, random password to stay secure"
+        />
+
+        <Form
+          action="/settings/password"
+          method="put"
+          options={{
+            preserveScroll: true,
+          }}
+          resetOnError={["password", "passwordConfirmation", "currentPassword"]}
+          resetOnSuccess
+          onError={(errors) => {
+            if (errors.password) {
+              passwordInput.current?.focus();
+            }
+
+            if (errors.currentPassword) {
+              currentPasswordInput.current?.focus();
+            }
+          }}
+          className="space-y-6"
+        >
+          {({ errors, processing }) => (
+            <>
+              <div className="grid gap-2">
+                <Label htmlFor="current_password">Current password</Label>
+
+                <PasswordInput
+                  id="current_password"
+                  ref={currentPasswordInput}
+                  name="currentPassword"
+                  className="mt-1 block w-full"
+                  autoComplete="current-password"
+                  placeholder="Current password"
                 />
 
-                <Form
-                    action="/settings/password"
-                    method="put"
-                    options={{
-                        preserveScroll: true,
-                    }}
-                    resetOnError={[
-                        'password',
-                        'passwordConfirmation',
-                        'currentPassword',
-                    ]}
-                    resetOnSuccess
-                    onError={(errors) => {
-                        if (errors.password) {
-                            passwordInput.current?.focus();
-                        }
+                <InputError message={errors.currentPassword} />
+              </div>
 
-                        if (errors.currentPassword) {
-                            currentPasswordInput.current?.focus();
-                        }
-                    }}
-                    className="space-y-6"
+              <div className="grid gap-2">
+                <Label htmlFor="password">New password</Label>
+
+                <PasswordInput
+                  id="password"
+                  ref={passwordInput}
+                  name="password"
+                  className="mt-1 block w-full"
+                  autoComplete="new-password"
+                  placeholder="New password"
+                  passwordrules={props.passwordRules}
+                />
+
+                <InputError message={errors.password} />
+              </div>
+
+              <div className="grid gap-2">
+                <Label htmlFor="password_confirmation">Confirm password</Label>
+
+                <PasswordInput
+                  id="password_confirmation"
+                  name="passwordConfirmation"
+                  className="mt-1 block w-full"
+                  autoComplete="new-password"
+                  placeholder="Confirm password"
+                  passwordrules={props.passwordRules}
+                />
+
+                <InputError message={errors.passwordConfirmation} />
+              </div>
+
+              <div className="flex items-center gap-4">
+                <Button
+                  disabled={processing}
+                  data-test="update-password-button"
                 >
-                    {({ errors, processing }) => (
-                        <>
-                            <div className="grid gap-2">
-                                <Label htmlFor="current_password">
-                                    Current password
-                                </Label>
+                  Save
+                </Button>
+              </div>
+            </>
+          )}
+        </Form>
+      </div>
 
-                                <PasswordInput
-                                    id="current_password"
-                                    ref={currentPasswordInput}
-                                    name="currentPassword"
-                                    className="mt-1 block w-full"
-                                    autoComplete="current-password"
-                                    placeholder="Current password"
-                                />
+      {featureEnabled("2fa") && (
+        <>
+          <ManageTwoFactor
+            canManageTwoFactor={props.canManageTwoFactor}
+            requiresConfirmation={props.requiresConfirmation}
+            twoFactorEnabled={props.twoFactorEnabled}
+          />
+        </>
+      )}
 
-                                <InputError message={errors.currentPassword} />
-                            </div>
-
-                            <div className="grid gap-2">
-                                <Label htmlFor="password">New password</Label>
-
-                                <PasswordInput
-                                    id="password"
-                                    ref={passwordInput}
-                                    name="password"
-                                    className="mt-1 block w-full"
-                                    autoComplete="new-password"
-                                    placeholder="New password"
-                                    passwordrules={props.passwordRules}
-                                />
-
-                                <InputError message={errors.password} />
-                            </div>
-
-                            <div className="grid gap-2">
-                                <Label htmlFor="password_confirmation">
-                                    Confirm password
-                                </Label>
-
-                                <PasswordInput
-                                    id="password_confirmation"
-                                    name="passwordConfirmation"
-                                    className="mt-1 block w-full"
-                                    autoComplete="new-password"
-                                    placeholder="Confirm password"
-                                    passwordrules={props.passwordRules}
-                                />
-
-                                <InputError
-                                    message={errors.passwordConfirmation}
-                                />
-                            </div>
-
-                            <div className="flex items-center gap-4">
-                                <Button
-                                    disabled={processing}
-                                    data-test="update-password-button"
-                                >
-                                    Save
-                                </Button>
-                            </div>
-                        </>
-                    )}
-                </Form>
-            </div>
-
-            {featureEnabled('2fa') && (<>
-            <ManageTwoFactor
-                canManageTwoFactor={props.canManageTwoFactor}
-                requiresConfirmation={props.requiresConfirmation}
-                twoFactorEnabled={props.twoFactorEnabled}
-            />
-            </>)}
-
-            {featureEnabled('passkeys') && (<>
-            <ManagePasskeys
-                canManagePasskeys={props.canManagePasskeys}
-                passkeys={props.passkeys}
-            />
-            </>)}
-        </div>
-    );
+      {featureEnabled("passkeys") && (
+        <>
+          <ManagePasskeys
+            canManagePasskeys={props.canManagePasskeys}
+            passkeys={props.passkeys}
+          />
+        </>
+      )}
+    </div>
+  );
 }
 
 Security.layout = {
-    breadcrumbs: [
-        {
-            title: 'Security settings',
-            href: { method: 'get', url: '/settings/security' },
-        },
-    ],
+  breadcrumbs: [
+    {
+      title: "Security settings",
+      href: { method: "get", url: "/settings/security" },
+    },
+  ],
 };
