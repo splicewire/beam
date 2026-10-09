@@ -36,13 +36,13 @@ const MONTH = new Date(2026, 6, 15);
 
 function dto(over: Partial<CalendarEventData> = {}): CalendarEventData {
     return {
-        cell_id: 'cell-1',
+        cellId: 'cell-1',
         channel: 'default',
         kind: 'composition-ref',
         anchor: '2026-07-15',
-        composition_id: 'ref-x',
-        series_ref: null,
-        recurrence_id: null,
+        compositionId: 'ref-x',
+        seriesRef: null,
+        recurrenceId: null,
         virtual: false,
         title: 'Weekly Digest #24',
         status: 'approved',
@@ -52,9 +52,9 @@ function dto(over: Partial<CalendarEventData> = {}): CalendarEventData {
 
 function fakeTransport(over: Partial<CalendarTransport> = {}): CalendarTransport {
     const byCal: Record<string, CalendarEventData[]> = {
-        'cal-a': [dto({ cell_id: 'a1', title: 'A · Digest' })],
-        'cal-b': [dto({ cell_id: 'b1', title: 'B · Blog' })],
-        'cal-x': [dto({ cell_id: 'x1', title: 'X · Single' })],
+        'cal-a': [dto({ cellId: 'a1', title: 'A · Digest' })],
+        'cal-b': [dto({ cellId: 'b1', title: 'B · Blog' })],
+        'cal-x': [dto({ cellId: 'x1', title: 'X · Single' })],
     };
     return {
         listCalendars: () =>
@@ -95,7 +95,7 @@ describe('ref + resident codec', () => {
 
 describe('projection DTO → FoundationCalendarEvent', () => {
     it('maps residence, the routable owning calendar, a resolved colour, and the meta bag', () => {
-        const event = toFoundationEvent(dto({ virtual: true, cell_id: null, series_ref: 'ser-9', recurrence_id: '2026-07-22' }), 'cal-a', () => 'violet');
+        const event = toFoundationEvent(dto({ virtual: true, cellId: null, seriesRef: 'ser-9', recurrenceId: '2026-07-22' }), 'cal-a', () => 'violet');
 
         expect(event.resident).toBe(false);
         expect(event.sourceId).toBe('cal-a'); // owning calendar (routable), not the referenced composition
@@ -191,7 +191,7 @@ describe('CompositionCalendar mounts (aggregate + single)', () => {
             listEvents: (cid) =>
                 Promise.resolve(
                     cid === 'cal-x'
-                        ? [dto({ cell_id: null, virtual: true, series_ref: 'ser-9', recurrence_id: '2026-07-20', anchor: '2026-07-20', title: 'Virtual #26' })]
+                        ? [dto({ cellId: null, virtual: true, seriesRef: 'ser-9', recurrenceId: '2026-07-20', anchor: '2026-07-20', title: 'Virtual #26' })]
                         : [],
                 ),
         });

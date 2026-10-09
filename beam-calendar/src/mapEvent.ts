@@ -44,13 +44,13 @@ export function toFoundationEvent(
     const meta: CalendarEventMeta = {
         status: dto.status,
         kind: dto.kind,
-        seriesRef: dto.series_ref,
-        recurrenceId: dto.recurrence_id,
-        referencedCompositionId: dto.composition_id,
+        seriesRef: dto.seriesRef,
+        recurrenceId: dto.recurrenceId,
+        referencedCompositionId: dto.compositionId,
     };
 
     return {
-        id: dto.cell_id ?? `${dto.series_ref ?? ''}|${dto.recurrence_id ?? ''}|${dto.anchor ?? ''}`,
+        id: dto.cellId ?? `${dto.seriesRef ?? ''}|${dto.recurrenceId ?? ''}|${dto.anchor ?? ''}`,
         title: dto.title,
         start,
         end: start,
@@ -61,9 +61,9 @@ export function toFoundationEvent(
         resident: !dto.virtual,
         ref: encodeRef({
             compositionId: owningCalendarId,
-            cellId: dto.cell_id,
-            seriesRef: dto.series_ref,
-            recurrenceId: dto.recurrence_id,
+            cellId: dto.cellId,
+            seriesRef: dto.seriesRef,
+            recurrenceId: dto.recurrenceId,
         }),
         meta: meta as unknown as Record<string, unknown>,
     };
