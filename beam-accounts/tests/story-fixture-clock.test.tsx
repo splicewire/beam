@@ -12,7 +12,7 @@ afterEach(() => {
 
 // The roster prints "Last used" as "Nd ago" from Date.now(). A fixture with fixed dates made the
 // TokensRoster baselines tick over every day at 21:00Z (launch ticket 05, slice 10). The expiry date counts
-// too: a token within 14 days of expires_at is "expiring", and one past it reads "Expired".
+// too: a token within 14 days of expiresAt is "expiring", and one past it reads "Expired".
 it.each([
   "2026-10-03T20:58:00Z",
   "2026-10-04T21:30:00Z",

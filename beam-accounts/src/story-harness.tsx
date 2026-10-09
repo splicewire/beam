@@ -99,13 +99,13 @@ export function makeAuthClient(config: AuthMockConfig = {}): AuthClient {
         registrationOptions: () => settle({ handle: 'h', options: {} }, passkeyOutcome),
         register: () =>
             settle<PasskeyData>(
-                { id: 99, name: 'New device', last_used_at: null, created_at: new Date().toISOString() },
+                { id: 99, name: 'New device', lastUsedAt: null, createdAt: new Date().toISOString() },
                 passkeyOutcome,
             ),
         list: () => (passkeysLoading ? never : Promise.resolve(passkeys)),
         rename: (id, name) =>
             settle<PasskeyData>(
-                { id, name, last_used_at: null, created_at: new Date().toISOString() },
+                { id, name, lastUsedAt: null, createdAt: new Date().toISOString() },
                 passkeyOutcome,
             ),
         remove: async () => settle(undefined),
@@ -120,9 +120,9 @@ export function makeAuthClient(config: AuthMockConfig = {}): AuthClient {
 }
 
 export const SAMPLE_PASSKEYS: PasskeyData[] = [
-    { id: 1, name: 'MacBook Pro (Touch ID)', last_used_at: '2026-07-20T10:00:00Z', created_at: '2026-01-01T00:00:00Z' },
-    { id: 2, name: 'iPhone 15', last_used_at: '2026-07-24T18:30:00Z', created_at: '2026-03-15T00:00:00Z' },
-    { id: 3, name: 'YubiKey 5C', last_used_at: null, created_at: '2026-05-01T00:00:00Z' },
+    { id: 1, name: 'MacBook Pro (Touch ID)', lastUsedAt: '2026-07-20T10:00:00Z', createdAt: '2026-01-01T00:00:00Z' },
+    { id: 2, name: 'iPhone 15', lastUsedAt: '2026-07-24T18:30:00Z', createdAt: '2026-03-15T00:00:00Z' },
+    { id: 3, name: 'YubiKey 5C', lastUsedAt: null, createdAt: '2026-05-01T00:00:00Z' },
 ];
 
 /** Wrap children in a fresh QueryClient + a mocked AuthProvider. */
@@ -164,28 +164,28 @@ export interface TokensMockConfig {
 export const SAMPLE_TOKENS: ApiTokenData[] = [
     {
         id: '0f1e2d3c-4b5a-4697-8899-aabbccddee01', name: 'CI deploys', provenance: 'api', abilities: null,
-        created_at: '2026-01-10T00:00:00Z', last_used_at: '2026-07-24T09:00:00Z',
-        expires_at: '2026-12-31T00:00:00Z', archived_at: null, is_current: false,
+        createdAt: '2026-01-10T00:00:00Z', lastUsedAt: '2026-07-24T09:00:00Z',
+        expiresAt: '2026-12-31T00:00:00Z', archivedAt: null, isCurrent: false,
     },
     {
         id: '0f1e2d3c-4b5a-4697-8899-aabbccddee02', name: 'Read-only metrics', provenance: 'api', abilities: ['metrics.read', 'reports.read'],
-        created_at: '2026-02-01T00:00:00Z', last_used_at: '2026-07-01T12:00:00Z',
-        expires_at: null, archived_at: null, is_current: false,
+        createdAt: '2026-02-01T00:00:00Z', lastUsedAt: '2026-07-01T12:00:00Z',
+        expiresAt: null, archivedAt: null, isCurrent: false,
     },
     {
         id: '0f1e2d3c-4b5a-4697-8899-aabbccddee03', name: 'Chrome · macOS', provenance: 'session', abilities: null,
-        created_at: '2026-07-25T08:00:00Z', last_used_at: '2026-07-25T08:05:00Z',
-        expires_at: null, archived_at: null, is_current: true,
+        createdAt: '2026-07-25T08:00:00Z', lastUsedAt: '2026-07-25T08:05:00Z',
+        expiresAt: null, archivedAt: null, isCurrent: true,
     },
     {
         id: '0f1e2d3c-4b5a-4697-8899-aabbccddee04', name: 'Firefox · Linux', provenance: 'session', abilities: null,
-        created_at: '2026-07-20T08:00:00Z', last_used_at: '2026-07-22T08:00:00Z',
-        expires_at: null, archived_at: null, is_current: false,
+        createdAt: '2026-07-20T08:00:00Z', lastUsedAt: '2026-07-22T08:00:00Z',
+        expiresAt: null, archivedAt: null, isCurrent: false,
     },
     {
         id: '0f1e2d3c-4b5a-4697-8899-aabbccddee05', name: 'Old staging key', provenance: 'api', abilities: ['deploy.write'],
-        created_at: '2025-06-01T00:00:00Z', last_used_at: '2025-12-01T00:00:00Z',
-        expires_at: '2026-01-01T00:00:00Z', archived_at: '2026-01-02T00:00:00Z', is_current: false,
+        createdAt: '2025-06-01T00:00:00Z', lastUsedAt: '2025-12-01T00:00:00Z',
+        expiresAt: '2026-01-01T00:00:00Z', archivedAt: '2026-01-02T00:00:00Z', isCurrent: false,
     },
 ];
 
@@ -215,22 +215,22 @@ export function makeTokensClient(config: TokensMockConfig = {}): TokensClient {
 const SAMPLE_TOKENS_AS_OF = Date.parse('2026-10-03T12:00:00Z');
 
 /**
- * {@link SAMPLE_TOKENS} with each `last_used_at` moved to the same age relative to `now` that it had
+ * {@link SAMPLE_TOKENS} with each `lastUsedAt` moved to the same age relative to `now` that it had
  * at `SAMPLE_TOKENS_AS_OF`. The roster prints that column as "Nd ago" from `Date.now()`, so fixed
- * dates made its stories and baselines change every day. A live token's `expires_at` is also read
+ * dates made its stories and baselines change every day. A live token's `expiresAt` is also read
  * against the clock: within 14 days it counts as "expiring", and past it the row reads "Expired". So a
- * live expiry moves to a fixed far-future date, while an archived one stays as it is. `created_at`
- * renders as an absolute date and stays fixed. (TokensPage prints `last_used_at` as an absolute date
+ * live expiry moves to a fixed far-future date, while an archived one stays as it is. `createdAt`
+ * renders as an absolute date and stays fixed. (TokensPage prints `lastUsedAt` as an absolute date
  * and keeps `SAMPLE_TOKENS`.) Call it once at module scope, because `MockTokensProvider` memoises on
  * its config.
  */
 export function rosterTokens(now: number = Date.now()): ApiTokenData[] {
     return SAMPLE_TOKENS.map((token) => ({
         ...token,
-        last_used_at: token.last_used_at
-            ? new Date(now - (SAMPLE_TOKENS_AS_OF - Date.parse(token.last_used_at))).toISOString()
+        lastUsedAt: token.lastUsedAt
+            ? new Date(now - (SAMPLE_TOKENS_AS_OF - Date.parse(token.lastUsedAt))).toISOString()
             : null,
-        expires_at: token.expires_at && !token.archived_at ? '2099-12-31T00:00:00Z' : token.expires_at,
+        expiresAt: token.expiresAt && !token.archivedAt ? '2099-12-31T00:00:00Z' : token.expiresAt,
     }));
 }
 

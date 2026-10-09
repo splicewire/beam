@@ -6,11 +6,11 @@ id: string,
 name: string,
 provenance: TokenProvenance,
 abilities: string[] | null,
-created_at: string | null,
-last_used_at: string | null,
-expires_at: string | null,
-archived_at: string | null,
-is_current: boolean,
+createdAt: string | null,
+lastUsedAt: string | null,
+expiresAt: string | null,
+archivedAt: string | null,
+isCurrent: boolean,
 };
 
 export type CreatedTokenData = {

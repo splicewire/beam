@@ -123,8 +123,8 @@ function asProvenance(value: string): TokenProvenance {
 }
 
 function isExpiring(token: ApiTokenData): boolean {
-  if (!token.expires_at || token.archived_at) return false;
-  const days = (new Date(token.expires_at).getTime() - Date.now()) / 86_400_000;
+  if (!token.expiresAt || token.archivedAt) return false;
+  const days = (new Date(token.expiresAt).getTime() - Date.now()) / 86_400_000;
   return days >= 0 && days <= 14;
 }
 
@@ -134,9 +134,9 @@ function fmtDate(value: string | null): string {
 
 /** The row's subtitle: when the token stops working. (Last used, created and scope have their own
  *  columns; the subtitle used to print `PersonalAccessToken#<id>`, a server class name.) */
-export function expiryLabel(token: Pick<ApiTokenData, "expires_at">, now: number = Date.now()): string {
-  if (!token.expires_at) return "Never expires";
-  const at = new Date(token.expires_at);
+export function expiryLabel(token: Pick<ApiTokenData, "expiresAt">, now: number = Date.now()): string {
+  if (!token.expiresAt) return "Never expires";
+  const at = new Date(token.expiresAt);
   return `${at.getTime() < now ? "Expired" : "Expires"} ${at.toLocaleDateString()}`;
 }
 
@@ -570,7 +570,7 @@ function buildColumns(
               <span className="truncate text-[13px] font-medium" title={t.name}>
                 {t.name}
               </span>
-              {t.is_current && (
+              {t.isCurrent && (
                 <Badge variant="secondary" className="shrink-0 text-[10px]">
                   This session
                 </Badge>
@@ -580,7 +580,7 @@ function buildColumns(
                   <Clock3 className="size-3" /> expiring
                 </span>
               )}
-              {t.archived_at && (
+              {t.archivedAt && (
                 <Badge
                   variant="outline"
                   className="shrink-0 text-[10px] text-muted-foreground"
@@ -615,20 +615,20 @@ function buildColumns(
       cell: ({ row }) => <ScopeChips abilities={row.original.abilities} />,
     },
     {
-      id: "last_used_at",
+      id: "lastUsedAt",
       header: "Last used",
       cell: ({ row }) => (
         <span className="text-[12.5px] text-muted-foreground">
-          {fmtRelative(row.original.last_used_at)}
+          {fmtRelative(row.original.lastUsedAt)}
         </span>
       ),
     },
     {
-      id: "created_at",
+      id: "createdAt",
       header: "Created",
       cell: ({ row }) => (
         <span className="text-[12.5px] text-muted-foreground">
-          {fmtDate(row.original.created_at)}
+          {fmtDate(row.original.createdAt)}
         </span>
       ),
     },
@@ -637,13 +637,13 @@ function buildColumns(
       header: () => <span className="sr-only">Actions</span>,
       cell: ({ row }) => {
         const t = row.original;
-        // is_current renders "—": the server 422 guard made a visible affordance.
-        if (t.is_current) {
+        // isCurrent renders "—": the server 422 guard made a visible affordance.
+        if (t.isCurrent) {
           return (
             <span className="font-mono text-sm text-muted-foreground">—</span>
           );
         }
-        const archived = !!t.archived_at;
+        const archived = !!t.archivedAt;
         const canManage = !archived && asProvenance(t.provenance) === "api";
         return (
           <div className="flex items-center justify-end gap-1.5">
@@ -719,7 +719,7 @@ export function TokensRoster() {
   const rows = useMemo(
     () =>
       all.filter((t) => {
-        if (!showArchived && t.archived_at) return false;
+        if (!showArchived && t.archivedAt) return false;
         if (active.size > 0 && !active.has(asProvenance(t.provenance)))
           return false;
         return true;
@@ -728,18 +728,18 @@ export function TokensRoster() {
   );
 
   const health = useMemo(() => {
-    const live = all.filter((t) => !t.archived_at);
+    const live = all.filter((t) => !t.archivedAt);
     return {
       active: live.length,
       expiring: live.filter(isExpiring).length,
-      archived: all.filter((t) => t.archived_at).length,
+      archived: all.filter((t) => t.archivedAt).length,
     };
   }, [all]);
 
   const otherSessionCount = useMemo(
     () =>
       all.filter(
-        (t) => t.provenance === "session" && !t.is_current && !t.archived_at,
+        (t) => t.provenance === "session" && !t.isCurrent && !t.archivedAt,
       ).length,
     [all],
   );
@@ -863,7 +863,7 @@ export function TokensRoster() {
           data={rows}
           loading={tokensQuery.isPending}
           rowClassName={(t: ApiTokenData) =>
-            t.archived_at ? "opacity-60" : undefined
+            t.archivedAt ? "opacity-60" : undefined
           }
           emptyMessage={
             all.length === 0

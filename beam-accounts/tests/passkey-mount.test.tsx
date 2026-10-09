@@ -32,9 +32,9 @@ function fakePasskey(overrides: Partial<AuthClient['passkey']> = {}): NonNullabl
         loginOptions: vi.fn(async () => CHALLENGE),
         login: vi.fn(async () => AUTH_RESULT),
         registrationOptions: vi.fn(async () => CHALLENGE),
-        register: vi.fn(async () => ({ id: 1, name: 'My laptop', last_used_at: null, created_at: null })),
+        register: vi.fn(async () => ({ id: 1, name: 'My laptop', lastUsedAt: null, createdAt: null })),
         list: vi.fn(async () => []),
-        rename: vi.fn(async (id: number, name: string) => ({ id, name, last_used_at: null, created_at: null })),
+        rename: vi.fn(async (id: number, name: string) => ({ id, name, lastUsedAt: null, createdAt: null })),
         remove: vi.fn(async () => {}),
         ...overrides,
     };
@@ -103,7 +103,7 @@ describe('PasskeysSection (ticket 11)', () => {
     it('lists registered passkeys with name + last-used', async () => {
         vi.mocked(webauthn.isWebAuthnSupported).mockReturnValue(true);
         const fixture: PasskeyData[] = [
-            { id: 7, name: 'Work laptop', last_used_at: '2026-07-01T00:00:00+00:00', created_at: null },
+            { id: 7, name: 'Work laptop', lastUsedAt: '2026-07-01T00:00:00+00:00', createdAt: null },
         ];
         mount(<PasskeysSection />, fakeClient({ list: vi.fn(async () => fixture) }));
 
@@ -132,7 +132,7 @@ describe('PasskeysSection (ticket 11)', () => {
     it('renames a passkey inline through the injected transport', async () => {
         vi.mocked(webauthn.isWebAuthnSupported).mockReturnValue(true);
         const fixture: PasskeyData[] = [
-            { id: 5, name: 'Work laptop', last_used_at: null, created_at: '2026-01-01T00:00:00Z' },
+            { id: 5, name: 'Work laptop', lastUsedAt: null, createdAt: '2026-01-01T00:00:00Z' },
         ];
         const client = fakeClient({ list: vi.fn(async () => fixture) });
         mount(<PasskeysSection />, client);
@@ -149,7 +149,7 @@ describe('PasskeysSection (ticket 11)', () => {
     it('hides the rename affordance when the host omits the transport', async () => {
         vi.mocked(webauthn.isWebAuthnSupported).mockReturnValue(true);
         const fixture: PasskeyData[] = [
-            { id: 8, name: 'Solo key', last_used_at: null, created_at: null },
+            { id: 8, name: 'Solo key', lastUsedAt: null, createdAt: null },
         ];
         const client = fakeClient({ list: vi.fn(async () => fixture), rename: undefined });
         mount(<PasskeysSection />, client);
@@ -161,7 +161,7 @@ describe('PasskeysSection (ticket 11)', () => {
     it('deletes a passkey through the injected transport', async () => {
         vi.mocked(webauthn.isWebAuthnSupported).mockReturnValue(true);
         const fixture: PasskeyData[] = [
-            { id: 9, name: 'Old key', last_used_at: null, created_at: null },
+            { id: 9, name: 'Old key', lastUsedAt: null, createdAt: null },
         ];
         const client = fakeClient({ list: vi.fn(async () => fixture) });
         mount(<PasskeysSection />, client);
