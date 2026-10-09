@@ -17,5 +17,5 @@ export const populatedSection: EntityIntakeFormSectionData = {
     fields: { name: 'Alex' },
 };
 export const receipt: EntityIntakeSectionSubmittedData = {
-    submission_id: 'submission-fixture',
+    submissionId: 'submission-fixture',
 };
