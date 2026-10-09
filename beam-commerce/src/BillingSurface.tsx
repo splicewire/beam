@@ -20,6 +20,7 @@ import { errorMessage, formatDate, formatUsd } from './format';
 import { useBillPreview, useBills, useBudget, useUsageSummary } from './commerce-hooks';
 import { useCommerceCan } from './commerce-provider';
 import type { Bill, BudgetVerdict, UsageModelBreakdown } from './commerce-types';
+import { SurfaceHeading } from './SurfaceHeading';
 
 /**
  * Billing / spend control (Frame OS ticket 21 — promoted from the app's settings `BillingPage`). The
@@ -401,7 +402,7 @@ function BillsSection({ onSelect }: { onSelect: (bill: Bill) => void }) {
     );
 }
 
-export function BillingSurface() {
+export function BillingSurface({ embedded = false }: { embedded?: boolean } = {}) {
     // Progressive-disclosure gate: the meter always renders (no perm); usage needs usage.view; the
     // bill preview + roster need billing.view. Gate on the actual permission — the client mirror of
     // the server's in-controller abort(403) — so a section only renders when the tenant can truly
@@ -425,7 +426,9 @@ export function BillingSurface() {
         <div className="space-y-6">
             <div className="flex items-start justify-between gap-4">
                 <div>
-                    <h1 className="text-xl font-semibold tracking-tight">Billing</h1>
+                    <SurfaceHeading embedded={embedded}>
+                        {embedded ? 'Budget, usage and bills' : 'Billing'}
+                    </SurfaceHeading>
                     <p className="text-sm text-muted-foreground">
                         What you&apos;re spending and what you&apos;ll owe.
                     </p>

@@ -31,6 +31,7 @@ import { errorMessage, formatDate, formatUsd } from './format';
 import { useCreditTopupCheckout, useReloadCredits, useWallet } from './commerce-hooks';
 import { useCommerceCan, useCommerceServices } from './commerce-provider';
 import type { CreditLedgerEntry, CreditReloadResult, WalletBalance } from './commerce-types';
+import { SurfaceHeading } from './SurfaceHeading';
 
 /**
  * Prepaid credits & wallet (Frame OS ticket 21 — promoted from the app's `features/credits`). The
@@ -368,7 +369,7 @@ function TopUpSheet({
     );
 }
 
-export function CreditsSurface() {
+export function CreditsSurface({ embedded = false }: { embedded?: boolean } = {}) {
     const wallet = useWallet();
     const topup = useCreditTopupCheckout();
     const reload = useReloadCredits();
@@ -426,7 +427,7 @@ export function CreditsSurface() {
         <div className="space-y-4">
             <div className="flex items-start justify-between gap-3">
                 <div>
-                    <h1 className="text-xl font-semibold tracking-tight">Credits</h1>
+                    <SurfaceHeading embedded={embedded}>Credits</SurfaceHeading>
                     <p className="text-sm text-muted-foreground">
                         Your prepaid generation wallet — balance, ledger, and top-ups.
                     </p>

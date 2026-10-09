@@ -191,6 +191,13 @@ function mount(node: ReactNode, client: CommerceClient, services = {}) {
 }
 
 describe('CreditsSurface — isolation mount (no Laravel)', () => {
+    it('uses a section heading when embedded in a composed billing page', async () => {
+        mount(<CreditsSurface embedded />, fakeClient());
+
+        expect(await screen.findByRole('heading', { level: 2, name: 'Credits' })).toBeTruthy();
+        expect(screen.queryByRole('heading', { level: 1, name: 'Credits' })).toBeNull();
+    });
+
     it('renders the wallet balance + ledger off the injected client (contract kind 1)', async () => {
         const client = fakeClient();
         mount(<CreditsSurface />, client);
@@ -435,6 +442,15 @@ describe('CreditsSurface — the direct-rail reload', () => {
 });
 
 describe('BillingSurface — isolation mount', () => {
+    it('names its embedded section without introducing another page heading', async () => {
+        mount(<BillingSurface embedded />, fakeClient());
+
+        expect(
+            await screen.findByRole('heading', { level: 2, name: 'Budget, usage and bills' }),
+        ).toBeTruthy();
+        expect(screen.queryByRole('heading', { level: 1, name: 'Billing' })).toBeNull();
+    });
+
     it('renders the budget meter off a pure fixture', async () => {
         const client = fakeClient();
         mount(<BillingSurface />, client);
@@ -469,6 +485,13 @@ describe('BillingSurface — isolation mount', () => {
 });
 
 describe('SubscriptionSurface — isolation mount', () => {
+    it('uses a section heading when embedded in a composed billing page', async () => {
+        mount(<SubscriptionSurface embedded />, fakeClient());
+
+        expect(await screen.findByRole('heading', { level: 2, name: 'Subscription' })).toBeTruthy();
+        expect(screen.queryByRole('heading', { level: 1, name: 'Subscription' })).toBeNull();
+    });
+
     it('renders the resolved plan header + entitlement grid off injected reads', async () => {
         const client = fakeClient();
         mount(<SubscriptionSurface />, client);

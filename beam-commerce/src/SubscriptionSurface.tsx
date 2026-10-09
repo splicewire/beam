@@ -24,6 +24,7 @@ import type {
     Subscription,
     SubscriptionView,
 } from './commerce-types';
+import { SurfaceHeading } from './SurfaceHeading';
 
 /**
  * Subscription & plan (Frame OS ticket 21 — promoted from the app's settings `SubscriptionPage`).
@@ -316,11 +317,13 @@ function EntitlementGrid({
 export interface CheckoutSignalProps {
     checkoutSignal?: 'success' | 'cancelled' | null;
     onClearCheckoutSignal?: () => void;
+    embedded?: boolean;
 }
 
 export function SubscriptionSurface({
     checkoutSignal = null,
     onClearCheckoutSignal,
+    embedded = false,
 }: CheckoutSignalProps = {}) {
     const entitlements = useEntitlements();
     const view = useSubscription();
@@ -378,7 +381,7 @@ export function SubscriptionSurface({
         <div className="space-y-6">
             <div className="flex items-start justify-between gap-4">
                 <div>
-                    <h1 className="text-xl font-semibold tracking-tight">Subscription</h1>
+                    <SurfaceHeading embedded={embedded}>Subscription</SurfaceHeading>
                     <p className="text-sm text-muted-foreground">
                         Your recurring plan and what it entitles you to.
                     </p>
