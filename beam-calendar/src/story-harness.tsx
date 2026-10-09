@@ -82,13 +82,13 @@ export const DEMO_CALENDARS: CalendarSummary[] = [
 /** A DTO builder — only the fields the satellite maps + the chrome reads matter. */
 function dto(overrides: Partial<CalendarEventData>): CalendarEventData {
     return {
-        cell_id: 'cell-1',
+        cellId: 'cell-1',
         channel: 'lane-a',
         kind: 'composition-ref',
         anchor: '2026-07-15',
-        composition_id: 'ref-comp-1',
-        series_ref: null,
-        recurrence_id: null,
+        compositionId: 'ref-comp-1',
+        seriesRef: null,
+        recurrenceId: null,
         virtual: false,
         title: 'Untitled release',
         status: 'approved',
@@ -102,15 +102,15 @@ function dto(overrides: Partial<CalendarEventData>): CalendarEventData {
 // SINGLE mount serves the `cal-marketing` set; the AGGREGATE mount merges both.
 const EVENTS_BY_CALENDAR: Record<string, CalendarEventData[]> = {
     'cal-marketing': [
-        dto({ cell_id: 'm1', title: 'Launch: Summer Drop', anchor: '2026-07-03', channel: 'lane-a', kind: 'composition-ref', status: 'approved' }),
-        dto({ cell_id: 'm2', title: 'Preview: Behind the Scenes', anchor: '2026-07-09', channel: 'lane-a', kind: 'idea-ref', status: 'generated' }),
-        dto({ cell_id: 'm3', title: 'Feature: Creator Spotlight', anchor: '2026-07-21', channel: 'lane-a', kind: 'composition-ref', status: 'needs_review' }),
-        dto({ cell_id: null, title: 'Recurring: Weekly Digest', anchor: '2026-07-15', channel: 'lane-b', kind: 'series', status: 'upcoming', virtual: true, series_ref: 'series-9', recurrence_id: '2026-07-15' }),
+        dto({ cellId: 'm1', title: 'Launch: Summer Drop', anchor: '2026-07-03', channel: 'lane-a', kind: 'composition-ref', status: 'approved' }),
+        dto({ cellId: 'm2', title: 'Preview: Behind the Scenes', anchor: '2026-07-09', channel: 'lane-a', kind: 'idea-ref', status: 'generated' }),
+        dto({ cellId: 'm3', title: 'Feature: Creator Spotlight', anchor: '2026-07-21', channel: 'lane-a', kind: 'composition-ref', status: 'needs_review' }),
+        dto({ cellId: null, title: 'Recurring: Weekly Digest', anchor: '2026-07-15', channel: 'lane-b', kind: 'series', status: 'upcoming', virtual: true, seriesRef: 'series-9', recurrenceId: '2026-07-15' }),
     ],
     'cal-product': [
-        dto({ cell_id: 'p1', title: 'Release Notes: v4', anchor: '2026-07-07', channel: 'lane-a', kind: 'disclosure-ref', status: 'approved' }),
-        dto({ cell_id: 'p2', title: 'Deprecation: Legacy API', anchor: '2026-07-24', channel: 'lane-a', kind: 'decommission', status: 'stale' }),
-        dto({ cell_id: null, title: 'Roadmap: Q4 Themes', anchor: '2026-07-28', channel: 'lane-a', kind: 'idea-ref', status: 'upcoming', virtual: true, series_ref: 'series-3', recurrence_id: '2026-07-28' }),
+        dto({ cellId: 'p1', title: 'Release Notes: v4', anchor: '2026-07-07', channel: 'lane-a', kind: 'disclosure-ref', status: 'approved' }),
+        dto({ cellId: 'p2', title: 'Deprecation: Legacy API', anchor: '2026-07-24', channel: 'lane-a', kind: 'decommission', status: 'stale' }),
+        dto({ cellId: null, title: 'Roadmap: Q4 Themes', anchor: '2026-07-28', channel: 'lane-a', kind: 'idea-ref', status: 'upcoming', virtual: true, seriesRef: 'series-3', recurrenceId: '2026-07-28' }),
     ],
 };
 
@@ -143,7 +143,7 @@ export function createMockTransport(fixtures: TransportFixtures = {}): CalendarT
             return Promise.resolve(byCalendar[compositionId] ?? []);
         },
         reAnchor: (_c: string, _t: RefParts, _d: Date) => Promise.resolve(),
-        createRelease: (_c: string, input) => Promise.resolve(dto({ cell_id: `new-${Date.now()}`, title: 'New release', anchor: input.date.toISOString().slice(0, 10) })),
+        createRelease: (_c: string, input) => Promise.resolve(dto({ cellId: `new-${Date.now()}`, title: 'New release', anchor: input.date.toISOString().slice(0, 10) })),
         editCell: () => Promise.resolve(),
         materialize: (_c: string, _t: RefParts) => Promise.resolve(first[0] ?? dto({})),
         override: (_c: string, _t: RefParts, _a: OverrideAction) => Promise.resolve(first[0] ?? dto({})),
