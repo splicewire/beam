@@ -89,7 +89,7 @@ const EXPIRY_OPTIONS = [
 // The create-token schema — the REAL SchemaForm artifact carrying name + expiry. `abilities` is NOT
 // a SchemaForm enum: the grouped scope picker (the ticket-Q1 enhancement) owns scope as a bespoke
 // grouped/searchable control. Both feed the one mint body ({ name, abilities, expiresInDays }).
-const tokenScopeSchema: SchemaNode = {
+export const tokenScopeSchema: SchemaNode = {
   type: "object",
   properties: {
     name: {
@@ -104,8 +104,9 @@ const tokenScopeSchema: SchemaNode = {
       title: "Expires",
       description:
         'When the token stops working. "Never" mints a token with no expiry.',
-      enum: EXPIRY_OPTIONS.map((o) => o.value),
-      enumNames: EXPIRY_OPTIONS.map((o) => o.label),
+      // Labels travel IN the schema as oneOf const/title pairs: the renderer (RJSF 6) never reads a
+      // schema-level `enumNames`, so an enum showed the raw "0" for "Never" (TOWER-05 shots-r5).
+      oneOf: EXPIRY_OPTIONS.map((o) => ({ const: o.value, title: o.label })),
       default: 0,
     },
   },
