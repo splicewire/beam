@@ -44,7 +44,7 @@ export function asProvenance(value: string): TokenProvenance {
 }
 
 export function isExpired(token: ApiTokenData): boolean {
-    return !!token.expires_at && new Date(token.expires_at).getTime() < Date.now();
+    return !!token.expiresAt && new Date(token.expiresAt).getTime() < Date.now();
 }
 
 /** Locale date, or an em-dash for a null/absent value. Portable browser API only. */

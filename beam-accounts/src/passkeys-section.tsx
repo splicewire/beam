@@ -149,8 +149,8 @@ export function PasskeysSection({
                                     <div className="min-w-0">
                                         <div className="truncate text-sm font-medium">{passkey.name}</div>
                                         <div className="text-xs text-muted-foreground">
-                                            Added {formatDate(passkey.created_at)} · Last used{' '}
-                                            {formatDate(passkey.last_used_at)}
+                                            Added {formatDate(passkey.createdAt)} · Last used{' '}
+                                            {formatDate(passkey.lastUsedAt)}
                                         </div>
                                     </div>
                                     <div className="flex items-center gap-1">
