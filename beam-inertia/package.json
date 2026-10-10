@@ -57,7 +57,7 @@
     "@schemastud/ui": "^0.1.1",
     "@splicewire/beam-accounts": "^0.1.1",
     "@splicewire/beam-mainframe": "0.1.1",
-    "@splicewire/beam-ux": "^0.2.1 || ^0.3.0",
+    "@splicewire/beam-ux": "^0.4.0",
     "@tanstack/react-query": "^5.0.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
