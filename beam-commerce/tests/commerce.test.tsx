@@ -545,6 +545,16 @@ describe('BillingSurface — isolation mount', () => {
         expect(container.querySelector('#subscription')).toBeNull();
     });
 
+    // orch-lead L1: a real ACTIVE subscriber (has_active_plan: true, the current server shape) still gets the estimate.
+    it('renders an active subscriber\'s next-bill estimate, never the empty state', async () => {
+        const client = fakeClient({ getBillPreview: vi.fn(async () => ({ ...BILL_PREVIEW, has_active_plan: true })) });
+        mount(<BillingSurface subscribeHref="#subscription" />, client, { can: () => true });
+
+        expect(await screen.findByText('Song renders')).toBeTruthy();
+        expect(screen.queryByText('No active plan')).toBeNull();
+        expect(screen.queryByRole('link', { name: 'Choose a plan' })).toBeNull();
+    });
+
     it('treats a preview without has_active_plan (an older adapter) as a plan in force, not the empty state', async () => {
         const { line_items, total_usd } = BILL_PREVIEW;
         mount(<BillingSurface subscribeHref="#subscription" />, fakeClient({ getBillPreview: vi.fn(async () => ({ line_items, total_usd })) }), {
