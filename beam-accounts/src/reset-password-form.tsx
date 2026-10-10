@@ -38,7 +38,7 @@ export function ResetPasswordForm({ token, email, brand, onSuccess }: ResetPassw
                 token,
                 email,
                 password,
-                password_confirmation: confirmation,
+                passwordConfirmation: confirmation,
             });
             onSuccess?.();
         } catch {

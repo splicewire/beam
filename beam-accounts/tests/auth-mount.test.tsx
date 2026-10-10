@@ -175,7 +175,7 @@ describe('ResetPasswordForm', () => {
                 token: 'tok-123',
                 email: 'me@test.com',
                 password: 'brand-new-pass',
-                password_confirmation: 'brand-new-pass',
+                passwordConfirmation: 'brand-new-pass',
             }),
         );
         await waitFor(() => expect(onSuccess).toHaveBeenCalled());
