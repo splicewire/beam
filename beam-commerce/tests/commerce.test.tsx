@@ -759,3 +759,24 @@ describe('X follow-up (c): human labels, no developer type names', () => {
         expect(ledgerReasonLabel('Generation')).toBe('Generation');
     });
 });
+
+// (d) The plan header read "1 months", and with no declared funding it inferred one from the price id ("Managed in
+// Stripe" / "No recurring price"), which the M14 rule forbids.
+describe('X follow-up (d): commitment count and undeclared funding', () => {
+    it('says "1 month" and "12 months"', async () => {
+        for (const [months, text] of [[1, '1 month'], [12, '12 months']] as const) {
+            const view = mount(<SubscriptionSurface />, fakeClient({ getSubscription: vi.fn(async () => subscriptionWith({ commitmentMonths: months })) }));
+            expect(await screen.findByText(text)).toBeTruthy();
+            view.unmount();
+        }
+    });
+
+    it('states undeclared funding as not recorded, whatever the price id', async () => {
+        for (const priceId of ['price_1', null]) {
+            const view = mount(<SubscriptionSurface />, fakeClient({ getSubscription: vi.fn(async () => subscriptionWith({ funding: null }, priceId)) }));
+            expect(await screen.findByText('Not recorded')).toBeTruthy();
+            expect(screen.queryByText(/Managed in Stripe|No recurring price/)).toBeNull();
+            view.unmount();
+        }
+    });
+});
