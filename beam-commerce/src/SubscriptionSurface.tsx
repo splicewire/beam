@@ -81,7 +81,7 @@ function LifecycleBadge({ state, endsAt, awaitingPayment }: { state: LifecycleSt
  * How the subscription is funded, stated from the declared value (purchase-walkthrough M14). Never inferred from a
  * missing price id: a plan with no price is not thereby a "Free tier".
  */
-function fundingLabel(sub: Subscription | null, stripePriceId: string | null): string {
+function fundingLabel(sub: Subscription | null): string {
     if (sub?.awaitingPayment) return 'Awaiting payment';
     switch (sub?.funding) {
         case 'card':
@@ -93,7 +93,7 @@ function fundingLabel(sub: Subscription | null, stripePriceId: string | null): s
         case 'none':
             return 'Not funded';
         default:
-            return stripePriceId ? 'Managed in Stripe' : 'No recurring price';
+            return 'Not recorded';
     }
 }
 
@@ -126,14 +126,14 @@ function PlanHeaderCard({ view }: { view: SubscriptionView }) {
                     <div>
                         <div className="text-xs text-muted-foreground">Funding</div>
                         <div className="text-lg font-semibold">
-                            <span className="text-muted-foreground">{fundingLabel(sub, view.stripePriceId)}</span>
+                            <span className="text-muted-foreground">{fundingLabel(sub)}</span>
                         </div>
                     </div>
                     <div>
                         <div className="text-xs text-muted-foreground">Commitment</div>
                         <div className="text-lg font-semibold">
                             {sub?.commitmentMonths
-                                ? `${sub.commitmentMonths} months`
+                                ? `${sub.commitmentMonths} ${sub.commitmentMonths === 1 ? 'month' : 'months'}`
                                 : 'Month-to-month'}
                         </div>
                     </div>
