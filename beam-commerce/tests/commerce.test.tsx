@@ -11,6 +11,7 @@ import {
     CreditsSurface,
     SubscriptionSurface,
 } from '../src/index';
+import { componentLabel, ledgerReasonLabel } from '../src/format';
 import {
     ACTIVE_CONFIG,
     MockAutoReloadProvider,
@@ -712,5 +713,49 @@ describe('SubscriptionSurface — lifecycle is declared', () => {
         mount(<SubscriptionSurface />, client);
 
         expect(await screen.findByText('Lapsed')).toBeTruthy();
+    });
+});
+
+// ── X shot review follow-ups (integrator 8196619a, ticket 00 879dddd8) ─────────
+//
+// (c) The surfaces showed developer labels: the `SubscriptionData` / `EntitlementData[]` type names, the raw billing
+// registry key of a bill line (`SubscriptionFee`), and the engine's raw ledger reason (`topup:fake_cs_…`).
+describe('X follow-up (c): human labels, no developer type names', () => {
+    it('shows no Data type name on the plan header or the entitlement grid', async () => {
+        mount(<SubscriptionSurface />, fakeClient());
+
+        expect(await screen.findByText('Resolved entitlements')).toBeTruthy();
+        expect(screen.queryByText('SubscriptionData')).toBeNull();
+        expect(screen.queryByText('EntitlementData[]')).toBeNull();
+    });
+
+    it('names a bill line by its component, not the registry key', async () => {
+        const preview: BillPreview = {
+            line_items: [{ component_type: 'SubscriptionFee', description: 'Professional plan', amount_usd: 299, metadata: {} }],
+            total_usd: 299,
+        };
+        mount(<BillingSurface />, fakeClient({ getBillPreview: vi.fn(async () => preview) }), {
+            can: (p: string) => p === 'usage.view' || p === 'billing.view',
+        });
+
+        expect(await screen.findByText('Professional plan')).toBeTruthy();
+        expect(screen.getByText('Subscription', { selector: 'div' })).toBeTruthy();
+        expect(screen.queryByText('SubscriptionFee')).toBeNull();
+    });
+
+    it('reads an engine top-up ledger reason as a credit top-up', async () => {
+        mount(<CreditsSurface />, fakeClient({ getWallet: vi.fn(async () => FUNDED_WALLET) }));
+
+        expect(await screen.findByText('Credit top-up')).toBeTruthy();
+        expect(screen.queryByText('topup:fake_abc')).toBeNull();
+    });
+
+    it('labels known components and humanizes an unknown one; leaves other ledger reasons as recorded', () => {
+        expect(componentLabel('SubscriptionFee')).toBe('Subscription');
+        expect(componentLabel('PerSeatFees')).toBe('Seats');
+        expect(componentLabel('PerTokenFees')).toBe('Token usage');
+        expect(componentLabel('MeteredWidgets')).toBe('Metered widgets');
+        expect(ledgerReasonLabel('topup:fake_cs_123')).toBe('Credit top-up');
+        expect(ledgerReasonLabel('Generation')).toBe('Generation');
     });
 });

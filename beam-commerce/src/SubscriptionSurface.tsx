@@ -119,9 +119,6 @@ function PlanHeaderCard({ view }: { view: SubscriptionView }) {
                             {plan?.description ?? 'You have no recurring subscription.'}
                         </CardDescription>
                     </div>
-                    <span className="hidden font-mono text-[11px] text-muted-foreground sm:inline">
-                        SubscriptionData
-                    </span>
                 </div>
             </CardHeader>
             <CardContent>
@@ -221,9 +218,6 @@ function EntitlementGrid({
                             <span className="font-mono text-xs">default → plan → tenant</span>.
                         </CardDescription>
                     </div>
-                    <span className="hidden font-mono text-[11px] text-muted-foreground sm:inline">
-                        EntitlementData[]
-                    </span>
                 </div>
                 <div className="flex flex-wrap gap-1.5 pt-1">
                     {FACETS.map((f) => (

@@ -27,7 +27,7 @@ import {
     RotateCcw,
 } from 'lucide-react';
 import { useState } from 'react';
-import { errorMessage, formatDate, formatUsd } from './format';
+import { errorMessage, formatDate, formatUsd, ledgerReasonLabel } from './format';
 import { useCreditTopupCheckout, useReloadCredits, useWallet } from './commerce-hooks';
 import { useCommerceCan, useCommerceServices } from './commerce-provider';
 import type { CreditLedgerEntry, CreditReloadResult, WalletBalance } from './commerce-types';
@@ -133,7 +133,7 @@ const ledgerColumns: ColumnDef<CreditLedgerEntry, unknown>[] = [
             // Wraps (two lines at most) instead of `truncate`: the table is auto-layout, so a nowrap Reason
             // grew its column to the full text and pushed Amount/Balance off-screen at narrow width.
             <div className="min-w-[8rem]">
-                <div className="line-clamp-2 [overflow-wrap:anywhere]">{row.original.reason}</div>
+                <div className="line-clamp-2 [overflow-wrap:anywhere]">{ledgerReasonLabel(row.original.reason)}</div>
                 {row.original.purchaseRef && (
                     <div className="font-mono text-[11px] text-muted-foreground [overflow-wrap:anywhere]">
                         {row.original.purchaseRef}
