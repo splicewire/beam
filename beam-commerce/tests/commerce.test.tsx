@@ -115,9 +115,9 @@ const BILLS: Bill[] = [
 ];
 
 const BILL_PREVIEW: BillPreview = {
-    line_items: [{ component_type: 'generation', description: 'Song renders', amount_usd: 12, metadata: {} }],
-    total_usd: 12,
-    has_active_plan: true,
+    lineItems: [{ componentType: 'generation', description: 'Song renders', amountUsd: 12, metadata: {} }],
+    totalUsd: 12,
+    hasActivePlan: true,
 };
 
 const SUBSCRIPTION: SubscriptionView = {
@@ -491,9 +491,9 @@ describe('BillingSurface — isolation mount', () => {
     it('renders a no-active-plan empty preview with a choose-plan CTA instead of an error', async () => {
         const client = fakeClient({
             getBillPreview: vi.fn(async () => ({
-                line_items: [],
-                total_usd: 0,
-                has_active_plan: false,
+                lineItems: [],
+                totalUsd: 0,
+                hasActivePlan: false,
             })),
         });
 
@@ -508,9 +508,9 @@ describe('BillingSurface — isolation mount', () => {
     it('without a subscribe target (standalone, or no custody): the no-active-plan empty preview has no dead choose-plan link', async () => {
         const client = fakeClient({
             getBillPreview: vi.fn(async () => ({
-                line_items: [],
-                total_usd: 0,
-                has_active_plan: false,
+                lineItems: [],
+                totalUsd: 0,
+                hasActivePlan: false,
             })),
         });
 
@@ -526,7 +526,7 @@ describe('BillingSurface — isolation mount', () => {
     // review-r1 (HIGH): the CTA must reach a REAL destination, not just carry an href. Through the real panel, the
     // 'Choose a plan' link resolves to the rendered subscription section; with no custody there is no section and no link.
     const noActivePlan = () =>
-        fakeClient({ getBillPreview: vi.fn(async () => ({ line_items: [], total_usd: 0, has_active_plan: false })) });
+        fakeClient({ getBillPreview: vi.fn(async () => ({ lineItems: [], totalUsd: 0, hasActivePlan: false })) });
 
     it('in the composed panel, Choose a plan resolves to the rendered subscription section', async () => {
         const { container } = mount(<CommerceBillingPanel custody="hosted" />, noActivePlan(), { can: () => true });
@@ -545,9 +545,9 @@ describe('BillingSurface — isolation mount', () => {
         expect(container.querySelector('#subscription')).toBeNull();
     });
 
-    // orch-lead L1: a real ACTIVE subscriber (has_active_plan: true, the current server shape) still gets the estimate.
+    // orch-lead L1: a real ACTIVE subscriber (hasActivePlan: true, the current server shape) still gets the estimate.
     it('renders an active subscriber\'s next-bill estimate, never the empty state', async () => {
-        const client = fakeClient({ getBillPreview: vi.fn(async () => ({ ...BILL_PREVIEW, has_active_plan: true })) });
+        const client = fakeClient({ getBillPreview: vi.fn(async () => ({ ...BILL_PREVIEW, hasActivePlan: true })) });
         mount(<BillingSurface subscribeHref="#subscription" />, client, { can: () => true });
 
         expect(await screen.findByText('Song renders')).toBeTruthy();
@@ -555,9 +555,9 @@ describe('BillingSurface — isolation mount', () => {
         expect(screen.queryByRole('link', { name: 'Choose a plan' })).toBeNull();
     });
 
-    it('treats a preview without has_active_plan (an older adapter) as a plan in force, not the empty state', async () => {
-        const { line_items, total_usd } = BILL_PREVIEW;
-        mount(<BillingSurface subscribeHref="#subscription" />, fakeClient({ getBillPreview: vi.fn(async () => ({ line_items, total_usd })) }), {
+    it('treats a preview without hasActivePlan (an older adapter) as a plan in force, not the empty state', async () => {
+        const { lineItems, totalUsd } = BILL_PREVIEW;
+        mount(<BillingSurface subscribeHref="#subscription" />, fakeClient({ getBillPreview: vi.fn(async () => ({ lineItems, totalUsd })) }), {
             can: () => true,
         });
 
