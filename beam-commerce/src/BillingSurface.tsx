@@ -345,7 +345,7 @@ function BillPreviewCard() {
                     </p>
                 )}
                 {preview.isSuccess &&
-                    (preview.data?.has_active_plan === false ? (
+                    (preview.data?.hasActivePlan === false ? (
                         <div className="space-y-2 rounded-md border bg-muted/40 p-4 text-sm">
                             <p className="font-medium">No active plan</p>
                             <p className="text-muted-foreground">
@@ -360,7 +360,7 @@ function BillPreviewCard() {
                         </div>
                     ) : preview.data ? (
                         <div className="divide-y rounded-md border text-sm">
-                            {preview.data.line_items.map((item, i) => (
+                            {preview.data.lineItems.map((item, i) => (
                                 <div
                                     key={i}
                                     className="flex items-center justify-between gap-4 px-3 py-2"
@@ -376,7 +376,7 @@ function BillPreviewCard() {
                             ))}
                             <div className="flex items-center justify-between gap-4 bg-muted/40 px-3 py-2 font-medium">
                                 <span>Estimated total</span>
-                                <span>{formatUsd(preview.data.total_usd)}</span>
+                                <span>{formatUsd(preview.data.totalUsd)}</span>
                             </div>
                         </div>
                     ) : (

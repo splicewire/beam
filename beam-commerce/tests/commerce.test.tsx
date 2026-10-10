@@ -114,9 +114,9 @@ const BILLS: Bill[] = [
 ];
 
 const BILL_PREVIEW: BillPreview = {
-    line_items: [{ component_type: 'generation', description: 'Song renders', amount_usd: 12, metadata: {} }],
-    total_usd: 12,
-    has_active_plan: true,
+    lineItems: [{ component_type: 'generation', description: 'Song renders', amount_usd: 12, metadata: {} }],
+    totalUsd: 12,
+    hasActivePlan: true,
 };
 
 const SUBSCRIPTION: SubscriptionView = {
@@ -490,9 +490,9 @@ describe('BillingSurface — isolation mount', () => {
     it('renders a no-active-plan empty preview with a choose-plan CTA instead of an error', async () => {
         const client = fakeClient({
             getBillPreview: vi.fn(async () => ({
-                line_items: [],
-                total_usd: 0,
-                has_active_plan: false,
+                lineItems: [],
+                totalUsd: 0,
+                hasActivePlan: false,
             })),
         });
 

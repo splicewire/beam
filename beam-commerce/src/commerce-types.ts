@@ -145,10 +145,10 @@ export interface BillPreviewLineItem {
 }
 
 export interface BillPreview {
-    line_items: BillPreviewLineItem[];
-    total_usd: number;
+    lineItems: BillPreviewLineItem[];
+    totalUsd: number;
     /** False only for the declared no-subscription empty state. */
-    has_active_plan: boolean;
+    hasActivePlan: boolean;
 }
 
 /**
