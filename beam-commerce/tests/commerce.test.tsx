@@ -485,6 +485,22 @@ describe('BillingSurface — isolation mount', () => {
         expect(await screen.findByText('Next bill (estimate)')).toBeTruthy();
         expect(await screen.findByText('Bills')).toBeTruthy();
     });
+
+    it('renders a funded prepaid wallet as lifetime credit, not a per-period cap', async () => {
+        const walletBudget: BudgetVerdict = {
+            ...BUDGET,
+            capUsd: 10,
+            remainingUsd: 10,
+            spentUsd: 0,
+            fractionUsed: 0,
+            bindingSourceId: 'prepaid_wallet',
+        };
+        mount(<BillingSurface />, fakeClient({ getBudget: vi.fn(async () => walletBudget) }));
+
+        expect(await screen.findByText('Prepaid wallet')).toBeTruthy();
+        expect(screen.getByText(/lifetime prepaid/i)).toBeTruthy();
+        expect(screen.queryByText(/\$0\.00 of \$10\.00 used/i)).toBeNull();
+    });
 });
 
 describe('SubscriptionSurface — isolation mount', () => {

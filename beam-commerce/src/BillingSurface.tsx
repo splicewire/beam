@@ -130,7 +130,9 @@ function BudgetMeter({ verdict }: { verdict: BudgetVerdict }) {
         );
     }
 
-    if (b.stopKind === 'prepaid_exhausted') {
+    // A funded wallet binds with no stopKind, while an empty wallet binds as
+    // prepaid_exhausted. The source distinguishes lifetime credit from a periodic cap.
+    if (b.bindingSourceId === 'prepaid_wallet' || b.stopKind === 'prepaid_exhausted') {
         return (
             <Card>
                 <CardHeader>
