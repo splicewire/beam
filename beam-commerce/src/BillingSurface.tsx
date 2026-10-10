@@ -345,7 +345,20 @@ function BillPreviewCard() {
                     </p>
                 )}
                 {preview.isSuccess &&
-                    (preview.data ? (
+                    (preview.data?.has_active_plan === false ? (
+                        <div className="space-y-2 rounded-md border bg-muted/40 p-4 text-sm">
+                            <p className="font-medium">No active plan</p>
+                            <p className="text-muted-foreground">
+                                Choose a plan to see an estimate for your next bill.
+                            </p>
+                            <a
+                                href="#subscription"
+                                className="inline-flex font-medium text-primary underline underline-offset-4"
+                            >
+                                Choose a plan
+                            </a>
+                        </div>
+                    ) : preview.data ? (
                         <div className="divide-y rounded-md border text-sm">
                             {preview.data.line_items.map((item, i) => (
                                 <div

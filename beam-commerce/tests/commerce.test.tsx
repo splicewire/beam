@@ -116,6 +116,7 @@ const BILLS: Bill[] = [
 const BILL_PREVIEW: BillPreview = {
     line_items: [{ component_type: 'generation', description: 'Song renders', amount_usd: 12, metadata: {} }],
     total_usd: 12,
+    has_active_plan: true,
 };
 
 const SUBSCRIPTION: SubscriptionView = {
@@ -484,6 +485,23 @@ describe('BillingSurface — isolation mount', () => {
         expect(await screen.findByText('Usage summary')).toBeTruthy();
         expect(await screen.findByText('Next bill (estimate)')).toBeTruthy();
         expect(await screen.findByText('Bills')).toBeTruthy();
+    });
+
+    it('renders a no-active-plan empty preview with a choose-plan CTA instead of an error', async () => {
+        const client = fakeClient({
+            getBillPreview: vi.fn(async () => ({
+                line_items: [],
+                total_usd: 0,
+                has_active_plan: false,
+            })),
+        });
+
+        mount(<BillingSurface />, client, { can: () => true });
+
+        expect(await screen.findByText('No active plan')).toBeTruthy();
+        const choosePlan = screen.getByRole('link', { name: 'Choose a plan' });
+        expect(choosePlan.getAttribute('href')).toBe('#subscription');
+        expect(screen.queryByText(/could not load the bill preview/i)).toBeNull();
     });
 
     it('wraps the usage heading and month control at narrow widths', async () => {

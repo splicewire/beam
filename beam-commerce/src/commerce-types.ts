@@ -147,6 +147,8 @@ export interface BillPreviewLineItem {
 export interface BillPreview {
     line_items: BillPreviewLineItem[];
     total_usd: number;
+    /** False only for the declared no-subscription empty state. */
+    has_active_plan: boolean;
 }
 
 /**
