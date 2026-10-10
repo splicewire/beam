@@ -133,25 +133,24 @@ export interface CreditReloadResult {
 // ── Client-only wire shapes (no server DTO — write/preview shapes, not read-models) ──
 
 /**
- * The bill-preview line item — snake_case (a raw generator array, not a projected DTO). The
- * preview endpoint returns this un-DTO'd shape, so the package narrows it here rather than off the
- * `beam-resources` projection.
+ * The bill-preview line item, camelCase like every other read-model (laravel-beam-commerce
+ * `BillPreviewLineItemData`; review-r1 X follow-ups HIGH dropped its snake_case wire pin, with no alias).
  */
 export interface BillPreviewLineItem {
-    component_type: string;
+    componentType: string;
     description: string;
-    amount_usd: number;
+    amountUsd: number;
     metadata: Record<string, unknown>;
 }
 
 export interface BillPreview {
-    line_items: BillPreviewLineItem[];
-    total_usd: number;
+    lineItems: BillPreviewLineItem[];
+    totalUsd: number;
     /**
      * False only for the declared no-subscription empty state. Optional so an adapter or fixture written against the
      * older shape stays valid: absent reads as a plan in force (the empty state renders only on an explicit `false`).
      */
-    has_active_plan?: boolean;
+    hasActivePlan?: boolean;
 }
 
 /**
