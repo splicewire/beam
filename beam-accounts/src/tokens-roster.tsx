@@ -1,4 +1,3 @@
-import { ResponsiveRoster } from "./responsive-roster";
 import { useMemo, useState } from "react";
 import type { ColumnDef } from "@tanstack/react-table";
 import {
@@ -15,6 +14,8 @@ import { SchemaForm, type SchemaNode } from "@schemastud/seam";
 import {
   Badge,
   Button,
+  cn,
+  DataTable,
   Dialog,
   DialogContent,
   DialogDescription,
@@ -22,7 +23,6 @@ import {
   DialogHeader,
   DialogTitle,
   Input,
-  cn,
 } from "@schemastud/ui";
 import {
   useTokens,
@@ -866,7 +866,8 @@ export function TokensRoster() {
           Could not load your tokens. Try refreshing this page.
         </p>
       ) : (
-        <ResponsiveRoster
+        <DataTable
+        stackOnMobile
           columns={columns}
           data={rows}
           loading={tokensQuery.isPending}

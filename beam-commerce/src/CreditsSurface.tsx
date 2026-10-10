@@ -180,6 +180,7 @@ function CreditLedger({ data, loading }: { data: CreditLedgerEntry[]; loading: b
             </CardHeader>
             <CardContent>
                 <DataTable
+                    stackOnMobile
                     columns={ledgerColumns}
                     data={data}
                     loading={loading}
