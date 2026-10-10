@@ -867,7 +867,7 @@ export function TokensRoster() {
         </p>
       ) : (
         <DataTable
-        stackOnMobile
+          stackOnMobile
           columns={columns}
           data={rows}
           loading={tokensQuery.isPending}
