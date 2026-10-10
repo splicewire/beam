@@ -367,14 +367,39 @@ export function SubscriptionSurface({
 
     // BUY-04 (BQ-2): the pay action is a card setup for a plan that awaits payment (no Stripe price id is involved); it
     // comes first. Otherwise an org with a Stripe customer manages billing in the portal.
-    const actions = data?.subscription?.awaitingPayment && data.subscription.planId ? (canCheckoutPlan ? (
-        <Button size="sm" onClick={onCheckout} disabled={checkout.isPending}>
-            Subscribe <ArrowUpRight className="size-3.5" />
-        </Button>
-    ) : null) : data?.hasStripeId && canManageBilling ? (
-        <Button variant="outline" size="sm" onClick={onPortal} disabled={portal.isPending}>
-            Manage subscription <ExternalLink className="size-3.5" />
-        </Button>
+    const actions = data?.subscription?.awaitingPayment && data.subscription.planId ? (
+        <div className="flex max-w-64 flex-col items-end gap-1">
+            <Button
+                size="sm"
+                onClick={onCheckout}
+                disabled={!canCheckoutPlan || checkout.isPending}
+                aria-describedby={!canCheckoutPlan ? 'subscription-checkout-refusal' : undefined}
+            >
+                Subscribe <ArrowUpRight className="size-3.5" />
+            </Button>
+            {!canCheckoutPlan && (
+                <p id="subscription-checkout-refusal" className="text-right text-xs text-muted-foreground">
+                    Your role can’t choose a plan. Ask a workspace owner or admin to subscribe.
+                </p>
+            )}
+        </div>
+    ) : data?.hasStripeId ? (
+        <div className="flex max-w-64 flex-col items-end gap-1">
+            <Button
+                variant="outline"
+                size="sm"
+                onClick={onPortal}
+                disabled={!canManageBilling || portal.isPending}
+                aria-describedby={!canManageBilling ? 'subscription-manage-refusal' : undefined}
+            >
+                Manage subscription <ExternalLink className="size-3.5" />
+            </Button>
+            {!canManageBilling && (
+                <p id="subscription-manage-refusal" className="text-right text-xs text-muted-foreground">
+                    Your role can’t manage billing. Ask a workspace owner or admin to manage the subscription.
+                </p>
+            )}
+        </div>
     ) : null;
 
     return (

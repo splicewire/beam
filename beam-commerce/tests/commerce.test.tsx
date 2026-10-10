@@ -233,11 +233,14 @@ describe('CreditsSurface — isolation mount (no Laravel)', () => {
         await waitFor(() => expect(client.startTopupCheckout).toHaveBeenCalledWith(100));
     });
 
-    it('offers no top-up to a principal without billing.manage, while still showing the wallet (launch 90ce7f6e, OQ-A2)', async () => {
+    it('shows why a principal without billing.manage cannot top up, while still showing the wallet', async () => {
         mount(<CreditsSurface />, fakeClient(), { can: (permission: string) => permission !== 'billing.manage' });
 
         expect(await screen.findByText('Credits')).toBeTruthy();
-        await waitFor(() => expect(screen.queryByRole('button', { name: /add credits/i })).toBeNull());
+        const button = screen.getByRole('button', { name: /add credits/i });
+        expect(button.hasAttribute('disabled')).toBe(true);
+        expect(button.getAttribute('aria-describedby')).toBe('credits-manage-refusal');
+        expect(screen.getByText(/your role can.t manage billing/i)).toBeTruthy();
     });
 
     it('follows a redirect action to the hosted leg instead of waiting on a client secret (BUY-02)', async () => {
@@ -512,21 +515,25 @@ describe('SubscriptionSurface — isolation mount', () => {
         await waitFor(() => expect(navigate).toHaveBeenCalledWith('https://stripe.test/portal'));
     });
 
-    it('offers no portal to a principal without billing.manage, while still reading the plan (launch 90ce7f6e, OQ-A2)', async () => {
-        // The server refuses the portal to non-holders of `billing.manage` (403); the surface does not offer a button that
-        // can only fail. The read side stays.
+    it('shows why a principal without billing.manage cannot open the portal', async () => {
         mount(<SubscriptionSurface />, fakeClient(), { can: (permission: string) => permission !== 'billing.manage' });
 
         expect(await screen.findByText('Songwriter')).toBeTruthy();
-        expect(screen.queryByRole('button', { name: /manage subscription/i })).toBeNull();
+        const button = screen.getByRole('button', { name: /manage subscription/i });
+        expect(button.hasAttribute('disabled')).toBe(true);
+        expect(button.getAttribute('aria-describedby')).toBe('subscription-manage-refusal');
+        expect(screen.getByText(/your role can.t manage billing/i)).toBeTruthy();
     });
 
-    it('offers no plan checkout to a principal without plans.checkout, the plan op\'s own gate (launch 90ce7f6e)', async () => {
+    it('shows why a principal without plans.checkout cannot choose a plan', async () => {
         const client = fakeClient({ getSubscription: vi.fn(async () => subscriptionWith({ funding: 'none', awaitingPayment: true })) });
         mount(<SubscriptionSurface />, client, { can: (permission: string) => permission !== 'plans.checkout' });
 
         expect((await screen.findAllByText('Awaiting payment')).length).toBeGreaterThan(0);
-        expect(screen.queryByRole('button', { name: /subscribe/i })).toBeNull();
+        const button = screen.getByRole('button', { name: /subscribe/i });
+        expect(button.hasAttribute('disabled')).toBe(true);
+        expect(button.getAttribute('aria-describedby')).toBe('subscription-checkout-refusal');
+        expect(screen.getByText(/your role can.t choose a plan/i)).toBeTruthy();
     });
 
     it('surfaces the cancelled checkout signal the host passes down (router-blind)', async () => {

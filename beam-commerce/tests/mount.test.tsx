@@ -141,6 +141,27 @@ describe('AutoReloadConfigCard — isolation mount (no Laravel)', () => {
         expect(onSavePaymentMethod).toHaveBeenCalled();
     });
 
+    it('associates the billing-account requirement with Save a card', async () => {
+        const fresh = { ...CONFIG, hasPaymentMethod: false, status: 'needs_payment_method' as const };
+        mount(<AutoReloadConfigCard config={fresh} />, fakeClient(fresh));
+
+        const button = (await screen.findAllByRole('button', { name: /save a card/i }))[0];
+        expect(button.getAttribute('aria-describedby')).toBe('auto-reload-card-requirement');
+        expect(screen.getByText(/requires a billing account/i)).toBeTruthy();
+    });
+
+    it('keeps member controls visible but disabled with an associated refusal', async () => {
+        const fresh = { ...CONFIG, hasPaymentMethod: false, status: 'needs_payment_method' as const };
+        mount(<AutoReloadConfigCard config={fresh} canManage={false} />, fakeClient(fresh));
+
+        const refusal = await screen.findByText(/your role can.t manage billing/i);
+        expect(refusal.id).toBe('auto-reload-manage-refusal');
+        for (const button of screen.getAllByRole('button', { name: /save a card|save changes|\$25/i })) {
+            expect(button.hasAttribute('disabled')).toBe(true);
+            expect(button.getAttribute('aria-describedby')).toBe(refusal.id);
+        }
+    });
+
     it('defaults the Stripe host slot to a no-op when the host injects none', () => {
         const client = fakeClient(CONFIG);
         function Harness() {

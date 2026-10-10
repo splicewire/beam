@@ -140,16 +140,22 @@ function SegBtn({
     icon,
     onClick,
     children,
+    disabled,
+    describedBy,
 }: {
     active: boolean;
     icon: ReactNode;
     onClick: () => void;
     children: ReactNode;
+    disabled?: boolean;
+    describedBy?: string;
 }) {
     return (
         <button
             type="button"
             onClick={onClick}
+            disabled={disabled}
+            aria-describedby={describedBy}
             className={cn(
                 'inline-flex items-center gap-1.5 rounded px-3 py-1.5 text-sm font-medium transition-colors',
                 active
@@ -167,9 +173,13 @@ function SegBtn({
 function CardOnFileRow({
     config,
     onSaveCard,
+    disabled,
+    describedBy,
 }: {
     config: AutoReloadConfig;
     onSaveCard: () => void;
+    disabled?: boolean;
+    describedBy?: string;
 }) {
     if (config.hasPaymentMethod) {
         return (
@@ -190,7 +200,7 @@ function CardOnFileRow({
                         ? 'From subscription'
                         : 'Saved card'}
                 </Badge>
-                <Button variant="outline" size="sm" onClick={onSaveCard}>
+                <Button variant="outline" size="sm" onClick={onSaveCard} disabled={disabled} aria-describedby={describedBy}>
                     Update card
                 </Button>
             </div>
@@ -206,11 +216,11 @@ function CardOnFileRow({
                 <div className="text-sm font-medium text-warning-foreground">
                     Save a card to turn on automatic top-ups
                 </div>
-                <div className="text-xs text-warning-foreground/80">
-                    We save your card securely with Stripe; you're not charged until a top-up runs.
+                <div id="auto-reload-card-requirement" className="text-xs text-warning-foreground/80">
+                    Saving a card requires a billing account. We save it securely with Stripe; you're not charged until a top-up runs.
                 </div>
             </div>
-            <Button size="sm" onClick={onSaveCard}>
+            <Button size="sm" onClick={onSaveCard} disabled={disabled} aria-describedby={describedBy ?? 'auto-reload-card-requirement'}>
                 <CreditCard className="size-4" /> Save a card
             </Button>
         </div>
@@ -300,7 +310,7 @@ function seedForm(config: AutoReloadConfig): FormState {
 
 const AMOUNT_PRESETS = [25, 50, 100];
 
-export function AutoReloadConfigCard({ config }: { config: AutoReloadConfig }) {
+export function AutoReloadConfigCard({ config, canManage = true }: { config: AutoReloadConfig; canManage?: boolean }) {
     const update = useUpdateAutoReloadConfig();
     const onSaveCard = useSavePaymentMethod();
     const clamps = config.clamps;
@@ -333,6 +343,7 @@ export function AutoReloadConfigCard({ config }: { config: AutoReloadConfig }) {
     }
 
     const fixed = form.amountMode === 'fixed';
+    const refusalId = !canManage ? 'auto-reload-manage-refusal' : undefined;
 
     return (
         <Card>
@@ -347,6 +358,11 @@ export function AutoReloadConfigCard({ config }: { config: AutoReloadConfig }) {
                     Keep generation running: when your prepaid balance runs low, top it up
                     automatically — no checkout, no waiting.
                 </CardDescription>
+                {!canManage && (
+                    <p id="auto-reload-manage-refusal" className="text-sm text-muted-foreground">
+                        Your role can’t manage billing. Ask a workspace owner or admin to change auto-reload or its payment method.
+                    </p>
+                )}
             </CardHeader>
             <CardContent className="space-y-6">
                 <FailureBanner config={config} onSaveCard={onSaveCard} />
@@ -362,6 +378,8 @@ export function AutoReloadConfigCard({ config }: { config: AutoReloadConfig }) {
                     <Switch
                         checked={form.enabled}
                         onCheckedChange={(checked) => set('enabled', checked)}
+                        disabled={!canManage}
+                        aria-describedby={refusalId}
                     />
                 </div>
 
@@ -373,6 +391,7 @@ export function AutoReloadConfigCard({ config }: { config: AutoReloadConfig }) {
                         label="Reload when my balance drops below"
                         value={form.thresholdUsd}
                         onChange={(v) => set('thresholdUsd', v)}
+                        disabled={!canManage}
                     />
 
                     {/* Amount mode — a segmented control (fixed ⇄ to_target). */}
@@ -385,6 +404,8 @@ export function AutoReloadConfigCard({ config }: { config: AutoReloadConfig }) {
                                 active={fixed}
                                 icon={<ArrowUpCircle className="size-3.5" />}
                                 onClick={() => set('amountMode', 'fixed')}
+                                disabled={!canManage}
+                                describedBy={refusalId}
                             >
                                 A fixed amount
                             </SegBtn>
@@ -392,6 +413,8 @@ export function AutoReloadConfigCard({ config }: { config: AutoReloadConfig }) {
                                 active={!fixed}
                                 icon={<Target className="size-3.5" />}
                                 onClick={() => set('amountMode', 'to_target')}
+                                disabled={!canManage}
+                                describedBy={refusalId}
                             >
                                 Up to a target
                             </SegBtn>
@@ -403,6 +426,7 @@ export function AutoReloadConfigCard({ config }: { config: AutoReloadConfig }) {
                                     label="Reload amount"
                                     value={form.reloadAmountUsd}
                                     onChange={(v) => set('reloadAmountUsd', v)}
+                                    disabled={!canManage}
                                 />
                                 <div className="flex flex-wrap gap-1.5">
                                     {AMOUNT_PRESETS.map((p) => (
@@ -410,6 +434,8 @@ export function AutoReloadConfigCard({ config }: { config: AutoReloadConfig }) {
                                             key={p}
                                             type="button"
                                             onClick={() => set('reloadAmountUsd', p)}
+                                            disabled={!canManage}
+                                            aria-describedby={refusalId}
                                             className={cn(
                                                 'rounded-md border px-2 py-1 text-xs transition-colors',
                                                 form.reloadAmountUsd === p
@@ -429,6 +455,7 @@ export function AutoReloadConfigCard({ config }: { config: AutoReloadConfig }) {
                                     label="Top up to"
                                     value={form.targetUsd}
                                     onChange={(v) => set('targetUsd', v)}
+                                    disabled={!canManage}
                                     help="We charge the difference between your balance and this target — capped by the per-reload limit below."
                                 />
                             </div>
@@ -449,6 +476,7 @@ export function AutoReloadConfigCard({ config }: { config: AutoReloadConfig }) {
                                 label="Max per reload"
                                 value={form.maxPerReloadUsd}
                                 onChange={(v) => set('maxPerReloadUsd', v)}
+                                disabled={!canManage}
                                 help={
                                     <ClampHelp
                                         raw={form.maxPerReloadUsd}
@@ -462,6 +490,7 @@ export function AutoReloadConfigCard({ config }: { config: AutoReloadConfig }) {
                                 label={`Max spend per ${form.periodDays ?? config.periodDays} days`}
                                 value={form.maxSpendPerPeriodUsd}
                                 onChange={(v) => set('maxSpendPerPeriodUsd', v)}
+                                disabled={!canManage}
                                 help={
                                     <ClampHelp
                                         raw={form.maxSpendPerPeriodUsd}
@@ -478,6 +507,7 @@ export function AutoReloadConfigCard({ config }: { config: AutoReloadConfig }) {
                                     inputMode="numeric"
                                     className="max-w-[12rem] font-mono tabular-nums"
                                     value={form.maxReloadsPerPeriod ?? ''}
+                                    disabled={!canManage}
                                     onChange={(e) =>
                                         set(
                                             'maxReloadsPerPeriod',
@@ -507,6 +537,7 @@ export function AutoReloadConfigCard({ config }: { config: AutoReloadConfig }) {
                                                 ? form.cooldownSeconds / 60
                                                 : ''
                                         }
+                                        disabled={!canManage}
                                         onChange={(e) =>
                                             set(
                                                 'cooldownSeconds',
@@ -542,7 +573,7 @@ export function AutoReloadConfigCard({ config }: { config: AutoReloadConfig }) {
                     {/* Card-on-file — inline (the recommended placement). */}
                     <div className="space-y-2">
                         <Label>Payment method</Label>
-                        <CardOnFileRow config={config} onSaveCard={onSaveCard} />
+                        <CardOnFileRow config={config} onSaveCard={onSaveCard} disabled={!canManage} describedBy={refusalId} />
                     </div>
                 </div>
 
@@ -555,7 +586,7 @@ export function AutoReloadConfigCard({ config }: { config: AutoReloadConfig }) {
                     {update.isSuccess && !update.isPending && (
                         <span className="text-sm text-muted-foreground">Saved.</span>
                     )}
-                    <Button onClick={onSave} disabled={update.isPending}>
+                    <Button onClick={onSave} disabled={!canManage || update.isPending} aria-describedby={refusalId}>
                         <ShieldCheck className="size-4" />
                         {update.isPending ? 'Saving…' : 'Save changes'}
                     </Button>

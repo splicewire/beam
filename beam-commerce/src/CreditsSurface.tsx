@@ -432,11 +432,21 @@ export function CreditsSurface({ embedded = false }: { embedded?: boolean } = {}
                         Your prepaid generation wallet — balance, ledger, and top-ups.
                     </p>
                 </div>
-                {canBuy && (
-                    <Button size="sm" onClick={() => setSheetOpen(true)}>
+                <div className="flex max-w-64 flex-col items-end gap-1">
+                    <Button
+                        size="sm"
+                        onClick={() => setSheetOpen(true)}
+                        disabled={!canBuy}
+                        aria-describedby={!canBuy ? 'credits-manage-refusal' : undefined}
+                    >
                         <Plus className="size-4" /> Add credits
                     </Button>
-                )}
+                    {!canBuy && (
+                        <p id="credits-manage-refusal" className="text-right text-xs text-muted-foreground">
+                            Your role can’t manage billing. Ask a workspace owner or admin to add credits.
+                        </p>
+                    )}
+                </div>
             </div>
 
             {wallet.isPending && <p className="text-sm text-muted-foreground">Loading wallet…</p>}
