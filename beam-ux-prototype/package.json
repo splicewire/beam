@@ -41,12 +41,13 @@
         "prepare": "npm run build"
     },
     "peerDependencies": {
+        "@schemastud/ui": "*",
         "lucide-react": ">=0.400.0",
         "react": ">=18",
         "react-router": ">=7"
     },
     "devDependencies": {
-        "@schemastud/ui": "^0.1.0",
+        "@schemastud/ui": "file:../../schemastud/ui",
         "@types/node": "^22.20.1",
         "@types/react": "^19.0.0",
         "lucide-react": "^0.525.0",
