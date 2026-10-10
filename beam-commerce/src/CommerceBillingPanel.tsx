@@ -53,7 +53,7 @@ export function CommerceBillingPanel({
                 </p>
             </header>
 
-            <BillingSurface embedded />
+            <BillingSurface embedded subscribeHref={hasMoneyCustody ? '#subscription' : undefined} />
 
             {hasMoneyCustody && (
                 <>

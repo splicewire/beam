@@ -320,7 +320,7 @@ function UsageSection() {
 }
 
 // ── Section 3a: Bill preview — a distinct "next bill (estimate)" artifact ───────
-function BillPreviewCard() {
+function BillPreviewCard({ subscribeHref }: { subscribeHref?: string }) {
     const preview = useBillPreview();
 
     return (
@@ -348,15 +348,25 @@ function BillPreviewCard() {
                     (preview.data?.has_active_plan === false ? (
                         <div className="space-y-2 rounded-md border bg-muted/40 p-4 text-sm">
                             <p className="font-medium">No active plan</p>
-                            <p className="text-muted-foreground">
-                                Choose a plan to see an estimate for your next bill.
-                            </p>
-                            <a
-                                href="#subscription"
-                                className="inline-flex font-medium text-primary underline underline-offset-4"
-                            >
-                                Choose a plan
-                            </a>
+                            {subscribeHref ? (
+                                <>
+                                    <p className="text-muted-foreground">
+                                        Choose a plan to see an estimate for your next bill.
+                                    </p>
+                                    {/* Only where the host renders a subscription section to reach (review-r1): a
+                                        standalone surface, or a host with no payment custody, gets no dead link. */}
+                                    <a
+                                        href={subscribeHref}
+                                        className="inline-flex font-medium text-primary underline underline-offset-4"
+                                    >
+                                        Choose a plan
+                                    </a>
+                                </>
+                            ) : (
+                                <p className="text-muted-foreground">
+                                    An estimate for your next bill appears once this workspace has a plan.
+                                </p>
+                            )}
                         </div>
                     ) : preview.data ? (
                         <div className="divide-y rounded-md border text-sm">
@@ -420,7 +430,14 @@ function BillsSection({ onSelect }: { onSelect: (bill: Bill) => void }) {
     );
 }
 
-export function BillingSurface({ embedded = false }: { embedded?: boolean } = {}) {
+export function BillingSurface({
+    embedded = false,
+    subscribeHref,
+}: {
+    embedded?: boolean;
+    /** Where 'Choose a plan' goes from the no-active-plan preview. A host passes it only when it renders that target. */
+    subscribeHref?: string;
+} = {}) {
     // Progressive-disclosure gate: the meter always renders (no perm); usage needs usage.view; the
     // bill preview + roster need billing.view. Gate on the actual permission — the client mirror of
     // the server's in-controller abort(403) — so a section only renders when the tenant can truly
@@ -467,7 +484,7 @@ export function BillingSurface({ embedded = false }: { embedded?: boolean } = {}
                 {canUsage && <UsageSection />}
                 {canBilling && (
                     <>
-                        <BillPreviewCard />
+                        <BillPreviewCard subscribeHref={subscribeHref} />
                         <BillsSection onSelect={setSelectedBill} />
                     </>
                 )}

@@ -7,6 +7,7 @@ import { beforeAll, describe, expect, it, vi } from 'vitest';
 import {
     AutoReloadConfigCard,
     BillingSurface,
+    CommerceBillingPanel,
     CommerceProvider,
     CreditsSurface,
     SubscriptionSurface,
@@ -496,12 +497,62 @@ describe('BillingSurface — isolation mount', () => {
             })),
         });
 
-        mount(<BillingSurface />, client, { can: () => true });
+        mount(<BillingSurface subscribeHref="#subscription" />, client, { can: () => true });
 
         expect(await screen.findByText('No active plan')).toBeTruthy();
         const choosePlan = screen.getByRole('link', { name: 'Choose a plan' });
         expect(choosePlan.getAttribute('href')).toBe('#subscription');
         expect(screen.queryByText(/could not load the bill preview/i)).toBeNull();
+    });
+
+    it('without a subscribe target (standalone, or no custody): the no-active-plan empty preview has no dead choose-plan link', async () => {
+        const client = fakeClient({
+            getBillPreview: vi.fn(async () => ({
+                line_items: [],
+                total_usd: 0,
+                has_active_plan: false,
+            })),
+        });
+
+        mount(<BillingSurface />, client, { can: () => true });
+
+        expect(await screen.findByText('No active plan')).toBeTruthy();
+        // review-r1 (MODERATE): a host with no subscription section to reach gets no dead 'Choose a plan' link.
+        expect(screen.queryByRole('link', { name: 'Choose a plan' })).toBeNull();
+        expect(document.querySelector('a[href="#subscription"]')).toBeNull();
+        expect(screen.queryByText(/could not load the bill preview/i)).toBeNull();
+    });
+
+    // review-r1 (HIGH): the CTA must reach a REAL destination, not just carry an href. Through the real panel, the
+    // 'Choose a plan' link resolves to the rendered subscription section; with no custody there is no section and no link.
+    const noActivePlan = () =>
+        fakeClient({ getBillPreview: vi.fn(async () => ({ line_items: [], total_usd: 0, has_active_plan: false })) });
+
+    it('in the composed panel, Choose a plan resolves to the rendered subscription section', async () => {
+        const { container } = mount(<CommerceBillingPanel custody="hosted" />, noActivePlan(), { can: () => true });
+
+        const link = await screen.findByRole('link', { name: 'Choose a plan' });
+        const target = container.querySelector(link.getAttribute('href') ?? '');
+        expect(target).not.toBeNull();
+        expect(target?.getAttribute('data-commerce-panel')).toBe('subscription');
+    });
+
+    it('in the composed panel with no custody, the no-active-plan preview offers no link', async () => {
+        const { container } = mount(<CommerceBillingPanel custody="none" />, noActivePlan(), { can: () => true });
+
+        expect(await screen.findByText('No active plan')).toBeTruthy();
+        expect(screen.queryByRole('link', { name: 'Choose a plan' })).toBeNull();
+        expect(container.querySelector('#subscription')).toBeNull();
+    });
+
+    it('treats a preview without has_active_plan (an older adapter) as a plan in force, not the empty state', async () => {
+        const { line_items, total_usd } = BILL_PREVIEW;
+        mount(<BillingSurface subscribeHref="#subscription" />, fakeClient({ getBillPreview: vi.fn(async () => ({ line_items, total_usd })) }), {
+            can: () => true,
+        });
+
+        expect(await screen.findByText('Song renders')).toBeTruthy();
+        expect(screen.queryByText('No active plan')).toBeNull();
     });
 
     it('wraps the usage heading and month control at narrow widths', async () => {

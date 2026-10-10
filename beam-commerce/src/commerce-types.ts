@@ -147,8 +147,11 @@ export interface BillPreviewLineItem {
 export interface BillPreview {
     line_items: BillPreviewLineItem[];
     total_usd: number;
-    /** False only for the declared no-subscription empty state. */
-    has_active_plan: boolean;
+    /**
+     * False only for the declared no-subscription empty state. Optional so an adapter or fixture written against the
+     * older shape stays valid: absent reads as a plan in force (the empty state renders only on an explicit `false`).
+     */
+    has_active_plan?: boolean;
 }
 
 /**
