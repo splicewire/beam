@@ -16,7 +16,7 @@ import {
 } from '@schemastud/ui';
 import type { ColumnDef } from '@tanstack/react-table';
 import { useState } from 'react';
-import { errorMessage, formatDate, formatUsd } from './format';
+import { componentLabel, errorMessage, formatDate, formatUsd } from './format';
 import { useBillPreview, useBills, useBudget, useUsageSummary } from './commerce-hooks';
 import { useCommerceCan } from './commerce-provider';
 import type { Bill, BudgetVerdict, UsageModelBreakdown } from './commerce-types';
@@ -378,7 +378,7 @@ function BillPreviewCard({ subscribeHref }: { subscribeHref?: string }) {
                                     <div className="min-w-0">
                                         <div className="truncate">{item.description}</div>
                                         <div className="text-xs text-muted-foreground">
-                                            {item.component_type}
+                                            {componentLabel(item.component_type)}
                                         </div>
                                     </div>
                                     <span className="shrink-0">{formatUsd(item.amount_usd)}</span>
@@ -522,7 +522,7 @@ export function BillingSurface({
                                         <div className="min-w-0">
                                             <div className="truncate">{item.description}</div>
                                             <div className="text-xs text-muted-foreground">
-                                                {item.componentType}
+                                                {componentLabel(item.componentType)}
                                             </div>
                                         </div>
                                         <span className="shrink-0">
