@@ -27,7 +27,7 @@ import {
     RotateCcw,
 } from 'lucide-react';
 import { useState } from 'react';
-import { errorMessage, formatDate, formatUsd, ledgerReasonLabel } from './format';
+import { errorMessage, formatDate, formatUsd } from './format';
 import { useCreditTopupCheckout, useReloadCredits, useWallet } from './commerce-hooks';
 import { useCommerceCan, useCommerceServices } from './commerce-provider';
 import type { CreditLedgerEntry, CreditReloadResult, WalletBalance } from './commerce-types';
@@ -97,7 +97,8 @@ function BalanceHeadline({
 }
 
 // ── Credit ledger — the DataTable, inline ColumnDef. ──
-const ledgerColumns: ColumnDef<CreditLedgerEntry, unknown>[] = [
+// Exported for the TC01 ledger-event-label tests (CreditsSurface.test.tsx).
+export const ledgerColumns: ColumnDef<CreditLedgerEntry, unknown>[] = [
     {
         header: 'Date',
         cell: ({ row }) => (
@@ -128,19 +129,28 @@ const ledgerColumns: ColumnDef<CreditLedgerEntry, unknown>[] = [
         },
     },
     {
-        header: 'Reason',
-        cell: ({ row }) => (
-            // Wraps (two lines at most) instead of `truncate`: the table is auto-layout, so a nowrap Reason
-            // grew its column to the full text and pushed Amount/Balance off-screen at narrow width.
-            <div className="min-w-[8rem]">
-                <div className="line-clamp-2 [overflow-wrap:anywhere]">{ledgerReasonLabel(row.original.reason)}</div>
-                {row.original.purchaseRef && (
-                    <div className="font-mono text-[11px] text-muted-foreground [overflow-wrap:anywhere]">
-                        {row.original.purchaseRef}
-                    </div>
-                )}
-            </div>
-        ),
+        header: 'Event',
+        // TC01 (owner ruling B): the ledger event reads a fixed, direction-based label — "Credit added"
+        // for a credit, "Usage charge" for a debit — never the raw ledger reason (machine strings like
+        // `topup:fake_cs_…` once surfaced here as the primary text). The opaque reference (the reason and
+        // any purchase ref) stays only as secondary audit detail; no finer claim is made about the event.
+        cell: ({ row }) => {
+            const credit = row.original.type === 'credit';
+            const auditRef = [row.original.reason, row.original.purchaseRef].filter(Boolean).join(' · ');
+            return (
+                <div className="min-w-[8rem]">
+                    <div>{credit ? 'Credit added' : 'Usage charge'}</div>
+                    {auditRef && (
+                        <div
+                            data-ledger-audit-ref
+                            className="font-mono text-[11px] text-muted-foreground [overflow-wrap:anywhere]"
+                        >
+                            {auditRef}
+                        </div>
+                    )}
+                </div>
+            );
+        },
     },
     {
         header: 'Amount',
