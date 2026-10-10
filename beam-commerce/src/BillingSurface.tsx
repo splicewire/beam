@@ -347,7 +347,7 @@ function BillPreviewCard() {
                 {preview.isSuccess &&
                     (preview.data ? (
                         <div className="divide-y rounded-md border text-sm">
-                            {preview.data.line_items.map((item, i) => (
+                            {preview.data.lineItems.map((item, i) => (
                                 <div
                                     key={i}
                                     className="flex items-center justify-between gap-4 px-3 py-2"
@@ -355,15 +355,15 @@ function BillPreviewCard() {
                                     <div className="min-w-0">
                                         <div className="truncate">{item.description}</div>
                                         <div className="text-xs text-muted-foreground">
-                                            {componentLabel(item.component_type)}
+                                            {componentLabel(item.componentType)}
                                         </div>
                                     </div>
-                                    <span className="shrink-0">{formatUsd(item.amount_usd)}</span>
+                                    <span className="shrink-0">{formatUsd(item.amountUsd)}</span>
                                 </div>
                             ))}
                             <div className="flex items-center justify-between gap-4 bg-muted/40 px-3 py-2 font-medium">
                                 <span>Estimated total</span>
-                                <span>{formatUsd(preview.data.total_usd)}</span>
+                                <span>{formatUsd(preview.data.totalUsd)}</span>
                             </div>
                         </div>
                     ) : (

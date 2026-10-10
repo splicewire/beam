@@ -115,8 +115,8 @@ const BILLS: Bill[] = [
 ];
 
 const BILL_PREVIEW: BillPreview = {
-    line_items: [{ component_type: 'generation', description: 'Song renders', amount_usd: 12, metadata: {} }],
-    total_usd: 12,
+    lineItems: [{ componentType: 'generation', description: 'Song renders', amountUsd: 12, metadata: {} }],
+    totalUsd: 12,
 };
 
 const SUBSCRIPTION: SubscriptionView = {
@@ -731,8 +731,8 @@ describe('X follow-up (c): human labels, no developer type names', () => {
 
     it('names a bill line by its component, not the registry key', async () => {
         const preview: BillPreview = {
-            line_items: [{ component_type: 'SubscriptionFee', description: 'Professional plan', amount_usd: 299, metadata: {} }],
-            total_usd: 299,
+            lineItems: [{ componentType: 'SubscriptionFee', description: 'Professional plan', amountUsd: 299, metadata: {} }],
+            totalUsd: 299,
         };
         mount(<BillingSurface />, fakeClient({ getBillPreview: vi.fn(async () => preview) }), {
             can: (p: string) => p === 'usage.view' || p === 'billing.view',
