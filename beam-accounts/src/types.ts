@@ -111,7 +111,7 @@ export interface ResetPasswordInput {
   email: string;
   token: string;
   password: string;
-  password_confirmation: string;
+  passwordConfirmation: string;
 }
 
 /**

@@ -18,7 +18,7 @@ export default function Register() {
             <Form
                 action="/register"
                 method="post"
-                resetOnSuccess={['password', 'password_confirmation']}
+                resetOnSuccess={['password', 'passwordConfirmation']}
                 disableWhileProcessing
                 className="flex flex-col gap-6"
             >
@@ -72,20 +72,20 @@ export default function Register() {
                             </div>
 
                             <div className="grid gap-2">
-                                <Label htmlFor="password_confirmation">
+                                <Label htmlFor="passwordConfirmation">
                                     Confirm password
                                 </Label>
                                 <PasswordInput
-                                    id="password_confirmation"
+                                    id="passwordConfirmation"
                                     required
                                     tabIndex={4}
                                     autoComplete="new-password"
-                                    name="password_confirmation"
+                                    name="passwordConfirmation"
                                     placeholder="Confirm password"
                                     passwordrules={passwordRules}
                                 />
                                 <InputError
-                                    message={errors.password_confirmation}
+                                    message={errors.passwordConfirmation}
                                 />
                             </div>
 
