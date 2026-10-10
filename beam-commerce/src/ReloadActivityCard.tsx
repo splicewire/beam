@@ -97,6 +97,7 @@ export function ReloadActivityCard({ activity }: { activity: AutoReloadActivity 
                 </div>
 
                 <DataTable
+                    stackOnMobile
                     columns={attemptColumns}
                     data={activity.attempts}
                     emptyMessage="No automatic reloads yet."
