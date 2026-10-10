@@ -17,7 +17,7 @@ import {
 import type { ColumnDef } from '@tanstack/react-table';
 import { useState } from 'react';
 import { errorMessage, formatDate, formatUsd } from './format';
-import { useBillPreview, useBills, useBudget, useUsageSummary } from './commerce-hooks';
+import { useBillPreview, useBills, useBudget, useSubscription, useUsageSummary } from './commerce-hooks';
 import { useCommerceCan } from './commerce-provider';
 import type { Bill, BudgetVerdict, UsageModelBreakdown } from './commerce-types';
 import { SurfaceHeading } from './SurfaceHeading';
@@ -320,6 +320,21 @@ function UsageSection() {
 }
 
 // ── Section 3a: Bill preview — a distinct "next bill (estimate)" artifact ───────
+// The estimate exists only for an active subscription: the preview endpoint answers its designed 422 otherwise (finding
+// ed2e4c6a), so without one the card says so instead of asking.
+function NoBillPreviewCard() {
+    return (
+        <Card>
+            <CardHeader>
+                <CardTitle>Next bill (estimate)</CardTitle>
+                <CardDescription>
+                    There&apos;s no active subscription, so there&apos;s no next bill to estimate yet.
+                </CardDescription>
+            </CardHeader>
+        </Card>
+    );
+}
+
 function BillPreviewCard() {
     const preview = useBillPreview();
 
@@ -424,6 +439,10 @@ export function BillingSurface({ embedded = false }: { embedded?: boolean } = {}
     const can = useCommerceCan();
     const canUsage = can('usage.view');
     const canBilling = can('billing.view');
+    // The next-bill estimate is asked for only while the subscription is active (the same `active` SubscriptionSurface
+    // reads); the API's 422 for any other tenant is its contract, not an error to show.
+    const subscription = useSubscription();
+    const previewable = subscription.data?.subscription?.active === true;
 
     const [selectedBill, setSelectedBill] = useState<Bill | null>(null);
 
@@ -438,7 +457,7 @@ export function BillingSurface({ embedded = false }: { embedded?: boolean } = {}
                         What you&apos;re spending and what you&apos;ll owe.
                     </p>
                 </div>
-                {canBilling && (
+                {canBilling && previewable && (
                     <Button
                         variant="outline"
                         size="sm"
@@ -454,7 +473,7 @@ export function BillingSurface({ embedded = false }: { embedded?: boolean } = {}
                 {canUsage && <UsageSection />}
                 {canBilling && (
                     <>
-                        <BillPreviewCard />
+                        {previewable ? <BillPreviewCard /> : subscription.isPending ? null : <NoBillPreviewCard />}
                         <BillsSection onSelect={setSelectedBill} />
                     </>
                 )}

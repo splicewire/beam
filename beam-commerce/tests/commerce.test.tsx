@@ -486,6 +486,40 @@ describe('BillingSurface — isolation mount', () => {
         expect(await screen.findByText('Bills')).toBeTruthy();
     });
 
+    // Finding ed2e4c6a (build-qa 18:53Z): the preview endpoint answers its designed 422 'no active subscription' for a
+    // tenant without one, and the card rendered the raw 'Request failed with status code 422'. The preview is asked for
+    // only while the subscription is active; otherwise the card says plainly that there is no next bill to estimate.
+    const billingViewer = { can: (p: string) => p === 'billing.view' };
+
+    it.each([
+        ['no subscription', { ...SUBSCRIPTION, subscription: null, stripePriceId: null, lifecycle: 'none' as const }],
+        ['an inactive subscription', { ...SUBSCRIPTION, subscription: { ...SUBSCRIPTION.subscription!, active: false }, lifecycle: 'lapsed' as const }],
+    ])('with %s: no preview request, no raw error, an honest empty state, bills still shown', async (_label, view) => {
+        const client = fakeClient({
+            getSubscription: vi.fn(async () => view),
+            getBillPreview: vi.fn(async () => {
+                throw new Error('Request failed with status code 422');
+            }),
+        });
+        mount(<BillingSurface />, client, billingViewer);
+
+        expect(await screen.findByText(/no active subscription/i)).toBeTruthy();
+        expect(await screen.findByText('Bills')).toBeTruthy();
+        expect(client.getBillPreview).not.toHaveBeenCalled();
+        expect(screen.queryByText(/status code 422/)).toBeNull();
+        expect(screen.queryByRole('button', { name: 'Preview next bill' })).toBeNull();
+    });
+
+    it('with an active subscription: the preview is asked for and renders', async () => {
+        const client = fakeClient();
+        mount(<BillingSurface />, client, billingViewer);
+
+        expect(await screen.findByText('Next bill (estimate)')).toBeTruthy();
+        await waitFor(() => expect(client.getBillPreview).toHaveBeenCalled());
+        expect(screen.queryByText(/no active subscription/i)).toBeNull();
+        expect(screen.getByRole('button', { name: 'Preview next bill' })).toBeTruthy();
+    });
+
     it('wraps the usage heading and month control at narrow widths', async () => {
         mount(<BillingSurface />, fakeClient());
 
