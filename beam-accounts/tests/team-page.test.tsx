@@ -45,6 +45,25 @@ it("does not show owner actions to an ordinary member", async () => {
   expect(screen.queryByRole("button", { name: /invite member/i })).toBeNull();
   expect(screen.queryByTitle("Resend invitation")).toBeNull();
 });
+
+it("renders the declared role label even when that role is not assignable", async () => {
+  const client = makeTeamClient(undefined, [
+    { ...TEAM_INVITATIONS[0], role: "project_lead" },
+  ]);
+  client.roles = async () => ({
+    assignable: [{ value: "member", label: "Member" }],
+    invitable: [{ value: "project_lead", label: "Project lead" }],
+  });
+
+  render(
+    <MockTeamProvider client={client}>
+      <TeamPage currentUserId="member" />
+    </MockTeamProvider>,
+  );
+
+  expect(await screen.findByText("Project lead")).toBeTruthy();
+  expect(screen.queryByText("project_lead")).toBeNull();
+});
 it("resends through the injected client with the opaque invitation id", async () => {
   const client = makeTeamClient();
   client.resendInvitation = vi.fn(async () => undefined);

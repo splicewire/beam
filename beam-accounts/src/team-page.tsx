@@ -91,6 +91,16 @@ function TeamInner({
   const inviteRows = invitationsQuery.data ?? [];
   const assignableRoles = roles.data?.assignable ?? [];
   const invitableRoles = roles.data?.invitable ?? [];
+  const roleLabels = useMemo(
+    () =>
+      new Map(
+        [...assignableRoles, ...invitableRoles].map((role) => [
+          role.value,
+          role.label,
+        ])
+      ),
+    [assignableRoles, invitableRoles]
+  );
 
   const myRole = memberRows.find((m) => m.id === currentUserId)?.role;
   const isOwner = myRole === "owner"; // manageMembers = owner-only (role change / remove / transfer)
@@ -203,8 +213,8 @@ function TeamInner({
           // non-owners always see a read-only badge (manageMembers = owner-only).
           if (r.kind === "invitation" || !isOwner) {
             return (
-              <Badge variant="secondary" className="capitalize">
-                {r.role}
+              <Badge variant="secondary">
+                {roleLabels.get(String(r.role)) ?? String(r.role)}
               </Badge>
             );
           }
@@ -302,6 +312,7 @@ function TeamInner({
       canInvite,
       lastOwner,
       assignableRoles,
+      roleLabels,
       updateRole.isPending,
       removeMember.isPending,
       revokeInvitation.isPending,
