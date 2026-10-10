@@ -486,6 +486,16 @@ describe('BillingSurface — isolation mount', () => {
         expect(await screen.findByText('Bills')).toBeTruthy();
     });
 
+    it('wraps the usage heading and month control at narrow widths', async () => {
+        mount(<BillingSurface />, fakeClient());
+
+        const month = await screen.findByLabelText('Usage month');
+        expect(month.className).toContain('w-full');
+        expect(month.className).toContain('sm:w-auto');
+        expect(month.closest('[data-usage-header]')?.className).toContain('flex-col');
+        expect(month.closest('[data-usage-header]')?.className).toContain('sm:flex-row');
+    });
+
     it('renders a funded prepaid wallet as lifetime credit, not a per-period cap', async () => {
         const walletBudget: BudgetVerdict = {
             ...BUDGET,

@@ -265,9 +265,12 @@ function UsageSection() {
 
     return (
         <Card>
-            <CardHeader className="flex-row items-start justify-between space-y-0">
+            <CardHeader
+                data-usage-header
+                className="flex-col items-stretch gap-3 space-y-0 sm:flex-row sm:items-start sm:justify-between"
+            >
                 <div className="space-y-1.5">
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
                         <CardTitle>Usage summary</CardTitle>
                         <Badge variant="secondary">OpenAI-only pricing — estimates</Badge>
                     </div>
@@ -278,7 +281,7 @@ function UsageSection() {
                     value={month}
                     max={currentMonth()}
                     onChange={(event) => setMonth(event.target.value || currentMonth())}
-                    className="h-8 rounded-md border border-input bg-transparent px-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    className="h-8 w-full rounded-md border border-input bg-transparent px-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:w-auto"
                     aria-label="Usage month"
                 />
             </CardHeader>
