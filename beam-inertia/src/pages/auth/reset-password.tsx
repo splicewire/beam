@@ -21,7 +21,7 @@ export default function ResetPassword() {
                 action="/reset-password"
                 method="post"
                 transform={(data) => ({ ...data, token, email: emailValue })}
-                resetOnSuccess={['password', 'password_confirmation']}
+                resetOnSuccess={['password', 'passwordConfirmation']}
             >
                 {({ processing, errors }) => (
                     <div className="grid gap-6">
@@ -57,19 +57,19 @@ export default function ResetPassword() {
                         </div>
 
                         <div className="grid gap-2">
-                            <Label htmlFor="password_confirmation">
+                            <Label htmlFor="passwordConfirmation">
                                 Confirm password
                             </Label>
                             <PasswordInput
-                                id="password_confirmation"
-                                name="password_confirmation"
+                                id="passwordConfirmation"
+                                name="passwordConfirmation"
                                 autoComplete="new-password"
                                 className="mt-1 block w-full"
                                 placeholder="Confirm password"
                                 passwordrules={passwordRules}
                             />
                             <InputError
-                                message={errors.password_confirmation}
+                                message={errors.passwordConfirmation}
                                 className="mt-2"
                             />
                         </div>
