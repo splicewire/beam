@@ -22,7 +22,7 @@ afterEach(cleanup);
 
 describe('CommerceBillingPanel', () => {
     it('renders one page heading and every paid surface as an embedded panel', () => {
-        render(<CommerceBillingPanel custody="hosted" autoReload={<p data-testid="auto-reload">Auto-reload</p>} />);
+        const { container } = render(<CommerceBillingPanel custody="hosted" autoReload={<p data-testid="auto-reload">Auto-reload</p>} />);
 
         expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1);
         expect(screen.getByRole('heading', { level: 1, name: 'Billing' })).toBeTruthy();
@@ -30,6 +30,7 @@ describe('CommerceBillingPanel', () => {
         expect(screen.getByTestId('subscription').textContent).toBe('embedded');
         expect(screen.getByTestId('credits').textContent).toBe('embedded');
         expect(screen.getByTestId('auto-reload')).toBeTruthy();
+        expect(container.querySelector('#subscription')?.getAttribute('data-commerce-panel')).toBe('subscription');
     });
 
     it('keeps honest usage and budget but omits every paid surface under no custody', () => {

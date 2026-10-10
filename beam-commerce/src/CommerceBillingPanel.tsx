@@ -57,7 +57,7 @@ export function CommerceBillingPanel({
 
             {hasMoneyCustody && (
                 <>
-                    <section ref={subscriptionRef} tabIndex={-1} data-commerce-panel="subscription">
+                    <section id="subscription" ref={subscriptionRef} tabIndex={-1} data-commerce-panel="subscription">
                         <SubscriptionSurface
                             embedded
                             checkoutSignal={checkoutSignal}
