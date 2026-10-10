@@ -64,6 +64,7 @@ it("renders the declared role label even when that role is not assignable", asyn
   expect(await screen.findByText("Project lead")).toBeTruthy();
   expect(screen.queryByText("project_lead")).toBeNull();
 });
+
 it("resends through the injected client with the opaque invitation id", async () => {
   const client = makeTeamClient();
   client.resendInvitation = vi.fn(async () => undefined);
