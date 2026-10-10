@@ -91,6 +91,8 @@ function TeamInner({
   const inviteRows = invitationsQuery.data ?? [];
   const assignableRoles = roles.data?.assignable ?? [];
   const invitableRoles = roles.data?.invitable ?? [];
+  // A displayed assignment can be valid without being offered by the current editor, so resolve
+  // labels from the complete server-declared vocabulary while the select stays assignable-only.
   const roleLabels = useMemo(
     () =>
       new Map(
@@ -222,7 +224,7 @@ function TeamInner({
           return (
             <div className="flex items-center gap-1.5">
               <SimpleSelect
-                className="h-8 w-32 capitalize"
+                className="h-8 w-32"
                 value={String(r.role)}
                 disabled={disabledSelf || updateRole.isPending}
                 onValueChange={(next) => changeRole(r, next)}
