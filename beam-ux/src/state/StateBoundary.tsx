@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { ForbiddenState } from './ForbiddenState.js';
 import { messageOf, pageStateOf, transportOf, type QueryLike } from './page-state.js';
 
 type Props = {
@@ -23,6 +24,10 @@ type Props = {
 export function StateBoundary({ query, label, filtered, onRetry, upsell, children }: Props) {
     const { state, retry } = pageStateOf(transportOf(query, filtered === undefined ? {} : { filtered }));
 
+    if (state === 'forbidden') {
+        return <ForbiddenState label={label} />;
+    }
+
     let body: ReactNode;
     switch (state) {
         case 'ready':
@@ -31,14 +36,6 @@ export function StateBoundary({ query, label, filtered, onRetry, upsell, childre
             break;
         case 'loading':
             body = <p aria-busy="true" className="p-6 text-sm text-muted-foreground">Loading {label}…</p>;
-            break;
-        case 'forbidden':
-            body = (
-                <div role="alert" className="p-6 text-sm">
-                    <p className="font-medium">You don't have access to {label}.</p>
-                    <p className="text-muted-foreground">An owner or admin of this workspace can grant it.</p>
-                </div>
-            );
             break;
         case 'not-found':
             body = <p role="alert" className="p-6 text-sm">We couldn't find {label}.</p>;

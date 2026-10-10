@@ -4,4 +4,5 @@
  */
 export { PAGE_STATE_TABLE, type PageState, type PageStateOutcome, type Transport } from './page-state.table.js';
 export { messageOf, pageStateOf, retryUnlessClientError, statusOf, transportOf, type QueryLike } from './page-state.js';
+export { ForbiddenState } from './ForbiddenState.js';
 export { StateBoundary } from './StateBoundary.js';

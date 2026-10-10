@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { PAGE_STATE_TABLE } from './page-state.table.js';
-import { StateBoundary, pageStateOf, retryUnlessClientError, transportOf } from './index.js';
+import { ForbiddenState, StateBoundary, pageStateOf, retryUnlessClientError, transportOf } from './index.js';
 
 describe('pageStateOf: one mapping from the transport to a page state (APP-8)', () => {
     it.each(PAGE_STATE_TABLE)('$name', ({ transport, outcome }) => {
@@ -81,6 +81,26 @@ describe('<StateBoundary>', () => {
         expect(container.textContent).toMatch(/agents/i);
         expect(container.textContent).not.toMatch(/Try again/);
         expect(screen.queryByText('rows')).toBeNull();
+    });
+
+    it('uses the same forbidden view callers can render without a query', () => {
+        const boundary = render(
+            <StateBoundary
+                query={{
+                    status: 'error',
+                    error: { response: { status: 403 } },
+                    data: undefined,
+                }}
+                label="agents"
+            >
+                <p>rows</p>
+            </StateBoundary>,
+        );
+        const boundaryHtml = boundary.container.innerHTML;
+        boundary.unmount();
+
+        const direct = render(<ForbiddenState label="agents" />);
+        expect(direct.container.innerHTML).toBe(boundaryHtml);
     });
 
     it('offers Try again only after a 5xx or a network failure', () => {
