@@ -1,4 +1,3 @@
-import { ResponsiveRoster } from "./responsive-roster";
 import type { ColumnDef } from "@tanstack/react-table";
 import {
   Check,
@@ -16,24 +15,25 @@ import {
   Badge,
   Button,
   buttonVariants,
-  Input,
-  Label,
+  cn,
+  DataTable,
   Dialog,
   DialogContent,
   DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  Input,
+  Label,
   Popover,
   PopoverContent,
   PopoverTrigger,
-  SimpleSelect,
   Sheet,
   SheetContent,
   SheetDescription,
   SheetHeader,
   SheetTitle,
-  cn,
+  SimpleSelect,
 } from "@schemastud/ui";
 import {
   useTeamMembers,
@@ -355,7 +355,8 @@ function TeamInner({
         </span>
       </div>
 
-      <ResponsiveRoster
+      <DataTable
+        stackOnMobile
         columns={columns}
         data={rows}
         emptyMessage="No one in this segment yet."

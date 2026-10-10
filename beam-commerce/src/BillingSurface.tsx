@@ -307,6 +307,7 @@ function UsageSection() {
                             </div>
                         </div>
                         <DataTable
+                            stackOnMobile
                             columns={modelColumns}
                             data={summary.data?.models ?? []}
                             loading={summary.isPending}
@@ -418,6 +419,7 @@ function BillsSection({ onSelect }: { onSelect: (bill: Bill) => void }) {
                     </p>
                 ) : (
                     <DataTable
+                        stackOnMobile
                         columns={billColumns}
                         data={bills.data ?? []}
                         loading={bills.isPending}
