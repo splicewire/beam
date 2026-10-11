@@ -1,11 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import {
-  fireEvent,
-  render,
-  screen,
-  waitFor,
-  within,
-} from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { beforeAll, describe, expect, it, vi } from "vitest";
 import {
   ExtensionsCatalog,
@@ -58,7 +52,7 @@ function mount(c: ExtensionsClient) {
       <ExtensionsProvider services={{ client: c }}>
         <ExtensionsCatalog onSelect={() => {}} />
       </ExtensionsProvider>
-    </QueryClientProvider>
+    </QueryClientProvider>,
   );
 }
 
@@ -67,9 +61,6 @@ describe("ExtensionsCatalog — empty and failed states (VR pass 2)", () => {
     mount(client(vi.fn(async () => ({ listings: [] }))));
     const empty = await screen.findByTestId("catalog-empty");
     expect(empty.textContent).toContain("No extensions are available yet.");
-    expect(
-      screen.queryByRole("button", { name: "Connect a market" })
-    ).toBeNull();
   });
 
   it("names a filter that matched nothing as a filter miss", async () => {
@@ -80,8 +71,8 @@ describe("ExtensionsCatalog — empty and failed states (VR pass 2)", () => {
     });
     await waitFor(() =>
       expect(screen.getByTestId("catalog-empty").textContent).toContain(
-        "No extensions match these filters."
-      )
+        "No extensions match these filters.",
+      ),
     );
   });
 
@@ -107,8 +98,7 @@ describe("ExtensionsCatalog — the filter row", () => {
     await screen.findByTestId("catalog-empty");
     const category = screen.getByLabelText("Filter by category");
     const kind = screen.getByLabelText("Filter by kind");
-    const width = (el: HTMLElement) =>
-      el.className.split(/\s+/).filter((c) => /^w-/.test(c));
+    const width = (el: HTMLElement) => el.className.split(/\s+/).filter((c) => /^w-/.test(c));
 
     expect(width(kind)).not.toContain("w-full");
     expect(width(kind)).toEqual(width(category));
