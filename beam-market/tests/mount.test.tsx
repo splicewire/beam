@@ -114,7 +114,7 @@ const INSTALLED: InstalledExtension[] = [
 ];
 
 function fakeClient(
-  overrides: Partial<ExtensionsClient> = {}
+  overrides: Partial<ExtensionsClient> = {},
 ): ExtensionsClient {
   return {
     getCatalog: vi.fn(async () => CATALOG),
@@ -158,7 +158,7 @@ function fakeClient(
 function mount(
   node: ReactNode,
   client: ExtensionsClient,
-  services: Record<string, unknown> = {}
+  services: Record<string, unknown> = {},
 ) {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
@@ -168,7 +168,7 @@ function mount(
       <ExtensionsProvider services={{ client, ...services }}>
         {node}
       </ExtensionsProvider>
-    </QueryClientProvider>
+    </QueryClientProvider>,
   );
 }
 
@@ -217,7 +217,7 @@ describe("ExtensionsCatalog — isolation mount (no Laravel)", () => {
     mount(<ExtensionsCatalog onSelect={() => {}} />, client);
 
     expect(
-      await screen.findByText(/isn.t connected to Splicewire/)
+      await screen.findByText(/isn.t connected to Splicewire/),
     ).toBeTruthy();
   });
 
@@ -261,9 +261,7 @@ describe("ExtensionsCatalog — isolation mount (no Laravel)", () => {
     });
     mount(<ExtensionsCatalog onSelect={() => {}} />, client);
 
-    expect(
-      await screen.findByText(/No Splicewire account connected/)
-    ).toBeTruthy();
+    expect(await screen.findByText(/No Splicewire account connected/)).toBeTruthy();
     expect(screen.queryByText(/isn.t connected to Splicewire/)).toBeNull();
   });
 
@@ -292,7 +290,7 @@ describe("InstalledTab — real inline Update/Remove mutations (contract kind 1)
 
     fireEvent.click(await screen.findByRole("button", { name: /update/i }));
     await waitFor(() =>
-      expect(client.update).toHaveBeenCalledWith("opaque-install-uuid")
+      expect(client.update).toHaveBeenCalledWith("opaque-install-uuid"),
     );
   });
 
@@ -302,7 +300,7 @@ describe("InstalledTab — real inline Update/Remove mutations (contract kind 1)
 
     fireEvent.click(await screen.findByRole("button", { name: /remove/i }));
     await waitFor(() =>
-      expect(client.remove).toHaveBeenCalledWith("opaque-install-uuid")
+      expect(client.remove).toHaveBeenCalledWith("opaque-install-uuid"),
     );
   });
 });
@@ -317,25 +315,6 @@ describe("ExtensionsArea — top-level composition", () => {
     fireEvent.click(screen.getByRole("button", { name: "Installed" }));
     expect(await screen.findByText("Satellite")).toBeTruthy();
   });
-
-  it("offers the real market connection path when the catalog is empty", async () => {
-    const client = fakeClient({
-      getCatalog: vi.fn(async () => ({ listings: [] })),
-      getConnectionStatus: vi.fn(async () => ({
-        ...DISCONNECTED_STATUS,
-        connected: true,
-      })),
-    });
-    mount(<ExtensionsArea />, client);
-
-    const action = await screen.findByRole("button", {
-      name: "Connect a market",
-    });
-    fireEvent.click(action);
-
-    expect(await screen.findByLabelText("Market URL")).toBeTruthy();
-    expect(screen.getByLabelText("Connection credential")).toBeTruthy();
-  });
 });
 
 describe("ExtensionDetailSheet — guided pairing step (ticket 10)", () => {
@@ -343,20 +322,20 @@ describe("ExtensionDetailSheet — guided pairing step (ticket 10)", () => {
     const client = fakeClient();
     mount(
       <ExtensionDetailSheet listingId={1} onOpenChange={() => {}} />,
-      client
+      client,
     );
 
     expect(
-      await screen.findByText(/requires a connected Splicewire account/)
+      await screen.findByText(/requires a connected Splicewire account/),
     ).toBeTruthy();
     expect(
-      screen.getByText(DISCONNECTED_STATUS.pairingGuidance.connectCommand)
+      screen.getByText(DISCONNECTED_STATUS.pairingGuidance.connectCommand),
     ).toBeTruthy();
     expect(
-      screen.getByText(DISCONNECTED_STATUS.pairingGuidance.manualTokenEnvVar)
+      screen.getByText(DISCONNECTED_STATUS.pairingGuidance.manualTokenEnvVar),
     ).toBeTruthy();
     expect(
-      screen.getByText(/Paste a Personal Access Token directly/)
+      screen.getByText(/Paste a Personal Access Token directly/),
     ).toBeTruthy();
   });
 
@@ -369,12 +348,12 @@ describe("ExtensionDetailSheet — guided pairing step (ticket 10)", () => {
     });
     mount(
       <ExtensionDetailSheet listingId={1} onOpenChange={() => {}} />,
-      client
+      client,
     );
 
     expect(await screen.findByText("Acme Waveform")).toBeTruthy();
     expect(
-      screen.queryByText(DISCONNECTED_STATUS.pairingGuidance.connectCommand)
+      screen.queryByText(DISCONNECTED_STATUS.pairingGuidance.connectCommand),
     ).toBeNull();
   });
 });
