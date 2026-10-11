@@ -385,3 +385,18 @@ describe("ExtensionDetailSheet — guided pairing step (ticket 10)", () => {
     ).toBeNull();
   });
 });
+
+describe('C39/UX03 — ExtensionsArea top-level heading', () => {
+  it('renders exactly one page h1 (default "Extensions")', () => {
+    mount(<ExtensionsArea />, fakeClient());
+    const h1s = screen.getAllByRole('heading', { level: 1 });
+    expect(h1s).toHaveLength(1);
+    expect(h1s[0].textContent).toBe('Extensions');
+  });
+  it('lets a host override the page title', () => {
+    mount(<ExtensionsArea title="Marketplace" />, fakeClient());
+    const h1s = screen.getAllByRole('heading', { level: 1 });
+    expect(h1s).toHaveLength(1);
+    expect(h1s[0].textContent).toBe('Marketplace');
+  });
+});
