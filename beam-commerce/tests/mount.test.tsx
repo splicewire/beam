@@ -182,6 +182,27 @@ describe('ReloadActivityCard — isolation mount', () => {
         expect(await screen.findByText('Reload activity')).toBeTruthy();
         expect(screen.getByText('Reloaded')).toBeTruthy();
     });
+
+    it('presents declared and unknown outcomes with human labels plus exact keys', async () => {
+        const activity: AutoReloadActivity = {
+            ...ACTIVITY,
+            attempts: [
+                ...ACTIVITY.attempts,
+                {
+                    createdAt: '2026-07-27T14:12:00Z',
+                    outcome: 'processor_delayed',
+                    amountUsd: null,
+                    stripeErrorCode: null,
+                },
+            ],
+        };
+        mount(<ReloadActivityCard activity={activity} />, fakeClient(CONFIG));
+
+        expect(await screen.findByText('Reloaded')).toBeTruthy();
+        expect(screen.getByText('succeeded')).toBeTruthy();
+        expect(screen.getByText('Unknown reload outcome')).toBeTruthy();
+        expect(screen.getByText('processor_delayed')).toBeTruthy();
+    });
 });
 
 // app-walkthrough APP-06 (APP-10): the card reads the declared reason. A party that never saved a card is told to add

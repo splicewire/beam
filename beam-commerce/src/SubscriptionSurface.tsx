@@ -24,6 +24,7 @@ import type {
     Subscription,
     SubscriptionView,
 } from './commerce-types';
+import { entitlementSourceLabel } from './vocabulary';
 import { SurfaceHeading } from './SurfaceHeading';
 
 /**
@@ -180,7 +181,8 @@ function SourceBadge({ source }: { source: string }) {
                 style,
             )}
         >
-            {source}
+            <span>{entitlementSourceLabel(source)}</span>
+            <span className="ml-1 font-mono text-[9px] normal-case opacity-70">{source}</span>
         </span>
     );
 }

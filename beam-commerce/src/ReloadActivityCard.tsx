@@ -11,19 +11,11 @@ import type { ColumnDef } from '@tanstack/react-table';
 import { ArrowUpCircle, CheckCircle2, XCircle } from 'lucide-react';
 import { formatDate, formatUsd } from './format';
 import type { AutoReloadActivity, AutoReloadAttempt } from './types';
-
-// An honest per-outcome badge — success is affirmative green; everything else reads as a failure.
-const OUTCOME_LABELS: Record<string, string> = {
-    succeeded: 'Reloaded',
-    declined: 'Declined',
-    sca_required: 'Auth required',
-    transient_error: 'Retrying',
-    blocked: 'Blocked',
-};
+import { reloadOutcomeLabel } from './vocabulary';
 
 function OutcomeBadge({ outcome }: { outcome: string }) {
     const ok = outcome === 'succeeded';
-    const label = OUTCOME_LABELS[outcome] ?? outcome;
+    const label = reloadOutcomeLabel(outcome);
     return (
         <span
             className={cn(
@@ -38,7 +30,8 @@ function OutcomeBadge({ outcome }: { outcome: string }) {
             ) : (
                 <XCircle className="size-3.5 text-destructive" />
             )}
-            {label}
+            <span>{label}</span>
+            <span className="font-mono text-[10px] opacity-70">{outcome}</span>
         </span>
     );
 }

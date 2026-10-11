@@ -112,3 +112,4 @@ export type {
     AutoReloadServices,
     NotifyEvent,
 } from './types';
+export { billStatusLabel, entitlementSourceLabel, reloadOutcomeLabel } from './vocabulary';
