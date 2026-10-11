@@ -112,7 +112,9 @@ function ListingCard({
         {listing.marketName && (
           <span className="text-xs" data-testid="listing-provenance">
             From {listing.marketName}
-            {listing.syncedAt ? ` · synced ${syncedAgo(listing.syncedAt)}` : null}
+            {listing.syncedAt
+              ? ` · synced ${syncedAgo(listing.syncedAt)}`
+              : null}
           </span>
         )}
       </CardContent>
@@ -144,8 +146,11 @@ const KIND_OPTIONS = [
 export function ExtensionsCatalog({
   onSelect,
   plays,
+  onManageMarkets,
 }: {
   onSelect: (id: number) => void;
+  /** A real host-supplied route to market management; absent on read-only publisher catalogs. */
+  onManageMarkets?: () => void;
   /**
    * The cross-instance sides the host plays (APP-11/APP-24, IA-6). The "not connected to Splicewire"
    * banner is a CLIENT concern — a hub has no upstream to be disconnected from — so it renders only
@@ -154,7 +159,8 @@ export function ExtensionsCatalog({
   plays?: readonly string[];
 }) {
   const [filters, setFilters] = useState<CatalogFilters>({});
-  const { data, isPending, isError, isFetching, refetch } = useExtensionsCatalog(filters);
+  const { data, isPending, isError, isFetching, refetch } =
+    useExtensionsCatalog(filters);
   const { data: connectionStatus } = useConnectionStatus();
 
   // The failure state names the recovery on the surface: the reason, and a Retry that re-runs the
@@ -197,7 +203,9 @@ export function ExtensionsCatalog({
         // surface. Render it only where this host plays `client`; `undefined` keeps prior behavior.
         (plays === undefined || plays.includes("client")) && (
           <DisconnectedBanner
-            marketConnected={(connectionStatus.markets ?? []).some((market) => market.status === "connected")}
+            marketConnected={(connectionStatus.markets ?? []).some(
+              (market) => market.status === "connected"
+            )}
           />
         )}
 
@@ -252,6 +260,16 @@ export function ExtensionsCatalog({
                   ? "Clear the filters to see the whole catalog."
                   : "Listings appear here once this site publishes or connects to a market."}
               </p>
+              {!filtered && onManageMarkets ? (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="mt-2"
+                  onClick={onManageMarkets}
+                >
+                  Connect a market
+                </Button>
+              ) : null}
             </div>
           )}
           {platformTier.length > 0 && (
