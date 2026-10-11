@@ -487,6 +487,12 @@ describe('BillingSurface — isolation mount', () => {
         expect(await screen.findByText('Usage summary')).toBeTruthy();
         expect(await screen.findByText('Next bill (estimate)')).toBeTruthy();
         expect(await screen.findByText('Bills')).toBeTruthy();
+        expect(screen.getByText('Estimate covers OpenAI usage only')).toBeTruthy();
+        expect(screen.getByText('Current usage estimate')).toBeTruthy();
+        expect(screen.getByText(/not yet finalized/i)).toBeTruthy();
+        expect(screen.getByText(/nothing is charged yet/i)).toBeTruthy();
+        expect(screen.queryByText('OpenAI-only pricing — estimates')).toBeNull();
+        expect(screen.queryByText('live recompute')).toBeNull();
     });
 
     it('renders a no-active-plan empty preview with a choose-plan CTA instead of an error', async () => {
