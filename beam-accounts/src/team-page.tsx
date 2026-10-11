@@ -12,7 +12,6 @@ import {
 } from "lucide-react";
 import { useMemo, useState } from "react";
 import {
-  Badge,
   Button,
   buttonVariants,
   cn,
@@ -47,6 +46,7 @@ import {
 } from "./team-hooks";
 import type { RoleOption } from "./team-types";
 import { mergeRoster, ownerCount, type RosterRow } from "./team-roster";
+import { RoleBadge } from "./RoleBadge";
 
 function formatDate(value: string | null | undefined): string {
   return value ? new Date(value).toLocaleDateString() : "—";
@@ -215,9 +215,10 @@ function TeamInner({
           // non-owners always see a read-only badge (manageMembers = owner-only).
           if (r.kind === "invitation" || !isOwner) {
             return (
-              <Badge variant="secondary">
-                {roleLabels.get(String(r.role)) ?? String(r.role)}
-              </Badge>
+              <RoleBadge
+                role={String(r.role)}
+                label={roleLabels.get(String(r.role))}
+              />
             );
           }
           const disabledSelf = r.isSelf && lastOwner; // last owner can't demote self
