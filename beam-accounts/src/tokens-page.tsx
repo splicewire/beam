@@ -761,8 +761,7 @@ function CreateTokenDialog() {
   const permissions = usePermissions();
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
-  // Access mode: 'full' reproduces an unscoped token; 'scoped' limits the token to a subset
-  // of the minting user's own permissions (ADR-0109).
+  // Access mode: 'full' uses all current access; 'scoped' limits the token to a subset.
   const [mode, setMode] = useState<"full" | "scoped">("full");
   const [selected, setSelected] = useState<Set<string>>(() => new Set());
   // Lifetime preset in days; '0' means never expires.
@@ -908,14 +907,11 @@ function CreateTokenDialog() {
                     })}
                   </div>
                 )}
-                {/* Honest framing (ADR-0109): scope is blast-radius control,
-                                    not a trust boundary. */}
+                {/* Explain the boundary in user language; exact identifiers stay in the picker. */}
                 <p className="text-xs text-muted-foreground">
-                  Scope limits what a <em>leaked</em> token can do — it is not a
-                  trust boundary. A scoped token is still not safe to hand to
-                  someone you don&apos;t trust. It can never do more than you
-                  can, and stops working for a permission the moment you lose
-                  it.
+                  Choosing fewer permissions limits what the token can do if
+                  it is exposed. It can never do more than you can, and stops
+                  working for a permission the moment you lose it.
                 </p>
               </div>
             )}

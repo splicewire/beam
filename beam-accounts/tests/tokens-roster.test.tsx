@@ -166,7 +166,26 @@ it("describes the new token and the filter in plain words", async () => {
   const dialog = await screen.findByRole("dialog");
   expect(dialog.textContent).toMatch(/A token can.t do more than you can/);
   expect(dialog.textContent).toMatch(/shown only once/);
-  expect(dialog.textContent).not.toMatch(/⊆|plaintext/);
+  expect(dialog.textContent).toMatch(/limits what the token can do if it is exposed/i);
+  expect(dialog.textContent).not.toMatch(/ADR-|clamp|re-intersect|⊆|plaintext/);
+  expect(screen.getByText("Browser sessions")).toBeTruthy();
+  expect(screen.queryByText("sessions")).toBeNull();
+});
+
+it("counts only tokens admitted by the archived filter in the adjacent type chips", async () => {
+  const archivedApi: ApiTokenData = {
+    ...SAMPLE_TOKENS[0],
+    id: "e3b0c442-98fc-4c14-9afb-f4c8996fb099",
+    name: "Old deploy key",
+    archivedAt: "2026-01-02T00:00:00Z",
+  };
+  mount({ client: makeTokensClient({ tokens: [archivedApi] }) });
+
+  await screen.findByText("No tokens match the selected types.");
+  expect(screen.getByRole("button", { name: "API 0" })).toBeTruthy();
+  fireEvent.click(screen.getByLabelText("Show archived"));
+  expect(await screen.findByRole("button", { name: "API 1" })).toBeTruthy();
+  expect(screen.getByText("Old deploy key")).toBeTruthy();
 });
 it("keeps the subset symbol and 'plaintext' off the whole page, including the reveal", async () => {
   // build.qa on 08b8694: the page subtitle still said "Mint only tokens ⊆ your own permissions" and the reveal said
