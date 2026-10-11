@@ -89,13 +89,13 @@ describe('portable privacy and retention', () => {
 });
 
 describe('C39/UX03 — package top-level heading contract', () => {
-    it('renders exactly one page h1 from the title; section card titles stay subordinate', () => {
+    it('renders exactly one page h1 from the title, with each section title a subordinate h2', () => {
         mount(fixture());
         const h1s = screen.getAllByRole('heading', { level: 1 });
         expect(h1s).toHaveLength(1);
         expect(h1s[0].textContent).toBe('Privacy & retention');
-        // the section CardTitles ("Retention posture", etc.) are not headings
-        expect(screen.queryByRole('heading', { name: /retention posture/i })).toBeNull();
+        // C43 (UX06): the section titles are now SUBORDINATE h2 headings under the single h1.
+        expect(screen.getByRole('heading', { level: 2, name: /retention posture/i })).toBeTruthy();
     });
     it('lets a host override the title without duplicating the h1', () => {
         const query = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
@@ -109,5 +109,22 @@ describe('C39/UX03 — package top-level heading contract', () => {
         const h1s = screen.getAllByRole('heading', { level: 1 });
         expect(h1s).toHaveLength(1);
         expect(h1s[0].textContent).toBe('Data & privacy');
+    });
+});
+
+describe('C43/UX06 — privacy prose hierarchy', () => {
+    it('exposes exactly one h1 and a coherent subordinate h2 per section, in document order', () => {
+        mount(fixture());
+        // one page heading …
+        expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1);
+        // … and every section carries a subordinate h2 (no title-less section, no type-only styling),
+        // in the reading order of the page.
+        const h2s = screen.getAllByRole('heading', { level: 2 }).map((h) => h.textContent?.trim());
+        expect(h2s).toEqual([
+            'Retention posture',
+            'Prune by policy',
+            'Erase a subject',
+            'Corpus / training consent',
+        ]);
     });
 });
