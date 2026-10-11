@@ -17,8 +17,11 @@ type Tab = 'browse' | 'installed' | 'market';
 export function ExtensionsArea({
   className,
   plays,
+  title = 'Extensions',
 }: {
   className?: string;
+  /** Host-supplied page heading (UX03/C39); the area renders exactly one h1 from it. */
+  title?: string;
   /** The sides the host plays (APP-11); forwarded to the catalog's host-true banner gate. */
   plays?: readonly string[];
 }) {
@@ -31,6 +34,7 @@ export function ExtensionsArea({
 
     return (
         <div className={cn('flex flex-col gap-4', className)}>
+            <h1 className="text-lg font-semibold tracking-tight">{title}</h1>
             <div className="flex items-center gap-1 border-b">
                 <TabButton active={activeTab === 'browse'} onClick={() => setTab('browse')}>
                     Browse
