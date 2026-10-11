@@ -3,7 +3,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { AlertTriangle, Check, Eraser, Info, Loader2, Shield, Trash2, X } from 'lucide-react';
 import { Badge } from '@schemastud/ui';
 import { Button } from '@schemastud/ui';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@schemastud/ui';
+import { Card, CardContent, CardDescription, CardHeader } from '@schemastud/ui';
 import {
     Dialog,
     DialogContent,
@@ -54,7 +54,7 @@ const DEFAULT_RETENTION_DAYS = 90;
 // ── Governance note (friendly one-liner — no code identifiers) ─────────────────────────────────
 function GovernanceBanner() {
     return (
-        <div className="flex items-start gap-2 rounded-md border border-border bg-muted/40 px-4 py-2.5 text-sm text-muted-foreground">
+        <div className="mx-auto flex max-w-3xl items-start gap-2 rounded-md border border-border bg-muted/40 px-4 py-2.5 text-sm text-muted-foreground">
             <Shield className="mt-0.5 size-4 flex-none" />
             <span>Only workspace admins can prune or erase retained data.</span>
         </div>
@@ -71,7 +71,7 @@ function PostureCard() {
     return (
         <Card>
             <CardHeader>
-                <CardTitle>Retention posture</CardTitle>
+                <h2 className="font-semibold leading-none tracking-tight">Retention posture</h2>
                 <CardDescription>
                     {policyDescription ?? <>Retention is a per-Published-Chat window that is snapshotted onto each session when it starts.</>}
                 </CardDescription>
@@ -150,9 +150,9 @@ function PruneCard({ disabled }: { disabled: boolean }) {
     return (
         <Card>
             <CardHeader>
-                <CardTitle className="flex items-center gap-2">
+                <h2 className="flex items-center gap-2 font-semibold leading-none tracking-tight">
                     <Trash2 className="size-4 text-muted-foreground" /> Prune by policy
-                </CardTitle>
+                </h2>
                 <CardDescription>
                     Delete every embed session (and its messages) past its retention window. A
                     visitor's personal data drops once their last session is gone.
@@ -253,9 +253,9 @@ export function EraseCard({ disabled }: { disabled: boolean }) {
         // Destructive card — unmistakably tinted apart from the ink-on-paper cards above.
         <Card className="border-destructive/40 bg-destructive/[0.03]">
             <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-destructive">
+                <h2 className="flex items-center gap-2 text-destructive font-semibold leading-none tracking-tight">
                     <Eraser className="size-4" /> Erase a subject
-                </CardTitle>
+                </h2>
                 <CardDescription>
                     A subject-access erasure request. Provide exactly one of a visitor ID or session
                     ID. This erases the <b>person, not just their chats</b> — the visitor's personal
@@ -417,7 +417,7 @@ function CorpusConsentCard() {
                     <Badge variant="outline" className="font-mono text-[10px] uppercase">
                         read-only
                     </Badge>
-                    <CardTitle>Corpus / training consent</CardTitle>
+                    <h2 className="font-semibold leading-none tracking-tight">Corpus / training consent</h2>
                 </div>
                 <CardDescription>
                     Whether each Published Chat opted transcripts into corpus/training.{' '}
