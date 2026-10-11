@@ -289,7 +289,7 @@ function UsageSection() {
                 <div className="space-y-1.5">
                     <div className="flex flex-wrap items-center gap-2">
                         <CardTitle>Usage summary</CardTitle>
-                        <Badge variant="secondary">OpenAI-only pricing — estimates</Badge>
+                        <Badge variant="secondary">Estimate covers OpenAI usage only</Badge>
                     </div>
                     <CardDescription>Token spend broken down by model.</CardDescription>
                 </div>
@@ -351,7 +351,7 @@ function BillPreviewCard({ subscribeHref }: { subscribeHref?: string }) {
             <CardHeader>
                 <div className="flex items-center justify-between gap-2">
                     <CardTitle>Next bill (estimate)</CardTitle>
-                    <Badge variant="outline">live recompute</Badge>
+                    <Badge variant="outline">Current usage estimate</Badge>
                 </div>
                 <CardDescription>
                     Current period, not yet finalized — distinct from your Bills below. Nothing is
