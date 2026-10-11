@@ -7,6 +7,7 @@ describe('commerce lifecycle vocabulary', () => {
         ['open', 'Open'],
         ['paid', 'Paid'],
         ['finalized', 'Finalized'],
+        ['invoiced', 'Invoiced'],
         ['void', 'Void'],
         ['future_bill_state', 'Unknown bill status'],
     ])('labels bill status %s', (key, label) => expect(billStatusLabel(key)).toBe(label));

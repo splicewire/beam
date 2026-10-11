@@ -24,7 +24,7 @@ import type {
     Subscription,
     SubscriptionView,
 } from './commerce-types';
-import { entitlementSourceLabel } from './vocabulary';
+import { ENTITLEMENT_SOURCE_FACETS, entitlementSourceLabel } from './vocabulary';
 import { SurfaceHeading } from './SurfaceHeading';
 
 /**
@@ -177,7 +177,7 @@ function SourceBadge({ source }: { source: string }) {
     return (
         <span
             className={cn(
-                'inline-flex items-center rounded border px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-wide',
+                'inline-flex items-center rounded border px-1.5 py-0.5 text-[10px] tracking-wide',
                 style,
             )}
         >
@@ -186,13 +186,6 @@ function SourceBadge({ source }: { source: string }) {
         </span>
     );
 }
-
-const FACETS: { key: SourceFacet; label: string }[] = [
-    { key: 'all', label: 'All' },
-    { key: 'default', label: 'Default' },
-    { key: 'plan', label: 'Plan' },
-    { key: 'tenant', label: 'Tenant override' },
-];
 
 function EntitlementGrid({
     entitlements,
@@ -222,7 +215,7 @@ function EntitlementGrid({
                     </div>
                 </div>
                 <div className="flex flex-wrap gap-1.5 pt-1">
-                    {FACETS.map((f) => (
+                    {ENTITLEMENT_SOURCE_FACETS.map((f) => (
                         <button
                             key={f.key}
                             type="button"

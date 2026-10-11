@@ -28,7 +28,7 @@ export function errorMessage(error: unknown, fallback = 'Something went wrong.')
     // Authored validation/refusal copy is part of a public 4xx contract. A server exception,
     // provider detail or transport Error is not: callers get their own safe, contextual fallback.
     if (status !== null && status >= 400 && status < 500) {
-        const message = candidate.response?.data?.message ?? candidate.message;
+        const message = candidate.response ? candidate.response.data?.message : candidate.message;
         if (typeof message === 'string' && message.trim() !== '') return message;
     }
 

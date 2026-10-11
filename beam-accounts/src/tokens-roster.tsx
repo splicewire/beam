@@ -210,7 +210,9 @@ function ScopeChips({ abilities }: { abilities: string[] | null }) {
           variant="outline"
           className="flex flex-col items-start gap-0.5 py-1"
         >
-          <span className="text-[11px] font-medium">{scopeLabel(a)}</span>
+          {scopeLabel(a) && (
+            <span className="text-[11px] font-medium">{scopeLabel(a)}</span>
+          )}
           <span className="font-mono text-[9px] text-muted-foreground">{a}</span>
         </Badge>
       ))}
@@ -218,15 +220,43 @@ function ScopeChips({ abilities }: { abilities: string[] | null }) {
   );
 }
 
-function scopeLabel(scope: string): string {
-  const [resource, ...actionParts] = scope.split(".");
-  if (actionParts.length === 0) return humanizeScopePart(resource);
-  return `${humanizeScopePart(actionParts.join(" "))} ${humanizeScopePart(resource).toLowerCase()}`;
-}
+const SCOPE_LABELS: Record<string, string> = {
+  "activity.view": "View activity",
+  "billing.manage": "Manage billing",
+  "billing.view": "View billing",
+  "conduit.delete": "Delete conduits",
+  "conduit.update": "Update conduits",
+  "content.author": "Author content",
+  "context-scopes.embeddings": "Search context scope embeddings",
+  "declarations.redetermine": "Redetermine declarations",
+  "embeddings.embed": "Generate embeddings",
+  "federation-grants.configure": "Configure federation grants",
+  "federation-grants.pin": "Pin federation grants",
+  "federation-grants.pull": "Pull federation grants",
+  "federation-grants.revoke": "Revoke federation grants",
+  "installed-extensions.refresh": "Refresh installed extensions",
+  "installed-extensions.remove": "Remove installed extensions",
+  "market-extensions.install": "Install marketplace extensions",
+  "market-extensions.purchase": "Purchase marketplace extensions",
+  "market-listing.create": "Create marketplace listings",
+  "market-listing.update": "Update marketplace listings",
+  "market-listing.view": "View marketplace listings",
+  "media.analyze": "Analyze media",
+  "media.ingest": "Ingest media",
+  "permission-cascade.platform_admin_permission": "Manage platform permissions",
+  "plans.checkout": "Checkout plans",
+  "platform.manage": "Manage platform objects",
+  "schemas.manage": "Manage schemas",
+  "silos.publish-corpus": "Publish silo corpus",
+  "silos.withdraw-corpus": "Withdraw silo corpus",
+  "site.edit": "Edit site",
+  "tenants.sync": "Sync workspaces",
+  "usage.view": "View usage",
+  "workflows.author": "Author workflows",
+};
 
-function humanizeScopePart(value: string): string {
-  const words = value.replace(/[_-]+/g, " ").trim().toLowerCase();
-  return words.charAt(0).toUpperCase() + words.slice(1);
+function scopeLabel(scope: string): string | null {
+  return SCOPE_LABELS[scope] ?? null;
 }
 
 // ─── the ONE enhancement: grouped + searchable scope picker (ticket Q1) ──────
