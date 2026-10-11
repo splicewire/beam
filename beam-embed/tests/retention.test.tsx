@@ -87,3 +87,27 @@ describe('portable privacy and retention', () => {
     });
 
 });
+
+describe('C39/UX03 — package top-level heading contract', () => {
+    it('renders exactly one page h1 from the title; section card titles stay subordinate', () => {
+        mount(fixture());
+        const h1s = screen.getAllByRole('heading', { level: 1 });
+        expect(h1s).toHaveLength(1);
+        expect(h1s[0].textContent).toBe('Privacy & retention');
+        // the section CardTitles ("Retention posture", etc.) are not headings
+        expect(screen.queryByRole('heading', { name: /retention posture/i })).toBeNull();
+    });
+    it('lets a host override the title without duplicating the h1', () => {
+        const query = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
+        render(
+            <QueryClientProvider client={query}>
+                <RetentionProvider services={{ client: fixture() }}>
+                    <PrivacyRetentionPage canManage title="Data & privacy" />
+                </RetentionProvider>
+            </QueryClientProvider>,
+        );
+        const h1s = screen.getAllByRole('heading', { level: 1 });
+        expect(h1s).toHaveLength(1);
+        expect(h1s[0].textContent).toBe('Data & privacy');
+    });
+});

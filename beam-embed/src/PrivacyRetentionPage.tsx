@@ -479,10 +479,11 @@ function CorpusConsentCard() {
  * The single-pane privacy governance console. Renders inside the Settings meta-area (SectionBar sub-tab
  * strip owns nav) — no prototype chrome.
  */
-export function PrivacyRetentionPage({ canManage }: { canManage: boolean }) {
+export function PrivacyRetentionPage({ canManage, title = 'Privacy & retention' }: { canManage: boolean; /** Host-supplied page heading (UX03/C39); the package renders exactly one h1 from it. */ title?: string }) {
     const actionsDisabled = !canManage;
     return (
         <div className="space-y-6 py-2">
+            <h1 className="mx-auto max-w-3xl text-lg font-semibold tracking-tight">{title}</h1>
             <GovernanceBanner />
 
             <div className="mx-auto max-w-3xl space-y-6">
