@@ -9,16 +9,29 @@ export function formatDate(value: string | null | undefined): string {
     return value ? new Date(value).toLocaleDateString() : '—';
 }
 
-/**
- * A transport-agnostic error message extractor. The app version read axios' response body; the
- * package can't import axios (the client is injected), so this reads the conventional
- * `{ message }` an adapter surfaces, then falls back to `Error.message`, then the fallback.
- */
+/** A transport-agnostic public-error boundary for every injected commerce client. */
 export function errorMessage(error: unknown, fallback = 'Something went wrong.'): string {
-    if (error && typeof error === 'object') {
-        const message = (error as { message?: unknown }).message;
-        if (typeof message === 'string' && message !== '') return message;
+    if (!error || typeof error !== 'object') return fallback;
+
+    const candidate = error as {
+        status?: unknown;
+        message?: unknown;
+        response?: { status?: unknown; data?: { message?: unknown } };
+    };
+    const status =
+        typeof candidate.response?.status === 'number'
+            ? candidate.response.status
+            : typeof candidate.status === 'number'
+              ? candidate.status
+              : null;
+
+    // Authored validation/refusal copy is part of a public 4xx contract. A server exception,
+    // provider detail or transport Error is not: callers get their own safe, contextual fallback.
+    if (status !== null && status >= 400 && status < 500) {
+        const message = candidate.response?.data?.message ?? candidate.message;
+        if (typeof message === 'string' && message.trim() !== '') return message;
     }
+
     return fallback;
 }
 

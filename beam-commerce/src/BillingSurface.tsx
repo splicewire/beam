@@ -17,6 +17,7 @@ import {
 import type { ColumnDef } from '@tanstack/react-table';
 import { useState } from 'react';
 import { componentLabel, errorMessage, formatDate, formatUsd } from './format';
+import { billStatusLabel } from './vocabulary';
 import { useBillPreview, useBills, useBudget, useUsageSummary } from './commerce-hooks';
 import { useCommerceCan } from './commerce-provider';
 import type { Bill, BudgetVerdict, UsageModelBreakdown } from './commerce-types';
@@ -78,7 +79,8 @@ function BillStatusBadge({ status }: { status: string }) {
                 cls,
             )}
         >
-            {status}
+            <span>{billStatusLabel(status)}</span>
+            <span className="ml-1.5 font-mono text-[10px] normal-case opacity-70">{status}</span>
         </span>
     );
 }

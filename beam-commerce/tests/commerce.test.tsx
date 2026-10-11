@@ -352,7 +352,8 @@ describe('CreditsSurface — the direct-rail reload', () => {
             }),
         );
 
-        expect(await screen.findByText('Wallet is unavailable.')).toBeTruthy();
+        expect(await screen.findByText('Could not load your wallet.')).toBeTruthy();
+        expect(screen.queryByText('Wallet is unavailable.')).toBeNull();
     });
 
     it('captures a reload through the injected rail and shows the funded balance', async () => {
@@ -429,7 +430,8 @@ describe('CreditsSurface — the direct-rail reload', () => {
         fireEvent.click(await screen.findByRole('button', { name: /add credits/i }));
         fireEvent.click(await screen.findByRole('button', { name: /pay & add credits/i }));
 
-        expect(await screen.findByText('Network unreachable.')).toBeTruthy();
+        expect(await screen.findByText('Could not reach the payment rail.')).toBeTruthy();
+        expect(screen.queryByText('Network unreachable.')).toBeNull();
         expect(screen.queryByRole('alert')).toBeNull();
     });
 
@@ -448,6 +450,34 @@ describe('CreditsSurface — the direct-rail reload', () => {
 });
 
 describe('BillingSurface — isolation mount', () => {
+    it("keeps a server failure behind the billing surface's safe public copy", async () => {
+        mount(
+            <BillingSurface />,
+            fakeClient({
+                getBills: vi.fn(async () => {
+                    throw { response: { status: 500, data: { message: 'SQLSTATE credentials leaked' } } };
+                }),
+            }),
+            { can: (permission: string) => permission === 'billing.view' },
+        );
+
+        expect(await screen.findByText('Could not load bills.')).toBeTruthy();
+        expect(screen.queryByText('SQLSTATE credentials leaked')).toBeNull();
+    });
+
+    it('presents declared and unknown bill statuses with human labels plus exact keys', async () => {
+        const bills = [BILLS[0], { ...BILLS[0], id: 'b2', status: 'awaiting_review' }] as Bill[];
+
+        mount(<BillingSurface />, fakeClient({ getBills: vi.fn(async () => bills) }), {
+            can: (permission: string) => permission === 'billing.view',
+        });
+
+        expect(await screen.findByText('Unknown bill status')).toBeTruthy();
+        expect(screen.getAllByText('Finalized').length).toBeGreaterThan(0);
+        expect(screen.getByText('finalized')).toBeTruthy();
+        expect(screen.getByText('awaiting_review')).toBeTruthy();
+    });
+
     it('names its embedded section without introducing another page heading', async () => {
         mount(<BillingSurface embedded />, fakeClient());
 
@@ -594,6 +624,32 @@ describe('BillingSurface — isolation mount', () => {
 });
 
 describe('SubscriptionSurface — isolation mount', () => {
+    it('preserves declared public validation copy from the subscription endpoint', async () => {
+        mount(
+            <SubscriptionSurface />,
+            fakeClient({
+                getSubscription: vi.fn(async () => {
+                    throw { response: { status: 422, data: { message: 'Choose a workspace first.' } } };
+                }),
+            }),
+        );
+
+        expect(await screen.findByText('Choose a workspace first.')).toBeTruthy();
+    });
+
+    it('presents declared and unknown entitlement sources with human labels plus exact keys', async () => {
+        const entitlements = [
+            ...ENTITLEMENTS,
+            { capability: 'review.queue', enabled: true, source: 'delegated' },
+        ] as EntitlementRecord[];
+        mount(<SubscriptionSurface />, fakeClient({ getEntitlements: vi.fn(async () => entitlements) }));
+
+        expect((await screen.findAllByText('Plan')).length).toBeGreaterThan(0);
+        expect(screen.getAllByText('plan').length).toBeGreaterThan(0);
+        expect(screen.getByText('Unknown entitlement source')).toBeTruthy();
+        expect(screen.getByText('delegated')).toBeTruthy();
+    });
+
     it('uses a section heading when embedded in a composed billing page', async () => {
         mount(<SubscriptionSurface embedded />, fakeClient());
 
