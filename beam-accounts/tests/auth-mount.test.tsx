@@ -208,3 +208,25 @@ describe('ResetPasswordForm', () => {
         expect((await screen.findByRole('alert')).textContent).toMatch(/invalid/i);
     });
 });
+
+describe('C37 — auth panel semantic headings (UX01)', () => {
+    it('LoginPanel renders exactly one h1 carrying the title (default)', () => {
+        mount(<LoginPanel onSuccess={() => {}} title="Sign in to Splicewire" />, fakeClient());
+        const h1s = screen.getAllByRole('heading', { level: 1 });
+        expect(h1s).toHaveLength(1);
+        expect(h1s[0].textContent).toContain('Sign in to Splicewire');
+    });
+
+    it('LoginPanel renders the title as h2 when the host owns the page h1', () => {
+        mount(<LoginPanel onSuccess={() => {}} title="Sign in" titleAs="h2" />, fakeClient());
+        expect(screen.queryByRole('heading', { level: 1 })).toBeNull();
+        expect(screen.getByRole('heading', { level: 2, name: 'Sign in' })).toBeTruthy();
+    });
+
+    it('ResetPasswordForm exposes exactly one h1 (shared by the initial and expired-link inline-error states)', () => {
+        mount(<ResetPasswordForm token="t" email="me@test.com" onSuccess={() => {}} />, fakeClient());
+        const h1s = screen.getAllByRole('heading', { level: 1 });
+        expect(h1s).toHaveLength(1);
+        expect(h1s[0].textContent).toContain('Set a new password');
+    });
+});
