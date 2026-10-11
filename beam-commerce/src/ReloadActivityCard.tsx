@@ -11,7 +11,7 @@ import type { ColumnDef } from '@tanstack/react-table';
 import { ArrowUpCircle, CheckCircle2, XCircle } from 'lucide-react';
 import { formatDate, formatUsd } from './format';
 import type { AutoReloadActivity, AutoReloadAttempt } from './types';
-import { reloadOutcomeLabel } from './vocabulary';
+import { reloadFailureCopy, reloadOutcomeLabel } from './vocabulary';
 
 function OutcomeBadge({ outcome }: { outcome: string }) {
     const ok = outcome === 'succeeded';
@@ -56,12 +56,22 @@ const attemptColumns: ColumnDef<AutoReloadAttempt, unknown>[] = [
         ),
     },
     {
-        header: 'Error code',
-        cell: ({ row }) => (
-            <span className="font-mono text-[11px] text-muted-foreground">
-                {row.original.stripeErrorCode ?? '—'}
-            </span>
-        ),
+        header: 'Details',
+        // OD-B3-01 (ruling B): a failed reload leads with actionable customer copy; the exact provider
+        // code (stripeErrorCode) sits behind a diagnostic disclosure, never inline.
+        cell: ({ row }) => {
+            const code = row.original.stripeErrorCode;
+            if (!code) return <span className="text-muted-foreground">—</span>;
+            return (
+                <div className="space-y-1">
+                    <p className="text-[12px]">{reloadFailureCopy(code)}</p>
+                    <details className="text-[11px] text-muted-foreground">
+                        <summary className="cursor-pointer select-none">Diagnostic details</summary>
+                        <span className="font-mono">Provider code: {code}</span>
+                    </details>
+                </div>
+            );
+        },
     },
 ];
 
