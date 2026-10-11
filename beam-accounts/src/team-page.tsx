@@ -34,6 +34,7 @@ import {
   SheetHeader,
   SheetTitle,
   SimpleSelect,
+  useIsMobile,
 } from "@schemastud/ui";
 import {
   useTeamMembers,
@@ -83,6 +84,7 @@ function TeamInner({
   // Generated SDK reads (client-sdk-codegen 05). The role vocabulary is server-derived from the
   // beam-accounts Role enum and never changes within a session, so `staleTime: Infinity` rides the
   // generated hook's options passthrough exactly as the hand-written hook set it.
+  const isMobile = useIsMobile();
   const membersQuery = useTeamMembers();
   const invitationsQuery = useTeamInvitations();
   const roles = useTeamRoles();
@@ -354,6 +356,16 @@ function TeamInner({
           one owner
         </span>
       </div>
+
+      {isMobile && counts.Pending > 0 && facet !== "Pending" && (
+        <Button
+          variant="outline"
+          className="h-auto w-full min-w-0 whitespace-normal break-words py-2"
+          onClick={() => setFacet("Pending")}
+        >
+          View pending invitations ({counts.Pending})
+        </Button>
+      )}
 
       <DataTable
         stackOnMobile
