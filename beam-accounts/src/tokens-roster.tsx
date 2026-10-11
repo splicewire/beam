@@ -370,8 +370,8 @@ function ScopePicker({
         })}
       </div>
       <p className="text-[11.5px] text-muted-foreground">
-        Leave everything unselected for an unscoped Full-access token. The
-        picker offers only permissions you hold — the ADR-0109 clamp ceiling.
+        Leave everything unselected for a Full-access token. The picker only
+        offers access you already have.
       </p>
     </div>
   );
@@ -459,21 +459,12 @@ function CreateTokenDialog({
           onChange={setAbilities}
         />
 
-        {/* ADR-0109 clamp/intersect teaching. */}
+        {/* Explain the security boundary in product language; the ADR stays in source history. */}
         <div className="flex gap-2.5 rounded-md border border-dashed border-primary/40 bg-primary/[0.04] p-3 text-[12px] leading-relaxed text-muted-foreground">
-          <span className="mt-0.5 font-mono text-[10px] uppercase tracking-wide text-primary">
-            ADR-0109
-          </span>
           <p>
-            Scope limits what a <b className="text-foreground">leaked</b> token
-            can do — not a trust boundary. Abilities are{" "}
-            <b className="text-foreground">clamped at mint</b> to what you hold
-            and <b className="text-foreground">re-intersected at enforcement</b>{" "}
-            (token ∩ your live permissions). The picker offers only your own
-            permissions;{" "}
-            <span className="font-mono text-[11px]">engine:consume</span> /{" "}
-            <span className="font-mono text-[11px]">tenant:provision</span>{" "}
-            never appear.
+            Choosing fewer permissions limits what the token can do if it is
+            exposed. A token can only use access you currently have, and it
+            stops using a permission when you lose that permission.
           </p>
         </div>
 
@@ -764,11 +755,12 @@ export function TokensRoster() {
       number
     >;
     for (const t of all) {
+      if (!showArchived && t.archivedAt) continue;
       const p = asProvenance(t.provenance);
       if (p in c) c[p] += 1;
     }
     return c;
-  }, [all]);
+  }, [all, showArchived]);
 
   const rows = useMemo(
     () =>
@@ -930,8 +922,8 @@ export function TokensRoster() {
 
       {/* The "log out everywhere else" teaching — Session-provenance ONLY. */}
       <div className="flex gap-2.5 rounded-md border border-warning/40 bg-warning/[0.06] p-3 text-[12.5px] leading-relaxed text-muted-foreground">
-        <span className="mt-0.5 font-mono text-[10px] uppercase tracking-wide text-warning-foreground">
-          sessions
+        <span className="mt-0.5 text-xs font-medium text-warning-foreground">
+          Browser sessions
         </span>
         <p>
           <b className="text-foreground">Revoke other sessions</b> signs out
