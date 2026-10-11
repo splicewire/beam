@@ -1,5 +1,5 @@
 import { useState, type FormEvent, type ReactNode } from 'react';
-import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Label } from '@schemastud/ui';
+import { Button, Card, CardContent, CardDescription, CardHeader, Label } from '@schemastud/ui';
 import { useLogin } from './auth-hooks';
 import { AuthError, PasswordInput } from './auth-fields';
 import { errorMessage } from './utils';
@@ -10,6 +10,13 @@ export interface LoginPanelProps<TResult = unknown> {
     /** Fires with the host's auth-result payload after a successful sign-in. */
     onSuccess: (result: TResult) => void;
     title?: string;
+    /**
+     * Semantic element for the panel title (UX01 / C37). The panel title is the page's main heading,
+     * so it defaults to a real `h1` — hosts set `h2` only when the panel is nested under a page that
+     * already owns the `h1`. The CardTitle visual styling is retained either way; this does NOT change
+     * the shared `CardTitle` component.
+     */
+    titleAs?: 'h1' | 'h2';
     description?: string;
 
     /** Render the passkey button in its slot above the "OR CONTINUE WITH EMAIL" divider. */
@@ -38,6 +45,7 @@ export function LoginPanel<TResult = unknown>({
     brand,
     onSuccess,
     title = 'Sign in to Splicewire',
+    titleAs: TitleTag = 'h1',
     description,
     showPasskeySlot = false,
     passkeySlot,
@@ -71,7 +79,8 @@ export function LoginPanel<TResult = unknown>({
             {brand}
             <Card className="w-full">
                 <CardHeader>
-                    <CardTitle>{title}</CardTitle>
+                    {/* UX01/C37: a real page heading, with the CardTitle visual styling retained. */}
+                    <TitleTag className="font-semibold leading-none tracking-tight">{title}</TitleTag>
                     {description && <CardDescription>{description}</CardDescription>}
                 </CardHeader>
                 <CardContent className="space-y-4">
