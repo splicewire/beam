@@ -2,6 +2,7 @@
 import { cleanup, render, screen } from '@testing-library/react';
 import { afterEach, expect, it } from 'vitest';
 import { ReloadActivityCard } from './ReloadActivityCard';
+import { reloadFailureCopy } from './vocabulary';
 import type { AutoReloadActivity } from './types';
 
 afterEach(cleanup);
@@ -44,4 +45,19 @@ it('OD-B3-01: a succeeded reload carries no failure copy and no provider code', 
     // Only the one declined attempt produces actionable copy + a provider code; the succeeded row does not.
     expect(screen.queryAllByText(/update your payment method/i)).toHaveLength(1);
     expect(screen.queryAllByText(/card_declined/)).toHaveLength(1);
+});
+
+it('OD-B3-01: the actionable copy is truthful per code — non-card codes never say "card declined", unknown codes fall back', () => {
+    // The card code gets the card wording …
+    expect(reloadFailureCopy('card_declined')).toMatch(/card was declined/i);
+    // … but non-card codes must NOT claim a card decline (truthfulness is the ruling's core).
+    for (const code of ['insufficient_funds', 'authentication_required']) {
+        expect(reloadFailureCopy(code), code).not.toMatch(/card (was )?declined/i);
+        expect(reloadFailureCopy(code).length, code).toBeGreaterThan(0);
+    }
+    // An unknown code gets the generic, still-actionable fallback (never a wrong-cause claim).
+    const generic = 'The automatic top-up didn’t go through — update your payment method to resume.';
+    expect(reloadFailureCopy('some_future_stripe_code')).toBe(generic);
+    expect(reloadFailureCopy(null)).toBe(generic);
+    expect(reloadFailureCopy(undefined)).toBe(generic);
 });
