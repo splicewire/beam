@@ -159,7 +159,7 @@ export function WorkflowsAdminPage() {
                 forks a new version — objects already running stay on the version they started on.
             </p>
 
-            <div className="grid grid-cols-[260px_1fr] gap-6">
+            <div className="grid grid-cols-1 gap-6 lg:grid-cols-[260px_1fr]">
                 {/* Lineage list */}
                 <aside className="space-y-1.5">
                     {/* Lineage-index filter (ticket 08) — router-agnostic search + system/custom segment. */}

@@ -198,7 +198,7 @@ function TransformEditorPane({
                 </div>
             </CardHeader>
             <CardContent className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <div className="space-y-1">
                         <Label htmlFor="rt-name">Name</Label>
                         <Input
@@ -235,7 +235,7 @@ function TransformEditorPane({
                     />
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <div className="space-y-1">
                         <Label htmlFor="rt-net">Requested network</Label>
                         <select
