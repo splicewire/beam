@@ -3,6 +3,7 @@ const BILL_STATUS_LABELS: Record<string, string> = {
     open: 'Open',
     paid: 'Paid',
     finalized: 'Finalized',
+    invoiced: 'Invoiced',
     void: 'Void',
 };
 
@@ -14,11 +15,16 @@ const RELOAD_OUTCOME_LABELS: Record<string, string> = {
     blocked: 'Blocked',
 };
 
-const ENTITLEMENT_SOURCE_LABELS: Record<string, string> = {
-    default: 'Default',
-    plan: 'Plan',
-    tenant: 'Tenant override',
-};
+export const ENTITLEMENT_SOURCE_FACETS = [
+    { key: 'all', label: 'All' },
+    { key: 'default', label: 'Default' },
+    { key: 'plan', label: 'Plan' },
+    { key: 'tenant', label: 'Tenant override' },
+] as const;
+
+const ENTITLEMENT_SOURCE_LABELS = Object.fromEntries(
+    ENTITLEMENT_SOURCE_FACETS.filter((facet) => facet.key !== 'all').map((facet) => [facet.key, facet.label]),
+);
 
 export function billStatusLabel(status: string): string {
     return BILL_STATUS_LABELS[status] ?? 'Unknown bill status';

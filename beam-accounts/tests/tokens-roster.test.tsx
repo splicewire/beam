@@ -164,6 +164,26 @@ it("explains compound scopes while retaining each exact permission key", async (
   expect(screen.getByText("Edit site")).toBeTruthy();
   expect(screen.getByText("site.edit")).toBeTruthy();
 });
+it("uses explicit labels for shipped scopes and leaves an unknown key exact", async () => {
+  const token: ApiTokenData = {
+    ...SAMPLE_TOKENS[0],
+    abilities: [
+      "context-scopes.embeddings",
+      "embeddings.embed",
+      "permission-cascade.platform_admin_permission",
+      "tenants.sync",
+      "future_scope.with_odd-shape",
+    ],
+  };
+  mount({ client: makeTokensClient({ tokens: [token] }), notify: vi.fn() });
+
+  expect(await screen.findByText("Search context scope embeddings")).toBeTruthy();
+  expect(screen.getByText("Generate embeddings")).toBeTruthy();
+  expect(screen.getByText("Manage platform permissions")).toBeTruthy();
+  expect(screen.getByText("Sync workspaces")).toBeTruthy();
+  expect(screen.getByText("future_scope.with_odd-shape")).toBeTruthy();
+  expect(screen.queryByText("With odd shape future scope")).toBeNull();
+});
 it("describes the new token and the filter in plain words", async () => {
   // Launch ticket 05 item 2: "Mint only tokens ⊆ your own permissions" and a "PROVENANCE" filter label. The rules stay
   // true (a token can't exceed its creator's permissions; its secret shows once) in plain words.

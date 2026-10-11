@@ -66,6 +66,7 @@ function Progress({
 function BillStatusBadge({ status }: { status: string }) {
     const map: Record<string, string> = {
         finalized: 'border-primary/25 bg-primary/5 text-foreground',
+        invoiced: 'border-primary/25 bg-primary/5 text-foreground',
         paid: 'border-primary/25 bg-primary/5 text-foreground',
         open: 'border-warning/40 bg-warning/10 text-warning-foreground',
         draft: 'border-border bg-muted/50 text-muted-foreground',

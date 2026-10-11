@@ -17,6 +17,14 @@ describe('errorMessage public boundary', () => {
         expect(errorMessage(error, 'Could not load billing.')).toBe(expected);
     });
 
+    it('does not leak an axios message when a 4xx response has no authored message', () => {
+        const error = Object.assign(new Error('Request failed with status code 404'), {
+            response: { status: 404, data: {} },
+        });
+
+        expect(errorMessage(error, 'Could not load billing.')).toBe('Could not load billing.');
+    });
+
     it.each([
         new Error('connect ECONNREFUSED 10.0.0.12'),
         {
