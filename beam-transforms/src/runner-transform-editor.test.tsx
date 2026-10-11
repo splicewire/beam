@@ -50,3 +50,21 @@ it('drops the empty-state prompt once transforms exist', async () => {
     await waitFor(() => expect(screen.getByText('Shape payload')).toBeTruthy());
     expect(screen.queryByText('No transforms yet')).toBeNull();
 });
+
+it('keeps the editor and paired fields single-column at narrow widths without changing the desktop panes', async () => {
+    const { container } = render(
+        <MockTransformsProvider config={{ transforms: SAMPLE_TRANSFORMS }}>
+            <RunnerTransformEditor />
+        </MockTransformsProvider>,
+    );
+
+    await waitFor(() => expect(screen.getByText('Shape payload')).toBeTruthy());
+    const layout = container.firstElementChild;
+    expect(layout?.className).toContain('grid-cols-1');
+    expect(layout?.className).toContain('lg:grid-cols-[320px_1fr]');
+
+    for (const input of [screen.getByLabelText('Name'), screen.getByLabelText('Requested network')]) {
+        expect(input.parentElement?.parentElement?.className).toContain('grid-cols-1');
+        expect(input.parentElement?.parentElement?.className).toContain('sm:grid-cols-2');
+    }
+});

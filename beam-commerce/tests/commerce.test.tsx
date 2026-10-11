@@ -594,6 +594,21 @@ describe('BillingSurface — isolation mount', () => {
 });
 
 describe('SubscriptionSurface — isolation mount', () => {
+    it('keeps every entitlement value labelled in a narrow single-column roster and restores desktop columns', async () => {
+        const view = mount(<SubscriptionSurface />, fakeClient());
+
+        await screen.findByText('Resolved entitlements');
+        const capability = screen.getAllByText('Capability').find((node) => node.className.includes('sm:hidden'));
+        const state = screen.getAllByText('State').find((node) => node.className.includes('sm:hidden'));
+        const source = screen.getAllByText('Source').find((node) => node.className.includes('sm:hidden'));
+        expect(capability).toBeDefined();
+        expect(state).toBeDefined();
+        expect(source).toBeDefined();
+        const roster = capability?.closest('[data-entitlement-row]')?.parentElement;
+        expect(roster?.className).not.toContain('min-w-[520px]');
+        expect(view.container.querySelector('[data-entitlement-header]')?.className).toContain('hidden');
+        expect(view.container.querySelector('[data-entitlement-header]')?.className).toContain('sm:grid');
+    });
     it('uses a section heading when embedded in a composed billing page', async () => {
         mount(<SubscriptionSurface embedded />, fakeClient());
 

@@ -238,9 +238,9 @@ function EntitlementGrid({
                 </div>
             </CardHeader>
             <CardContent>
-                <div className="overflow-x-auto">
-                    <div className="min-w-[520px] divide-y rounded-md border">
-                        <div className="grid grid-cols-[1fr_auto_auto] gap-4 bg-muted/40 px-3 py-2 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+                <div>
+                    <div className="divide-y rounded-md border">
+                        <div data-entitlement-header className="hidden grid-cols-[1fr_auto_auto] gap-4 bg-muted/40 px-3 py-2 text-[11px] font-medium uppercase tracking-wide text-muted-foreground sm:grid">
                             <span>Capability</span>
                             <span className="text-right">State</span>
                             <span className="text-right">Source</span>
@@ -255,9 +255,11 @@ function EntitlementGrid({
                             return (
                                 <div
                                     key={e.capability}
-                                    className="grid grid-cols-[1fr_auto_auto] items-center gap-4 px-3 py-2.5"
+                                    data-entitlement-row
+                                    className="grid grid-cols-1 items-center gap-2 px-3 py-2.5 sm:grid-cols-[1fr_auto_auto] sm:gap-4"
                                 >
                                     <div className="min-w-0">
+                                        <span className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground sm:hidden">Capability</span>
                                         <div
                                             className={cn(
                                                 'truncate text-sm',
@@ -270,7 +272,8 @@ function EntitlementGrid({
                                             {e.capability}
                                         </div>
                                     </div>
-                                    <div className="flex justify-end">
+                                    <div className="flex items-center justify-between gap-3 sm:justify-end">
+                                        <span className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground sm:hidden">State</span>
                                         <span
                                             className={cn(
                                                 'inline-flex items-center gap-1.5 text-xs',
@@ -290,7 +293,8 @@ function EntitlementGrid({
                                                   : 'Off'}
                                         </span>
                                     </div>
-                                    <div className="flex justify-end">
+                                    <div className="flex items-center justify-between gap-3 sm:justify-end">
+                                        <span className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground sm:hidden">Source</span>
                                         <SourceBadge source={e.source} />
                                     </div>
                                 </div>

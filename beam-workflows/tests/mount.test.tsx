@@ -217,6 +217,22 @@ describe('§8a — the full tree mounts off pure generated-DTO fixtures (no Lara
         await waitFor(() => expect(notify).toHaveBeenCalledWith(expect.objectContaining({ type: 'success' })));
     });
 
+    it('uses one pane at narrow widths and preserves the desktop lineage/editor split', async () => {
+        const client = fakeClient(() => Promise.reject(new Error('n/a')));
+        client.listLineages = () => Promise.resolve([]);
+        client.catalog = () => Promise.resolve(catalogFixture);
+
+        render(<WorkflowsAdminPage />, {
+            wrapper: withProviders({ client }),
+        });
+
+        await waitFor(() => expect(screen.getByText('No workflows match.')).toBeDefined());
+        const filter = screen.getByLabelText('Filter workflows');
+        const layout = filter.closest('aside')?.parentElement;
+        expect(layout?.className).toContain('grid-cols-1');
+        expect(layout?.className).toContain('lg:grid-cols-[260px_1fr]');
+    });
+
     it('names a bound type by its catalog label in the list chip and the type card, never by its raw key', async () => {
         // Launch ticket 05 item 1: the admin showed a type's raw key (`App\\Models\\Post` in the review's stories).
         // The server only ever sends registry-legal keys; the label is what a person reads.
