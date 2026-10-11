@@ -47,7 +47,7 @@ export function CommerceBillingPanel({
     return (
         <div className="space-y-10">
             <header>
-                <h1 className="text-2xl font-semibold tracking-tight">Billing</h1>
+                <h1 className="text-xl font-semibold tracking-tight">Billing</h1>
                 <p className="text-sm text-muted-foreground">
                     Usage, spending, subscription and prepaid credit for this workspace.
                 </p>
