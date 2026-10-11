@@ -195,6 +195,34 @@ describe("ExtensionsCatalog — isolation mount (no Laravel)", () => {
     expect(screen.getByRole("button", { name: "Browse" })).toBeTruthy();
   });
 
+  it("offers an empty catalog's connect task only when the host wires connect and admits it", async () => {
+    const emptyCatalog = { ...CATALOG, listings: [] };
+    const client = fakeClient({ getCatalog: vi.fn(async () => emptyCatalog) });
+    mount(<ExtensionsArea />, client, {
+      can: (ability: string) => ability === "market-connection.create",
+    });
+
+    fireEvent.click(await screen.findByRole("button", { name: "Connect a market" }));
+    expect(await screen.findByLabelText("Market URL")).toBeTruthy();
+  });
+
+  it.each([
+    ["the actor is refused", fakeClient({ getCatalog: vi.fn(async () => ({ ...CATALOG, listings: [] })) }), () => false],
+    [
+      "only other market mutations are wired",
+      fakeClient({
+        getCatalog: vi.fn(async () => ({ ...CATALOG, listings: [] })),
+        connectMarket: undefined,
+      }),
+      () => true,
+    ],
+  ])("does not invent a connect task when %s", async (_reason, client, can) => {
+    mount(<ExtensionsArea />, client, { can });
+
+    expect(await screen.findByText("No extensions are available yet.")).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Connect a market" })).toBeNull();
+  });
+
   it("renders both listing kinds off a pure generated-DTO fixture, with trust + lock badges", async () => {
     const client = fakeClient();
     mount(<ExtensionsCatalog onSelect={() => {}} />, client);
