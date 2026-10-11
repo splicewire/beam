@@ -118,6 +118,28 @@ describe("CreatorWorkspaceArea", () => {
     );
   });
 
+  it("shows a retryable error instead of calling a failed seller lookup an absent identity", async () => {
+    const getSeller = vi.fn().mockRejectedValue(new Error("seller lookup failed"));
+    mount(stubClient({ getSeller }));
+
+    expect((await screen.findByRole("alert")).textContent).toContain(
+      "Unable to load the creator workspace.",
+    );
+    expect(screen.queryByTestId("creator-no-seller")).toBeNull();
+    expect(screen.queryByTestId("creator-repository-row")).toBeNull();
+
+    fireEvent.click(screen.getByRole("button", { name: "Retry" }));
+    await waitFor(() => expect(getSeller).toHaveBeenCalledTimes(2));
+  });
+
+  it("hides seller mutations when the lookup succeeds with no seller identity", async () => {
+    mount(stubClient({ getSeller: async () => null }));
+
+    expect(await screen.findByTestId("creator-no-seller")).toBeTruthy();
+    expect(screen.queryByTestId("creator-repository-row")).toBeNull();
+    expect(screen.queryByTestId("creator-new-listing")).toBeNull();
+  });
+
   it("labels a simulated authorization permanently, because nothing else distinguishes it", async () => {
     mount(stubClient());
 

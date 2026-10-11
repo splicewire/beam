@@ -24,8 +24,9 @@ export function ExtensionsArea({
 }) {
     const [tab, setTab] = useState<Tab>('browse');
     const [selectedListingId, setSelectedListingId] = useState<number | null>(null);
-    const { client } = useExtensionsServices();
+    const { client, can } = useExtensionsServices();
     const hasMarketActions = Boolean(client.connectMarket || client.syncMarket || client.disconnectMarket);
+    const canConnectMarket = Boolean(client.connectMarket) && (can?.('market-connection.create') ?? true);
     const activeTab = tab === 'market' && !hasMarketActions ? 'browse' : tab;
 
     return (
@@ -50,7 +51,13 @@ export function ExtensionsArea({
                 )}
             </div>
 
-            {activeTab === 'browse' && <ExtensionsCatalog onSelect={setSelectedListingId} plays={plays} />}
+            {activeTab === 'browse' && (
+                <ExtensionsCatalog
+                    onSelect={setSelectedListingId}
+                    plays={plays}
+                    onManageMarkets={canConnectMarket ? () => setTab('market') : undefined}
+                />
+            )}
             {activeTab === 'installed' && <InstalledTab />}
             {activeTab === 'market' && <MarketConnectionPanel />}
 

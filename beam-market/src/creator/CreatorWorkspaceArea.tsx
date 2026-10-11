@@ -1,4 +1,4 @@
-import { Badge, cn } from "@schemastud/ui";
+import { Badge, Button, cn } from "@schemastud/ui";
 import { useCreatorSeller } from "./hooks";
 import { ListingsSection } from "./ListingsSection";
 import { RepositorySection } from "./RepositorySection";
@@ -32,7 +32,15 @@ export function CreatorWorkspaceArea({ className }: { className?: string }) {
         {seller.isPending ? (
           <span className="text-sm text-muted-foreground">Resolving your seller identity…</span>
         ) : null}
-        {!seller.isPending && !seller.data ? (
+        {seller.isError ? (
+          <span className="flex items-center gap-2 text-sm" role="alert">
+            Unable to load the creator workspace.
+            <Button size="sm" variant="outline" onClick={() => void seller.refetch()}>
+              Retry
+            </Button>
+          </span>
+        ) : null}
+        {!seller.isPending && !seller.isError && !seller.data ? (
           // Not an error state: a host whose actor resolves to no Seller (no tenant, or a
           // deliberately null resolver) reaches this surface and can do nothing on it. Saying so is
           // better than an empty page that looks broken.
@@ -42,8 +50,12 @@ export function CreatorWorkspaceArea({ className }: { className?: string }) {
         ) : null}
       </header>
 
-      <RepositorySection />
-      <ListingsSection />
+      {seller.data ? (
+        <>
+          <RepositorySection />
+          <ListingsSection />
+        </>
+      ) : null}
     </div>
   );
 }

@@ -144,8 +144,11 @@ const KIND_OPTIONS = [
 export function ExtensionsCatalog({
   onSelect,
   plays,
+  onManageMarkets,
 }: {
   onSelect: (id: number) => void;
+  /** A real, admitted host action; omitted for read-only and connect-less catalogs. */
+  onManageMarkets?: () => void;
   /**
    * The cross-instance sides the host plays (APP-11/APP-24, IA-6). The "not connected to Splicewire"
    * banner is a CLIENT concern — a hub has no upstream to be disconnected from — so it renders only
@@ -252,6 +255,11 @@ export function ExtensionsCatalog({
                   ? "Clear the filters to see the whole catalog."
                   : "Listings appear here once this site publishes or connects to a market."}
               </p>
+              {!filtered && onManageMarkets ? (
+                <Button variant="outline" size="sm" className="mt-2" onClick={onManageMarkets}>
+                  Connect a market
+                </Button>
+              ) : null}
             </div>
           )}
           {platformTier.length > 0 && (
