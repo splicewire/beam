@@ -24,6 +24,15 @@ import type { Bill, BudgetVerdict, UsageModelBreakdown } from './commerce-types'
 import { SurfaceHeading } from './SurfaceHeading';
 
 /**
+ * C46/XR-2: a failed read is retryable only on a 5xx or a network failure (no status) — never a 4xx
+ * (APP-8), matching the host's shared alert/Retry terminal. Local to beam-commerce (no beam-ux dep).
+ */
+function isRetryable(error: unknown): boolean {
+    const status = (error as { response?: { status?: number } } | null)?.response?.status;
+    return typeof status !== 'number' || status >= 500;
+}
+
+/**
  * Billing / spend control (Frame OS ticket 21 — promoted from the app's settings `BillingPage`). The
  * single vertical scrolling spend pane answering "what am I spending / what will I owe":
  *   Section 1 — BudgetMeter   (no perm; always renders)
@@ -250,9 +259,14 @@ function BudgetSection() {
                         <CardTitle>Spending cap</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <p className="text-sm text-destructive">
-                            {errorMessage(budget.error, 'Could not load the budget.')}
-                        </p>
+                        <div role="alert" className="text-sm text-destructive">
+                        <p>{errorMessage(budget.error, 'Could not load the budget.')}</p>
+                        {isRetryable(budget.error) && (
+                            <Button size="sm" variant="outline" className="mt-2" onClick={() => void budget.refetch()}>
+                                Try again
+                            </Button>
+                        )}
+                    </div>
                     </CardContent>
                 </Card>
             )}
@@ -290,9 +304,14 @@ function UsageSection() {
             </CardHeader>
             <CardContent className="space-y-4">
                 {summary.isError ? (
-                    <p className="text-sm text-destructive">
-                        {errorMessage(summary.error, 'Could not load the usage summary.')}
-                    </p>
+                    <div role="alert" className="text-sm text-destructive">
+                        <p>{errorMessage(summary.error, 'Could not load the usage summary.')}</p>
+                        {isRetryable(summary.error) && (
+                            <Button size="sm" variant="outline" className="mt-2" onClick={() => void summary.refetch()}>
+                                Try again
+                            </Button>
+                        )}
+                    </div>
                 ) : (
                     <>
                         <div className="flex gap-8">
@@ -344,9 +363,14 @@ function BillPreviewCard({ subscribeHref }: { subscribeHref?: string }) {
                     <p className="text-sm text-muted-foreground">Loading preview…</p>
                 )}
                 {preview.isError && (
-                    <p className="text-sm text-destructive">
-                        {errorMessage(preview.error, 'Could not load the bill preview.')}
-                    </p>
+                    <div role="alert" className="text-sm text-destructive">
+                        <p>{errorMessage(preview.error, 'Could not load the bill preview.')}</p>
+                        {isRetryable(preview.error) && (
+                            <Button size="sm" variant="outline" className="mt-2" onClick={() => void preview.refetch()}>
+                                Try again
+                            </Button>
+                        )}
+                    </div>
                 )}
                 {preview.isSuccess &&
                     (preview.data?.hasActivePlan === false ? (
@@ -417,9 +441,14 @@ function BillsSection({ onSelect }: { onSelect: (bill: Bill) => void }) {
             </CardHeader>
             <CardContent>
                 {bills.isError ? (
-                    <p className="py-12 text-center text-sm text-destructive">
-                        {errorMessage(bills.error, 'Could not load bills.')}
-                    </p>
+                    <div role="alert" className="py-12 text-center text-sm text-destructive">
+                        <p>{errorMessage(bills.error, 'Could not load bills.')}</p>
+                        {isRetryable(bills.error) && (
+                            <Button size="sm" variant="outline" className="mt-2" onClick={() => void bills.refetch()}>
+                                Try again
+                            </Button>
+                        )}
+                    </div>
                 ) : (
                     <DataTable
                         stackOnMobile
