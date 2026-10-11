@@ -205,12 +205,28 @@ function ScopeChips({ abilities }: { abilities: string[] | null }) {
   return (
     <div className="flex max-w-xs flex-wrap gap-1">
       {abilities.map((a) => (
-        <Badge key={a} variant="outline" className="font-mono text-[10.5px]">
-          {a}
+        <Badge
+          key={a}
+          variant="outline"
+          className="flex flex-col items-start gap-0.5 py-1"
+        >
+          <span className="text-[11px] font-medium">{scopeLabel(a)}</span>
+          <span className="font-mono text-[9px] text-muted-foreground">{a}</span>
         </Badge>
       ))}
     </div>
   );
+}
+
+function scopeLabel(scope: string): string {
+  const [resource, ...actionParts] = scope.split(".");
+  if (actionParts.length === 0) return humanizeScopePart(resource);
+  return `${humanizeScopePart(actionParts.join(" "))} ${humanizeScopePart(resource).toLowerCase()}`;
+}
+
+function humanizeScopePart(value: string): string {
+  const words = value.replace(/[_-]+/g, " ").trim().toLowerCase();
+  return words.charAt(0).toUpperCase() + words.slice(1);
 }
 
 // ─── the ONE enhancement: grouped + searchable scope picker (ticket Q1) ──────

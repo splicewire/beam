@@ -150,6 +150,20 @@ it("labels an unscoped token 'Full access' without leaking the ['*'] wire wildca
   expect(screen.getAllByText("Full access").length).toBeGreaterThan(0);
   expect(screen.queryByText(/\['\*'\]/)).toBeNull();
 });
+it("explains compound scopes while retaining each exact permission key", async () => {
+  const token: ApiTokenData = {
+    ...SAMPLE_TOKENS[0],
+    abilities: ["billing.view", "declarations.redetermine", "site.edit"],
+  };
+  mount({ client: makeTokensClient({ tokens: [token] }), notify: vi.fn() });
+
+  expect(await screen.findByText("View billing")).toBeTruthy();
+  expect(screen.getByText("billing.view")).toBeTruthy();
+  expect(screen.getByText("Redetermine declarations")).toBeTruthy();
+  expect(screen.getByText("declarations.redetermine")).toBeTruthy();
+  expect(screen.getByText("Edit site")).toBeTruthy();
+  expect(screen.getByText("site.edit")).toBeTruthy();
+});
 it("describes the new token and the filter in plain words", async () => {
   // Launch ticket 05 item 2: "Mint only tokens ⊆ your own permissions" and a "PROVENANCE" filter label. The rules stay
   // true (a token can't exceed its creator's permissions; its secret shows once) in plain words.
