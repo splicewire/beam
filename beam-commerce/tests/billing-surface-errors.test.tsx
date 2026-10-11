@@ -2,7 +2,7 @@
 // C46/XR-2: BillingSurface section read-errors announce (role=alert) and offer Retry only on a 5xx/network
 // failure — NEVER a 4xx — while PRESERVING the authored errorMessage copy. No beam-ux dependency.
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { cleanup, render, screen, waitFor, within } from '@testing-library/react';
+import { cleanup, render, screen, within } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { afterEach, expect, it, vi } from 'vitest';
 import { BillingSurface, CommerceProvider } from '../src/index';

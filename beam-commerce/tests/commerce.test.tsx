@@ -222,7 +222,9 @@ describe('CreditsSurface — isolation mount (no Laravel)', () => {
         // overflow-wrap:anywhere (not break-words) also lowers the table's min-content, so a long unbroken token
         // (an id, a URL, the mono purchaseRef) cannot widen the column either (review-r1 on 5aaa2f2).
         expect(reason.className).toContain('[overflow-wrap:anywhere]');
-        expect(screen.getByText('cs_test_123').className).toContain('[overflow-wrap:anywhere]');
+        const auditRef = screen.getByText(/cs_test_123/);
+        expect(auditRef.getAttribute('data-ledger-audit-ref')).not.toBeNull();
+        expect(auditRef.className).toContain('[overflow-wrap:anywhere]');
         expect(screen.getByText('$149.00').className).toContain('whitespace-nowrap');
     });
 
@@ -900,11 +902,11 @@ describe('X follow-up (c): human labels, no developer type names', () => {
         expect(screen.queryByText('SubscriptionFee')).toBeNull();
     });
 
-    it('reads an engine top-up ledger reason as a credit top-up', async () => {
+    it('reads an engine top-up as a credit added event with the raw reason demoted to audit detail', async () => {
         mount(<CreditsSurface />, fakeClient({ getWallet: vi.fn(async () => FUNDED_WALLET) }));
 
-        expect(await screen.findByText('Credit top-up')).toBeTruthy();
-        expect(screen.queryByText('topup:fake_abc')).toBeNull();
+        expect(await screen.findByText('Credit added')).toBeTruthy();
+        expect(screen.getByText('topup:fake_abc').getAttribute('data-ledger-audit-ref')).not.toBeNull();
     });
 
     it('labels known components and humanizes an unknown one; leaves other ledger reasons as recorded', () => {
