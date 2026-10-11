@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react';
+import { useRef, useState, type ReactNode } from 'react';
 import type { HostRealms, LinkComponent } from './types.js';
 
 export type RealmSwitcherProps = {
@@ -46,6 +46,7 @@ export function RealmSwitcher({
 }: RealmSwitcherProps) {
     const here = current ?? realms.current;
     const [open, setOpen] = useState(defaultOpen);
+    const trigger = useRef<HTMLButtonElement>(null);
     const Link = linkComponent ?? PlainLink;
     const appRealms = realms.realms.filter((r) => r.surface === 'app' && !r.locked);
     const site = realms.realms.find((r) => r.surface === 'site' && !r.locked);
@@ -53,11 +54,21 @@ export function RealmSwitcher({
 
     return (
         <div className={['relative', className].filter(Boolean).join(' ')} data-realm-switcher="">
-            <button type="button" aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen((v) => !v)}>
+            <button ref={trigger} type="button" aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen((v) => !v)}>
                 {label}
             </button>
             {open && (
-                <div role="menu" className={`absolute right-0 z-50 min-w-48 rounded-md border bg-popover p-1 text-popover-foreground shadow-md ${side === 'top' ? 'bottom-full mb-1' : 'top-full mt-1'}`}>
+                <div
+                    role="menu"
+                    className={`absolute right-0 z-50 min-w-48 rounded-md border bg-popover p-1 text-popover-foreground shadow-md ${side === 'top' ? 'bottom-full mb-1' : 'top-full mt-1'}`}
+                    onKeyDown={(event) => {
+                        if (event.key !== 'Escape') return;
+                        event.preventDefault();
+                        event.stopPropagation();
+                        setOpen(false);
+                        trigger.current?.focus();
+                    }}
+                >
                     {workspaces}
                     {appRealms.map((realm) => (
                         <Link
