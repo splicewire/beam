@@ -215,7 +215,14 @@ function PruneCard({ disabled }: { disabled: boolean }) {
 }
 
 // ── Card 3: Erase a subject (destructive — typed-ERASE confirm Dialog) ─────────────────────────
-function EraseCard({ disabled }: { disabled: boolean }) {
+// The erase subject selector shows human labels; the exact DTO key (visitorId/sessionId) still drives
+// state, the request and the receipt (W6-09 / C32).
+const SUBJECT_KIND_LABELS: Record<EraseSubjectKind, string> = {
+    visitorId: 'Visitor ID',
+    sessionId: 'Session ID',
+};
+
+export function EraseCard({ disabled }: { disabled: boolean }) {
     const erase = useEraseSubject();
     const [kind, setKind] = useState<EraseSubjectKind>('visitorId');
     const [subjectId, setSubjectId] = useState('');
@@ -278,16 +285,14 @@ function EraseCard({ disabled }: { disabled: boolean }) {
                                         kind === k ? 'bg-destructive' : 'bg-muted-foreground/30',
                                     )}
                                 />
-                                {k}
+                                {SUBJECT_KIND_LABELS[k]}
                             </span>
                         </button>
                     ))}
                 </div>
 
                 <div className="grid gap-1.5">
-                    <Label htmlFor="subject-id">
-                        {kind === 'visitorId' ? 'Visitor ID' : 'Session ID'}
-                    </Label>
+                    <Label htmlFor="subject-id">{SUBJECT_KIND_LABELS[kind]}</Label>
                     <Input
                         id="subject-id"
                         value={subjectId}
