@@ -59,3 +59,12 @@ describe('CommerceBillingPanel', () => {
         expect(scrollIntoView).toHaveBeenCalledWith({ block: 'start' });
     });
 });
+
+describe('CommerceBillingPanel — C47/XR-1 shared h1 size token', () => {
+    it('the page-level billing h1 uses the shared size token (text-xl), not text-2xl', () => {
+        render(<CommerceBillingPanel custody="hosted" autoReload={<p data-testid="auto-reload">Auto-reload</p>} />);
+        const h1 = screen.getByRole('heading', { level: 1, name: 'Billing' });
+        expect(h1.className).toContain('text-xl');
+        expect(h1.className).not.toContain('text-2xl');
+    });
+});
