@@ -54,6 +54,21 @@ describe('RealmSwitcher', () => {
         expect(screen.getAllByText('Operator')).toHaveLength(1);
     });
 
+    it('dismisses the open menu with Escape and returns focus to its trigger', () => {
+        const { container } = render(<RealmSwitcher realms={realms} label="Ada" signOutHref="/logout" />);
+        const trigger = screen.getByRole('button', { name: /ada/i });
+
+        fireEvent.click(trigger);
+        const menu = screen.getByRole('menu');
+        screen.getByRole('menuitem', { name: 'App' }).focus();
+        fireEvent.keyDown(menu, { key: 'Escape' });
+
+        expect(trigger.getAttribute('aria-expanded')).toBe('false');
+        expect(screen.queryByRole('menu')).toBeNull();
+        expect(container.querySelectorAll('[data-realm-switcher-item]')).toHaveLength(0);
+        expect(document.activeElement).toBe(trigger);
+    });
+
     it('lists the app realms, then View site and Sign out, and never the site realm as a realm', () => {
         const { container } = render(<RealmSwitcher realms={realms} label="Ada" signOutHref="/logout" defaultOpen />);
         expect(structure(container)).toEqual([
