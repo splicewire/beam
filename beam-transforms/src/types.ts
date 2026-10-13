@@ -76,6 +76,13 @@ export interface TransformsClient<TTransform = RunnerTransform> {
     test(id: string, input: Record<string, unknown>): Promise<RunnerTransformResult>;
 }
 
+/** What the acting user may change, as the host's server policy answers it. */
+export interface TransformsCapabilities {
+    create: boolean;
+    update: boolean;
+    delete: boolean;
+}
+
 export interface NotifyEvent {
     type: 'success' | 'error';
     message: string;
@@ -96,4 +103,10 @@ export interface TransformsServices<TTransform = RunnerTransform> {
      * per-transform activity affordance. The host owns the concept; the component only makes a slot.
      */
     renderHeaderExtra?: (transform: TTransform | null) => ReactNode;
+    /**
+     * What the actor may change. Each omitted key is allowed, so a host that passes nothing keeps full
+     * controls. The editor only follows the answer; the server still decides every write. Testing a
+     * transform needs read access only and is never hidden.
+     */
+    can?: Partial<TransformsCapabilities>;
 }

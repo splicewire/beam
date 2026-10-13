@@ -1,5 +1,5 @@
 import { createContext, useContext, type ReactNode } from 'react';
-import type { NotifyEvent, TransformsServices } from './types';
+import type { NotifyEvent, TransformsCapabilities, TransformsServices } from './types';
 
 const TransformsServicesContext = createContext<TransformsServices | null>(null);
 
@@ -34,4 +34,10 @@ export function useTransformsServices(): TransformsServices {
 /** The injected `notify`, or the console default when the host supplied none. */
 export function useNotify(): (event: NotifyEvent) => void {
     return useTransformsServices().notify ?? consoleNotify;
+}
+
+/** The injected `can`, each omitted key allowed. */
+export function useTransformsCan(): TransformsCapabilities {
+    const can = useTransformsServices().can;
+    return { create: can?.create ?? true, update: can?.update ?? true, delete: can?.delete ?? true };
 }

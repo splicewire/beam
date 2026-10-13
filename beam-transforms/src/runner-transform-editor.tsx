@@ -12,7 +12,7 @@ import {
     useTransforms,
     useUpdateTransform,
 } from './hooks';
-import { useNotify, useTransformsServices } from './provider';
+import { useNotify, useTransformsCan, useTransformsServices } from './provider';
 import type { RunnerTransform, RunnerTransformResult } from './types';
 
 // The RunnerTransform authoring editor (popcorn-runner-substrate ticket 09 §5, ADR-0116/0141) —
@@ -47,6 +47,8 @@ const selectClass =
 export function RunnerTransformEditor() {
     const { data: transforms = [], isLoading } = useTransforms();
     const { renderHeaderExtra } = useTransformsServices();
+    const can = useTransformsCan();
+    const readOnly = !can.create && !can.update && !can.delete;
     const [selectedId, setSelectedId] = useState<string | null>(null);
     const [draft, setDraft] = useState<Draft>(BLANK);
 
@@ -68,27 +70,36 @@ export function RunnerTransformEditor() {
             <aside className="space-y-3">
                 <div className="flex items-center justify-between">
                     <h1 className="text-lg font-semibold">Transforms</h1>
-                    <Button
-                        size="sm"
-                        onClick={() => {
-                            setSelectedId(null);
-                            setDraft(BLANK);
-                        }}
-                    >
-                        New
-                    </Button>
+                    {can.create && (
+                        <Button
+                            size="sm"
+                            onClick={() => {
+                                setSelectedId(null);
+                                setDraft(BLANK);
+                            }}
+                        >
+                            New
+                        </Button>
+                    )}
                 </div>
                 <p className="text-sm text-muted-foreground">
                     Sandboxed, user-authored transforms of another tool — code that runs deny-by-default in a
                     scoped sandbox.
                 </p>
+                {readOnly && (
+                    <p className="text-sm text-muted-foreground">
+                        You can view and test transforms, but not change them.
+                    </p>
+                )}
                 {isLoading && <p className="text-sm text-muted-foreground">Loading…</p>}
                 {!isLoading && transforms.length === 0 && (
                     <div className="rounded-md border border-dashed p-4 text-sm">
                         <p className="font-medium">No transforms yet</p>
-                        <p className="mt-1 text-muted-foreground">
-                            Write your first one in the editor, then save it to list it here.
-                        </p>
+                        {can.create && (
+                            <p className="mt-1 text-muted-foreground">
+                                Write your first one in the editor, then save it to list it here.
+                            </p>
+                        )}
                     </div>
                 )}
                 <ul className="space-y-2">
@@ -116,14 +127,18 @@ export function RunnerTransformEditor() {
                 </ul>
             </aside>
 
-            <TransformEditorPane
-                key={selectedId ?? 'new'}
-                transform={selected}
-                draft={draft}
-                setDraft={setDraft}
-                onSaved={(t) => setSelectedId(t.id)}
-                headerExtra={renderHeaderExtra?.(selected) ?? null}
-            />
+            {selected || can.create ? (
+                <TransformEditorPane
+                    key={selectedId ?? 'new'}
+                    transform={selected}
+                    draft={draft}
+                    setDraft={setDraft}
+                    onSaved={(t) => setSelectedId(t.id)}
+                    headerExtra={renderHeaderExtra?.(selected) ?? null}
+                />
+            ) : (
+                <p className="text-sm text-muted-foreground">Choose a transform to view and test it.</p>
+            )}
         </div>
     );
 }
@@ -142,6 +157,9 @@ function TransformEditorPane({
     headerExtra: React.ReactNode;
 }) {
     const notify = useNotify();
+    const can = useTransformsCan();
+    // A new draft needs create; an open transform needs update. Without it the fields are read-only.
+    const editable = transform ? can.update : can.create;
     const create = useCreateTransform();
     const update = useUpdateTransform(transform?.id ?? '');
     const remove = useDeleteTransform();
@@ -184,17 +202,19 @@ function TransformEditorPane({
     return (
         <Card>
             <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle>{transform ? 'Edit transform' : 'New transform'}</CardTitle>
+                <CardTitle>{!transform ? 'New transform' : editable ? 'Edit transform' : 'Transform details'}</CardTitle>
                 <div className="flex items-center gap-2">
                     {headerExtra}
-                    {transform && (
+                    {transform && can.delete && (
                         <Button variant="destructive" size="sm" onClick={() => remove.mutate(transform.id)}>
                             Delete
                         </Button>
                     )}
-                    <Button size="sm" onClick={save} disabled={!draft.name || !draft.code}>
-                        {needsReview ? 'Request review & save' : 'Save'}
-                    </Button>
+                    {editable && (
+                        <Button size="sm" onClick={save} disabled={!draft.name || !draft.code}>
+                            {needsReview ? 'Request review & save' : 'Save'}
+                        </Button>
+                    )}
                 </div>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -203,6 +223,7 @@ function TransformEditorPane({
                         <Label htmlFor="rt-name">Name</Label>
                         <Input
                             id="rt-name"
+                            readOnly={!editable}
                             value={draft.name}
                             onChange={(e) => setDraft({ ...draft, name: e.target.value })}
                         />
@@ -212,6 +233,7 @@ function TransformEditorPane({
                         <select
                             id="rt-runtime"
                             className={selectClass}
+                            disabled={!editable}
                             value={draft.runtime}
                             onChange={(e) => setDraft({ ...draft, runtime: e.target.value })}
                         >
@@ -229,6 +251,7 @@ function TransformEditorPane({
                     <Textarea
                         id="rt-code"
                         className="h-64 font-mono text-xs"
+                        readOnly={!editable}
                         value={draft.code}
                         onChange={(e) => setDraft({ ...draft, code: e.target.value })}
                         placeholder="// read { input, grant } on stdin; write one JSON object on stdout"
@@ -241,6 +264,7 @@ function TransformEditorPane({
                         <select
                             id="rt-net"
                             className={selectClass}
+                            disabled={!editable}
                             value={draft.requestedNet}
                             onChange={(e) => setDraft({ ...draft, requestedNet: e.target.value })}
                         >
@@ -256,6 +280,7 @@ function TransformEditorPane({
                         <select
                             id="rt-visibility"
                             className={selectClass}
+                            disabled={!editable}
                             value={draft.visibility}
                             onChange={(e) => setDraft({ ...draft, visibility: e.target.value })}
                         >
@@ -270,7 +295,7 @@ function TransformEditorPane({
 
                 {transform && <EffectiveGrant transform={transform} />}
 
-                {needsReview && (
+                {editable && needsReview && (
                     <p className="rounded-md bg-amber-50 p-2 text-xs text-amber-800">
                         Review required — <code>net:open</code> and <code>platform</code> publishing are
                         trust-gated (effective grant floors to deny-by-default until approved).

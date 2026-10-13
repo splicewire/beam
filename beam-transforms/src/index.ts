@@ -4,7 +4,7 @@
 // feedback / chrome) through <TransformsProvider>; the react-query data logic, the DTO typing, and
 // the presentation travel inside the package.
 
-export { TransformsProvider, useTransformsServices, useNotify } from './provider';
+export { TransformsProvider, useTransformsServices, useNotify, useTransformsCan } from './provider';
 export { RunnerTransformEditor } from './runner-transform-editor';
 export {
     useTransforms,
@@ -19,5 +19,6 @@ export type {
     RunnerTransformResult,
     TransformsClient,
     TransformsServices,
+    TransformsCapabilities,
     NotifyEvent,
 } from './types';
