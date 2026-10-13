@@ -20,17 +20,26 @@ const client: TransformsClient = {
     test: (id, input) => api.post(route('runner-transforms.test', { id }), { input }).then((r) => r.data.data),
 };
 
-<TransformsProvider services={{ client, notify }}>
+// Optional: what this actor may change, as the host's server policy answers it.
+const can = { create: isRoot, update: isRoot, delete: isRoot };
+
+<TransformsProvider services={{ client, notify, can }}>
     <RunnerTransformEditor />
 </TransformsProvider>;
 ```
 
-## The four-kind injection contract (ADR-0116)
+## The five-kind injection contract (ADR-0116)
 
 1. **client** — the transport adapter (required, tenant-blind, endpoints relative — the host binds route names).
 2. **notify** — feedback sink (optional; a dependency-free console default applies — no bundled toaster).
 3. **onError** — mutation-error hook (optional; the rejection still propagates).
 4. **renderHeaderExtra** — a host-chrome render slot in the editor header (optional).
+5. **can** — `{ create?, update?, delete? }`, what the actor may change (optional). The host supplies its server's
+   decision; the editor only follows it, and the server still decides every write. An omitted object, or an omitted
+   key, means allowed, so a host that passes nothing keeps full controls. Without `create` there is no New and no
+   blank form; without `update` an open transform is read-only with no Save; without `delete` there is no Delete;
+   with none of the three the editor says "You can view and test transforms, but not change them." Testing a
+   transform needs read access only, so the test panel stays available.
 
 The component holds **no tenant concept** — scoping is the adapter's job.
 
