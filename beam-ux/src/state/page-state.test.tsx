@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { PAGE_STATE_TABLE } from './page-state.table.js';
-import { StateBoundary, pageStateOf, retryUnlessClientError, transportOf } from './index.js';
+import { ForbiddenState, StateBoundary, pageStateOf, retryUnlessClientError, transportOf } from './index.js';
 
 describe('pageStateOf: one mapping from the transport to a page state (APP-8)', () => {
     it.each(PAGE_STATE_TABLE)('$name', ({ transport, outcome }) => {
@@ -102,5 +102,70 @@ describe('<StateBoundary>', () => {
         );
         expect(container.querySelector('[data-page-state]')?.getAttribute('data-page-state')).toBe('error');
         expect(container.textContent).toContain('The window is invalid.');
+    });
+});
+
+describe('<StateBoundary> way-back + ForbiddenState (UX sweep: a refusal was a dead end)', () => {
+    const wayBack = { label: 'Back to agents', target: '/agents' };
+
+    it('renders the way-back link in the forbidden state', () => {
+        const { container } = render(
+            <StateBoundary query={{ status: 'error', error: { response: { status: 403 } }, data: undefined }} label="agents" wayBack={wayBack}>
+                <p>rows</p>
+            </StateBoundary>,
+        );
+        expect(container.querySelector('[data-page-state]')?.getAttribute('data-page-state')).toBe('forbidden');
+        expect(screen.getByRole('link', { name: 'Back to agents' }).getAttribute('href')).toBe('/agents');
+    });
+
+    it('renders the way-back link in the not-found state', () => {
+        const { container } = render(
+            <StateBoundary query={{ status: 'error', error: { status: 404 }, data: undefined }} label="agents" wayBack={wayBack}>
+                <p>rows</p>
+            </StateBoundary>,
+        );
+        expect(container.querySelector('[data-page-state]')?.getAttribute('data-page-state')).toBe('not-found');
+        expect(screen.getByText("We couldn't find agents.")).toBeTruthy();
+        expect(screen.getByRole('link', { name: 'Back to agents' }).getAttribute('href')).toBe('/agents');
+    });
+
+    it('renders the way-back link beside Try again in the error state after a 5xx', () => {
+        render(
+            <StateBoundary query={{ status: 'error', error: { response: { status: 503 } }, data: undefined }} label="agents" onRetry={vi.fn()} wayBack={wayBack}>
+                <p>rows</p>
+            </StateBoundary>,
+        );
+        expect(screen.getByRole('button', { name: 'Try again' })).toBeTruthy();
+        expect(screen.getByRole('link', { name: 'Back to agents' }).getAttribute('href')).toBe('/agents');
+    });
+
+    it('renders the way-back link in the error state even for a 4xx that offers no retry', () => {
+        render(
+            <StateBoundary query={{ status: 'error', error: { response: { status: 405 } }, data: undefined }} label="agents" onRetry={vi.fn()} wayBack={wayBack}>
+                <p>rows</p>
+            </StateBoundary>,
+        );
+        expect(screen.queryByRole('button', { name: 'Try again' })).toBeNull();
+        expect(screen.getByRole('link', { name: 'Back to agents' }).getAttribute('href')).toBe('/agents');
+    });
+
+    it('renders no way-back link when none is given (it is optional)', () => {
+        render(
+            <StateBoundary query={{ status: 'error', error: { response: { status: 403 } }, data: undefined }} label="agents">
+                <p>rows</p>
+            </StateBoundary>,
+        );
+        expect(screen.queryByRole('link')).toBeNull();
+    });
+
+    it('exports ForbiddenState: the forbidden page state as a standalone node, no query needed', () => {
+        const { container, rerender } = render(<ForbiddenState label="studio" />);
+        expect(container.querySelector('[data-page-state="forbidden"]')).not.toBeNull();
+        expect(screen.getByText("You don't have access to studio.")).toBeTruthy();
+        expect(screen.getByText('An owner or admin of this workspace can grant it.')).toBeTruthy();
+        expect(screen.queryByRole('link')).toBeNull();
+
+        rerender(<ForbiddenState label="studio" wayBack={{ label: 'Back to Studio', target: '/studio' }} />);
+        expect(screen.getByRole('link', { name: 'Back to Studio' }).getAttribute('href')).toBe('/studio');
     });
 });
