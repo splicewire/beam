@@ -239,3 +239,14 @@ it("keeps the subset symbol and 'plaintext' off the whole page, including the re
   expect(document.body.textContent).not.toMatch(/⊆|plaintext/i);
   expect(document.body.textContent).toMatch(/only time you'll see this token/i);
 });
+it("is the page's one top-level heading, since every host renders the roster as the whole Tokens page", async () => {
+  mount({ client: makeTokensClient() });
+
+  expect(
+    await screen.findByRole("heading", {
+      level: 1,
+      name: "Personal access tokens",
+    })
+  ).toBeTruthy();
+  expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
+});
