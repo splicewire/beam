@@ -70,7 +70,8 @@ export const ReadFailed: Story = {
     render: withProvider({ walletError: 'Wallet is unavailable right now.' }),
     play: async ({ canvasElement }) => {
         const canvas = within(canvasElement);
-        await expect(await canvas.findByText('Wallet is unavailable right now.')).toBeInTheDocument();
+        await expect(await canvas.findByText('Could not load your wallet.')).toBeInTheDocument();
+        await expect(canvas.queryByText('Wallet is unavailable right now.')).toBeNull();
     },
 };
 

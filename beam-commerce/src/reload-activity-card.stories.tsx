@@ -49,6 +49,6 @@ export const AllFailed: Story = {
     args: { activity: ACTIVITY_ALL_FAILED },
     play: async ({ canvasElement }) => {
         const canvas = within(canvasElement);
-        await expect(await canvas.findByText('Auth required')).toBeInTheDocument();
+        await expect(await canvas.findByText('Authentication required')).toBeInTheDocument();
     },
 };
