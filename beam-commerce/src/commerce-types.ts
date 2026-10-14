@@ -43,8 +43,12 @@ export type {
 // surface renders (the trailing `string` keeps an unknown future value assignable). These are
 // TS-only — NOT PHP `#[TypeScript]` types — so they live here, not in the projected `beam-resources` slice.
 
-/** The credit-ledger entry kind the ledger badges switch on. */
-export type CreditEntryType = 'credit' | 'debit' | string;
+/**
+ * The credit-ledger entry kind the ledger badges switch on. CLOSED union: the ledger emits exactly
+ * `credit` or `debit` (ticket 00, 2026-10-10 21:42Z), so — unlike the display-hint unions above — it
+ * carries NO trailing `string` widening; an unknown third kind is a compile error, not a silent pass.
+ */
+export type CreditEntryType = 'credit' | 'debit';
 
 /** The budget-offer action the raise-cap / upgrade CTA branches on. */
 export type BudgetOfferAction = 'raise_cap' | 'upgrade_plan' | string;
@@ -63,6 +67,19 @@ export type WalletBalance = WalletBalanceData;
 export type CreditLedgerEntry = Omit<CreditEntryData, 'type'> & {
     type: CreditEntryType;
 };
+
+/**
+ * Narrow a raw wire ledger entry onto the closed direction model. The projected DTO ships `type` as
+ * bare `string`; the ledger renders exactly two directions, so it is `credit` iff the wire says
+ * `'credit'` and `debit` otherwise. Note the asymmetry: ANY value other than `'credit'` — including
+ * an unknown/unexpected future wire kind — is mapped to `debit` SILENTLY (no throw, no log, no
+ * telemetry). This is deliberate and preserves the surface's prior binary read exactly (the badge
+ * already treated everything non-`'credit'` as a debit); it is the boundary that now absorbs the
+ * `string` the closed `CreditEntryType` union no longer does.
+ */
+export function toCreditLedgerEntry(entry: CreditEntryData): CreditLedgerEntry {
+    return { ...entry, type: entry.type === 'credit' ? 'credit' : 'debit' };
+}
 
 /** How a subscription is funded (purchase-walkthrough M14). Null: no funding recorded (it resolves as it always did). */
 export type Funding = 'card' | 'invoice' | 'comp' | 'none';
