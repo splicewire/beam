@@ -58,3 +58,9 @@ export type {
     MetaCrumb,
     SectionLinkComponent,
 } from './types.js';
+
+// Shared app core; routers, feature rosters and runtime facts remain host-owned.
+export { AppShell, type AppShellProps, type AppShellContext } from './AppShell.js';
+export { AppRail, type AppRailProps, type AppRailGroup, type AppRailItem } from './AppRail.js';
+export { createBeamApp, type BeamAppOptions } from './createBeamApp.js';
+export type { DeskNavigation } from './DeskMainframe.js';
