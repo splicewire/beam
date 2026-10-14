@@ -1,5 +1,11 @@
 # @splicewire/beam-accounts
 
+## 0.2.1
+
+### Patch Changes
+
+- d107a7f: Render the API tokens roster title as the page's semantic `h1`.
+
 ## 0.2.0
 
 ### Minor Changes
