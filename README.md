@@ -1,35 +1,57 @@
-# beam
+# @splicewire/beam-commerce
 
-The `beam` **app-substrate** package family, as a single npm workspace.
+The commerce-domain [beam](https://github.com/splicewire/beam) surfaces, authored **pre-packaged
+and DTO-first** (rehome-ui / ADR-0116; ADR-0092 vendor seam). Mirrors the PHP
+`splicewire/laravel-beam-commerce` package by domain.
 
-Per ADR-0082's layering — *frame = editor/UI tooling; **beam = app substrate**; beam-\* =
-capabilities* — this monorepo holds the implementation/app/site-level substrate, sitting **above**
-the [`schemastud`](https://github.com/schemastud/js) core/tooling layer (`frame → beam` dependency
-direction, never the reverse).
+Customer-zero: the **prepaid-credit auto-reload** config + activity surface — a portable,
+tenancy-agnostic component. It owns its react-query data logic and presentation; the host supplies
+**one transport adapter** (plus optional feedback and the Stripe SetupIntent host slot) through
+`<AutoReloadProvider>`. It is typed off the generated `AutoReloadConfigData` / `AutoReloadActivityData`
+projection delivered via the public `@splicewire/beam-resources`, so the PHP source of truth travels into the
+package as a real build dependency.
 
-| Package | What it is |
-| --- | --- |
-| `@splicewire/beam-mdx` | File-driven MDX content rung (draft-exclusion Vite plugin, citation kit, `.site-prose`) |
+```tsx
+import {
+    AutoReloadProvider,
+    AutoReloadConfigCard,
+    ReloadActivityCard,
+    useAutoReloadConfig,
+    useAutoReloadActivity,
+    type AutoReloadClient,
+} from '@splicewire/beam-commerce';
 
-Growing as FC mints `beam` / `beam-accounts` / `beam-notifications` / `beam-commerce`.
+const client: AutoReloadClient = {
+    // The host resolves the endpoints however it likes — a route-name registry (recommended)
+    // or literal paths. splicewire-app keys off `route('beam.commerce.auto-reload.*')`.
+    getConfig: () => api.get(route('beam.commerce.auto-reload.show')).then((r) => r.data.data),
+    updateConfig: (body) => api.put(route('beam.commerce.auto-reload.update'), body).then((r) => r.data.data),
+    getActivity: () => api.get(route('beam.commerce.auto-reload.activity')).then((r) => r.data.data),
+};
 
-## Scope note
-
-beam publishes under the **shared `@schemastud` npm scope** (so `@splicewire/beam-mdx` keeps its
-name — the core/beam split is repo-level, not name-level). Two repos, one scope, one public
-registry; no consumer breakage.
-
-## Dev
-
-```bash
-npm install
-npm run build
-npm run typecheck
-npm run test
+<AutoReloadProvider
+    services={{
+        client,
+        notify: (e) => toast[e.type](e.message),
+        // The Stripe SetupIntent flow the package must not own — the host wires it here.
+        onSavePaymentMethod: () => openStripeSetupIntent(),
+    }}
+>
+    <AutoReloadConfigCard config={config} />
+    <ReloadActivityCard activity={activity} />
+</AutoReloadProvider>;
 ```
 
-## Release
+## The four-kind injection contract
 
-Public npm via Changesets (independent per package). On merge to `main`,
-`.github/workflows/release.yml` opens a "Version Packages" PR; merging it publishes. Requires the
-`NPM_TOKEN` repo secret (an npm automation token for the `schemastud` org).
+- **kind 1 — `client`** (required): the transport adapter, pointed at the
+  `beam/commerce/auto-reload*` endpoints (resolved by route name). The component is tenant- and URL-blind.
+- **kind 2 — `notify` / `onError`**: feedback + mutation-error hooks. Dependency-free console
+  defaults apply when omitted (no bundled toaster).
+- **kind 3 — `onSavePaymentMethod`**: the Stripe SetupIntent (usage=off_session) host slot the
+  "Save / Update card" affordances invoke. Omitted → a no-op. There is deliberately **no subscribe
+  kind**.
+
+Generic UI comes from the `@schemastud/ui` foundation; the DTO typing from `@splicewire/beam-resources`.
+Frame `EditShell` / `SchemaForm` graduation is a deferred follow-up — this ships the hand-authored
+injectable card.

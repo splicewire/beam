@@ -1,0 +1,14 @@
+{
+  "package": "@splicewire/beam-commerce",
+  "version": "0.1.0",
+  "sourceRepository": "https://github.com/splicewire/beam.git",
+  "sourceCommit": "dca18141008c8e0c1f9fd5ba0d8f3da14bb0297d",
+  "sourcePackageTree": "f84ef7a3e2f090fed01f5ec85c751491ff093761",
+  "sourceLockSha256": "b5f3ad5da2721cd3d3448b6eb642148df95d913ef67ef3832a542dc1d0e7f6d7",
+  "node": "v22.23.3",
+  "npm": "10.9.9",
+  "dist": {
+    "index.js": "94859199bb406cf3f593992d5004bb119c9e9db7be135b8745dfd85d22cb8312",
+    "index.d.ts": "26afde42ee5741ec114e1b63f4904d47c5b016bde062ac6bf5d188e2c698ea33"
+  }
+}
