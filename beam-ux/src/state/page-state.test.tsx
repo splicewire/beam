@@ -168,4 +168,36 @@ describe('<StateBoundary> way-back + ForbiddenState (UX sweep: a refusal was a d
         rerender(<ForbiddenState label="studio" wayBack={{ label: 'Back to Studio', target: '/studio' }} />);
         expect(screen.getByRole('link', { name: 'Back to Studio' }).getAttribute('href')).toBe('/studio');
     });
+
+    it('renders the way-back link in the upsell state so the default plan copy is not a dead end', () => {
+        const { container } = render(
+            <StateBoundary query={{ status: 'error', error: { response: { status: 402 } }, data: undefined }} label="agents" wayBack={wayBack}>
+                <p>rows</p>
+            </StateBoundary>,
+        );
+        expect(container.querySelector('[data-page-state]')?.getAttribute('data-page-state')).toBe('upsell');
+        expect(screen.getByText("agents isn't included in this plan.")).toBeTruthy();
+        expect(screen.getByRole('link', { name: 'Back to agents' }).getAttribute('href')).toBe('/agents');
+    });
+
+    it('renders the way back through a provided render prop (host router) instead of a plain anchor', () => {
+        render(
+            <StateBoundary
+                query={{ status: 'error', error: { response: { status: 403 } }, data: undefined }}
+                label="agents"
+                wayBack={{
+                    label: 'Back to agents',
+                    target: '/agents',
+                    render: ({ target, className, children }) => (
+                        <a href={target} className={className} data-router-link="true">{children}</a>
+                    ),
+                }}
+            >
+                <p>rows</p>
+            </StateBoundary>,
+        );
+        const back = screen.getByRole('link', { name: 'Back to agents' });
+        expect(back.getAttribute('data-router-link')).toBe('true');
+        expect(back.getAttribute('href')).toBe('/agents');
+    });
 });

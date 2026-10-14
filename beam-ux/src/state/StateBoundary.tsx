@@ -7,12 +7,25 @@ import { messageOf, pageStateOf, transportOf, type QueryLike } from './page-stat
  * fallback (beside "Try again") — so none is a dead end. A plain anchor: `@splicewire/beam-ux/state` is
  * framework-agnostic, so the host router owns navigation; `target` is an in-app path or a URL.
  */
-export type WayBack = { label: string; target: string };
+export type WayBack = {
+    label: string;
+    target: string;
+    /** Render the link through the host's router (e.g. react-router's `<Link>`) so the way back navigates
+     *  without a full page reload. Receives the resolved `target`/`className`/`children`; when omitted it is a
+     *  plain `<a href={target}>` (beam-ux stays framework-agnostic). */
+    render?: (props: { target: string; className: string; children: ReactNode }) => ReactNode;
+};
+
+const WAY_BACK_CLASS = 'mt-3 inline-flex font-medium underline';
 
 function WayBackLink({ wayBack }: { wayBack: WayBack }) {
+    const props = { target: wayBack.target, className: WAY_BACK_CLASS, children: wayBack.label };
+    if (wayBack.render) {
+        return <>{wayBack.render(props)}</>;
+    }
     return (
-        <a href={wayBack.target} className="mt-3 inline-flex font-medium underline">
-            {wayBack.label}
+        <a href={props.target} className={props.className}>
+            {props.children}
         </a>
     );
 }
@@ -80,7 +93,14 @@ export function StateBoundary({ query, label, filtered, onRetry, upsell, wayBack
             );
             break;
         case 'upsell':
-            body = upsell ?? <p role="alert" className="p-6 text-sm">{label} isn't included in this plan.</p>;
+            // A consumer-supplied upsell owns its own affordances; the default copy was a dead end, so it
+            // carries the way back when the page supplies one.
+            body = upsell ?? (
+                <div role="alert" className="p-6 text-sm">
+                    <p>{label} isn't included in this plan.</p>
+                    {wayBack && <WayBackLink wayBack={wayBack} />}
+                </div>
+            );
             break;
         default:
             body = (
