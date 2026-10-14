@@ -1,35 +1,65 @@
-# beam
+# @splicewire/beam-market
 
-The `beam` **app-substrate** package family, as a single npm workspace.
+The marketplace-domain [beam](https://github.com/splicewire/beam) surfaces, authored **pre-packaged
+and DTO-first** (rehome-ui / ADR-0116). Mirrors the PHP `splicewire/laravel-beam-market` package by
+domain — born as its lazy JS twin (ticket 08, the first surface off this domain).
 
-Per ADR-0082's layering — *frame = editor/UI tooling; **beam = app substrate**; beam-\* =
-capabilities* — this monorepo holds the implementation/app/site-level substrate, sitting **above**
-the [`schemastud`](https://github.com/schemastud/js) core/tooling layer (`frame → beam` dependency
-direction, never the reverse).
+Ships the beam-core **Extensions area**: a unified `/extensions` catalog covering both listing
+kinds (Scaffold Pack export, Beam Extension) plus Platform Tier listings (Satellite/Tower, their
+own Browse section), a package-manager-style **Installed tab** with real inline Update/Remove
+actions, and `requires_splicewire` gating with an area-wide disconnected promo banner. It owns its
+react-query data logic and presentation; the host supplies **one transport adapter** (plus optional
+feedback and the "Connect Splicewire" host-chrome slot) through `<ExtensionsProvider>`. It is typed
+off the generated `ExtensionListingSummaryData` / `InstalledExtensionData` / etc. projection
+delivered via `@splicewire/_resources`, so the PHP source of truth travels into the package as a
+real build dependency.
 
-| Package | What it is |
-| --- | --- |
-| `@splicewire/beam-mdx` | File-driven MDX content rung (draft-exclusion Vite plugin, citation kit, `.site-prose`) |
+```tsx
+import { ExtensionsArea, ExtensionsProvider, type ExtensionsClient } from '@splicewire/beam-market';
 
-Growing as FC mints `beam` / `beam-accounts` / `beam-notifications` / `beam-commerce`.
+const client: ExtensionsClient = {
+    getCatalog: (filters) => api.get(route('beam-market.extensions.index'), { params: filters }).then((r) => r.data),
+    getListing: (id) => api.get(route('beam-market.extensions.show', id)).then((r) => r.data),
+    getInstalled: () => api.get(route('beam-market.extensions.installed.index')).then((r) => r.data),
+    install: (id) => api.post(route('beam-market.extensions.install', id)).then((r) => r.data),
+    update: (installId) => api.patch(route('beam-market.extensions.installed.update', installId)).then((r) => r.data),
+    remove: (installId) => api.delete(route('beam-market.extensions.installed.destroy', installId)),
+};
 
-## Scope note
-
-beam publishes under the **shared `@schemastud` npm scope** (so `@splicewire/beam-mdx` keeps its
-name — the core/beam split is repo-level, not name-level). Two repos, one scope, one public
-registry; no consumer breakage.
-
-## Dev
-
-```bash
-npm install
-npm run build
-npm run typecheck
-npm run test
+<ExtensionsProvider
+    services={{
+        client,
+        notify: (e) => toast[e.type](e.message),
+        // The host-chrome render slot for the "requires_splicewire" gated CTA (kind 3) — the
+        // actual connect flow is host-specific.
+        connectUrl: '/settings/splicewire',
+    }}
+>
+    <ExtensionsArea />
+</ExtensionsProvider>;
 ```
 
-## Release
+## The injection contract (ADR-0116)
 
-Public npm via Changesets (independent per package). On merge to `main`,
-`.github/workflows/release.yml` opens a "Version Packages" PR; merging it publishes. Requires the
-`NPM_TOKEN` repo secret (an npm automation token for the `schemastud` org).
+- **kind 1 — `client`** (required): the transport adapter, pointed at
+  `beam-market/extensions/*` endpoints (`Splicewire\Beam\Market\Http\Controllers\*`, registered by
+  `BeamMarketServiceProvider` with zero host route-file edits). The component is host- and
+  URL-blind.
+- **kind 2 — `notify` / `onError`**: feedback + mutation-error hooks. Dependency-free console
+  defaults apply when omitted (no bundled toaster).
+- **kind 3 — `renderConnectCta` / `connectUrl`**: the "Connect Splicewire to install" host-chrome
+  render slot the disconnected banner and detail-sheet gating notice invoke — a rendered host
+  affordance the package can't own. A dependency-free default (a plain link) applies when the host
+  supplies only `connectUrl`.
+- There is deliberately **no real-time subscription kind (kind 4)** — this surface has no
+  server→client streaming need; ADR-0116's four-kind vocabulary is used only where a genuine
+  host-coupling need shows up, not applied wholesale to every surface.
+
+Generic UI comes from the `@schemastud/ui` foundation; the DTO typing from `@splicewire/_resources`.
+
+## Known gap (ticket 08)
+
+`ProductInstall` (the backend's "installed" data source) carries no per-site scoping column yet —
+ticket 09's manual-install-detection heartbeat is what adds real multi-site fan-out. Until then the
+Installed tab reads the whole install-log table as a single self-hosted site's own local installed
+set.

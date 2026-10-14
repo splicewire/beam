@@ -1,52 +1,60 @@
 {
-  "name": "beam",
-  "private": true,
+  "name": "@splicewire/beam-market",
+  "version": "0.1.2",
+  "description": "The marketplace-domain beam surfaces, authored pre-packaged and DTO-first (rehome-ui, ADR-0116). Mirrors the PHP splicewire/laravel-beam-market package by domain (born as its lazy JS twin, ticket 08 — the first surface off this domain). Ships the beam-core Extensions area: a unified /extensions catalog covering both listing kinds (Scaffold Pack export, Beam Extension) plus Platform Tier listings (Satellite/Tower), a package-manager-style Installed tab with real Update/Remove actions, and requires_splicewire gating with an area-wide disconnected promo banner. Owns its react-query data logic, takes its transport + feedback + the Connect-Splicewire host-chrome slot as injected services (never app-local imports), and types off the generated Extension*Data / InstalledExtensionData projection delivered via @splicewire/beam-resources. Generic UI comes from the @schemastud/ui foundation.",
+  "license": "MIT",
   "type": "module",
-  "description": "The beam app-substrate package family \u2014 one npm workspace. App/site-level substrate + capabilities (ADR-0082: beam = substrate), sitting above the schemastud core/tooling layer. Publishes under the @splicewire npm scope (Beam is the free-tier arm of Splicewire).",
-  "packageManager": "npm@10.9.2",
-  "//workspaces": "TOPOLOGICAL order (leaves first) so `npm run build --workspaces` resolves internal .d.ts in order. Grows as FC mints beam / beam-accounts / beam-notifications / beam-commerce.",
-  "workspaces": [
-    "beam-resources",
-    "beam-ux-canvas",
-    "beam-mdx",
-    "beam-content",
-    "beam-ux-prototype",
-    "beam-mainframe",
-    "beam-accounts",
-    "beam-workflows",
-    "beam-ux",
-    "beam-docs",
-    "beam-commerce",
-    "beam-market",
-    "beam-transforms",
-    "beam-calendar",
-    "beam-versioning",
-    "beam-ingest",
-    "beam-intake",
-    "beam-inertia",
-    "beam-embed"
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "sideEffects": false,
+  "files": [
+    "dist",
+    "src",
+    "README.md"
   ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/splicewire/beam.git",
+    "directory": "beam-market"
+  },
   "scripts": {
-    "build": "npm run build --workspaces --if-present",
-    "dev": "npm run dev --workspaces --if-present",
-    "test": "npm run test --workspaces --if-present",
-    "typecheck": "npm run typecheck --workspaces --if-present",
-    "changeset": "changeset",
-    "version-packages": "changeset version",
-    "release": "npm run build && changeset publish",
-    "storybook": "storybook dev -p 6007",
-    "build-storybook": "storybook build",
-    "test-storybook": "test-storybook --url http://127.0.0.1:6007",
-    "lint:tokens": "node scripts/lint-tokens.mjs"
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "lint:imports": "node scripts/check-imports.mjs",
+    "prepublishOnly": "npm run build"
+  },
+  "dependencies": {
+    "@splicewire/beam-resources": "^0.1.1"
+  },
+  "peerDependencies": {
+    "@schemastud/ui": "*",
+    "@tanstack/react-query": ">=5",
+    "lucide-react": ">=0.400.0",
+    "react": ">=18"
   },
   "devDependencies": {
-    "@changesets/cli": "^2.27.9",
-    "@storybook/react-vite": "^10.5.4",
-    "@storybook/test-runner": "^0.24.4",
-    "@tailwindcss/vite": "^4.3.3",
-    "jest-image-snapshot": "^6.5.2",
-    "playwright": "^1.61.1",
-    "storybook": "^10.5.4",
-    "tailwindcss": "^4.3.3"
-  }
+    "@schemastud/ui": "file:../../schemastud/ui",
+    "@tanstack/react-query": "^5.62.0",
+    "@testing-library/react": "^16.1.0",
+    "@testing-library/user-event": "^14.5.2",
+    "@types/node": "^22.20.1",
+    "@types/react": "^19.0.0",
+    "jsdom": "^25.0.1",
+    "lucide-react": "^0.468.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "tsup": "^8.5.1",
+    "typescript": "^5.7.2",
+    "vitest": "^4.1.10",
+    "@splicewire/beam-resources": "file:../beam-resources"
+  },
+  "private": true
 }

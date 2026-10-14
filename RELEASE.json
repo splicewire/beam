@@ -1,0 +1,14 @@
+{
+  "package": "@splicewire/beam-market",
+  "version": "0.1.2",
+  "sourceRepository": "https://github.com/splicewire/beam.git",
+  "sourceCommit": "dca18141008c8e0c1f9fd5ba0d8f3da14bb0297d",
+  "sourcePackageTree": "76178a4d02d5336f728f3a5a3f7a953ef93e6efa",
+  "sourceLockSha256": "b5f3ad5da2721cd3d3448b6eb642148df95d913ef67ef3832a542dc1d0e7f6d7",
+  "node": "v22.23.3",
+  "npm": "10.9.9",
+  "dist": {
+    "index.js": "7dc4f32b531d8abc5f1a300acb5364886ddb02a031d44d0863b6b3fb4a090228",
+    "index.d.ts": "713c6fe18ae81dc28b19e6b5cca5b332f452f124420f33c48870b431ae52e27d"
+  }
+}
