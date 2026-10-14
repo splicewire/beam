@@ -31,6 +31,7 @@ import { errorMessage, formatDate, formatUsd } from './format';
 import { useCreditTopupCheckout, useReloadCredits, useWallet } from './commerce-hooks';
 import { useCommerceCan, useCommerceServices } from './commerce-provider';
 import type { CreditLedgerEntry, CreditReloadResult, WalletBalance } from './commerce-types';
+import { toCreditLedgerEntry } from './commerce-types';
 import { SurfaceHeading } from './SurfaceHeading';
 
 /**
@@ -469,7 +470,7 @@ export function CreditsSurface({ embedded = false }: { embedded?: boolean } = {}
             {wallet.data && (
                 <>
                     <BalanceHeadline wallet={wallet.data} pendingCreditUsd={pendingCreditUsd} />
-                    <CreditLedger data={wallet.data.ledger} loading={false} />
+                    <CreditLedger data={wallet.data.ledger.map(toCreditLedgerEntry)} loading={false} />
                 </>
             )}
 
