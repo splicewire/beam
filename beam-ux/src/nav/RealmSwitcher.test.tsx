@@ -54,6 +54,26 @@ describe('RealmSwitcher', () => {
         expect(screen.getAllByText('Operator')).toHaveLength(1);
     });
 
+    it('styles the trigger from triggerClassName so a multi-element chip lays out in a row, and leaves a plain trigger classless', () => {
+        // Regression guard for the dashboard user chip (G1): the sidebar-foot trigger carries an
+        // avatar + name label and must be a full-width flex ROW, not a bare button that stacks them.
+        const { rerender } = render(
+            <RealmSwitcher
+                realms={realms}
+                label="Ada"
+                signOutHref="/logout"
+                triggerClassName="flex w-full items-center gap-2"
+            />,
+        );
+        const styled = screen.getByRole('button', { name: /ada/i });
+        expect(styled.className).toContain('flex');
+        expect(styled.className).toContain('w-full');
+
+        // A header trigger passes no triggerClassName and must stay exactly as before: no class attribute.
+        rerender(<RealmSwitcher realms={realms} label="Ada" signOutHref="/logout" />);
+        expect(screen.getByRole('button', { name: /ada/i }).getAttribute('class')).toBeNull();
+    });
+
     it('dismisses the open menu with Escape and returns focus to its trigger', () => {
         const { container } = render(<RealmSwitcher realms={realms} label="Ada" signOutHref="/logout" />);
         const trigger = screen.getByRole('button', { name: /ada/i });
