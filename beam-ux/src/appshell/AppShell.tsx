@@ -26,6 +26,8 @@ export interface AppShellProps {
     /** Router outlet or page content, supplied by the host. */
     outlet: ReactNode;
     routeKey?: string;
+    /** Preserve host-owned page chrome without an additional route wrapper. */
+    unframed?: boolean;
 }
 
 /** Router-neutral placement core. Hosts own navigation, authorization, runtime facts and routes. */
@@ -36,6 +38,7 @@ export function AppShell({
     contribute,
     outlet,
     routeKey,
+    unframed = false,
 }: AppShellProps) {
     const registries = useMemo(() => {
         const slots = createSlotRegistry();
@@ -54,7 +57,9 @@ export function AppShell({
                 const p = payload as {
                     outlet?: ReactNode;
                     routeKey?: string;
+                    unframed?: boolean;
                 };
+                if (p.unframed) return p.outlet;
                 return (
                     <div
                         key={p.routeKey}
@@ -74,7 +79,7 @@ export function AppShell({
     );
     return (
         <MainframeProvider injection={injection}>
-            <MainframeOutlet mode={mode} ctx={{ ...context, payload: { outlet, routeKey } }} />
+            <MainframeOutlet mode={mode} ctx={{ ...context, payload: { outlet, routeKey, unframed } }} />
         </MainframeProvider>
     );
 }

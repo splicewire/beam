@@ -19,13 +19,15 @@ export function createBeamApp<Runtime>({ runtime, Providers }: BeamAppOptions<Ru
         if (!current) throw new Error('App runtime must be read inside its own App.');
         return current.value;
     }
-    function App(props: AppShellProps) {
-        const shell = <AppShell {...props} />;
+    function Provider({ children }: { children: ReactNode }) {
         return (
             <RuntimeContext.Provider value={value}>
-                {Providers ? <Providers>{shell}</Providers> : shell}
+                {Providers ? <Providers>{children}</Providers> : children}
             </RuntimeContext.Provider>
         );
     }
-    return { runtime, App, useRuntime };
+    function App(props: AppShellProps) {
+        return <Provider><AppShell {...props} /></Provider>;
+    }
+    return { runtime, App, Provider, useRuntime };
 }
