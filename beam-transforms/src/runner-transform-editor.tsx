@@ -175,7 +175,7 @@ function TransformEditorPane({
             name: draft.name,
             runtime: draft.runtime,
             code: draft.code,
-            requested_grant: { net: draft.requestedNet },
+            requestedGrant: { net: draft.requestedNet },
             visibility: draft.visibility,
         };
         try {

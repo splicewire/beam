@@ -37,7 +37,7 @@ export interface RunnerTransformInput {
     runtime?: string;
     code?: string;
     io?: string;
-    requested_grant?: Record<string, unknown> | null;
+    requestedGrant?: Record<string, unknown> | null;
     enabled?: boolean;
     visibility?: string | null;
 }

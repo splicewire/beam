@@ -1,7 +1,10 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { expect, it } from 'vitest';
+import { expect, it, vi } from 'vitest';
+import { TransformsProvider } from './provider';
 import { RunnerTransformEditor } from './runner-transform-editor';
-import { MockTransformsProvider, SAMPLE_TRANSFORMS } from './story-harness';
+import { makeTransformsClient, MockTransformsProvider, SAMPLE_TRANSFORMS } from './story-harness';
+import type { RunnerTransformInput } from './types';
 
 const READ_ONLY_NOTICE = 'You can view and test transforms, but not change them.';
 
@@ -136,4 +139,36 @@ it('applies each capability on its own', async () => {
     expect(screen.getByRole('button', { name: /Save/ })).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'Delete' })).toBeNull();
     expect((screen.getByLabelText('Name') as HTMLInputElement).readOnly).toBe(false);
+});
+
+// Tower's RunnerTransformInputData is a strict DTO whose wire key is `requestedGrant`; an unknown key is a 422
+// ('Unknown input field [requested_grant]'), which this surface would only show as a failed-save toast.
+it('sends the requested grant as requestedGrant on create and update', async () => {
+    const base = makeTransformsClient({ transforms: SAMPLE_TRANSFORMS });
+    const create = vi.fn(async (input: RunnerTransformInput) => ({ ...SAMPLE_TRANSFORMS[0], id: 'new', name: input.name ?? 'New' }));
+    const update = vi.fn(async (id: string, input: RunnerTransformInput) => ({ ...SAMPLE_TRANSFORMS[0], id, name: input.name ?? 'x' }));
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+
+    render(
+        <QueryClientProvider client={queryClient}>
+            <TransformsProvider services={{ client: { ...base, create, update } }}>
+                <RunnerTransformEditor />
+            </TransformsProvider>
+        </QueryClientProvider>,
+    );
+
+    await waitFor(() => expect(screen.getByText('Shape payload')).toBeTruthy());
+    fireEvent.click(screen.getByRole('button', { name: 'New' }));
+    fireEvent.change(screen.getByLabelText('Name'), { target: { value: 'probe' } });
+    fireEvent.change(screen.getByLabelText('Code'), { target: { value: 'print("{}")' } });
+    fireEvent.click(screen.getByRole('button', { name: /save/i }));
+    await waitFor(() => expect(create).toHaveBeenCalledTimes(1));
+    expect(create.mock.calls[0][0]).toHaveProperty('requestedGrant');
+    expect(create.mock.calls[0][0]).not.toHaveProperty('requested_grant');
+
+    fireEvent.click(screen.getByText('Shape payload'));
+    fireEvent.click(screen.getByRole('button', { name: /save/i }));
+    await waitFor(() => expect(update).toHaveBeenCalledTimes(1));
+    expect(update.mock.calls[0][1]).toHaveProperty('requestedGrant');
+    expect(update.mock.calls[0][1]).not.toHaveProperty('requested_grant');
 });
