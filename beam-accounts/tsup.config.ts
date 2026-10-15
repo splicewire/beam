@@ -1,7 +1,7 @@
 import { defineConfig } from "tsup";
 
 export default defineConfig({
-  entry: { index: "src/index.ts" },
+  entry: { index: "src/index.ts", account: "src/account/index.ts" },
   format: ["esm"],
   dts: true,
   sourcemap: true,
@@ -23,6 +23,7 @@ export default defineConfig({
     "@tanstack/react-query",
     "@tanstack/react-table",
     "@schemastud/ui",
+    "@splicewire/beam-ux",
     "@schemastud/seam",
     "lucide-react",
   ],
