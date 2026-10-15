@@ -6,6 +6,7 @@ export type AuthEntryPageData = {
   entry: PageEntryData | null;
   body: Record<string, any>[] | null;
   canResetPassword: undefined | boolean;
+  canRegister: undefined | boolean;
   status: undefined | string | null;
   demoAccounts: DemoAccountLinkData[] | undefined;
   passwordRules: undefined | string;
