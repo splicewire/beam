@@ -50,6 +50,20 @@ describe('ApiReference', () => {
         expect(css).toContain('.scalar-app aside a[href="https://www.scalar.com"] { display: none !important; }');
     });
 
+    it('keeps enum value labels on the primary readable ink in light and dark themes', () => {
+        const createApiReference = vi.fn();
+        render(<ApiReference specUrl="/beam/openapi.json" createApiReference={createApiReference} />);
+
+        const css = String((createApiReference.mock.calls[0][1] as Record<string, unknown>).customCss);
+
+        // Scalar gives the enum row its tertiary ink. The label is normal-size text on Scalar's tinted
+        // code fill, so it must opt back into the primary ink: the tertiary Beam mapping measures 3.14:1
+        // in light mode, while --scalar-color-1 clears AA in both shipped schemes.
+        expect(css).toMatch(
+            /\.scalar-app \.property-enum-value-label\s*\{\s*color: var\(--scalar-color-1\);\s*\}/,
+        );
+    });
+
     it('omits only the MCP curation when the host opts out, and keeps the vendor and palette rules', () => {
         const createApiReference = vi.fn();
         render(

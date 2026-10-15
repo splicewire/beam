@@ -83,6 +83,13 @@ export const BEAM_SCALAR_CSS = `.scalar-app {
   --scalar-sidebar-color-active: var(--beam-accent, var(--beam-green));
   --scalar-sidebar-search-background: var(--beam-paper-raised, var(--beam-paper));
   --scalar-sidebar-search-border-color: var(--beam-border, var(--beam-line));
+}
+
+/* Scalar's enum row uses tertiary ink. Its value is normal-size code on the tinted background, where
+   Beam's translucent muted ink falls below AA in light mode. Keep the descriptive copy tertiary, but
+   put the actual value label back on the primary text token in both schemes. */
+.scalar-app .property-enum-value-label {
+  color: var(--scalar-color-1);
 }`;
 
 /** Curation, not palette: our MCP server has its own docs page, so hide Scalar's MCP affordance. */
