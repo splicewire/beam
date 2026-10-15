@@ -29,7 +29,8 @@
   "scripts": {
     "build": "npm run build --workspaces --if-present",
     "dev": "npm run dev --workspaces --if-present",
-    "test": "npm run test --workspaces --if-present",
+    "test": "npm run test:ownership && npm run test --workspaces --if-present",
+    "test:ownership": "npm exec --workspace beam-accounts -- vitest run --root .. tests/account-ownership.test.ts",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "changeset": "changeset",
     "version-packages": "changeset version",
