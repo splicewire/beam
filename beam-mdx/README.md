@@ -22,6 +22,13 @@ route macros + `beam-mdx:doctor`).
     allowlisted (so a draft's content *and slug* are absent from a production bundle).
   - `beamMdxPreset(options)` — the MDX compile step (mdx + remark-frontmatter +
     remark-mdx-frontmatter).
+- **`@splicewire/beam-mdx/kit`** — presentational guide components (`Figure`, `FileTree`,
+  `Terminal`, `Callout`, `Steps`, `DoctorOutput`, and section-landing cards). Import
+  **`@splicewire/beam-mdx/kit/css`** beside them.
+- **`@splicewire/beam-mdx/editor`** — the separately loaded MDX authoring surface and its kit
+  manifest, descriptors, schema inspector, and toolbar. Import
+  **`@splicewire/beam-mdx/editor/css`** for its layout styles. Its MDXEditor and RJSF peers are
+  optional unless a host loads this subpath.
 - **`@splicewire/beam-mdx/css`** — the token-driven base `.site-prose` typography (apps override
   the shadcn semantic `--foreground`/`--primary`/`--muted-foreground`/`--border` + `--font-*` tokens it reads).
 
