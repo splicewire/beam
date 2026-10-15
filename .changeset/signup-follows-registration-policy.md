@@ -1,6 +1,5 @@
 ---
 '@splicewire/beam-inertia': minor
-'@splicewire/beam-resources': patch
 ---
 
 Make the login "Sign up" affordance follow the server registration policy. The packaged login page
