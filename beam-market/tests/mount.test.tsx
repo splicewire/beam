@@ -334,6 +334,27 @@ describe("InstalledTab — real inline Update/Remove mutations (contract kind 1)
 });
 
 describe("ExtensionsArea — top-level composition", () => {
+  it("shows Installed only when the host admits its viewAny ability", async () => {
+    const deniedClient = fakeClient();
+    const denied = mount(<ExtensionsArea />, deniedClient, {
+      can: () => false,
+    });
+
+    expect(await screen.findByText("Acme Waveform")).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Installed" })).toBeNull();
+    expect(deniedClient.getInstalled).not.toHaveBeenCalled();
+    denied.unmount();
+
+    const admittedClient = fakeClient();
+    mount(<ExtensionsArea />, admittedClient, {
+      can: (ability: string) => ability === "installed-extension.view",
+    });
+
+    expect(await screen.findByText("Acme Waveform")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Installed" }));
+    expect(await screen.findByText("Satellite")).toBeTruthy();
+  });
+
   it("switches between Browse and Installed tabs", async () => {
     const client = fakeClient();
     mount(<ExtensionsArea />, client);

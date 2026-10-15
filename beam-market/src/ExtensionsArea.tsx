@@ -30,7 +30,9 @@ export function ExtensionsArea({
     const { client, can } = useExtensionsServices();
     const hasMarketActions = Boolean(client.connectMarket || client.syncMarket || client.disconnectMarket);
     const canConnectMarket = Boolean(client.connectMarket) && (can?.('market-connection.create') ?? true);
-    const activeTab = tab === 'market' && !hasMarketActions ? 'browse' : tab;
+    const canViewInstalled = can?.('installed-extension.view') ?? true;
+    const activeTab =
+        (tab === 'market' && !hasMarketActions) || (tab === 'installed' && !canViewInstalled) ? 'browse' : tab;
 
     return (
         <div className={cn('flex flex-col gap-4', className)}>
@@ -39,9 +41,11 @@ export function ExtensionsArea({
                 <TabButton active={activeTab === 'browse'} onClick={() => setTab('browse')}>
                     Browse
                 </TabButton>
-                <TabButton active={tab === 'installed'} onClick={() => setTab('installed')}>
-                    Installed
-                </TabButton>
+                {canViewInstalled && (
+                    <TabButton active={tab === 'installed'} onClick={() => setTab('installed')}>
+                        Installed
+                    </TabButton>
+                )}
                 {/* ux-demo-convergence G5 (G5-CATALOG-FEDERATION) — a third seat, because "where
                     does this catalog come from" is a question about the SITE, not about any
                     listing in it. Putting it inside Browse would have made the connection state
