@@ -1,0 +1,123 @@
+{
+  "schemaVersion": 1,
+  "package": "@splicewire/beam-resources",
+  "version": "0.1.3",
+  "sourceCommit": "dd61dc8a133bf809188c62e0ea59865159ab3506",
+  "releaseCommitParent": "dd61dc8a133bf809188c62e0ea59865159ab3506",
+  "versionTag": "beam-resources@0.1.3",
+  "packageJsonSha256": "99da1a75e3b3a7fd9761ec10ed1019d9d98730e1595ed976bd8a86257ddb6aef",
+  "artifactMode": "committed",
+  "artifactFiles": {
+    "README.md": {
+      "sha256": "4b4bbe3895c54bd45e993a1758d2c3d9e84988a8d247cea0adf6baec7eced841",
+      "executable": false
+    },
+    "package.json": {
+      "sha256": "99da1a75e3b3a7fd9761ec10ed1019d9d98730e1595ed976bd8a86257ddb6aef",
+      "executable": false
+    },
+    "types/accounts-pages.d.ts": {
+      "sha256": "711fc696106093e3d8135459ee9b39ddd0be7e2168bb257d8ec82e68bca41db2",
+      "executable": false
+    },
+    "types/accounts.d.ts": {
+      "sha256": "f2ee8bc0da7aee30b05d5ce316fa511b1eb66c99d97cba2d1bceadbf449d8dc8",
+      "executable": false
+    },
+    "types/auto-reload.d.ts": {
+      "sha256": "7d524ecc07b6f90ae12c34475974ffdbd756fd8102f11edef9e976a898940e5a",
+      "executable": false
+    },
+    "types/beam-ux.d.ts": {
+      "sha256": "c96f77860141c5231b2835a73d60de980cc7d1093e1fb7ef8225a0724709185e",
+      "executable": false
+    },
+    "types/calendar-actions.d.ts": {
+      "sha256": "4f5faae1fd5b56ce613f9e0d5d57e333c4dfd3c04320fb90e927504b9847db6c",
+      "executable": false
+    },
+    "types/commerce.d.ts": {
+      "sha256": "0d474dd3ffa4e255ea8dc519bf27adcc7dbf0c3d5db88aba8f1afd31c449fbf4",
+      "executable": false
+    },
+    "types/embed-retention.d.ts": {
+      "sha256": "d1a2c81418d0b1aff7da6981ab913e17c1a83e33172f5421ed54eed0b0b4e19a",
+      "executable": false
+    },
+    "types/market.d.ts": {
+      "sha256": "3fd7b11b456d6efdcab4362094a6800280ea788c63a90c9034a392d9921b3011",
+      "executable": false
+    },
+    "types/tokens.d.ts": {
+      "sha256": "afb862d27e18ff9323a35ed03c5baf4f9605ba62ce0d6ff70039d2d9dc033601",
+      "executable": false
+    },
+    "types/workflow-history.d.ts": {
+      "sha256": "42de0a922b2621017319dec2630bde13ac73737089c98d78cfcf1f615a125049",
+      "executable": false
+    },
+    "types/workflow-reactions.d.ts": {
+      "sha256": "3b3530b7b3d47e3b728aaf09d574065033fff5e25920daf91666d2e7b84d559f",
+      "executable": false
+    }
+  },
+  "dependencyMap": {},
+  "node": "v22.23.3",
+  "pnpm": "9.15.3",
+  "commands": {
+    "install": [
+      [
+        "npm",
+        "ci",
+        "--prefix",
+        "..",
+        "--ignore-scripts"
+      ]
+    ],
+    "verify": [
+      [
+        "npm",
+        "run",
+        "typecheck"
+      ]
+    ]
+  },
+  "installCommands": {
+    "first": [
+      [
+        "pnpm",
+        "install",
+        "--ignore-scripts",
+        "--ignore-workspace",
+        "--no-frozen-lockfile"
+      ]
+    ],
+    "second": [
+      [
+        "pnpm",
+        "install",
+        "--ignore-scripts",
+        "--ignore-workspace",
+        "--frozen-lockfile"
+      ]
+    ]
+  },
+  "rootBuildInputs": [
+    {
+      "name": "typescript",
+      "version": "5.9.3",
+      "integrity": "sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw=="
+    }
+  ],
+  "buildLock": {
+    "packageManager": "pnpm",
+    "path": "first-build/pnpm-lock.yaml",
+    "sha256": "9747995ee6c20d5990a84006b6353d66070f7a2bb23b92133c1c81e02a1e5693",
+    "contents": "lockfileVersion: '9.0'\n\nsettings:\n  autoInstallPeers: true\n  excludeLinksFromLockfile: false\n\nimporters:\n\n  .:\n    devDependencies:\n      typescript:\n        specifier: 5.9.3\n        version: 5.9.3\n\npackages:\n\n  typescript@5.9.3:\n    resolution: {integrity: sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw==}\n    engines: {node: '>=14.17'}\n    hasBin: true\n\nsnapshots:\n\n  typescript@5.9.3: {}\n"
+  },
+  "buildManifest": {
+    "contents": "{\n  \"name\": \"@splicewire/beam-resources\",\n  \"version\": \"0.1.3\",\n  \"description\": \"Generated public Beam wire types, projected from PHP declarations by resources:beam.\",\n  \"license\": \"MIT\",\n  \"type\": \"module\",\n  \"sideEffects\": false,\n  \"exports\": {\n    \"./types/*\": {\n      \"types\": \"./types/*.d.ts\"\n    },\n    \"./package.json\": \"./package.json\"\n  },\n  \"files\": [\n    \"types\",\n    \"README.md\"\n  ],\n  \"publishConfig\": {\n    \"registry\": \"https://registry.npmjs.org\",\n    \"access\": \"public\"\n  },\n  \"repository\": {\n    \"type\": \"git\",\n    \"url\": \"https://github.com/splicewire/beam.git\",\n    \"directory\": \"beam-resources\"\n  },\n  \"scripts\": {\n    \"typecheck\": \"tsc --noEmit\",\n    \"prepack\": \"npm run typecheck\"\n  },\n  \"devDependencies\": {\n    \"typescript\": \"5.9.3\"\n  }\n}\n",
+    "sha256": "b29953fb0d8a2a003e3868572d2634c2561d0036ca26cefeaa5045e34097d232"
+  },
+  "rebuildVerified": true
+}
