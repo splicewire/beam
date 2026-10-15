@@ -36,7 +36,7 @@
         "prepublishOnly": "npm run build"
     },
     "dependencies": {
-        "@splicewire/beam-resources": "^0.1.2"
+        "@splicewire/beam-resources": "^0.1.3"
     },
     "peerDependencies": {
         "@schemastud/ui": "^0.1.2",

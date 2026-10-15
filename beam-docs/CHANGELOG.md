@@ -1,5 +1,11 @@
 # @splicewire/beam-docs
 
+## 0.2.1
+
+### Patch Changes
+
+- 9b0776a: Keep inline enum values in Scalar property descriptions readable against their tinted code-chip background in light mode.
+
 ## 0.2.0
 
 ### Minor Changes

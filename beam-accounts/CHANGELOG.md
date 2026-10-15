@@ -1,5 +1,25 @@
 # @splicewire/beam-accounts
 
+## 0.3.0
+
+### Minor Changes
+
+- 7a93ed7: Move AccountShell and its account data/nav exports from beam-ux/account to
+  beam-accounts/account. The old beam-ux/account entry is removed without an alias.
+  Update the Inertia adapter and story together; consumers must upgrade this release
+  set together. AppRail retains its default renderer and exposes router-neutral row
+  and group rendering seams for sidebar primitives. Account collapse, tooltips,
+  mobile disclosure, slots, prefetch and sidebar state remain host-controlled.
+
+  Versioning policy: remain on 0.x; a minor may remove a breaking entry. Land after
+  the train-3 beam-ux 0.5.0 bump, then release this move as beam-ux 0.6.0 with
+  coordinated Accounts/Inertia minors and matching peer ranges.
+
+### Patch Changes
+
+- Updated dependencies [201a73e]
+  - @splicewire/beam-resources@0.1.3
+
 ## 0.2.1
 
 ### Patch Changes

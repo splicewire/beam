@@ -24,7 +24,7 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@splicewire/beam-resources": "^0.1.1"
+    "@splicewire/beam-resources": "^0.1.3"
   },
   "peerDependencies": {
     "@schemastud/ui": "*",
