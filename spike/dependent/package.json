@@ -1,0 +1,10 @@
+{
+  "name": "@splicewire/spike-dependent",
+  "version": "0.1.0",
+  "description": "Spike fixture: peers @splicewire/spike-leaf with a semver range.",
+  "type": "module",
+  "main": "dist/index.js",
+  "exports": { ".": "./dist/index.js" },
+  "files": ["dist"],
+  "peerDependencies": { "@splicewire/spike-leaf": "^0.1.0" }
+}

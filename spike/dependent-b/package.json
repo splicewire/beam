@@ -1,0 +1,11 @@
+{
+  "name": "@splicewire/spike-dependent-b",
+  "version": "0.1.0",
+  "description": "Spike fixture: second peer of spike-leaf, plus an optional peer that is never installed.",
+  "type": "module",
+  "main": "dist/index.js",
+  "exports": { ".": "./dist/index.js" },
+  "files": ["dist"],
+  "peerDependencies": { "@splicewire/spike-leaf": "^0.1.0", "@splicewire/spike-absent": "^1.0.0" },
+  "peerDependenciesMeta": { "@splicewire/spike-absent": { "optional": true } }
+}

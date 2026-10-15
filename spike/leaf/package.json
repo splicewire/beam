@@ -1,0 +1,10 @@
+{
+  "name": "@splicewire/spike-leaf",
+  "version": "0.1.0",
+  "private": false,
+  "description": "Spike fixture for pnpm git release refs (slice 1). Not a real package.",
+  "type": "module",
+  "main": "dist/index.js",
+  "exports": { ".": "./dist/index.js" },
+  "files": ["dist"]
+}
