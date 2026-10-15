@@ -1,5 +1,11 @@
 # @splicewire/beam-inertia
 
+## 0.3.0
+
+### Minor Changes
+
+- Accept @splicewire/beam-ux 0.5 while preserving compatibility with 0.4 consumers.
+
 ## 0.2.0
 
 ### Minor Changes
