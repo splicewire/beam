@@ -30,6 +30,9 @@ const client: ExtensionsClient = {
     services={{
         client,
         notify: (e) => toast[e.type](e.message),
+        // Host authorization stays authoritative: denied model reads remove the Installed tab,
+        // while denied mutations remain disabled on the rows the viewer may read.
+        can: (ability) => user.permissions.includes(ability),
         // The host-chrome render slot for the "requires_splicewire" gated CTA (kind 3) — the
         // actual connect flow is host-specific.
         connectUrl: '/settings/splicewire',
@@ -47,6 +50,10 @@ const client: ExtensionsClient = {
   URL-blind.
 - **kind 2 — `notify` / `onError`**: feedback + mutation-error hooks. Dependency-free console
   defaults apply when omitted (no bundled toaster).
+- **kind 2 — `can`**: host authorization by the same ability strings the server checks. The
+  `Installed` tab is omitted unless the host admits `installed-extension.view`; install, update,
+  remove, and market-connection controls use their own declared abilities. When omitted, controls
+  remain visible and the server is still the final gate.
 - **kind 3 — `renderConnectCta` / `connectUrl`**: the "Connect Splicewire to install" host-chrome
   render slot the disconnected banner and detail-sheet gating notice invoke — a rendered host
   affordance the package can't own. A dependency-free default (a plain link) applies when the host
