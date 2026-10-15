@@ -63,4 +63,6 @@ export type {
 export { AppShell, type AppShellProps, type AppShellContext } from './AppShell.js';
 export { AppRail, type AppRailProps, type AppRailGroup, type AppRailItem } from './AppRail.js';
 export { createBeamApp, type BeamAppOptions } from './createBeamApp.js';
-export type { DeskNavigation } from './DeskMainframe.js';
+export { DeskMainframe, type DeskNavigation } from './DeskMainframe.js';
+export { WindowMainframe } from './WindowMainframe.js';
+export { FocusMainframe } from './FocusMainframe.js';

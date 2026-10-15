@@ -100,3 +100,20 @@ describe('router-neutral app shell', () => {
     });
 
 });
+
+
+it('allows a transport adapter to provide runtime without adding shell chrome', () => {
+    const app = createBeamApp({ runtime: { base: '/ui' }, Providers: ({ children }) => <section aria-label="Host providers">{children}</section> });
+    function Route() { return <h1>{app.useRuntime().base}</h1>; }
+    render(<app.Provider><Route /></app.Provider>);
+    expect(screen.getByRole('heading', { name: '/ui' })).toBeTruthy();
+    expect(screen.getByRole('region', { name: 'Host providers' })).toBeTruthy();
+    expect(screen.queryByRole('main')).toBeNull();
+});
+
+it('preserves an explicitly unframed outlet without a route-enter wrapper', () => {
+    const { rerender } = render(<AppShell mode="window" can={can} context={{}} outlet={<article>Site</article>} unframed />);
+    expect(screen.getByText('Site').parentElement?.classList.contains('route-enter')).toBe(false);
+    rerender(<AppShell mode="window" can={can} context={{}} outlet={<article>Site</article>} />);
+    expect(screen.getByText('Site').parentElement?.classList.contains('route-enter')).toBe(true);
+});
