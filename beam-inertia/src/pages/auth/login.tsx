@@ -22,6 +22,7 @@ export default function Login() {
     const {
         status,
         canResetPassword,
+        canRegister,
         demoAccounts = [],
     } = usePage<AuthEntryPageData>().props;
 
@@ -100,7 +101,13 @@ export default function Login() {
                             </Button>
                         </div>
 
-                        {featureEnabled('registration') && (<>
+                        {/* The Sign up affordance follows the SERVER registration policy
+                            (`canRegister`, from `Features::enabled(Features::registration())` —
+                            the same source the /register route reads), not a build-time client
+                            feature flag. A closed-door host (ACCOUNT_REGISTRATION=closed) 404s
+                            /register, so the link must not render there. Mirrors `canResetPassword`
+                            above. */}
+                        {canRegister && (<>
                         <div className="text-center text-sm text-muted-foreground">
                             Don't have an account?{' '}
                             <TextLink href="/register" tabIndex={5}>
