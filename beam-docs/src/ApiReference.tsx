@@ -85,11 +85,11 @@ export const BEAM_SCALAR_CSS = `.scalar-app {
   --scalar-sidebar-search-border-color: var(--beam-border, var(--beam-line));
 }
 
-/* Scalar's enum row uses tertiary ink. Its value is normal-size code on the tinted background, where
-   Beam's translucent muted ink falls below AA in light mode. Keep the descriptive copy tertiary, but
-   put the actual value label back on the primary text token in both schemes. */
-.scalar-app .property-enum-value-label {
-  color: var(--scalar-color-1);
+/* Scalar forces every descendant of a property description onto color-2 with !important. Enum prose
+   contains inline code such as "fixed" and "to_target"; Beam's translucent muted ink falls below AA
+   on those chips in light mode. Keep the prose muted, but put only its inline code on primary ink. */
+.scalar-app .property-description :not(pre) > code {
+  color: var(--scalar-color-1) !important;
 }`;
 
 /** Curation, not palette: our MCP server has its own docs page, so hide Scalar's MCP affordance. */
