@@ -1,5 +1,5 @@
 /**
- * `@splicewire/beam-ux/account` — generic authed-account chrome (beam-ux-uplift ticket 13).
+ * `@splicewire/beam-accounts/account` — generic authed-account chrome (beam-ux-uplift ticket 13).
  *
  * So a fresh beam host gets its account area OOTB. The deferred JS half of ticket 08, which shipped
  * the DATA CONTRACT (`AccountShellData` + the `laravel-beam-accounts` provider seam). Portable,

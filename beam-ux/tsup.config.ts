@@ -13,7 +13,6 @@ export default defineConfig({
         site: 'src/site/index.ts',
         docs: 'src/docs/index.ts',
         pages: 'src/pages/index.ts',
-        account: 'src/account/index.ts',
         shell: 'src/shell/index.ts',
         desk: 'src/desk/index.ts',
         appshell: 'src/appshell/index.ts',

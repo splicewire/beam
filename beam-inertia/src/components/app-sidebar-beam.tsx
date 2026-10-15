@@ -1,13 +1,13 @@
 import { Link, usePage } from '@inertiajs/react';
-import { AccountShell } from '@splicewire/beam-ux/account';
-import type { AccountNavItem } from '@splicewire/beam-ux/account';
+import { AccountShell } from '@splicewire/beam-accounts/account';
+import type { AccountNavItem } from '@splicewire/beam-accounts/account';
 import { LayoutGrid, Settings } from 'lucide-react';
 import type { ReactNode } from 'react';
 import AppLogo from './app-logo';
 import { NavUser } from './nav-user';
 
 /**
- * The `account`-realm app shell — a THIN host wrapper over the generic `@splicewire/beam-ux/account`
+ * The `account`-realm app shell — a THIN host wrapper over the generic `@splicewire/beam-accounts/account`
  * `<AccountShell>`. The package owns the sidebar/inset chrome (the @schemastud/ui Sidebar + brand
  * header + data-driven nav group + opt-in plan/profile sections + user footer slot); this file supplies
  * only host specifics: the brand, Inertia's `<Link>`, active-URL matching, neutral row icons, and the
