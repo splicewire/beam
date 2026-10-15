@@ -18,6 +18,7 @@ const self = dirname(fileURLToPath(import.meta.url));
 export default defineConfig({
   resolve: {
     alias: {
+      "@splicewire/beam-ux/appshell": join(self, "..", "beam-ux", "dist", "appshell.js"),
       "react-remove-scroll-bar/constants": join(
         self,
         "..",
