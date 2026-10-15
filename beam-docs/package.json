@@ -1,6 +1,6 @@
 {
     "name": "@splicewire/beam-docs",
-    "version": "0.1.1",
+    "version": "0.2.0",
     "description": "Optional Beam documentation, Scalar API reference and release publication controls.",
     "license": "MIT",
     "type": "module",
