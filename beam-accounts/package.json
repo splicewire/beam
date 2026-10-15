@@ -10,6 +10,10 @@
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
+    },
+    "./account": {
+      "types": "./dist/account.d.ts",
+      "import": "./dist/account.js"
     }
   },
   "sideEffects": false,
@@ -44,7 +48,8 @@
     "@tanstack/react-table": ">=8",
     "lucide-react": ">=0.400.0",
     "react": ">=18",
-    "@schemastud/seam": ">=0.2.2"
+    "@schemastud/seam": ">=0.2.2",
+    "@splicewire/beam-ux": "^0.4.0"
   },
   "devDependencies": {
     "@schemastud/ui": "file:../../schemastud/ui",
@@ -62,6 +67,7 @@
     "typescript": "^5.7.2",
     "vitest": "^4.1.10",
     "@schemastud/seam": "file:../../schemastud/seam",
-    "@splicewire/beam-resources": "file:../beam-resources"
+    "@splicewire/beam-resources": "file:../beam-resources",
+    "@splicewire/beam-ux": "file:../beam-ux"
   }
 }

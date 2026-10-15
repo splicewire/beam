@@ -1,9 +1,11 @@
-import { render, screen } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { afterEach, describe, expect, it } from 'vitest';
 import { SidebarProvider, TooltipProvider } from '@schemastud/ui';
 import { AccountShell } from './AccountShell.js';
 import { AccountNav } from './AccountNav.js';
 import type { AccountNavData, AccountShellData, LinkComponent } from './types.js';
+
+afterEach(cleanup);
 
 // `AccountNav`'s rows are `SidebarMenuButton`s, which read the SidebarProvider context — so the
 // standalone nav renders inside a bare provider (its natural home inside `<AccountShell>`).
@@ -164,4 +166,21 @@ describe('AccountShell', () => {
             expect(line.className).not.toContain('text-muted-foreground');
         }
     });
+});
+
+it('preserves injected-link prefetch, active aria and the host initial collapsed state', () => {
+    const Link: LinkComponent = ({ prefetch, ...props }) => <a {...props} data-prefetch={String(prefetch)} />;
+    const { container } = render(<AccountShell nav={nav} linkComponent={Link} defaultOpen={false}
+        isActive={href => href === '/account/lyrics'} brand="Brand" brandHref="/account" action={<button>Action</button>} user={<span>User</span>}>
+        <p>Body</p>
+    </AccountShell>);
+    const link = screen.getByRole('link', { name: 'Lyrics' });
+    expect(link.getAttribute('aria-current')).toBe('page');
+    expect(link.getAttribute('data-prefetch')).toBe('true');
+    expect(link.getAttribute('data-active')).toBe('true');
+    expect(container.querySelector('[data-state="collapsed"][data-collapsible="icon"]')).not.toBeNull();
+    expect(screen.getByRole('button', { name: 'Action', hidden: true })).toBeTruthy();
+    expect(screen.getByText('User')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Open navigation' }));
+    expect(document.cookie).toContain('sidebar_state=true');
 });

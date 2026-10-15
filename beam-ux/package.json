@@ -47,10 +47,6 @@
             "types": "./dist/pages.d.ts",
             "import": "./dist/pages.js"
         },
-        "./account": {
-            "types": "./dist/account.d.ts",
-            "import": "./dist/account.js"
-        },
         "./shell": {
             "types": "./dist/shell.d.ts",
             "import": "./dist/shell.js"

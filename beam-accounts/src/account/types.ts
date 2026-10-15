@@ -1,5 +1,5 @@
 /**
- * `@splicewire/beam-ux/account` — the shared shapes for the authed account chrome.
+ * `@splicewire/beam-accounts/account` — the shared shapes for the authed account chrome.
  *
  * Structural, framework-neutral, and theme-neutral by design, mirroring the `/site` subpath
  * (ticket 10). The `nav` a host feeds `<AccountShell>` is the `account` sitemap projected by the

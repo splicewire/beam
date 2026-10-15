@@ -44,3 +44,15 @@ const client: TokensClient = {
 
 `npm run lint:imports` enforces the deny-list; `npm test` mounts the surface off a pure DTO fixture
 with no Laravel backend.
+
+## Account shell
+
+`@splicewire/beam-accounts/account` owns `AccountShell`, its projected account data
+and optional sections. `AccountNav` adapts the router-neutral beam-ux `AppRail` to
+foundation sidebar primitives, retaining collapse, tooltips and injected link
+prefetch. The host still supplies brand, user/action slots, active-route matching
+and the sidebar-open cookie. No router or transport is imported.
+
+Upgrade beam-ux, beam-accounts and beam-inertia together. The old beam-ux/account
+entry is removed, not re-exported. Consumers scanning package dist for Tailwind
+utilities must scan beam-accounts/dist as well as beam-ux/dist.

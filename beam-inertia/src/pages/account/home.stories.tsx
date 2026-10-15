@@ -2,12 +2,12 @@ import { useEffect, useState, type ComponentType } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { within, expect } from 'storybook/test';
 import { resolveBeamPage } from '@splicewire/beam-inertia';
-import { AccountShell } from '@splicewire/beam-ux/account';
+import { AccountShell } from '@splicewire/beam-accounts/account';
 import { setStubPage } from '../../story-harness';
 
 /**
  * Account / Home — the packaged `account/home` page, resolved via `resolveBeamPage` and
- * mounted inside the promoted `AccountShell` (`@splicewire/beam-ux/account`) exactly the
+ * mounted inside the promoted `AccountShell` (`@splicewire/beam-accounts/account`) exactly the
  * way a real host's `layout:` resolution wraps `account/*` pages (see beam-inertia's
  * `index.tsx` `beamInertiaOptions().layout`). Both packages' real exports, no deep paths.
  */
