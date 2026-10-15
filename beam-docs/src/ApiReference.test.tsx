@@ -50,18 +50,33 @@ describe('ApiReference', () => {
         expect(css).toContain('.scalar-app aside a[href="https://www.scalar.com"] { display: none !important; }');
     });
 
-    it('keeps enum value labels on the primary readable ink in light and dark themes', () => {
-        const createApiReference = vi.fn();
+    it('renders Scalar property-description code with primary readable ink', () => {
+        let renderedColor = '';
+        const createApiReference = vi.fn((element: string | HTMLElement, configuration: Record<string, unknown>) => {
+            const mount = element as HTMLElement;
+            mount.innerHTML = `<style>
+                .scalar-app {
+                    --beam-fg: rgb(17, 32, 26);
+                    --beam-fg-muted: rgba(17, 32, 26, 0.5);
+                }
+                [data-v-933ce0d5] .property-description * {
+                    color: var(--scalar-color-2) !important;
+                }
+                ${String(configuration.customCss)}
+            </style>
+            <div class="scalar-app" data-v-933ce0d5>
+                <div class="property-description"><p>Choose <code>fixed</code>.</p></div>
+            </div>`;
+            renderedColor = getComputedStyle(mount.querySelector('code')!).color;
+        });
         render(<ApiReference specUrl="/beam/openapi.json" createApiReference={createApiReference} />);
 
-        const css = String((createApiReference.mock.calls[0][1] as Record<string, unknown>).customCss);
-
-        // Scalar gives the enum row its tertiary ink. The label is normal-size text on Scalar's tinted
-        // code fill, so it must opt back into the primary ink: the tertiary Beam mapping measures 3.14:1
-        // in light mode, while --scalar-color-1 clears AA in both shipped schemes.
-        expect(css).toMatch(
-            /\.scalar-app \.property-enum-value-label\s*\{\s*color: var\(--scalar-color-1\);\s*\}/,
-        );
+        // Scalar 1.65.1 forces every property-description descendant onto color-2 with !important.
+        // Commerce's enum descriptions contain inline code such as `fixed`; verify the real cascade,
+        // not merely the presence of an override string.
+        // jsdom preserves custom-property references in computed styles; this still exercises the
+        // real !important cascade and fails if Scalar's muted color-2 rule wins.
+        expect(renderedColor).toBe('var(--scalar-color-1)');
     });
 
     it('omits only the MCP curation when the host opts out, and keeps the vendor and palette rules', () => {
