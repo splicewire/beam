@@ -1,6 +1,6 @@
 {
   "name": "@splicewire/beam-inertia",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Packaged Beam defaults for Laravel Inertia hosts: authentication, realms, editor and operator desktop.",
   "license": "MIT",
   "type": "module",

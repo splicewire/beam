@@ -1,6 +1,6 @@
 {
     "name": "@splicewire/beam-transforms",
-    "version": "0.1.0",
+    "version": "0.2.0",
     "description": "The transforms-domain beam surface (popcorn-runner-substrate ticket 09, ADR-0116/0141): the RunnerTransform authoring editor for sandboxed, user-authored transforms. Authored pre-packaged and DTO-first — it owns its react-query data logic, takes its transport + feedback as injected services (never app-local imports), and types off the RunnerTransform wire shape. Generic UI comes from the @schemastud/ui foundation.",
     "license": "MIT",
     "type": "module",
