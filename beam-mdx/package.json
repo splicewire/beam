@@ -50,6 +50,9 @@
         "test": "vitest run --passWithNoTests",
         "typecheck": "tsc --noEmit"
     },
+    "dependencies": {
+        "unified": "^11.0.5"
+    },
     "peerDependencies": {
         "@inertiajs/react": ">=2",
         "@mdx-js/mdx": "^3",
