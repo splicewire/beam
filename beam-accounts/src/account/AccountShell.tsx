@@ -1,4 +1,4 @@
-// @splicewire/beam-ux/account — the generic authed account shell (beam-ux-uplift ticket 13).
+// @splicewire/beam-accounts/account — the generic authed account shell (beam-ux-uplift ticket 13).
 //
 // The AppLayout + sidebar chrome for a beam host's account area: a `@schemastud/ui` Sidebar (brand
 // header + a data-driven nav group + an optional plan/profile/account/upsell block + a user footer

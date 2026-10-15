@@ -16,9 +16,10 @@ CSS-vars).
 | `./blockdoc/json` | **Babel-free** JSON projection of BlockDoc — the visual-editor runtime shape (`JsonNode`) + immutable edit ops. Safe for the client bundle. |
 | `./site` | Generic public-site chrome, prose, compiled entry bodies and manifest tables. API reference rendering lives in `@splicewire/beam-docs`. |
 | `./docs` | Generic chrome registry, reading templates and entry-page configuration. `@splicewire/beam-docs` explicitly registers its optional documentation layout. |
-| `./account` | Generic authed-account chrome — `AccountShell` + `AccountNav` (ticket 13). |
 | `./shell` | The **realm-aware OS-shell layer** — `buildAppsFromManifest` over the canonical `@schemastud/mainframe/os` chrome (ADR-0017). |
 | `./theme.css` · `./tokens.css` | The **opt-in beam token layer** — every `--beam-*` colour primitive and the status semantics, light and `.dark` (ADR 0002). Stylesheets only; nothing in the JS imports them. |
+
+Account chrome now belongs to `@splicewire/beam-accounts/account`. Upgrade its Inertia consumer together; the former `./account` export is removed, without an alias.
 
 ## `@splicewire/beam-ux/theme.css` — the opt-in token layer
 
