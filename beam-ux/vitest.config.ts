@@ -13,7 +13,14 @@ const require = createRequire(import.meta.url);
 const pkgDir = (id: string) => dirname(require.resolve(`${id}/package.json`));
 const react = pkgDir('react');
 const reactDom = pkgDir('react-dom');
-const self = dirname(fileURLToPath(import.meta.url));
+// Resolve an @schemastud entry (or subpath) to the ONE installed copy, honoring its import-only
+// `exports` map. `import.meta.resolve` finds it in node_modules wherever the package is installed —
+// the `file:` symlink into the co-located schemastud workspace during co-dev, or the published copy
+// in a beam-only checkout — so the test suite collects in BOTH layouts. (A hard-coded
+// `../../schemastud/<pkg>/dist` relative path only exists in the co-located monorepo, which is why a
+// beam-only checkout could not resolve `@schemastud/mainframe/os` etc. and 11 files failed to collect;
+// `require.resolve` cannot be used here because these packages publish import-only exports.)
+const schemastud = (id: string) => fileURLToPath(import.meta.resolve(id));
 
 export default defineConfig({
     // RJSF's nested lucide-react CJS entry bypasses Vite's React aliases. Resolve only
@@ -58,37 +65,22 @@ export default defineConfig({
             'react-rnd': pkgDir('react-rnd'),
             're-resizable': pkgDir('re-resizable'),
             'react-draggable': pkgDir('react-draggable'),
-            // Resolve the foundation UI + the seam to their built dist (their published entries),
-            // not their src.
-            '@schemastud/ui': join(self, '..', '..', 'schemastud', 'ui', 'dist', 'index.js'),
-            '@schemastud/seam': join(self, '..', '..', 'schemastud', 'seam', 'dist', 'index.js'),
+            // Resolve the foundation UI + the seam to the ONE installed copy (their published
+            // entries), not their src — see `schemastud()` above for why this resolves the package
+            // rather than a hard-coded sibling path.
+            '@schemastud/ui': schemastud('@schemastud/ui'),
+            '@schemastud/seam': schemastud('@schemastud/seam'),
             // The /appshell entry's overlay reads the frame side-panel store; its mode-core types
             // off mainframe. Resolve both to their built dist (their published entries).
-            '@schemastud/frame': join(self, '..', '..', 'schemastud', 'frame', 'dist', 'index.js'),
+            '@schemastud/frame': schemastud('@schemastud/frame'),
             // The nav primitives the `/docs` layout composes (`<OnThisPage>`); same cross-workspace
             // `file:` link, same second-React hazard, same pin to the built dist.
-            '@schemastud/nav': join(self, '..', '..', 'schemastud', 'nav', 'dist', 'index.js'),
+            '@schemastud/nav': schemastud('@schemastud/nav'),
             // The Frame OS desktop subpath (OperatorOverlay + the window manager the /desk entry
             // composes). Listed BEFORE the bare specifier — vite matches alias keys in order, so the
             // bare '@schemastud/mainframe' would otherwise swallow '/os' and resolve the wrong entry.
-            '@schemastud/mainframe/os': join(
-                self,
-                '..',
-                '..',
-                'schemastud',
-                'mainframe',
-                'dist',
-                'os.js',
-            ),
-            '@schemastud/mainframe': join(
-                self,
-                '..',
-                '..',
-                'schemastud',
-                'mainframe',
-                'dist',
-                'index.js',
-            ),
+            '@schemastud/mainframe/os': schemastud('@schemastud/mainframe/os'),
+            '@schemastud/mainframe': schemastud('@schemastud/mainframe'),
         },
     },
     test: {
