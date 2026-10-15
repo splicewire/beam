@@ -1,5 +1,11 @@
 # @splicewire/beam-ux
 
+## 0.5.0
+
+### Minor Changes
+
+- 8ccb81f: Expose the app runtime Provider for transport adapters, support an explicitly unframed outlet, and export the shared mode placements so existing shell APIs can delegate without duplicating chrome.
+
 ## 0.4.0
 
 ### Minor Changes

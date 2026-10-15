@@ -1,5 +1,12 @@
 # @splicewire/beam-inertia
 
+## 1.0.0
+
+### Patch Changes
+
+- Updated dependencies [8ccb81f]
+  - @splicewire/beam-ux@0.5.0
+
 ## 0.2.0
 
 ### Minor Changes
