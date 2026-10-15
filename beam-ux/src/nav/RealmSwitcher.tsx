@@ -19,6 +19,14 @@ export type RealmSwitcherProps = {
     /** Where the menu opens: below the trigger (a header), or above it (a trigger at the bottom of a rail). */
     side?: 'bottom' | 'top';
     className?: string;
+    /**
+     * Classes for the trigger BUTTON itself. The trigger is router-free and shape-agnostic, so each shell
+     * styles it for its slot: the sidebar-foot user chip wants a full-width flex row (so a multi-element
+     * `label` — avatar + name — lays out in a row rather than stacking) plus its menu-button chrome; a
+     * header trigger wants nothing. Left unset, the button carries no class (unchanged for text-label
+     * consumers like the site header).
+     */
+    triggerClassName?: string;
 };
 
 const PlainLink: LinkComponent = ({ href, className, children, ...rest }) => (
@@ -43,6 +51,7 @@ export function RealmSwitcher({
     side = 'bottom',
     current,
     className,
+    triggerClassName,
 }: RealmSwitcherProps) {
     const here = current ?? realms.current;
     const [open, setOpen] = useState(defaultOpen);
@@ -54,7 +63,7 @@ export function RealmSwitcher({
 
     return (
         <div className={['relative', className].filter(Boolean).join(' ')} data-realm-switcher="">
-            <button ref={trigger} type="button" aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen((v) => !v)}>
+            <button ref={trigger} type="button" aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen((v) => !v)} className={triggerClassName || undefined}>
                 {label}
             </button>
             {open && (
