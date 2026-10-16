@@ -11,3 +11,52 @@ body: Record<string, any>,
 source: string | null,
 compileError: string | null,
 };
+
+export type EntryVersionData = {
+id: string,
+version: number,
+readable: string,
+label: string | null,
+createdBy: string | null,
+createdAt: string | null,
+isHead: boolean,
+isPublished: boolean,
+};
+
+export type JsonNode = JsonBlockNode & {
+kind: 'block',
+} | JsonTextNode & {
+kind: 'text',
+} | JsonOpaqueNode & {
+kind: 'opaque',
+};
+
+export type JsonBlockNode = {
+name: string | null,
+isComponent: boolean,
+props: JsonProp[],
+children: JsonNode[],
+dynamic: boolean,
+kind: string,
+};
+
+export type JsonTextNode = {
+value: string,
+kind: string,
+};
+
+export type JsonOpaqueNode = {
+reason: OpaqueReason,
+source: string,
+kind: string,
+};
+
+export type JsonProp = {
+name: string,
+kind: PropKind,
+value: string | number | boolean | null,
+};
+
+export type PropKind = 'boolean-shorthand' | 'string' | 'number' | 'boolean' | 'expression';
+
+export type OpaqueReason = 'map' | 'conditional' | 'ternary' | 'expression' | 'spread';
