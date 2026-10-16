@@ -37,18 +37,18 @@ isComponent: boolean,
 props: JsonProp[],
 children: JsonNode[],
 dynamic: boolean,
-kind: string,
+kind: 'block',
 };
 
 export type JsonTextNode = {
 value: string,
-kind: string,
+kind: 'text',
 };
 
 export type JsonOpaqueNode = {
 reason: OpaqueReason,
 source: string,
-kind: string,
+kind: 'opaque',
 };
 
 export type JsonProp = {
