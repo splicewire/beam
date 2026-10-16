@@ -32,6 +32,8 @@ editor-local, and so is Webflow's, with versions kept as a separate list.
 - **The package owns it**, so every host gets the same undo. The host-injected `onUndo`/`canUndo` props are no longer how
   undo reaches versions. The package still doesn't know about versions (ADR-0116's four-kind seam): a Local Session is
   editor state, and History goes through the transport's `versions` and `restore`.
+- *Extended by ADR-0006 decisions 3 and 4 (2026-10-16): every text edit in a Prose Run is a step here, and while Source
+  Mode is open the session holds its unapplied text, which survives a reload like any other change.*
 
 ## Considered and not taken
 

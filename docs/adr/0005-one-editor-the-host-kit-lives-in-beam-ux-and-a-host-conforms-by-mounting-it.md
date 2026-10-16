@@ -31,6 +31,8 @@ one config read for an injected transport (`transport.ts:130`).
    theme, whether the viewer may author, and the entry transport (`UxBuilderClient`). It holds the in-place page
    editor and the window-mode mount, Edit mode for a rendered entry, the format gate in front of the canvas, and the
    default islands and canvas configuration.
+   *Amended by ADR-0006 decisions 1 and 5 (2026-10-16): the gate checks the Body Kind, not the format, and the `Mdx`
+   island leaves the default islands.*
 2. **`beam-inertia` keeps a thin adapter** that reads those inputs from Inertia page props. The SPA passes a token
    transport over the API mount. A host can take the editor without taking `beam-inertia`'s authentication, realms or
    desk.
@@ -39,6 +41,8 @@ one config read for an injected transport (`transport.ts:130`).
    as `beam-ux-canvas`. The entry's format chooses the surface. The canvas opens `tsx` entries, and the surface for an
    MDX entry is editor-parity ticket 15's decision. The kit adds no heavy editor dependency to `beam-ux`: a heavy
    surface loads lazily or is supplied by the host.
+   *Amended by ADR-0006 decisions 1 and 3 (2026-10-16): the Body Kind chooses the surface, so the canvas opens MDX pages,
+   which hold blocks. Text is edited through `@schemastud/blockdoc`, which `beam-ux` loads lazily.*
 4. **A host conforms** when every editing surface it shows is packaged or extended at a declared seam (the transport,
    the theme, the component registry, chrome, a workflow binding) and none is a host copy. Its write path is the
    packaged entry operations over the publication pins

@@ -47,3 +47,7 @@ Inline `style` cannot hold a media query or `:hover`, so it cannot carry breakpo
 
 Additional states, Style Presets, a "tokens only" lock for a host or realm, colour-scheme token modes (dark), and component
 variants (named Block Style overrides on a component).
+
+*Shape set by `splicewire/laravel-beam-ux docs/adr/0231-an-authored-component-is-an-entry-composed-at-render-and-an-instance-edits-only-its-interface.md`
+decision 18 (2026-10-15): a variant will be a third Style Layer condition, beside breakpoint and state, on a variant axis
+the component declares and each instance picks. It compiles like a state. Still deferred.*
