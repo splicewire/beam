@@ -1,9 +1,9 @@
 import assert from 'node:assert/strict';
-import { chromium } from 'playwright';
+import { launchBrowser } from './_browser.mjs';
 
 const base = process.env.WORKFLOW_STORY_URL ?? 'http://localhost:6019';
 const api = 'http://127.0.0.1:8767/api/beam/calendar-actions';
-const browser = await chromium.launch({ headless: true });
+const browser = await launchBrowser();
 try {
     const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
     const errors = [];

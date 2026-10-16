@@ -25,3 +25,7 @@ Two conventions specific to how this repo vendors `schemastud/js`:
   paths never leak into anything published — unlike a composer `composer.local.json` path-repo
   overlay (which does leak into `composer.lock` and needs `/composer-canonicalize`'s strip-and-relink
   pass before shipping), no equivalent canonicalize step exists or is needed here, by construction.
+
+## Browser verify scripts
+
+- **Launch headless Chromium through `beam-workflows/scripts/_browser.mjs` (`launchBrowser`), never `chromium.launch` directly** — it sets `--password-store=basic` so the ad-hoc-signed headless shell never pops the macOS login-keychain dialog that blocks a headless run on the host (rationale in that file).
