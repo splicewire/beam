@@ -24,56 +24,37 @@ import type { BlockChild, BlockDoc, BlockNode, PropKind } from './types.js';
 // The JSON shape — an AST-free mirror of BlockChild, discriminated by `kind`.
 // ---------------------------------------------------------------------------
 
-/** A prop on a {@link JsonBlock} — mirrors `BlockProp` minus the AST `node` handle. */
-export interface JsonProp {
-    name: string;
-    kind: PropKind;
-    /**
-     * Decoded literal for string/number/boolean; source text (`{…}` stripped) for `expression`.
-     * `null` is a legitimate string-kind value — e.g. Laravel's default `ConvertEmptyStringsToNull`
-     * middleware turns a cleared string attr's `''` into a real `null` before it's ever persisted, so
-     * a round-tripped doc can carry `null` here even though nothing in this package writes it directly.
-     */
-    value: string | number | boolean | null;
-}
-
-/** An intrinsic element or component node. `isComponent` ⇒ a registered PascalCase component. */
-export interface JsonBlock {
-    kind: 'block';
-    /** `null` for a fragment (`<>…</>`). */
-    name: string | null;
-    isComponent: boolean;
-    props: JsonProp[];
-    children: JsonNode[];
-    /** Mirrors `BlockNode.dynamic` (an undecomposable spread attribute, etc). Descriptive. */
-    dynamic: boolean;
-}
-
-/** A text leaf. */
-export interface JsonText {
-    kind: 'text';
-    value: string;
-}
-
 /**
- * A sealed dynamic island — the AST-free mirror of `OpaqueNode`. Carried verbatim; the canvas
- * renders it read-only (position/delete only) and `jsonToTsx` re-emits its `source` unchanged.
+ * The node shapes are GENERATED from the PHP `JsonNode` morph union (ADR-0228 d2): schemastud's
+ * `MorphUnionTransformer` projects the `#[MorphUnion]` base to a discriminated union in TypeScript and
+ * `JsonSchemaGenerator` to JSON Schema, and the flagship's `resources:beam` distributes them through
+ * `@splicewire/beam-resources/types/beam-ux`. This module no longer HAND-DECLARES the node shapes — the
+ * hand-mirror ADR-0228 d2 retires — it imports the generated contract and keeps only the pure edit-ops
+ * and the browser-safe printer below.
+ *
+ * The PHP arm classes are `JsonBlockNode` / `JsonTextNode` / `JsonOpaqueNode`; the historical short
+ * names `JsonBlock` / `JsonText` / `JsonOpaque` are re-exported as aliases so every canvas consumer
+ * keeps its one import site and no call site has to change.
  */
-export interface JsonOpaque {
-    kind: 'opaque';
-    reason: 'map' | 'conditional' | 'ternary' | 'expression' | 'spread';
-    /** Verbatim source of the expression, `{…}` braces included. */
-    source: string;
-}
+import type {
+    JsonBlockNode,
+    JsonNode,
+    JsonOpaqueNode,
+    JsonProp,
+    JsonTextNode,
+} from '@splicewire/beam-resources/types/beam-ux';
 
-export type JsonNode = JsonBlock | JsonText | JsonOpaque;
+export type { JsonBlockNode, JsonNode, JsonOpaqueNode, JsonProp, JsonTextNode };
+export type JsonBlock = JsonBlockNode;
+export type JsonText = JsonTextNode;
+export type JsonOpaque = JsonOpaqueNode;
 
 /** A JSON document — the roots of a page body. Edit ops address into this array. */
 export type JsonDoc = JsonNode[];
 
-export const isJsonBlock = (n: JsonNode): n is JsonBlock => n.kind === 'block';
-export const isJsonText = (n: JsonNode): n is JsonText => n.kind === 'text';
-export const isJsonOpaque = (n: JsonNode): n is JsonOpaque => n.kind === 'opaque';
+export const isJsonBlock = (n: JsonNode): n is JsonBlockNode => n.kind === 'block';
+export const isJsonText = (n: JsonNode): n is JsonTextNode => n.kind === 'text';
+export const isJsonOpaque = (n: JsonNode): n is JsonOpaqueNode => n.kind === 'opaque';
 
 /** A block whose children are all text (an inline-editable leaf, e.g. `<h2>Title</h2>`). */
 export const isLeafText = (b: JsonBlock): boolean =>
