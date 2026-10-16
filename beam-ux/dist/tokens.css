@@ -1,0 +1,176 @@
+/*
+ * @splicewire/beam-ux/tokens.css — the beam tier's token defaults (opt-in).
+ *
+ * Beam packages read their OWN tier's raw keys (`--beam-*`, component-seams ticket 07 decisions 1-3:
+ * vendor-prefixed raw primitives, neutral semantics, own-key indirection) plus four status semantics
+ * shadcn does not define (`--signal`, `--warning`, `--warning-foreground`, `--info`). Before this file
+ * every host had to declare them itself; a host that did not (the starters) rendered beam chrome with
+ * unset variables: borders and ink ramps fell back to inherited colour, and `text-warning-foreground`
+ * was never generated. Ticket 07 decision 5 is that a package ships its own tier defaults; this is
+ * that file (ADR 0002 in this repo).
+ *
+ * OPT-IN. Nothing in the JS imports it — the package stays `sideEffects: false` and ships no CSS a
+ * bundler could drop. A host imports it from its stylesheet:
+ *
+ *     @import '@splicewire/beam-ux/theme.css';   // Tailwind v4 host: tokens + the status utilities
+ *     @import '@splicewire/beam-ux/tokens.css';  // any host: the custom properties alone
+ *
+ * OVERRIDING (Model B, own-key indirection): re-declare the `--beam-*` key you want to change AFTER the
+ * import, on `:root` for light and `.dark` for dark — never on a component instance. A host with its own
+ * palette maps the keys onto it (the flagship binds them to `--splice-*` with `color-mix`) and may skip
+ * this file entirely; importing it first and re-declaring after is equally valid, since a later rule at
+ * the same specificity wins.
+ *
+ * DARK follows the `.dark` class (the fleet's `@custom-variant dark (&:is(.dark *))`), on the root or
+ * on any subtree. Aliases are re-declared under `.dark` because a custom property inherits its
+ * COMPUTED value: an alias resolved on `:root` would carry the light value into a dark subtree.
+ *
+ * NOT SHIPPED HERE, on purpose:
+ *   - fonts (`--beam-font-*`): brand layer 1, the host's (runbook references/theming.md);
+ *   - the site-content hooks `--beam-fg`, `--beam-fg-muted`, `--beam-heading`, `--beam-accent`,
+ *     `--beam-border`, `--beam-surface-2`: `<Prose>` and the desk read them with fallbacks to the
+ *     surrounding ink, so an undefined hook follows the host's site theme in both schemes. Defining them
+ *     here would override that theme (and recolour the operator orb, which reads `--beam-accent`);
+ *   - the shadcn semantics (`--background`, `--primary`, …) and `--sidebar-*`: the host's layer 2.
+ *
+ * `--beam-muted` is a SURFACE (a filled tone: the mdx kit's code/figure/callout grounds, the workbench's
+ * `--secondary`). Text that wants a dimmed ink reads `--beam-ink-muted` or the ramp; prose reads
+ * `--beam-fg-muted`.
+ *
+ * Values: the Splicewire visual family (beam is its free-tier arm) — light from the Storybook workbench
+ * seed, dark from the flagship's shipped dark theme (`splicewire-app` `ui/src/index.css`).
+ */
+
+:root {
+    /* Surfaces */
+    --beam-paper: #eef1ee;
+    --beam-paper-raised: #ffffff;
+    --beam-muted: #e6eae5;
+
+    /* Ink */
+    --beam-ink: #2e2c26;
+    --beam-ink-muted: rgba(17, 32, 26, 0.5);
+    --beam-ink-18: rgba(17, 32, 26, 0.18);
+    --beam-line: #e3e6e2;
+
+    /* Green — primary */
+    --beam-green: #14803f;
+    --beam-green-deep: #0f5f2e;
+    --beam-green-tint: #eaf6ee;
+
+    /* Signal + status */
+    --beam-signal: #35d07a;
+    --beam-signal-13: rgba(53, 208, 122, 0.13);
+    --beam-signal-18: rgba(53, 208, 122, 0.18);
+    --beam-warn: #e8a13a;
+    --beam-warn-deep: #9a6608;
+    --beam-warn-tint: #fdf3e3;
+    --beam-amber: #d97706;
+    --beam-info: #2b63a7;
+    --beam-info-tint: #e8eff8;
+    --beam-danger: #a3271b;
+    --beam-danger-tint: #f8e9e7;
+
+    /* The rail — deep green-black */
+    --beam-rail: #11201a;
+    --beam-rail-deep: #0d1a14;
+    --beam-rail-fg: rgba(207, 233, 216, 0.6);
+    --beam-rail-active: #eaf6ee;
+    --beam-rail-avatar: #1d3527;
+
+    /* Ink opacity ramp — steps of the ink base (rgb 17 32 26): hairlines, faint fills, dimmed text. */
+    --beam-ink-03: rgba(17, 32, 26, 0.03);
+    --beam-ink-04: rgba(17, 32, 26, 0.04);
+    --beam-ink-05: rgba(17, 32, 26, 0.05);
+    --beam-ink-08: rgba(17, 32, 26, 0.08);
+    --beam-ink-10: rgba(17, 32, 26, 0.1);
+    --beam-ink-12: rgba(17, 32, 26, 0.12);
+    --beam-ink-15: rgba(17, 32, 26, 0.15);
+    --beam-ink-20: rgba(17, 32, 26, 0.2);
+    --beam-ink-22: rgba(17, 32, 26, 0.22);
+    --beam-ink-30: rgba(17, 32, 26, 0.3);
+    --beam-ink-35: rgba(17, 32, 26, 0.35);
+    --beam-ink-40: rgba(17, 32, 26, 0.4);
+    --beam-ink-45: rgba(17, 32, 26, 0.45);
+    --beam-ink-50: rgba(17, 32, 26, 0.5);
+    --beam-ink-55: rgba(17, 32, 26, 0.55);
+    --beam-ink-60: rgba(17, 32, 26, 0.6);
+    --beam-ink-70: rgba(17, 32, 26, 0.7);
+    --beam-ink-80: rgba(17, 32, 26, 0.8);
+
+    /* Status semantics — `--warning-foreground` is WARNING TEXT (amber ink on a `bg-warning/10` tint or
+       the page); nothing pairs it with a solid `bg-warning`. */
+    --signal: var(--beam-signal);
+    --warning: var(--beam-warn);
+    --warning-foreground: var(--beam-warn-deep);
+    --info: var(--beam-info);
+}
+
+.dark {
+    /* Surfaces take the card/muted tones; ink becomes the dark foreground. */
+    --beam-paper: oklch(0.2 0.02 165);
+    --beam-paper-raised: oklch(0.24 0.022 165);
+    --beam-muted: oklch(0.28 0.02 165);
+
+    --beam-ink: oklch(0.93 0.015 160);
+    --beam-ink-muted: oklch(0.93 0.015 160 / 0.6);
+    --beam-ink-18: oklch(0.93 0.015 160 / 0.18);
+    --beam-line: oklch(0.32 0.02 165);
+
+    --beam-green: oklch(0.78 0.17 155);
+    --beam-green-deep: oklch(0.82 0.15 155);
+    --beam-green-tint: oklch(0.78 0.17 155 / 0.16);
+
+    --beam-signal: oklch(0.78 0.17 155);
+    --beam-signal-13: oklch(0.78 0.17 155 / 0.16);
+    --beam-signal-18: oklch(0.78 0.17 155 / 0.22);
+    --beam-warn: oklch(0.8 0.14 75);
+    --beam-warn-deep: oklch(0.82 0.13 78);
+    --beam-warn-tint: oklch(0.8 0.14 75 / 0.16);
+    --beam-amber: oklch(0.8 0.14 75);
+    --beam-info: oklch(0.72 0.13 245);
+    --beam-info-tint: oklch(0.72 0.13 245 / 0.16);
+    --beam-danger: oklch(0.72 0.18 25);
+    --beam-danger-tint: oklch(0.72 0.18 25 / 0.16);
+
+    /* The rail — a distinct deep tone below the raised surfaces. */
+    --beam-rail: oklch(0.17 0.02 165);
+    --beam-rail-deep: oklch(0.14 0.02 165);
+    --beam-rail-fg: oklch(0.72 0.03 160);
+    --beam-rail-active: oklch(0.95 0.015 160);
+    --beam-rail-avatar: oklch(0.28 0.03 160);
+
+    /* The ramp keeps the light ramp's alphas over the dark foreground. */
+    --beam-ink-03: oklch(0.93 0.015 160 / 0.03);
+    --beam-ink-04: oklch(0.93 0.015 160 / 0.04);
+    --beam-ink-05: oklch(0.93 0.015 160 / 0.05);
+    --beam-ink-08: oklch(0.93 0.015 160 / 0.08);
+    --beam-ink-10: oklch(0.93 0.015 160 / 0.1);
+    --beam-ink-12: oklch(0.93 0.015 160 / 0.12);
+    --beam-ink-15: oklch(0.93 0.015 160 / 0.15);
+    --beam-ink-20: oklch(0.93 0.015 160 / 0.2);
+    --beam-ink-22: oklch(0.93 0.015 160 / 0.22);
+    --beam-ink-30: oklch(0.93 0.015 160 / 0.3);
+    --beam-ink-35: oklch(0.93 0.015 160 / 0.35);
+    --beam-ink-40: oklch(0.93 0.015 160 / 0.4);
+    --beam-ink-45: oklch(0.93 0.015 160 / 0.45);
+    --beam-ink-50: oklch(0.93 0.015 160 / 0.5);
+    --beam-ink-55: oklch(0.93 0.015 160 / 0.55);
+    --beam-ink-60: oklch(0.93 0.015 160 / 0.6);
+    --beam-ink-70: oklch(0.93 0.015 160 / 0.7);
+    --beam-ink-80: oklch(0.93 0.015 160 / 0.8);
+
+    /* Status semantics, brightened for the dark canvas (the flagship's values). A dark
+       `--warning-foreground` left every tinted warning (privacy callout, Pending badge, Needs-a-card)
+       dark-on-dark. */
+    --signal: oklch(0.78 0.17 155);
+    --warning: oklch(0.78 0.14 75);
+    --warning-foreground: oklch(0.82 0.13 78);
+    --info: oklch(0.68 0.13 245);
+}
+
+/* Own-tier aliases, declared on both so a `.dark` subtree re-resolves them (see the header). */
+:root,
+.dark {
+    --beam-surface: var(--beam-paper-raised);
+}
