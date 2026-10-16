@@ -258,8 +258,9 @@ export const SavedWithACompileError: Story = {
 };
 
 /**
- * The RESTORE CONFIRM — one click ARMS it and a second performs it, because a restore changes what
- * every reader of the page is served and is not an undoable local edit.
+ * The RESTORE CONFIRM — one click ARMS it and a second performs it, because a restore replaces the working
+ * copy with that version as a new draft (readers keep the published body until Publish; laravel-beam-ux
+ * ADR-0225 decision 5) and an unsaved canvas would be lost.
  */
 export const RestoreConfirm: Story = {
     args: { transport: transportFor(PUBLISHED_WITH_HISTORY) },

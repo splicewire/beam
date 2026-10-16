@@ -46,7 +46,8 @@ export interface UxBuilderClient<TBody = BeamUxEntryBodyData> {
     publish?(id: string, label?: string): Promise<EntryPublicationState>;
     /** The recorded version history plus both pins. */
     listVersions?(id: string): Promise<EntryPublicationState>;
-    /** Roll forward to a recorded version (a uuid or a readable handle like `v2`) and publish it. */
+    /** Roll forward to a recorded version (a uuid or a readable handle like `v2`) as a DRAFT: the published body
+     *  readers get does not move until `publish` (laravel-beam-ux ADR-0225 decision 5). */
     restoreVersion?(id: string, ref: string, label?: string): Promise<EntryPublicationState>;
     /**
      * REMOVE the entry's content and return it to the unauthored state

@@ -55,7 +55,7 @@ export interface PageEditorTransport {
     publish?: (slug: string) => Promise<EntryPublicationState>;
     /** The recorded history plus both pins — refetched whenever the panel opens. */
     listVersions?: (slug: string) => Promise<EntryPublicationState>;
-    /** Roll forward to a recorded version and publish it. */
+    /** Roll forward to a recorded version as a DRAFT (ADR-0225 d5): readers keep the published body until Publish. */
     restoreVersion?: (slug: string, ref: string) => Promise<EntryPublicationState>;
     /**
      * REMOVE the page's content — `beam-ux-entry.clear-body` on a beam-ux host: the stored body, its
@@ -584,8 +584,9 @@ export function PageEditor({
                     something), and selecting an element auto-opens it with that element's properties.
                     frame's own Inspector already renders its own empty state when nothing is selected. */}
                 {/* The version history — the same right-hand strip as the Inspector, so they toggle
-                    each other rather than stacking. Restore is CONFIRMED, never one click: it changes
-                    what every reader of the page is served, which is not an undoable local edit. */}
+                    each other rather than stacking. Restore is CONFIRMED, never one click: it replaces the
+                    working copy with that version as a new draft (readers keep the published body until
+                    Publish; laravel-beam-ux ADR-0225 decision 5), and an unsaved canvas would be lost. */}
                 {versionsOpen && (
                     <aside className="pe-panel pe-versions" aria-label="Versions">
                         <h3>Versions</h3>
@@ -593,8 +594,8 @@ export function PageEditor({
                         {pendingRestore && (
                             <div className="pe-confirm" role="alertdialog" aria-label="Confirm restore">
                                 <span>
-                                    Restore {pendingRestore.readable}? It becomes the published body
-                                    every reader is served.
+                                    Restore {pendingRestore.readable} as a draft? Readers keep the published
+                                    body until you Publish.
                                 </span>
                                 <div className="pe-confirm-actions">
                                     <button
