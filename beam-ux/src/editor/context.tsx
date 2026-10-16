@@ -19,14 +19,20 @@ export function EditorKitProvider({
   children,
   ...inputs
 }: EditorKitInputs & { children: ReactNode }) {
+  const {
+    theme = {},
+    canvasConfig = defaults,
+    defaultTreeFor = defaultTree,
+    notify = { success: noop, error: noop },
+  } = inputs;
   return (
     <KitContext.Provider
       value={{
-        theme: {},
-        canvasConfig: defaults,
-        defaultTreeFor: defaultTree,
-        notify: { success: noop, error: noop },
         ...inputs,
+        theme,
+        canvasConfig,
+        defaultTreeFor,
+        notify,
       }}
     >
       {children}

@@ -6,7 +6,7 @@ import {
   screen,
   waitFor,
 } from "@testing-library/react";
-import { EditorKitProvider } from "./context";
+import { EditorKitProvider, useEditorKit } from "./context";
 import { PageEditor } from "./page-editor";
 import type { UxBuilderClient } from "../types";
 const tree = [
@@ -77,4 +77,22 @@ it("a non-author cannot create an editable entry", () => {
   expect(
     screen.queryByRole("button", { name: "Make this page editable" })
   ).toBeNull();
+});
+
+it("explicit undefined optional inputs retain the kit defaults", () => {
+  let received: ReturnType<typeof useEditorKit> | undefined;
+  function Probe() {
+    received = useEditorKit();
+    return null;
+  }
+  const transport = { loadBody: vi.fn(), saveBody: vi.fn(), makeEditable: vi.fn() };
+  render(<EditorKitProvider transport={transport} canAuthor={false} theme={undefined}
+    canvasConfig={undefined} defaultTreeFor={undefined} notify={undefined}><Probe /></EditorKitProvider>);
+  expect(received?.transport).toBe(transport);
+  expect(received?.canAuthor).toBe(false);
+  expect(received?.theme).toEqual({});
+  expect(received?.canvasConfig).toBeDefined();
+  expect(received?.defaultTreeFor).toBeTypeOf("function");
+  expect(() => received!.notify.success("done")).not.toThrow();
+  expect(() => received!.notify.error("failed")).not.toThrow();
 });
