@@ -1,4 +1,4 @@
-import { beamInertiaOptions, type PageModule } from '@splicewire/beam-inertia-contract';
+import { beamInertiaOptions, type PageModule } from '../fixtures/inertia-contract-0.1.2/index';
 import { beamDocsPages } from '@splicewire/beam-docs/pages';
 
 const hostPages: Record<string, () => Promise<PageModule>> = {
