@@ -69,6 +69,13 @@
     "tailwind-merge": "^3.0.1"
   },
   "devDependencies": {
+    "jsdom": "25.0.1",
+    "react": "19.2.7",
+    "react-rnd": "10.5.3",
+    "re-resizable": "6.11.2",
+    "react-draggable": "4.7.1",
+    "@testing-library/react": "16.3.2",
+    "react-dom": "19.2.7",
     "tsup": "^8.5.1",
     "typescript": "^5.7.2",
     "vitest": "^4.1.10",
