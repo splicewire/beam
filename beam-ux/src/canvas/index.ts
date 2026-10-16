@@ -1,7 +1,7 @@
 /**
  * `@splicewire/beam-ux/canvas` — the portable, in-place visual editor promoted from the audiostud host
  * (editor-promotion tickets 02+03). A Webflow-grade editor over a single-root `JsonDoc` body (the AST-free
- * tree from `@splicewire/beam-ux/blockdoc/json`): click to select, double-click text to edit inline, drag
+ * tree from `@splicewire/beam-ux/jsondoc`): click to select, double-click text to edit inline, drag
  * to reorder (from the canvas OR from the Insert palette), a breadcrumb + right-click menu, and an
  * entitlement-gated seal for per-element access control.
  *

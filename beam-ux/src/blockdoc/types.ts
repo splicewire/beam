@@ -1,7 +1,7 @@
 /**
- * BlockDoc lens — the editable projection over a parsed `.tsx` page AST.
+ * TsxTree lens — the editable projection over a parsed `.tsx` page AST.
  *
- * The AST (recast + @babel/parser) is the source of truth. A BlockDoc is a *lens*:
+ * The AST (recast + @babel/parser) is the source of truth. A TsxTree is a *lens*:
  * every node in it holds a live reference (`node`) to the babel AST node it projects,
  * so an edit patches the AST node's tokens and recast reprints only that node — every
  * untouched node is reprinted from its original source tokens (byte-identical).
@@ -93,7 +93,7 @@ export interface BlockNode {
     node: unknown;
 }
 
-export interface BlockDoc {
+export interface TsxTree {
     /** The recast `File` AST — the source of truth. Pass to `print` to serialize. */
     ast: File;
     /**

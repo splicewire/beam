@@ -27,6 +27,8 @@ export interface UxBuilderClient<TBody = BeamUxEntryBodyData> {
      * representable rather than merely guarded against.
      */
     loadBody(id: string): Promise<TBody>;
+    /** Create an absent page from its default tree; PHP EntryMakeEditableOp, under ux.author. */
+    makeEditable?(slug: string, body: Record<string, unknown>): Promise<{id: string; compileError?: string | null}>;
     /**
      * Persist a region's body — returns the fresh projection
      * (`POST .../beam-ux-entries/{id}/op/save-body`). Addressed by id, same as {@link loadBody}.

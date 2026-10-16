@@ -1,5 +1,5 @@
 /**
- * BlockDoc lens core — lossless `.tsx` ⟷ BlockDoc.
+ * TsxTree lens core — lossless `.tsx` ⟷ TsxTree.
  *
  * `parse` builds the lens over a recast AST; `print` serializes the (possibly patched)
  * AST back. Untouched nodes reprint from their original tokens, so an unedited
@@ -13,7 +13,7 @@ import * as t from '@babel/types';
 import type { File } from '@babel/types';
 import type {
     BlockChild,
-    BlockDoc,
+    TsxTree,
     BlockNode,
     BlockProp,
     OpaqueNode,
@@ -24,8 +24,8 @@ import type {
 /** The recast parser config — a single instance so parse + reprint agree on tokens. */
 const parser = babelTsParser;
 
-/** Parse a `.tsx` source string into an editable BlockDoc lens. */
-export function parse(tsx: string): BlockDoc {
+/** Parse a `.tsx` source string into an editable TsxTree lens. */
+export function parse(tsx: string): TsxTree {
     const ast = recast.parse(tsx, { parser }) as File;
     const roots: BlockNode[] = [];
     const seen = new Set<t.Node>();
@@ -43,9 +43,9 @@ export function parse(tsx: string): BlockDoc {
     return { ast, roots };
 }
 
-/** Serialize a BlockDoc (or a raw AST) back to a `.tsx` string. */
-export function print(input: BlockDoc | File): string {
-    const ast = 'ast' in (input as BlockDoc) ? (input as BlockDoc).ast : (input as File);
+/** Serialize a TsxTree (or a raw AST) back to a `.tsx` string. */
+export function print(input: TsxTree | File): string {
+    const ast = 'ast' in (input as TsxTree) ? (input as TsxTree).ast : (input as File);
     return recast.print(ast).code;
 }
 

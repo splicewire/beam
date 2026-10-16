@@ -17,13 +17,9 @@ const editMode = vi.hoisted(() => ({ value: false }));
 const loadBody = vi.hoisted(() => vi.fn());
 const saveBody = vi.hoisted(() => vi.fn());
 
-vi.mock('@inertiajs/react', () => ({ usePage: () => ({ props: {} }) }));
 vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
-vi.mock('./canvas-config', () => ({ canvasConfig: { registry: {} } }));
-vi.mock('./defaults', () => ({ defaultTreeFor: () => [{ kind: 'text', value: 'SEED' }] }));
-vi.mock('./theme', () => ({ NEUTRAL_THEME: {} }));
-vi.mock('./transport', () => ({ bodyClient: { loadBody, saveBody } }));
-vi.mock('@splicewire/beam-ux/canvas', () => ({
+vi.mock('./context', () => ({useEditorKit: () => ({transport:{loadBody,saveBody}, theme:{}, canAuthor:true, canvasConfig:{registry:{}}, defaultTreeFor:()=>[{kind:'text',value:'SEED'}], notify:{success:vi.fn(),error:vi.fn()}})}));
+vi.mock('../canvas', () => ({
     CanvasProvider: ({ children }: { children: unknown }) => <>{children as never}</>,
     useEditMode: () => editMode.value,
     // The public canvas owns its draft after mount; incidental parent props do not reseed it.

@@ -2,18 +2,14 @@
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { afterEach, expect, it, vi } from 'vitest';
-import type { JsonDoc } from '@splicewire/beam-ux/blockdoc/json';
+import type { JsonDoc } from '@splicewire/beam-ux/jsondoc';
 
 const loadBody = vi.hoisted(() => vi.fn());
 const saveBody = vi.hoisted(() => vi.fn());
-vi.mock('@inertiajs/react', () => ({ usePage: () => ({ props: {} }) }));
 vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
-vi.mock('./canvas-config', () => ({ canvasConfig: { registry: {} } }));
-vi.mock('./defaults', () => ({ defaultTreeFor: () => [{ kind: 'text', value: 'SEED' }] }));
-vi.mock('./theme', () => ({ NEUTRAL_THEME: {} }));
-vi.mock('./transport', () => ({ bodyClient: { loadBody, saveBody } }));
+vi.mock('./context', () => ({useEditorKit: () => ({transport:{loadBody,saveBody}, theme:{}, canAuthor:true, canvasConfig:{registry:{}}, defaultTreeFor:()=>[{kind:'text',value:'SEED'}], notify:{success:vi.fn(),error:vi.fn()}})}));
 // Observe the adapter's public controlled-value and save seam; the canvas has its own owning tests.
-vi.mock('@splicewire/beam-ux/canvas', () => ({
+vi.mock('../canvas', () => ({
     CanvasProvider: ({ children }: { children: ReactNode }) => <>{children}</>,
     VisualEditor: ({ value, onSave }: { value: JsonDoc; onSave: () => void }) => (
         <div data-testid="canvas">

@@ -11,14 +11,6 @@
             "types": "./dist/index.d.ts",
             "import": "./dist/index.js"
         },
-        "./blockdoc": {
-            "types": "./dist/blockdoc.d.ts",
-            "import": "./dist/blockdoc.js"
-        },
-        "./blockdoc/json": {
-            "types": "./dist/blockdoc/json.d.ts",
-            "import": "./dist/blockdoc/json.js"
-        },
         "./canvas": {
             "types": "./dist/canvas.d.ts",
             "import": "./dist/canvas.js"
@@ -77,7 +69,19 @@
         },
         "./tokens.css": "./dist/tokens.css",
         "./theme.css": "./dist/theme.css",
-        "./tokens-docs.css": "./dist/tokens-docs.css"
+        "./tokens-docs.css": "./dist/tokens-docs.css",
+        "./tsx-lens": {
+            "types": "./dist/tsx-lens.d.ts",
+            "import": "./dist/tsx-lens.js"
+        },
+        "./jsondoc": {
+            "types": "./dist/jsondoc.d.ts",
+            "import": "./dist/jsondoc.js"
+        },
+        "./editor": {
+            "types": "./dist/editor.d.ts",
+            "import": "./dist/editor.js"
+        }
     },
     "sideEffects": false,
     "bin": {

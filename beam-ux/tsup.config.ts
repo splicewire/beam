@@ -6,8 +6,9 @@ import { defineConfig } from 'tsup';
 export default defineConfig({
     entry: {
         index: 'src/index.ts',
-        blockdoc: 'src/blockdoc/index.ts',
-        'blockdoc/json': 'src/blockdoc/json.ts',
+        'tsx-lens': 'src/blockdoc/index.ts',
+        jsondoc: 'src/blockdoc/json.ts',
+        editor: 'src/editor/index.ts',
         canvas: 'src/canvas/index.ts',
         leaf: 'src/leaf/index.ts',
         site: 'src/site/index.ts',

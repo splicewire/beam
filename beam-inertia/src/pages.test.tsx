@@ -15,8 +15,8 @@ describe('package default page resolution', () => {
         expect(local).toHaveBeenCalledOnce();
         expect(packaged).not.toBe(Override);
     });
-    it.each(['account/create-team', 'auth/accept-invitation'])(
-        'ships the team-onboarding page %s that beam-accounts renders',
+    it.each(['account/create-team', 'auth/accept-invitation', 'account/theme'])(
+        'resolves the packaged account page %s',
         async (page) => {
             expect(typeof (await resolveBeamPage(page))).toBe('function');
         },

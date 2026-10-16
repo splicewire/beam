@@ -46,6 +46,14 @@ async function readData(res: Response, what: string): Promise<unknown> {
 }
 
 const defaultBodyClient: UxBuilderClient = {
+    makeEditable: async (slug, body) => {
+        const res = await fetch('/beam-ux-entries/make-editable', {
+            method: 'POST', credentials: 'same-origin',
+            headers: {'Content-Type':'application/json', Accept:'application/json', 'X-XSRF-TOKEN':csrfToken()},
+            body: JSON.stringify({slug, body}),
+        });
+        return await readData(res, 'make-editable') as Awaited<ReturnType<NonNullable<UxBuilderClient['makeEditable']>>>;
+    },
     /**
      * The read is a GET with NO query string, deliberately: `EntryBodyShowOp` declares `input: false`,
      * and beam's operation controller rejects a GET carrying any query key with a 422. The retired
@@ -127,6 +135,10 @@ async function publicationPost(
 }
 
 export const bodyClient: UxBuilderClient = {
+    get makeEditable() {
+        const client = getBeamInertiaConfig().entryClient ?? defaultBodyClient;
+        return client.makeEditable?.bind(client);
+    },
     loadBody: (id) => (getBeamInertiaConfig().entryClient ?? defaultBodyClient).loadBody(id),
     saveBody: (id, body) =>
         (getBeamInertiaConfig().entryClient ?? defaultBodyClient).saveBody(id, body),

@@ -2,7 +2,7 @@
  * `patchText` — the ONE lens edit-op the inline leaf seam (`@splicewire/beam-ux/leaf`) needs, kept in a
  * **babel-free** module on purpose.
  *
- * The rest of the `.tsx` ⟷ BlockDoc lens (`lens.ts`) is an AUTHORING/build concern: it value-imports
+ * The rest of the `.tsx` ⟷ TsxTree lens (`lens.ts`) is an AUTHORING/build concern: it value-imports
  * `recast` + `@babel/types` to parse/generate JSX, which are build-time libraries that must never reach
  * the browser render bundle (`@babel/types`' validators reference a bare `process` global and crash the
  * client). But `patchText` only edits an already-parsed AST text node in place — it needs no parser and
