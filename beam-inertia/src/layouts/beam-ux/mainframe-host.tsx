@@ -8,7 +8,7 @@ import type {
     HostEntryBody,
     RibbonRender,
 } from '@splicewire/beam-mainframe';
-import { canvasAcceptsFormat, canvasRefusalFor } from '@splicewire/beam-ux/canvas';
+import { CanvasOrRefusal } from '@splicewire/beam-ux/editor';
 import { lazy, Suspense, type ReactNode } from 'react';
 import { bodyClient } from '../../editor/transport';
 
@@ -127,22 +127,7 @@ async function loadEntryBody(ref: EntryRef): Promise<HostEntryBody | null> {
  * mirroring `MdxBody` exists to prevent) or a new declared input on the op. That is a transport change,
  * not a small one, and it is not this defect's fix — the defect is that the wrong editor opened at all.
  */
-export function CanvasOrRefusal({ entry, children }: { entry: EntryRef; children: ReactNode }) {
-    if (canvasAcceptsFormat(entry.format)) {
-        return <>{children}</>;
-    }
-
-    return (
-        <div
-            data-beam-ux-editor-refused={entry.format ?? 'unknown'}
-            role="note"
-            className="m-4 rounded-md border border-amber-300 bg-amber-50 p-6 text-sm text-amber-900"
-        >
-            <p className="font-medium">This page cannot be edited here.</p>
-            <p className="mt-2">{canvasRefusalFor(entry.format)}</p>
-        </div>
-    );
-}
+export { CanvasOrRefusal } from '@splicewire/beam-ux/editor';
 
 export default createMainframeHost({
     // Every starter route page renders its OWN body (its layout chrome + scoped CSS). So read mode must

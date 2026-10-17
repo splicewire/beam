@@ -1,7 +1,7 @@
 // Which entry FORMATS this canvas may open — the client mirror of beam-ux's server-side
 // `Splicewire\Beam\Ux\Codec\AcceptsJsonDoc` capability.
 //
-// The canvas edits a JsonDoc (`@splicewire/beam-ux/blockdoc`'s `JsonNode[]`). An entry's body language
+// The canvas edits a JsonDoc (`@splicewire/beam-ux/tsx-lens`'s `JsonNode[]`). An entry's body language
 // is its own axis, and only a codec that can print a JsonDoc back to source may store one. `tsx` is the
 // only such codec today (`TsxBodyCodec::decode()`'s `array_is_list` branch → `JsonDocPrinter`); mdx and
 // css cannot, and `MdxBodyCodec::decode()` handed a JsonDoc silently returns `''`.

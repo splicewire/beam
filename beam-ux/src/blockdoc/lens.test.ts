@@ -117,7 +117,7 @@ describe('identity round-trip is byte-identical', () => {
         });
     }
 
-    it('print accepts a raw AST as well as a BlockDoc', () => {
+    it('print accepts a raw AST as well as a TsxTree', () => {
         const doc = parse(HERO);
         expect(print(doc.ast)).toBe(HERO);
     });

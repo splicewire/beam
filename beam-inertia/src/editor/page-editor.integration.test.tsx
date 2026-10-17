@@ -1,12 +1,12 @@
 // @vitest-environment jsdom
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
-import { afterEach, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { __resetEditMode } from '@splicewire/beam-ux/canvas';
 import { configureBeamInertia } from '../config';
 import { PageEditor } from './page-editor';
 import AuthEntry from '../pages/auth/entry';
 
-const pageProps = vi.hoisted(() => ({ auth: { canAuthorUx: true } }));
+const pageProps = vi.hoisted(() => ({ auth: { canAuthorUx: true, user: { id: "author" } } }));
 
 vi.mock('@inertiajs/react', () => ({
     usePage: () => ({ props: pageProps }),
@@ -34,6 +34,30 @@ const envelope = {
     ],
 };
 
+// Storage behavior is proved separately in Chromium; this fixture supplies only the IDB boundary.
+beforeEach(() => {
+    vi.stubGlobal('indexedDB', { open: () => {
+        const request: any = {};
+        request.result = { close() {}, transaction: () => {
+            const tx: any = { objectStore: () => ({
+                getAll: () => { const read: any = { result: [] }; queueMicrotask(() => read.onsuccess?.()); return read; },
+                put() { queueMicrotask(() => tx.oncomplete?.()); },
+                delete() {},
+            }) };
+            return tx;
+        } };
+        queueMicrotask(() => request.onsuccess?.());
+        return request;
+    } });
+});
+const publication = { id:'a', draftPending:false, publishedVersion:'v1', publishedReadable:'v1', headVersion:'v1', headReadable:'v1', versions:[], compileError:null };
+const historyClient = () => ({
+    listVersions: vi.fn(async () => publication),
+    saveDraft: vi.fn(async () => publication),
+    publish: vi.fn(async () => publication),
+    restoreVersion: vi.fn(async () => publication),
+});
+
 afterEach(() => {
     pageProps.auth.canAuthorUx = true;
     cleanup();
@@ -42,7 +66,7 @@ afterEach(() => {
     vi.unstubAllGlobals();
 });
 
-it('the actual inline canvas offers one Publish (save-body) and no Save draft for a body-only host', async () => {
+it('the actual inline canvas refuses a body-only host without publication history', async () => {
     const fetch = vi.fn();
     vi.stubGlobal('fetch', fetch);
     configureBeamInertia({
@@ -53,8 +77,8 @@ it('the actual inline canvas offers one Publish (save-body) and no Save draft fo
         window.dispatchEvent(new CustomEvent('beam-ux:mode', { detail: { mode: 'window' } }));
     });
 
-    // Launch ticket 05 ruling 3: plain Save is gone; a body-only host's one write is Publish, the same save-body.
-    expect(await screen.findByRole('button', { name: 'Publish' })).toBeTruthy();
+    expect((await screen.findByRole('alert')).textContent).toContain('publication transport');
+    expect(screen.queryByRole('button', { name: 'Publish' })).toBeNull();
     expect(screen.queryByRole('button', { name: 'Save draft' })).toBeNull();
     expect(screen.queryByRole('button', { name: 'Save' })).toBeNull();
     expect(fetch).not.toHaveBeenCalled();
@@ -64,9 +88,9 @@ it('retains the complete publication dock when the injected host supplies it', a
     const state = {
         id: 'a',
         draftPending: false,
-        publishedVersion: null,
+        publishedVersion: 'v1',
         publishedReadable: null,
-        headVersion: null,
+        headVersion: 'v1',
         headReadable: null,
         versions: [],
         compileError: null,
@@ -99,8 +123,9 @@ it('same-mounted inline navigation reseeds the real canvas only for the replacem
         body: [{ ...envelope.body[0], children: [{ kind: 'text', value: 'Replacement content' }] }],
     };
     const saveBody = vi.fn(async () => next);
+    const history = historyClient();
     configureBeamInertia({
-        entryClient: { loadBody: async (id) => (id === 'a' ? envelope : next), saveBody },
+        entryClient: { ...history, loadBody: async (id) => (id === 'a' ? envelope : next), saveBody },
     });
     const view = render(<PageEditor slug="home" entryId="a" />);
     await act(async () => {
@@ -110,16 +135,17 @@ it('same-mounted inline navigation reseeds the real canvas only for the replacem
 
     view.rerender(<PageEditor slug="home" entryId="b" />);
     expect(screen.queryByRole('button', { name: 'Publish' })).toBeNull();
-    const save = await screen.findByRole('button', { name: 'Publish' });
+    const save = await screen.findByRole('button', { name: 'Save draft' });
     await act(async () => {
         fireEvent.click(save);
     });
-    expect(saveBody).toHaveBeenCalledWith('b', next.body);
+    expect(history.saveDraft).toHaveBeenCalledWith('b', next.body, 'v1');
+    expect(saveBody).not.toHaveBeenCalled();
 });
 
 it('the existing auth slug remount exits editing before the next page can be authored', async () => {
     const loadBody = vi.fn(async () => envelope);
-    configureBeamInertia({ entryClient: { loadBody, saveBody: async () => envelope } });
+    configureBeamInertia({ entryClient: { ...historyClient(), loadBody, saveBody: async () => envelope } });
     const entry = { id: 'a', slug: 'login', format: 'tsx', artifact: null };
     const view = render(<AuthEntry slug="login" entry={entry} body={envelope.body} />);
     await act(async () => {
@@ -144,18 +170,18 @@ it('the existing auth slug remount exits editing before the next page can be aut
 const cleared = {
     id: 'a',
     draftPending: false,
-    publishedVersion: null,
+    publishedVersion: 'v1',
     publishedReadable: null,
-    headVersion: null,
+    headVersion: 'v1',
     headReadable: null,
     versions: [],
     compileError: null,
 };
 
-it('an author removes the content only after confirming, and the canvas re-seeds to unauthored', async () => {
+it('an author clears the working draft only after confirming', async () => {
     const clearBody = vi.fn(async () => cleared);
     configureBeamInertia({
-        entryClient: { loadBody: async () => envelope, saveBody: async () => envelope, clearBody },
+        entryClient: { ...historyClient(), loadBody: async () => envelope, saveBody: async () => envelope, clearBody },
     });
     render(<PageEditor slug="home" entryId="a" />);
     await act(async () => {
@@ -182,7 +208,7 @@ it('an author removes the content only after confirming, and the canvas re-seeds
 it('cancelling the confirm removes nothing', async () => {
     const clearBody = vi.fn(async () => cleared);
     configureBeamInertia({
-        entryClient: { loadBody: async () => envelope, saveBody: async () => envelope, clearBody },
+        entryClient: { ...historyClient(), loadBody: async () => envelope, saveBody: async () => envelope, clearBody },
     });
     render(<PageEditor slug="home" entryId="a" />);
     await act(async () => {
@@ -204,7 +230,7 @@ it('a viewer without the author ability is not offered Remove content', async ()
     pageProps.auth.canAuthorUx = false;
     const clearBody = vi.fn(async () => cleared);
     configureBeamInertia({
-        entryClient: { loadBody: async () => envelope, saveBody: async () => envelope, clearBody },
+        entryClient: { ...historyClient(), loadBody: async () => envelope, saveBody: async () => envelope, clearBody },
     });
     render(<PageEditor slug="home" entryId="a" />);
     await act(async () => {
@@ -213,4 +239,18 @@ it('a viewer without the author ability is not offered Remove content', async ()
 
     await screen.findByRole('button', { name: 'Publish' });
     expect(screen.queryByRole('button', { name: 'Remove content' })).toBeNull();
+});
+
+it('refuses to mount the inline editor when the entry has no Publication Pin', async () => {
+    configureBeamInertia({ entryClient: {
+        ...historyClient(), loadBody: async () => envelope, saveBody: async () => envelope,
+        listVersions: async () => ({ ...publication, publishedVersion: null }),
+    } });
+    render(<PageEditor slug="home" entryId="a" />);
+    await act(async () => {
+        window.dispatchEvent(new CustomEvent('beam-ux:mode', { detail: { mode: 'window' } }));
+    });
+    expect((await screen.findByRole('alert')).textContent).toContain('Publication Pin');
+    expect(screen.queryByRole('button', { name: 'Save draft' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Publish' })).toBeNull();
 });

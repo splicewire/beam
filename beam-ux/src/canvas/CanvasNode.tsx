@@ -1,6 +1,6 @@
 // The editable canvas recursion — stamps `data-bd-path`, makes blocks draggable, edits leaf text inline,
 // and renders opaque islands / opaque nodes SEALED. A faithful port of the host `CanvasNode`, re-based on
-// the `JsonNode` tree from `@splicewire/beam-ux/blockdoc/json` + the injected CanvasConfig (registry / MDX
+// the `JsonNode` tree from `@splicewire/beam-ux/jsondoc` + the injected CanvasConfig (registry / MDX
 // island / — NO app imports).
 import React, { useEffect, useRef } from 'react';
 import {

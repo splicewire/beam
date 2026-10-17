@@ -43,7 +43,7 @@ site-content hooks `<Prose>` reads (`--beam-fg`, `--beam-fg-muted`, `--beam-head
 keeps its own theme. `--beam-muted` is a surface; dimmed prose text is `--beam-fg-muted`.
 See [ADR 0002](../docs/adr/0002-beam-ux-ships-an-opt-in-token-layer.md).
 
-## `@splicewire/beam-ux/blockdoc/json` — the visual-editor runtime shape
+## `@splicewire/beam-ux/jsondoc` — the visual-editor runtime shape
 
 The BlockDoc lens (`./blockdoc`) is lossless but AST-backed — it pulls recast/@babel and is a
 **build/server** concern. `./blockdoc/json` is its **Babel-free** mirror: a plain, serializable
@@ -52,12 +52,12 @@ canvas can edit + persist it in the client bundle without ever loading Babel (AD
 
 ```ts
 // server / build boundary (the `./blockdoc` index — Babel-side):
-import { parse, toJson, fromJson } from '@splicewire/beam-ux/blockdoc';
+import { parse, toJson, fromJson } from '@splicewire/beam-ux/tsx-lens';
 const doc = toJson(parse(tsxSource));        // .tsx ▶ JsonNode[]  (persist this)
 const back = fromJson(doc);                  // JsonNode[] ▶ BlockDoc  (= parse(jsonToTsx(doc)))
 
 // browser (the canvas — Babel-free):
-import { getAt, updateAt, setText, type JsonDoc } from '@splicewire/beam-ux/blockdoc/json';
+import { getAt, updateAt, setText, type JsonDoc } from '@splicewire/beam-ux/jsondoc';
 ```
 
 - `toJson(BlockDoc | BlockNode | BlockChild[]) → JsonNode[]` — AST-free projection (pure).
@@ -128,3 +128,17 @@ The portable `defaultGenericBinding` and `defaultSurfaceInjection` helpers remai
 `defaultSurfaceInjection(title, route, render, linkComponent?)` uses a native anchor for its error
 fallback by default. Existing direct consumers needing Inertia SPA navigation pass Inertia's `Link`
 as the fourth argument. The desktop adapter supplies it automatically.
+
+### Editor kit (EP-01 candidate)
+
+`@splicewire/beam-ux/editor` owns `PageEditor`, `VisualEditorMount`, the format
+refusal and the default tree/config. Mount `EditorKitProvider` with `transport`,
+`canAuthor` and optional `theme`, `canvasConfig`, `defaultTreeFor`, and `notify`.
+An SPA supplies its token transport; the kit never imports Inertia or reads cookies.
+`beam-inertia` supplies the cookie/CSRF adapter and its auth-page island registry.
+The optional `transport.makeEditable(slug, body)` enables “Make this page editable”
+for an author when a page has a default tree and no entry id. It must call the
+server's declared, `ux.author`-gated operation; client admission is only presentation.
+
+The AST lens is `./tsx-lens` (`TsxTree`); the browser-safe document projection is
+`./jsondoc`. The old `./blockdoc` and `./blockdoc/json` exports have no aliases.

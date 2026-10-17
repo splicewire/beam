@@ -1,16 +1,16 @@
 /**
- * `@splicewire/beam-ux/blockdoc/json` — the **browser-safe** JSON projection of a BlockDoc.
+ * `@splicewire/beam-ux/jsondoc` — the **browser-safe** JSON projection of a TsxTree.
  *
- * The BlockDoc lens ({@link ./lens}) is the *source-of-truth* shape: every node holds a live
+ * The TsxTree lens ({@link ./lens}) is the *source-of-truth* shape: every node holds a live
  * recast/@babel AST reference, so it is lossless but pulls Babel — it is a **build/server** concern.
  * This module is its AST-free mirror: a plain, serializable `JsonNode` tree (no `node` handles) plus
  * a pure edit-op set. It imports **types only** from the lens, so it never drags recast/@babel into a
  * client bundle — the visual editor canvas (ticket 02) edits + persists THIS shape.
  *
  * The seam (ticket 01, editor-promotion):
- *   `.tsx` ──parse──▶ BlockDoc ──toJson──▶ JsonNode[]  (browser edits + persists as JSON)
+ *   `.tsx` ──parse──▶ TsxTree ──toJson──▶ JsonNode[]  (browser edits + persists as JSON)
  *   JsonNode[] ──jsonToTsx──▶ `.tsx`   (pure printer; no Babel — safe anywhere)
- *   JsonNode[] ──fromJson──▶ BlockDoc  (re-parses; Babel-side, exported from `./blockdoc`)
+ *   JsonNode[] ──fromJson──▶ TsxTree  (re-parses; Babel-side, exported from `./blockdoc`)
  *
  * Opacity (a sealed node) is a per-node POLICY overlay computed by the canvas from
  * (permission × source-reachability); the only intrinsic seal here is {@link JsonOpaque} — a dynamic
@@ -18,7 +18,7 @@
  * always round-trips. This is the ONE opaque-island concept (the host's forked `isIsland` is retired).
  */
 
-import type { BlockChild, BlockDoc, BlockNode, PropKind } from './types.js';
+import type { BlockChild, TsxTree, BlockNode, PropKind } from './types.js';
 
 // ---------------------------------------------------------------------------
 // The JSON shape — an AST-free mirror of BlockChild, discriminated by `kind`.
@@ -86,11 +86,11 @@ export const VOID_TAGS = new Set([
 ]);
 
 // ---------------------------------------------------------------------------
-// toJson — BlockDoc (AST lens) ▶ JSON projection. Pure; safe to call server-side after parse.
+// toJson — TsxTree (AST lens) ▶ JSON projection. Pure; safe to call server-side after parse.
 // ---------------------------------------------------------------------------
 
-/** Project a BlockDoc, a single BlockNode, or a BlockChild[] into the AST-free JSON tree. */
-export function toJson(input: BlockDoc | BlockNode | BlockChild[]): JsonDoc {
+/** Project a TsxTree, a single BlockNode, or a BlockChild[] into the AST-free JSON tree. */
+export function toJson(input: TsxTree | BlockNode | BlockChild[]): JsonDoc {
     const roots: BlockChild[] = Array.isArray(input)
         ? input
         : 'roots' in input

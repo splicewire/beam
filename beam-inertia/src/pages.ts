@@ -16,6 +16,7 @@ const defaults: Record<string, PageLoader> = {
     'auth/verify-email': () => import('./pages/auth/verify-email') as unknown as Promise<PageModule>,
     'frame/console': () => import('./pages/frame/console') as unknown as Promise<PageModule>,
     'site/home': () => import('./pages/site/home') as unknown as Promise<PageModule>,
+    'account/theme': () => import('./pages/account/theme') as unknown as Promise<PageModule>,
     'account/home': () => import('./pages/account/home') as unknown as Promise<PageModule>,
     // Getting onto a team (splicewire/laravel-beam-accounts `routes/teams.php`): `teams.create` renders
     // the first, the emailed `invitations.accept` link the second. Bodies are @splicewire/beam-accounts'.

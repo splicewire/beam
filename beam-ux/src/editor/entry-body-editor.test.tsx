@@ -9,10 +9,11 @@
 import { cleanup, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+
 const editMode = vi.hoisted(() => ({ value: false }));
 const mounted = vi.hoisted(() => [] as Array<{ slug: string; entryId: string | null }>);
 
-vi.mock('@splicewire/beam-ux/canvas', () => ({
+vi.mock('../canvas', () => ({
     useEditMode: () => editMode.value,
     canvasAcceptsFormat: (format: string | null) => format === 'tsx',
     canvasRefusalFor: (format: string | null) => `authored as ${format}`,
@@ -22,7 +23,6 @@ vi.mock('@splicewire/beam-mainframe', () => ({
     createMainframeHost: () => () => null,
     useBeamUxEntry: () => null,
 }));
-vi.mock('./transport', () => ({ bodyClient: {} }));
 vi.mock('./page-editor', () => ({
     default: ({ slug, entryId }: { slug: string; entryId: string | null }) => {
         mounted.push({ slug, entryId });
