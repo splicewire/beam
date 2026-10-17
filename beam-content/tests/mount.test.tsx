@@ -69,12 +69,13 @@ describe('ContentOutlineNodeView', () => {
 });
 
 describe('registerContentNodeViews', () => {
-    it('registers both content node types on the injected registry', () => {
+    it('registers both content node types under their new PascalCase tags AND the pre-07c snake aliases (read-compat)', () => {
         const registered: string[] = [];
         registerContentNodeViews({
             registerNodeView: (name) => registered.push(name),
             resolveNodeView: () => undefined,
         });
-        expect(registered).toEqual(['content_section', 'content_outline']);
+        // EP-07c C: new PascalCase keys first, then the pre-07c snake aliases (read-compat).
+        expect(registered).toEqual(['ContentSection', 'ContentOutline', 'content_section', 'content_outline']);
     });
 });
