@@ -82,7 +82,7 @@ it('retains a supplied method receiver and switches back to starter defaults onl
     };
     const load = vi.spyOn(supplied, 'loadBody');
     configureBeamInertia({ entryClient: supplied });
-    expect(await bodyClient.publish?.('e1')).toBe(state);
+    expect(await bodyClient.publish?.('e1', 'v1')).toBe(state);
     expect(load).toHaveBeenCalledWith('e1');
     expect(bodyClient.saveDraft).toBeUndefined();
 
@@ -123,4 +123,18 @@ it('clears through the canonical clear-body route, and an injected client withou
 
     configureBeamInertia({ entryClient: client });
     expect(bodyClient.clearBody).toBeUndefined();
+});
+
+
+it('sends the draft base and named publish ref, and preserves a stale-base status', async () => {
+    const fetch = vi.fn().mockImplementation(async () => Response.json({ data: { headVersion: 'v2' } }));
+    vi.stubGlobal('fetch', fetch);
+    vi.stubGlobal('document', { cookie: '' });
+    configureBeamInertia({});
+    await bodyClient.saveDraft?.('e1', { content: 'ours' }, 'v1');
+    expect(JSON.parse(fetch.mock.calls[0][1].body)).toEqual({ body: { content: 'ours' }, baseVersion: 'v1' });
+    await bodyClient.publish?.('e1', 'v2');
+    expect(JSON.parse(fetch.mock.calls[1][1].body)).toEqual({ ref: 'v2' });
+    fetch.mockResolvedValueOnce(Response.json({ message: 'Stale base' }, { status: 409 }));
+    await expect(bodyClient.saveDraft?.('e1', {}, 'v1')).rejects.toMatchObject({ status: 409 });
 });

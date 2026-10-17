@@ -59,7 +59,7 @@ const asBody = (doc: JsonDoc): Record<string, unknown> => doc as unknown as Reco
 export function PageEditor({ slug, body = null, entryId: suppliedId = null }: PageEditorProps) {
     // theme-entries-and-authoring ticket `str-01`: server-resolved theme, NEUTRAL_THEME as the
     // degrade-safe fallback (mirrors mount.tsx's VisualEditorMount).
-    const { transport: bodyClient, theme, canAuthor, canvasConfig, defaultTreeFor, notify: toast } = useEditorKit();
+    const { transport: bodyClient, theme, canAuthor, userId, canvasConfig, defaultTreeFor, notify: toast } = useEditorKit();
 
     const [created, setCreated] = useState<{slug: string; id: string} | null>(null);
     const [creating, setCreating] = useState(false);
@@ -151,6 +151,8 @@ export function PageEditor({ slug, body = null, entryId: suppliedId = null }: Pa
             <CanvasPageEditor
                 key={entryId ?? slug}
                 slug={slug}
+                entryId={entryId ?? undefined}
+                userId={userId}
                 body={asDoc(current?.body) ?? asDoc(body)}
                 transport={{
                     // CanvasPageEditor's transport seam is keyed by its `slug` prop, which stays a slug
@@ -170,9 +172,9 @@ export function PageEditor({ slug, body = null, entryId: suppliedId = null }: Pa
                     !restoreVersion
                         ? {}
                         : {
-                              saveDraft: (_s: string, doc: JsonDoc) =>
-                                  saveDraft(entryId, asBody(doc)),
-                              publish: () => publish(entryId),
+                              saveDraft: (_s: string, doc: JsonDoc, baseVersion: string) =>
+                                  saveDraft(entryId, asBody(doc), baseVersion),
+                              publish: (_s: string, ref: string) => publish(entryId, ref),
                               listVersions: () => listVersions(entryId),
                               restoreVersion: (_s: string, ref: string) =>
                                   restoreVersion(entryId, ref),

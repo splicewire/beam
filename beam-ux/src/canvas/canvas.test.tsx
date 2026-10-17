@@ -1,3 +1,7 @@
+vi.mock('../editor/local-session.js', async (original) => {
+    const module = await original<typeof import('../editor/local-session.js')>();
+    return { ...module, IndexedDbSessions: class { async forEntry() { return []; } async write() {} async close() {} } };
+});
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { JsonBlock, JsonDoc } from '../blockdoc/json.js';
@@ -343,32 +347,24 @@ describe('StyleRowsWidget', () => {
 // ── PageEditor: mode fork + save ──────────────────────────────────────────────────────────────────────
 const doc = (): JsonDoc => [block({ name: 'div', children: [block({ name: 'h1', children: [{ kind: 'text', value: 'Hi' }] })] })];
 
-describe('PageEditor — mode fork + transport', () => {
-    it('renders read-only (TreeRender) until window mode is broadcast', () => {
-        const transport = { saveBody: vi.fn().mockResolvedValue({}) };
-        const { container } = render(wrap(<PageEditor slug="home" body={doc()} transport={transport} />));
+describe('PageEditor — mode fork + transport', async () => {
+    it('renders read-only (TreeRender) until window mode is broadcast', async () => {
+        const transport = publishingTransport();
+        const { container } = render(wrap(<PageEditor entryId="entry-1" userId="author-1" slug="home" body={doc()} transport={transport} />));
         // read mode: no editing chrome (no floating bar)
         expect(container.querySelector('.pe-bar')).toBeNull();
         expect(container.querySelector('h1')?.textContent).toBe('Hi');
         // enter window mode
-        fireEvent(window, new CustomEvent('beam-ux:mode', { detail: { mode: 'window' } }));
+        await act(async () => { fireEvent(window, new CustomEvent('beam-ux:mode', { detail: { mode: 'window' } })); });
         expect(container.querySelector('.pe-bar')).not.toBeNull();
     });
 
-    it('Publish on a host without the draft seam calls transport.saveBody(slug, doc) and notifies', async () => {
-        const saveBody = vi.fn().mockResolvedValue({});
-        const notify = { success: vi.fn(), error: vi.fn() };
-        const { container } = render(
-            wrap(<PageEditor slug="home" body={doc()} transport={{ saveBody }} notify={notify} />),
-        );
-        fireEvent(window, new CustomEvent('beam-ux:mode', { detail: { mode: 'window' } }));
-        const saveBtn = Array.from(container.querySelectorAll('.pe-btn')).find((b) => b.textContent === 'Publish')!;
-        await act(async () => {
-            fireEvent.click(saveBtn);
-            await Promise.resolve();
-        });
-        expect(saveBody).toHaveBeenCalledWith('home', expect.any(Array));
-        expect(notify.success).toHaveBeenCalledWith('Published');
+    it('refuses editing when only programmatic save-body is available', async () => {
+        const saveBody = vi.fn();
+        const { container } = await enterEditMode({ saveBody });
+        expect(container.querySelector('[role="alert"]')?.textContent).toContain('publication transport');
+        expect(dockButton(container, 'Publish')).toBeUndefined();
+        expect(saveBody).not.toHaveBeenCalled();
     });
 
     // ── a save that stored but did NOT compile ──────────────────────────────────────────────────────
@@ -387,30 +383,24 @@ describe('PageEditor — mode fork + transport', () => {
     // The affordance is deliberately the SAME one publish uses — the error toast over a write that
     // really did land — not a thrown failure: the body IS stored, so the dock stays clean and the
     // canvas is not dirty; what is missing is the reader's copy.
-    it('a Publish whose save-body response carries a compileError says so, and does NOT claim "Published"', async () => {
-        const saveBody = vi.fn().mockResolvedValue({ compileError: 'Unclosed <Card> on line 12' });
+    it('reports a named Publish compile error without claiming success', async () => {
+        const transport = publishingTransport();
+        transport.publish.mockResolvedValue(state({ compileError: 'Unclosed <Card> on line 12' }));
         const notify = { success: vi.fn(), error: vi.fn() };
-        const { container } = render(
-            wrap(<PageEditor slug="home" body={doc()} transport={{ saveBody }} notify={notify} />),
-        );
-        fireEvent(window, new CustomEvent('beam-ux:mode', { detail: { mode: 'window' } }));
-        await act(async () => {
-            fireEvent.click(dockButton(container, 'Publish')!);
-            await Promise.resolve();
-        });
-
-        expect(saveBody).toHaveBeenCalledWith('home', expect.any(Array));
-        // The diagnostic itself, not a generic failure: it names what to fix.
+        const { container } = render(wrap(<PageEditor entryId="entry-1" userId="author-1" slug="home" body={doc()} transport={transport} notify={notify} />));
+        await act(async () => { fireEvent(window, new CustomEvent('beam-ux:mode', { detail: { mode: 'window' } })); });
+        await act(async () => { fireEvent.click(dockButton(container, 'Publish')!); });
+        expect(transport.publish).toHaveBeenCalledWith('home', 'v-v1');
+        expect(transport.saveBody).not.toHaveBeenCalled();
         expect(notify.error).toHaveBeenCalledWith('Unclosed <Card> on line 12');
-        // And the success claim is withheld — "Saved" to an author means "readers have it".
         expect(notify.success).not.toHaveBeenCalled();
     });
 
-    it('Exit dispatches beam-ux:exit', () => {
+    it('Exit dispatches beam-ux:exit', async () => {
         const onExit = vi.fn();
         window.addEventListener('beam-ux:exit', onExit);
-        const { container } = render(wrap(<PageEditor slug="home" body={doc()} transport={{ saveBody: vi.fn() }} />));
-        fireEvent(window, new CustomEvent('beam-ux:mode', { detail: { mode: 'window' } }));
+        const { container } = render(wrap(<PageEditor entryId="entry-1" userId="author-1" slug="home" body={doc()} transport={publishingTransport()} />));
+        await act(async () => { fireEvent(window, new CustomEvent('beam-ux:mode', { detail: { mode: 'window' } })); });
         const exitBtn = Array.from(container.querySelectorAll('.pe-btn')).find((b) => b.textContent === 'Exit')!;
         fireEvent.click(exitBtn);
         expect(onExit).toHaveBeenCalled();
@@ -463,9 +453,9 @@ describe('PageEditor — mode fork + transport', () => {
     };
 
     const enterEditMode = async (transport: object) => {
-        const rendered = render(wrap(<PageEditor slug="home" body={doc()} transport={transport as never} />));
+        const rendered = render(wrap(<PageEditor entryId="entry-1" userId="author-1" slug="home" body={doc()} transport={transport as never} />));
         await act(async () => {
-            fireEvent(window, new CustomEvent('beam-ux:mode', { detail: { mode: 'window' } }));
+            await act(async () => { fireEvent(window, new CustomEvent('beam-ux:mode', { detail: { mode: 'window' } })); });
             await Promise.resolve();
         });
         return rendered;
@@ -485,7 +475,8 @@ describe('PageEditor — mode fork + transport', () => {
         expect(dockButton(container, 'Save draft')).toBeUndefined();
         expect(dockButton(container, 'Versions')).toBeUndefined();
         // Ruling 3 (launch ticket 05): the one write a seamless host has is Publish (save-body, live on return).
-        expect(dockButton(container, 'Publish')).toBeDefined();
+        expect(dockButton(container, 'Publish')).toBeUndefined();
+        expect(container.querySelector('[role="alert"]')).not.toBeNull();
         expect(dockButton(container, 'Save')).toBeUndefined();
     });
 
@@ -508,18 +499,18 @@ describe('PageEditor — mode fork + transport', () => {
             await Promise.resolve();
         });
 
-        expect(transport.publish).toHaveBeenCalledWith('home');
+        expect(transport.publish).toHaveBeenCalledWith('home', 'v-v1');
         expect(transport.saveBody).not.toHaveBeenCalled();
     });
 
-    it('Publish with unsaved edits publishes the canvas itself (save-body), never the older working copy', async () => {
+    it('Publish refuses unsaved edits and never calls programmatic save-body', async () => {
         // The old Publish sent no document, so edits made since the last Save draft were silently left out of what readers
         // got. Publish on a dirty canvas is now plain Save's write: save-body, draft + publish in one act.
         const transport = publishingTransport();
         const notify = { success: vi.fn(), error: vi.fn() };
-        const { container } = render(wrap(<PageEditor slug="home" body={doc()} transport={transport as never} notify={notify} />));
+        const { container } = render(wrap(<PageEditor entryId="entry-1" userId="author-1" slug="home" body={doc()} transport={transport as never} notify={notify} />));
         await act(async () => {
-            fireEvent(window, new CustomEvent('beam-ux:mode', { detail: { mode: 'window' } }));
+            await act(async () => { fireEvent(window, new CustomEvent('beam-ux:mode', { detail: { mode: 'window' } })); });
             await Promise.resolve();
         });
         const palette = Array.from(container.querySelectorAll('.pe-panel.pe-left .ve-pal-item')).find((el) =>
@@ -535,19 +526,19 @@ describe('PageEditor — mode fork + transport', () => {
             await Promise.resolve();
         });
 
-        expect(transport.saveBody).toHaveBeenCalledWith('home', expect.any(Array));
+        expect(transport.saveBody).not.toHaveBeenCalled();
         expect(transport.publish).not.toHaveBeenCalled();
         expect(transport.listVersions).toHaveBeenCalled();
-        expect(notify.success).toHaveBeenCalledWith('Published');
+        expect(notify.error).toHaveBeenCalledWith('Save your draft before publishing it.');
     });
 
-    it('Publish flushes first, so an edit still pending in a widget is published, not dropped (build.qa on 05d10b9)', async () => {
+    it('Publish flushes pending widget edits and refuses until they are saved as a draft', async () => {
         // A press that does not blur the inline editor (no mouse click) leaves the edit pending in the widget's flush.
         // Publish must flush BEFORE choosing, or a clean-looking seam host publishes the older draft without the edit.
         const transport = publishingTransport();
-        const { container } = render(wrap(<PageEditor slug="home" body={doc()} transport={transport as never} />));
+        const { container } = render(wrap(<PageEditor entryId="entry-1" userId="author-1" slug="home" body={doc()} transport={transport as never} />));
         await act(async () => {
-            fireEvent(window, new CustomEvent('beam-ux:mode', { detail: { mode: 'window' } }));
+            await act(async () => { fireEvent(window, new CustomEvent('beam-ux:mode', { detail: { mode: 'window' } })); });
             await Promise.resolve();
         });
         const palette = Array.from(container.querySelectorAll('.pe-panel.pe-left .ve-pal-item')).find((el) =>
@@ -574,8 +565,9 @@ describe('PageEditor — mode fork + transport', () => {
         });
 
         expect(transport.publish).not.toHaveBeenCalled();
-        expect(transport.saveBody).toHaveBeenCalledTimes(1);
-        expect(JSON.stringify(transport.saveBody.mock.calls[0][1])).toContain('Pending edit');
+        expect(transport.saveBody).not.toHaveBeenCalled();
+        await act(async () => { fireEvent.click(dockButton(container, 'Save draft')!); });
+        expect(JSON.stringify(transport.saveDraft.mock.calls[1][1])).toContain('Pending edit');
     });
 
     it('a partial seam is treated as no seam, so Save draft is never offered without Publish', async () => {
@@ -598,7 +590,7 @@ describe('PageEditor — mode fork + transport', () => {
             await Promise.resolve();
         });
 
-        expect(transport.saveDraft).toHaveBeenCalledWith('home', expect.any(Array));
+        expect(transport.saveDraft).toHaveBeenCalledWith('home', expect.any(Array), 'v-v1');
         // The one thing an author cannot read off the canvas: their copy is ahead of the readers'.
         expect(container.querySelector('.pe-draft')?.textContent).toContain('Draft pending');
         expect(container.querySelector('.pe-draft')?.textContent).toContain('readers see v1');
@@ -619,7 +611,7 @@ describe('PageEditor — mode fork + transport', () => {
         });
 
         // No body argument: what a publish publishes is what the server already holds.
-        expect(transport.publish).toHaveBeenCalledWith('home');
+        expect(transport.publish).toHaveBeenCalledWith('home', 'v-v2');
         expect(container.querySelector('.pe-draft')).toBeNull();
     });
 
@@ -680,7 +672,7 @@ describe('PageEditor — mode fork + transport', () => {
             await Promise.resolve();
         });
 
-        expect(transport.restoreVersion).toHaveBeenCalledWith('home', 'v1');
+        expect(transport.restoreVersion).toHaveBeenCalledWith('home', 'v-v1');
         // The re-read is what stops the next Save writing the pre-restore document back over it.
         expect(transport.loadBody).toHaveBeenCalledWith('home');
     });
@@ -732,7 +724,7 @@ describe('PageEditor — mode fork + transport', () => {
 
         const save = async () => {
             await act(async () => {
-                fireEvent.click(dockButton(container, 'Publish')!);
+                fireEvent.click(dockButton(container, 'Save draft')!);
                 await Promise.resolve();
             });
         };
@@ -744,8 +736,8 @@ describe('PageEditor — mode fork + transport', () => {
         await authorHeading('Marker');
         await save();
 
-        expect(transport.saveBody).toHaveBeenCalledTimes(2);
-        const text = (call: number) => JSON.stringify(transport.saveBody.mock.calls[call][1]);
+        expect(transport.saveDraft).toHaveBeenCalledTimes(2);
+        const text = (call: number) => JSON.stringify(transport.saveDraft.mock.calls[call][1]);
         expect(text(0)).toContain('Baseline');
         // The claim: the second save is the WHOLE document, not the delta and not a re-seeded snapshot.
         expect(text(1)).toContain('Baseline');
@@ -759,8 +751,8 @@ describe('PageEditor — mode fork + transport', () => {
 
     it('right-click opens a context menu; Duplicate clones the node, Delete removes it', async () => {
         const saveBody = vi.fn().mockResolvedValue({});
-        const { container } = render(wrap(<PageEditor slug="home" body={doc()} transport={{ saveBody }} />));
-        fireEvent(window, new CustomEvent('beam-ux:mode', { detail: { mode: 'window' } }));
+        const { container } = render(wrap(<PageEditor entryId="entry-1" userId="author-1" slug="home" body={doc()} transport={{ ...publishingTransport(), saveBody }} />));
+        await act(async () => { fireEvent(window, new CustomEvent('beam-ux:mode', { detail: { mode: 'window' } })); });
         const h1 = container.querySelector('h1') as HTMLElement;
 
         fireEvent.contextMenu(h1, { clientX: 10, clientY: 10 });
@@ -775,9 +767,9 @@ describe('PageEditor — mode fork + transport', () => {
         expect(container.querySelectorAll('h1')).toHaveLength(1);
     });
 
-    it('the context menu closes on outside click without acting', () => {
-        const { container } = render(wrap(<PageEditor slug="home" body={doc()} transport={{ saveBody: vi.fn() }} />));
-        fireEvent(window, new CustomEvent('beam-ux:mode', { detail: { mode: 'window' } }));
+    it('the context menu closes on outside click without acting', async () => {
+        const { container } = render(wrap(<PageEditor entryId="entry-1" userId="author-1" slug="home" body={doc()} transport={publishingTransport()} />));
+        await act(async () => { fireEvent(window, new CustomEvent('beam-ux:mode', { detail: { mode: 'window' } })); });
         const h1 = container.querySelector('h1') as HTMLElement;
         fireEvent.contextMenu(h1, { clientX: 10, clientY: 10 });
         expect(document.querySelector('.ve-menu')).not.toBeNull();
@@ -785,9 +777,9 @@ describe('PageEditor — mode fork + transport', () => {
         expect(document.querySelector('.ve-menu')).toBeNull();
     });
 
-    it('shows a breadcrumb for the selection, and clicking an ancestor crumb re-selects it', () => {
-        const { container } = render(wrap(<PageEditor slug="home" body={doc()} transport={{ saveBody: vi.fn() }} />));
-        fireEvent(window, new CustomEvent('beam-ux:mode', { detail: { mode: 'window' } }));
+    it('shows a breadcrumb for the selection, and clicking an ancestor crumb re-selects it', async () => {
+        const { container } = render(wrap(<PageEditor entryId="entry-1" userId="author-1" slug="home" body={doc()} transport={publishingTransport()} />));
+        await act(async () => { fireEvent(window, new CustomEvent('beam-ux:mode', { detail: { mode: 'window' } })); });
         const h1 = container.querySelector('h1') as HTMLElement;
         fireEvent.click(h1);
 
@@ -802,14 +794,14 @@ describe('PageEditor — mode fork + transport', () => {
         expect(container.querySelector('[data-frame-region="inspector"]')?.getAttribute('data-node-type')).toBe('div');
     });
 
-    it('takes its FIRST block on an empty document, from the palette', () => {
+    it('takes its FIRST block on an empty document, from the palette', async () => {
         // G2-BEAM-AUTHOR-EMPTY-ENTRY, measured on beam.test's never-authored /about 2026-09-11:
         // "+ Heading" flipped the status bar to Unsaved and inserted nothing — the doc stayed at 0
         // nodes with nothing selectable, so the entry could never take its first block through the UI.
         // Two causes, both fixed: `[]` passed as a persisted document (so the seed never ran), and
         // `insertRelativeTo` returned the doc unchanged when there was no root to be relative to.
-        const { container } = render(wrap(<PageEditor slug="blank" body={[]} transport={{ saveBody: vi.fn() }} />));
-        fireEvent(window, new CustomEvent('beam-ux:mode', { detail: { mode: 'window' } }));
+        const { container } = render(wrap(<PageEditor entryId="entry-1" userId="author-1" slug="blank" body={[]} transport={publishingTransport()} />));
+        await act(async () => { fireEvent(window, new CustomEvent('beam-ux:mode', { detail: { mode: 'window' } })); });
 
         const before = container.querySelectorAll('[data-bd-path]').length;
         const heading = Array.from(container.querySelectorAll('.pe-panel.pe-left .ve-pal-item')).find(
@@ -822,9 +814,9 @@ describe('PageEditor — mode fork + transport', () => {
         expect(container.querySelector('h2')).not.toBeNull();
     });
 
-    it('insert-palette items are draggable (drag-to-position, alongside click-to-insert)', () => {
-        const { container } = render(wrap(<PageEditor slug="home" body={doc()} transport={{ saveBody: vi.fn() }} />));
-        fireEvent(window, new CustomEvent('beam-ux:mode', { detail: { mode: 'window' } }));
+    it('insert-palette items are draggable (drag-to-position, alongside click-to-insert)', async () => {
+        const { container } = render(wrap(<PageEditor entryId="entry-1" userId="author-1" slug="home" body={doc()} transport={publishingTransport()} />));
+        await act(async () => { fireEvent(window, new CustomEvent('beam-ux:mode', { detail: { mode: 'window' } })); });
         const palItems = container.querySelectorAll('.pe-panel.pe-left .ve-pal-item');
         expect(palItems.length).toBeGreaterThan(0);
         palItems.forEach((el) => expect(el.getAttribute('draggable')).toBe('true'));

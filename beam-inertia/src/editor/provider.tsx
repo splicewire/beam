@@ -9,11 +9,12 @@ import { defaultTreeFor } from "./defaults";
 export function InertiaEditorKit({ children }: { children: ReactNode }) {
   const page = usePage<{
     theme?: { canvas?: Partial<CanvasTheme> };
-    auth?: { canAuthorUx?: boolean };
+    auth?: { canAuthorUx?: boolean; user?: { id: string | number } };
   }>();
   return (
     <EditorKitProvider
       transport={bodyClient}
+      userId={page.props.auth?.user?.id == null ? undefined : String(page.props.auth.user.id)}
       theme={page.props.theme?.canvas ?? {}}
       canAuthor={page.props.auth?.canAuthorUx === true}
       canvasConfig={canvasConfig}

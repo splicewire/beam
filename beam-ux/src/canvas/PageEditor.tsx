@@ -22,6 +22,7 @@ import { WidgetRegistryContext } from '@schemastud/seam';
 import { getAt, isJsonBlock } from '../blockdoc/json.js';
 import type { JsonDoc } from '../blockdoc/json.js';
 import type { EntryPublicationState, EntryVersion } from '../types.js';
+import { useLocalSession } from '../editor/use-local-session.js';
 import { Breadcrumb } from './Breadcrumb.js';
 import { CanvasPalette } from './CanvasPalette.js';
 import { CanvasWidget } from './CanvasWidget.js';
@@ -50,9 +51,9 @@ export interface PageEditorTransport {
     saveBody: (slug: string, body: JsonDoc) => Promise<unknown>;
     loadBody?: (slug: string) => Promise<{ body?: unknown } | unknown>;
     /** Record the document as a draft: versioned, not published — readers keep the published body. */
-    saveDraft?: (slug: string, body: JsonDoc) => Promise<EntryPublicationState>;
+    saveDraft?: (slug: string, body: JsonDoc, baseVersion: string) => Promise<EntryPublicationState>;
     /** Publish the working copy through the real compile path. */
-    publish?: (slug: string) => Promise<EntryPublicationState>;
+    publish?: (slug: string, ref: string) => Promise<EntryPublicationState>;
     /** The recorded history plus both pins — refetched whenever the panel opens. */
     listVersions?: (slug: string) => Promise<EntryPublicationState>;
     /** Roll forward to a recorded version and publish it. */
@@ -75,6 +76,8 @@ export interface Notify {
 
 export interface PageEditorProps {
     slug: string;
+    entryId?: string;
+    userId?: string;
     /** The initial body (a JsonDoc, or a legacy/absent body → falls back to `fallbackDoc` or empty). */
     body?: JsonDoc | null;
     transport: PageEditorTransport;
@@ -217,10 +220,8 @@ export function PageEditor({
     theme,
     fallbackDoc,
     brand,
-    onUndo,
-    onRedo,
-    canUndo = false,
-    canRedo = false,
+    entryId,
+    userId,
     reloadToken,
 }: PageEditorProps) {
     const editing = useEditMode();
@@ -235,6 +236,7 @@ export function PageEditor({
     const onCanvasChange = (next: JsonDoc) => {
         docRef.current = next;
         editedRef.current = true;
+        local.change(next);
         setDoc(next);
     };
     // Re-seed on an explicit host-driven reload only (see PageEditorProps.reloadToken) — reading the
@@ -272,6 +274,21 @@ export function PageEditor({
         transport.restoreVersion
     );
     const [publication, setPublication] = useState<EntryPublicationState | null>(null);
+    const [publicationError, setPublicationError] = useState<string | null>(null);
+    const [conflict, setConflict] = useState(false);
+    const local = useLocalSession(entryId ?? slug, userId, publication?.headVersion ?? undefined, initial, editing && !!publication?.headVersion);
+    useEffect(() => {
+        if (!local.session) return;
+        const current = local.session.body as JsonDoc;
+        docRef.current = current;
+        setDoc(current);
+        editedRef.current = local.session.dirty;
+        mount.markDirty(local.session.dirty);
+    }, [local.session, local.session?.snapshot().cursor, JSON.stringify(local.session?.body), local.session?.dirty]);
+    const onUndo = async () => { await mount.flush(); local.undo(); };
+    const onRedo = async () => { await mount.flush(); local.redo(); };
+    const canUndo = local.session?.canUndo ?? false;
+    const canRedo = local.session?.canRedo ?? false;
     const [versionsOpen, setVersionsOpen] = useState(false);
     const [pendingRestore, setPendingRestore] = useState<EntryVersion | null>(null);
     const [confirmClear, setConfirmClear] = useState(false);
@@ -288,10 +305,15 @@ export function PageEditor({
         let live = true;
         transport
             .listVersions?.(slug)
-            .then((state) => live && setPublication(state))
+            .then((state) => {
+                if (!live) return;
+                if (!state.publishedVersion || !state.headVersion) {
+                    setPublicationError('This entry has no Publication Pin. Publish its baseline before mounting the editor.');
+                } else setPublication(state);
+            })
             // Silent: the draft badge is an enrichment of a dock that works without it, and a toast on
             // every editor open would be noise on a host mid-migration.
-            .catch(() => {});
+            .catch(() => live && setPublicationError('Could not load publication history. Verify the versions and publication-pin migrations.'));
 
         return () => {
             live = false;
@@ -304,35 +326,6 @@ export function PageEditor({
         return <TreeRender tree={doc} />;
     }
 
-    /**
-     * Write the canvas document — the immediate-publish path, and on this host a save IS a publish
-     * (`EntryBodySaveOp` records the version, moves the pin and compiles the artifact).
-     *
-     * So it reports a compile diagnostic exactly the way {@link publish} does: the write LANDED — the
-     * body is stored and the canvas is no longer dirty — but the compile that follows the pin did not,
-     * which means there is no artifact at the new address and a reader is served the packaged default
-     * over a body that is perfectly intact. Saying "Saved" to that is the one sentence an author can
-     * act on and would be wrong: the document they are looking at is not the document anyone else can
-     * see until it compiles. A thrown failure would be the wrong shape for the same reason it is wrong
-     * for publish — nothing was lost, one step of three did not finish.
-     */
-    const save = async () => {
-        mount.markSaving(true);
-        try {
-            await mount.flush();
-            const compileError = compileErrorOf(await transport.saveBody(slug, docRef.current));
-            mount.markDirty(false);
-            editedRef.current = false;
-            if (compileError) notify?.error(compileError);
-            else notify?.success('Published');
-            // A host with the publication seam shows what readers are on; this write just moved it.
-            if (publishable && transport.listVersions) setPublication(await transport.listVersions(slug));
-        } catch {
-            notify?.error('Publish failed');
-        } finally {
-            mount.markSaving(false);
-        }
-    };
     const exit = () => window.dispatchEvent(new CustomEvent('beam-ux:exit'));
 
     /**
@@ -341,16 +334,21 @@ export function PageEditor({
      * published.
      */
     const saveDraft = async () => {
-        if (!transport.saveDraft) return;
+        if (!transport.saveDraft || !local.session) return;
         setBusy(true);
         try {
             await mount.flush();
-            setPublication(await transport.saveDraft(slug, docRef.current));
+            const sent = docRef.current;
+            const next = await transport.saveDraft(slug, sent, local.session.identity.base);
+            setPublication(next);
+            if (!next.headVersion) throw new Error('Save returned no version.');
+            local.saved(next.headVersion, sent);
             mount.markDirty(false);
             editedRef.current = false;
             notify?.success('Draft saved');
-        } catch {
-            notify?.error('Draft save failed');
+        } catch (error) {
+            if ((error as { status?: number })?.status === 409) setConflict(true);
+            else notify?.error('Draft save failed');
         } finally {
             setBusy(false);
         }
@@ -364,10 +362,10 @@ export function PageEditor({
      * landed by then — so it is reported as an error toast over a publication that really did happen.
      */
     const publish = async () => {
-        if (!transport.publish) return;
+        if (!transport.publish || !publication?.headVersion) return;
         setBusy(true);
         try {
-            const next = await transport.publish(slug);
+            const next = await transport.publish(slug, local.session!.identity.base);
             setPublication(next);
             if (next.compileError) notify?.error(next.compileError);
             else notify?.success('Published');
@@ -387,7 +385,8 @@ export function PageEditor({
     const publishNow = async () => {
         // Flush FIRST, so an edit still pending in a widget counts (a press that did not blur the inline editor).
         await mount.flush();
-        return publishable && !mount.dirty && !editedRef.current ? publish() : save();
+        if (local.session?.dirty || editedRef.current) { notify?.error('Save your draft before publishing it.'); return; }
+        return publish();
     };
 
     /** Open/close the history panel, refetching on every open so it can never show a stale HEAD. */
@@ -418,15 +417,21 @@ export function PageEditor({
      * says so rather than leaving a stale canvas looking authoritative.
      */
     const restore = async (version: EntryVersion) => {
+        await mount.flush();
+        if (local.session?.dirty || editedRef.current) { notify?.error('Save or discard unsaved changes before restoring History.'); return; }
         if (!transport.restoreVersion) return;
         setBusy(true);
         try {
-            setPublication(await transport.restoreVersion(slug, version.readable));
+            const next = await transport.restoreVersion(slug, version.id);
+            setPublication(next);
             setPendingRestore(null);
 
             if (transport.loadBody) {
                 const restored = (await transport.loadBody(slug)) as { body?: unknown } | undefined;
-                if (isDoc(restored?.body)) setDoc(restored.body);
+                if (Array.isArray(restored?.body) && next.headVersion) {
+                    local.reset(next.headVersion, restored.body);
+                    setDoc(restored.body as JsonDoc);
+                }
                 mount.markDirty(false);
                 notify?.success(`Restored ${version.readable}`);
             } else {
@@ -453,9 +458,11 @@ export function PageEditor({
         try {
             const next = await transport.clearBody(slug);
             if (next && typeof next === 'object' && 'versions' in next) {
-                setPublication(next as EntryPublicationState);
+                const state = next as EntryPublicationState;
+                setPublication(state);
+                if (state.headVersion) local.reset(state.headVersion, []);
             }
-            setDoc(fallbackDoc?.(slug) ?? EMPTY_DOC);
+            setDoc([]);
             mount.markDirty(false);
             setConfirmClear(false);
             notify?.success('Content removed');
@@ -466,11 +473,43 @@ export function PageEditor({
         }
     };
 
+    if (!publishable || !entryId || !userId) return <div role="alert">The editor requires an entry, authenticated user, and publication transport.</div>;
+    if (publicationError || local.error) return <div role="alert">{publicationError ?? local.error}</div>;
+    if (local.pending) return <div role="alertdialog" aria-label="Unsaved session base moved">
+        <p>The server version changed. Restore unsaved changes from {local.pending.identity.base} or discard them?</p>
+        <button onClick={() => void local.recover(true)}>Restore unsaved changes</button>
+        <button onClick={() => void local.recover(false)}>Discard</button>
+    </div>;
+    if (!local.session) return <div role="status">Loading Local Session…</div>;
+    const resolveConflict = async (keepOurs: boolean) => {
+        if (!transport.listVersions || !transport.loadBody || !transport.saveDraft) return;
+        try {
+            const current = await transport.listVersions(slug);
+            if (!current.headVersion) throw new Error('No current version');
+            if (keepOurs) {
+                const sent = docRef.current;
+                const next = await transport.saveDraft(slug, sent, current.headVersion);
+                if (!next.headVersion) throw new Error('No saved version');
+                local.saved(next.headVersion, sent); setPublication(next);
+            } else {
+                const envelope = await transport.loadBody(slug) as { body?: unknown };
+                if (!Array.isArray(envelope.body)) throw new Error('No current body');
+                local.reset(current.headVersion, envelope.body); setPublication(current);
+            }
+            setConflict(false);
+        } catch { notify?.error('The current version changed again; reload the conflict before retrying.'); }
+    };
+
     return (
         <WidgetRegistryContext.Provider value={registry}>
             <EditShellMountProvider value={mount}>
                 <style dangerouslySetInnerHTML={{ __html: veCss(theme) + peCss(theme) }} />
 
+                {conflict && <div role="alertdialog" aria-label="Save conflict">
+                    <p>The server draft changed. Choose which work to keep.</p>
+                    <button onClick={() => void resolveConflict(false)}>Reload theirs</button>
+                    <button onClick={() => void resolveConflict(true)}>Save ours as a new version</button>
+                </div>}
                 {/* The content region — IN PLACE (inside the page's layout), so classes + scoped CSS apply.
                     hideBreadcrumb: PageEditor renders its own breadcrumb in the floating Inspector panel
                     below — the in-flow one would render at the top of the real page's content, which is
@@ -486,7 +525,7 @@ export function PageEditor({
                         {brand ?? `editing · ${slug}`}
                     </span>
                     <span style={{ flex: 1 }} />
-                    {(onUndo || onRedo) && (
+                    {(
                         <>
                             <button className="pe-btn" onClick={onUndo} disabled={!canUndo} title="Undo">
                                 ↶ Undo
@@ -558,9 +597,7 @@ export function PageEditor({
                     <div className="pe-panel pe-clear">
                         <div className="pe-confirm" role="alertdialog" aria-label="Confirm remove content">
                             <span>
-                                Remove this page’s content? The stored body, its file and its compiled
-                                page are deleted and readers see the page as never authored. The
-                                removed body stays in the version history.
+                                Clear this draft? The published page stays unchanged until Publish. Earlier bodies remain in History.
                             </span>
                             <div className="pe-confirm-actions">
                                 <button className="pe-btn primary" onClick={clearContent} disabled={busy}>
@@ -593,8 +630,7 @@ export function PageEditor({
                         {pendingRestore && (
                             <div className="pe-confirm" role="alertdialog" aria-label="Confirm restore">
                                 <span>
-                                    Restore {pendingRestore.readable}? It becomes the published body
-                                    every reader is served.
+                                    Restore {pendingRestore.readable} into a new draft? Publish remains separate.
                                 </span>
                                 <div className="pe-confirm-actions">
                                     <button

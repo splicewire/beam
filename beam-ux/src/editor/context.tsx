@@ -9,6 +9,8 @@ export interface EditorKitInputs {
   transport: UxBuilderClient;
   theme?: Partial<CanvasTheme>;
   canAuthor: boolean;
+  /** Authenticated user id, required before editing; isolates persisted Local Sessions. */
+  userId?: string;
   canvasConfig?: CanvasConfig;
   defaultTreeFor?: (slug: string) => JsonDoc | null;
   notify?: { success(message: string): void; error(message: string): void };
@@ -20,6 +22,7 @@ export function EditorKitProvider({
   ...inputs
 }: EditorKitInputs & { children: ReactNode }) {
   const {
+    userId = "",
     theme = {},
     canvasConfig = defaults,
     defaultTreeFor = defaultTree,
@@ -29,6 +32,7 @@ export function EditorKitProvider({
     <KitContext.Provider
       value={{
         ...inputs,
+        userId,
         theme,
         canvasConfig,
         defaultTreeFor,

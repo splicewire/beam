@@ -1,117 +1,120 @@
-// Window-mode ("Edit content") mount — a THIN host wrapper over @splicewire/beam-ux/canvas's promoted
-// VisualEditor. Loads the entry's body (JsonDoc) through the host transport, edits it, and saves back. A
-// body that isn't a JsonDoc yet (or none) starts from the slug default (or an empty root). Mounted by the
-// Mainframe host's window (author) mode.
-//
-// ID-ADDRESSED as of beam-docs-satellite ticket 40. It is mounted by the Mainframe host, which hands it
-// an `EntryRef` — `{id, slug}` — instead of the bare slug it used to resolve off the Inertia component
-// name. The slug survives only as the `defaultTreeFor()` SEED key: it names the page, not the row.
-type EntryRef = { id: string | null; slug: string | null; format?: string | null };
-import type { JsonDoc } from '../blockdoc/json';
-import { CanvasProvider, VisualEditor } from '../canvas';
+// Window-mode authoring shares the package-owned Local Session and publication transport.
 import { useEffect, useState } from 'react';
-import { asDoc } from './page-editor';
+import type { JsonDoc } from '../blockdoc/json';
+import type { EntryPublicationState } from '../types';
+import { CanvasProvider, VisualEditor } from '../canvas';
 import { useEditorKit } from './context';
+import { useLocalSession } from './use-local-session';
 
-const EMPTY: JsonDoc = [
-    {
-        kind: 'block',
-        name: 'div',
-        isComponent: false,
-        dynamic: false,
-        props: [{ name: 'className', kind: 'string', value: 'page' }],
-        children: [],
-    },
-];
-
-/**
- * The per-slug SEED tree for a page with no persisted body yet. Keyed by slug because it is a FRONTEND
- * default, not an address — a ref carrying no slug simply gets the empty root.
- */
-function seedFor(slug: string | null, defaultTreeFor: (slug: string) => JsonDoc | null): JsonDoc {
-    return slug === null ? EMPTY : defaultTreeFor(slug) ?? EMPTY;
-}
-
+type EntryRef = { id: string | null; slug: string | null; format?: string | null };
 export function VisualEditorMount({ entryRef }: { entryRef: EntryRef }) {
-    const { transport: bodyClient, theme, canvasConfig, defaultTreeFor, notify: toast } = useEditorKit();
-    const entryId = entryRef.id;
-    const slug = entryRef.slug;
-    // With no id there is nothing to load, so the seed IS the initial state — no effect, no loading
-    // flash. Reachable only for a ref that genuinely has no id (a hand-typed `?beam_entry=<slug>`,
-    // which this starter deliberately does not resolve — see mainframe-host.tsx).
-    const [loaded, setLoaded] = useState<{
-        entryId: string | null;
-        slug: string | null;
-        doc: JsonDoc | null;
-        failed?: boolean;
-    } | null>(null);
-    const current = loaded?.entryId === entryId && loaded.slug === slug ? loaded : null;
-    const doc = current?.doc ?? (entryId === null ? seedFor(slug, defaultTreeFor) : null);
-    // theme-entries-and-authoring ticket `str-01`: the server-resolved theme (ThemeResolver cascade)
-    // replaces the static NEUTRAL_THEME import — NEUTRAL_THEME stays as the degrade-safe fallback for
-    // when the prop is absent (a stale build, or a request that never reached HandleInertiaRequests).
-
-
-    useEffect(() => {
-        if (entryId === null) {
-            return;
-        }
-
-        let live = true;
-        const fallback = () => seedFor(slug, defaultTreeFor);
-        bodyClient
-            .loadBody(entryId)
-            .then((env) => {
-                const body = (env as { body?: unknown })?.body;
-
-                if (live) {
-                    setLoaded({ entryId, slug, doc: asDoc(body) ?? fallback() });
-                }
-            })
-            .catch(() => live && setLoaded({ entryId, slug, doc: null, failed: true }));
-
-        return () => {
-            live = false;
-        };
-    }, [entryId, slug]);
-
-    if (current?.failed) {
-        return <div role="alert">Could not load this page’s saved content.</div>;
-    }
-
-    if (!doc) {
-        return <div style={{ padding: 24, color: '#64748b', fontSize: 13 }}>Loading editor…</div>;
-    }
-
-    const save = async () => {
-        // Unconditional now: without an id there is no address to save to. This used to be reachable
-        // with a slug and no id at all, which is exactly the shape ADR-0214 §2 made unrepresentable.
-        if (entryId === null) {
-            toast.error('This page is not bound to an entry');
-
-            return;
-        }
-
-        try {
-            await bodyClient.saveBody(entryId, doc as unknown as Record<string, unknown>);
-            toast.success('Saved');
-        } catch {
-            toast.error('Save failed');
-        }
-    };
-
-    return (
-        <CanvasProvider config={canvasConfig}>
-            <VisualEditor
-                key={entryId ?? slug}
-                value={doc}
-                onChange={(doc) => setLoaded({ entryId, slug, doc })}
-                onSave={save}
-                theme={theme}
-                brand="beam-starter · visual editor"
-            />
-        </CanvasProvider>
-    );
+    const { userId, canAuthor } = useEditorKit();
+    // An address or actor change retires the previous editor before the new read starts.
+    // Its loaded document, pending session and write callbacks must never cross that boundary.
+    return <AddressedVisualEditor key={JSON.stringify([entryRef.id, userId, canAuthor])} entryRef={entryRef} />;
 }
-
+function AddressedVisualEditor({ entryRef }: { entryRef: EntryRef }) {
+    const { transport, theme, canvasConfig, userId, canAuthor, notify } = useEditorKit();
+    const [loaded, setLoaded] = useState<{ body: JsonDoc; state: EntryPublicationState } | null>(null);
+    const [error, setError] = useState<string | null>(null);
+    const [conflict, setConflict] = useState(false);
+    const [busy, setBusy] = useState(false);
+    const [history, setHistory] = useState(false);
+    const id = entryRef.id;
+    const local = useLocalSession(id ?? '', userId, loaded?.state.headVersion ?? undefined, loaded?.body ?? [], !!loaded && !!id);
+    useEffect(() => {
+        if (!id || !userId || !canAuthor || !transport.listVersions || !transport.saveDraft || !transport.publish || !transport.restoreVersion) {
+            setError('The editor requires an authored entry, authenticated author, and publication transport.'); return;
+        }
+        let live = true;
+        Promise.all([transport.loadBody(id), transport.listVersions(id)]).then(([envelope, state]) => {
+            if (!live) return;
+            if (!state.publishedVersion || !state.headVersion) throw new Error('This entry has no Publication Pin. Publish its baseline before mounting the editor.');
+            const body = (envelope as { body?: unknown }).body;
+            if (!Array.isArray(body)) throw new Error('The entry has no editable document.');
+            setLoaded({ body: body as JsonDoc, state });
+        }).catch(reason => live && setError(reason instanceof Error ? reason.message : 'Could not load editor history. Verify the versions and publication-pin migrations.'));
+        return () => { live = false; };
+        // The transport may be a new object each render; the address owns the load lifecycle.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [id, userId, canAuthor]);
+    const run = async (action: () => Promise<void>) => {
+        setBusy(true);
+        try { await action(); }
+        catch (reason) {
+            if ((reason as { status?: number })?.status === 409) setConflict(true);
+            else notify.error(reason instanceof Error ? reason.message : 'Editor action failed');
+        } finally { setBusy(false); }
+    };
+    const save = () => run(async () => {
+        if (!id || !local.session || !transport.saveDraft) return;
+        const sent = local.session.body;
+        const state = await transport.saveDraft(id, sent as unknown as Record<string, unknown>, local.session.identity.base);
+        if (!state.headVersion) throw new Error('Save returned no version.');
+        local.saved(state.headVersion, sent);
+        setLoaded(previous => previous && { ...previous, state });
+        notify.success('Draft saved');
+    });
+    const resolveConflict = (ours: boolean) => run(async () => {
+        if (!id || !transport.listVersions || !transport.saveDraft || !local.session) return;
+        const current = await transport.listVersions(id);
+        if (!current.headVersion) throw new Error('No current server version.');
+        if (ours) {
+            const sent = local.session.body;
+            const state = await transport.saveDraft(id, sent as unknown as Record<string, unknown>, current.headVersion);
+            if (!state.headVersion) throw new Error('Save returned no version.');
+            local.saved(state.headVersion, sent); setLoaded(previous => previous && { ...previous, state });
+        } else {
+            const envelope = await transport.loadBody(id) as { body?: unknown };
+            if (!Array.isArray(envelope.body)) throw new Error('No current body.');
+            local.reset(current.headVersion, envelope.body);
+            setLoaded({ body: envelope.body as JsonDoc, state: current });
+        }
+        setConflict(false);
+    });
+    if (error || local.error) return <div role="alert">{error ?? local.error}</div>;
+    if (local.pending) return <div role="alertdialog" aria-label="Unsaved session base moved">
+        <p>The server base changed from {local.pending.identity.base}.</p>
+        <button onClick={() => void local.recover(true)}>Restore unsaved changes</button>
+        <button onClick={() => void local.recover(false)}>Discard</button>
+    </div>;
+    if (!loaded || !local.session) return <div role="status">Loading Local Session…</div>;
+    const publish = () => run(async () => {
+        if (local.session!.dirty) throw new Error('Save your draft before publishing it.');
+        if (!id || !transport.publish || !loaded.state.headVersion) return;
+        const state = await transport.publish(id, local.session!.identity.base);
+        setLoaded(previous => previous && { ...previous, state });
+        if (state.compileError) notify.error(state.compileError); else notify.success('Published');
+    });
+    const restore = (ref: string) => run(async () => {
+        if (local.session!.dirty) throw new Error('Save or discard unsaved changes before restoring History.');
+        if (!id || !transport.restoreVersion) return;
+        const state = await transport.restoreVersion(id, ref);
+        const envelope = await transport.loadBody(id) as { body?: unknown };
+        if (!state.headVersion || !Array.isArray(envelope.body)) throw new Error('Could not load the restored draft.');
+        local.reset(state.headVersion, envelope.body);
+        setLoaded({ body: envelope.body as JsonDoc, state });
+        notify.success('Restored into a draft');
+    });
+    return <CanvasProvider config={canvasConfig}>
+        {conflict && <div role="alertdialog" aria-label="Save conflict">
+            <p>The server draft changed.</p>
+            <button disabled={busy} onClick={() => void resolveConflict(false)}>Reload theirs</button>
+            <button disabled={busy} onClick={() => void resolveConflict(true)}>Save ours as a new version</button>
+        </div>}
+        <div aria-label="Publication controls">
+            <button disabled={busy || local.session.dirty} onClick={() => void publish()}>Publish</button>
+            <button onClick={() => setHistory(!history)}>History</button>
+            <span>{local.session.dirty ? 'Unsaved changes' : 'Draft saved'}</span>
+        </div>
+        {history && <aside aria-label="History">{loaded.state.versions.map(version => <div key={version.id}>
+            <span>{version.readable} {version.label}</span>
+            <button disabled={busy || local.session!.dirty} onClick={() => void restore(version.id)}>Restore {version.readable} into draft</button>
+        </div>)}</aside>}
+        <VisualEditor value={local.session.body as JsonDoc} onChange={local.change}
+            onSave={save} onUndo={local.undo} onRedo={local.redo}
+            canUndo={local.session.canUndo} canRedo={local.session.canRedo}
+            theme={theme} brand="Entry editor" />
+    </CanvasProvider>;
+}
 export default VisualEditorMount;

@@ -39,7 +39,7 @@ function csrfToken(): string {
 
 async function readData(res: Response, what: string): Promise<unknown> {
     if (!res.ok) {
-        throw new Error(`${what} ${res.status}`);
+        throw Object.assign(new Error(`${what} ${res.status}`), { status: res.status });
     }
 
     return (await res.json()).data;
@@ -102,10 +102,10 @@ const publicationClient = {
 
         return (await readData(res, 'versions')) as EntryPublicationState;
     },
-    saveDraft: async (id: string, body: Record<string, unknown>, label?: string) =>
-        (await publicationPost(id, 'save-draft', { body, label })) as EntryPublicationState,
-    publish: async (id: string, label?: string) =>
-        (await publicationPost(id, 'publish', { label })) as EntryPublicationState,
+    saveDraft: async (id: string, body: Record<string, unknown>, baseVersion: string, label?: string) =>
+        (await publicationPost(id, 'save-draft', { body, baseVersion, label })) as EntryPublicationState,
+    publish: async (id: string, ref: string, label?: string) =>
+        (await publicationPost(id, 'publish', { ref, label })) as EntryPublicationState,
     restoreVersion: async (id: string, ref: string, label?: string) =>
         (await publicationPost(id, 'restore', { ref, label })) as EntryPublicationState,
     // `clear-body` — remove the page's content and return the entry to unauthored. Not the same act as
