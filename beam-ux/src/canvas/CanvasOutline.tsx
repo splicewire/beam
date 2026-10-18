@@ -1,6 +1,6 @@
 import {useState} from 'react';
 import {isJsonBlock,type JsonDoc} from '../blockdoc/json';
-import {useCanvas,isIsland,isEditGated} from './context';
+import {useCanvas,isEditGated} from './context';
 import {useStyleSelection} from './StyleSelection';
 import {effectiveDeclaration} from './inspector-style';
 import {DEFAULT_STYLE_REGISTRY} from '../blockdoc/style-runtime';
@@ -18,9 +18,9 @@ export function CanvasOutline({doc,onSelect,onHide}:{doc:JsonDoc;onSelect:(path:
   const style=blockStyleFields(node,{schema:{},attrs:{}}).attrs.bdStyle;
   const selectedLayer={breakpoint:layer.breakpoint,state:null};
   const own=style.layers.some(l=>(l.breakpoint??null)===layer.breakpoint&&!l.state&&l.declarations.display==='none');
-  const sealed=node.dynamic||isIsland(config,node.name)||isEditGated(config,node);
-  rows.push({path,depth,name:node.name??'Fragment',hasChildren:!sealed&&node.children.some(isJsonBlock),own,hidden:effectiveDeclaration(style,'display',selectedLayer,registry)?.value==='none'});
-  if(!sealed&&!collapsed.has(path))walk(node.children,path,depth+1);
+  const sealed=node.dynamic||isEditGated(config,node);
+  rows.push({path,depth,name:node.name??'Fragment',hasChildren:!sealed&&[...node.children,...Object.values(node.slots??{}).flat()].some(isJsonBlock),own,hidden:effectiveDeclaration(style,'display',selectedLayer,registry)?.value==='none'});
+  if(!sealed&&!collapsed.has(path)){walk(node.children,path,depth+1);for(const [name,children] of Object.entries(node.slots??{}))walk(children,`${path}.slots.${name}`,depth+1);}
  });walk(doc,'',1);
  const focus=(index:number,root:HTMLElement)=>root.querySelectorAll<HTMLButtonElement>('[data-outline-select]')[index]?.focus();
  return <section className="ve-outline" aria-label="Block outline"><h3>Outline</h3><p>Hide changes visitor styles after publish ({layer.breakpoint?`${layer.breakpoint}+`:'all widths'}).</p>

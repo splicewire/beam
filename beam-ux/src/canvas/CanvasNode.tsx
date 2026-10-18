@@ -211,10 +211,20 @@ export function CanvasNode({ node, path, editing, onEditText, onEditMd, onEditPr
     // deletable block with no drill-in. The inner wrapper is pointer-events:none so a click selects it.
     if (isIsland(config, block.name)) {
         const Comp = registry[block.name as string];
+        const subtree = (nodes: JsonNode[], parent: string) => <div style={{pointerEvents:'auto', minHeight: nodes.length ? undefined : 24}} data-bd-slot={parent}
+            onDragOver={event => {event.preventDefault(); event.stopPropagation(); dnd.onDragOverNode(`${parent}.${nodes.length}`, 'before');}}
+            onDrop={event => {event.preventDefault(); event.stopPropagation(); dnd.onDrop(event.dataTransfer);}}>
+            <CanvasSiblings nodes={nodes} parent={parent} editing={editing} onEditText={onEditText} onEditMd={onEditMd} onEditProse={onEditProse} dnd={dnd}/>
+        </div>;
+        const declaration = config.profile?.nodes.find(entry => entry.name === block.name);
+        const names = new Set([...(declaration?.slots ?? []).map(slot => slot.name), ...Object.keys(block.slots ?? {})]);
+        const slots = Object.fromEntries([...names].map(name => [name, subtree(block.slots?.[name] ?? [], `${path}.slots.${name}`)]));
         return (
             <div {...props} className="ve-island">
                 <div style={{ pointerEvents: 'none' }}>
-                    <Comp {...islandProps(block, config.styleRegistry)} />
+                    <Comp {...islandProps(block, config.styleRegistry)} {...slots}>
+                        {block.children.length || declaration?.admitsChildCategories === null || (declaration?.admitsChildCategories?.length ?? 0) > 0 ? subtree(block.children, path) : undefined}
+                    </Comp>
                 </div>
             </div>
         );

@@ -1,4 +1,5 @@
 import { assertBlockStyle, legacyStyle, type BlockStyle } from './style.js';
+import { declaredProp, declaredSlot, type LensContext } from './component-interface.js';
 import { assertFieldPath, assertRepeat, assertCondition, type RepeatDeclaration, type DataCondition } from './bindings.js';
 /**
  * TsxTree lens core — lossless `.tsx` ⟷ TsxTree.
@@ -27,7 +28,7 @@ import type {
 const parser = babelTsParser;
 
 /** Parse a `.tsx` source string into an editable TsxTree lens. */
-export function parse(tsx: string): TsxTree {
+export function parse(tsx: string, context: LensContext = {}): TsxTree {
     const ast = recast.parse(tsx, { parser }) as File;
     const roots: BlockNode[] = [];
     const seen = new Set<t.Node>();
@@ -37,7 +38,7 @@ export function parse(tsx: string): TsxTree {
     // match @babel/types, so we hand-walk to avoid pulling @babel/traverse at runtime.
     walk(ast.program, (node) => {
         if ((t.isJSXElement(node) || t.isJSXFragment(node)) && !seen.has(node)) {
-            const block = buildBlock(node, seen);
+            const block = buildBlock(node, seen, context);
             if (block) roots.push(block);
         }
     });
@@ -58,6 +59,7 @@ export function print(input: TsxTree | File): string {
 function buildBlock(
     el: t.JSXElement | t.JSXFragment,
     seen: Set<t.Node>,
+    context: LensContext,
 ): BlockNode {
     seen.add(el);
     const isElement = t.isJSXElement(el);
@@ -67,6 +69,7 @@ function buildBlock(
     const isComponent = !!name && /^[A-Z]/.test(name.replace(/^.*\./, name[0]));
 
     const props: BlockProp[] = [];
+    const slots: Record<string, BlockChild[]> = {};
     let style: BlockStyle | undefined;
     let legacy: BlockStyle | undefined;
     let repeat: RepeatDeclaration | undefined;
@@ -75,6 +78,13 @@ function buildBlock(
     if (opening) {
         for (const attr of opening.attributes) {
             if (t.isJSXAttribute(attr)) {
+                const value = t.isJSXExpressionContainer(attr.value) ? attr.value.expression : attr.value;
+                const slot = context.profile?.nodes.find(entry => entry.name === name)?.slots?.find(slot => slot.name === jsxName(attr.name));
+                if (slot && (t.isJSXElement(value) || t.isJSXFragment(value))) {
+                    const slotBlock = buildBlock(value, seen, context);
+                    slots[slot.name] = t.isJSXFragment(value) ? slotBlock.children : [slotBlock];
+                    continue;
+                }
                 if (t.isJSXIdentifier(attr.name) && attr.name.name === 'bdStyle') {
                     if (!t.isJSXExpressionContainer(attr.value)) throw new Error('bdStyle requires a literal object');
                     const value = styleLiteral(attr.value.expression);
@@ -86,7 +96,9 @@ function buildBlock(
                     if (attr.name.name === 'bdRepeat') { assertRepeat(value); repeat = value; }
                     else { assertCondition(value); when = value; }
                 } else {
-                    const prop = buildProp(attr);
+                    const prop = buildProp(attr, context);
+                    // JSX carried as opaque attribute code belongs to that attribute, not another root.
+                    if (prop.kind === 'expression') sealSubtree(attr, seen);
                     if (prop.name === 'style' && prop.kind === 'string') {
                         // A structured style takes precedence; legacy text contributes the base.
                         legacy = legacyStyle(String(prop.value));
@@ -105,14 +117,21 @@ function buildBlock(
             if (child.value.trim() === '') continue;
             children.push(textFromJSXText(child));
         } else if (t.isJSXElement(child) || t.isJSXFragment(child)) {
-            children.push(buildBlock(child, seen));
+            children.push(buildBlock(child, seen, context));
         } else if (t.isJSXExpressionContainer(child)) {
             const expr = child.expression;
             if (t.isJSXEmptyExpression(expr)) {
                 // A `{/* comment */}` container: comments hang off the empty expression.
                 continue;
             }
-            if (t.isCallExpression(expr) && t.isIdentifier(expr.callee, { name: 'bdText' })) {
+            const slotIdentifier = t.isIdentifier(expr) ? expr : t.isLogicalExpression(expr, {operator: '??'}) && t.isIdentifier(expr.left) ? expr.left : null;
+            const fallback = t.isLogicalExpression(expr, {operator: '??'}) ? expr.right : null;
+            if (slotIdentifier && declaredSlot(context, slotIdentifier.name) && (fallback === null || t.isJSXElement(fallback) || t.isJSXFragment(fallback))) {
+                const fallbackBlock = fallback ? buildBlock(fallback as t.JSXElement | t.JSXFragment, seen, context) : null;
+                children.push({type:'block', name:'Slot', isComponent:true, props: slotIdentifier.name === 'children' ? [] : [{name:'name', kind:'string', value:slotIdentifier.name, node:child}], children: fallbackBlock ? (t.isJSXFragment(fallback) ? fallbackBlock.children : [fallbackBlock]) : [], dynamic:false, node:child});
+            } else if (t.isIdentifier(expr) && declaredProp(context, expr.name)) {
+                children.push({type:'text', value:'', prop:expr.name, node:child});
+            } else if (t.isCallExpression(expr) && t.isIdentifier(expr.callee, { name: 'bdText' })) {
                 const args = bindingArguments(expr, 2);
                 children.push({ type: 'text', field: args[0], value: args[1], node: child });
             } else if (t.isStringLiteral(expr) || t.isTemplateLiteral(expr)) {
@@ -142,6 +161,7 @@ function buildBlock(
         isComponent,
         props,
         children,
+        ...(Object.keys(slots).length ? {slots} : {}),
         dynamic,
         ...(style || legacy ? { style: { layers: [...(legacy?.layers ?? []), ...(style?.layers ?? [])] } } : {}),
         ...(repeat ? { repeat } : {}),
@@ -150,7 +170,7 @@ function buildBlock(
     };
 }
 
-function buildProp(attr: t.JSXAttribute): BlockProp {
+function buildProp(attr: t.JSXAttribute, context: LensContext): BlockProp {
     const name = jsxName(attr.name);
     const value = attr.value;
 
@@ -166,6 +186,9 @@ function buildProp(attr: t.JSXAttribute): BlockProp {
 
     if (t.isJSXExpressionContainer(value)) {
         const expr = value.expression;
+        if (t.isIdentifier(expr) && declaredProp(context, expr.name)) {
+            return {name, kind:'prop', value:expr.name, node:attr};
+        }
         if (t.isCallExpression(expr) && t.isIdentifier(expr.callee, { name: 'bdField' })) {
             return { name, kind: 'field', value: bindingArguments(expr, 1)[0], node: attr };
         }

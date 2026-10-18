@@ -20,7 +20,7 @@ import type { File } from '@babel/types';
  * from an *arbitrary expression* because a prop panel (ticket 09) can edit literals
  * inline but must treat expressions as opaque code (`{...}` — round-tripped verbatim).
  */
-export type PropKind = 'string' | 'number' | 'boolean' | 'expression' | 'boolean-shorthand' | 'field';
+export type PropKind = 'string' | 'number' | 'boolean' | 'expression' | 'boolean-shorthand' | 'field' | 'prop';
 
 export interface BlockProp {
     /** Attribute name, e.g. `className`, `data-x`, `aria-label`, `style`. */
@@ -64,6 +64,7 @@ export interface OpaqueNode {
 }
 
 export interface TextNode {
+    prop?: string;
     field?: string;
     type: 'text';
     /** The literal text (JSXText value, or the string of a `{"..."}` expression). */
@@ -77,6 +78,7 @@ export interface TextNode {
 }
 
 export interface BlockNode {
+    slots?: Record<string, BlockChild[]>;
     repeat?: RepeatDeclaration;
     when?: DataCondition;
     style?: BlockStyle;

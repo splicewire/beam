@@ -16,9 +16,18 @@ export function profileTemplates(templates: BlockTemplate[], profile: BlockdocMa
     return profileTemplatesAtParent(templates, profile, doc, parentPath);
 }
 
-export function profileTemplatesAtParent(templates: BlockTemplate[], profile: BlockdocManifest, doc: JsonDoc, parentPath: string): BlockTemplate[] {
+/** Resolve a default-child or named-slot container from the one manifest. */
+export function profileParentDeclaration(profile: BlockdocManifest, doc: JsonDoc, parentPath: string) {
     const parent = parentPath ? getAt(doc, parentPath) : null;
-    const declaration = parent && isJsonBlock(parent) ? profile.nodes.find(n => n.name === parent.name) : profile.doc;
+    const slot = parentPath.match(/^(.*)\.slots\.([A-Za-z_$][A-Za-z0-9_$]*)$/);
+    const owner = slot ? getAt(doc, slot[1]) : null;
+    return slot && owner && isJsonBlock(owner)
+        ? profile.nodes.find(node => node.name === owner.name)?.slots?.find(entry => entry.name === slot[2])
+        : parent && isJsonBlock(parent) ? profile.nodes.find(n => n.name === parent.name) : profile.doc;
+}
+
+export function profileTemplatesAtParent(templates: BlockTemplate[], profile: BlockdocManifest, doc: JsonDoc, parentPath: string): BlockTemplate[] {
+    const declaration = profileParentDeclaration(profile, doc, parentPath);
     const categories = declaration?.admitsChildCategories;
     return templates.filter(template => {
         const block = template.make();

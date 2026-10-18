@@ -97,7 +97,7 @@ export function compileEntryStyles(
 export function stylesIn(doc: import("./json.js").JsonNode[]): BlockStyle[] {
   return doc.flatMap((node) =>
     node.kind === "block"
-      ? [...(node.style ? [node.style] : []), ...stylesIn(node.children)]
+      ? [...(node.style ? [node.style] : []), ...stylesIn(node.children), ...Object.values(node.slots ?? {}).flatMap(stylesIn), ...stylesIn(node.repeat?.empty ?? [])]
       : []
   );
 }

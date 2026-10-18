@@ -46,3 +46,18 @@ it('checks the target profile recursively, including categories, attributes and 
  expect(()=>assertPasteProfile([block('x')],{...profile,doc:{admitsChildCategories:[]}},null)).toThrow(/parent/);
  expect(()=>pasteBlocks([{...block('void'),name:'img'}],'0',[block('x')])).toThrow(/editable container/);
 });
+it('pastes and wraps inside declared slots using their category contract',()=>{
+ const profile={profile:'test',version:1,doc:{admitsChildCategories:null},nodes:[
+  {name:'Card',category:'html',admitsChildCategories:['html'],slots:[{name:'body',admitsChildCategories:['html']}],attrsSchema:{type:'object',properties:{}}},
+  {name:'div',category:'html',admitsChildCategories:['html'],attrsSchema:{type:'object',properties:{}}},
+  {name:'img',category:'image',admitsChildCategories:[],attrsSchema:{type:'object',properties:{}}}
+ ]};
+ const card={...block('card'),name:'Card',isComponent:true,slots:{body:[block('a'),block('b')]}};
+ const pasted=pasteBlocks([card],'0.slots.body',[block('c')],profile);
+ expect((pasted[0] as JsonBlock).slots?.body).toHaveLength(3);
+ expect(()=>pasteBlocks([card],'0.slots.body',[{...block('image'),name:'img'}],profile)).toThrow(/parent/);
+ expect(()=>pasteBlocks([card],'0.slots.unknown',[block('x')],profile)).toThrow();
+ const wrapped=wrapBlocks([card],['0.slots.body.0','0.slots.body.1'],'flex',profile);
+ expect(unwrapBlock(wrapped,'0.slots.body.0',profile)).toEqual([card]);
+ expect((pasteBlocks([card],'0',[block('default')],profile)[0] as JsonBlock).children).toHaveLength(1);
+});

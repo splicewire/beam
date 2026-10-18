@@ -13,6 +13,8 @@ import { parse } from './lens.js';
 import { jsonToTsx } from './json.js';
 import type { JsonDoc } from './json.js';
 import type { TsxTree } from './types.js';
+import type { LensContext } from './component-interface.js';
+export type { LensContext } from './component-interface.js';
 
 export {
     parse,
@@ -54,6 +56,6 @@ export type {
  * via {@link parse}). `parse(jsonToTsx(doc))` — the closing leg of the JSON⟷.tsx round-trip. The
  * browser never calls this; it edits the JSON directly and persists it.
  */
-export function fromJson(doc: JsonDoc): TsxTree {
-    return parse(jsonToTsx(doc));
+export function fromJson(doc: JsonDoc, context: LensContext = {}): TsxTree {
+    return parse(jsonToTsx(doc), context);
 }

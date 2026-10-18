@@ -96,7 +96,7 @@ function countNodes(nodes: JsonNode[]): number {
     let n = 0;
     for (const node of nodes) {
         n += 1;
-        if (isJsonBlock(node)) n += countNodes(node.children);
+        if (isJsonBlock(node)) n += countNodes([...node.children, ...Object.values(node.slots ?? {}).flat()]);
     }
     return n;
 }

@@ -1,5 +1,6 @@
 import { assertBlockStyle, type BlockStyle } from './style.js';
 import { freshBlockIds } from './identity.js';
+import { assertReferenceName } from './component-interface.js';
 import { assertFieldPath, assertRepeat, assertCondition, type RepeatDeclaration, type DataCondition } from './bindings.js';
 /**
  * `@splicewire/beam-ux/jsondoc` — the **browser-safe** JSON projection of a TsxTree.
@@ -42,6 +43,7 @@ export interface JsonProp {
 
 /** An intrinsic element or component node. `isComponent` ⇒ a registered PascalCase component. */
 export interface JsonBlock {
+    slots?: Record<string, JsonNode[]>;
     repeat?: RepeatDeclaration;
     when?: DataCondition;
     id?: string;
@@ -58,6 +60,7 @@ export interface JsonBlock {
 
 /** A text leaf. */
 export interface JsonText {
+    prop?: string;
     field?: string;
     kind: 'text';
     value: string;
@@ -108,7 +111,7 @@ export function toJson(input: TsxTree | BlockNode | BlockChild[]): JsonDoc {
 }
 
 function childToJson(child: BlockChild): JsonNode {
-    if (child.type === 'text') return { kind: 'text', value: child.value, ...(child.field != null ? { field: child.field } : {}) };
+    if (child.type === 'text') return { kind: 'text', value: child.value, ...(child.field != null ? { field: child.field } : {}), ...(child.prop != null ? { prop: child.prop } : {}) };
     if (child.type === 'opaque') {
         return { kind: 'opaque', reason: child.reason, source: child.source };
     }
@@ -118,6 +121,7 @@ function childToJson(child: BlockChild): JsonNode {
         isComponent: child.isComponent,
         props: child.props.map((p) => ({ name: p.name, kind: p.kind, value: p.value })),
         children: child.children.map(childToJson),
+        ...(child.slots ? {slots: Object.fromEntries(Object.entries(child.slots).map(([name, nodes]) => [name, nodes.map(childToJson)]))} : {}),
         dynamic: child.dynamic,
         ...(child.style ? { style: child.style } : {}),
         ...(child.repeat ? { repeat: child.repeat } : {}),
@@ -150,6 +154,10 @@ export function jsonToTsx(doc: JsonDoc, depth = 0): string {
 function printNode(node: JsonNode, depth: number): string {
     const pad = INDENT.repeat(depth);
     if (isJsonText(node)) {
+        if (node.prop != null) {
+            assertReferenceName(node.prop);
+            return pad + `{${node.prop}}`;
+        }
         if (node.field != null) {
             assertFieldPath(node.field);
             return pad + `{bdText(${JSON.stringify(node.field)}, ${JSON.stringify(node.value)})}`;
@@ -158,6 +166,13 @@ function printNode(node: JsonNode, depth: number): string {
     }
     if (isJsonOpaque(node)) return pad + node.source;
 
+    if (node.name === 'Slot') {
+        const name = node.props.find(prop => prop.name === 'name')?.value ?? 'children';
+        assertReferenceName(name);
+        const fallback = node.children.length === 0 ? '' : ` ?? ${printSlotValue(node.children, depth)}`;
+        return pad + `{${name}${fallback}}`;
+    }
+
     const tag = node.name ?? '';
     if (node.style) assertBlockStyle(node.style);
     if (node.repeat) assertRepeat(node.repeat);
@@ -165,16 +180,20 @@ function printNode(node: JsonNode, depth: number): string {
     const attrs = node.props.map(printProp).join('') + (node.style ? ` bdStyle={${JSON.stringify(node.style)}}` : '')
         + (node.repeat ? ` bdRepeat={${JSON.stringify(node.repeat)}}` : '')
         + (node.when ? ` bdWhen={${JSON.stringify(node.when)}}` : '');
-    const open = node.name === null ? '<>' : `<${tag}${attrs}>`;
+    const slotAttrs = Object.entries(node.slots ?? {}).map(([name, children]) => {
+        assertReferenceName(name);
+        return ` ${name}={${printSlotValue(children, depth)}}`;
+    }).join('');
+    const open = node.name === null ? '<>' : `<${tag}${attrs}${slotAttrs}>`;
     const close = node.name === null ? '</>' : `</${tag}>`;
 
     if (node.children.length === 0) {
         // A fragment always uses the paired form; a self-closing element otherwise.
-        return node.name === null ? pad + '<></>' : pad + `<${tag}${attrs} />`;
+        return node.name === null ? pad + '<></>' : pad + `<${tag}${attrs}${slotAttrs} />`;
     }
 
     // A leaf (text-only children) prints inline for readability + stable round-trip.
-    if (isLeafText(node) && node.children.every((child) => !('field' in child))) {
+    if (isLeafText(node) && node.children.every((child) => !('field' in child) && !('prop' in child))) {
         const inner = node.children.map((c) => escapeText((c as JsonText).value.trim())).join('');
         return `${pad}${open}${inner}${close}`;
     }
@@ -185,6 +204,9 @@ function printNode(node: JsonNode, depth: number): string {
 
 function printProp(p: JsonProp): string {
     switch (p.kind) {
+        case 'prop':
+            assertReferenceName(p.value);
+            return ` ${p.name}={${p.value}}`;
         case 'field':
             assertFieldPath(p.value);
             return ` ${p.name}={bdField(${JSON.stringify(p.value)})}`;
@@ -207,6 +229,11 @@ function printProp(p: JsonProp): string {
     }
 }
 
+function printSlotValue(children: JsonNode[], depth: number): string {
+    if (children.length === 1 && isJsonBlock(children[0]) && children[0].name !== 'Slot') return printNode(children[0], depth).trimStart();
+    return `<>${children.map(child => printNode(child, depth + 1)).join('\n')}</>`;
+}
+
 /** Escape a text leaf for JSX body content (only `{`, `}`, `<`, `>` are special). */
 function escapeText(s: string): string {
     return s.replace(/[{}<>]/g, (c) => `{'${c}'}`);
@@ -223,35 +250,44 @@ export const indexOf = (path: string): number => Number(path.split('.').pop());
 
 /** The node at `path`, or `null` if the path doesn't resolve (or lands on a non-block mid-chain). */
 export function getAt(doc: JsonDoc, path: string): JsonNode | null {
-    const idx = path.split('.').map(Number);
-    let node: JsonNode | undefined = doc[idx[0]];
-    for (let i = 1; i < idx.length; i++) {
+    const parts = path.split('.');
+    if (!/^\d+$/.test(parts[0])) return null;
+    let node: JsonNode | undefined = doc[Number(parts[0])];
+    for (let i = 1; i < parts.length; i++) {
         if (!node || !isJsonBlock(node)) return null;
-        node = node.children[idx[i]];
+        if (parts[i] === 'slots') {
+            const name = parts[++i];
+            try { assertReferenceName(name); } catch { return null; }
+            node = slotContainer(node.slots?.[name] ?? []);
+        } else {
+            if (!/^\d+$/.test(parts[i])) return null;
+            node = node.children[Number(parts[i])];
+        }
     }
     return node ?? null;
 }
 
-/** Immutably replace the node at `path` with `fn(node)`. Returns a new doc. */
+/** Slot containers exist only as path cursors; never persisted as extra JsonNode arms. */
+function slotContainer(children: JsonNode[]): JsonBlock {
+    return {kind:'block', name:null, isComponent:false, dynamic:false, props:[], children};
+}
+
+/** Immutably replace a node (including one inside a named slot). */
 export function updateAt(doc: JsonDoc, path: string, fn: (node: JsonNode) => JsonNode): JsonDoc {
-    const idx = path.split('.').map(Number);
-
-    const recurChildren = (nodes: JsonNode[], depth: number): JsonNode[] => {
-        const ci = idx[depth];
-        const child = nodes[ci];
-        if (child === undefined) return nodes;
-        const next = nodes.slice();
-        next[ci] = recur(child, depth);
-        return next;
-    };
-
-    const recur = (node: JsonNode, depth: number): JsonNode => {
-        if (depth === idx.length - 1) return fn(node);
+    if (!getAt(doc, path)) return doc;
+    const parts = path.split('.');
+    const recur = (node: JsonNode, offset: number): JsonNode => {
+        if (offset === parts.length) return fn(node);
         if (!isJsonBlock(node)) return node;
-        return { ...node, children: recurChildren(node.children, depth + 1) };
+        if (parts[offset] === 'slots') {
+            const name = parts[offset + 1];
+            const changed = recur(slotContainer(node.slots?.[name] ?? []), offset + 2);
+            return isJsonBlock(changed) ? {...node, slots:{...node.slots, [name]:changed.children}} : node;
+        }
+        const index = Number(parts[offset]);
+        return {...node, children:node.children.map((child, i) => i === index ? recur(child, offset + 1) : child)};
     };
-
-    return recurChildren(doc, 0);
+    return doc.map((node, i) => i === Number(parts[0]) ? recur(node, 1) : node);
 }
 
 /** Insert `node` as `parentPath`'s child at `index`. `parentPath === ''` targets the doc root array. */

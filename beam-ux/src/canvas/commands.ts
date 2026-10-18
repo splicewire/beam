@@ -1,3 +1,4 @@
+import {profileParentDeclaration} from './profile';
 import validator from '@rjsf/validator-ajv8';
 import type {BlockdocManifest} from '@schemastud/blockdoc';
 import {getAt,indexOf,parentOf,insertInto,removeAt,updateAt,isJsonBlock,VOID_TAGS,type JsonDoc,type JsonNode,type JsonBlock} from '../blockdoc/json';
@@ -8,8 +9,8 @@ import {validatedEdit,type StyleSelection} from './inspector-style';
 import {applyBlockStyle,blockStyleFields} from './block-style';
 
 const compare=(a:string,b:string)=>{
- const x=a.split('.').map(Number),y=b.split('.').map(Number);
- for(let i=0;i<Math.min(x.length,y.length);i++)if(x[i]!==y[i])return x[i]-y[i];
+ const x=a.split('.'),y=b.split('.');
+ for(let i=0;i<Math.min(x.length,y.length);i++)if(x[i]!==y[i])return /^\d+$/.test(x[i])&&/^\d+$/.test(y[i])?Number(x[i])-Number(y[i]):x[i].localeCompare(y[i]);
  return x.length-y.length;
 };
 export function selectionRoots(paths:string[]):string[]{
@@ -30,21 +31,23 @@ export function parseClipboard(text:string):JsonDoc{
   if(node.kind==='text'){if(typeof node.value!=='string')throw Error('Invalid text');return;}
   if(node.kind==='opaque'){if(typeof node.source!=='string'||!['map','conditional','ternary','expression','spread'].includes(node.reason))throw Error('Invalid opaque node');return;}
   if(node.kind!=='block'||(typeof node.name!=='string'&&node.name!==null)||typeof node.dynamic!=='boolean'||typeof node.isComponent!=='boolean'||!Array.isArray(node.props)||!Array.isArray(node.children))throw Error('Invalid block');
-  for(const prop of node.props)if(!prop||typeof prop.name!=='string'||!['string','number','boolean','boolean-shorthand','expression'].includes(prop.kind)||!['string','number','boolean'].includes(typeof prop.value)&&prop.value!==null)throw Error('Invalid prop');
+  for(const prop of node.props)if(!prop||typeof prop.name!=='string'||!['string','number','boolean','boolean-shorthand','expression','field','prop'].includes(prop.kind)||!['string','number','boolean'].includes(typeof prop.value)&&prop.value!==null)throw Error('Invalid prop');
   if(node.style)assertBlockStyle(node.style);
   node.children.forEach(child=>visit(child,depth+1));
+  Object.values(node.slots??{}).forEach(nodes=>{if(!Array.isArray(nodes))throw Error('Invalid slot');nodes.forEach(child=>visit(child,depth+1));});
+  node.repeat?.empty?.forEach(child=>visit(child,depth+1));
  };
  if(input?.format!=='beam-blocks'||input.version!==1||!Array.isArray(input.nodes)||!input.nodes.length)throw Error('Not a Beam block clipboard');
  input.nodes.forEach((node:JsonNode)=>{visit(node,0);if(!isJsonBlock(node))throw Error('Select blocks');});
  return input.nodes;
 }
-export function assertPasteProfile(nodes:JsonDoc,profile:BlockdocManifest|undefined,parent:JsonBlock|null,registry:StyleRegistry=DEFAULT_STYLE_REGISTRY){
+export function assertPasteProfile(nodes:JsonDoc,profile:BlockdocManifest|undefined,parent:JsonBlock|null,registry:StyleRegistry=DEFAULT_STYLE_REGISTRY,containerDeclaration?:BlockdocManifest['doc']|null){
  const noCode=profile&&'x-admits-code' in profile&&profile['x-admits-code']===false;
  const visit=(node:JsonNode,container:BlockdocManifest['doc']|undefined)=>{
   if(node.kind==='text')return;
   if(node.kind==='opaque'){if(noCode)throw Error('Target profile does not admit code');return;}
   if(node.style)compileBlockStyle(node.style,registry);
-  if(!profile){node.children.forEach(child=>visit(child,undefined));return;}
+  if(!profile){[...node.children,...Object.values(node.slots??{}).flat()].forEach(child=>visit(child,undefined));return;}
   const declaration=profile.nodes.find(n=>n.name===node.name);
   if(!declaration||!container)throw Error(`Target profile does not admit ${node.name}`);
   if(container.admitsChildCategories!==null&&(!declaration.category||!container.admitsChildCategories?.includes(declaration.category)))throw Error(`Target parent does not admit ${node.name}`);
@@ -56,15 +59,17 @@ export function assertPasteProfile(nodes:JsonDoc,profile:BlockdocManifest|undefi
    if(result.errors.length)throw Error(`Invalid attributes for ${node.name}: ${result.errors[0].message}`);
   }
   node.children.forEach(child=>visit(child,declaration));
+  for(const [name,children] of Object.entries(node.slots??{})){const slot=declaration.slots?.find(slot=>slot.name===name);if(!slot)throw Error('Undeclared slot '+name);children.forEach(child=>visit(child,slot));}
+  node.repeat?.empty?.forEach(child=>visit(child,container));
  };
- const declaration=parent?profile?.nodes.find(n=>n.name===parent.name):profile?.doc;
+ const declaration=containerDeclaration===undefined ? (parent?profile?.nodes.find(n=>n.name===parent.name):profile?.doc) : containerDeclaration??undefined;
  nodes.forEach(node=>visit(node,declaration));
 }
 export function pasteBlocks(doc:JsonDoc,parentPath:string,nodes:JsonDoc,profile?:BlockdocManifest,registry?:StyleRegistry):JsonDoc{
  const parent=parentPath?getAt(doc,parentPath):null;
  if(parentPath&&(!parent||!isJsonBlock(parent)))throw Error('Paste destination no longer exists');
- if(parent&&isJsonBlock(parent)&&(parent.isComponent||parent.dynamic||VOID_TAGS.has(parent.name??'')))throw Error('Paste into an editable container');
- assertPasteProfile(nodes,profile,parent as JsonBlock|null,registry);
+ if(parent&&isJsonBlock(parent)&&(parent.dynamic||VOID_TAGS.has(parent.name??'')))throw Error('Paste into an editable container');
+ assertPasteProfile(nodes,profile,parent as JsonBlock|null,registry,profile?profileParentDeclaration(profile,doc,parentPath)??null:undefined);
  let next=doc;let at=parent&&isJsonBlock(parent)?parent.children.length:doc.length;
  for(const node of nodes)next=insertInto(next,parentPath,at++,freshBlockIds(node));
  return next;
@@ -79,13 +84,13 @@ export function wrapBlocks(doc:JsonDoc,paths:string[],layout:'flex'|'grid',profi
  if(children.some(node=>!node||!isJsonBlock(node)))throw Error('Select blocks to wrap');
  const wrapper:JsonBlock={kind:'block',id:blockId(),name:'div',isComponent:false,dynamic:false,props:[],children:children as JsonDoc,style:{layers:[{declarations:{display:layout}}]}};
  const container=parent?getAt(doc,parent):null;
- assertPasteProfile([wrapper],profile,container as JsonBlock|null);
+ assertPasteProfile([wrapper],profile,container as JsonBlock|null,undefined,profile?profileParentDeclaration(profile,doc,parent)??null:undefined);
  return insertInto(removeBlocks(doc,roots),parent,indexOf(roots[0]),wrapper);
 }
 export function unwrapBlock(doc:JsonDoc,path:string,profile?:BlockdocManifest):JsonDoc{
  const node=getAt(doc,path);if(!node||!isJsonBlock(node)||node.isComponent||node.dynamic)throw Error('Select a container to unwrap');
  const parent=parentOf(path),container=parent?getAt(doc,parent):null;
- assertPasteProfile(node.children,profile,container as JsonBlock|null);
+ assertPasteProfile(node.children,profile,container as JsonBlock|null,undefined,profile?profileParentDeclaration(profile,doc,parent)??null:undefined);
  let next=removeAt(doc,path);let at=indexOf(path);
  for(const child of node.children)next=insertInto(next,parent,at++,child);
  return next;

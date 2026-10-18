@@ -52,11 +52,14 @@ export function renderNode(node: JsonNode, path: string, config: CanvasConfig, r
     }
 
     if (isIsland(config, block.name)) {
+        const slots = Object.fromEntries(Object.entries(block.slots ?? {}).map(([name, children]) =>
+            [name, children.map((child, index) => renderNode(child, `${path}.slots.${name}.${index}`, config, record))]));
         return createElement(config.registry[block.name as string], {
             key: path,
             ...islandProps(block, config.styleRegistry),
             ...fields,
-        });
+            ...slots,
+        }, ...block.children.map((child, index) => renderNode(child, `${path}.${index}`, config, record)));
     }
 
     const tag = block.name ?? 'div';
