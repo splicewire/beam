@@ -14,20 +14,19 @@ import {
     indexOf,
     insertInto,
     isJsonBlock,
-    isLeafText,
     moveAfter,
     moveBefore,
     parentOf,
     removeAt,
     setProp,
-    setText,
     updateAt,
 } from '../blockdoc/json.js';
 import type { ContextMenuAction } from './ContextMenu.js';
 import type { JsonBlock, JsonDoc, JsonNode } from '../blockdoc/json.js';
 import { attrsSchemaFor } from './attrsSchema.js';
 import { Breadcrumb } from './Breadcrumb.js';
-import { CanvasNode } from './CanvasNode.js';
+import { CanvasSiblings } from './CanvasSiblings.js';
+import { proseRole } from './prose';
 import type { DropEdge } from './CanvasNode.js';
 import { ContextMenu } from './ContextMenu.js';
 import type { ContextMenuState } from './ContextMenu.js';
@@ -249,6 +248,7 @@ export function CanvasWidget({
     }, [doc]);
 
     const onCanvasClick = (e: React.MouseEvent) => {
+        if ((e.target as HTMLElement).closest('[data-prose-edit]')) return;
         const el = (e.target as HTMLElement).closest('[data-bd-path]');
         const path = el ? el.getAttribute('data-bd-path') : null;
         // A click inside the node currently being text-edited places the caret — let the browser
@@ -259,9 +259,10 @@ export function CanvasWidget({
         setEditing(null);
     };
     const onCanvasDbl = (e: React.MouseEvent) => {
+        if ((e.target as HTMLElement).closest('[data-prose-edit]')) return;
         const p = (e.target as HTMLElement).closest('[data-bd-path]')?.getAttribute('data-bd-path');
         const node = p ? getAt(doc, p) : null;
-        if (!readOnly && p && node && isJsonBlock(node) && isLeafText(node)) setEditing(p);
+        if (!readOnly && p && node && isJsonBlock(node) && config.profile && proseRole(node.name, config.profile)) setEditing(p);
     };
     const onCanvasContextMenu = (e: React.MouseEvent) => {
         const p = (e.target as HTMLElement).closest('[data-bd-path]')?.getAttribute('data-bd-path');
@@ -362,26 +363,14 @@ export function CanvasWidget({
                 onDoubleClick={onCanvasDbl}
                 onContextMenu={onCanvasContextMenu}
             >
-                {doc.map((n, i) => (
-                    <CanvasNode
-                        key={i}
-                        node={n}
-                        path={String(i)}
-                        editing={editing}
-                        onEditText={(p, text) => {
-                            emit(updateAt(doc, p, (el) => (isJsonBlock(el) ? setText(el, text) : el)));
-                            setEditing(null);
-                        }}
-                        onEditMd={(p, md) =>
-                            emit(
-                                updateAt(doc, p, (el) =>
-                                    isJsonBlock(el) ? setProp(el, 'md', md, 'string') : el,
-                                ),
-                            )
-                        }
-                        dnd={dnd}
-                    />
-                ))}
+                <CanvasSiblings nodes={doc} parent="" editing={editing} onEditText={() => {}}
+                    onEditProse={(parent,start,end,body)=>{
+                        const replace=(children:JsonDoc)=>[...children.slice(0,start),...body,...children.slice(end)];
+                        emit(parent ? updateAt(doc,parent,node=>isJsonBlock(node)?{...node,children:replace(node.children)}:node) : replace(doc));
+                    }}
+                    onEditMd={(p, md)=>emit(updateAt(doc,p,node=>isJsonBlock(node)?setProp(node,'md',md,'string'):node))}
+                    dnd={dnd}/>
+
             </div>
 
             {menu && (

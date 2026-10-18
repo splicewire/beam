@@ -2,15 +2,15 @@
 // and renders opaque islands / opaque nodes SEALED. A faithful port of the host `CanvasNode`, re-based on
 // the `JsonNode` tree from `@splicewire/beam-ux/jsondoc` + the injected CanvasConfig (registry / MDX
 // island / — NO app imports).
-import React, { useEffect, useRef } from 'react';
+import React from 'react';
+import {CanvasSiblings, type ProseChange} from './CanvasSiblings';
 import {
     isJsonOpaque,
     isJsonText,
-    isLeafText,
     propValue,
     VOID_TAGS,
 } from '../blockdoc/json.js';
-import type { JsonBlock, JsonNode } from '../blockdoc/json.js';
+import type { JsonNode } from '../blockdoc/json.js';
 import { isEditGated, isIsland, useCanvas } from './context.js';
 import { blockToProps, editGateOf, islandProps } from './props.js';
 import { renderNode } from './TreeRender.js';
@@ -44,6 +44,7 @@ export interface CanvasNodeProps {
     /** The path currently being inline-text-edited, or null. */
     editing: string | null;
     onEditText: (path: string, text: string) => void;
+    onEditProse?: ProseChange;
     onEditMd?: (path: string, md: string) => void;
     dnd: Dnd;
 }
@@ -54,27 +55,10 @@ export function edgeAt(el: HTMLElement, clientY: number): DropEdge {
     return clientY - rect.top < rect.height / 2 ? 'before' : 'after';
 }
 
-export function CanvasNode({ node, path, editing, onEditText, onEditMd, dnd }: CanvasNodeProps) {
+export function CanvasNode({ node, path, editing, onEditText, onEditMd, onEditProse, dnd }: CanvasNodeProps) {
     const config = useCanvas();
     const { MdxEdit, registry } = config;
-    const hostRef = useRef<HTMLElement | null>(null);
-    const isEditingThis = node.kind === 'block' && editing === path && isLeafText(node);
-
-    // Entering inline-edit places focus + the caret at the end of the existing text — without this the
-    // element becomes contentEditable but nothing is focused, so a user has to click again to type, and
-    // that click is exactly what the canvas's own click handler intercepts to SELECT (see VisualEditor/
-    // PageEditor's onCanvasClick guard) — the double-click would otherwise appear to do nothing.
-    useEffect(() => {
-        if (!isEditingThis || !hostRef.current) return;
-        const el = hostRef.current;
-        el.focus();
-        const range = document.createRange();
-        range.selectNodeContents(el);
-        range.collapse(false);
-        const sel = window.getSelection();
-        sel?.removeAllRanges();
-        sel?.addRange(range);
-    }, [isEditingThis]);
+    const isEditingThis = editing === path;
 
     // Text leaf — rendered as bare content (the parent element hosts it; contentEditable is applied there).
     if (isJsonText(node)) return <>{node.value}</>;
@@ -242,49 +226,12 @@ export function CanvasNode({ node, path, editing, onEditText, onEditMd, dnd }: C
         return React.createElement(tag, props);
     }
 
-    if (isEditingThis) {
-        return React.createElement(
-            tag,
-            {
-                ...props,
-                ref: hostRef,
-                contentEditable: true,
-                suppressContentEditableWarning: true,
-                onBlur: (e: React.FocusEvent<HTMLElement>) =>
-                    onEditText(path, e.currentTarget.textContent ?? ''),
-                onKeyDown: (e: React.KeyboardEvent<HTMLElement>) => {
-                    // Escape discards the in-progress edit and drops back to plain selection — not a
-                    // full deselect. Reverting the DOM text BEFORE blurring makes the ensuing onBlur's
-                    // onEditText call a no-op (it commits the now-reverted, unchanged text).
-                    if (e.key === 'Escape') {
-                        e.preventDefault();
-                        e.currentTarget.textContent = childText(block);
-                        e.currentTarget.blur();
-                    }
-                },
-            },
-            childText(block),
-        );
-    }
 
     return React.createElement(
         tag,
         props,
-        block.children.map((c, i) => (
-            <CanvasNode
-                key={`${path}.${i}`}
-                node={c}
-                path={`${path}.${i}`}
-                editing={editing}
-                onEditText={onEditText}
-                onEditMd={onEditMd}
-                dnd={dnd}
-            />
-        )),
+        <CanvasSiblings nodes={block.children} parent={path} editing={editing} onEditText={onEditText}
+            onEditMd={onEditMd} onEditProse={onEditProse} dnd={dnd}/>,
     );
 }
 
-/** The text content of a leaf block (its text children joined) — rendered inside contentEditable. */
-function childText(block: JsonBlock): string {
-    return block.children.map((c) => (isJsonText(c) ? c.value : '')).join('');
-}

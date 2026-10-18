@@ -1,3 +1,5 @@
+import { SourceMode } from '../editor/SourceMode';
+import { useCanvas } from './context';
 import { PageSettings } from '../editor/PageSettings';
 import type { SessionPageSettings } from '../editor/local-session';
 // In-place page editor: renders the entry's body INSIDE the real page (host layout chrome + full class
@@ -44,6 +46,8 @@ import { createCanvasWidgetRegistry } from './widgetRegistry.js';
  * draft button is broken" the same picture.
  */
 export interface PageEditorTransport {
+    printSource?: (slug: string, body: JsonDoc) => Promise<{source: string}>;
+    readSource?: (slug: string, source: string, body: JsonDoc) => Promise<{body: JsonDoc}>;
     /**
      * Persist the document. The RESPONSE is read, not discarded: a host whose save op answers with a
      * `compileError` (the beam-ux entry envelope does) has stored the body but produced no artifact for
@@ -280,6 +284,7 @@ export function PageEditor({
     const [publication, setPublication] = useState<EntryPublicationState | null>(null);
     const [publicationError, setPublicationError] = useState<string | null>(null);
     const [conflict, setConflict] = useState(false);
+    const canvasConfig = useCanvas();
     const local = useLocalSession(entryId ?? slug, userId, publication?.headVersion ?? undefined, initial, editing && !!publication?.headVersion, pageSettings ?? null);
     useEffect(() => {
         if (!local.session) return;
@@ -338,6 +343,7 @@ export function PageEditor({
      * published.
      */
     const saveDraft = async () => {
+        if (local.session?.source) { notify?.error('Apply or discard Source Mode before saving.'); return; }
         if (!transport.saveDraft || !local.session) return;
         setBusy(true);
         try {
@@ -460,6 +466,7 @@ export function PageEditor({
      * leaves the badge as it was rather than guessing.
      */
     const clearContent = async () => {
+        if (local.session?.source) { notify?.error('Apply or discard Source Mode before clearing.'); return; }
         if (!transport.clearBody) return;
         setBusy(true);
         try {
@@ -489,6 +496,7 @@ export function PageEditor({
     </div>;
     if (!local.session) return <div role="status">Loading Local Session…</div>;
     const resolveConflict = async (keepOurs: boolean) => {
+        if (local.session?.source) { notify?.error('Apply or discard Source Mode before resolving the conflict.'); return; }
         if (!transport.listVersions || !transport.loadBody || !transport.saveDraft) return;
         try {
             const current = await transport.listVersions(slug);
@@ -526,7 +534,13 @@ export function PageEditor({
                     exactly where the floating pe-left/pe-right panels sit, so it was rendering almost
                     entirely behind them (found live: only its LAST segment's last few pixels peeked out
                     past the left panel's edge). */}
-                <CanvasWidget value={doc} onChange={onCanvasChange} editShellMount={mount} theme={theme} hideBreadcrumb />
+                <SourceMode local={local} allowed={!canvasConfig.profile || !('x-admits-code' in canvasConfig.profile) || canvasConfig.profile['x-admits-code'] !== false}
+                    conversion={transport.printSource && transport.readSource ? {
+                        print: body => transport.printSource!(slug, body),
+                        read: (source, body) => transport.readSource!(slug, source, body),
+                    } : undefined}>
+                    <CanvasWidget value={doc} onChange={onCanvasChange} editShellMount={mount} theme={theme} hideBreadcrumb />
+                </SourceMode>
 
                 {/* Floating editor chrome — fixed over the page. */}
                 <div className="pe-bar">
@@ -534,7 +548,7 @@ export function PageEditor({
                         <span className="pe-mark" />
                         {brand ?? `editing · ${slug}`}
                     </span>
-                    {local.session.pageSettings && <PageSettings value={local.session.pageSettings} onChange={settings => local.change(local.session!.body, settings)} />}
+                    {!local.session.source && local.session.pageSettings && <PageSettings value={local.session.pageSettings} onChange={settings => local.change(local.session!.body, settings)} />}
                     <span style={{ flex: 1 }} />
                     {(
                         <>
