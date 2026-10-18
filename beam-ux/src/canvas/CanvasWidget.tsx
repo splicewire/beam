@@ -189,7 +189,7 @@ export function CanvasWidget({
                 // back the attrs it was given. That echo is not an edit: it must not reach the document,
                 // the host, or the dirty flag. `updateAt` always rebuilds, so identity cannot answer
                 // this — the props themselves are what changed or did not.
-                if (samePropList(node.props, next.props) && JSON.stringify(node.style) === JSON.stringify(next.style)) return;
+                if (samePropList(node.props, next.props) && JSON.stringify(node.style ?? { layers: [] }) === JSON.stringify(next.style ?? { layers: [] })) return;
 
                 emitFromRef(updateAt(docRef.current, nodeId, () => next));
             },

@@ -1093,6 +1093,15 @@ describe('CanvasWidget — the stale-snapshot race (G2-BEAM-AUTHOR-FIRST-EDIT-LO
         expect(mount.markDirty).toHaveBeenCalledWith(true);
     });
 
+    it('an empty Block Style form echo does not dirty an unstyled block', () => {
+        const { mount, captured } = captureMount();
+        const onChange = vi.fn();
+        render(wrap(<CanvasWidget value={doc()} onChange={onChange} editShellMount={mount as never} />));
+        act(() => captured.setNodeAttrs?.('0.0', { bdStyle: { layers: [] } }));
+        expect(onChange).not.toHaveBeenCalled();
+        expect(mount.markDirty).not.toHaveBeenCalled();
+    });
+
     it('a REAL attrs change still emits', () => {
         const { mount, captured } = captureMount();
         const onChange = vi.fn();
