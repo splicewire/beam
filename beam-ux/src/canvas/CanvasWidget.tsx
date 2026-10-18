@@ -1,4 +1,6 @@
 import { blockStyleFields, applyBlockStyle } from './block-style.js';
+import { useStyleSelection } from './StyleSelection';
+import { DEFAULT_STYLE_REGISTRY } from '../blockdoc/style-runtime';
 // The registered heavyweight widget (WIDGET_NAME in registry.ts) FiveRegionEditShell mounts
 // full-surface in its canvas region. Everything about the block tree itself — text edit, drag-reorder,
 // opaque islands, entitlement sealing, breadcrumb, context menu — is UNCHANGED, still CanvasNode/
@@ -106,6 +108,7 @@ export function CanvasWidget({
     hideBreadcrumb = false,
 }: CanvasWidgetProps) {
     const config = useCanvas();
+    const { selection: styleSelection } = useStyleSelection();
     const doc: JsonDoc = value ?? formData ?? [];
     const allTemplates = config.blockTemplates ?? DEFAULT_BLOCK_TEMPLATES;
     // Was hardcoded to a fixed blue regardless of the host's actual theme — found live: it clashed
@@ -186,7 +189,7 @@ export function CanvasWidget({
                 // back the attrs it was given. That echo is not an edit: it must not reach the document,
                 // the host, or the dirty flag. `updateAt` always rebuilds, so identity cannot answer
                 // this — the props themselves are what changed or did not.
-                if (samePropList(node.props, next.props)) return;
+                if (samePropList(node.props, next.props) && JSON.stringify(node.style) === JSON.stringify(next.style)) return;
 
                 emitFromRef(updateAt(docRef.current, nodeId, () => next));
             },
@@ -336,7 +339,7 @@ export function CanvasWidget({
     };
 
     return (
-        <div className="ve-canvas-widget">
+        <div className="ve-canvas-widget" style={{width: styleSelection.breakpoint ? (config.styleRegistry ?? DEFAULT_STYLE_REGISTRY).breakpoints[styleSelection.breakpoint] : undefined, maxWidth: '100%'}}>
             {sel &&
                 (() => {
                     const selNode = getAt(doc, sel);

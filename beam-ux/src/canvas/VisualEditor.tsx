@@ -15,6 +15,7 @@ import { useCanvas } from './context.js';
 import { useMemo, useRef } from 'react';
 import { FiveRegionEditShell, useEditShellMount } from '@schemastud/frame';
 import { CanvasPalette } from './CanvasPalette.js';
+import { BlockInspector } from './BlockInspector';
 import { CanvasWidget } from './CanvasWidget.js';
 import { veCss } from './css.js';
 import type { CanvasTheme } from './css.js';
@@ -108,6 +109,7 @@ export function VisualEditor({
                     />
                 }
                 palette={<CanvasPalette />}
+                inspector={<BlockInspector />}
             />
         </>
     );

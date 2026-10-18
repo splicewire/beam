@@ -10,6 +10,7 @@ import type { JsonBlock } from '../blockdoc/json.js';
 import type { BlockdocManifest } from '@schemastud/blockdoc';
 import { editGateOf } from './props.js';
 import { assertProfileRegistry } from './profile';
+import { StyleSelectionProvider } from './StyleSelection';
 
 /** The MDX island read view — a host-provided component (the package never imports @splicewire/beam-mdx). */
 export type MdxViewComponent = ComponentType<{ file?: string; md?: string }>;
@@ -67,7 +68,7 @@ const CanvasContext = createContext<CanvasConfig | null>(null);
 
 export function CanvasProvider({ config, children }: { config: CanvasConfig; children: ReactNode }) {
     if (config.profile) assertProfileRegistry(config.profile, config.registry);
-    return <CanvasContext.Provider value={config}>{children}</CanvasContext.Provider>;
+    return <CanvasContext.Provider value={config}><StyleSelectionProvider>{children}</StyleSelectionProvider></CanvasContext.Provider>;
 }
 
 /** Read the injected CanvasConfig. Throws if used outside a <CanvasProvider>. */

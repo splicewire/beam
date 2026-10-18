@@ -19,7 +19,8 @@ import type { SessionPageSettings } from '../editor/local-session';
 // the SAME canvas widget registry (class-chips/style-rows) itself, or className/style would silently
 // fall back to plain text inputs instead of the chip/row UX.
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
-import { EditShellMountProvider, Inspector as FrameInspector, useEditShellMountController } from '@schemastud/frame';
+import { EditShellMountProvider, useEditShellMountController } from '@schemastud/frame';
+import { BlockInspector } from './BlockInspector';
 import { WidgetRegistryContext } from '@schemastud/seam';
 import { getAt, isJsonBlock } from '../blockdoc/json.js';
 import type { JsonDoc } from '../blockdoc/json.js';
@@ -713,7 +714,7 @@ export function PageEditor({
                                 )}
                             </>
                         )}
-                        <FrameInspector />
+                        <BlockInspector />
                     </aside>
                 )}
             </EditShellMountProvider>

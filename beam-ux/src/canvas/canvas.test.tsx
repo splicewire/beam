@@ -17,6 +17,7 @@ import { PageEditor, __resetEditMode, useEditMode } from './PageEditor.js';
 import type { EntryPublicationState, EntryVersion } from '../types.js';
 import { EDIT_GATE_ATTR, VIEW_GATE_ATTR } from './props.js';
 import { ClassChipsWidget, StyleRowsWidget } from './widgets.js';
+import { useStyleSelection } from './StyleSelection';
 
 // ── injected config ───────────────────────────────────────────────────────────────────────────────────
 const Hero = (props: Record<string, unknown>) => <div data-testid="hero">HERO {String(props.title ?? '')}</div>;
@@ -28,6 +29,18 @@ const MdxEdit = ({ md, onChange }: { md?: string; onChange: (s: string) => void 
 const config: CanvasConfig = { registry: { Hero }, MdxView, MdxEdit };
 
 const wrap = (ui: React.ReactNode) => <CanvasProvider config={config}>{ui}</CanvasProvider>;
+
+it('constrains layout width from the same registry selection without emitting a document change', () => {
+    function Selector() {
+        const { select } = useStyleSelection();
+        return <button onClick={() => select({ breakpoint: 'md', state: null })}>Set layout width</button>;
+    }
+    const onChange = vi.fn();
+    const { container } = render(wrap(<><Selector /><CanvasWidget value={[]} onChange={onChange} /></>));
+    fireEvent.click(screen.getByText('Set layout width'));
+    expect((container.querySelector('.ve-canvas-widget') as HTMLElement).style.width).toBe('48rem');
+    expect(onChange).not.toHaveBeenCalled();
+});
 
 it('publishes and inserts only the server profile palette', () => {
     const profile = { profile: 'hosted', version: 1, 'x-admits-code': false,
@@ -1063,6 +1076,21 @@ describe('CanvasWidget — the stale-snapshot race (G2-BEAM-AUTHOR-FIRST-EDIT-LO
 
         expect(onChange).not.toHaveBeenCalled();
         expect(mount.markDirty).not.toHaveBeenCalled();
+    });
+
+    it('a style-only Inspector change emits without rewriting props', () => {
+        const { mount, captured } = captureMount();
+        const onChange = vi.fn();
+        const original = doc();
+        render(wrap(<CanvasWidget value={original} onChange={onChange} editShellMount={mount as never} />));
+        const style = { layers: [{ declarations: { color: 'red' } }] };
+        act(() => captured.setNodeAttrs?.('0.0', { bdStyle: style }));
+        expect(onChange).toHaveBeenCalledOnce();
+        const changed = onChange.mock.calls[0][0] as JsonDoc;
+        expect((changed[0] as JsonBlock).children[0]).toEqual({
+            ...(original[0] as JsonBlock).children[0], style,
+        });
+        expect(mount.markDirty).toHaveBeenCalledWith(true);
     });
 
     it('a REAL attrs change still emits', () => {
