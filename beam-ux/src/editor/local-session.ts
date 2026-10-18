@@ -1,7 +1,7 @@
 import type { EntryPageSettings } from '../generated/page-settings';
 export type SessionPageSettings = Partial<EntryPageSettings>;
 /** ADR-0004: client undo is a Local Session; server versions are not the undo stack. */
-export interface SessionIdentity { entry: string; user: string; base: string }
+export interface SessionIdentity { entry: string; user: string; base: string | null }
 export interface SessionSnapshot {
   source?: {text: string; printed: string; body: unknown[]};
   format: 1;
@@ -20,7 +20,7 @@ export const sessionKey = (identity: SessionIdentity): string => JSON.stringify(
 export class LocalSession {
   private state: SessionSnapshot;
   constructor(identity: SessionIdentity, body: unknown[], pageSettings: SessionPageSettings | null = null) {
-    if (!identity.entry || !identity.user || !identity.base) throw new Error('A Local Session requires an entry/user/base identity.');
+    if (!identity.entry || !identity.user || (identity.base !== null && (typeof identity.base !== 'string' || !identity.base))) throw new Error('A Local Session requires an entry/user/base identity.');
     this.state = { format: 1, identity: copy(identity), history: [copy(body)], cursor: 0, savedBody: copy(body), settingsHistory: [copy(pageSettings)], savedSettings: copy(pageSettings) };
   }
   static resume(identity: SessionIdentity, snapshot: SessionSnapshot, initialSettings: SessionPageSettings | null = null): LocalSession {

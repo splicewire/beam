@@ -3,7 +3,7 @@ import type { SessionPageSettings } from './local-session';
 import { IndexedDbSessions, LocalSession, type SessionSnapshot } from './local-session';
 
 /** Persistence errors are visible: a session is never silently advertised as reload-safe. */
-export function useLocalSession(entry: string, user: string | undefined, base: string | undefined, body: unknown[], enabled: boolean, pageSettings: SessionPageSettings | null = null) {
+export function useLocalSession(entry: string, user: string | undefined, base: string | null | undefined, body: unknown[], enabled: boolean, pageSettings: SessionPageSettings | null = null) {
   const [session, setSession] = useState<LocalSession | null>(null);
   const [pending, setPending] = useState<SessionSnapshot | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -14,7 +14,7 @@ export function useLocalSession(entry: string, user: string | undefined, base: s
   const server = useRef({ body, base, pageSettings });
   server.current = { body, base, pageSettings };
   useEffect(() => {
-    if (!enabled || !base) return;
+    if (!enabled || base === undefined) return;
     if (!user) { setError('The editor requires an authenticated user identity for its Local Session.'); return; }
     let live = true;
     const identity = { entry, user, base };
@@ -45,7 +45,7 @@ export function useLocalSession(entry: string, user: string | undefined, base: s
     render(value => value + 1);
   };
   const recover = async (restore: boolean) => {
-    if (!pending || !user || !server.current.base) return;
+    if (!pending || !user || server.current.base === undefined) return;
     const identity = { entry, user, base: server.current.base };
     const next = restore
       ? LocalSession.restoreUnsaved(identity, server.current.body, pending, server.current.pageSettings)

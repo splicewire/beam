@@ -7,6 +7,7 @@ import type { JsonDoc } from '@splicewire/beam-ux/jsondoc';
 const loadBody = vi.hoisted(() => vi.fn());
 const saveBody = vi.hoisted(() => vi.fn());
 const saveDraft = vi.hoisted(() => vi.fn());
+const publishVersion = vi.hoisted(() => vi.fn());
 const listVersions = vi.hoisted(() => vi.fn());
 const provided = vi.hoisted(() => ({ profile: undefined as unknown }));
 vi.mock('./local-session', async importOriginal => {
@@ -18,7 +19,7 @@ vi.mock('./local-session', async importOriginal => {
     } };
 });
 vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
-vi.mock('./context', () => ({useEditorKit: () => ({userId:"author", transport:{loadBody,saveBody,saveDraft,listVersions,publish:vi.fn(),restoreVersion:vi.fn()}, theme:{}, canAuthor:true, canvasConfig:{registry:{}}, defaultTreeFor:()=>[{kind:'text',value:'SEED'}], notify:{success:vi.fn(),error:vi.fn()}})}));
+vi.mock('./context', () => ({useEditorKit: () => ({userId:"author", transport:{loadBody,saveBody,saveDraft,listVersions,publish:publishVersion,restoreVersion:vi.fn()}, theme:{}, canAuthor:true, canvasConfig:{registry:{}}, defaultTreeFor:()=>[{kind:'text',value:'SEED'}], notify:{success:vi.fn(),error:vi.fn()}})}));
 // Observe the adapter's public controlled-value and save seam; the canvas has its own owning tests.
 vi.mock('../canvas', () => ({
     CanvasProvider: ({ children, config }: { children: ReactNode; config: { profile?: unknown } }) => { provided.profile = config.profile; return <>{children}</>; },
@@ -51,6 +52,7 @@ afterEach(() => {
     saveBody.mockReset();
     saveDraft.mockReset();
     listVersions.mockReset();
+    publishVersion.mockReset();
 });
 
 it('withholds replacement writes after a refused window read', async () => {
@@ -114,4 +116,31 @@ it('saves page settings and body as one draft and undoes both through the sessio
     await waitFor(() => expect(saveDraft).toHaveBeenCalledWith('settings-page', SAVED, 'v1', undefined, { title: 'Draft title', segment: 'home' }));
     fireEvent.click(screen.getByRole('button', { name: 'Undo' }));
     expect((screen.getByLabelText('Title') as HTMLInputElement).value).toBe('Published title');
+});
+
+it('mounts an unauthored existing row without writing, then first-saves with a null base', async () => {
+    listVersions.mockResolvedValue({headVersion:null,publishedVersion:null,versions:[],draftPending:false});
+    loadBody.mockResolvedValue({body:SAVED});
+    render(<VisualEditorMount entryRef={ref('unauthored')} />);
+    await screen.findByRole('button',{name:'Save'});
+    expect(saveDraft).not.toHaveBeenCalled();
+    expect(publishVersion).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button',{name:'Save'}));
+    await waitFor(()=>expect(saveDraft).toHaveBeenCalledWith('unauthored',SAVED,null));
+});
+it('first Publish saves a null-base draft then publishes its returned ref', async () => {
+    listVersions.mockResolvedValue({headVersion:null,publishedVersion:null,versions:[],draftPending:false});
+    loadBody.mockResolvedValue({body:SAVED});
+    publishVersion.mockResolvedValue({headVersion:'v1',publishedVersion:'v1',versions:[],draftPending:false});
+    render(<VisualEditorMount entryRef={ref('publish-first')} />);
+    fireEvent.click(await screen.findByRole('button',{name:'Publish'}));
+    await waitFor(()=>expect(saveDraft).toHaveBeenCalledWith('publish-first',SAVED,null,undefined,null));
+    await waitFor(()=>expect(publishVersion).toHaveBeenCalledWith('publish-first','v1'));
+});
+it('refuses a missing pin when history exists even if head is missing', async () => {
+    listVersions.mockResolvedValue({headVersion:null,publishedVersion:null,versions:[{id:'old'}],draftPending:false});
+    loadBody.mockResolvedValue({body:SAVED});
+    render(<VisualEditorMount entryRef={ref('damaged')} />);
+    expect((await screen.findByRole('alert')).textContent).toContain('Publication Pin');
+    expect(screen.queryByRole('button',{name:'Save'})).toBeNull();
 });

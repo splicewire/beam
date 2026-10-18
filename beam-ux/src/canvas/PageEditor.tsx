@@ -28,6 +28,7 @@ import { getAt, isJsonBlock } from '../blockdoc/json.js';
 import type { JsonDoc } from '../blockdoc/json.js';
 import type { EntryPublicationState, EntryVersion } from '../types.js';
 import { ReleasePanel, type ReleaseCommand, type ReleaseRecord } from '../releases';
+import { canMountPublication, isUnauthored } from '../editor/publication-state.js';
 import { useLocalSession } from '../editor/use-local-session.js';
 import { Breadcrumb } from './Breadcrumb.js';
 import { CanvasPalette } from './CanvasPalette.js';
@@ -59,7 +60,7 @@ export interface PageEditorTransport {
     saveBody: (slug: string, body: JsonDoc) => Promise<unknown>;
     loadBody?: (slug: string) => Promise<{ body?: unknown } | unknown>;
     /** Record the document as a draft: versioned, not published — readers keep the published body. */
-    saveDraft?: (slug: string, body: JsonDoc, baseVersion: string, pageSettings?: SessionPageSettings | null) => Promise<EntryPublicationState>;
+    saveDraft?: (slug: string, body: JsonDoc, baseVersion: string | null, pageSettings?: SessionPageSettings | null) => Promise<EntryPublicationState>;
     /** Publish the working copy through the real compile path. */
     publish?: (slug: string, ref: string) => Promise<EntryPublicationState>;
     releaseCommand?: (id: string, command: ReleaseCommand) => Promise<ReleaseRecord>;
@@ -288,7 +289,7 @@ export function PageEditor({
     const [publicationError, setPublicationError] = useState<string | null>(null);
     const [conflict, setConflict] = useState(false);
     const canvasConfig = useCanvas();
-    const local = useLocalSession(entryId ?? slug, userId, publication?.headVersion ?? undefined, initial, editing && !!publication?.headVersion, pageSettings ?? null);
+    const local = useLocalSession(entryId ?? slug, userId, publication?.headVersion, initial, editing && !!publication, pageSettings ?? null);
     useEffect(() => {
         if (!local.session) return;
         const current = local.session.body as JsonDoc;
@@ -319,7 +320,7 @@ export function PageEditor({
             .listVersions?.(slug)
             .then((state) => {
                 if (!live) return;
-                if (!state.publishedVersion || !state.headVersion) {
+                if (!canMountPublication(state)) {
                     setPublicationError('This entry has no Publication Pin. Publish its baseline before mounting the editor.');
                 } else setPublication(state);
             })
@@ -362,6 +363,7 @@ export function PageEditor({
             mount.markDirty(false);
             editedRef.current = false;
             notify?.success('Draft saved');
+            return next;
         } catch (error) {
             if ((error as { status?: number })?.status === 409) setConflict(true);
             else notify?.error('Draft save failed');
@@ -378,10 +380,17 @@ export function PageEditor({
      * landed by then — so it is reported as an error toast over a publication that really did happen.
      */
     const publish = async () => {
-        if (!transport.publish || !publication?.headVersion) return;
+        if (!transport.publish || !publication || !local.session) return;
+        let ref = local.session.identity.base;
+        if (isUnauthored(publication)) {
+            const draft = await saveDraft();
+            if (!draft?.headVersion) return;
+            ref = draft.headVersion;
+        }
+        if (!ref) return;
         setBusy(true);
         try {
-            const next = await transport.publish(slug, local.session!.identity.base);
+            const next = await transport.publish(slug, ref);
             setPublication(next);
             if (next.compileError) notify?.error(next.compileError);
             else notify?.success(next.release && next.release.status !== 'published' ? 'Release submitted for review' : 'Published');
@@ -401,7 +410,7 @@ export function PageEditor({
     const publishNow = async () => {
         // Flush FIRST, so an edit still pending in a widget counts (a press that did not blur the inline editor).
         await mount.flush();
-        if (local.session?.dirty || editedRef.current) { notify?.error('Save your draft before publishing it.'); return; }
+        if ((local.session?.dirty || editedRef.current) && !(publication && isUnauthored(publication))) { notify?.error('Save your draft before publishing it.'); return; }
         return publish();
     };
 

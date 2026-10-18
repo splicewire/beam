@@ -122,7 +122,7 @@ const publicationClient = {
 
         return (await readData(res, 'versions')) as EntryPublicationState;
     },
-    saveDraft: async (id: string, body: Record<string, unknown>, baseVersion: string, label?: string, pageSettings?: Record<string, unknown> | null) =>
+    saveDraft: async (id: string, body: Record<string, unknown>, baseVersion: string | null, label?: string, pageSettings?: Record<string, unknown> | null) =>
         (await publicationPost(id, 'save-draft', { body, baseVersion, label, ...(pageSettings ? { pageSettings } : {}) })) as EntryPublicationState,
     publish: async (id: string, ref: string, label?: string) =>
         (await publicationPost(id, 'publish', { ref, label })) as EntryPublicationState,

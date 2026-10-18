@@ -79,3 +79,14 @@ it('a settings edit made during Save remains dirty after the response', () => {
   expect(session.dirty).toBe(true);
   expect(session.pageSettings?.title).toBe('Typed during request');
 });
+
+it('retains unauthored changes under a null base and replaces that identity after first save', () => {
+    const session = new LocalSession({entry:'legacy',user:'author',base:null}, []);
+    session.change([{kind:'text',value:'draft'}]);
+    const resumed = LocalSession.resume({entry:'legacy',user:'author',base:null},session.snapshot());
+    expect(resumed.dirty).toBe(true);
+    resumed.saved('first-head');
+    expect(resumed.identity.base).toBe('first-head');
+    expect(resumed.canUndo).toBe(true);
+    expect(resumed.dirty).toBe(false);
+});

@@ -1,3 +1,4 @@
+import { canMountPublication, isUnauthored } from './publication-state';
 import { PageSettings } from './PageSettings';
 import { SourceMode } from './SourceMode';
 import { ReleasePanel } from '../releases';
@@ -25,7 +26,7 @@ function AddressedVisualEditor({ entryRef }: { entryRef: EntryRef }) {
     const [busy, setBusy] = useState(false);
     const [history, setHistory] = useState(false);
     const id = entryRef.id;
-    const local = useLocalSession(id ?? '', userId, loaded?.state.headVersion ?? undefined, loaded?.body ?? [], !!loaded && !!id, loaded?.pageSettings ?? null);
+    const local = useLocalSession(id ?? '', userId, loaded?.state.headVersion, loaded?.body ?? [], !!loaded && !!id, loaded?.pageSettings ?? null);
     useEffect(() => {
         if (!id || !userId || !canAuthor || !transport.listVersions || !transport.saveDraft || !transport.publish || !transport.restoreVersion) {
             setError('The editor requires an authored entry, authenticated author, and publication transport.'); return;
@@ -33,7 +34,7 @@ function AddressedVisualEditor({ entryRef }: { entryRef: EntryRef }) {
         let live = true;
         Promise.all([transport.loadBody(id), transport.listVersions(id)]).then(([envelope, state]) => {
             if (!live) return;
-            if (!state.publishedVersion || !state.headVersion) throw new Error('This entry has no Publication Pin. Publish its baseline before mounting the editor.');
+            if (!canMountPublication(state)) throw new Error('This entry has no Publication Pin. Publish its baseline before mounting the editor.');
             const body = (envelope as { body?: unknown }).body;
             if (!Array.isArray(body)) throw new Error('The entry has no editable document.');
             setLoaded({ body: body as JsonDoc, state, pageSettings: (envelope as unknown as { pageSettings?: SessionPageSettings }).pageSettings, styleRegistry: (envelope as { styleRegistry?: import("../blockdoc/style-runtime.js").StyleRegistry }).styleRegistry, profile: (envelope as { pageSettings?: SessionPageSettings; styleRegistry?: import('../blockdoc/style-runtime.js').StyleRegistry; profile?: import('@schemastud/blockdoc').BlockdocManifest }).profile });
@@ -88,9 +89,21 @@ function AddressedVisualEditor({ entryRef }: { entryRef: EntryRef }) {
     </div>;
     if (!loaded || !local.session) return <div role="status">Loading Local Session…</div>;
     const publish = () => run(async () => {
-        if (local.session!.dirty) throw new Error('Save your draft before publishing it.');
-        if (!id || !transport.publish || !loaded.state.headVersion) return;
-        const state = await transport.publish(id, local.session!.identity.base);
+        if (!id || !transport.publish || !local.session) return;
+        if (local.session.source) throw new Error('Apply or discard Source Mode before publishing.');
+        let ref = local.session.identity.base;
+        if (isUnauthored(loaded.state)) {
+            if (!transport.saveDraft) return;
+            const sent = local.session.body;
+            const settings = local.session.pageSettings;
+            const draft = await transport.saveDraft(id, sent as unknown as Record<string, unknown>, null, undefined, settings);
+            if (!draft.headVersion) throw new Error('Save returned no version.');
+            ref = draft.headVersion;
+            local.saved(ref, sent, settings);
+            setLoaded(previous => previous && { ...previous, state: draft });
+        } else if (local.session.dirty) throw new Error('Save your draft before publishing it.');
+        if (!ref) throw new Error('Publish requires a saved version.');
+        const state = await transport.publish(id, ref);
         setLoaded(previous => previous && { ...previous, state });
         if (state.compileError) notify.error(state.compileError);
         else notify.success(state.release && state.release.status !== 'published' ? 'Release submitted for review' : 'Published');
@@ -112,7 +125,7 @@ function AddressedVisualEditor({ entryRef }: { entryRef: EntryRef }) {
             <button disabled={busy} onClick={() => void resolveConflict(true)}>Save ours as a new version</button>
         </div>}
         <div aria-label="Publication controls">
-            <button disabled={busy || local.session.dirty} onClick={() => void publish()}>Publish</button>
+            <button disabled={busy || (local.session.dirty && !isUnauthored(loaded.state))} onClick={() => void publish()}>Publish</button>
             <button onClick={() => setHistory(!history)}>History</button>
             <span>{local.session.dirty ? 'Unsaved changes' : 'Draft saved'}</span>
         </div>
