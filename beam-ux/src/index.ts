@@ -31,6 +31,7 @@ export { RegionInspector, type RegionEditorProps } from "./RegionInspector";
 // The theme entry's editor seat — the same three parts (useEntryBody → RegionInspector's
 // `form` body → useSaveEntryBody) wired to one entry id. G2-BEAM-THEME-NAV.
 export { ThemeEditor } from "./ThemeEditor";
+export { ReleasePanel, type ReleaseRecord, type ReleaseCommand, type ReleaseEntryChoice } from './releases';
 export { RegionOverlay } from "./RegionOverlay";
 export { UX_BUILDER_CSS } from "./css";
 export { RegionCanvas, RegionBlock } from "./RegionCanvas";

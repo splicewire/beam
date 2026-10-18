@@ -181,6 +181,7 @@ export function PageEditor({ slug, body = null, entryId: suppliedId = null }: Pa
                               saveDraft: (_s: string, doc: JsonDoc, baseVersion: string, settings?: import("./local-session").SessionPageSettings | null) =>
                                   settings ? saveDraft(entryId, asBody(doc), baseVersion, undefined, settings) : saveDraft(entryId, asBody(doc), baseVersion),
                               publish: (_s: string, ref: string) => publish(entryId, ref),
+                              releaseCommand: bodyClient.releaseCommand?.bind(bodyClient),
                               listVersions: () => listVersions(entryId),
                               restoreVersion: (_s: string, ref: string) =>
                                   restoreVersion(entryId, ref),

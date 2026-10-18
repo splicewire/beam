@@ -61,6 +61,9 @@ export interface UxBuilderClient<TBody = BeamUxEntryBodyData> {
      * is an authored empty body.
      */
     clearBody?(id: string, label?: string): Promise<EntryPublicationState>;
+    createRelease?(entryId: string, title: string): Promise<import('./releases').ReleaseRecord>;
+    releaseCommand?(releaseId: string, command: import('./releases').ReleaseCommand): Promise<import('./releases').ReleaseRecord>;
+    listReleases?(): Promise<Array<{id: string; title: string}>>;
 }
 
 /**
@@ -96,6 +99,7 @@ export interface EntryVersion {
  * client must not compute or cache its own.
  */
 export interface EntryPublicationState {
+    release?: import('./releases').ReleaseRecord | null;
     id: string;
     draftPending: boolean;
     publishedVersion: string | null;
