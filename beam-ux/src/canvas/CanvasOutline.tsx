@@ -23,8 +23,8 @@ export function CanvasOutline({doc,onSelect,onHide}:{doc:JsonDoc;onSelect:(path:
   if(!sealed&&!collapsed.has(path))walk(node.children,path,depth+1);
  });walk(doc,'',1);
  const focus=(index:number,root:HTMLElement)=>root.querySelectorAll<HTMLButtonElement>('[data-outline-select]')[index]?.focus();
- return <section aria-label="Block outline"><h3>Outline</h3><p>Hide changes visitor styles after publish ({layer.breakpoint?`${layer.breakpoint}+`:'all widths'}).</p>
- <div role="tree" aria-label="Page blocks" aria-multiselectable="true">{rows.map((row,index)=><div role="treeitem" aria-level={row.depth} aria-selected={selection.paths.includes(row.path)} aria-expanded={row.hasChildren?!collapsed.has(row.path):undefined} key={row.path} style={{paddingInlineStart:(row.depth-1)*12}}
+ return <section className="ve-outline" aria-label="Block outline"><h3>Outline</h3><p>Hide changes visitor styles after publish ({layer.breakpoint?`${layer.breakpoint}+`:'all widths'}).</p>
+ <div role="tree" aria-label="Page blocks" aria-multiselectable="true">{rows.map((row,index)=><div className="ve-outline-row" role="treeitem" aria-level={row.depth} aria-selected={selection.paths.includes(row.path)} aria-expanded={row.hasChildren?!collapsed.has(row.path):undefined} key={row.path} style={{paddingInlineStart:(row.depth-1)*12}}
  onKeyDown={event=>{
   const root=event.currentTarget.parentElement!;
   if(event.key==='ArrowDown'){event.preventDefault();focus(Math.min(rows.length-1,index+1),root);}

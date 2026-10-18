@@ -81,3 +81,10 @@ it('labels inherited hiding after clearing only the selected breakpoint override
  expect(screen.getByText(/inherited; edit the earlier layer/)).toBeTruthy();
  expect(JSON.parse(screen.getByTestId('doc').textContent!)[0].style.layers).toEqual([{declarations:{display:'none'}}]);
 });
+it('ships command chrome hooks instead of unstyled host-dependent buttons',()=>{
+ render(<Harness/>);
+ const bar=screen.getByRole('toolbar',{name:'Block commands'});
+ expect(bar.classList.contains('ve-command-bar')).toBe(true);
+ expect(screen.getByRole('region',{name:'Block outline'}).classList.contains('ve-outline')).toBe(true);
+ for(const button of bar.querySelectorAll('button')) expect(button.classList.contains('ve-command-button')).toBe(true);
+});

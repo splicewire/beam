@@ -93,6 +93,19 @@ export function veCss(t?: Partial<CanvasTheme>): string {
 .ve-pal-item{text-align:left;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:8px;color:${c.panelFg};cursor:pointer;font:inherit;font-size:12px;padding:8px 11px}
 .ve-pal-item:hover{color:#fff;background:${c.accent}24;border-color:${c.accent}66}
 .ve-pal-note{margin-top:6px;color:${c.muted};font-size:10px;line-height:1.4}
+.ve-command-bar{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:10px;background:${c.panelBg};color:${c.panelFg};font-family:${c.fontBody};font-size:12px;border-radius:8px;margin-bottom:12px}
+.ve-command-button{display:inline-flex;align-items:center;padding:6px 10px;border:1px solid ${c.muted};border-radius:6px;background:transparent;color:inherit;font:inherit;line-height:1.4;cursor:pointer}
+.ve-command-button:hover:not(:disabled){border-color:${c.accent}}
+.ve-command-button:focus-visible{outline:2px solid ${c.accent};outline-offset:2px}
+.ve-command-button:disabled{opacity:.45;cursor:not-allowed}
+.ve-canvas-widget{min-width:0}
+.ve-outline{font-family:${c.fontBody};font-size:12px;color:${c.ink}}
+.ve-outline h3{font-weight:600;margin:0 0 8px}
+.ve-outline p{margin:0 0 12px}
+.ve-outline-row{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:6px 0}
+.ve-outline-row button{padding:4px 7px;border:1px solid currentColor;border-radius:5px;background:transparent;color:inherit;font:inherit;cursor:pointer}
+.ve-outline-row button:disabled{opacity:.45;cursor:not-allowed}
+.ve-outline-row[aria-selected="true"]{outline:2px solid ${c.accent};outline-offset:2px;border-radius:5px}
 .ve-canvas{flex:1;overflow:auto;background:${c.canvas};color:${c.ink}}
 .ve-canvas [data-bd-path]:hover{outline:1.5px dashed ${c.accent}80;outline-offset:1px}
 .ve-canvas [data-bd-component]:hover{outline:1.5px dotted ${c.accent};outline-offset:1px}
@@ -203,7 +216,7 @@ ${inspectorPalette(c)}
 export function peCss(t?: Partial<CanvasTheme>): string {
     const c = theme(t);
     return `
-.pe-canvas{position:relative}
+.pe-canvas{position:relative;box-sizing:border-box;min-width:0;padding-top:40px}
 .pe-canvas [data-bd-path]:hover{outline:1.5px dashed ${c.accent}80;outline-offset:1px}
 .pe-canvas [data-bd-component]:hover{outline:1.5px dotted ${c.accent};outline-offset:1px}
 .pe-canvas [contenteditable="true"]{outline:2px solid ${c.editAccent} !important;cursor:text}

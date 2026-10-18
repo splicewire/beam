@@ -411,13 +411,13 @@ export function CanvasWidget({
             const key=event.key.toLowerCase();
             if(['c','x','v'].includes(key)){event.preventDefault();if(key==='v')void paste();else void copy(key==='x');}
         }} style={{width: styleSelection.breakpoint ? (config.styleRegistry ?? DEFAULT_STYLE_REGISTRY).breakpoints[styleSelection.breakpoint] : undefined, maxWidth: '100%'}}>
-            <div role="toolbar" aria-label="Block commands">
-                <button type="button" disabled={!selection.paths.length} onClick={()=>void copy()}>Copy blocks</button>
-                <button type="button" disabled={readOnly||!selection.paths.length} onClick={()=>void copy(true)}>Cut blocks</button>
-                <button type="button" disabled={readOnly} onClick={()=>void paste()}>Paste into {sel??'document'}</button>
-                <button type="button" disabled={readOnly||!selection.paths.length} onClick={()=>command(()=>wrapBlocks(docRef.current,selection.paths,'flex',config.profile))}>Wrap in flex</button>
-                <button type="button" disabled={readOnly||!selection.paths.length} onClick={()=>command(()=>wrapBlocks(docRef.current,selection.paths,'grid',config.profile))}>Wrap in grid</button>
-                <button type="button" disabled={readOnly||selection.paths.length!==1} onClick={()=>command(()=>unwrapBlock(docRef.current,selection.paths[0],config.profile))}>Unwrap</button>
+            <div className="ve-command-bar" role="toolbar" aria-label="Block commands">
+                <button className="ve-command-button" type="button" disabled={!selection.paths.length} onClick={()=>void copy()}>Copy blocks</button>
+                <button className="ve-command-button" type="button" disabled={readOnly||!selection.paths.length} onClick={()=>void copy(true)}>Cut blocks</button>
+                <button className="ve-command-button" type="button" disabled={readOnly} onClick={()=>void paste()}>Paste into {sel??'document'}</button>
+                <button className="ve-command-button" type="button" disabled={readOnly||!selection.paths.length} onClick={()=>command(()=>wrapBlocks(docRef.current,selection.paths,'flex',config.profile))}>Wrap in flex</button>
+                <button className="ve-command-button" type="button" disabled={readOnly||!selection.paths.length} onClick={()=>command(()=>wrapBlocks(docRef.current,selection.paths,'grid',config.profile))}>Wrap in grid</button>
+                <button className="ve-command-button" type="button" disabled={readOnly||selection.paths.length!==1} onClick={()=>command(()=>unwrapBlock(docRef.current,selection.paths[0],config.profile))}>Unwrap</button>
                 <span>{selection.paths.length} blocks selected</span>
             </div>
             {commandError&&<p role="alert">{commandError}</p>}

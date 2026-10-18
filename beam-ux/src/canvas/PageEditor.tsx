@@ -531,12 +531,8 @@ export function PageEditor({
                     <button onClick={() => void resolveConflict(false)}>Reload theirs</button>
                     <button onClick={() => void resolveConflict(true)}>Save ours as a new version</button>
                 </div>}
-                {/* The content region — IN PLACE (inside the page's layout), so classes + scoped CSS apply.
-                    hideBreadcrumb: PageEditor renders its own breadcrumb in the floating Inspector panel
-                    below — the in-flow one would render at the top of the real page's content, which is
-                    exactly where the floating pe-left/pe-right panels sit, so it was rendering almost
-                    entirely behind them (found live: only its LAST segment's last few pixels peeked out
-                    past the left panel's edge). */}
+                {/* Reserve space for floating panels without changing the published page layout. */}
+                <div className="pe-canvas" style={{marginLeft: leftOpen ? 212 : 0, marginRight: versionsOpen || confirmClear ? 332 : rightOpen ? 312 : 0}}>
                 <SourceMode local={local} allowed={!canvasConfig.profile || !('x-admits-code' in canvasConfig.profile) || canvasConfig.profile['x-admits-code'] !== false}
                     conversion={transport.printSource && transport.readSource ? {
                         print: body => transport.printSource!(slug, body),
@@ -544,6 +540,7 @@ export function PageEditor({
                     } : undefined}>
                     <CanvasWidget value={doc} onChange={onCanvasChange} editShellMount={mount} theme={theme} hideBreadcrumb />
                 </SourceMode>
+                </div>
 
                 {/* Floating editor chrome — fixed over the page. */}
                 <div className="pe-bar">
