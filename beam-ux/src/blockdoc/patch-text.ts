@@ -1,14 +1,13 @@
 /**
- * `patchText` — the ONE lens edit-op the inline leaf seam (`@splicewire/beam-ux/leaf`) needs, kept in a
- * **babel-free** module on purpose.
+ * `patchText` edits an already-parsed TSX text node in a Babel-free module.
  *
  * The rest of the `.tsx` ⟷ TsxTree lens (`lens.ts`) is an AUTHORING/build concern: it value-imports
  * `recast` + `@babel/types` to parse/generate JSX, which are build-time libraries that must never reach
  * the browser render bundle (`@babel/types`' validators reference a bare `process` global and crash the
  * client). But `patchText` only edits an already-parsed AST text node in place — it needs no parser and
  * no builder, just the node's `.type` discriminant and a plain-object `TemplateElement`. Isolating it
- * here lets `leaf/bind.ts` import a lossless text patch WITHOUT dragging babel/recast onto the client
- * render path. `lens.ts` re-exports this so the public lens API is unchanged.
+ * here keeps text patching independent of parser and builder imports.
+ * `lens.ts` re-exports this as part of the public TSX Lens API.
  */
 
 import type { TextNode } from './types.js';

@@ -369,9 +369,8 @@ export function patchPropExpression(prop: BlockProp, exprSrc: string): void {
     prop.value = exprSrc;
 }
 
-// `patchText` lives in a babel-free module (`patch-text.ts`) so the inline leaf seam
-// (`@splicewire/beam-ux/leaf`) can import a lossless text patch without dragging `@babel/types` +
-// `recast` onto the client render bundle. Re-exported here to keep the lens public API unchanged.
+// `patchText` edits an already-parsed text node without loading a parser or builder.
+// Keep the module Babel-free and re-export it here as part of the public TSX Lens API.
 export { patchText } from './patch-text.js';
 
 // ---------------------------------------------------------------------------
