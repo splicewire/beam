@@ -1,7 +1,9 @@
 import { styleRegistry } from './blockdoc/style-runtime.js';
 import { useState } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { SchemaNode } from '@schemastud/seam';
-import { useEntryBody, useSaveEntryBody } from './hooks';
+import { useEntryBody } from './hooks';
+import { useUxBuilderServices } from './provider';
 import { RegionInspector } from './RegionInspector';
 import type { Region } from './types';
 
@@ -17,7 +19,7 @@ import type { Region } from './types';
  * editor in this package already is, wired to one entry id:
  *
  *   {@link useEntryBody} → {@link RegionInspector} (`kind: 'form'` ⇒ the REAL `@schemastud/seam`
- *   SchemaForm over `{schema, body}`) → {@link useSaveEntryBody}.
+ *   SchemaForm over `{schema, body}`) → the entry's versioned draft operation.
  *
  * The schema is the SERVER's: `Splicewire\Beam\Ux\Particle\EntryBodyEnvelope::schemaFor()` answers a
  * `UxType::Theme` entry with `ThemeSchemas`' `{canvas, site}` JSON Schema, so the fields an author
@@ -58,7 +60,7 @@ import type { Region } from './types';
 export function ThemeEditor({
     entryId,
     label = 'Theme tokens',
-    note = 'The resolved theme cascade: package defaults → this entry → a tenant override. Saved tokens reach every reader on their next page load.',
+    note = 'Save creates a theme draft. Add its saved version to a Release to publish it with the other changes.',
 }: {
     /** The `namespace=theme, slug=default` entry's id, resolved server-side and shared as a prop. */
     entryId: string;
@@ -66,9 +68,31 @@ export function ThemeEditor({
     note?: string;
 }) {
     const [breakpoint, setBreakpoint] = useState('');
+    const { client } = useUxBuilderServices();
+    const cache = useQueryClient();
     const query = useEntryBody(entryId);
-    const save = useSaveEntryBody();
     const [draft, setDraft] = useState<Record<string, unknown> | null>(null);
+    const [releaseId, setReleaseId] = useState('');
+    const versionKey = ['theme-versions', entryId];
+    const versions = useQuery({queryKey: versionKey, queryFn: () => client.listVersions!(entryId), enabled: !!client.listVersions});
+    const releases = useQuery({queryKey:['theme-releases',entryId],queryFn: () => client.listReleases!(),enabled:!!client.listReleases});
+    const save = useMutation({
+        mutationFn: async (body: Record<string, unknown>) => {
+            const base = versions.data?.headVersion;
+            if (!client.saveDraft || !base) throw new Error('A saved base version and draft transport are required to edit this theme.');
+            return client.saveDraft(entryId, body, base);
+        },
+        onSuccess: async (state, savedBody) => {
+            cache.setQueryData(versionKey, state);
+            await query.refetch();
+            setDraft(current => current === savedBody ? null : current);
+        },
+    });
+    const join = useMutation({mutationFn: async () => {
+        const ref = versions.data?.headVersion;
+        if (!client.releaseCommand || !releaseId || !ref) throw new Error('Choose a Release and a saved theme version.');
+        return client.releaseCommand(releaseId, {action:'member',entryId,ref});
+    }});
 
     if (query.isPending) {
         return (
@@ -113,12 +137,24 @@ export function ThemeEditor({
             // MERGED over the loaded body — see this component's docblock. `next` is the schema-shaped
             // form output; every top-level namespace the schema does not describe survives it.
             onChange={changeLayer}
-            onSave={() => save.mutate({ id: entryId, body })}
+            onSave={() => save.mutate(body)}
             // Dropping the buffer IS Discard: the next render falls back to `query.data.body`, the
             // last thing the server actually stored.
             onDiscard={draft === null ? undefined : () => setDraft(null)}
             saving={save.isPending}
         />
+        {save.isError && <p role="alert">{save.error.message}</p>}
+        {save.isSuccess && <p role="status">Theme draft saved. Readers still receive the published theme.</p>}
+        {client.listReleases && client.releaseCommand && <div>
+            <label>Release <select value={releaseId} onChange={event => setReleaseId(event.target.value)}>
+                <option value="">Choose a Release</option>
+                {releases.data?.map(release => <option key={release.id} value={release.id}>{release.title}</option>)}
+            </select></label>
+            <button disabled={join.isPending || !releaseId || !versions.data?.headVersion}
+                onClick={() => join.mutate()}>Add saved theme to Release</button>
+            {join.isError && <p role="alert">{join.error.message}</p>}
+            {join.isSuccess && <p role="status">Saved theme version added to the Release.</p>}
+        </div>}
         </>
     );
 }

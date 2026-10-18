@@ -1,5 +1,6 @@
 import { PageSettings } from './PageSettings';
 import { SourceMode } from './SourceMode';
+import { ReleasePanel } from '../releases';
 import type { SessionPageSettings } from './local-session';
 // Window-mode authoring shares the package-owned Local Session and publication transport.
 import { useEffect, useState } from 'react';
@@ -91,7 +92,8 @@ function AddressedVisualEditor({ entryRef }: { entryRef: EntryRef }) {
         if (!id || !transport.publish || !loaded.state.headVersion) return;
         const state = await transport.publish(id, local.session!.identity.base);
         setLoaded(previous => previous && { ...previous, state });
-        if (state.compileError) notify.error(state.compileError); else notify.success('Published');
+        if (state.compileError) notify.error(state.compileError);
+        else notify.success(state.release && state.release.status !== 'published' ? 'Release submitted for review' : 'Published');
     });
     const restore = (ref: string) => run(async () => {
         if (local.session!.dirty) throw new Error('Save or discard unsaved changes before restoring History.');
@@ -114,6 +116,13 @@ function AddressedVisualEditor({ entryRef }: { entryRef: EntryRef }) {
             <button onClick={() => setHistory(!history)}>History</button>
             <span>{local.session.dirty ? 'Unsaved changes' : 'Draft saved'}</span>
         </div>
+        {loaded.state.release && transport.releaseCommand && <ReleasePanel release={loaded.state.release}
+            entries={[{id:id!,title:entryRef.slug ?? 'This entry',versions:loaded.state.versions.map(version => ({id:version.id,label:version.readable ?? version.id}))}]}
+            onCommand={async command => {
+                const release = await transport.releaseCommand!(loaded.state.release!.id, command);
+                const state = await transport.listVersions!(id!);
+                setLoaded(previous => previous && {...previous,state:{...state,release}});
+            }} />}
         {history && <aside aria-label="History">{loaded.state.versions.map(version => <div key={version.id}>
             <span>{version.readable} {version.label}</span>
             <button disabled={busy || local.session!.dirty} onClick={() => void restore(version.id)}>Restore {version.readable} into draft</button>

@@ -27,6 +27,7 @@ import { WidgetRegistryContext } from '@schemastud/seam';
 import { getAt, isJsonBlock } from '../blockdoc/json.js';
 import type { JsonDoc } from '../blockdoc/json.js';
 import type { EntryPublicationState, EntryVersion } from '../types.js';
+import { ReleasePanel, type ReleaseCommand, type ReleaseRecord } from '../releases';
 import { useLocalSession } from '../editor/use-local-session.js';
 import { Breadcrumb } from './Breadcrumb.js';
 import { CanvasPalette } from './CanvasPalette.js';
@@ -61,6 +62,7 @@ export interface PageEditorTransport {
     saveDraft?: (slug: string, body: JsonDoc, baseVersion: string, pageSettings?: SessionPageSettings | null) => Promise<EntryPublicationState>;
     /** Publish the working copy through the real compile path. */
     publish?: (slug: string, ref: string) => Promise<EntryPublicationState>;
+    releaseCommand?: (id: string, command: ReleaseCommand) => Promise<ReleaseRecord>;
     /** The recorded history plus both pins — refetched whenever the panel opens. */
     listVersions?: (slug: string) => Promise<EntryPublicationState>;
     /** Roll forward to a recorded version and publish it. */
@@ -382,7 +384,7 @@ export function PageEditor({
             const next = await transport.publish(slug, local.session!.identity.base);
             setPublication(next);
             if (next.compileError) notify?.error(next.compileError);
-            else notify?.success('Published');
+            else notify?.success(next.release && next.release.status !== 'published' ? 'Release submitted for review' : 'Published');
         } catch {
             notify?.error('Publish failed');
         } finally {
@@ -649,6 +651,13 @@ export function PageEditor({
                 {/* The version history — the same right-hand strip as the Inspector, so they toggle
                     each other rather than stacking. Restore is CONFIRMED, never one click: it changes
                     what every reader of the page is served, which is not an undoable local edit. */}
+                {publication?.release && transport.releaseCommand && <ReleasePanel release={publication.release}
+                    entries={[{id:publication.id,title:slug,versions:publication.versions.map(version => ({id:version.id,label:version.readable ?? version.id}))}]}
+                    onCommand={async command => {
+                        const release = await transport.releaseCommand!(publication.release!.id, command);
+                        const state = await transport.listVersions!(slug);
+                        setPublication({...state,release});
+                    }} />}
                 {versionsOpen && (
                     <aside className="pe-panel pe-versions" aria-label="Versions">
                         <h3>Versions</h3>

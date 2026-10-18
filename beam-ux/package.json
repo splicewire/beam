@@ -114,6 +114,7 @@
         "recast": "^0.23.12"
     },
     "peerDependencies": {
+        "@splicewire/beam-workflows": "^0.1.0",
         "@inertiajs/react": ">=2",
         "@rjsf/core": ">=6",
         "@rjsf/shadcn": ">=6",
@@ -139,6 +140,7 @@
         }
     },
     "devDependencies": {
+        "@splicewire/beam-workflows": "file:../beam-workflows",
         "@inertiajs/react": "^3.0.0",
         "@schemastud/blockdoc": "file:../../schemastud/blockdoc",
         "@schemastud/chat": "file:../../schemastud/chat",

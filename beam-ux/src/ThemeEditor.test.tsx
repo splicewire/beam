@@ -48,7 +48,10 @@ function mount(client: Partial<UxBuilderClient>) {
     return full;
 }
 
+const themeState = {id:entryIds.theme,headVersion:'v1',publishedVersion:'v1',headReadable:'v1',publishedReadable:'v1',draftPending:false,versions:[],compileError:null};
 const loadsTheTheme = () => ({
+    listVersions: vi.fn(async () => themeState),
+    saveDraft: vi.fn(async (_id: string, _body: Record<string, unknown>, _base: string) => ({...themeState,headVersion:'v2',draftPending:true})),
     loadBody: vi.fn(async () => themeEntryBody as BeamUxEntryBodyData),
     saveBody: vi.fn(async (_id: string, body: Record<string, unknown>) => ({
         ...themeEntryBody,
@@ -57,6 +60,21 @@ const loadsTheTheme = () => ({
 });
 
 describe('the theme entry gets Frame’s form, addressed by entry id', () => {
+    it('saves a theme as a draft against its base and can join the returned version to a Release', async () => {
+        const state = {id:entryIds.theme,headVersion:'v2',publishedVersion:'v1',headReadable:'v2',publishedReadable:'v1',draftPending:true,versions:[],compileError:null};
+        const saveDraft = vi.fn(async () => state);
+        const releaseCommand = vi.fn(async () => ({} as never));
+        const client = {...loadsTheTheme(), listVersions:vi.fn(async () => ({...state,headVersion:'v1',draftPending:false})),saveDraft,
+            listReleases:vi.fn(async () => [{id:'launch',title:'Launch'}]),releaseCommand};
+        mount(client);
+        await screen.findByText('Site theme');
+        await userEvent.click(screen.getByRole('button',{name:'Save'}));
+        await waitFor(() => expect(saveDraft).toHaveBeenCalledWith(entryIds.theme,expect.any(Object),'v1'));
+        expect(client.saveBody).not.toHaveBeenCalled();
+        fireEvent.change(await screen.findByLabelText('Release'),{target:{value:'launch'}});
+        await userEvent.click(screen.getByRole('button',{name:'Add saved theme to Release'}));
+        await waitFor(() => expect(releaseCommand).toHaveBeenCalledWith('launch',{action:'member',entryId:entryIds.theme,ref:'v2'}));
+    });
     it('edits a responsive token without changing base tokens or another breakpoint', async () => {
         const original: Record<string, unknown> = {...themeEntryBody.body, responsive: {breakpoints:{md:'52rem'},tokens:{lg:{site:{accentHover:'#123456'}}}}};
         const client = loadsTheTheme();
@@ -66,8 +84,8 @@ describe('the theme entry gets Frame’s form, addressed by entry id', () => {
         fireEvent.change(screen.getByLabelText('Token breakpoint'), {target:{value:'md'}});
         fireEvent.change(screen.getByLabelText('Accent hover'), {target:{value:'#b91c1c'}});
         await userEvent.click(screen.getByRole('button', {name:'Save'}));
-        await waitFor(() => expect(client.saveBody).toHaveBeenCalled());
-        const body = client.saveBody.mock.calls[0][1];
+        await waitFor(() => expect(client.saveDraft).toHaveBeenCalled());
+        const body = client.saveDraft.mock.calls[0][1];
         expect(body.site).toEqual(original.site);
         expect(body.shell).toEqual(original.shell);
         expect(body.responsive).toMatchObject({breakpoints:{md:'52rem'},tokens:{md:{site:{accentHover:'#b91c1c'}},lg:{site:{accentHover:'#123456'}}}});
@@ -108,8 +126,8 @@ describe('the theme entry gets Frame’s form, addressed by entry id', () => {
 
         await userEvent.click(screen.getByRole('button', { name: 'Save' }));
 
-        await waitFor(() => expect(client.saveBody).toHaveBeenCalled());
-        const [id, body] = client.saveBody.mock.calls[0];
+        await waitFor(() => expect(client.saveDraft).toHaveBeenCalled());
+        const [id, body] = client.saveDraft.mock.calls[0];
         expect(id).toBe(entryIds.theme);
         // The edit landed …
         expect((body.site as Record<string, string>).accentHover).toBe('#b91c1c');

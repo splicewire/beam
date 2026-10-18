@@ -59,7 +59,26 @@ it('preserves publication absence on an injected body-only client without using 
     expect(bodyClient.publish).toBeUndefined();
     expect(bodyClient.listVersions).toBeUndefined();
     expect(bodyClient.restoreVersion).toBeUndefined();
+    expect(bodyClient.createRelease).toBeUndefined();
+    expect(bodyClient.releaseCommand).toBeUndefined();
+    expect(bodyClient.listReleases).toBeUndefined();
     expect(fetch).not.toHaveBeenCalled();
+});
+
+it('assembles and schedules Releases using the mounted package operations', async () => {
+    const release = {id:'r1',status:'approved',title:'Launch'};
+    const fetch = vi.fn().mockImplementation(async () => Response.json({data:release}));
+    vi.stubGlobal('fetch', fetch);
+    vi.stubGlobal('document', {cookie:'XSRF-TOKEN=token'});
+    await bodyClient.createRelease!('e1','Launch');
+    expect(fetch.mock.calls[0][0]).toBe('/beam-ux-entries/e1/create-release');
+    const command = {action:'schedule' as const,dueAt:'2030-01-01T12:00:00Z',timezone:'UTC'};
+    expect(await bodyClient.releaseCommand!('r1',command)).toEqual(release);
+    expect(fetch.mock.calls[1][0]).toBe('/beam-ux-releases/r1/command');
+    expect(JSON.parse(fetch.mock.calls[1][1].body)).toEqual(command);
+    expect(fetch.mock.calls[1][1].headers['X-XSRF-TOKEN']).toBe('token');
+    fetch.mockResolvedValueOnce(Response.json({data:[release,{id:'old',status:'published'}]}));
+    expect(await bodyClient.listReleases!()).toEqual([release]);
 });
 
 it('retains a supplied method receiver and switches back to starter defaults only without a custom client', async () => {
