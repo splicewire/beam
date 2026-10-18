@@ -1,9 +1,11 @@
+import profileFixture from '../editor/default-profile.fixture.json';
+import {CanvasSiblings} from './CanvasSiblings';
 vi.mock('../editor/local-session.js', async (original) => {
     const module = await original<typeof import('../editor/local-session.js')>();
     return { ...module, IndexedDbSessions: class { async forEntry() { return []; } async write() {} async close() {} } };
 });
-import { act, fireEvent, render, screen } from '@testing-library/react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import type { JsonBlock, JsonDoc } from '../blockdoc/json.js';
 import { attrsSchemaFor } from './attrsSchema.js';
 import { Breadcrumb } from './Breadcrumb.js';
@@ -18,6 +20,11 @@ import type { EntryPublicationState, EntryVersion } from '../types.js';
 import { EDIT_GATE_ATTR, VIEW_GATE_ATTR } from './props.js';
 import { ClassChipsWidget, StyleRowsWidget } from './widgets.js';
 
+beforeAll(()=>{
+    // jsdom has no layout. PM measures the selection after a real DOM input mutation.
+    Range.prototype.getClientRects=()=>[] as unknown as DOMRectList;
+    Range.prototype.getBoundingClientRect=()=>new DOMRect();
+});
 // ── injected config ───────────────────────────────────────────────────────────────────────────────────
 const Hero = (props: Record<string, unknown>) => <div data-testid="hero">HERO {String(props.title ?? '')}</div>;
 const MdxView = ({ md }: { md?: string }) => <div data-testid="mdxview">{md}</div>;
@@ -28,6 +35,19 @@ const MdxEdit = ({ md, onChange }: { md?: string; onChange: (s: string) => void 
 const config: CanvasConfig = { registry: { Hero }, MdxView, MdxEdit };
 
 const wrap = (ui: React.ReactNode) => <CanvasProvider config={config}>{ui}</CanvasProvider>;
+const proseProfile = {...profileFixture, nodes: profileFixture.nodes.filter(node=>!node.name.startsWith('Demo'))};
+const wrapProse = (ui: React.ReactNode) => <CanvasProvider config={{...config,profile:proseProfile as CanvasConfig['profile']}}>{ui}</CanvasProvider>;
+async function editRichText(selector:string, text:string) {
+    await waitFor(()=>expect(document.querySelector(`.ProseMirror ${selector}`)).not.toBeNull());
+    const elements=document.querySelectorAll(`.ProseMirror ${selector}`);
+    const target=elements[elements.length-1] as HTMLElement;
+    await act(async()=>{
+        target.textContent=text;
+        fireEvent.input(target);
+        await new Promise(resolve=>setTimeout(resolve,20));
+    });
+}
+
 
 it('publishes and inserts only the server profile palette', () => {
     const profile = { profile: 'hosted', version: 1, 'x-admits-code': false,
@@ -154,34 +174,21 @@ describe('CanvasNode — entitlement-gated blocks render sealed', () => {
 
 // ── CanvasNode: inline text edit ──────────────────────────────────────────────────────────────────────
 describe('CanvasNode — inline text edit', () => {
-    it('makes a leaf editable, autofocuses it, and calls onEditText on blur', () => {
-        const onEditText = vi.fn();
-        const node = block({ name: 'h2', children: [{ kind: 'text', value: 'Title' }] });
-        render(wrap(<CanvasNode node={node} path="0" editing="0" onEditText={onEditText} dnd={noopDnd} />));
-        const h2 = document.querySelector('h2') as HTMLElement;
-        expect(h2.getAttribute('contenteditable')).toBe('true');
-        // entering edit mode focuses the node directly — no second click needed to place the caret
-        // (the bug this guards: without this, a click to place the caret was intercepted by the
-        // canvas's own selection handler and immediately exited edit mode).
-        expect(document.activeElement).toBe(h2);
-        h2.textContent = 'Changed';
-        fireEvent.blur(h2);
-        expect(onEditText).toHaveBeenCalledWith('0', 'Changed');
+    it('loads a rich editor and commits text through the document channel', async () => {
+        const onEditProse=vi.fn();
+        const node=block({name:'h2',children:[{kind:'text',value:'Title'}]});
+        render(wrapProse(<CanvasSiblings nodes={[node]} parent="" editing="0" onEditText={vi.fn()} onEditProse={onEditProse} dnd={noopDnd}/>));
+        await editRichText('h2','Changed');
+        await waitFor(()=>expect(onEditProse).toHaveBeenCalled());
+        expect(JSON.stringify(onEditProse.mock.calls.at(-1))).toContain('Changed');
+        expect(document.querySelector('h2')?.getAttribute('contenteditable')).not.toBe('true');
     });
 
-    it('Escape reverts the text and blurs (canceling, not committing, the edit)', () => {
-        const onEditText = vi.fn();
-        const node = block({ name: 'h2', children: [{ kind: 'text', value: 'Title' }] });
-        render(wrap(<CanvasNode node={node} path="0" editing="0" onEditText={onEditText} dnd={noopDnd} />));
-        const h2 = document.querySelector('h2') as HTMLElement;
-        h2.textContent = 'Half-typed nonsense';
-        fireEvent.keyDown(h2, { key: 'Escape' });
-        // the DOM text is reverted to the ORIGINAL block content before the (Escape-triggered) blur —
-        // so onEditText, if it fires at all via the blur it triggers, commits the unchanged original.
-        expect(h2.textContent).toBe('Title');
-        if (onEditText.mock.calls.length > 0) {
-            expect(onEditText).toHaveBeenCalledWith('0', 'Title');
-        }
+    it('does not install a plain editable surface on an undeclared node', () => {
+        const onEditText=vi.fn();
+        render(wrap(<CanvasNode node={block({name:'h2',children:[{kind:'text',value:'Title'}]})} path="0" editing="0" onEditText={onEditText} dnd={noopDnd}/>));
+        expect(document.querySelector('[contenteditable]')).toBeNull();
+        expect(onEditText).not.toHaveBeenCalled();
     });
 
     it('is not draggable while being text-edited (draggable would hijack text-selection drag)', () => {
@@ -473,7 +480,7 @@ describe('PageEditor — mode fork + transport', async () => {
     };
 
     const enterEditMode = async (transport: object) => {
-        const rendered = render(wrap(<PageEditor entryId="entry-1" userId="author-1" slug="home" body={doc()} transport={transport as never} />));
+        const rendered = render(wrapProse(<PageEditor entryId="entry-1" userId="author-1" slug="home" body={doc()} transport={transport as never} />));
         await act(async () => {
             await act(async () => { fireEvent(window, new CustomEvent('beam-ux:mode', { detail: { mode: 'window' } })); });
             await Promise.resolve();
@@ -556,7 +563,7 @@ describe('PageEditor — mode fork + transport', async () => {
         // A press that does not blur the inline editor (no mouse click) leaves the edit pending in the widget's flush.
         // Publish must flush BEFORE choosing, or a clean-looking seam host publishes the older draft without the edit.
         const transport = publishingTransport();
-        const { container } = render(wrap(<PageEditor entryId="entry-1" userId="author-1" slug="home" body={doc()} transport={transport as never} />));
+        const { container } = render(wrapProse(<PageEditor entryId="entry-1" userId="author-1" slug="home" body={doc()} transport={transport as never} />));
         await act(async () => {
             await act(async () => { fireEvent(window, new CustomEvent('beam-ux:mode', { detail: { mode: 'window' } })); });
             await Promise.resolve();
@@ -575,7 +582,7 @@ describe('PageEditor — mode fork + transport', async () => {
         await act(async () => {
             fireEvent.doubleClick(inserted);
         });
-        (Array.from(container.querySelectorAll('h2')).pop() as HTMLElement).textContent = 'Pending edit';
+        await editRichText('h2','Pending edit');
 
         // No blur: the edit exists only in the widget's pending flush when Publish is pressed.
         await act(async () => {
@@ -734,12 +741,7 @@ describe('PageEditor — mode fork + transport', async () => {
                 fireEvent.doubleClick(inserted);
             });
 
-            // Re-query: the node re-renders as contenteditable once `editing` is set.
-            const editable = Array.from(container.querySelectorAll('h2')).pop() as HTMLElement;
-            editable.textContent = text;
-            await act(async () => {
-                fireEvent.blur(editable);
-            });
+            await editRichText('h2',text);
         };
 
         const save = async () => {
@@ -1021,7 +1023,7 @@ describe('CanvasWidget — the stale-snapshot race (G2-BEAM-AUTHOR-FIRST-EDIT-LO
 
     const typed = 'Via click-away';
 
-    it('a stale Inspector write-back does not revert the inline text committed after it registered', () => {
+    it('a stale Inspector write-back does not revert the inline text committed after it registered', async () => {
         const { mount, captured } = captureMount();
         let current: JsonDoc = doc();
         const onChange = vi.fn((next: JsonDoc) => {
@@ -1029,22 +1031,20 @@ describe('CanvasWidget — the stale-snapshot race (G2-BEAM-AUTHOR-FIRST-EDIT-LO
         });
 
         const { rerender } = render(
-            wrap(<CanvasWidget value={current} onChange={onChange} editShellMount={mount as never} />),
+            wrapProse(<CanvasWidget value={current} onChange={onChange} editShellMount={mount as never} />),
         );
 
         // 1. The author types into the contenteditable and clicks away: the blur commits the text.
         const h1 = document.querySelector('h1') as HTMLElement;
         fireEvent.doubleClick(h1);
-        rerender(wrap(<CanvasWidget value={current} onChange={onChange} editShellMount={mount as never} />));
-        const editable = document.querySelector('h1') as HTMLElement;
-        editable.textContent = typed;
-        fireEvent.blur(editable);
+        rerender(wrapProse(<CanvasWidget value={current} onChange={onChange} editShellMount={mount as never} />));
+        await editRichText('h1',typed);
         expect(onChange).toHaveBeenCalled();
-        rerender(wrap(<CanvasWidget value={current} onChange={onChange} editShellMount={mount as never} />));
+        rerender(wrapProse(<CanvasWidget value={current} onChange={onChange} editShellMount={mount as never} />));
 
         // 2. NOW the Inspector's first-mount onChange lands, through the handler it captured earlier.
         act(() => captured.setNodeAttrs?.('0.0', { className: 'lead' }));
-        rerender(wrap(<CanvasWidget value={current} onChange={onChange} editShellMount={mount as never} />));
+        rerender(wrapProse(<CanvasWidget value={current} onChange={onChange} editShellMount={mount as never} />));
 
         // The text edit must survive: the attrs write applies to the CURRENT document, not the snapshot
         // the handler closed over.

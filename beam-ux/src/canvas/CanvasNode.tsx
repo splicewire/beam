@@ -234,4 +234,3 @@ export function CanvasNode({ node, path, editing, onEditText, onEditMd, onEditPr
             onEditMd={onEditMd} onEditProse={onEditProse} dnd={dnd}/>,
     );
 }
-

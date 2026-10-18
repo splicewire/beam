@@ -19,7 +19,15 @@ export function SourceMode({local,conversion,allowed,children}:{local:ReturnType
  }
  return <>
   {error&&<div role="alert">{error}</div>}
-  {!source ? <><button disabled={busy || !local.session} onClick={()=>void run(async()=>{const body=local.session!.body as JsonDoc;const printed=await conversion.print(body);local.beginSource(printed.source,body);})}>Source Mode</button>{children}</> :
+  {!source ? <><button disabled={busy || !local.session} onClick={()=>void run(async()=>{
+   // Keyboard/programmatic activation need not blur the prose island first.
+   // Its ordinary blur handler commits to the same Local Session before printing.
+   if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
+   await local.flushed();
+   const body=local.session!.body as JsonDoc;
+   const printed=await conversion.print(body);
+   local.beginSource(printed.source,body);
+  })}>Source Mode</button>{children}</> :
    <section aria-label="Source Mode">
     <textarea aria-label="TSX source" value={source.text} disabled={busy} onChange={event=>local.editSource(event.target.value)}/>
     <button disabled={busy} onClick={()=>void run(async()=>{const parsed=await conversion.read(source.text,source.body as JsonDoc);local.applySource(parsed.body);})}>Apply source</button>

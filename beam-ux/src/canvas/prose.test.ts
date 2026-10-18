@@ -1,9 +1,15 @@
 import {expect,it} from 'vitest';
 import profile from '../editor/default-profile.fixture.json';
-import {toProse,fromProse,proseRuns} from './prose';
+import {toProse,fromProse,proseRuns,proseManifest} from './prose';
 import type {JsonBlock,JsonNode} from '../blockdoc/json';
 const block=(name:string,id:string,children:JsonNode[],props:JsonBlock['props']=[]):JsonBlock=>({kind:'block',name,id,isComponent:false,dynamic:false,props,children} as JsonBlock);
 const text=(value:string):JsonNode=>({kind:'text',value});
+it('declares bridge nodes as editing prose without changing the source profile',()=>{
+ const manifest=proseManifest(profile);
+ expect(manifest['x-prose'].beamInlineRun).toBe('block');
+ expect(manifest['x-prose'].beamEmpty).toBe('inline');
+ expect(profile['x-prose']).not.toHaveProperty('beamInlineRun');
+});
 it('round trips inline strong/em/a/code with their exact identities, nesting and props',()=>{
  const doc=[block('p','p1',[text('Hello '),block('strong','s1',[text('bold '),block('em','e1',[text('and italic')])]),text(' '),block('a','a1',[block('code','c1',[text('code')])],[{kind:'string',name:'href',value:'/hello'}])])];
  const editing=toProse(doc,profile);

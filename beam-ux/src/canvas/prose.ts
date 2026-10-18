@@ -134,6 +134,6 @@ export function proseManifest(profile:ProseProfile) {
  nodes.push({name:'beamInlineRun',group:'block',category:'proseBlock',admitsChildCategories:null,admitsText:true,contentExpression:'inline*',attrsSchema:{type:'object',properties}},
  {name:'beamEmpty',group:'inline',category:'proseInline',admitsChildCategories:null,admitsText:false,contentExpression:'',attrsSchema:{type:'object',properties:{...properties,text:{default:false}}} } as typeof nodes[number]);
  const marks=profile.nodes.filter(node=>proseRole(node.name,profile)==='mark').map(node=>({name:node.name,excludes:'',attrsSchema:{type:'object',properties:{...properties,href:{default:null}}}}));
- return {profile:'prose-editing',version:1,'x-prose':profile['x-prose'] as Record<string,ProseRole>,doc:{admitsChildCategories:['proseBlock']},nodes,
+ return {profile:'prose-editing',version:1,'x-prose':{...profile['x-prose'],beamInlineRun:'block',beamEmpty:'inline'} as Record<string,ProseRole>,doc:{admitsChildCategories:['proseBlock']},nodes,
  marks:[...marks,{name:'beamTextBoundary',excludes:'',attrsSchema:{type:'object',properties:{key:{default:null}}}}]};
 }
