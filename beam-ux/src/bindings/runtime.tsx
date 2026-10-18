@@ -20,6 +20,18 @@ function text(record: BindingRecord | undefined, path: string, fallback: string)
     return value == null || value === '' || !['string', 'number', 'boolean'].includes(typeof value) ? fallback : String(value);
 }
 
+function attribute(record: BindingRecord | undefined, path: string, name: string): unknown {
+    if (/^on/i.test(name) || ['dangerouslysetinnerhtml', 'srcdoc'].includes(name.toLowerCase())) return undefined;
+    const value = field(record, path);
+    if (['href', 'src', 'action', 'formaction', 'poster', 'xlinkhref'].includes(name.toLowerCase())) {
+        if (typeof value !== 'string') return undefined;
+        try {
+            if (!['https:', 'http:', 'mailto:', 'tel:'].includes(new URL(value, 'https://binding.invalid').protocol)) return undefined;
+        } catch { return undefined; }
+    }
+    return value;
+}
+
 function comparable(value: unknown): number | null {
     if (typeof value === 'number') return Number.isFinite(value) ? value : null;
     if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}(?:T.*)?$/.test(value)) return null;
@@ -57,4 +69,4 @@ function repeat(payload: RepeatRecords | undefined, render: (record: BindingReco
 }
 
 /** Static artifacts consume this runtime and the request payload; it has no fetch or author identity. */
-export const bindingRuntime: { field: typeof field; text: typeof text; when: typeof when; repeat: typeof repeat } = { field, text, when, repeat };
+export const bindingRuntime: { field: typeof field; attribute: typeof attribute; text: typeof text; when: typeof when; repeat: typeof repeat } = { field, attribute, text, when, repeat };

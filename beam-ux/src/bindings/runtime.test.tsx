@@ -2,6 +2,21 @@ import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { expect, it } from 'vitest';
 import { bindingRuntime } from './runtime.js';
+import { freshBlockIds } from '../blockdoc/identity.js';
+
+it('never forwards executable URLs or HTML sinks from record data to DOM attributes', () => {
+    expect(bindingRuntime.attribute({ value: 'javascript:alert(1)' }, 'value', 'href')).toBeUndefined();
+    expect(bindingRuntime.attribute({ value: { __html: '<script>bad</script>' } }, 'value', 'dangerouslySetInnerHTML')).toBeUndefined();
+    expect(bindingRuntime.attribute({ value: '/safe' }, 'value', 'href')).toBe('/safe');
+    expect(bindingRuntime.attribute({ value: 3 }, 'value', 'count')).toBe(3);
+});
+
+it('duplicates empty-state blocks with new identities too', () => {
+    const node = { kind: 'block', id: 'outer', repeat: { collection: 'items', empty: [{ kind: 'block', id: 'empty' }] } };
+    const copy = freshBlockIds(node);
+    expect(copy.repeat.empty[0].id).not.toBe('empty');
+    expect(node.repeat.empty[0].id).toBe('empty');
+});
 
 it('renders only the supplied records, with text escaping and an empty-state fallback', () => {
     const render = (record: Record<string, unknown>) => createElement('p', null, bindingRuntime.text(record, 'title', 'Empty title'));

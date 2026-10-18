@@ -23,6 +23,7 @@ import type { ComponentType } from 'react';
 
 
 import { DemoFeatureRow, DemoHero } from './islands';
+import { richFieldComponents } from '@splicewire/beam-ux/editor';
 
 export function defaultComponents(): Record<
     string,
@@ -30,6 +31,7 @@ export function defaultComponents(): Record<
 > { return {
     DemoHero,
     DemoFeatureRow,
+    ...richFieldComponents,
     // theme-entries-and-authoring STR-03: the 7 promoted auth pages' real Fortify-bound forms, sealed
     // (position/delete-only in the visual editor, never decomposed) — the files themselves are
     // UNCHANGED in location/content (chisel's scaffold-time feature-toggle operates on these exact

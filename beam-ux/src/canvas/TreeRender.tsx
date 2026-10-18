@@ -37,7 +37,7 @@ export function renderNode(node: JsonNode, path: string, config: CanvasConfig, r
             () => (block.repeat?.empty ?? []).map((child, index) => renderNode(child, `${path}.empty.${index}`, config, record)));
     }
     if (block.when && !bindingRuntime.when(block.when, record)) return null;
-    const fields = Object.fromEntries(block.props.filter((prop) => prop.kind === 'field').map((prop) => [prop.name, bindingRuntime.field(record, String(prop.value))]));
+    const fields = Object.fromEntries(block.props.filter((prop) => prop.kind === 'field').map((prop) => [prop.name, bindingRuntime.attribute(record, String(prop.value), prop.name)]));
 
     if (block.name === 'Mdx') {
         const file = propValue(block, 'file');

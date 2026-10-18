@@ -11,11 +11,12 @@ export function blockId(): string {
 
 export function freshBlockIds<T extends {kind: string}>(node: T): T {
     const copy = structuredClone(node);
-    type Node = {kind:string; id?:string; children?:Node[]};
+    type Node = {kind:string; id?:string; children?:Node[]; repeat?: {empty?:Node[]}};
     const visit = (value: Node) => {
         if (value.kind !== 'block') return;
         value.id = blockId();
         value.children?.forEach(visit);
+        value.repeat?.empty?.forEach(visit);
     };
     visit(copy);
     return copy;
