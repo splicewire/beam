@@ -5,7 +5,7 @@
 // through the shared `editShellMount` instead of local component state, so the shell's Inspector/
 // palette/save-pill drive (and are driven by) the same channel a plain `<VisualEditor>` used to own
 // entirely by itself.
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { EditShellMountValue } from '@schemastud/frame';
 import {
     duplicateAt,
@@ -36,6 +36,7 @@ import type { CanvasTheme } from './css.js';
 import { setAttrs } from './props.js';
 import { insertRelativeTo } from './insert.js';
 import { DEFAULT_BLOCK_TEMPLATES } from './templates.js';
+import { profileAttrs, profileTemplates, profileTemplatesAtParent, setProfileAttrs } from './profile';
 
 /** The `DataTransfer` key a palette drag stashes its template's `nodeType` under — the bridge for a
  * drag that starts in the shell's palette region (a REACT SIBLING of this widget, not an ancestor/
@@ -105,7 +106,7 @@ export function CanvasWidget({
 }: CanvasWidgetProps) {
     const config = useCanvas();
     const doc: JsonDoc = value ?? formData ?? [];
-    const templates = config.blockTemplates ?? DEFAULT_BLOCK_TEMPLATES;
+    const allTemplates = config.blockTemplates ?? DEFAULT_BLOCK_TEMPLATES;
     // Was hardcoded to a fixed blue regardless of the host's actual theme — found live: it clashed
     // (near-invisible) against block content whose own background happened to be a similar hue.
     const accent = theme?.accent ?? DEFAULT_CANVAS_THEME.accent;
@@ -116,6 +117,7 @@ export function CanvasWidget({
     const [menu, setMenu] = useState<ContextMenuState | null>(null);
 
     const sel = mount?.selectedNodeId ?? null;
+    const templates = useMemo(() => config.profile ? profileTemplates(allTemplates, config.profile, doc, sel) : allTemplates, [allTemplates, config.profile, doc, sel]);
     const setSel = (path: string | null) => mount?.selectNode(path);
 
     // Every doc mutation funnels through here, and a NO-OP must not reach the host or the dirty flag.
@@ -167,14 +169,14 @@ export function CanvasWidget({
             getNode: (nodeId) => {
                 const node = getAt(docRef.current, nodeId);
                 if (!node || !isJsonBlock(node)) return null;
-                const { schema, attrs } = attrsSchemaFor(node, config.entitlementKeys ?? []);
+                const { schema, attrs } = config.profile ? profileAttrs(node, config.profile) : attrsSchemaFor(node, config.entitlementKeys ?? []);
                 return { type: node.name ?? 'fragment', attrsSchema: schema, attrs };
             },
             setNodeAttrs: (nodeId, attrs) => {
                 const node = getAt(docRef.current, nodeId);
                 if (!node || !isJsonBlock(node)) return;
 
-                const next = setAttrs(node, attrs as Record<string, string>);
+                const next = config.profile ? setProfileAttrs(node, attrs, config.profile) : setAttrs(node, attrs as Record<string, string>);
 
                 // The no-op guard, and the reason the race above had anything to race WITH. RJSF fires
                 // `onChange` on first mount whenever ajv's normalization differs from the seed, handing
@@ -195,7 +197,7 @@ export function CanvasWidget({
         // it depended on `mount`) -> publishes again -> forever. `mount` itself is read fresh from
         // this render's props regardless (it's not stale — only the DEPENDENCY LIST omits it).
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [doc, config.entitlementKeys]);
+    }, [doc, config.entitlementKeys, config.profile]);
 
     // Insert candidates: the palette region reads mount.candidates and calls mount.insert(candidate)
     // on click (drag goes through TEMPLATE_DATA_KEY instead, handled in onDrop below) — this widget
@@ -272,7 +274,8 @@ export function CanvasWidget({
         onDrop: (dataTransfer: DataTransfer | null) => {
             const templateNodeType = dataTransfer?.getData(TEMPLATE_DATA_KEY);
             if (dropTarget && templateNodeType) {
-                const template = templates.find((t) => t.label === templateNodeType);
+                const offered = config.profile ? profileTemplatesAtParent(allTemplates, config.profile, doc, parentOf(dropTarget.path)) : allTemplates;
+                const template = offered.find((t) => t.label === templateNodeType);
                 if (template) {
                     const index = indexOf(dropTarget.path) + (dropTarget.edge === 'after' ? 1 : 0);
                     emit(insertInto(doc, parentOf(dropTarget.path), index, template.make()));
@@ -311,7 +314,7 @@ export function CanvasWidget({
             },
             {
                 label: 'Insert',
-                children: templates.map((t) => ({
+                children: (config.profile ? profileTemplates(allTemplates, config.profile, doc, path) : allTemplates).map((t) => ({
                     label: t.label,
                     onSelect: () => emit(insertRelativeTo(doc, path, t.make)),
                 })),

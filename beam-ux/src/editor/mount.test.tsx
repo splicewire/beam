@@ -8,6 +8,7 @@ const loadBody = vi.hoisted(() => vi.fn());
 const saveBody = vi.hoisted(() => vi.fn());
 const saveDraft = vi.hoisted(() => vi.fn());
 const listVersions = vi.hoisted(() => vi.fn());
+const provided = vi.hoisted(() => ({ profile: undefined as unknown }));
 vi.mock('./local-session', async importOriginal => {
     const original = await importOriginal<typeof import('./local-session')>();
     return { ...original, IndexedDbSessions: class {
@@ -20,7 +21,7 @@ vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
 vi.mock('./context', () => ({useEditorKit: () => ({userId:"author", transport:{loadBody,saveBody,saveDraft,listVersions,publish:vi.fn(),restoreVersion:vi.fn()}, theme:{}, canAuthor:true, canvasConfig:{registry:{}}, defaultTreeFor:()=>[{kind:'text',value:'SEED'}], notify:{success:vi.fn(),error:vi.fn()}})}));
 // Observe the adapter's public controlled-value and save seam; the canvas has its own owning tests.
 vi.mock('../canvas', () => ({
-    CanvasProvider: ({ children }: { children: ReactNode }) => <>{children}</>,
+    CanvasProvider: ({ children, config }: { children: ReactNode; config: { profile?: unknown } }) => { provided.profile = config.profile; return <>{children}</>; },
     VisualEditor: ({ value, onSave }: { value: JsonDoc; onSave: () => void }) => (
         <div data-testid="canvas">
             {JSON.stringify(value)}
@@ -32,6 +33,12 @@ import { VisualEditorMount } from './mount';
 
 const SAVED = [{ kind: 'text', value: 'Persisted A' }];
 const ref = (id: string | null) => ({ id, slug: 'home', format: 'tsx' });
+it('passes the server entry profile to the window canvas', async () => {
+    const profile = { profile: 'tenant', version: 1, nodes: [], 'x-admits-code': false };
+    loadBody.mockResolvedValue({ body: SAVED, profile });
+    render(<VisualEditorMount entryRef={ref('entry-profile')} />);
+    await waitFor(() => expect(provided.profile).toBe(profile));
+});
 beforeEach(() => {
     const state = { headVersion:'v1', publishedVersion:'v1', draftPending:false, versions:[] };
     listVersions.mockResolvedValue(state);

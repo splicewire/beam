@@ -29,6 +29,26 @@ const config: CanvasConfig = { registry: { Hero }, MdxView, MdxEdit };
 
 const wrap = (ui: React.ReactNode) => <CanvasProvider config={config}>{ui}</CanvasProvider>;
 
+it('publishes and inserts only the server profile palette', () => {
+    const profile = { profile: 'hosted', version: 1, 'x-admits-code': false,
+        doc: { admitsChildCategories: ['html'] },
+        nodes: [{ name: 'p', category: 'html', admitsChildCategories: [], attrsSchema: { type: 'object', properties: { title: { type: 'string' } }, additionalProperties: false } }],
+    };
+    const mount = {
+        selectedNodeId: null, selectNode: vi.fn(), markDirty: vi.fn(),
+        registerNodeAccess: vi.fn(() => () => {}), registerInsertHandler: vi.fn((_handler: unknown) => () => {}),
+        publishCandidates: vi.fn(), publishConformance: vi.fn(), registerFlush: vi.fn(() => () => {}),
+    };
+    const onChange = vi.fn();
+    render(<CanvasProvider config={{ ...config, profile }}><CanvasWidget value={[]} onChange={onChange} editShellMount={mount as never} /></CanvasProvider>);
+    expect(mount.publishCandidates).toHaveBeenLastCalledWith([{ nodeType: 'Text', label: 'Text' }]);
+    const insert = mount.registerInsertHandler.mock.calls.at(-1)![0] as unknown as (candidate: unknown) => void;
+    act(() => insert({ nodeType: 'Heading' }));
+    expect(onChange).not.toHaveBeenCalled();
+    act(() => insert({ nodeType: 'Text' }));
+    expect(onChange).toHaveBeenCalledOnce();
+});
+
 const block = (over: Partial<JsonBlock>): JsonBlock => ({
     kind: 'block',
     name: 'div',
