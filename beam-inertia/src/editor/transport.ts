@@ -1,3 +1,4 @@
+import type { JsonDoc } from '@splicewire/beam-ux/jsondoc';
 import { getBeamInertiaConfig } from '../config';
 // The host-supplied entry-body transport — the ONE injection seam the promoted editor + Mainframe host
 // load/save an entry body through. Mirrors `splicewire/www`'s and `rushing/audiostud`'s: a same-origin,
@@ -94,6 +95,10 @@ const defaultBodyClient: UxBuilderClient = {
 // The same literal-URL hazard the block above describes applies verbatim: if a draft or publish 404s,
 // check these four against `php artisan route:list` before looking anywhere else.
 const publicationClient = {
+    printSource: async (id: string, body: JsonDoc) =>
+        (await publicationPost(id, 'print-source', {body})) as {source: string},
+    readSource: async (id: string, source: string, body: JsonDoc) =>
+        (await publicationPost(id, 'read-source', {source, body})) as {body: JsonDoc},
     listVersions: async (id: string) => {
         const res = await fetch(`/beam-ux-entries/${id}/versions`, {
             headers: { Accept: 'application/json' },
@@ -135,6 +140,14 @@ async function publicationPost(
 }
 
 export const bodyClient: UxBuilderClient = {
+    get printSource() {
+        const client = getBeamInertiaConfig().entryClient ?? publicationClient;
+        return client.printSource?.bind(client);
+    },
+    get readSource() {
+        const client = getBeamInertiaConfig().entryClient ?? publicationClient;
+        return client.readSource?.bind(client);
+    },
     get makeEditable() {
         const client = getBeamInertiaConfig().entryClient ?? defaultBodyClient;
         return client.makeEditable?.bind(client);

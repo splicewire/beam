@@ -55,6 +55,10 @@ export function useLocalSession(entry: string, user: string | undefined, base: s
   };
   return {
     session, pending, error, recover,
+    beginSource(text: string, printedBody?: unknown[]) { if (session) { session.beginSource(text, printedBody); persist(session); } },
+    editSource(text: string) { if (session) { session.editSource(text); persist(session); } },
+    applySource(body: unknown[]) { if (session) { session.applySource(body); persist(session); } },
+    discardSource() { if (session) { session.discardSource(); persist(session); } },
     change(next: unknown[], settings?: SessionPageSettings | null) { if (session) { session.change(next, settings); persist(session); } },
     undo() { if (session) { session.undo(); persist(session); } },
     redo() { if (session) { session.redo(); persist(session); } },

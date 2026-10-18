@@ -1,4 +1,5 @@
 import { PageSettings } from './PageSettings';
+import { SourceMode } from './SourceMode';
 import type { SessionPageSettings } from './local-session';
 // Window-mode authoring shares the package-owned Local Session and publication transport.
 import { useEffect, useState } from 'react';
@@ -50,6 +51,7 @@ function AddressedVisualEditor({ entryRef }: { entryRef: EntryRef }) {
     };
     const save = () => run(async () => {
         if (!id || !local.session || !transport.saveDraft) return;
+        if (local.session.source) throw new Error('Apply or discard Source Mode before saving.');
         const sent = local.session.body;
         const sentSettings = local.session.pageSettings;
         const state = sentSettings ? await transport.saveDraft(id, sent as unknown as Record<string, unknown>, local.session.identity.base, undefined, sentSettings) : await transport.saveDraft(id, sent as unknown as Record<string, unknown>, local.session.identity.base);
@@ -59,6 +61,7 @@ function AddressedVisualEditor({ entryRef }: { entryRef: EntryRef }) {
         notify.success('Draft saved');
     });
     const resolveConflict = (ours: boolean) => run(async () => {
+        if (local.session?.source) throw new Error('Apply or discard Source Mode before resolving the conflict.');
         if (!id || !transport.listVersions || !transport.saveDraft || !local.session) return;
         const current = await transport.listVersions(id);
         if (!current.headVersion) throw new Error('No current server version.');
@@ -115,11 +118,14 @@ function AddressedVisualEditor({ entryRef }: { entryRef: EntryRef }) {
             <span>{version.readable} {version.label}</span>
             <button disabled={busy || local.session!.dirty} onClick={() => void restore(version.id)}>Restore {version.readable} into draft</button>
         </div>)}</aside>}
-        {local.session.pageSettings && <PageSettings value={local.session.pageSettings} onChange={settings => local.change(local.session!.body, settings)} />}
+        {!local.session.source && local.session.pageSettings && <PageSettings value={local.session.pageSettings} onChange={settings => local.change(local.session!.body, settings)} />}
+        <SourceMode local={local} allowed={(!loaded.profile || !('x-admits-code' in loaded.profile) || loaded.profile['x-admits-code'] !== false) && (!entryRef.format || entryRef.format === 'tsx')}
+            conversion={id && transport.printSource && transport.readSource ? {print:body=>transport.printSource!(id,body),read:(source,body)=>transport.readSource!(id,source,body)} : undefined}>
         <VisualEditor value={local.session.body as JsonDoc} onChange={local.change}
             onSave={save} onUndo={local.undo} onRedo={local.redo}
             canUndo={local.session.canUndo} canRedo={local.session.canRedo}
             theme={theme} brand="Entry editor" />
+        </SourceMode>
     </CanvasProvider>;
 }
 export default VisualEditorMount;

@@ -147,3 +147,14 @@ it('sends page settings with the body in the same versioned draft request', asyn
     await bodyClient.saveDraft!('e1', { content: 'Body' }, 'v1', undefined, settings);
     expect(JSON.parse(fetch.mock.calls[0][1].body)).toEqual({ body: { content: 'Body' }, baseVersion: 'v1', pageSettings: settings });
 });
+
+it('prints and reads source without invoking any save operation',async()=>{
+ const fetch=vi.fn().mockResolvedValueOnce(Response.json({data:{source:'<p>Hello</p>'}})).mockResolvedValueOnce(Response.json({data:{body:[]}}));
+ vi.stubGlobal('fetch',fetch);vi.stubGlobal('document',{cookie:''});configureBeamInertia({});
+ expect(await bodyClient.printSource!('e',[])).toEqual({source:'<p>Hello</p>'});
+ expect(await bodyClient.readSource!('e','<p>Hello</p>',[])).toEqual({body:[]});
+ expect(fetch.mock.calls.map(call=>call[0])).toEqual(['/beam-ux-entries/e/print-source','/beam-ux-entries/e/read-source']);
+ expect(JSON.parse(fetch.mock.calls[1][1].body)).toEqual({source:'<p>Hello</p>',body:[]});
+ configureBeamInertia({entryClient:client});
+ expect(bodyClient.printSource).toBeUndefined();expect(bodyClient.readSource).toBeUndefined();
+});

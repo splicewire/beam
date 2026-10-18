@@ -28,6 +28,8 @@ export interface UxBuilderClient<TBody = BeamUxEntryBodyData> {
      * representable rather than merely guarded against.
      */
     loadBody(id: string): Promise<TBody>;
+    printSource?(id: string, body: import('./blockdoc/json').JsonDoc): Promise<{source:string}>;
+    readSource?(id: string, source:string, body: import('./blockdoc/json').JsonDoc): Promise<{body:import('./blockdoc/json').JsonDoc}>;
     /** Create an absent page from its default tree; PHP EntryMakeEditableOp, under ux.author. */
     makeEditable?(slug: string, body: Record<string, unknown>): Promise<{id: string; compileError?: string | null}>;
     /**
