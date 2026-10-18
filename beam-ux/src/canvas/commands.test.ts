@@ -61,3 +61,19 @@ it('pastes and wraps inside declared slots using their category contract',()=>{
  expect(unwrapBlock(wrapped,'0.slots.body.0',profile)).toEqual([card]);
  expect((pasteBlocks([card],'0',[block('default')],profile)[0] as JsonBlock).children).toHaveLength(1);
 });
+it('rejects malformed clipboard references and undeclared page references',()=>{
+ const profile={profile:'test',version:1,'x-admits-code':false,doc:{admitsChildCategories:['html']},nodes:[{name:'div',category:'html',admitsChildCategories:['html'],attrsSchema:{type:'object',properties:{title:{type:'string'}}}}]};
+ const encode=(node:JsonBlock)=>JSON.stringify({format:'beam-blocks',version:1,nodes:[node]});
+ const textRef=block('text');textRef.children=[{kind:'text',value:'',prop:'secret'}];
+ expect(()=>assertPasteProfile([textRef],profile,null)).toThrow(/reference/);
+ const attrRef=block('attr');attrRef.props=[{name:'title',kind:'prop',value:'secret'}];
+ expect(()=>assertPasteProfile([attrRef],profile,null)).toThrow(/reference/);
+ for(const value of ['constructor','x.y','steal()']){
+  attrRef.props=[{name:'title',kind:'prop',value}];
+  expect(()=>parseClipboard(encode(attrRef))).toThrow(/reference/);
+  textRef.children=[{kind:'text',value:'',prop:value}];
+  expect(()=>parseClipboard(encode(textRef))).toThrow(/reference/);
+ }
+ const badSlot=block('slot');badSlot.slots=JSON.parse('{"__proto__":[]}');
+ expect(()=>parseClipboard(encode(badSlot))).toThrow(/reference/);
+});

@@ -1,3 +1,4 @@
+import {assertReferenceName} from '../blockdoc/component-interface';
 import {profileParentDeclaration} from './profile';
 import validator from '@rjsf/validator-ajv8';
 import type {BlockdocManifest} from '@schemastud/blockdoc';
@@ -28,13 +29,15 @@ export function parseClipboard(text:string):JsonDoc{
  const input=JSON.parse(text);let count=0;
  const visit=(node:JsonNode,depth:number)=>{
   if(++count>5000||depth>100||!node||typeof node!=='object')throw Error('Invalid block clipboard');
-  if(node.kind==='text'){if(typeof node.value!=='string')throw Error('Invalid text');return;}
+  if(node.kind==='text'){if(typeof node.value!=='string')throw Error('Invalid text');if(node.prop!==undefined)assertReferenceName(node.prop);return;}
   if(node.kind==='opaque'){if(typeof node.source!=='string'||!['map','conditional','ternary','expression','spread'].includes(node.reason))throw Error('Invalid opaque node');return;}
   if(node.kind!=='block'||(typeof node.name!=='string'&&node.name!==null)||typeof node.dynamic!=='boolean'||typeof node.isComponent!=='boolean'||!Array.isArray(node.props)||!Array.isArray(node.children))throw Error('Invalid block');
   for(const prop of node.props)if(!prop||typeof prop.name!=='string'||!['string','number','boolean','boolean-shorthand','expression','field','prop'].includes(prop.kind)||!['string','number','boolean'].includes(typeof prop.value)&&prop.value!==null)throw Error('Invalid prop');
+  for(const prop of node.props)if(prop.kind==='prop')assertReferenceName(prop.value);
   if(node.style)assertBlockStyle(node.style);
   node.children.forEach(child=>visit(child,depth+1));
-  Object.values(node.slots??{}).forEach(nodes=>{if(!Array.isArray(nodes))throw Error('Invalid slot');nodes.forEach(child=>visit(child,depth+1));});
+  if(node.slots!==undefined&&(!node.slots||typeof node.slots!=='object'||Array.isArray(node.slots)))throw Error('Invalid slots');
+  Object.entries(node.slots??{}).forEach(([name,nodes])=>{assertReferenceName(name);if(!Array.isArray(nodes))throw Error('Invalid slot');nodes.forEach(child=>visit(child,depth+1));});
   node.repeat?.empty?.forEach(child=>visit(child,depth+1));
  };
  if(input?.format!=='beam-blocks'||input.version!==1||!Array.isArray(input.nodes)||!input.nodes.length)throw Error('Not a Beam block clipboard');
@@ -44,8 +47,10 @@ export function parseClipboard(text:string):JsonDoc{
 export function assertPasteProfile(nodes:JsonDoc,profile:BlockdocManifest|undefined,parent:JsonBlock|null,registry:StyleRegistry=DEFAULT_STYLE_REGISTRY,containerDeclaration?:BlockdocManifest['doc']|null){
  const noCode=profile&&'x-admits-code' in profile&&profile['x-admits-code']===false;
  const visit=(node:JsonNode,container:BlockdocManifest['doc']|undefined)=>{
-  if(node.kind==='text')return;
+  if(node.kind==='text'){if(noCode&&node.prop!==undefined)throw Error('A page has no enclosing component reference declaration');return;}
   if(node.kind==='opaque'){if(noCode)throw Error('Target profile does not admit code');return;}
+  // Page clipboard operations have no enclosing component definition. A placed island is not that scope.
+  if(noCode&&node.props.some(p=>p.kind==='prop'))throw Error('A page has no enclosing component reference declaration');
   if(node.style)compileBlockStyle(node.style,registry);
   if(!profile){[...node.children,...Object.values(node.slots??{}).flat()].forEach(child=>visit(child,undefined));return;}
   const declaration=profile.nodes.find(n=>n.name===node.name);
