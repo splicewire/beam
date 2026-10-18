@@ -97,7 +97,7 @@ export class IndexedDbSessions {
   }
   /** Atomic replacement when Save changes the base; the old key cannot remain as a false conflict. */
   async write(snapshot: SessionSnapshot, previousIdentity?: SessionIdentity): Promise<void> {
-    LocalSession.resume(snapshot.identity, snapshot, serverSettings);
+    LocalSession.resume(snapshot.identity, snapshot);
     const database = await this.database;
     await new Promise<void>((resolve, reject) => {
       const transaction = database.transaction('sessions', 'readwrite');
