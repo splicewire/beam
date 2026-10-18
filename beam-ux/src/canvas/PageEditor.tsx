@@ -1,3 +1,5 @@
+import { PageSettings } from '../editor/PageSettings';
+import type { SessionPageSettings } from '../editor/local-session';
 // In-place page editor: renders the entry's body INSIDE the real page (host layout chrome + full class
 // hierarchy intact, so styles are correct), read-only until an operator enters window mode (via the host's
 // dock "Edit content"), then the same content region becomes editable with FLOATING panels (Insert ·
@@ -51,7 +53,7 @@ export interface PageEditorTransport {
     saveBody: (slug: string, body: JsonDoc) => Promise<unknown>;
     loadBody?: (slug: string) => Promise<{ body?: unknown } | unknown>;
     /** Record the document as a draft: versioned, not published — readers keep the published body. */
-    saveDraft?: (slug: string, body: JsonDoc, baseVersion: string) => Promise<EntryPublicationState>;
+    saveDraft?: (slug: string, body: JsonDoc, baseVersion: string, pageSettings?: SessionPageSettings | null) => Promise<EntryPublicationState>;
     /** Publish the working copy through the real compile path. */
     publish?: (slug: string, ref: string) => Promise<EntryPublicationState>;
     /** The recorded history plus both pins — refetched whenever the panel opens. */
@@ -80,6 +82,7 @@ export interface PageEditorProps {
     userId?: string;
     /** The initial body (a JsonDoc, or a legacy/absent body → falls back to `fallbackDoc` or empty). */
     body?: JsonDoc | null;
+    pageSettings?: SessionPageSettings | null;
     transport: PageEditorTransport;
     notify?: Notify;
     theme?: Partial<CanvasTheme>;
@@ -215,6 +218,7 @@ export function __resetEditMode(): void {
 export function PageEditor({
     slug,
     body = null,
+    pageSettings = null,
     transport,
     notify,
     theme,
@@ -276,7 +280,7 @@ export function PageEditor({
     const [publication, setPublication] = useState<EntryPublicationState | null>(null);
     const [publicationError, setPublicationError] = useState<string | null>(null);
     const [conflict, setConflict] = useState(false);
-    const local = useLocalSession(entryId ?? slug, userId, publication?.headVersion ?? undefined, initial, editing && !!publication?.headVersion);
+    const local = useLocalSession(entryId ?? slug, userId, publication?.headVersion ?? undefined, initial, editing && !!publication?.headVersion, pageSettings ?? null);
     useEffect(() => {
         if (!local.session) return;
         const current = local.session.body as JsonDoc;
@@ -339,10 +343,13 @@ export function PageEditor({
         try {
             await mount.flush();
             const sent = docRef.current;
-            const next = await transport.saveDraft(slug, sent, local.session.identity.base);
+            const sentSettings = local.session.pageSettings;
+            const next = sentSettings
+                ? await transport.saveDraft(slug, sent, local.session.identity.base, sentSettings)
+                : await transport.saveDraft(slug, sent, local.session.identity.base);
             setPublication(next);
             if (!next.headVersion) throw new Error('Save returned no version.');
-            local.saved(next.headVersion, sent);
+            local.saved(next.headVersion, sent, sentSettings);
             mount.markDirty(false);
             editedRef.current = false;
             notify?.success('Draft saved');
@@ -427,9 +434,9 @@ export function PageEditor({
             setPendingRestore(null);
 
             if (transport.loadBody) {
-                const restored = (await transport.loadBody(slug)) as { body?: unknown } | undefined;
+                const restored = (await transport.loadBody(slug)) as { body?: unknown; pageSettings?: SessionPageSettings } | undefined;
                 if (Array.isArray(restored?.body) && next.headVersion) {
-                    local.reset(next.headVersion, restored.body);
+                    local.reset(next.headVersion, restored.body, restored.pageSettings);
                     setDoc(restored.body as JsonDoc);
                 }
                 mount.markDirty(false);
@@ -488,13 +495,16 @@ export function PageEditor({
             if (!current.headVersion) throw new Error('No current version');
             if (keepOurs) {
                 const sent = docRef.current;
-                const next = await transport.saveDraft(slug, sent, current.headVersion);
+                const sentSettings = local.session?.pageSettings ?? null;
+                const next = sentSettings
+                    ? await transport.saveDraft(slug, sent, current.headVersion, sentSettings)
+                    : await transport.saveDraft(slug, sent, current.headVersion);
                 if (!next.headVersion) throw new Error('No saved version');
-                local.saved(next.headVersion, sent); setPublication(next);
+                local.saved(next.headVersion, sent, sentSettings); setPublication(next);
             } else {
-                const envelope = await transport.loadBody(slug) as { body?: unknown };
+                const envelope = await transport.loadBody(slug) as { body?: unknown; pageSettings?: SessionPageSettings };
                 if (!Array.isArray(envelope.body)) throw new Error('No current body');
-                local.reset(current.headVersion, envelope.body); setPublication(current);
+                local.reset(current.headVersion, envelope.body, envelope.pageSettings); setPublication(current);
             }
             setConflict(false);
         } catch { notify?.error('The current version changed again; reload the conflict before retrying.'); }
@@ -524,6 +534,7 @@ export function PageEditor({
                         <span className="pe-mark" />
                         {brand ?? `editing · ${slug}`}
                     </span>
+                    {local.session.pageSettings && <PageSettings value={local.session.pageSettings} onChange={settings => local.change(local.session!.body, settings)} />}
                     <span style={{ flex: 1 }} />
                     {(
                         <>

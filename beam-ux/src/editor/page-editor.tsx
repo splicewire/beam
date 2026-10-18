@@ -155,6 +155,7 @@ export function PageEditor({ slug, body = null, entryId: suppliedId = null }: Pa
                 entryId={entryId ?? undefined}
                 userId={userId}
                 body={asDoc(current?.body) ?? asDoc(body)}
+                pageSettings={(current as unknown as { pageSettings?: import("./local-session").SessionPageSettings })?.pageSettings}
                 transport={{
                     // CanvasPageEditor's transport seam is keyed by its `slug` prop, which stays a slug
                     // — it is the editor's display label and `defaultTreeFor()` key. The BODY transport
@@ -173,8 +174,8 @@ export function PageEditor({ slug, body = null, entryId: suppliedId = null }: Pa
                     !restoreVersion
                         ? {}
                         : {
-                              saveDraft: (_s: string, doc: JsonDoc, baseVersion: string) =>
-                                  saveDraft(entryId, asBody(doc), baseVersion),
+                              saveDraft: (_s: string, doc: JsonDoc, baseVersion: string, settings?: import("./local-session").SessionPageSettings | null) =>
+                                  settings ? saveDraft(entryId, asBody(doc), baseVersion, undefined, settings) : saveDraft(entryId, asBody(doc), baseVersion),
                               publish: (_s: string, ref: string) => publish(entryId, ref),
                               listVersions: () => listVersions(entryId),
                               restoreVersion: (_s: string, ref: string) =>

@@ -55,3 +55,27 @@ describe('editor Local Session (ADR-0004)', () => {
     expect(() => LocalSession.resume(identity, { ...snapshot, cursor: 12 } as SessionSnapshot)).toThrow('session');
   });
 });
+
+ it('undo and reload keep page settings in the same session as the body', () => {
+    const session = new LocalSession(identity, ['body'], { title: 'Original' });
+    session.change(['edited'], { title: 'Draft' });
+    const resumed = LocalSession.resume(identity, session.snapshot());
+    expect(resumed.pageSettings).toEqual({ title: 'Draft' });
+    resumed.undo();
+    expect(resumed.body).toEqual(['body']);
+    expect(resumed.pageSettings).toEqual({ title: 'Original' });
+    resumed.redo();
+    resumed.saved('v2', ['edited'], { title: 'Draft' });
+    expect(resumed.dirty).toBe(false);
+    resumed.change(['edited'], { title: 'Another title' });
+    expect(resumed.dirty).toBe(true);
+ });
+
+it('a settings edit made during Save remains dirty after the response', () => {
+  const session = new LocalSession(identity, ['body'], { title: 'Sent' });
+  const sent = session.pageSettings;
+  session.change(['body'], { title: 'Typed during request' });
+  session.saved('v2', ['body'], sent);
+  expect(session.dirty).toBe(true);
+  expect(session.pageSettings?.title).toBe('Typed during request');
+});

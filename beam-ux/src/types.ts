@@ -1,3 +1,4 @@
+import type { SessionPageSettings } from './editor/local-session';
 // The generated DTO projection (rehome-ui), sliced off the app's single `generated.d.ts` and
 // delivered as a bundle. This build-time dependency is LOAD-BEARING — the builder's default typing
 // IS the projection, so the PHP source of truth genuinely travels into this package. tsup keeps the
@@ -43,7 +44,7 @@ export interface UxBuilderClient<TBody = BeamUxEntryBodyData> {
     // "this host's draft button is broken" are never the same picture.
 
     /** Record a body as a DRAFT: written and versioned, NOT published — readers keep the published body. */
-    saveDraft?(id: string, body: Record<string, unknown>, baseVersion: string, label?: string): Promise<EntryPublicationState>;
+    saveDraft?(id: string, body: Record<string, unknown>, baseVersion: string, label?: string, pageSettings?: SessionPageSettings | null): Promise<EntryPublicationState>;
     /** Publish the working copy: move the publication pin, mirror to disk, compile the artifact. */
     publish?(id: string, ref: string, label?: string): Promise<EntryPublicationState>;
     /** The recorded version history plus both pins. */

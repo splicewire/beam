@@ -22,10 +22,11 @@ vi.mock('./context', () => ({useEditorKit: () => ({userId:"author", transport:{l
 // Observe the adapter's public controlled-value and save seam; the canvas has its own owning tests.
 vi.mock('../canvas', () => ({
     CanvasProvider: ({ children, config }: { children: ReactNode; config: { profile?: unknown } }) => { provided.profile = config.profile; return <>{children}</>; },
-    VisualEditor: ({ value, onSave }: { value: JsonDoc; onSave: () => void }) => (
+    VisualEditor: ({ value, onSave, onUndo }: { value: JsonDoc; onSave: () => void; onUndo: () => void }) => (
         <div data-testid="canvas">
             {JSON.stringify(value)}
             <button onClick={onSave}>Save</button>
+            <button onClick={onUndo}>Undo</button>
         </div>
     ),
 }));
@@ -102,4 +103,15 @@ it('preserves a pinned empty draft without replacing it with a seed', async () =
     fireEvent.click(await screen.findByRole('button', { name: 'Save' }));
     await waitFor(() => expect(saveDraft).toHaveBeenCalledWith('a', [], 'v1'));
     expect(saveBody).not.toHaveBeenCalled();
+});
+
+it('saves page settings and body as one draft and undoes both through the session', async () => {
+    loadBody.mockResolvedValue({ body: SAVED, pageSettings: { title: 'Published title', segment: 'home' } });
+    render(<VisualEditorMount entryRef={ref('settings-page')} />);
+    const title = await screen.findByLabelText('Title');
+    fireEvent.change(title, { target: { value: 'Draft title' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+    await waitFor(() => expect(saveDraft).toHaveBeenCalledWith('settings-page', SAVED, 'v1', undefined, { title: 'Draft title', segment: 'home' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Undo' }));
+    expect((screen.getByLabelText('Title') as HTMLInputElement).value).toBe('Published title');
 });

@@ -1,3 +1,5 @@
+import { PageSettings } from './PageSettings';
+import type { SessionPageSettings } from './local-session';
 // Window-mode authoring shares the package-owned Local Session and publication transport.
 import { useEffect, useState } from 'react';
 import type { JsonDoc } from '../blockdoc/json';
@@ -15,13 +17,13 @@ export function VisualEditorMount({ entryRef }: { entryRef: EntryRef }) {
 }
 function AddressedVisualEditor({ entryRef }: { entryRef: EntryRef }) {
     const { transport, theme, canvasConfig, userId, canAuthor, notify } = useEditorKit();
-    const [loaded, setLoaded] = useState<{ body: JsonDoc; state: EntryPublicationState; profile?: import('@schemastud/blockdoc').BlockdocManifest } | null>(null);
+    const [loaded, setLoaded] = useState<{ body: JsonDoc; state: EntryPublicationState; pageSettings?: SessionPageSettings; profile?: import('@schemastud/blockdoc').BlockdocManifest } | null>(null);
     const [error, setError] = useState<string | null>(null);
     const [conflict, setConflict] = useState(false);
     const [busy, setBusy] = useState(false);
     const [history, setHistory] = useState(false);
     const id = entryRef.id;
-    const local = useLocalSession(id ?? '', userId, loaded?.state.headVersion ?? undefined, loaded?.body ?? [], !!loaded && !!id);
+    const local = useLocalSession(id ?? '', userId, loaded?.state.headVersion ?? undefined, loaded?.body ?? [], !!loaded && !!id, loaded?.pageSettings ?? null);
     useEffect(() => {
         if (!id || !userId || !canAuthor || !transport.listVersions || !transport.saveDraft || !transport.publish || !transport.restoreVersion) {
             setError('The editor requires an authored entry, authenticated author, and publication transport.'); return;
@@ -32,7 +34,7 @@ function AddressedVisualEditor({ entryRef }: { entryRef: EntryRef }) {
             if (!state.publishedVersion || !state.headVersion) throw new Error('This entry has no Publication Pin. Publish its baseline before mounting the editor.');
             const body = (envelope as { body?: unknown }).body;
             if (!Array.isArray(body)) throw new Error('The entry has no editable document.');
-            setLoaded({ body: body as JsonDoc, state, profile: (envelope as { profile?: import('@schemastud/blockdoc').BlockdocManifest }).profile });
+            setLoaded({ body: body as JsonDoc, state, pageSettings: (envelope as unknown as { pageSettings?: SessionPageSettings }).pageSettings, profile: (envelope as { pageSettings?: SessionPageSettings; profile?: import('@schemastud/blockdoc').BlockdocManifest }).profile });
         }).catch(reason => live && setError(reason instanceof Error ? reason.message : 'Could not load editor history. Verify the versions and publication-pin migrations.'));
         return () => { live = false; };
         // The transport may be a new object each render; the address owns the load lifecycle.
@@ -49,9 +51,10 @@ function AddressedVisualEditor({ entryRef }: { entryRef: EntryRef }) {
     const save = () => run(async () => {
         if (!id || !local.session || !transport.saveDraft) return;
         const sent = local.session.body;
-        const state = await transport.saveDraft(id, sent as unknown as Record<string, unknown>, local.session.identity.base);
+        const sentSettings = local.session.pageSettings;
+        const state = sentSettings ? await transport.saveDraft(id, sent as unknown as Record<string, unknown>, local.session.identity.base, undefined, sentSettings) : await transport.saveDraft(id, sent as unknown as Record<string, unknown>, local.session.identity.base);
         if (!state.headVersion) throw new Error('Save returned no version.');
-        local.saved(state.headVersion, sent);
+        local.saved(state.headVersion, sent, sentSettings);
         setLoaded(previous => previous && { ...previous, state });
         notify.success('Draft saved');
     });
@@ -61,14 +64,15 @@ function AddressedVisualEditor({ entryRef }: { entryRef: EntryRef }) {
         if (!current.headVersion) throw new Error('No current server version.');
         if (ours) {
             const sent = local.session.body;
-            const state = await transport.saveDraft(id, sent as unknown as Record<string, unknown>, current.headVersion);
+            const sentSettings = local.session.pageSettings;
+            const state = await transport.saveDraft(id, sent as unknown as Record<string, unknown>, current.headVersion, undefined, sentSettings);
             if (!state.headVersion) throw new Error('Save returned no version.');
-            local.saved(state.headVersion, sent); setLoaded(previous => previous && { ...previous, state });
+            local.saved(state.headVersion, sent, sentSettings); setLoaded(previous => previous && { ...previous, state });
         } else {
-            const envelope = await transport.loadBody(id) as { body?: unknown; profile?: import('@schemastud/blockdoc').BlockdocManifest };
+            const envelope = await transport.loadBody(id) as { body?: unknown; pageSettings?: SessionPageSettings; profile?: import('@schemastud/blockdoc').BlockdocManifest };
             if (!Array.isArray(envelope.body)) throw new Error('No current body.');
-            local.reset(current.headVersion, envelope.body);
-            setLoaded({ body: envelope.body as JsonDoc, state: current, profile: envelope.profile });
+            local.reset(current.headVersion, envelope.body, envelope.pageSettings);
+            setLoaded({ body: envelope.body as JsonDoc, state: current, pageSettings: envelope.pageSettings, profile: envelope.profile });
         }
         setConflict(false);
     });
@@ -90,9 +94,9 @@ function AddressedVisualEditor({ entryRef }: { entryRef: EntryRef }) {
         if (local.session!.dirty) throw new Error('Save or discard unsaved changes before restoring History.');
         if (!id || !transport.restoreVersion) return;
         const state = await transport.restoreVersion(id, ref);
-        const envelope = await transport.loadBody(id) as { body?: unknown; profile?: import('@schemastud/blockdoc').BlockdocManifest };
+        const envelope = await transport.loadBody(id) as { body?: unknown; pageSettings?: SessionPageSettings; profile?: import('@schemastud/blockdoc').BlockdocManifest };
         if (!state.headVersion || !Array.isArray(envelope.body)) throw new Error('Could not load the restored draft.');
-        local.reset(state.headVersion, envelope.body);
+        local.reset(state.headVersion, envelope.body, envelope.pageSettings);
         setLoaded({ body: envelope.body as JsonDoc, state, profile: envelope.profile });
         notify.success('Restored into a draft');
     });
@@ -111,6 +115,7 @@ function AddressedVisualEditor({ entryRef }: { entryRef: EntryRef }) {
             <span>{version.readable} {version.label}</span>
             <button disabled={busy || local.session!.dirty} onClick={() => void restore(version.id)}>Restore {version.readable} into draft</button>
         </div>)}</aside>}
+        {local.session.pageSettings && <PageSettings value={local.session.pageSettings} onChange={settings => local.change(local.session!.body, settings)} />}
         <VisualEditor value={local.session.body as JsonDoc} onChange={local.change}
             onSave={save} onUndo={local.undo} onRedo={local.redo}
             canUndo={local.session.canUndo} canRedo={local.session.canRedo}
