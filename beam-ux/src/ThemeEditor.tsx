@@ -93,7 +93,7 @@ export function ThemeEditor({
     const visibleBody = breakpoint ? (layers[breakpoint] ?? {}) : body;
     const changeLayer = (next: Record<string, unknown>) => setDraft(breakpoint
         ? { ...body, responsive: { ...responsive, tokens: { ...layers, [breakpoint]: next } } }
-        : { ...loaded, ...next });
+        : { ...body, ...next });
     const region: Region = {
         id: 'theme',
         label,

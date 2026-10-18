@@ -57,6 +57,22 @@ const loadsTheTheme = () => ({
 });
 
 describe('the theme entry gets Frame’s form, addressed by entry id', () => {
+    it('edits a responsive token without changing base tokens or another breakpoint', async () => {
+        const original: Record<string, unknown> = {...themeEntryBody.body, responsive: {breakpoints:{md:'52rem'},tokens:{lg:{site:{accentHover:'#123456'}}}}};
+        const client = loadsTheTheme();
+        client.loadBody = vi.fn(async () => ({...themeEntryBody,body:original}) as BeamUxEntryBodyData);
+        mount(client);
+        await screen.findByText('Site theme');
+        fireEvent.change(screen.getByLabelText('Token breakpoint'), {target:{value:'md'}});
+        fireEvent.change(screen.getByLabelText('Accent hover'), {target:{value:'#b91c1c'}});
+        await userEvent.click(screen.getByRole('button', {name:'Save'}));
+        await waitFor(() => expect(client.saveBody).toHaveBeenCalled());
+        const body = client.saveBody.mock.calls[0][1];
+        expect(body.site).toEqual(original.site);
+        expect(body.shell).toEqual(original.shell);
+        expect(body.responsive).toMatchObject({breakpoints:{md:'52rem'},tokens:{md:{site:{accentHover:'#b91c1c'}},lg:{site:{accentHover:'#123456'}}}});
+    });
+
     it('loads the body through the injected client, by the id it was given', async () => {
         const client = loadsTheTheme();
         mount(client);

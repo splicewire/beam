@@ -1,11 +1,7 @@
-/** ADR-0228 d4. This is a block field, never a second prop store. */
-export interface BlockStyle {
-  layers: {
-    breakpoint?: string | null;
-    state?: string | null;
-    declarations: Record<string, string>;
-  }[];
-}
+import type { BlockStyleData } from '../generated/block-style';
+
+/** ADR-0228 d4. The PHP Data declaration owns this wire shape. */
+export type BlockStyle = BlockStyleData;
 
 export function legacyStyle(css: string): BlockStyle {
   const declarations: Record<string, string> = {};

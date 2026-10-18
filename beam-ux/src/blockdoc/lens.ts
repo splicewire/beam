@@ -67,6 +67,7 @@ function buildBlock(
 
     const props: BlockProp[] = [];
     let style: BlockStyle | undefined;
+    let legacy: BlockStyle | undefined;
     let dynamic = !isElement ? false : opening!.attributes.some((a) => t.isJSXSpreadAttribute(a));
     if (opening) {
         for (const attr of opening.attributes) {
@@ -80,8 +81,7 @@ function buildBlock(
                     const prop = buildProp(attr);
                     if (prop.name === 'style' && prop.kind === 'string') {
                         // A structured style takes precedence; legacy text contributes the base.
-                        const base = legacyStyle(String(prop.value));
-                        style = { layers: [...base.layers, ...(style?.layers ?? [])] };
+                        legacy = legacyStyle(String(prop.value));
                     } else props.push(prop);
                 }
             }
@@ -132,7 +132,7 @@ function buildBlock(
         props,
         children,
         dynamic,
-        ...(style ? { style } : {}),
+        ...(style || legacy ? { style: { layers: [...(legacy?.layers ?? []), ...(style?.layers ?? [])] } } : {}),
         node: el,
     };
 }
