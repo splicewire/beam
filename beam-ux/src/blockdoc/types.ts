@@ -1,4 +1,4 @@
-import type { BlockStyle } from "./style.js";
+import type { BlockStyle } from './style.js';
 /**
  * TsxTree lens — the editable projection over a parsed `.tsx` page AST.
  *
@@ -12,33 +12,28 @@ import type { BlockStyle } from "./style.js";
  * the same AST to serialize.
  */
 
-import type { File } from "@babel/types";
+import type { File } from '@babel/types';
 
 /**
  * The kind of value a JSX prop carries. We distinguish a *string/number/bool literal*
  * from an *arbitrary expression* because a prop panel (ticket 09) can edit literals
  * inline but must treat expressions as opaque code (`{...}` — round-tripped verbatim).
  */
-export type PropKind =
-  | "string"
-  | "number"
-  | "boolean"
-  | "expression"
-  | "boolean-shorthand";
+export type PropKind = 'string' | 'number' | 'boolean' | 'expression' | 'boolean-shorthand';
 
 export interface BlockProp {
-  /** Attribute name, e.g. `className`, `data-x`, `aria-label`, `style`. */
-  name: string;
-  kind: PropKind;
-  /**
-   * The decoded literal value for `string` / `number` / `boolean`, or the source text
-   * of the expression for `expression`. `boolean-shorthand` (a bare `<X disabled />`)
-   * has value `true` and no braces. For `expression` this is best-effort source text
-   * for display — the authoritative form is always the AST `node`.
-   */
-  value: string | number | boolean;
-  /** The `JSXAttribute` AST node — the surgical edit target. */
-  node: unknown;
+    /** Attribute name, e.g. `className`, `data-x`, `aria-label`, `style`. */
+    name: string;
+    kind: PropKind;
+    /**
+     * The decoded literal value for `string` / `number` / `boolean`, or the source text
+     * of the expression for `expression`. `boolean-shorthand` (a bare `<X disabled />`)
+     * has value `true` and no braces. For `expression` this is best-effort source text
+     * for display — the authoritative form is always the AST `node`.
+     */
+    value: string | number | boolean;
+    /** The `JSXAttribute` AST node — the surgical edit target. */
+    node: unknown;
 }
 
 export type BlockChild = BlockNode | TextNode | OpaqueNode;
@@ -55,57 +50,57 @@ export type BlockChild = BlockNode | TextNode | OpaqueNode;
  * display / for the JSON mirror to carry verbatim.
  */
 export interface OpaqueNode {
-  type: "opaque";
-  /**
-   * The reason this subtree is opaque — the flavor of dynamic control flow detected. Purely
-   * descriptive (drives the canvas label); the source is always carried verbatim regardless.
-   */
-  reason: "map" | "conditional" | "ternary" | "expression" | "spread";
-  /** The verbatim source text of the expression (recast-printed from `node`). */
-  source: string;
-  /** The `JSXExpressionContainer` / `JSXSpreadChild` AST node backing this island. */
-  node: unknown;
+    type: 'opaque';
+    /**
+     * The reason this subtree is opaque — the flavor of dynamic control flow detected. Purely
+     * descriptive (drives the canvas label); the source is always carried verbatim regardless.
+     */
+    reason: 'map' | 'conditional' | 'ternary' | 'expression' | 'spread';
+    /** The verbatim source text of the expression (recast-printed from `node`). */
+    source: string;
+    /** The `JSXExpressionContainer` / `JSXSpreadChild` AST node backing this island. */
+    node: unknown;
 }
 
 export interface TextNode {
-  type: "text";
-  /** The literal text (JSXText value, or the string of a `{"..."}` expression). */
-  value: string;
-  /**
-   * The AST node backing this text — a `JSXText`, or the `StringLiteral` /
-   * `TemplateLiteral` inside a `JSXExpressionContainer`. This is the addressable
-   * handle the ProseMirror rich-text leaf (ticket 10) patches.
-   */
-  node: unknown;
+    type: 'text';
+    /** The literal text (JSXText value, or the string of a `{"..."}` expression). */
+    value: string;
+    /**
+     * The AST node backing this text — a `JSXText`, or the `StringLiteral` /
+     * `TemplateLiteral` inside a `JSXExpressionContainer`. This is the addressable
+     * handle the ProseMirror rich-text leaf (ticket 10) patches.
+     */
+    node: unknown;
 }
 
 export interface BlockNode {
-  style?: BlockStyle;
-  type: "block";
-  /** JSX element/component name, e.g. `div`, `Card`, `Foo.Bar`. `null` for fragments. */
-  name: string | null;
-  /** Lowercase-initial ⇒ intrinsic host element; else a component reference. */
-  isComponent: boolean;
-  props: BlockProp[];
-  children: BlockChild[];
-  /**
-   * True when this subtree contains dynamic control flow the static lens does not model
-   * (a `.map(...)`, a conditional `&&`/ternary rendering JSX, a spread child, etc), OR a
-   * spread ATTRIBUTE (`<X {...props} />`). Ticket 11: the dynamic *children* are captured as
-   * {@link OpaqueNode} entries in `children` (preserved verbatim, sealed in the canvas); this
-   * flag additionally marks a block whose OPENING TAG carries a spread the lens can't decompose.
-   */
-  dynamic: boolean;
-  /** The `JSXElement` / `JSXFragment` AST node. */
-  node: unknown;
+    style?: BlockStyle;
+    type: 'block';
+    /** JSX element/component name, e.g. `div`, `Card`, `Foo.Bar`. `null` for fragments. */
+    name: string | null;
+    /** Lowercase-initial ⇒ intrinsic host element; else a component reference. */
+    isComponent: boolean;
+    props: BlockProp[];
+    children: BlockChild[];
+    /**
+     * True when this subtree contains dynamic control flow the static lens does not model
+     * (a `.map(...)`, a conditional `&&`/ternary rendering JSX, a spread child, etc), OR a
+     * spread ATTRIBUTE (`<X {...props} />`). Ticket 11: the dynamic *children* are captured as
+     * {@link OpaqueNode} entries in `children` (preserved verbatim, sealed in the canvas); this
+     * flag additionally marks a block whose OPENING TAG carries a spread the lens can't decompose.
+     */
+    dynamic: boolean;
+    /** The `JSXElement` / `JSXFragment` AST node. */
+    node: unknown;
 }
 
 export interface TsxTree {
-  /** The recast `File` AST — the source of truth. Pass to `print` to serialize. */
-  ast: File;
-  /**
-   * The top-level blocks discovered in the file (the JSX returned/rendered by each
-   * component). A file with no JSX yields an empty array but still round-trips.
-   */
-  roots: BlockNode[];
+    /** The recast `File` AST — the source of truth. Pass to `print` to serialize. */
+    ast: File;
+    /**
+     * The top-level blocks discovered in the file (the JSX returned/rendered by each
+     * component). A file with no JSX yields an empty array but still round-trips.
+     */
+    roots: BlockNode[];
 }

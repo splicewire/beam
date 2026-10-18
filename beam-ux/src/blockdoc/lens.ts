@@ -1,4 +1,4 @@
-import { assertBlockStyle, legacyStyle, type BlockStyle } from "./style.js";
+import { assertBlockStyle, legacyStyle, type BlockStyle } from './style.js';
 /**
  * TsxTree lens core — lossless `.tsx` ⟷ TsxTree.
  *
@@ -8,47 +8,46 @@ import { assertBlockStyle, legacyStyle, type BlockStyle } from "./style.js";
  * tokens change) and idempotent.
  */
 
-import * as recast from "recast";
-import * as babelTsParser from "recast/parsers/babel-ts.js";
-import * as t from "@babel/types";
-import type { File } from "@babel/types";
+import * as recast from 'recast';
+import * as babelTsParser from 'recast/parsers/babel-ts.js';
+import * as t from '@babel/types';
+import type { File } from '@babel/types';
 import type {
-  BlockChild,
-  TsxTree,
-  BlockNode,
-  BlockProp,
-  OpaqueNode,
-  PropKind,
-  TextNode,
-} from "./types.js";
+    BlockChild,
+    TsxTree,
+    BlockNode,
+    BlockProp,
+    OpaqueNode,
+    PropKind,
+    TextNode,
+} from './types.js';
 
 /** The recast parser config — a single instance so parse + reprint agree on tokens. */
 const parser = babelTsParser;
 
 /** Parse a `.tsx` source string into an editable TsxTree lens. */
 export function parse(tsx: string): TsxTree {
-  const ast = recast.parse(tsx, { parser }) as File;
-  const roots: BlockNode[] = [];
-  const seen = new Set<t.Node>();
+    const ast = recast.parse(tsx, { parser }) as File;
+    const roots: BlockNode[] = [];
+    const seen = new Set<t.Node>();
 
-  // Walk the whole program collecting *top-level* JSX (a JSX node whose nearest JSX
-  // ancestor is not itself in the tree). recast's AST is estree-ish but node shapes
-  // match @babel/types, so we hand-walk to avoid pulling @babel/traverse at runtime.
-  walk(ast.program, (node) => {
-    if ((t.isJSXElement(node) || t.isJSXFragment(node)) && !seen.has(node)) {
-      const block = buildBlock(node, seen);
-      if (block) roots.push(block);
-    }
-  });
+    // Walk the whole program collecting *top-level* JSX (a JSX node whose nearest JSX
+    // ancestor is not itself in the tree). recast's AST is estree-ish but node shapes
+    // match @babel/types, so we hand-walk to avoid pulling @babel/traverse at runtime.
+    walk(ast.program, (node) => {
+        if ((t.isJSXElement(node) || t.isJSXFragment(node)) && !seen.has(node)) {
+            const block = buildBlock(node, seen);
+            if (block) roots.push(block);
+        }
+    });
 
-  return { ast, roots };
+    return { ast, roots };
 }
 
 /** Serialize a TsxTree (or a raw AST) back to a `.tsx` string. */
 export function print(input: TsxTree | File): string {
-  const ast =
-    "ast" in (input as TsxTree) ? (input as TsxTree).ast : (input as File);
-  return recast.print(ast).code;
+    const ast = 'ast' in (input as TsxTree) ? (input as TsxTree).ast : (input as File);
+    return recast.print(ast).code;
 }
 
 // ---------------------------------------------------------------------------
@@ -56,155 +55,147 @@ export function print(input: TsxTree | File): string {
 // ---------------------------------------------------------------------------
 
 function buildBlock(
-  el: t.JSXElement | t.JSXFragment,
-  seen: Set<t.Node>
+    el: t.JSXElement | t.JSXFragment,
+    seen: Set<t.Node>,
 ): BlockNode {
-  seen.add(el);
-  const isElement = t.isJSXElement(el);
-  const opening = isElement ? el.openingElement : null;
+    seen.add(el);
+    const isElement = t.isJSXElement(el);
+    const opening = isElement ? el.openingElement : null;
 
-  const name = opening ? jsxName(opening.name) : null;
-  const isComponent = !!name && /^[A-Z]/.test(name.replace(/^.*\./, name[0]));
+    const name = opening ? jsxName(opening.name) : null;
+    const isComponent = !!name && /^[A-Z]/.test(name.replace(/^.*\./, name[0]));
 
-  const props: BlockProp[] = [];
-  let style: BlockStyle | undefined;
-  let dynamic = !isElement
-    ? false
-    : opening!.attributes.some((a) => t.isJSXSpreadAttribute(a));
-  if (opening) {
-    for (const attr of opening.attributes) {
-      if (t.isJSXAttribute(attr)) {
-        if (t.isJSXIdentifier(attr.name) && attr.name.name === "bdStyle") {
-          if (!t.isJSXExpressionContainer(attr.value))
-            throw new Error("bdStyle requires a literal object");
-          const value = styleLiteral(attr.value.expression);
-          assertBlockStyle(value);
-          style = value;
-        } else {
-          const prop = buildProp(attr);
-          if (prop.name === "style" && prop.kind === "string") {
-            // A structured style takes precedence; legacy text contributes the base.
-            const base = legacyStyle(String(prop.value));
-            style = { layers: [...base.layers, ...(style?.layers ?? [])] };
-          } else props.push(prop);
+    const props: BlockProp[] = [];
+    let style: BlockStyle | undefined;
+    let dynamic = !isElement ? false : opening!.attributes.some((a) => t.isJSXSpreadAttribute(a));
+    if (opening) {
+        for (const attr of opening.attributes) {
+            if (t.isJSXAttribute(attr)) {
+                if (t.isJSXIdentifier(attr.name) && attr.name.name === 'bdStyle') {
+                    if (!t.isJSXExpressionContainer(attr.value)) throw new Error('bdStyle requires a literal object');
+                    const value = styleLiteral(attr.value.expression);
+                    assertBlockStyle(value);
+                    style = value;
+                } else {
+                    const prop = buildProp(attr);
+                    if (prop.name === 'style' && prop.kind === 'string') {
+                        // A structured style takes precedence; legacy text contributes the base.
+                        const base = legacyStyle(String(prop.value));
+                        style = { layers: [...base.layers, ...(style?.layers ?? [])] };
+                    } else props.push(prop);
+                }
+            }
+            // JSXSpreadAttribute already flagged dynamic above; it carries no static prop.
         }
-      }
-      // JSXSpreadAttribute already flagged dynamic above; it carries no static prop.
     }
-  }
 
-  const children: BlockChild[] = [];
-  for (const child of el.children) {
-    if (t.isJSXText(child)) {
-      // Whitespace-only JSXText between elements is layout, not addressable content;
-      // keep it out of the lens but it stays in the AST and reprints verbatim.
-      if (child.value.trim() === "") continue;
-      children.push(textFromJSXText(child));
-    } else if (t.isJSXElement(child) || t.isJSXFragment(child)) {
-      children.push(buildBlock(child, seen));
-    } else if (t.isJSXExpressionContainer(child)) {
-      const expr = child.expression;
-      if (t.isJSXEmptyExpression(expr)) {
-        // A `{/* comment */}` container: comments hang off the empty expression.
-        continue;
-      }
-      if (t.isStringLiteral(expr) || t.isTemplateLiteral(expr)) {
-        children.push(textFromExpression(child, expr));
-      } else {
-        // Any other expression child (`{items.map(...)}`, `{cond && <X/>}`, a ternary, a
-        // bare identifier, an imported-expression call) is dynamic — captured as an OPAQUE
-        // ISLAND (ticket 11): its verbatim source is preserved as an addressable child so the
-        // file round-trips losslessly and the canvas can seal it. This works at ANY depth —
-        // a `.map` nested inside an editable `<Section>` is captured here in that Section's
-        // child loop, so nesting seals + round-trips too.
-        sealSubtree(child, seen);
-        children.push(opaqueFromExpression(child, expr));
-        dynamic = true;
-      }
-    } else if (t.isJSXSpreadChild(child)) {
-      // `{...children}` — a spread child. Opaque, but still preserved verbatim.
-      sealSubtree(child, seen);
-      children.push(opaqueFromSpreadChild(child));
-      dynamic = true;
+    const children: BlockChild[] = [];
+    for (const child of el.children) {
+        if (t.isJSXText(child)) {
+            // Whitespace-only JSXText between elements is layout, not addressable content;
+            // keep it out of the lens but it stays in the AST and reprints verbatim.
+            if (child.value.trim() === '') continue;
+            children.push(textFromJSXText(child));
+        } else if (t.isJSXElement(child) || t.isJSXFragment(child)) {
+            children.push(buildBlock(child, seen));
+        } else if (t.isJSXExpressionContainer(child)) {
+            const expr = child.expression;
+            if (t.isJSXEmptyExpression(expr)) {
+                // A `{/* comment */}` container: comments hang off the empty expression.
+                continue;
+            }
+            if (t.isStringLiteral(expr) || t.isTemplateLiteral(expr)) {
+                children.push(textFromExpression(child, expr));
+            } else {
+                // Any other expression child (`{items.map(...)}`, `{cond && <X/>}`, a ternary, a
+                // bare identifier, an imported-expression call) is dynamic — captured as an OPAQUE
+                // ISLAND (ticket 11): its verbatim source is preserved as an addressable child so the
+                // file round-trips losslessly and the canvas can seal it. This works at ANY depth —
+                // a `.map` nested inside an editable `<Section>` is captured here in that Section's
+                // child loop, so nesting seals + round-trips too.
+                sealSubtree(child, seen);
+                children.push(opaqueFromExpression(child, expr));
+                dynamic = true;
+            }
+        } else if (t.isJSXSpreadChild(child)) {
+            // `{...children}` — a spread child. Opaque, but still preserved verbatim.
+            sealSubtree(child, seen);
+            children.push(opaqueFromSpreadChild(child));
+            dynamic = true;
+        }
     }
-  }
 
-  return {
-    type: "block",
-    name,
-    isComponent,
-    props,
-    children,
-    dynamic,
-    ...(style ? { style } : {}),
-    node: el,
-  };
+    return {
+        type: 'block',
+        name,
+        isComponent,
+        props,
+        children,
+        dynamic,
+        ...(style ? { style } : {}),
+        node: el,
+    };
 }
 
 function buildProp(attr: t.JSXAttribute): BlockProp {
-  const name = jsxName(attr.name);
-  const value = attr.value;
+    const name = jsxName(attr.name);
+    const value = attr.value;
 
-  // Bare attribute (`<X disabled />`) ⇒ boolean shorthand, value true.
-  if (value == null) {
-    return { name, kind: "boolean-shorthand", value: true, node: attr };
-  }
+    // Bare attribute (`<X disabled />`) ⇒ boolean shorthand, value true.
+    if (value == null) {
+        return { name, kind: 'boolean-shorthand', value: true, node: attr };
+    }
 
-  // `attr="literal"` ⇒ string literal.
-  if (t.isStringLiteral(value)) {
-    return { name, kind: "string", value: value.value, node: attr };
-  }
+    // `attr="literal"` ⇒ string literal.
+    if (t.isStringLiteral(value)) {
+        return { name, kind: 'string', value: value.value, node: attr };
+    }
 
-  if (t.isJSXExpressionContainer(value)) {
-    const expr = value.expression;
-    if (t.isStringLiteral(expr)) {
-      return { name, kind: "string", value: expr.value, node: attr };
+    if (t.isJSXExpressionContainer(value)) {
+        const expr = value.expression;
+        if (t.isStringLiteral(expr)) {
+            return { name, kind: 'string', value: expr.value, node: attr };
+        }
+        if (t.isNumericLiteral(expr)) {
+            return { name, kind: 'number', value: expr.value, node: attr };
+        }
+        if (t.isBooleanLiteral(expr)) {
+            return { name, kind: 'boolean', value: expr.value, node: attr };
+        }
+        if (
+            t.isUnaryExpression(expr) &&
+            expr.operator === '-' &&
+            t.isNumericLiteral(expr.argument)
+        ) {
+            return { name, kind: 'number', value: -expr.argument.value, node: attr };
+        }
+        // Everything else (`style={{…}}`, `onClick={fn}`, `n={a + b}`, template literals):
+        // an opaque expression. Surface its source text for display only.
+        return {
+            name,
+            kind: 'expression',
+            value: exprSource(expr),
+            node: attr,
+        };
     }
-    if (t.isNumericLiteral(expr)) {
-      return { name, kind: "number", value: expr.value, node: attr };
-    }
-    if (t.isBooleanLiteral(expr)) {
-      return { name, kind: "boolean", value: expr.value, node: attr };
-    }
-    if (
-      t.isUnaryExpression(expr) &&
-      expr.operator === "-" &&
-      t.isNumericLiteral(expr.argument)
-    ) {
-      return { name, kind: "number", value: -expr.argument.value, node: attr };
-    }
-    // Everything else (`style={{…}}`, `onClick={fn}`, `n={a + b}`, template literals):
-    // an opaque expression. Surface its source text for display only.
-    return {
-      name,
-      kind: "expression",
-      value: exprSource(expr),
-      node: attr,
-    };
-  }
 
-  // A JSXElement/JSXFragment value (`prop=<X/>`) is rare; treat as expression.
-  return {
-    name,
-    kind: "expression",
-    value: exprSource(value as t.Node),
-    node: attr,
-  };
+    // A JSXElement/JSXFragment value (`prop=<X/>`) is rare; treat as expression.
+    return { name, kind: 'expression', value: exprSource(value as t.Node), node: attr };
 }
 
 function textFromJSXText(node: t.JSXText): TextNode {
-  return { type: "text", value: node.value, node };
+    return { type: 'text', value: node.value, node };
 }
 
 function textFromExpression(
-  _container: t.JSXExpressionContainer,
-  expr: t.StringLiteral | t.TemplateLiteral
+    _container: t.JSXExpressionContainer,
+    expr: t.StringLiteral | t.TemplateLiteral,
 ): TextNode {
-  const value = t.isStringLiteral(expr)
-    ? expr.value
-    : expr.quasis.map((q) => q.value.cooked ?? q.value.raw).join("");
-  // Back the text node with the literal itself so a patch targets its tokens.
-  return { type: "text", value, node: expr };
+    const value = t.isStringLiteral(expr)
+        ? expr.value
+        : expr.quasis.map((q) => q.value.cooked ?? q.value.raw).join('');
+    // Back the text node with the literal itself so a patch targets its tokens.
+    return { type: 'text', value, node: expr };
 }
 
 /**
@@ -214,25 +205,25 @@ function textFromExpression(
  * container printed (`{…}` included) for the canvas preview + the JSON mirror to carry verbatim.
  */
 function opaqueFromExpression(
-  container: t.JSXExpressionContainer,
-  expr: t.Expression
+    container: t.JSXExpressionContainer,
+    expr: t.Expression,
 ): OpaqueNode {
-  return {
-    type: "opaque",
-    reason: opaqueReason(expr),
-    source: exprSource(container),
-    node: container,
-  };
+    return {
+        type: 'opaque',
+        reason: opaqueReason(expr),
+        source: exprSource(container),
+        node: container,
+    };
 }
 
 /** Build an {@link OpaqueNode} from a `{...spread}` JSX child. */
 function opaqueFromSpreadChild(child: t.JSXSpreadChild): OpaqueNode {
-  return {
-    type: "opaque",
-    reason: "spread",
-    source: exprSource(child),
-    node: child,
-  };
+    return {
+        type: 'opaque',
+        reason: 'spread',
+        source: exprSource(child),
+        node: child,
+    };
 }
 
 /**
@@ -241,29 +232,26 @@ function opaqueFromSpreadChild(child: t.JSXSpreadChild): OpaqueNode {
  * spurious separate root. The island already carries that JSX verbatim in its `source`.
  */
 function sealSubtree(root: t.Node, seen: Set<t.Node>): void {
-  walk(root, (n) => {
-    if (t.isJSXElement(n) || t.isJSXFragment(n)) seen.add(n);
-  });
+    walk(root, (n) => {
+        if (t.isJSXElement(n) || t.isJSXFragment(n)) seen.add(n);
+    });
 }
 
 /** Classify WHY an expression is opaque — drives the canvas label; purely descriptive. */
-function opaqueReason(expr: t.Expression): OpaqueNode["reason"] {
-  if (t.isConditionalExpression(expr)) return "ternary";
-  if (
-    t.isLogicalExpression(expr) &&
-    (expr.operator === "&&" || expr.operator === "||")
-  ) {
-    return "conditional";
-  }
-  if (
-    t.isCallExpression(expr) &&
-    t.isMemberExpression(expr.callee) &&
-    t.isIdentifier(expr.callee.property) &&
-    expr.callee.property.name === "map"
-  ) {
-    return "map";
-  }
-  return "expression";
+function opaqueReason(expr: t.Expression): OpaqueNode['reason'] {
+    if (t.isConditionalExpression(expr)) return 'ternary';
+    if (t.isLogicalExpression(expr) && (expr.operator === '&&' || expr.operator === '||')) {
+        return 'conditional';
+    }
+    if (
+        t.isCallExpression(expr) &&
+        t.isMemberExpression(expr.callee) &&
+        t.isIdentifier(expr.callee.property) &&
+        expr.callee.property.name === 'map'
+    ) {
+        return 'map';
+    }
+    return 'expression';
 }
 
 // ---------------------------------------------------------------------------
@@ -275,15 +263,12 @@ function opaqueReason(expr: t.Expression): OpaqueNode["reason"] {
  * is inferred from its JS type (string ⇒ string literal attr, number ⇒ `{n}`, boolean ⇒
  * `{true}`/`{false}`). Only this attribute's tokens change on reprint.
  */
-export function patchProp(
-  prop: BlockProp,
-  value: string | number | boolean
-): void {
-  const attr = prop.node as t.JSXAttribute;
-  const [attrValue, kind] = encodeScalar(value);
-  attr.value = attrValue;
-  prop.kind = kind;
-  prop.value = value;
+export function patchProp(prop: BlockProp, value: string | number | boolean): void {
+    const attr = prop.node as t.JSXAttribute;
+    const [attrValue, kind] = encodeScalar(value);
+    attr.value = attrValue;
+    prop.kind = kind;
+    prop.value = value;
 }
 
 /**
@@ -293,12 +278,12 @@ export function patchProp(
  * `{n}` / `{true}` expression containers. `null` value ⇒ a bare boolean-shorthand attr (`<X flag />`).
  */
 function encodeScalar(
-  value: string | number | boolean
+    value: string | number | boolean,
 ): [t.StringLiteral | t.JSXExpressionContainer, PropKind] {
-  if (typeof value === "string") return [t.stringLiteral(value), "string"];
-  if (typeof value === "number")
-    return [t.jsxExpressionContainer(t.numericLiteral(value)), "number"];
-  return [t.jsxExpressionContainer(t.booleanLiteral(value)), "boolean"];
+    if (typeof value === 'string') return [t.stringLiteral(value), 'string'];
+    if (typeof value === 'number')
+        return [t.jsxExpressionContainer(t.numericLiteral(value)), 'number'];
+    return [t.jsxExpressionContainer(t.booleanLiteral(value)), 'boolean'];
 }
 
 /**
@@ -313,43 +298,40 @@ function encodeScalar(
  * on reprint; every sibling attr + the children reprint verbatim.
  */
 export function addProp(
-  block: BlockNode,
-  name: string,
-  value: string | number | boolean | { expression: string }
+    block: BlockNode,
+    name: string,
+    value: string | number | boolean | { expression: string },
 ): BlockProp {
-  const existing = block.props.find((p) => p.name === name);
-  if (existing) {
-    if (typeof value === "object")
-      patchPropExpression(existing, value.expression);
-    else patchProp(existing, value);
-    return existing;
-  }
+    const existing = block.props.find((p) => p.name === name);
+    if (existing) {
+        if (typeof value === 'object') patchPropExpression(existing, value.expression);
+        else patchProp(existing, value);
+        return existing;
+    }
 
-  const el = block.node as t.JSXElement | t.JSXFragment;
-  if (!t.isJSXElement(el)) {
-    throw new Error("addProp: cannot add an attribute to a fragment");
-  }
+    const el = block.node as t.JSXElement | t.JSXFragment;
+    if (!t.isJSXElement(el)) {
+        throw new Error('addProp: cannot add an attribute to a fragment');
+    }
 
-  let attrValue: t.JSXAttribute["value"];
-  let kind: PropKind;
-  let propValue: string | number | boolean;
-  if (typeof value === "object") {
-    attrValue = t.jsxExpressionContainer(
-      parseExpression(value.expression) as t.Expression
-    );
-    kind = "expression";
-    propValue = value.expression;
-  } else {
-    [attrValue, kind] = encodeScalar(value);
-    propValue = value;
-  }
+    let attrValue: t.JSXAttribute['value'];
+    let kind: PropKind;
+    let propValue: string | number | boolean;
+    if (typeof value === 'object') {
+        attrValue = t.jsxExpressionContainer(parseExpression(value.expression) as t.Expression);
+        kind = 'expression';
+        propValue = value.expression;
+    } else {
+        [attrValue, kind] = encodeScalar(value);
+        propValue = value;
+    }
 
-  const attr = t.jsxAttribute(t.jsxIdentifier(name), attrValue);
-  el.openingElement.attributes.push(attr);
+    const attr = t.jsxAttribute(t.jsxIdentifier(name), attrValue);
+    el.openingElement.attributes.push(attr);
 
-  const prop: BlockProp = { name, kind, value: propValue, node: attr };
-  block.props.push(prop);
-  return prop;
+    const prop: BlockProp = { name, kind, value: propValue, node: attr };
+    block.props.push(prop);
+    return prop;
 }
 
 /**
@@ -360,18 +342,18 @@ export function addProp(
  * surviving attr + the children reprint verbatim.
  */
 export function removeProp(block: BlockNode, name: string): boolean {
-  const idx = block.props.findIndex((p) => p.name === name);
-  if (idx === -1) return false;
+    const idx = block.props.findIndex((p) => p.name === name);
+    if (idx === -1) return false;
 
-  const prop = block.props[idx];
-  const el = block.node as t.JSXElement | t.JSXFragment;
-  if (t.isJSXElement(el)) {
-    const attrs = el.openingElement.attributes;
-    const attrIdx = attrs.indexOf(prop.node as t.JSXAttribute);
-    if (attrIdx !== -1) attrs.splice(attrIdx, 1);
-  }
-  block.props.splice(idx, 1);
-  return true;
+    const prop = block.props[idx];
+    const el = block.node as t.JSXElement | t.JSXFragment;
+    if (t.isJSXElement(el)) {
+        const attrs = el.openingElement.attributes;
+        const attrIdx = attrs.indexOf(prop.node as t.JSXAttribute);
+        if (attrIdx !== -1) attrs.splice(attrIdx, 1);
+    }
+    block.props.splice(idx, 1);
+    return true;
 }
 
 /**
@@ -380,111 +362,95 @@ export function removeProp(block: BlockNode, name: string): boolean {
  * "edit as code" affordance; use `patchProp` for literal edits.
  */
 export function patchPropExpression(prop: BlockProp, exprSrc: string): void {
-  const attr = prop.node as t.JSXAttribute;
-  const expr = parseExpression(exprSrc);
-  attr.value = t.jsxExpressionContainer(expr as t.Expression);
-  prop.kind = "expression";
-  prop.value = exprSrc;
+    const attr = prop.node as t.JSXAttribute;
+    const expr = parseExpression(exprSrc);
+    attr.value = t.jsxExpressionContainer(expr as t.Expression);
+    prop.kind = 'expression';
+    prop.value = exprSrc;
 }
 
 // `patchText` lives in a babel-free module (`patch-text.ts`) so the inline leaf seam
 // (`@splicewire/beam-ux/leaf`) can import a lossless text patch without dragging `@babel/types` +
 // `recast` onto the client render bundle. Re-exported here to keep the lens public API unchanged.
-export { patchText } from "./patch-text.js";
+export { patchText } from './patch-text.js';
 
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
 function jsxName(
-  name: t.JSXIdentifier | t.JSXMemberExpression | t.JSXNamespacedName
+    name: t.JSXIdentifier | t.JSXMemberExpression | t.JSXNamespacedName,
 ): string {
-  if (t.isJSXIdentifier(name)) return name.name;
-  if (t.isJSXNamespacedName(name))
-    return `${name.namespace.name}:${name.name.name}`;
-  // JSXMemberExpression, e.g. `Foo.Bar`
-  return `${jsxName(name.object)}.${name.property.name}`;
+    if (t.isJSXIdentifier(name)) return name.name;
+    if (t.isJSXNamespacedName(name)) return `${name.namespace.name}:${name.name.name}`;
+    // JSXMemberExpression, e.g. `Foo.Bar`
+    return `${jsxName(name.object)}.${name.property.name}`;
 }
 
 /** Best-effort source text of an expression, for display in the lens. */
 function exprSource(node: t.Node): string {
-  try {
-    return recast.print(node).code;
-  } catch {
-    return "";
-  }
+    try {
+        return recast.print(node).code;
+    } catch {
+        return '';
+    }
 }
 
 /** Parse a standalone expression string into an AST expression node. */
 function parseExpression(src: string): t.Node {
-  // Wrap so recast/babel-ts parses it as an expression, then unwrap.
-  const file = recast.parse(`(${src})`, { parser }) as File;
-  const stmt = file.program.body[0];
-  if (t.isExpressionStatement(stmt)) {
-    const expr = stmt.expression as t.Node & {
-      extra?: Record<string, unknown>;
-    };
-    // Drop the wrapping-paren bookkeeping babel attaches so recast doesn't reprint
-    // the `( … )` we only added to force expression parsing.
-    if (expr.extra) {
-      delete expr.extra.parenthesized;
-      delete expr.extra.parenStart;
+    // Wrap so recast/babel-ts parses it as an expression, then unwrap.
+    const file = recast.parse(`(${src})`, { parser }) as File;
+    const stmt = file.program.body[0];
+    if (t.isExpressionStatement(stmt)) {
+        const expr = stmt.expression as t.Node & { extra?: Record<string, unknown> };
+        // Drop the wrapping-paren bookkeeping babel attaches so recast doesn't reprint
+        // the `( … )` we only added to force expression parsing.
+        if (expr.extra) {
+            delete expr.extra.parenthesized;
+            delete expr.extra.parenStart;
+        }
+        return expr;
     }
-    return expr;
-  }
-  throw new Error(`Not an expression: ${src}`);
+    throw new Error(`Not an expression: ${src}`);
 }
 
 /** Depth-first walk of an AST subtree, visiting every node. */
 function walk(node: unknown, visit: (n: t.Node) => void): void {
-  if (!node || typeof node !== "object") return;
-  if (Array.isArray(node)) {
-    for (const item of node) walk(item, visit);
-    return;
-  }
-  const n = node as t.Node;
-  if (typeof (n as { type?: unknown }).type === "string") {
-    visit(n);
-  }
-  for (const key of Object.keys(node)) {
-    if (key === "loc" || key === "start" || key === "end" || key === "range")
-      continue;
-    if (key === "tokens" || key === "comments" || key === "original") continue;
-    walk((node as Record<string, unknown>)[key], visit);
-  }
+    if (!node || typeof node !== 'object') return;
+    if (Array.isArray(node)) {
+        for (const item of node) walk(item, visit);
+        return;
+    }
+    const n = node as t.Node;
+    if (typeof (n as { type?: unknown }).type === 'string') {
+        visit(n);
+    }
+    for (const key of Object.keys(node)) {
+        if (key === 'loc' || key === 'start' || key === 'end' || key === 'range') continue;
+        if (key === 'tokens' || key === 'comments' || key === 'original') continue;
+        walk((node as Record<string, unknown>)[key], visit);
+    }
 }
+
 
 /** The ONLY object-literal prop the lens interprets. Never eval; spreads/calls/computed keys refuse. */
 function styleLiteral(node: t.Node): unknown {
-  if (t.isStringLiteral(node)) return node.value;
-  if (t.isNullLiteral(node)) return null;
-  if (t.isArrayExpression(node))
-    return node.elements.map((n) => {
-      if (!n || t.isSpreadElement(n))
-        throw new Error("bdStyle requires literal array elements");
-      return styleLiteral(n);
+    if (t.isStringLiteral(node)) return node.value;
+    if (t.isNullLiteral(node)) return null;
+    if (t.isArrayExpression(node)) return node.elements.map(n => {
+        if (!n || t.isSpreadElement(n)) throw new Error('bdStyle requires literal array elements');
+        return styleLiteral(n);
     });
-  if (t.isObjectExpression(node)) {
-    const result: Record<string, unknown> = Object.create(null);
-    for (const prop of node.properties) {
-      if (
-        !t.isObjectProperty(prop) ||
-        prop.computed ||
-        prop.shorthand ||
-        !(t.isIdentifier(prop.key) || t.isStringLiteral(prop.key))
-      )
-        throw new Error("bdStyle requires literal object properties");
-      const key = t.isIdentifier(prop.key) ? prop.key.name : prop.key.value;
-      if (
-        ["__proto__", "prototype", "constructor"].includes(key) ||
-        Object.hasOwn(result, key)
-      )
-        throw new Error("bdStyle has an invalid literal key");
-      result[key] = styleLiteral(prop.value);
+    if (t.isObjectExpression(node)) {
+        const result: Record<string, unknown> = Object.create(null);
+        for (const prop of node.properties) {
+            if (!t.isObjectProperty(prop) || prop.computed || prop.shorthand ||
+                !(t.isIdentifier(prop.key) || t.isStringLiteral(prop.key))) throw new Error('bdStyle requires literal object properties');
+            const key = t.isIdentifier(prop.key) ? prop.key.name : prop.key.value;
+            if (['__proto__','prototype','constructor'].includes(key) || Object.hasOwn(result,key)) throw new Error('bdStyle has an invalid literal key');
+            result[key] = styleLiteral(prop.value);
+        }
+        return result;
     }
-    return result;
-  }
-  throw new Error(
-    "bdStyle requires literal values (no executable expressions)"
-  );
+    throw new Error('bdStyle requires literal values (no executable expressions)');
 }

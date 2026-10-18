@@ -1,9 +1,9 @@
-import { styleRegistry } from "./blockdoc/style-runtime.js";
-import { useState } from "react";
-import type { SchemaNode } from "@schemastud/seam";
-import { useEntryBody, useSaveEntryBody } from "./hooks";
-import { RegionInspector } from "./RegionInspector";
-import type { Region } from "./types";
+import { styleRegistry } from './blockdoc/style-runtime.js';
+import { useState } from 'react';
+import type { SchemaNode } from '@schemastud/seam';
+import { useEntryBody, useSaveEntryBody } from './hooks';
+import { RegionInspector } from './RegionInspector';
+import type { Region } from './types';
 
 /**
  * The THEME ENTRY's editor seat — the one surface that lets an author change a theme token through a
@@ -56,102 +56,69 @@ import type { Region } from "./types";
  * through should not be a door either.
  */
 export function ThemeEditor({
-  entryId,
-  label = "Theme tokens",
-  note = "The resolved theme cascade: package defaults → this entry → a tenant override. Saved tokens reach every reader on their next page load.",
+    entryId,
+    label = 'Theme tokens',
+    note = 'The resolved theme cascade: package defaults → this entry → a tenant override. Saved tokens reach every reader on their next page load.',
 }: {
-  /** The `namespace=theme, slug=default` entry's id, resolved server-side and shared as a prop. */
-  entryId: string;
-  label?: string;
-  note?: string;
+    /** The `namespace=theme, slug=default` entry's id, resolved server-side and shared as a prop. */
+    entryId: string;
+    label?: string;
+    note?: string;
 }) {
-  const [breakpoint, setBreakpoint] = useState("");
-  const query = useEntryBody(entryId);
-  const save = useSaveEntryBody();
-  const [draft, setDraft] = useState<Record<string, unknown> | null>(null);
+    const [breakpoint, setBreakpoint] = useState('');
+    const query = useEntryBody(entryId);
+    const save = useSaveEntryBody();
+    const [draft, setDraft] = useState<Record<string, unknown> | null>(null);
 
-  if (query.isPending) {
+    if (query.isPending) {
+        return (
+            <p role="status" className="rounded-lg border bg-card p-4 text-sm text-muted-foreground">
+                Loading the theme…
+            </p>
+        );
+    }
+
+    if (query.isError || !query.data) {
+        return (
+            <p role="alert" className="rounded-lg border bg-card p-4 text-sm text-destructive">
+                The theme entry could not be loaded.
+            </p>
+        );
+    }
+
+    const loaded = query.data.body ?? {};
+    const body = draft ?? loaded;
+    const responsive = (body.responsive ?? {}) as {breakpoints?: Record<string,string>; tokens?: Record<string,Record<string,unknown>>};
+    const layers = responsive.tokens ?? {};
+    const visibleBody = breakpoint ? (layers[breakpoint] ?? {}) : body;
+    const changeLayer = (next: Record<string, unknown>) => setDraft(breakpoint
+        ? { ...body, responsive: { ...responsive, tokens: { ...layers, [breakpoint]: next } } }
+        : { ...loaded, ...next });
+    const region: Region = {
+        id: 'theme',
+        label,
+        kind: 'form',
+        recordId: entryId,
+        recordLabel: query.data.slug,
+        note,
+    };
+
     return (
-      <p
-        role="status"
-        className="rounded-lg border bg-card p-4 text-sm text-muted-foreground"
-      >
-        Loading the theme…
-      </p>
+        <>
+        <label>Token breakpoint <select value={breakpoint} onChange={e => setBreakpoint(e.target.value)}><option value="">Base</option>{Object.keys(styleRegistry({responsive}).breakpoints).map(name => <option key={name} value={name}>{name}</option>)}</select></label>
+        <RegionInspector
+            region={region}
+            schema={(query.data.schema ?? null) as SchemaNode | null}
+            body={visibleBody}
+            // MERGED over the loaded body — see this component's docblock. `next` is the schema-shaped
+            // form output; every top-level namespace the schema does not describe survives it.
+            onChange={changeLayer}
+            onSave={() => save.mutate({ id: entryId, body })}
+            // Dropping the buffer IS Discard: the next render falls back to `query.data.body`, the
+            // last thing the server actually stored.
+            onDiscard={draft === null ? undefined : () => setDraft(null)}
+            saving={save.isPending}
+        />
+        </>
     );
-  }
-
-  if (query.isError || !query.data) {
-    return (
-      <p
-        role="alert"
-        className="rounded-lg border bg-card p-4 text-sm text-destructive"
-      >
-        The theme entry could not be loaded.
-      </p>
-    );
-  }
-
-  const loaded = query.data.body ?? {};
-  const body = draft ?? loaded;
-  const responsive = (body.responsive ?? {}) as {
-    breakpoints?: Record<string, string>;
-    tokens?: Record<string, Record<string, unknown>>;
-  };
-  const layers = responsive.tokens ?? {};
-  const visibleBody = breakpoint ? layers[breakpoint] ?? {} : body;
-  const changeLayer = (next: Record<string, unknown>) =>
-    setDraft(
-      breakpoint
-        ? {
-            ...body,
-            responsive: {
-              ...responsive,
-              tokens: { ...layers, [breakpoint]: next },
-            },
-          }
-        : { ...loaded, ...next }
-    );
-  const region: Region = {
-    id: "theme",
-    label,
-    kind: "form",
-    recordId: entryId,
-    recordLabel: query.data.slug,
-    note,
-  };
-
-  return (
-    <>
-      <label>
-        Token breakpoint{" "}
-        <select
-          value={breakpoint}
-          onChange={(e) => setBreakpoint(e.target.value)}
-        >
-          <option value="">Base</option>
-          {Object.keys(styleRegistry({ responsive }).breakpoints).map(
-            (name) => (
-              <option key={name} value={name}>
-                {name}
-              </option>
-            )
-          )}
-        </select>
-      </label>
-      <RegionInspector
-        region={region}
-        schema={(query.data.schema ?? null) as SchemaNode | null}
-        body={visibleBody}
-        // MERGED over the loaded body — see this component's docblock. `next` is the schema-shaped
-        // form output; every top-level namespace the schema does not describe survives it.
-        onChange={changeLayer}
-        onSave={() => save.mutate({ id: entryId, body })}
-        // Dropping the buffer IS Discard: the next render falls back to `query.data.body`, the
-        // last thing the server actually stored.
-        onDiscard={draft === null ? undefined : () => setDraft(null)}
-        saving={save.isPending}
-      />
-    </>
-  );
 }

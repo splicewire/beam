@@ -138,3 +138,12 @@ it('sends the draft base and named publish ref, and preserves a stale-base statu
     fetch.mockResolvedValueOnce(Response.json({ message: 'Stale base' }, { status: 409 }));
     await expect(bodyClient.saveDraft?.('e1', {}, 'v1')).rejects.toMatchObject({ status: 409 });
 });
+
+it('sends page settings with the body in the same versioned draft request', async () => {
+    const fetch = vi.fn().mockResolvedValue(Response.json({ data: { headVersion: 'v2' } }));
+    vi.stubGlobal('fetch', fetch);
+    vi.stubGlobal('document', { cookie: '' });
+    const settings = { title: 'Draft title', segment: 'draft-url' };
+    await bodyClient.saveDraft!('e1', { content: 'Body' }, 'v1', undefined, settings);
+    expect(JSON.parse(fetch.mock.calls[0][1].body)).toEqual({ body: { content: 'Body' }, baseVersion: 'v1', pageSettings: settings });
+});

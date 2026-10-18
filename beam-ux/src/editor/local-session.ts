@@ -1,3 +1,5 @@
+import type { EntryPageSettings } from '../generated/page-settings';
+export type SessionPageSettings = Partial<EntryPageSettings>;
 /** ADR-0004: client undo is a Local Session; server versions are not the undo stack. */
 export interface SessionIdentity { entry: string; user: string; base: string }
 export interface SessionSnapshot {
@@ -5,6 +7,8 @@ export interface SessionSnapshot {
   identity: SessionIdentity;
   history: unknown[][];
   cursor: number;
+  settingsHistory?: (SessionPageSettings | null)[];
+  savedSettings?: SessionPageSettings | null;
   savedBody: unknown[];
 }
 const copy = <T>(value: T): T => JSON.parse(JSON.stringify(value)) as T;
@@ -14,32 +18,42 @@ export const sessionKey = (identity: SessionIdentity): string => JSON.stringify(
 
 export class LocalSession {
   private state: SessionSnapshot;
-  constructor(identity: SessionIdentity, body: unknown[]) {
+  constructor(identity: SessionIdentity, body: unknown[], pageSettings: SessionPageSettings | null = null) {
     if (!identity.entry || !identity.user || !identity.base) throw new Error('A Local Session requires an entry/user/base identity.');
-    this.state = { format: 1, identity: copy(identity), history: [copy(body)], cursor: 0, savedBody: copy(body) };
+    this.state = { format: 1, identity: copy(identity), history: [copy(body)], cursor: 0, savedBody: copy(body), settingsHistory: [copy(pageSettings)], savedSettings: copy(pageSettings) };
   }
-  static resume(identity: SessionIdentity, snapshot: SessionSnapshot): LocalSession {
+  static resume(identity: SessionIdentity, snapshot: SessionSnapshot, initialSettings: SessionPageSettings | null = null): LocalSession {
     if (!snapshot || snapshot.format !== 1 || !snapshot.identity || sessionKey(identity) !== sessionKey(snapshot.identity)) throw new Error('Local Session identity differs.');
     if (!Array.isArray(snapshot.history) || !snapshot.history.length || !snapshot.history.every(Array.isArray) || !Array.isArray(snapshot.savedBody) || !Number.isInteger(snapshot.cursor) || snapshot.cursor < 0 || snapshot.cursor >= snapshot.history.length) throw new Error('Invalid persisted session.');
+    if (snapshot.settingsHistory !== undefined && (!Array.isArray(snapshot.settingsHistory) || snapshot.settingsHistory.length !== snapshot.history.length || snapshot.settingsHistory.some(value => value !== null && (typeof value !== 'object' || Array.isArray(value))))) throw new Error('Invalid persisted page settings.');
     const session = new LocalSession(identity, []);
     session.state = copy(snapshot);
+    if (!session.state.settingsHistory) {
+      session.state.settingsHistory = session.state.history.map(() => copy(initialSettings));
+      session.state.savedSettings = copy(initialSettings);
+    }
     return session;
   }
   /** Called only after the author chooses Restore unsaved changes; never a silent merge. */
-  static restoreUnsaved(identity: SessionIdentity, serverBody: unknown[], snapshot: SessionSnapshot): LocalSession {
+  static restoreUnsaved(identity: SessionIdentity, serverBody: unknown[], snapshot: SessionSnapshot, serverSettings: SessionPageSettings | null = null): LocalSession {
     if (!sameOwner(identity, snapshot.identity)) throw new Error('Local Session identity differs.');
-    const session = LocalSession.resume(snapshot.identity, snapshot);
+    const session = LocalSession.resume(snapshot.identity, snapshot, serverSettings);
     session.state.identity = copy(identity);
     session.state.savedBody = copy(serverBody);
+    session.state.savedSettings = copy(serverSettings);
     return session;
   }
   get identity(): SessionIdentity { return copy(this.state.identity); }
   get body(): unknown[] { return copy(this.state.history[this.state.cursor]); }
-  get dirty(): boolean { return !equal(this.body, this.state.savedBody); }
+  get pageSettings(): SessionPageSettings | null { return copy(this.state.settingsHistory?.[this.state.cursor] ?? null); }
+  get dirty(): boolean { return !equal(this.body, this.state.savedBody) || !equal(this.pageSettings, this.state.savedSettings ?? null); }
   get canUndo(): boolean { return this.state.cursor > 0; }
   get canRedo(): boolean { return this.state.cursor + 1 < this.state.history.length; }
-  change(body: unknown[]): void {
-    if (equal(body, this.body)) return;
+  change(body: unknown[], pageSettings: SessionPageSettings | null = this.pageSettings): void {
+    if (equal(body, this.body) && equal(pageSettings, this.pageSettings)) return;
+    this.state.settingsHistory ??= this.state.history.map(() => null);
+    this.state.settingsHistory.splice(this.state.cursor + 1);
+    this.state.settingsHistory.push(copy(pageSettings));
     this.state.history.splice(this.state.cursor + 1);
     this.state.history.push(copy(body));
     this.state.cursor++;
@@ -47,10 +61,11 @@ export class LocalSession {
   undo(): void { if (this.canUndo) this.state.cursor--; }
   redo(): void { if (this.canRedo) this.state.cursor++; }
   /** Save advances the server base, but deliberately preserves undo/redo and the session. */
-  saved(base: string, savedBody: unknown[] = this.body): void {
+  saved(base: string, savedBody: unknown[] = this.body, savedSettings: SessionPageSettings | null = this.pageSettings): void {
     if (!base) throw new Error('A saved Local Session requires a base.');
     this.state.identity.base = base;
     this.state.savedBody = copy(savedBody);
+    this.state.savedSettings = copy(savedSettings);
   }
   snapshot(): SessionSnapshot { return copy(this.state); }
 }
@@ -82,7 +97,7 @@ export class IndexedDbSessions {
   }
   /** Atomic replacement when Save changes the base; the old key cannot remain as a false conflict. */
   async write(snapshot: SessionSnapshot, previousIdentity?: SessionIdentity): Promise<void> {
-    LocalSession.resume(snapshot.identity, snapshot);
+    LocalSession.resume(snapshot.identity, snapshot, serverSettings);
     const database = await this.database;
     await new Promise<void>((resolve, reject) => {
       const transaction = database.transaction('sessions', 'readwrite');

@@ -1,13 +1,5 @@
-import { compileEntryStyles } from "../blockdoc/style-runtime.js";
-import {
-  Fragment,
-  createElement,
-  useEffect,
-  useState,
-  type ComponentType,
-  type ReactNode,
-} from "react";
-import { jsx, jsxs } from "react/jsx-runtime";
+import { Fragment, createElement, useEffect, useState, type ComponentType, type ReactNode } from 'react';
+import { jsx, jsxs } from 'react/jsx-runtime';
 
 /**
  * Loads and renders a rendered entry's **compiled body artifact** (ADR-0209 §7).
@@ -45,23 +37,21 @@ import { jsx, jsxs } from "react/jsx-runtime";
  */
 
 /** The jsx runtime handed to every artifact. `createElement` serves the tsx path's classic factory. */
-const RUNTIME = { jsx, jsxs, Fragment, createElement, compileEntryStyles };
+const RUNTIME = { jsx, jsxs, Fragment, createElement };
 
 type ArtifactModule = {
-  default: (runtime: typeof RUNTIME) => {
-    default: ComponentType<Record<string, unknown>>;
-  };
+    default: (runtime: typeof RUNTIME) => { default: ComponentType<Record<string, unknown>> };
 };
 
 export type EntryArtifact = {
-  responsiveCss?: string;
-  styleRegistry?: import("../blockdoc/style-runtime.js").StyleRegistry;
-  url: string;
-  /**
-   * Part of the artifact's ADDRESS, not metadata: an edited body compiles to a different URL, so a
-   * changed version must re-import rather than reuse the module already in memory.
-   */
-  version?: string | null;
+    responsiveCss?: string;
+    styleRegistry?: import("../blockdoc/style-runtime.js").StyleRegistry;
+    url: string;
+    /**
+     * Part of the artifact's ADDRESS, not metadata: an edited body compiles to a different URL, so a
+     * changed version must re-import rather than reuse the module already in memory.
+     */
+    version?: string | null;
 };
 
 /**
@@ -74,18 +64,18 @@ export type EntryArtifact = {
  * a host where that command was already current ("already current 13"). The entry was not uncompiled;
  * it was empty. Two different conditions had one message, and the message was false for the common one.
  */
-export type EntryArtifactStatus = "loading" | "ready" | "unauthored" | "failed";
+export type EntryArtifactStatus = 'loading' | 'ready' | 'unauthored' | 'failed';
 
 export type UseEntryArtifactResult = {
-  /** The compiled body, or null unless `status === 'ready'`. */
-  Body: ComponentType<Record<string, unknown>> | null;
-  /** See {@link EntryArtifactStatus}. */
-  status: EntryArtifactStatus;
-  /**
-   * The artifact EXISTS and could not be loaded. Never a reason to fall back to compiling in the
-   * browser. Narrowed by this defect: "there is no artifact to load" is `unauthored`, not this.
-   */
-  failed: boolean;
+    /** The compiled body, or null unless `status === 'ready'`. */
+    Body: ComponentType<Record<string, unknown>> | null;
+    /** See {@link EntryArtifactStatus}. */
+    status: EntryArtifactStatus;
+    /**
+     * The artifact EXISTS and could not be loaded. Never a reason to fall back to compiling in the
+     * browser. Narrowed by this defect: "there is no artifact to load" is `unauthored`, not this.
+     */
+    failed: boolean;
 };
 
 /**
@@ -100,99 +90,92 @@ export type UseEntryArtifactResult = {
  * Extracted so this is testable without a real dynamic import: jsdom cannot `import()` an arbitrary
  * URL, so a test that goes through {@link useEntryArtifact} passes whether or not this check exists.
  */
-export function componentFromArtifact(
-  mod: ArtifactModule
-): ComponentType<Record<string, unknown>> | null {
-  const Component = mod?.default?.(RUNTIME)?.default;
+export function componentFromArtifact(mod: ArtifactModule): ComponentType<Record<string, unknown>> | null {
+    const Component = mod?.default?.(RUNTIME)?.default;
 
-  return typeof Component === "function" ? Component : null;
+    return typeof Component === 'function' ? Component : null;
 }
 
-export function useEntryArtifact(
-  url: string,
-  version?: string | null
-): UseEntryArtifactResult {
-  const [Body, setBody] = useState<ComponentType<
-    Record<string, unknown>
-  > | null>(null);
-  const [status, setStatus] = useState<EntryArtifactStatus>("loading");
+export function useEntryArtifact(url: string, version?: string | null): UseEntryArtifactResult {
+    const [Body, setBody] = useState<ComponentType<Record<string, unknown>> | null>(null);
+    const [status, setStatus] = useState<EntryArtifactStatus>('loading');
 
-  useEffect(() => {
-    let cancelled = false;
-    setBody(null);
-    setStatus("loading");
+    useEffect(() => {
+        let cancelled = false;
+        setBody(null);
+        setStatus('loading');
 
-    if (!url) {
-      setStatus("unauthored");
-      return;
-    }
-
-    import(/* @vite-ignore */ url)
-      .then((mod: ArtifactModule) => {
-        const Component = componentFromArtifact(mod);
-
-        if (cancelled) {
-          return;
+        if (!url) {
+            setStatus('unauthored');
+            return;
         }
 
-        if (Component === null) {
-          setStatus("failed");
+        import(/* @vite-ignore */ url)
+            .then((mod: ArtifactModule) => {
+                const Component = componentFromArtifact(mod);
 
-          return;
-        }
+                if (cancelled) {
+                    return;
+                }
 
-        setBody(() => Component);
-        setStatus("ready");
-      })
-      .catch(() => {
-        // No client-side compile fallback, deliberately (ADR-0209 §7). A missing or broken
-        // artifact is a doctor finding (`BeamUxArtifactAudit`) and a visible empty state —
-        // never a silent regression to shipping an MDX compiler to every reader.
-        if (!cancelled) {
-          setStatus("failed");
-        }
-      });
+                if (Component === null) {
+                    setStatus('failed');
 
-    return () => {
-      cancelled = true;
-    };
-  }, [url, version]);
+                    return;
+                }
 
-  return { Body, status, failed: status === "failed" };
+                setBody(() => Component);
+                setStatus('ready');
+            })
+            .catch(() => {
+                // No client-side compile fallback, deliberately (ADR-0209 §7). A missing or broken
+                // artifact is a doctor finding (`BeamUxArtifactAudit`) and a visible empty state —
+                // never a silent regression to shipping an MDX compiler to every reader.
+                if (!cancelled) {
+                    setStatus('failed');
+                }
+            });
+
+        return () => {
+            cancelled = true;
+        };
+    }, [url, version]);
+
+    return { Body, status, failed: status === 'failed' };
 }
 
 export type EntryBodyProps = {
-  artifact: EntryArtifact;
-  /**
-   * What the body may reach for — the contribution contract from the docs side (ADR-0210 §5). A beam
-   * package contributes a seed row naming `<ApiReference>` or `<ManifestTable>` and ships no
-   * frontend; this map is what makes those names resolve, so it is the HOST's to supply.
-   */
-  components?: Record<string, ComponentType<never>>;
-  /**
-   * Shown when an artifact that EXISTS cannot be loaded. Defaults to the operator-facing line naming
-   * the command that fixes it, because that is what a broken artifact usually means.
-   *
-   * It is deliberately no longer the answer for an entry that simply has no body — see
-   * {@link EntryBodyProps.empty} and {@link EntryArtifactStatus}.
-   */
-  fallback?: ReactNode;
-  /**
-   * Shown when the entry has never been authored (no artifact URL). Defaults to a reader-facing line
-   * that states the fact and nothing else: a guest cannot run an artisan command, and telling them to
-   * is both useless and wrong.
-   */
-  empty?: ReactNode;
-  /** Shown while the artifact is in flight. Defaults to nothing — the load is usually imperceptible. */
-  loading?: ReactNode;
-  /**
-   * Extra props handed to the compiled body — ADR-0213 §6's escape hatch. A screen component owns its
-   * data logic and fetches, because an artifact is a static module addressed by body hash with
-   * nowhere in it for a per-request value. Where a round trip is silly (the current user), the
-   * renderer's page props reach the body here under one well-known name rather than each host
-   * inventing a channel.
-   */
-  bodyProps?: Record<string, unknown>;
+    artifact: EntryArtifact;
+    /**
+     * What the body may reach for — the contribution contract from the docs side (ADR-0210 §5). A beam
+     * package contributes a seed row naming `<ApiReference>` or `<ManifestTable>` and ships no
+     * frontend; this map is what makes those names resolve, so it is the HOST's to supply.
+     */
+    components?: Record<string, ComponentType<never>>;
+    /**
+     * Shown when an artifact that EXISTS cannot be loaded. Defaults to the operator-facing line naming
+     * the command that fixes it, because that is what a broken artifact usually means.
+     *
+     * It is deliberately no longer the answer for an entry that simply has no body — see
+     * {@link EntryBodyProps.empty} and {@link EntryArtifactStatus}.
+     */
+    fallback?: ReactNode;
+    /**
+     * Shown when the entry has never been authored (no artifact URL). Defaults to a reader-facing line
+     * that states the fact and nothing else: a guest cannot run an artisan command, and telling them to
+     * is both useless and wrong.
+     */
+    empty?: ReactNode;
+    /** Shown while the artifact is in flight. Defaults to nothing — the load is usually imperceptible. */
+    loading?: ReactNode;
+    /**
+     * Extra props handed to the compiled body — ADR-0213 §6's escape hatch. A screen component owns its
+     * data logic and fetches, because an artifact is a static module addressed by body hash with
+     * nowhere in it for a per-request value. Where a round trip is silly (the current user), the
+     * renderer's page props reach the body here under one well-known name rather than each host
+     * inventing a channel.
+     */
+    bodyProps?: Record<string, unknown>;
 };
 
 // The placeholder copy is dimmed off the surrounding ink unless the host names a dimmed ink: it renders
@@ -200,71 +183,37 @@ export type EntryBodyProps = {
 // `--beam-fg-muted`, the prose text token, never `--beam-muted`, which is a SURFACE tone in the beam tier
 // (the mdx kit fills with it), so reading it as text came out pale-on-pale.
 const DEFAULT_EMPTY = (
-  <p
-    data-beam-entry-unauthored=""
-    style={{
-      fontSize: "0.875rem",
-      color:
-        "var(--beam-fg-muted, color-mix(in oklab, currentColor 62%, transparent))",
-    }}
-  >
-    This page doesn&rsquo;t have any content yet.
-  </p>
+    <p data-beam-entry-unauthored="" style={{ fontSize: '0.875rem', color: 'var(--beam-fg-muted, color-mix(in oklab, currentColor 62%, transparent))' }}>
+        This page doesn&rsquo;t have any content yet.
+    </p>
 );
 
 const DEFAULT_FALLBACK = (
-  <p
-    data-beam-entry-uncompiled=""
-    style={{
-      fontSize: "0.875rem",
-      color:
-        "var(--beam-fg-muted, color-mix(in oklab, currentColor 62%, transparent))",
-    }}
-  >
-    This page&rsquo;s content has not been compiled yet. Run{" "}
-    <code
-      style={{ fontFamily: "var(--beam-font-mono, ui-monospace, monospace)" }}
-    >
-      php artisan splicewire:beam:ux:compile
-    </code>
-    .
-  </p>
+    <p data-beam-entry-uncompiled="" style={{ fontSize: '0.875rem', color: 'var(--beam-fg-muted, color-mix(in oklab, currentColor 62%, transparent))' }}>
+        This page&rsquo;s content has not been compiled yet. Run{' '}
+        <code style={{ fontFamily: 'var(--beam-font-mono, ui-monospace, monospace)' }}>
+            php artisan splicewire:beam:ux:compile
+        </code>
+        .
+    </p>
 );
 
-export function EntryBody({
-  artifact,
-  components,
-  fallback,
-  empty,
-  loading = null,
-  bodyProps,
-}: EntryBodyProps) {
-  const { Body, status } = useEntryArtifact(artifact.url, artifact.version);
+export function EntryBody({ artifact, components, fallback, empty, loading = null, bodyProps }: EntryBodyProps) {
+    const { Body, status } = useEntryArtifact(artifact.url, artifact.version);
 
-  if (status === "unauthored") {
-    return <>{empty ?? DEFAULT_EMPTY}</>;
-  }
+    if (status === 'unauthored') {
+        return <>{empty ?? DEFAULT_EMPTY}</>;
+    }
 
-  if (status === "failed") {
-    return <>{fallback ?? DEFAULT_FALLBACK}</>;
-  }
+    if (status === 'failed') {
+        return <>{fallback ?? DEFAULT_FALLBACK}</>;
+    }
 
-  if (Body === null) {
-    return <>{loading}</>;
-  }
+    if (Body === null) {
+        return <>{loading}</>;
+    }
 
-  // The compiler runs without `providerImportSource`, so the compiled body takes its component map
-  // as a PROP. An `<MDXProvider>` wrapper around this would be inert.
-  return (
-    <>
-      {artifact.responsiveCss ? (
-        <style data-beam-responsive-theme="">{artifact.responsiveCss}</style>
-      ) : null}
-      <Body
-        {...(bodyProps ?? {})}
-        components={components ?? {}}
-        styleRegistry={artifact.styleRegistry}
-      />
-    </>
-  );
+    // The compiler runs without `providerImportSource`, so the compiled body takes its component map
+    // as a PROP. An `<MDXProvider>` wrapper around this would be inert.
+    return <>{artifact.responsiveCss ? <style data-beam-responsive-theme="">{artifact.responsiveCss}</style> : null}<Body {...(bodyProps ?? {})} components={components ?? {}} styleRegistry={artifact.styleRegistry} /></>;
 }
