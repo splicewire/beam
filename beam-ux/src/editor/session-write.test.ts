@@ -15,8 +15,9 @@ it('persists the complete session snapshot without a server-settings variable', 
         }),
     };
     // The fake supplies only the IDB boundary; exercise the real write method and validation.
-    const store = Object.assign(Object.create(IndexedDbSessions.prototype) as IndexedDbSessions, {
-        database: Promise.resolve({transaction: () => transaction}),
+    const store = Object.create(IndexedDbSessions.prototype) as IndexedDbSessions;
+    Object.defineProperty(store, 'database', {
+        value: Promise.resolve({transaction: () => transaction}),
     });
     await expect(store.write(snapshot)).resolves.toBeUndefined();
     expect(writes).toEqual([{value:snapshot,key:sessionKey(snapshot.identity)}]);
