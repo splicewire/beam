@@ -1,5 +1,6 @@
 import { assertBlockStyle, type BlockStyle } from './style.js';
 import { freshBlockIds } from './identity.js';
+import { assertFieldPath, assertRepeat, assertCondition, type RepeatDeclaration, type DataCondition } from './bindings.js';
 /**
  * `@splicewire/beam-ux/jsondoc` — the **browser-safe** JSON projection of a TsxTree.
  *
@@ -41,6 +42,8 @@ export interface JsonProp {
 
 /** An intrinsic element or component node. `isComponent` ⇒ a registered PascalCase component. */
 export interface JsonBlock {
+    repeat?: RepeatDeclaration;
+    when?: DataCondition;
     id?: string;
     style?: BlockStyle;
     kind: 'block';
@@ -55,6 +58,7 @@ export interface JsonBlock {
 
 /** A text leaf. */
 export interface JsonText {
+    field?: string;
     kind: 'text';
     value: string;
 }
@@ -104,7 +108,7 @@ export function toJson(input: TsxTree | BlockNode | BlockChild[]): JsonDoc {
 }
 
 function childToJson(child: BlockChild): JsonNode {
-    if (child.type === 'text') return { kind: 'text', value: child.value };
+    if (child.type === 'text') return { kind: 'text', value: child.value, ...(child.field != null ? { field: child.field } : {}) };
     if (child.type === 'opaque') {
         return { kind: 'opaque', reason: child.reason, source: child.source };
     }
@@ -116,6 +120,8 @@ function childToJson(child: BlockChild): JsonNode {
         children: child.children.map(childToJson),
         dynamic: child.dynamic,
         ...(child.style ? { style: child.style } : {}),
+        ...(child.repeat ? { repeat: child.repeat } : {}),
+        ...(child.when ? { when: child.when } : {}),
     };
 }
 
@@ -143,12 +149,22 @@ export function jsonToTsx(doc: JsonDoc, depth = 0): string {
 
 function printNode(node: JsonNode, depth: number): string {
     const pad = INDENT.repeat(depth);
-    if (isJsonText(node)) return pad + escapeText(node.value.trim());
+    if (isJsonText(node)) {
+        if (node.field != null) {
+            assertFieldPath(node.field);
+            return pad + `{bdText(${JSON.stringify(node.field)}, ${JSON.stringify(node.value)})}`;
+        }
+        return pad + escapeText(node.value.trim());
+    }
     if (isJsonOpaque(node)) return pad + node.source;
 
     const tag = node.name ?? '';
     if (node.style) assertBlockStyle(node.style);
-    const attrs = node.props.map(printProp).join('') + (node.style ? ` bdStyle={${JSON.stringify(node.style)}}` : '');
+    if (node.repeat) assertRepeat(node.repeat);
+    if (node.when) assertCondition(node.when);
+    const attrs = node.props.map(printProp).join('') + (node.style ? ` bdStyle={${JSON.stringify(node.style)}}` : '')
+        + (node.repeat ? ` bdRepeat={${JSON.stringify(node.repeat)}}` : '')
+        + (node.when ? ` bdWhen={${JSON.stringify(node.when)}}` : '');
     const open = node.name === null ? '<>' : `<${tag}${attrs}>`;
     const close = node.name === null ? '</>' : `</${tag}>`;
 
@@ -158,7 +174,7 @@ function printNode(node: JsonNode, depth: number): string {
     }
 
     // A leaf (text-only children) prints inline for readability + stable round-trip.
-    if (isLeafText(node)) {
+    if (isLeafText(node) && node.children.every((child) => !('field' in child))) {
         const inner = node.children.map((c) => escapeText((c as JsonText).value.trim())).join('');
         return `${pad}${open}${inner}${close}`;
     }
@@ -169,6 +185,9 @@ function printNode(node: JsonNode, depth: number): string {
 
 function printProp(p: JsonProp): string {
     switch (p.kind) {
+        case 'field':
+            assertFieldPath(p.value);
+            return ` ${p.name}={bdField(${JSON.stringify(p.value)})}`;
         case 'boolean-shorthand':
             return ` ${p.name}`;
         case 'string':

@@ -167,7 +167,7 @@ export default function SiteEntry(props: SiteEntryProps) {
                     Template,
                     templateArtifact,
                     ProseTemplate,
-                    editable(<EntryBody artifact={artifact} components={components} bodyProps={{ page: props }} />),
+                    editable(<EntryBody artifact={artifact} components={components} bodyProps={{ page: props, bindings: props.bindings }} />),
                 ),
             )}
         </>

@@ -96,6 +96,7 @@ export function PageEditor({ slug, body = null, entryId: suppliedId = null }: Pa
         body: unknown;
         styleRegistry?: import('../blockdoc/style-runtime.js').StyleRegistry; profile?: import('@schemastud/blockdoc').BlockdocManifest;
         failed?: boolean;
+        bindings?: import('../bindings/runtime.js').BindingPayload;
     } | null>(null);
 
     const current = loaded?.entryId === entryId ? loaded : null;
@@ -110,7 +111,7 @@ export function PageEditor({ slug, body = null, entryId: suppliedId = null }: Pa
             .loadBody(entryId)
             .then(
                 (env) =>
-                    live && setLoaded({ entryId, body: (env as { body?: unknown })?.body ?? null, styleRegistry: (env as { styleRegistry?: import("../blockdoc/style-runtime.js").StyleRegistry }).styleRegistry, profile: (env as { styleRegistry?: import('../blockdoc/style-runtime.js').StyleRegistry; profile?: import('@schemastud/blockdoc').BlockdocManifest }).profile }),
+                    live && setLoaded({ entryId, body: (env as { body?: unknown })?.body ?? null, bindings: (env as { bindings?: import('../bindings/runtime.js').BindingPayload }).bindings, styleRegistry: (env as { styleRegistry?: import("../blockdoc/style-runtime.js").StyleRegistry }).styleRegistry, profile: (env as { styleRegistry?: import('../blockdoc/style-runtime.js').StyleRegistry; profile?: import('@schemastud/blockdoc').BlockdocManifest }).profile }),
             )
             // A refused read is not an empty body: keep replacement writes unavailable.
             .catch(() => {
@@ -145,7 +146,7 @@ export function PageEditor({ slug, body = null, entryId: suppliedId = null }: Pa
     const canClear = entryId !== null && !!clearBody && canAuthor;
 
     return (
-        <CanvasProvider config={{ ...canvasConfig, profile: current?.profile, styleRegistry: current?.styleRegistry }}>
+        <CanvasProvider config={{ ...canvasConfig, profile: current?.profile, styleRegistry: current?.styleRegistry, bindings: current?.bindings }}>
             {entryId === null && canAuthor && bodyClient.makeEditable && seed && (
                 <button type="button" disabled={creating} onClick={makeEditable}>Make this page editable</button>
             )}

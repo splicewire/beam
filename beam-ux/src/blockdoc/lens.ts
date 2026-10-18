@@ -1,4 +1,5 @@
 import { assertBlockStyle, legacyStyle, type BlockStyle } from './style.js';
+import { assertFieldPath, assertRepeat, assertCondition, type RepeatDeclaration, type DataCondition } from './bindings.js';
 /**
  * TsxTree lens core — lossless `.tsx` ⟷ TsxTree.
  *
@@ -68,6 +69,8 @@ function buildBlock(
     const props: BlockProp[] = [];
     let style: BlockStyle | undefined;
     let legacy: BlockStyle | undefined;
+    let repeat: RepeatDeclaration | undefined;
+    let when: DataCondition | undefined;
     let dynamic = !isElement ? false : opening!.attributes.some((a) => t.isJSXSpreadAttribute(a));
     if (opening) {
         for (const attr of opening.attributes) {
@@ -77,6 +80,11 @@ function buildBlock(
                     const value = styleLiteral(attr.value.expression);
                     assertBlockStyle(value);
                     style = value;
+                } else if (t.isJSXIdentifier(attr.name) && ['bdRepeat', 'bdWhen'].includes(attr.name.name)) {
+                    if (!t.isJSXExpressionContainer(attr.value)) throw new Error(`${attr.name.name} requires a literal object`);
+                    const value = styleLiteral(attr.value.expression);
+                    if (attr.name.name === 'bdRepeat') { assertRepeat(value); repeat = value; }
+                    else { assertCondition(value); when = value; }
                 } else {
                     const prop = buildProp(attr);
                     if (prop.name === 'style' && prop.kind === 'string') {
@@ -104,7 +112,10 @@ function buildBlock(
                 // A `{/* comment */}` container: comments hang off the empty expression.
                 continue;
             }
-            if (t.isStringLiteral(expr) || t.isTemplateLiteral(expr)) {
+            if (t.isCallExpression(expr) && t.isIdentifier(expr.callee, { name: 'bdText' })) {
+                const args = bindingArguments(expr, 2);
+                children.push({ type: 'text', field: args[0], value: args[1], node: child });
+            } else if (t.isStringLiteral(expr) || t.isTemplateLiteral(expr)) {
                 children.push(textFromExpression(child, expr));
             } else {
                 // Any other expression child (`{items.map(...)}`, `{cond && <X/>}`, a ternary, a
@@ -133,6 +144,8 @@ function buildBlock(
         children,
         dynamic,
         ...(style || legacy ? { style: { layers: [...(legacy?.layers ?? []), ...(style?.layers ?? [])] } } : {}),
+        ...(repeat ? { repeat } : {}),
+        ...(when ? { when } : {}),
         node: el,
     };
 }
@@ -153,6 +166,9 @@ function buildProp(attr: t.JSXAttribute): BlockProp {
 
     if (t.isJSXExpressionContainer(value)) {
         const expr = value.expression;
+        if (t.isCallExpression(expr) && t.isIdentifier(expr.callee, { name: 'bdField' })) {
+            return { name, kind: 'field', value: bindingArguments(expr, 1)[0], node: attr };
+        }
         if (t.isStringLiteral(expr)) {
             return { name, kind: 'string', value: expr.value, node: attr };
         }
@@ -185,6 +201,15 @@ function buildProp(attr: t.JSXAttribute): BlockProp {
 
 function textFromJSXText(node: t.JSXText): TextNode {
     return { type: 'text', value: node.value, node };
+}
+
+function bindingArguments(call: t.CallExpression, count: number): string[] {
+    if (call.arguments.length !== count || call.arguments.some((argument) => !t.isStringLiteral(argument))) {
+        throw new Error('A binding helper requires literal string arguments only');
+    }
+    const args = call.arguments.map((argument) => (argument as t.StringLiteral).value);
+    assertFieldPath(args[0]);
+    return args;
 }
 
 function textFromExpression(

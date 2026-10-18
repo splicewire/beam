@@ -1,4 +1,5 @@
 import type { BlockStyle } from './style.js';
+import type { RepeatDeclaration, DataCondition } from './bindings.js';
 /**
  * TsxTree lens — the editable projection over a parsed `.tsx` page AST.
  *
@@ -19,7 +20,7 @@ import type { File } from '@babel/types';
  * from an *arbitrary expression* because a prop panel (ticket 09) can edit literals
  * inline but must treat expressions as opaque code (`{...}` — round-tripped verbatim).
  */
-export type PropKind = 'string' | 'number' | 'boolean' | 'expression' | 'boolean-shorthand';
+export type PropKind = 'string' | 'number' | 'boolean' | 'expression' | 'boolean-shorthand' | 'field';
 
 export interface BlockProp {
     /** Attribute name, e.g. `className`, `data-x`, `aria-label`, `style`. */
@@ -63,6 +64,7 @@ export interface OpaqueNode {
 }
 
 export interface TextNode {
+    field?: string;
     type: 'text';
     /** The literal text (JSXText value, or the string of a `{"..."}` expression). */
     value: string;
@@ -75,6 +77,8 @@ export interface TextNode {
 }
 
 export interface BlockNode {
+    repeat?: RepeatDeclaration;
+    when?: DataCondition;
     style?: BlockStyle;
     type: 'block';
     /** JSX element/component name, e.g. `div`, `Card`, `Foo.Bar`. `null` for fragments. */

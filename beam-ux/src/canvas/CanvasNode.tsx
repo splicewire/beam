@@ -143,11 +143,11 @@ export function CanvasNode({ node, path, editing, onEditText, onEditMd, onEditPr
     // (via TreeRender's renderNode) rather than editable. (MDX blocks are exempted for now — they
     // already fork their own edit/view rendering via MdxEdit/MdxView, a separate follow-up to route
     // through this same gate.)
-    if (isEditGated(config, block)) {
+    if (isEditGated(config, block) || block.repeat) {
         return (
             <div
                 data-bd-path={path}
-                className="ve-island ve-gated"
+                className={block.repeat ? 've-island ve-repeat' : 've-island ve-gated'}
                 draggable
                 onDragStart={(e) => {
                     e.stopPropagation();
@@ -164,7 +164,7 @@ export function CanvasNode({ node, path, editing, onEditText, onEditMd, onEditPr
                     dnd.onDrop(e.dataTransfer);
                 }}
                 onDragEnd={dnd.onDragEnd}
-                title={`Sealed — editing requires "${editGateOf(block)}"`}
+                title={isEditGated(config, block) ? `Sealed — editing requires "${editGateOf(block)}"` : 'Repeat — Records from your current read'}
             >
                 <div style={{ pointerEvents: 'none' }}>{renderNode(block, path, config)}</div>
             </div>

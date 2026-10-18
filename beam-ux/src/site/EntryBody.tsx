@@ -1,5 +1,6 @@
 import { Fragment, createElement, useEffect, useState, type ComponentType, type ReactNode } from 'react';
 import { jsx, jsxs } from 'react/jsx-runtime';
+import { bindingRuntime } from '../bindings/runtime.js';
 
 /**
  * Loads and renders a rendered entry's **compiled body artifact** (ADR-0209 §7).
@@ -215,5 +216,5 @@ export function EntryBody({ artifact, components, fallback, empty, loading = nul
 
     // The compiler runs without `providerImportSource`, so the compiled body takes its component map
     // as a PROP. An `<MDXProvider>` wrapper around this would be inert.
-    return <>{artifact.responsiveCss ? <style data-beam-responsive-theme="">{artifact.responsiveCss}</style> : null}<Body {...(bodyProps ?? {})} components={components ?? {}} styleRegistry={artifact.styleRegistry} /></>;
+    return <>{artifact.responsiveCss ? <style data-beam-responsive-theme="">{artifact.responsiveCss}</style> : null}<Body {...(bodyProps ?? {})} components={components ?? {}} styleRegistry={artifact.styleRegistry} bindingRuntime={bindingRuntime} /></>;
 }

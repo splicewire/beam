@@ -15,20 +15,29 @@ import type { JsonNode } from '../blockdoc/json.js';
 import { isIsland, useCanvas } from './context.js';
 import type { CanvasConfig } from './context.js';
 import { blockToProps, islandProps } from './props.js';
+import { bindingRuntime, type BindingRecord, type BindingPayload } from '../bindings/runtime.js';
 
 /**
  * Render a single node (and its subtree) read-only. Exported so CanvasNode can reuse it for an
  * entitlement-sealed node's content (same "sealed but real" rendering an opaque/component island
  * already gets — just gated on the viewer's can-map instead of source-reachability).
  */
-export function renderNode(node: JsonNode, path: string, config: CanvasConfig): ReactNode {
-    if (isJsonText(node)) return node.value;
+export function renderNode(node: JsonNode, path: string, config: CanvasConfig, record?: BindingRecord): ReactNode {
+    if (isJsonText(node)) return node.field == null ? node.value : bindingRuntime.text(record, node.field, node.value);
     // A sealed opaque island renders its verbatim source read-only (mirrors the canvas seal, view-side).
     if (isJsonOpaque(node)) {
         return createElement('pre', { key: path, className: 've-opaque-src' }, node.source);
     }
 
     const block = node;
+    if (block.repeat) {
+        const template = { ...block, repeat: undefined };
+        return bindingRuntime.repeat(config.bindings?.[block.id ?? ''],
+            (item) => renderNode(template, path, { ...config, bindings: item.bindings as BindingPayload | undefined }, item),
+            () => (block.repeat?.empty ?? []).map((child, index) => renderNode(child, `${path}.empty.${index}`, config, record)));
+    }
+    if (block.when && !bindingRuntime.when(block.when, record)) return null;
+    const fields = Object.fromEntries(block.props.filter((prop) => prop.kind === 'field').map((prop) => [prop.name, bindingRuntime.field(record, String(prop.value))]));
 
     if (block.name === 'Mdx') {
         const file = propValue(block, 'file');
@@ -46,18 +55,19 @@ export function renderNode(node: JsonNode, path: string, config: CanvasConfig): 
         return createElement(config.registry[block.name as string], {
             key: path,
             ...islandProps(block, config.styleRegistry),
+            ...fields,
         });
     }
 
     const tag = block.name ?? 'div';
-    const props = { key: path, ...blockToProps(block, config.styleRegistry) };
+    const props = { key: path, ...blockToProps(block, config.styleRegistry), ...fields };
 
     if (VOID_TAGS.has(tag)) return createElement(tag, props);
 
     return createElement(
         tag,
         props,
-        block.children.map((c, i) => renderNode(c, `${path}.${i}`, config)),
+        block.children.map((c, i) => renderNode(c, `${path}.${i}`, config, record)),
     );
 }
 

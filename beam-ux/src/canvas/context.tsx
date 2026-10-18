@@ -31,6 +31,7 @@ export interface BlockTemplate {
 
 /** Everything the canvas recursion needs, injected by the host. */
 export interface CanvasConfig {
+    bindings?: import('../bindings/runtime.js').BindingPayload;
     styleRegistry?: import("../blockdoc/style-runtime.js").StyleRegistry;
     /** Resolved by the server for the entry; the save guard reads this same profile. */
     profile?: BlockdocManifest;
