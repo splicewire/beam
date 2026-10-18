@@ -1,4 +1,5 @@
 import { assertBlockStyle, type BlockStyle } from './style.js';
+import { freshBlockIds } from './identity.js';
 /**
  * `@splicewire/beam-ux/jsondoc` — the **browser-safe** JSON projection of a TsxTree.
  *
@@ -40,6 +41,7 @@ export interface JsonProp {
 
 /** An intrinsic element or component node. `isComponent` ⇒ a registered PascalCase component. */
 export interface JsonBlock {
+    id?: string;
     style?: BlockStyle;
     kind: 'block';
     /** `null` for a fragment (`<>…</>`). */
@@ -266,15 +268,14 @@ export function removeAt(doc: JsonDoc, path: string): JsonDoc {
 }
 
 /**
- * Duplicate the node at `path`, inserting the clone as the next sibling. A structural (deep) clone —
- * no new node has any identity beyond its position, so this is exactly "insert a second copy of this
- * subtree right after the original." No-op (returns `doc` unchanged) if `path` doesn't resolve.
+ * Duplicate as the next sibling, giving every copied block a fresh identity.
+ * No-op (returns `doc` unchanged) if `path` does not resolve.
  */
 export function duplicateAt(doc: JsonDoc, path: string): JsonDoc {
     const node = getAt(doc, path);
     if (!node) return doc;
 
-    return insertInto(doc, parentOf(path), indexOf(path) + 1, structuredClone(node));
+    return insertInto(doc, parentOf(path), indexOf(path) + 1, freshBlockIds(node));
 }
 
 /** Move the node at `from` to be the sibling immediately before `target`. No-op if dropping into self. */

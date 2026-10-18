@@ -7,6 +7,9 @@ import {useCanvas} from './context';
 import {useStyleSelection} from './StyleSelection';
 import {contrastRatio,effectiveDeclaration,readableShade,validatedEdit} from './inspector-style';
 import {DEFAULT_VAR_SUGGESTIONS} from './templates';
+import {useCanvasSelection} from './CanvasSelection';
+import {getAt,isJsonBlock} from '../blockdoc/json';
+import {blockStyleFields} from './block-style';
 
 const PANELS:Record<string,string[]>={
  Size:['width','height','min-width','max-width','min-height','max-height','aspect-ratio','object-fit'],
@@ -21,6 +24,7 @@ interface Node {type:string;attrsSchema?:SchemaNode;attrs?:Record<string,unknown
 export function BlockInspector(){
  const mount=useEditShellMount();
  const config=useCanvas();
+ const canvasSelection=useCanvasSelection();
  const {selection,select}=useStyleSelection();
  const registry=config.styleRegistry??DEFAULT_STYLE_REGISTRY;
  const [error,setError]=useState<string|null>(null);
@@ -34,6 +38,11 @@ export function BlockInspector(){
  const node=id!==null?mount.getNode(id) as Node|null:null;
  const attrs=node?.attrs??{};
  const style=(attrs.bdStyle??{layers:[]}) as BlockStyle;
+ const selected=canvasSelection.commands&&canvasSelection.paths.includes(id??'')?canvasSelection.paths:[...(id?[id]:[])];
+ const styles=selected.map(path=>{
+  const block=canvasSelection.commands?getAt(canvasSelection.commands.doc,path):null;
+  return block&&isJsonBlock(block)?blockStyleFields(block,{schema:{},attrs:{}}).attrs.bdStyle:style;
+ });
  const tokens=config.varSuggestions??DEFAULT_VAR_SUGGESTIONS;
  useEffect(()=>{
   const element=[...document.querySelectorAll<HTMLElement>('[data-bd-path]')].find(el=>el.dataset.bdPath===id);
@@ -44,10 +53,15 @@ export function BlockInspector(){
  },[id,JSON.stringify(attrs),tokens.join('|')]);
  if(!node||id===null)return <div data-frame-region="inspector" data-frame-inspector-empty="">Select a block to edit</div>;
  const write=(property:string,value:string|null)=>{
-  try{const next=validatedEdit(style,selection,property,value,registry);mount.setNodeAttrs(id,{...attrs,bdStyle:next});setError(null);}
+  try{
+   if(canvasSelection.commands)canvasSelection.commands.editStyle(selected,selection,property,value);
+   else {const next=validatedEdit(style,selection,property,value,registry);mount.setNodeAttrs(id,{...attrs,bdStyle:next});}
+   setError(null);
+  }
   catch(e){setError(e instanceof Error?e.message:String(e));}
  };
  const own=(property:string)=>{
+  if(styles.length>1&&new Set(styles.map(s=>effectiveDeclaration(s,property,selection,registry)?.value??'')).size>1)return '';
   let value='';
   for(const layer of style.layers)if((layer.breakpoint??null)===selection.breakpoint&&(layer.state??null)===selection.state&&Object.hasOwn(layer.declarations,property))value=layer.declarations[property];
   return value;
@@ -58,7 +72,7 @@ export function BlockInspector(){
  // Components expose declared props; className remains source-owned, never an inspector edit.
  delete properties.className;
  const props=Object.fromEntries(Object.entries(attrs).filter(([key])=>Object.hasOwn(properties,key)));
- const rootStyles=!/^[A-Z]/.test(node.type); // Root forwarding marker is explicitly deferred to ticket 00.
+ const rootStyles=!/^[A-Z]/.test(node.type)&&selected.every(path=>{const n=canvasSelection.commands?getAt(canvasSelection.commands.doc,path):null;return !n||!isJsonBlock(n)||!n.isComponent&&!/^[A-Z]/.test(n.name??'');}); // Root forwarding marker is explicitly deferred to ticket 00.
  const foreground=resolve(effectiveDeclaration(style,'color',selection,registry)?.value||rendered.color||'');
  const background=resolve(effectiveDeclaration(style,'background-color',selection,registry)?.value||rendered['background-color']||'');
  const ratio=contrastRatio(foreground,background);
@@ -66,11 +80,13 @@ export function BlockInspector(){
  const field=(property:string)=>{
   const inherited=effectiveDeclaration(style,property,selection,registry);
   const value=own(property);
+  const mixed=styles.length>1&&new Set(styles.map(s=>effectiveDeclaration(s,property,selection,registry)?.value??'')).size>1;
   return <div key={property} style={{marginBlock:8}}>
    <label>{property} token<select aria-label={`${property} token`} value={tokens.includes(value)?value:''} onChange={event=>{if(event.target.value)write(property,event.target.value);}}>
     <option value="">Custom value</option>{tokens.map(token=><option key={token} value={token}>{token} {resolve(token)!==token?`(${resolve(token)})`:''}</option>)}</select></label>
    <label>{property}<input aria-label={property} list={tokenId} key={`${id}:${selection.breakpoint}:${selection.state}:${property}:${value}`} defaultValue={value}
-    placeholder={inherited?.value||rendered[property]||'Unset'} onBlur={event=>{if(event.target.value!==value)write(property,event.target.value||null);}}/></label>
+    placeholder={mixed?'Mixed values':inherited?.value||rendered[property]||'Unset'} onBlur={event=>{if(event.target.value!==value)write(property,event.target.value||null);}}/></label>
+   {mixed&&<small>{property}: Mixed values</small>}
    <small>{inherited?`${inherited.layer}: ${resolve(inherited.value)}`:rendered[property]?`Rendered / inherited: ${rendered[property]}`:'No value'}</small>
    {(property==='color'||property.endsWith('-color'))&&<ColourControls property={property} value={value||inherited?.value||rendered[property]||'#000000'} onChange={value=>write(property,value)} onError={setError}/>}
    <div><button type="button" onClick={()=>write(property,null)}>Unset {property}</button>
@@ -80,8 +96,10 @@ export function BlockInspector(){
  };
  return <div data-frame-region="inspector" data-node-type={node.type} style={{padding:12,overflow:'auto'}}>
   {error&&<p role="alert">{error}</p>}
-  <section aria-label="Element properties"><h3>{node.type} properties</h3><SchemaForm key={id} schema={{...node.attrsSchema,properties}} formData={props}
-   uiSchema={{'ui:submitButtonOptions':{norender:true}}} onChange={(event:{formData?:unknown})=>mount.setNodeAttrs(id,{...(event.formData as Record<string,unknown>),...(Object.hasOwn(attrs,'className')?{className:attrs.className}:{}),bdStyle:style})}/></section>
+  {selected.length>1&&<p>{selected.length} blocks selected — Block Style edits apply together.</p>}
+  {effectiveDeclaration(style,'display',{breakpoint:selection.breakpoint,state:null},registry)?.value==='none'&&<p>Hidden for visitors at {selection.breakpoint?`${selection.breakpoint}+`:'all widths'} after publish. An earlier layer may still hide this block when this override is cleared.</p>}
+  {selected.length<=1&&<section aria-label="Element properties"><h3>{node.type} properties</h3><SchemaForm key={id} schema={{...node.attrsSchema,properties}} formData={props}
+   uiSchema={{'ui:submitButtonOptions':{norender:true}}} onChange={(event:{formData?:unknown})=>mount.setNodeAttrs(id,{...(event.formData as Record<string,unknown>),...(Object.hasOwn(attrs,'className')?{className:attrs.className}:{}),bdStyle:style})}/></section>}
   {!rootStyles?<p>Style panels are unavailable: this component does not declare root-style forwarding.</p>:<>
    <label>Breakpoint<select aria-label="Breakpoint" value={selection.breakpoint??''} onChange={event=>select({...selection,breakpoint:event.target.value||null})}>
     <option value="">Base</option>{Object.entries(registry.breakpoints).map(([name,width])=><option key={name} value={name}>{name} ({width})</option>)}</select></label>

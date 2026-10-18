@@ -1,6 +1,9 @@
 import { blockStyleFields, applyBlockStyle } from './block-style.js';
 import { useStyleSelection } from './StyleSelection';
 import { DEFAULT_STYLE_REGISTRY } from '../blockdoc/style-runtime';
+import {useCanvasSelection} from './CanvasSelection';
+import {CanvasOutline} from './CanvasOutline';
+import {clipboardText,parseClipboard,pasteBlocks,wrapBlocks,unwrapBlock,removeBlocks,editStyles,assertPasteProfile} from './commands';
 // The registered heavyweight widget (WIDGET_NAME in registry.ts) FiveRegionEditShell mounts
 // full-surface in its canvas region. Everything about the block tree itself — text edit, drag-reorder,
 // opaque islands, entitlement sealing, breadcrumb, context menu — is UNCHANGED, still CanvasNode/
@@ -32,7 +35,7 @@ import { proseRole } from './prose';
 import type { DropEdge } from './CanvasNode.js';
 import { ContextMenu } from './ContextMenu.js';
 import type { ContextMenuState } from './ContextMenu.js';
-import { useCanvas } from './context.js';
+import { useCanvas, isEditGated, isIsland } from './context.js';
 import { DEFAULT_CANVAS_THEME, dropIndicatorCss, selectionCss } from './css.js';
 import type { CanvasTheme } from './css.js';
 import { setAttrs } from './props.js';
@@ -44,6 +47,7 @@ import { profileAttrs, profileTemplates, profileTemplatesAtParent, setProfileAtt
  * drag that starts in the shell's palette region (a REACT SIBLING of this widget, not an ancestor/
  * descendant) with no shared React state to use instead. See CanvasPalette.tsx (the drag source). */
 export const TEMPLATE_DATA_KEY = 'application/x-beam-ux-template';
+const EMPTY_DOC:JsonDoc=[];
 
 export interface CanvasWidgetProps {
     /** WidgetSurface passes the record as BOTH `value` and `formData`; either is accepted. */
@@ -107,8 +111,10 @@ export function CanvasWidget({
     hideBreadcrumb = false,
 }: CanvasWidgetProps) {
     const config = useCanvas();
+    const selection = useCanvasSelection();
+    const [commandError,setCommandError] = useState<string|null>(null);
     const { selection: styleSelection } = useStyleSelection();
-    const doc: JsonDoc = value ?? formData ?? [];
+    const doc: JsonDoc = value ?? formData ?? EMPTY_DOC;
     const allTemplates = config.blockTemplates ?? DEFAULT_BLOCK_TEMPLATES;
     // Was hardcoded to a fixed blue regardless of the host's actual theme — found live: it clashed
     // (near-invisible) against block content whose own background happened to be a similar hue.
@@ -121,7 +127,10 @@ export function CanvasWidget({
 
     const sel = mount?.selectedNodeId ?? null;
     const templates = useMemo(() => config.profile ? profileTemplates(allTemplates, config.profile, doc, sel) : allTemplates, [allTemplates, config.profile, doc, sel]);
-    const setSel = (path: string | null) => mount?.selectNode(path);
+    const setSel = (path: string | null, add = false) => {
+        selection.setPaths(path ? (add ? selection.paths.includes(path) ? selection.paths.filter(p=>p!==path) : [...selection.paths,path] : [path]) : []);
+        mount?.selectNode(path);
+    };
 
     // Every doc mutation funnels through here, and a NO-OP must not reach the host or the dirty flag.
     // Measured 2026-09-11 (G2-BEAM-AUTHOR-EMPTY-ENTRY): "+ Heading" on the empty `/about` document
@@ -156,11 +165,63 @@ export function CanvasWidget({
     // lost, the COMMIT did, because a later writer rebuilt the tree from a document that predated it.
     const docRef = useRef(doc);
     docRef.current = doc;
+    const readOnlyRef=useRef(readOnly);readOnlyRef.current=readOnly;
+    const alive=useRef(true);
+    useEffect(()=>{alive.current=true;return()=>{alive.current=false;};},[]);
 
     const emitFromRef = (next: JsonDoc) => {
         if (readOnly || next === docRef.current) return;
         onChange?.(next);
         mount?.markDirty(true);
+    };
+
+    // One commit for a batch edit: the host's Local Session supplies its single undo step.
+    useEffect(()=>{
+        selection.register({doc,readOnly,editStyle:(paths,layer,property,value)=>{
+            if(readOnly)return;
+            emitFromRef(editStyles(docRef.current,paths,layer,property,value,config.styleRegistry??DEFAULT_STYLE_REGISTRY));
+        }});
+        return ()=>selection.register(null);
+    },[doc,readOnly,config.styleRegistry,selection.register]);
+    useEffect(()=>{
+        if(sel&&!selection.paths.includes(sel))selection.setPaths([sel]);
+        if(!sel&&selection.paths.length)selection.setPaths([]);
+    },[sel]);
+
+    const command=(run:()=>JsonDoc)=>{
+        if(readOnlyRef.current)return;
+        try{emitFromRef(run());setSel(null);setCommandError(null);}
+        catch(error){setCommandError(error instanceof Error?error.message:String(error));}
+    };
+    const copy=async(cut=false)=>{
+        if(cut&&readOnly)return;
+        try{
+            if(!navigator.clipboard?.writeText)throw Error('Clipboard is unavailable in this browser');
+            const snapshot=docRef.current,paths=[...selection.paths];
+            await navigator.clipboard.writeText(clipboardText(snapshot,paths));
+            if(!alive.current)return;
+            if(cut){
+                if(readOnlyRef.current)throw Error('Editor became read-only; copied blocks were not cut');
+                // A slow clipboard prompt must never delete paths from a newer document.
+                if(docRef.current!==snapshot)throw Error('Document changed while copying; copied blocks were not cut');
+                command(()=>removeBlocks(docRef.current,paths));
+            }
+            setCommandError(null);
+        }catch(error){setCommandError(error instanceof Error?error.message:String(error));}
+    };
+    const paste=async()=>{
+        if(readOnly)return;
+        try{
+            if(!navigator.clipboard?.readText)throw Error('Clipboard is unavailable in this browser');
+            const snapshot=docRef.current,target=sel??'';
+            const nodes=parseClipboard(await navigator.clipboard.readText());
+            if(!alive.current)return;
+            if(readOnlyRef.current)throw Error('Editor is read-only');
+            if(docRef.current!==snapshot)throw Error('Document changed while reading clipboard; choose the destination again');
+            const parent=target?getAt(docRef.current,target):null;
+            if(parent&&isJsonBlock(parent)&&(isEditGated(config,parent)||isIsland(config,parent.name)))throw Error('Paste into an editable container');
+            command(()=>pasteBlocks(docRef.current,target,nodes,config.profile,config.styleRegistry));
+        }catch(error){setCommandError(error instanceof Error?error.message:String(error));}
     };
 
     // Node access: the shell's generic Inspector calls getNode(selectedNodeId)/setNodeAttrs(...) —
@@ -258,7 +319,7 @@ export function CanvasWidget({
         // handle it natively (see CanvasNode's own docs for why intercepting it here breaks typing).
         if (editing && path === editing) return;
         e.preventDefault();
-        setSel(path);
+        setSel(path,e.ctrlKey||e.metaKey||e.shiftKey);
         setEditing(null);
     };
     const onCanvasDbl = (e: React.MouseEvent) => {
@@ -304,7 +365,12 @@ export function CanvasWidget({
         const prev = siblingPath(path, -1);
         const next = siblingPath(path, 1);
         return [
-            { label: 'Duplicate', onSelect: () => emit(duplicateAt(doc, path)) },
+            { label: 'Duplicate', onSelect: () => command(()=>{
+                const node=getAt(docRef.current,path),parent=parentOf(path)?getAt(docRef.current,parentOf(path)):null;
+                if(!node)throw Error('Selection no longer exists');
+                assertPasteProfile([node],config.profile,parent as JsonBlock|null,config.styleRegistry);
+                return duplicateAt(docRef.current,path);
+            }) },
             {
                 label: 'Move up',
                 disabled: !prev || !getAt(doc, prev),
@@ -340,7 +406,24 @@ export function CanvasWidget({
     };
 
     return (
-        <div className="ve-canvas-widget" style={{width: styleSelection.breakpoint ? (config.styleRegistry ?? DEFAULT_STYLE_REGISTRY).breakpoints[styleSelection.breakpoint] : undefined, maxWidth: '100%'}}>
+        <div className="ve-canvas-widget" onKeyDown={event=>{
+            if(!(event.ctrlKey||event.metaKey)||(event.target as HTMLElement).closest('input,textarea,[contenteditable="true"]'))return;
+            const key=event.key.toLowerCase();
+            if(['c','x','v'].includes(key)){event.preventDefault();if(key==='v')void paste();else void copy(key==='x');}
+        }} style={{width: styleSelection.breakpoint ? (config.styleRegistry ?? DEFAULT_STYLE_REGISTRY).breakpoints[styleSelection.breakpoint] : undefined, maxWidth: '100%'}}>
+            <div role="toolbar" aria-label="Block commands">
+                <button type="button" disabled={!selection.paths.length} onClick={()=>void copy()}>Copy blocks</button>
+                <button type="button" disabled={readOnly||!selection.paths.length} onClick={()=>void copy(true)}>Cut blocks</button>
+                <button type="button" disabled={readOnly} onClick={()=>void paste()}>Paste into {sel??'document'}</button>
+                <button type="button" disabled={readOnly||!selection.paths.length} onClick={()=>command(()=>wrapBlocks(docRef.current,selection.paths,'flex',config.profile))}>Wrap in flex</button>
+                <button type="button" disabled={readOnly||!selection.paths.length} onClick={()=>command(()=>wrapBlocks(docRef.current,selection.paths,'grid',config.profile))}>Wrap in grid</button>
+                <button type="button" disabled={readOnly||selection.paths.length!==1} onClick={()=>command(()=>unwrapBlock(docRef.current,selection.paths[0],config.profile))}>Unwrap</button>
+                <span>{selection.paths.length} blocks selected</span>
+            </div>
+            {commandError&&<p role="alert">{commandError}</p>}
+            <div style={{display:'grid',gridTemplateColumns:'minmax(140px, 220px) minmax(0, 1fr)',gap:12}}>
+            <CanvasOutline doc={doc} onSelect={setSel} onHide={(path,hidden)=>command(()=>editStyles(docRef.current,[path],{breakpoint:styleSelection.breakpoint,state:null},'display',hidden?'none':null,config.styleRegistry??DEFAULT_STYLE_REGISTRY))}/>
+            <div style={{minWidth:0}}>
             {sel &&
                 (() => {
                     const selNode = getAt(doc, sel);
@@ -383,6 +466,7 @@ export function CanvasWidget({
                     actions={contextMenuActions(menu.path)}
                 />
             )}
+            </div></div>
         </div>
     );
 }
