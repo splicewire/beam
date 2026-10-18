@@ -10,7 +10,7 @@ it('duplicate mints recursive UUIDv7 ids without changing the source',()=>{
  expect((copy.children[0] as JsonBlock).id).not.toBe('child');expect(source.id).toBe('old');
 });
 it('clipboard roundtrip pastes fresh ids and retains source props/styles',()=>{
- const a=block('a');a.props=[{name:'title',kind:'string',value:'hello'}];
+ const a=block('a');a.props=[{name:'title',kind:'string',value:'hello'},{name:'hidden',kind:'boolean-shorthand',value:true}];
  const clip=parseClipboard(clipboardText([a],['0']));
  const result=pasteBlocks([block('target')],'0',clip);
  expect((result[0] as JsonBlock).children[0]).toMatchObject({props:a.props});

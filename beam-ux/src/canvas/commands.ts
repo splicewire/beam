@@ -30,7 +30,7 @@ export function parseClipboard(text:string):JsonDoc{
   if(node.kind==='text'){if(typeof node.value!=='string')throw Error('Invalid text');return;}
   if(node.kind==='opaque'){if(typeof node.source!=='string'||!['map','conditional','ternary','expression','spread'].includes(node.reason))throw Error('Invalid opaque node');return;}
   if(node.kind!=='block'||(typeof node.name!=='string'&&node.name!==null)||typeof node.dynamic!=='boolean'||typeof node.isComponent!=='boolean'||!Array.isArray(node.props)||!Array.isArray(node.children))throw Error('Invalid block');
-  for(const prop of node.props)if(!prop||typeof prop.name!=='string'||!['string','number','boolean','expression'].includes(prop.kind)||!['string','number','boolean'].includes(typeof prop.value)&&prop.value!==null)throw Error('Invalid prop');
+  for(const prop of node.props)if(!prop||typeof prop.name!=='string'||!['string','number','boolean','boolean-shorthand','expression'].includes(prop.kind)||!['string','number','boolean'].includes(typeof prop.value)&&prop.value!==null)throw Error('Invalid prop');
   if(node.style)assertBlockStyle(node.style);
   node.children.forEach(child=>visit(child,depth+1));
  };
@@ -52,7 +52,7 @@ export function assertPasteProfile(nodes:JsonDoc,profile:BlockdocManifest|undefi
   // Expressions remain opaque; the save guard is authoritative for dynamic attributes.
   if(!node.props.some(p=>p.kind==='expression')){
    const attrs=Object.fromEntries(node.props.map(p=>[p.name,p.value]));
-   const result=validator.validateFormData(attrs,declaration.attrsSchema);
+   const result=validator.validateFormData(attrs,declaration.attrsSchema??{type:'object',properties:{},additionalProperties:false});
    if(result.errors.length)throw Error(`Invalid attributes for ${node.name}: ${result.errors[0].message}`);
   }
   node.children.forEach(child=>visit(child,declaration));

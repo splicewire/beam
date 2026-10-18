@@ -55,10 +55,10 @@ export function blockStyleFields(
       },
     },
   };
-  attrs.bdStyle =
+  const bdStyle =
     block.style ??
     (legacy ? legacyStyle(String(legacy.value ?? "")) : { layers: [] });
-  return { schema: { ...input.schema, properties }, attrs };
+  return { schema: { ...input.schema, properties }, attrs: {...attrs, bdStyle} };
 }
 
 export function applyBlockStyle(block: JsonBlock, value: unknown): JsonBlock {
