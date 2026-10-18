@@ -2,7 +2,6 @@ import { getBeamInertiaConfig } from '../config';
 import { Link, router } from '@inertiajs/react';
 import {
     buildRealmRoutes,
-    createGuardRegistry,
     createMountDispatcher,
     createRouteRegistry,
     ListShell,
@@ -11,6 +10,7 @@ import type { RealmRouteObject, RouteContextEntry } from '@schemastud/frame';
 import type { ReactNode } from 'react';
 import { useMemo } from 'react';
 import { useParams, useRoutes } from 'react-router';
+import { createFrameGuards } from './guards';
 import { frameIcon } from './icons';
 import type { FrameManifest, FrameNavNode } from './manifest';
 import { realmHref, realmRelative, useFrameRealm } from './realm';
@@ -219,7 +219,9 @@ export function FrameRoutes({ manifest }: { manifest: FrameManifest }) {
 
         const generated = buildRealmRoutes(manifest.routeContext, {
             routes: routeRegistry,
-            guards: createGuardRegistry(),
+            // Every guard key a realm stamps is bound (the operator realm's `root`), so a guarded leaf never renders
+            // unguarded and never trips Frame's fail-closed refusal for an unregistered guard.
+            guards: createFrameGuards(),
             fallback: (entry) => {
                 const Component = dispatch(entry);
 

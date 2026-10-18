@@ -14,9 +14,12 @@ import { FrameRealmProvider } from './realm';
 import { FrameRoutes } from './router';
 import { frameTransport } from './transport';
 
+// The shared page props each test sets (the `realms` HostIa payload the host shares on every Inertia request).
+const page = vi.hoisted(() => ({ props: {} as Record<string, unknown> }));
+
 vi.mock('@inertiajs/react', () => ({
     Head: () => null,
-    usePage: () => ({ props: {} }),
+    usePage: () => page,
     Link: (props: AnchorHTMLAttributes<HTMLAnchorElement>) => <a {...props} />,
     router: {
         visit: vi.fn((href: string) => {
@@ -41,7 +44,7 @@ const leaf = (
     resource: 'documents',
 });
 
-function fixture({ create = true, show = true, editable = false, host = false } = {}) {
+function fixture({ create = true, show = true, editable = false, host = false, guard = null as string | null } = {}) {
     const manifest: FrameManifest = {
         resources: [
             {
@@ -66,7 +69,7 @@ function fixture({ create = true, show = true, editable = false, host = false } 
         },
         nav: { items: [] },
         routeContext: [
-            leaf('documents.index', 'catalog', 'list'),
+            { ...leaf('documents.index', 'catalog', 'list'), guard },
             ...(create && !host ? [leaf('documents.create', 'catalog/new', 'edit')] : []),
             ...(show || editable
                 ? [leaf('documents.edit', 'catalog/:id', editable ? 'edit' : 'detail')]
@@ -122,6 +125,7 @@ beforeEach(() => {
     vi.clearAllMocks();
 });
 afterEach(() => {
+    page.props = {};
     cleanup();
     client.clear();
     vi.restoreAllMocks();
@@ -288,5 +292,43 @@ describe('explicit Frame creation destinations', () => {
             expect(create).toHaveBeenCalledWith('documents', { name: 'Widget draft' })
         );
         expect(data.requests.some(({ path }) => path.includes('/records/'))).toBe(false);
+    });
+});
+
+// orch-lead 10:04Z: the operator realm stamps `guard: 'root'` on every leaf (laravel-beam RealmRegistry). This router
+// binds it to the rule the flagship's RequireRoot applies: admit exactly whom the host's realms payload offers an
+// UNLOCKED operator realm, the payload's own decision (an os.operate operator included), never a hard-coded Root check.
+describe("the operator realm's 'root' guard", () => {
+    const realms = (operator: { locked: boolean } | null) => ({
+        realms: [
+            { key: 'tenant', label: 'Workspace', href: '/', surface: 'app', locked: false },
+            ...(operator ? [{ key: 'operator', label: 'Operator', href: '/operator', surface: 'app', ...operator }] : []),
+        ],
+        current: 'operator',
+        back: null,
+    });
+
+    it('admits a principal the payload offers an unlocked operator realm', async () => {
+        page.props = { realms: realms({ locked: false }) };
+        mount(fixture({ guard: 'root' }));
+        expect(await screen.findByText('Existing document')).toBeTruthy();
+    });
+
+    it('refuses a principal whose operator realm is locked', async () => {
+        page.props = { realms: realms({ locked: true }) };
+        mount(fixture({ guard: 'root' }));
+        expect(await screen.findByText('This operator page is not available to you.')).toBeTruthy();
+        expect(screen.queryByText('Existing document')).toBeNull();
+    });
+
+    it('refuses when the payload offers no operator realm, or the host shares none', async () => {
+        page.props = { realms: realms(null) };
+        mount(fixture({ guard: 'root' }));
+        expect(await screen.findByText('This operator page is not available to you.')).toBeTruthy();
+        cleanup();
+        page.props = {};
+        mount(fixture({ guard: 'root' }));
+        expect(await screen.findByText('This operator page is not available to you.')).toBeTruthy();
+        expect(screen.queryByText('Existing document')).toBeNull();
     });
 });
