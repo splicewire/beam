@@ -15,7 +15,7 @@ export function VisualEditorMount({ entryRef }: { entryRef: EntryRef }) {
 }
 function AddressedVisualEditor({ entryRef }: { entryRef: EntryRef }) {
     const { transport, theme, canvasConfig, userId, canAuthor, notify } = useEditorKit();
-    const [loaded, setLoaded] = useState<{ body: JsonDoc; state: EntryPublicationState } | null>(null);
+    const [loaded, setLoaded] = useState<{ body: JsonDoc; state: EntryPublicationState; profile?: import('@schemastud/blockdoc').BlockdocManifest } | null>(null);
     const [error, setError] = useState<string | null>(null);
     const [conflict, setConflict] = useState(false);
     const [busy, setBusy] = useState(false);
@@ -32,7 +32,7 @@ function AddressedVisualEditor({ entryRef }: { entryRef: EntryRef }) {
             if (!state.publishedVersion || !state.headVersion) throw new Error('This entry has no Publication Pin. Publish its baseline before mounting the editor.');
             const body = (envelope as { body?: unknown }).body;
             if (!Array.isArray(body)) throw new Error('The entry has no editable document.');
-            setLoaded({ body: body as JsonDoc, state });
+            setLoaded({ body: body as JsonDoc, state, profile: (envelope as { profile?: import('@schemastud/blockdoc').BlockdocManifest }).profile });
         }).catch(reason => live && setError(reason instanceof Error ? reason.message : 'Could not load editor history. Verify the versions and publication-pin migrations.'));
         return () => { live = false; };
         // The transport may be a new object each render; the address owns the load lifecycle.
@@ -65,10 +65,10 @@ function AddressedVisualEditor({ entryRef }: { entryRef: EntryRef }) {
             if (!state.headVersion) throw new Error('Save returned no version.');
             local.saved(state.headVersion, sent); setLoaded(previous => previous && { ...previous, state });
         } else {
-            const envelope = await transport.loadBody(id) as { body?: unknown };
+            const envelope = await transport.loadBody(id) as { body?: unknown; profile?: import('@schemastud/blockdoc').BlockdocManifest };
             if (!Array.isArray(envelope.body)) throw new Error('No current body.');
             local.reset(current.headVersion, envelope.body);
-            setLoaded({ body: envelope.body as JsonDoc, state: current });
+            setLoaded({ body: envelope.body as JsonDoc, state: current, profile: envelope.profile });
         }
         setConflict(false);
     });
@@ -90,13 +90,13 @@ function AddressedVisualEditor({ entryRef }: { entryRef: EntryRef }) {
         if (local.session!.dirty) throw new Error('Save or discard unsaved changes before restoring History.');
         if (!id || !transport.restoreVersion) return;
         const state = await transport.restoreVersion(id, ref);
-        const envelope = await transport.loadBody(id) as { body?: unknown };
+        const envelope = await transport.loadBody(id) as { body?: unknown; profile?: import('@schemastud/blockdoc').BlockdocManifest };
         if (!state.headVersion || !Array.isArray(envelope.body)) throw new Error('Could not load the restored draft.');
         local.reset(state.headVersion, envelope.body);
-        setLoaded({ body: envelope.body as JsonDoc, state });
+        setLoaded({ body: envelope.body as JsonDoc, state, profile: envelope.profile });
         notify.success('Restored into a draft');
     });
-    return <CanvasProvider config={canvasConfig}>
+    return <CanvasProvider config={{ ...canvasConfig, profile: loaded.profile }}>
         {conflict && <div role="alertdialog" aria-label="Save conflict">
             <p>The server draft changed.</p>
             <button disabled={busy} onClick={() => void resolveConflict(false)}>Reload theirs</button>

@@ -7,7 +7,9 @@
 import { createContext, useContext } from 'react';
 import type { ComponentType, ReactNode } from 'react';
 import type { JsonBlock } from '../blockdoc/json.js';
+import type { BlockdocManifest } from '@schemastud/blockdoc';
 import { editGateOf } from './props.js';
+import { assertProfileRegistry } from './profile';
 
 /** The MDX island read view — a host-provided component (the package never imports @splicewire/beam-mdx). */
 export type MdxViewComponent = ComponentType<{ file?: string; md?: string }>;
@@ -27,6 +29,8 @@ export interface BlockTemplate {
 
 /** Everything the canvas recursion needs, injected by the host. */
 export interface CanvasConfig {
+    /** Resolved by the server for the entry; the save guard reads this same profile. */
+    profile?: BlockdocManifest;
     /** PascalCase component map — a tree block whose `name` is a key renders SEALED as this component. */
     registry: Record<string, ComponentType<Record<string, unknown>>>;
     /** The MDX island read component. */
@@ -61,6 +65,7 @@ export interface CanvasConfig {
 const CanvasContext = createContext<CanvasConfig | null>(null);
 
 export function CanvasProvider({ config, children }: { config: CanvasConfig; children: ReactNode }) {
+    if (config.profile) assertProfileRegistry(config.profile, config.registry);
     return <CanvasContext.Provider value={config}>{children}</CanvasContext.Provider>;
 }
 

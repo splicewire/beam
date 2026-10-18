@@ -16,11 +16,12 @@ import { useState } from 'react';
 const editMode = vi.hoisted(() => ({ value: false }));
 const loadBody = vi.hoisted(() => vi.fn());
 const saveBody = vi.hoisted(() => vi.fn());
+const provided = vi.hoisted(() => ({ profile: undefined as unknown }));
 
 vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
 vi.mock('./context', () => ({useEditorKit: () => ({transport:{loadBody,saveBody}, theme:{}, canAuthor:true, canvasConfig:{registry:{}}, defaultTreeFor:()=>[{kind:'text',value:'SEED'}], notify:{success:vi.fn(),error:vi.fn()}})}));
 vi.mock('../canvas', () => ({
-    CanvasProvider: ({ children }: { children: unknown }) => <>{children as never}</>,
+    CanvasProvider: ({ children, config }: { children: unknown; config: { profile?: unknown } }) => { provided.profile = config.profile; return <>{children as never}</>; },
     useEditMode: () => editMode.value,
     // The public canvas owns its draft after mount; incidental parent props do not reseed it.
     PageEditor: ({
@@ -54,6 +55,13 @@ afterEach(() => {
 });
 
 describe('host PageEditor — the body load', () => {
+    it('passes the server entry profile to the canvas', async () => {
+        editMode.value = true;
+        const profile = { profile: 'tenant', version: 1, nodes: [], 'x-admits-code': false };
+        loadBody.mockResolvedValue({ body: SAVED, profile });
+        render(<PageEditor slug="home" entryId="e1" />);
+        await waitFor(() => expect(provided.profile).toBe(profile));
+    });
     it('does not load for a reader — the read op declares ability ux.author, so it would 401 every view', async () => {
         render(<PageEditor slug="home" entryId="e1" />);
 

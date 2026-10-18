@@ -94,6 +94,7 @@ export function PageEditor({ slug, body = null, entryId: suppliedId = null }: Pa
     const [loaded, setLoaded] = useState<{
         entryId: string;
         body: unknown;
+        profile?: import('@schemastud/blockdoc').BlockdocManifest;
         failed?: boolean;
     } | null>(null);
 
@@ -109,7 +110,7 @@ export function PageEditor({ slug, body = null, entryId: suppliedId = null }: Pa
             .loadBody(entryId)
             .then(
                 (env) =>
-                    live && setLoaded({ entryId, body: (env as { body?: unknown })?.body ?? null }),
+                    live && setLoaded({ entryId, body: (env as { body?: unknown })?.body ?? null, profile: (env as { profile?: import('@schemastud/blockdoc').BlockdocManifest }).profile }),
             )
             // A refused read is not an empty body: keep replacement writes unavailable.
             .catch(() => {
@@ -144,7 +145,7 @@ export function PageEditor({ slug, body = null, entryId: suppliedId = null }: Pa
     const canClear = entryId !== null && !!clearBody && canAuthor;
 
     return (
-        <CanvasProvider config={canvasConfig}>
+        <CanvasProvider config={{ ...canvasConfig, profile: current?.profile }}>
             {entryId === null && canAuthor && bodyClient.makeEditable && seed && (
                 <button type="button" disabled={creating} onClick={makeEditable}>Make this page editable</button>
             )}
