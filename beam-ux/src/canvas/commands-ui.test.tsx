@@ -64,3 +64,20 @@ it('wrap is one mutation and outline supports collapse and keyboard navigation',
  expect(screen.getByText('div 0.0')).toBeTruthy();fireEvent.keyDown(parent,{key:'ArrowDown'});
  expect(document.activeElement).toBe(screen.getByText('div 0.0'));
 });
+it('pastes clipboard blocks into another entry with fresh identity',async()=>{
+ const source=block('other-entry','purple');
+ Object.defineProperty(navigator,'clipboard',{configurable:true,value:{readText:async()=>JSON.stringify({format:'beam-blocks',version:1,nodes:[source]})}});
+ const change=vi.fn();render(<Harness onChange={change}/>);fireEvent.click(screen.getByText('div 0'));
+ await act(async()=>fireEvent.click(screen.getByText('Paste into 0')));
+ expect(change).toHaveBeenCalledTimes(1);
+ const pasted=JSON.parse(screen.getByTestId('doc').textContent!)[0].children[0];
+ expect(pasted.id).not.toBe('other-entry');expect(pasted.style).toEqual(source.style);
+});
+it('labels inherited hiding after clearing only the selected breakpoint override',()=>{
+ const node=block('hidden','red');node.style={layers:[{declarations:{display:'none'}},{breakpoint:'md',declarations:{display:'none'}}]};
+ render(<Harness initial={[node]}/>);fireEvent.click(screen.getByText('div 0'));
+ fireEvent.change(screen.getByLabelText('Breakpoint'),{target:{value:'md'}});
+ fireEvent.click(screen.getByText('Show div 0'));
+ expect(screen.getByText(/inherited; edit the earlier layer/)).toBeTruthy();
+ expect(JSON.parse(screen.getByTestId('doc').textContent!)[0].style.layers).toEqual([{declarations:{display:'none'}}]);
+});

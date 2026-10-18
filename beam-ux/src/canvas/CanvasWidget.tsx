@@ -424,6 +424,10 @@ export function CanvasWidget({
             <div style={{display:'grid',gridTemplateColumns:'minmax(140px, 220px) minmax(0, 1fr)',gap:12}}>
             <CanvasOutline doc={doc} onSelect={setSel} onHide={(path,hidden)=>command(()=>editStyles(docRef.current,[path],{breakpoint:styleSelection.breakpoint,state:null},'display',hidden?'none':null,config.styleRegistry??DEFAULT_STYLE_REGISTRY))}/>
             <div style={{minWidth:0}}>
+            {selection.paths.filter(path=>path!==sel).map(path=>{
+                const node=getAt(doc,path);
+                return <style key={path} dangerouslySetInnerHTML={{__html:selectionCss(path,accent,!!node&&isJsonBlock(node)&&node.isComponent)}}/>;
+            })}
             {sel &&
                 (() => {
                     const selNode = getAt(doc, sel);
