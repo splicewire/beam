@@ -3,7 +3,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { ReleasePanel, type ReleaseRecord } from './releases';
 
 const release: ReleaseRecord = {id:'r1',title:'Launch',realm:'site',status:'draft',reviewedBy:null,
-    members:[],workflow:{available:['submit'],transitions:[],places:[],marking:['draft']} as unknown as ReleaseRecord['workflow'],canSchedule:false,reviewRequired:true};
+    members:[],workflow:{available:['submit','publish'],transitions:[],places:[],marking:['draft']} as unknown as ReleaseRecord['workflow'],canSchedule:false,reviewRequired:true};
 const entries = [{id:'page',title:'Page',versions:[{id:'v1',label:'Version one'},{id:'v2',label:'Version two'}],canTakeDown:true}];
 
 describe('Release assembly', () => {

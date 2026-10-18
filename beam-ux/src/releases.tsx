@@ -63,7 +63,8 @@ export function ReleasePanel({release, entries, onCommand}: {
             {ref === 'take-down' && <label>Redirect to a published page (optional) <input value={redirect} onChange={event => setRedirect(event.target.value)} /></label>}
             <button disabled={!entry || !ref} onClick={() => void act({action:'member',entryId,ref:ref==='take-down'?null:ref,redirectTarget:ref==='take-down'?(redirect||null):null})}>Add to Release</button>
         </fieldset>}
-        <div>{(['submit','approve','publish'] as const).filter(action => release.workflow?.available.includes(action)).map(action =>
+        <div>{(['submit','approve','publish'] as const).filter(action => release.workflow?.available.includes(action)
+            && (action !== 'publish' || !release.reviewRequired || ['approved','scheduled'].includes(release.status))).map(action =>
             <button key={action} disabled={pending || (action==='publish' && release.members.some(member => member.stale))}
                 onClick={() => void act({action})}>{action==='submit'?'Request review':action==='approve'?'Approve':'Publish now'}</button>)}</div>
         {immutable && <button disabled={pending} onClick={() => void act({action:'rollback'})}>Create rollback Release</button>}
