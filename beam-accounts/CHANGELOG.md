@@ -1,5 +1,11 @@
 # @splicewire/beam-accounts
 
+## 0.3.1
+
+### Patch Changes
+
+- Admit beam-ux 0.7 alongside 0.6 in the AccountShell peer contract.
+
 ## 0.3.0
 
 ### Minor Changes

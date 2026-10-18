@@ -1,5 +1,11 @@
 # @splicewire/beam-inertia
 
+## 0.5.0
+
+### Minor Changes
+
+- Delegate editor surfaces to the packaged UX editor kit and require beam-ux 0.7.0 or later in the 0.7 line.
+
 ## 0.4.0
 
 ### Minor Changes

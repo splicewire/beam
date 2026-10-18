@@ -1,5 +1,11 @@
 # @splicewire/beam-ux
 
+## 0.7.0
+
+### Minor Changes
+
+- Package the transport-independent editor kit and one-history editor. Replace the `blockdoc` and `blockdoc/json` export paths with `tsx-lens` and `jsondoc`; consumers must update imports.
+
 ## 0.6.0
 
 ### Minor Changes

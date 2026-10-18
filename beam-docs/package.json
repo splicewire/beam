@@ -1,6 +1,6 @@
 {
     "name": "@splicewire/beam-docs",
-    "version": "0.2.1",
+    "version": "0.2.2",
     "description": "Optional Beam documentation, Scalar API reference and release publication controls.",
     "license": "MIT",
     "type": "module",
@@ -60,7 +60,7 @@
         "@schemastud/nav": "file:../../schemastud/nav",
         "@schemastud/seam": "file:../../schemastud/seam",
         "@rjsf/utils": "^6.0.0",
-        "@splicewire/beam-ux": "^0.6.0",
+        "@splicewire/beam-ux": "^0.7.0",
         "@testing-library/react": "^16.1.0",
         "@testing-library/user-event": "^14.5.2",
         "@types/node": "^22.20.1",

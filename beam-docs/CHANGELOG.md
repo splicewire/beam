@@ -1,5 +1,11 @@
 # @splicewire/beam-docs
 
+## 0.2.2
+
+### Patch Changes
+
+- Build and verify against beam-ux 0.7; the runtime peer range remains unchanged.
+
 ## 0.2.1
 
 ### Patch Changes
