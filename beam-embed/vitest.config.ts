@@ -13,65 +13,17 @@ const require = createRequire(import.meta.url);
 const pkgDir = (id: string) => dirname(require.resolve(`${id}/package.json`));
 const react = pkgDir("react");
 const reactDom = pkgDir("react-dom");
-const self = dirname(fileURLToPath(import.meta.url));
+const entry = (id: string) => fileURLToPath(import.meta.resolve(id));
 
 export default defineConfig({
   resolve: {
     alias: {
-      "react-remove-scroll-bar/constants": join(
-        self,
-        "..",
-        "..",
-        "schemastud",
-        "node_modules",
-        "react-remove-scroll-bar",
-        "dist/es2015/constants.js",
-      ),
-      "react-remove-scroll": join(
-        self,
-        "..",
-        "..",
-        "schemastud",
-        "node_modules",
-        "react-remove-scroll",
-        "dist/es2015/index.js",
-      ),
-      "react-remove-scroll-bar": join(
-        self,
-        "..",
-        "..",
-        "schemastud",
-        "node_modules",
-        "react-remove-scroll-bar",
-        "dist/es2015/index.js",
-      ),
-      "react-style-singleton": join(
-        self,
-        "..",
-        "..",
-        "schemastud",
-        "node_modules",
-        "react-style-singleton",
-        "dist/es2015/index.js",
-      ),
-      "use-callback-ref": join(
-        self,
-        "..",
-        "..",
-        "schemastud",
-        "node_modules",
-        "use-callback-ref",
-        "dist/es2015/index.js",
-      ),
-      "use-sidecar": join(
-        self,
-        "..",
-        "..",
-        "schemastud",
-        "node_modules",
-        "use-sidecar",
-        "dist/es2015/index.js",
-      ),
+      "react-remove-scroll-bar/constants": entry("react-remove-scroll-bar/dist/es2015/constants.js"),
+      "react-remove-scroll": entry("react-remove-scroll/dist/es2015/index.js"),
+      "react-remove-scroll-bar": entry("react-remove-scroll-bar/dist/es2015/index.js"),
+      "react-style-singleton": entry("react-style-singleton/dist/es2015/index.js"),
+      "use-callback-ref": entry("use-callback-ref/dist/es2015/index.js"),
+      "use-sidecar": entry("use-sidecar/dist/es2015/index.js"),
       "react/jsx-runtime": join(react, "jsx-runtime.js"),
       "react/jsx-dev-runtime": join(react, "jsx-dev-runtime.js"),
       "react-dom/client": join(reactDom, "client.js"),
@@ -80,15 +32,7 @@ export default defineConfig({
       "@tanstack/react-table": pkgDir("@tanstack/react-table"),
       "@tanstack/react-query": pkgDir("@tanstack/react-query"),
       // Resolve the foundation UI to its built dist (its published entry), not its src.
-      "@schemastud/ui": join(
-        self,
-        "..",
-        "..",
-        "schemastud",
-        "ui",
-        "dist",
-        "index.js",
-      ),
+      "@schemastud/ui": entry("@schemastud/ui"),
     },
   },
   test: {
