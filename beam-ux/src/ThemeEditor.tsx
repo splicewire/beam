@@ -6,6 +6,7 @@ import { useEntryBody } from './hooks';
 import { useUxBuilderServices } from './provider';
 import { RegionInspector } from './RegionInspector';
 import type { Region } from './types';
+import { ReleasePanel, type ReleaseRecord } from './releases';
 
 /**
  * The THEME ENTRY's editor seat — the one surface that lets an author change a theme token through a
@@ -60,7 +61,7 @@ import type { Region } from './types';
 export function ThemeEditor({
     entryId,
     label = 'Theme tokens',
-    note = 'Save creates a theme draft. Add its saved version to a Release to publish it with the other changes.',
+    note = 'Save creates a theme draft. Publish releases the saved version, or submits it for review when required.',
 }: {
     /** The `namespace=theme, slug=default` entry's id, resolved server-side and shared as a prop. */
     entryId: string;
@@ -73,6 +74,7 @@ export function ThemeEditor({
     const query = useEntryBody(entryId);
     const [draft, setDraft] = useState<Record<string, unknown> | null>(null);
     const [releaseId, setReleaseId] = useState('');
+    const [publication, setPublication] = useState<ReleaseRecord | null>(null);
     const versionKey = ['theme-versions', entryId];
     const versions = useQuery({queryKey: versionKey, queryFn: () => client.listVersions!(entryId), enabled: !!client.listVersions});
     const releases = useQuery({queryKey:['theme-releases',entryId],queryFn: () => client.listReleases!(),enabled:!!client.listReleases});
@@ -92,6 +94,21 @@ export function ThemeEditor({
         const ref = versions.data?.headVersion;
         if (!client.releaseCommand || !releaseId || !ref) throw new Error('Choose a Release and a saved theme version.');
         return client.releaseCommand(releaseId, {action:'member',entryId,ref});
+    }});
+
+    const publish = useMutation({mutationFn: async () => {
+        if (!client.createRelease || !client.releaseCommand) throw new Error('Release publication is unavailable.');
+        const state = draft === null ? versions.data : await save.mutateAsync(draft);
+        if (!state?.headVersion) throw new Error('Save a theme version before publishing.');
+        if (state.compileError) throw new Error(state.compileError);
+        let release = await client.createRelease(entryId, `Publish: ${label}`);
+        setPublication(release);
+        release = await client.releaseCommand(release.id, {action:'member',entryId,ref:state.headVersion});
+        setPublication(release);
+        release = await client.releaseCommand(release.id, {action:release.reviewRequired ? 'submit' : 'publish'});
+        setPublication(release);
+        await Promise.all([versions.refetch(), query.refetch(), ...(client.listReleases ? [releases.refetch()] : [])]);
+        return release;
     }});
 
     if (query.isPending) {
@@ -141,10 +158,22 @@ export function ThemeEditor({
             // Dropping the buffer IS Discard: the next render falls back to `query.data.body`, the
             // last thing the server actually stored.
             onDiscard={draft === null ? undefined : () => setDraft(null)}
-            saving={save.isPending}
+            saving={save.isPending || publish.isPending}
         />
         {save.isError && <p role="alert">{save.error.message}</p>}
-        {save.isSuccess && <p role="status">Theme draft saved. Readers still receive the published theme.</p>}
+        {save.isSuccess && !publication && <p role="status">Theme draft saved. Readers still receive the published theme.</p>}
+        {client.createRelease && client.releaseCommand && <button type="button"
+            disabled={save.isPending || publish.isPending || !versions.data?.headVersion}
+            onClick={() => publish.mutate()}>Publish</button>}
+        {publish.isError && <p role="alert">{publish.error.message}</p>}
+        {publish.isSuccess && <p role="status">{publication?.status === 'published' ? 'Theme published.' : 'Theme Release submitted for review.'}</p>}
+        {publication && client.releaseCommand && <ReleasePanel release={publication}
+            entries={[{id:entryId,title:label,versions:versions.data?.versions.map(version=>({id:version.id,label:version.readable})) ?? []}]}
+            onCommand={async command => {
+                const next = await client.releaseCommand!(publication.id, command);
+                setPublication(next);
+                await Promise.all([versions.refetch(), query.refetch()]);
+            }} />}
         {client.listReleases && client.releaseCommand && <div>
             <label>Release <select value={releaseId} onChange={event => setReleaseId(event.target.value)}>
                 <option value="">Choose a Release</option>

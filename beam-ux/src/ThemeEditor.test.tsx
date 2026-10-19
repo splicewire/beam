@@ -152,3 +152,31 @@ describe('the theme entry gets Frame’s form, addressed by entry id', () => {
         expect(screen.queryByRole('button', { name: 'Save' })).toBeNull();
     });
 });
+
+
+describe('theme publication through Releases', () => {
+    it.each([false, true])('saves dirty tokens before publishing the saved version (review required=%s)', async reviewRequired => {
+        const calls: string[] = [];
+        const release = {id:'theme-release',title:'Theme',realm:'site',status:'draft',reviewedBy:null,members:[],workflow:null,canSchedule:false,reviewRequired};
+        const client = {...loadsTheTheme(),
+            saveDraft: vi.fn(async () => {calls.push('save');return {...themeState,headVersion:'v2',draftPending:true};}),
+            createRelease: vi.fn(async () => {calls.push('create');return release;}),
+            releaseCommand: vi.fn(async (_id: string, command: import('./releases').ReleaseCommand) => {calls.push(command.action);return {...release,status:command.action==='publish'?'published':command.action==='submit'?'in_review':'draft'};}),
+        };
+        mount(client);
+        await screen.findByText('Site theme');
+        fireEvent.change(screen.getByLabelText('Accent hover'), {target:{value:'#b91c1c'}});
+        await userEvent.click(screen.getByRole('button',{name:'Publish'}));
+        await waitFor(()=>expect(calls).toEqual(['save','create','member',reviewRequired?'submit':'publish']));
+        expect(client.releaseCommand).toHaveBeenCalledWith('theme-release',{action:'member',entryId:entryIds.theme,ref:'v2'});
+        expect(client.saveBody).not.toHaveBeenCalled();
+        await screen.findByText(reviewRequired?'Theme Release submitted for review.':'Theme published.');
+    });
+    it('reports an authority refusal without publishing or bypassing through save-body', async () => {
+        const client = {...loadsTheTheme(),createRelease:vi.fn(async()=>{throw new Error('Forbidden');}),releaseCommand:vi.fn()};
+        mount(client);await screen.findByText('Site theme');
+        await userEvent.click(screen.getByRole('button',{name:'Publish'}));
+        await screen.findByText('Forbidden');
+        expect(client.releaseCommand).not.toHaveBeenCalled();expect(client.saveBody).not.toHaveBeenCalled();
+    });
+});
