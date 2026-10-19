@@ -12,10 +12,23 @@ export default function ProseRun({value,profile,onChange}:{value:JsonDoc;profile
   // Focus once on readiness; value/selection updates must not steal focus back.
   if(handle?.editor&&!focused.current){focused.current=true;handle.editor.commands.focus();}
  },[]);
- const doc=useMemo(()=>toProse(value,profile),[value,profile]);
+ const emitted=useRef<{json:string;prose:ProseNode;profile:ProseProfile}|null>(null);
+ const doc=useMemo(()=>{
+  // JsonDoc intentionally omits editing-only/default PM attributes. Rebuilding
+  // our own echo through toProse changes those attributes and looks external to
+  // blockdoc's exact echo guard, causing setContent and a caret reset per key.
+  const previous=emitted.current;
+  return previous?.profile===profile&&previous.json===JSON.stringify(value)
+   ? previous.prose : toProse(value,profile);
+ },[value,profile]);
  return <div data-prose-edit onClick={event=>event.stopPropagation()} onDoubleClick={event=>event.stopPropagation()}>
   <BlockdocEditor ref={attach} manifests={manifest} value={doc as unknown as Record<string,unknown>}
    history={false} palette={false} commitPolicy={{debounceMs:0,onBlur:true}}
-   onChange={next=>onChange(fromProse(next as unknown as ProseNode,profile))}/>
+   onChange={next=>{
+    const prose=next as unknown as ProseNode;
+    const body=fromProse(prose,profile);
+    emitted.current={json:JSON.stringify(body),prose,profile};
+    onChange(body);
+   }}/>
  </div>;
 }
