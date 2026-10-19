@@ -103,10 +103,14 @@ export function ThemeEditor({
         if (state.compileError) throw new Error(state.compileError);
         let release = await client.createRelease(entryId, `Publish: ${label}`);
         setPublication(release);
-        release = await client.releaseCommand(release.id, {action:'member',entryId,ref:state.headVersion});
-        setPublication(release);
-        release = await client.releaseCommand(release.id, {action:release.reviewRequired ? 'submit' : 'publish'});
-        setPublication(release);
+        try {
+            release = await client.releaseCommand(release.id, {action:'member',entryId,ref:state.headVersion});
+            setPublication(release);
+            release = await client.releaseCommand(release.id, {action:release.reviewRequired ? 'submit' : 'publish'});
+            setPublication(release);
+        } catch (error) {
+            throw new Error(`Release "${release.title}" (${release.id}): ${error instanceof Error ? error.message : 'Publication failed.'}`);
+        }
         await Promise.all([versions.refetch(), query.refetch(), ...(client.listReleases ? [releases.refetch()] : [])]);
         return release;
     }});

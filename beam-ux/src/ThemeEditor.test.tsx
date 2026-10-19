@@ -159,7 +159,7 @@ describe('theme publication through Releases', () => {
         const calls: string[] = [];
         const release = {id:'theme-release',title:'Theme',realm:'site',status:'draft',reviewedBy:null,members:[],workflow:null,canSchedule:false,reviewRequired};
         const client = {...loadsTheTheme(),
-            saveDraft: vi.fn(async () => {calls.push('save');return {...themeState,headVersion:'v2',draftPending:true};}),
+            saveDraft: vi.fn(async (_id: string, body: Record<string, unknown>) => {calls.push('save'); expect(body).toMatchObject({site:{accentHover:'#b91c1c'}}); return {...themeState,headVersion:'v2',draftPending:true};}),
             createRelease: vi.fn(async () => {calls.push('create');return release;}),
             releaseCommand: vi.fn(async (_id: string, command: import('./releases').ReleaseCommand) => {calls.push(command.action);return {...release,status:command.action==='publish'?'published':command.action==='submit'?'in_review':'draft'};}),
         };
@@ -171,6 +171,15 @@ describe('theme publication through Releases', () => {
         expect(client.releaseCommand).toHaveBeenCalledWith('theme-release',{action:'member',entryId:entryIds.theme,ref:'v2'});
         expect(client.saveBody).not.toHaveBeenCalled();
         await screen.findByText(reviewRequired?'Theme Release submitted for review.':'Theme published.');
+    });
+    it('names the retained Release if a member operation fails after creation', async () => {
+        const release = {id:'retained-release',title:'Theme recovery',realm:'site',status:'draft',reviewedBy:null,members:[],workflow:null,canSchedule:false,reviewRequired:false};
+        const client = {...loadsTheTheme(),createRelease:vi.fn(async()=>release),releaseCommand:vi.fn(async()=>{throw new Error('Member refused');})};
+        mount(client);await screen.findByText('Site theme');
+        await userEvent.click(screen.getByRole('button',{name:'Publish'}));
+        await waitFor(()=>expect(screen.getByRole('alert').textContent).toContain('retained-release'));
+        expect(screen.getByRole('alert').textContent).toContain('Member refused');
+        expect(client.releaseCommand).toHaveBeenCalledTimes(1);
     });
     it('reports an authority refusal without publishing or bypassing through save-body', async () => {
         const client = {...loadsTheTheme(),createRelease:vi.fn(async()=>{throw new Error('Forbidden');}),releaseCommand:vi.fn()};
