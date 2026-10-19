@@ -16,9 +16,8 @@ import type { PageEditorTransport } from './PageEditor.js';
  * dock knows arrives on ONE injected shape — `EntryPublicationState`, the projection of the PHP
  * `EntryPublicationData` every publication operation returns — so a story is a state, not a script.
  *
- * The FIRST story is the one worth reading twice: a transport with no publication methods gets the
- * Save/Exit dock unchanged. That is not a placeholder, it is the contract — a host mounts
- * `save-draft` / `publish` / `versions` / `restore` deliberately, and one that has not is not broken.
+ * The first story demonstrates the fail-closed mount without the publication transport. Other
+ * stories provide a per-story entry identity, an authenticated author, and the full publication seam.
  */
 /** No islands and no MDX lens: these stories are about the DOCK, not about what the canvas renders. */
 const config: CanvasConfig = {
@@ -117,7 +116,7 @@ const transportFor = (state: EntryPublicationState): PageEditorTransport => ({
  * something — and what an operation reports is half of what these stories are about: a publish and a
  * save both answer with a compile diagnostic, and the dock itself stays clean either way.
  */
-function InEditMode({ transport }: { transport: PageEditorTransport }) {
+function InEditMode({ transport, entryId = 'publication-story' }: { transport: PageEditorTransport; entryId?: string }) {
     const [toasts, setToasts] = useState<{ kind: 'success' | 'error'; msg: string }[]>([]);
     const notify = {
         success: (msg: string) => setToasts((t) => [...t, { kind: 'success' as const, msg }]),
@@ -134,6 +133,8 @@ function InEditMode({ transport }: { transport: PageEditorTransport }) {
             <div style={{ paddingTop: 56, minHeight: 320 }}>
                 <PageEditor
                     slug="home"
+                    entryId={entryId}
+                    userId="storybook-author"
                     body={body}
                     transport={transport}
                     notify={notify}
@@ -174,6 +175,7 @@ function InEditMode({ transport }: { transport: PageEditorTransport }) {
 const meta = {
     title: 'BeamUx/Canvas/PageEditor publication',
     component: InEditMode,
+    render: (args, context) => <InEditMode {...args} entryId={context.id} />,
     parameters: { layout: 'fullscreen' },
 } satisfies Meta<typeof InEditMode>;
 
@@ -194,9 +196,12 @@ async function click(root: HTMLElement, label: string): Promise<void> {
     await userEvent.click(button);
 }
 
-/** NO publication seam — the Save/Exit dock a host that has not mounted the operations still gets. */
+/** Missing publication operations refuse the mount instead of falling back to save-body. */
 export const WithoutThePublicationSeam: Story = {
     args: { transport: { saveBody: async () => ({}) } },
+    play: async ({ canvasElement }) => {
+        await expect(await within(canvasElement).findByRole('alert')).toHaveTextContent('The editor requires an entry, authenticated user, and publication transport.');
+    },
 };
 
 /** PUBLISHED — the working copy and the readers' body are the same version; no badge. */
@@ -229,22 +234,13 @@ export const VersionsPanel: Story = {
 /**
  * SAVED, BUT NOT COMPILED — the state an author used to be told was a clean "Saved".
  *
- * Publish is its own write here: the body is written, a version recorded, the pin moved, and only
- * then is the artifact compiled. When that last step fails there is no artifact at the new address and
- * a reader is served the packaged default over a body that is perfectly intact — so the dock is clean,
- * the canvas is not dirty, and the ONE thing that is wrong is invisible from the canvas. The server
- * already answers with the diagnostic (`BeamUxEntryBodyData.compileError`); this is what reading it
- * looks like, and it is the same error surface a failed `Publish` uses.
+ * A failed publish reports its compile diagnostic while readers retain the existing pin.
+ * This story exercises the same error surface without changing the publication authority.
  */
 export const SavedWithACompileError: Story = {
     args: {
         transport: {
             ...transportFor(PUBLISHED),
-            // Publish takes save-body with unsaved edits and publish on a clean canvas (launch ticket 05 ruling 3); both
-            // answer a failed compile the same way, so both carry it here.
-            saveBody: async () => ({
-                compileError: 'Unclosed <Card> on line 12 — readers still see the last good version.',
-            }),
             publish: async () => ({
                 ...PUBLISHED,
                 compileError: 'Unclosed <Card> on line 12 — readers still see the last good version.',
@@ -258,8 +254,8 @@ export const SavedWithACompileError: Story = {
 };
 
 /**
- * The RESTORE CONFIRM — one click ARMS it and a second performs it, because a restore changes what
- * every reader of the page is served and is not an undoable local edit.
+ * The RESTORE CONFIRM — one click arms it and a second records the restored draft.
+ * Readers keep the published version until the author explicitly publishes.
  */
 export const RestoreConfirm: Story = {
     args: { transport: transportFor(PUBLISHED_WITH_HISTORY) },
