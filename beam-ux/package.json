@@ -103,6 +103,7 @@
         "build": "tsup",
         "dev": "tsup --watch",
         "test": "vitest run",
+        "test:artifact-contract": "vitest run --config vitest.artifact-contract.config.ts",
         "typecheck": "tsc --noEmit",
         "lint:imports": "node scripts/check-imports.mjs",
         "prepublishOnly": "npm run build"
