@@ -1,6 +1,6 @@
 {
     "name": "@splicewire/beam-versioning",
-    "version": "0.1.1",
+    "version": "0.1.2",
     "description": "The version-history beam surface, authored pre-packaged and DTO-first (rehome-components, ADR-0116; ADR-0092 vendor seam). Mirrors the PHP splicewire/laravel-beam-versioning package. Ships the record-agnostic version-history UI extracted from the composition VersionsDrawer: VersionsList, VersionRestoreDialog, and relativeTime — typed off the record-agnostic VersionData shape, owning its react-query data logic, taking transport + feedback + host chrome as injected services (never app-local imports). Generic UI comes from the @schemastud/ui foundation.",
     "license": "MIT",
     "type": "module",
