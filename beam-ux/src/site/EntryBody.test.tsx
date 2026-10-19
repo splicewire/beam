@@ -38,6 +38,15 @@ describe('EntryBody — never-authored vs unloadable', () => {
 });
 
 describe('componentFromArtifact', () => {
+    it('supplies the generation-3 styled artifact runtime contract', () => {
+        let supplied: Record<string, unknown> = {};
+        componentFromArtifact({ default: (runtime) => {
+            supplied = runtime;
+            return { default: () => null };
+        } });
+        expect(Object.keys(supplied).sort()).toEqual(['Fragment', 'compileEntryStyles', 'createElement', 'jsx', 'jsxs']);
+        expect(typeof supplied.compileEntryStyles).toBe('function');
+    });
     // Measured on beam.test 2026-09-11: a canvas-authored page compiled to a module with an empty
     // `module.exports`; handing React the resulting `undefined` killed the entire page at render
     // (minified error #130). A reader must never lose the page over a build product they cannot fix.

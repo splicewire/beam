@@ -2,6 +2,7 @@ import { Fragment, createElement, useEffect, useState, type ComponentType, type 
 import { jsx, jsxs } from 'react/jsx-runtime';
 import { bindingRuntime } from '../bindings/runtime.js';
 import { richFieldComponents } from '../bindings/rich-field.js';
+import { compileEntryStyles } from '../blockdoc/style-runtime.js';
 
 /**
  * Loads and renders a rendered entry's **compiled body artifact** (ADR-0209 §7).
@@ -39,7 +40,7 @@ import { richFieldComponents } from '../bindings/rich-field.js';
  */
 
 /** The jsx runtime handed to every artifact. `createElement` serves the tsx path's classic factory. */
-const RUNTIME = { jsx, jsxs, Fragment, createElement };
+const RUNTIME = { jsx, jsxs, Fragment, createElement, compileEntryStyles };
 
 type ArtifactModule = {
     default: (runtime: typeof RUNTIME) => { default: ComponentType<Record<string, unknown>> };
