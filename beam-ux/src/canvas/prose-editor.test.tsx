@@ -15,6 +15,7 @@ it('mounts a real rich-text blockdoc island with inline formatting and no second
  const {container}=render(<ProseRun value={value} profile={profile} onChange={onChange}/>);
  await waitFor(()=>expect(container.querySelector('.ProseMirror strong')?.textContent).toBe('bold'));
  expect(container.querySelectorAll('[contenteditable=true]')).toHaveLength(1);
+ await waitFor(()=>expect(document.activeElement).toBe(container.querySelector('[contenteditable=true]')));
  expect(onChange).not.toHaveBeenCalled();
 });
 
