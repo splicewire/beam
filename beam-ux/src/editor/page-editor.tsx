@@ -3,6 +3,7 @@
 // injects only its CanvasConfig, transport, toast, theme, and defaults. Mount `<PageEditor slug body/>`
 // where a page's content goes; read mode renders the same body via the package's TreeRender.
 import type { JsonDoc } from '../blockdoc/json';
+import type { EntryPageSettings } from '../generated/page-settings';
 import {
     CanvasProvider,
     PageEditor as CanvasPageEditor,
@@ -94,6 +95,7 @@ export function PageEditor({ slug, body = null, entryId: suppliedId = null }: Pa
     const [loaded, setLoaded] = useState<{
         entryId: string;
         body: unknown;
+        pageSettings?: EntryPageSettings | null;
         styleRegistry?: import('../blockdoc/style-runtime.js').StyleRegistry; profile?: import('@schemastud/blockdoc').BlockdocManifest;
         failed?: boolean;
         bindings?: import('../bindings/runtime.js').BindingPayload;
@@ -111,7 +113,7 @@ export function PageEditor({ slug, body = null, entryId: suppliedId = null }: Pa
             .loadBody(entryId)
             .then(
                 (env) =>
-                    live && setLoaded({ entryId, body: (env as { body?: unknown })?.body ?? null, bindings: (env as { bindings?: import('../bindings/runtime.js').BindingPayload }).bindings, styleRegistry: (env as { styleRegistry?: import("../blockdoc/style-runtime.js").StyleRegistry }).styleRegistry, profile: (env as { styleRegistry?: import('../blockdoc/style-runtime.js').StyleRegistry; profile?: import('@schemastud/blockdoc').BlockdocManifest }).profile }),
+                    live && setLoaded({ entryId, body: (env as { body?: unknown })?.body ?? null, pageSettings: (env as { pageSettings?: EntryPageSettings | null }).pageSettings, bindings: (env as { bindings?: import('../bindings/runtime.js').BindingPayload }).bindings, styleRegistry: (env as { styleRegistry?: import("../blockdoc/style-runtime.js").StyleRegistry }).styleRegistry, profile: (env as { styleRegistry?: import('../blockdoc/style-runtime.js').StyleRegistry; profile?: import('@schemastud/blockdoc').BlockdocManifest }).profile }),
             )
             // A refused read is not an empty body: keep replacement writes unavailable.
             .catch(() => {
@@ -156,7 +158,7 @@ export function PageEditor({ slug, body = null, entryId: suppliedId = null }: Pa
                 entryId={entryId ?? undefined}
                 userId={userId}
                 body={asDoc(current?.body) ?? asDoc(body)}
-                pageSettings={(current as unknown as { pageSettings?: import("./local-session").SessionPageSettings })?.pageSettings}
+                pageSettings={current?.pageSettings}
                 transport={{
                     // CanvasPageEditor's transport seam is keyed by its `slug` prop, which stays a slug
                     // — it is the editor's display label and `defaultTreeFor()` key. The BODY transport
