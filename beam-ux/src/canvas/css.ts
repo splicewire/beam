@@ -93,6 +93,8 @@ export function veCss(t?: Partial<CanvasTheme>): string {
 .ve-pal-item{text-align:left;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:8px;color:${c.panelFg};cursor:pointer;font:inherit;font-size:12px;padding:8px 11px}
 .ve-pal-item:hover{color:#fff;background:${c.accent}24;border-color:${c.accent}66}
 .ve-pal-note{margin-top:6px;color:${c.muted};font-size:10px;line-height:1.4}
+.ve-canvas-layout{display:grid;grid-template-columns:minmax(140px,220px) minmax(0,1fr);gap:12px}
+@container beam-canvas (max-width:480px){.ve-canvas-layout{grid-template-columns:minmax(0,1fr)}}
 .ve-command-bar{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:10px;background:${c.panelBg};color:${c.panelFg};font-family:${c.fontBody};font-size:12px;border-radius:8px;margin-bottom:12px}
 .ve-command-button{display:inline-flex;align-items:center;padding:6px 10px;border:1px solid ${c.muted};border-radius:6px;background:transparent;color:inherit;font:inherit;line-height:1.4;cursor:pointer}
 .ve-command-button:hover:not(:disabled){border-color:${c.accent}}

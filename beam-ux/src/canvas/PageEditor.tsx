@@ -1,3 +1,4 @@
+import { CanvasClearance } from './CanvasClearance';
 import { SourceMode } from '../editor/SourceMode';
 import { useCanvas } from './context';
 import { PageSettings } from '../editor/PageSettings';
@@ -541,7 +542,7 @@ export function PageEditor({
                     <button onClick={() => void resolveConflict(true)}>Save ours as a new version</button>
                 </div>}
                 {/* Reserve space for floating panels without changing the published page layout. */}
-                <div className="pe-canvas" style={{marginLeft: leftOpen ? 212 : 0, marginRight: versionsOpen || confirmClear ? 332 : rightOpen ? 312 : 0}}>
+                <CanvasClearance panels={`${leftOpen}-${rightOpen}-${versionsOpen}-${confirmClear}`}>
                 <SourceMode local={local} allowed={!canvasConfig.profile || !('x-admits-code' in canvasConfig.profile) || canvasConfig.profile['x-admits-code'] !== false}
                     conversion={transport.printSource && transport.readSource ? {
                         print: body => transport.printSource!(slug, body),
@@ -549,7 +550,7 @@ export function PageEditor({
                     } : undefined}>
                     <CanvasWidget value={doc} onChange={onCanvasChange} editShellMount={mount} theme={theme} hideBreadcrumb />
                 </SourceMode>
-                </div>
+                </CanvasClearance>
 
                 {/* Floating editor chrome — fixed over the page. */}
                 <div className="pe-bar">

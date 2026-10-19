@@ -121,6 +121,7 @@ export function CanvasWidget({
     const accent = theme?.accent ?? DEFAULT_CANVAS_THEME.accent;
 
     const [editing, setEditing] = useState<string | null>(null);
+    const firstClickPath = useRef<{ path: string | null } | null>(null);
     const [dragPath, setDragPath] = useState<string | null>(null);
     const [dropTarget, setDropTarget] = useState<{ path: string; edge: DropEdge } | null>(null);
     const [menu, setMenu] = useState<ContextMenuState | null>(null);
@@ -315,6 +316,9 @@ export function CanvasWidget({
         if ((e.target as HTMLElement).closest('[data-prose-edit]')) return;
         const el = (e.target as HTMLElement).closest('[data-bd-path]');
         const path = el ? el.getAttribute('data-bd-path') : null;
+        // Selection can open the Inspector and move the node before click two.
+        // Keep the first click's target for this double-click sequence.
+        if (e.detail === 1) firstClickPath.current = { path };
         // A click inside the node currently being text-edited places the caret — let the browser
         // handle it natively (see CanvasNode's own docs for why intercepting it here breaks typing).
         if (editing && path === editing) return;
@@ -324,7 +328,10 @@ export function CanvasWidget({
     };
     const onCanvasDbl = (e: React.MouseEvent) => {
         if ((e.target as HTMLElement).closest('[data-prose-edit]')) return;
-        const p = (e.target as HTMLElement).closest('[data-bd-path]')?.getAttribute('data-bd-path');
+        const p = firstClickPath.current
+            ? firstClickPath.current.path
+            : (e.target as HTMLElement).closest('[data-bd-path]')?.getAttribute('data-bd-path');
+        firstClickPath.current = null;
         const node = p ? getAt(doc, p) : null;
         if (!readOnly && p && node && isJsonBlock(node) && config.profile && proseRole(node.name, config.profile)) setEditing(p);
     };
@@ -406,11 +413,13 @@ export function CanvasWidget({
     };
 
     return (
-        <div className="ve-canvas-widget" onKeyDown={event=>{
+        <div className="ve-canvas-widget" onDoubleClick={onCanvasDbl} onClickCapture={event=>{
+            if (event.detail === 1 && !(event.target as HTMLElement).closest('.ve-canvas')) firstClickPath.current = null;
+        }} onKeyDown={event=>{
             if(!(event.ctrlKey||event.metaKey)||(event.target as HTMLElement).closest('input,textarea,[contenteditable="true"]'))return;
             const key=event.key.toLowerCase();
             if(['c','x','v'].includes(key)){event.preventDefault();if(key==='v')void paste();else void copy(key==='x');}
-        }} style={{width: styleSelection.breakpoint ? (config.styleRegistry ?? DEFAULT_STYLE_REGISTRY).breakpoints[styleSelection.breakpoint] : undefined, maxWidth: '100%'}}>
+        }} style={{containerType:'inline-size',containerName:'beam-canvas',width: styleSelection.breakpoint ? (config.styleRegistry ?? DEFAULT_STYLE_REGISTRY).breakpoints[styleSelection.breakpoint] : undefined, maxWidth: '100%'}}>
             <div className="ve-command-bar" role="toolbar" aria-label="Block commands">
                 <button className="ve-command-button" type="button" disabled={!selection.paths.length} onClick={()=>void copy()}>Copy blocks</button>
                 <button className="ve-command-button" type="button" disabled={readOnly||!selection.paths.length} onClick={()=>void copy(true)}>Cut blocks</button>
@@ -421,7 +430,7 @@ export function CanvasWidget({
                 <span>{selection.paths.length} blocks selected</span>
             </div>
             {commandError&&<p role="alert">{commandError}</p>}
-            <div style={{display:'grid',gridTemplateColumns:'minmax(140px, 220px) minmax(0, 1fr)',gap:12}}>
+            <div className="ve-canvas-layout">
             <CanvasOutline doc={doc} onSelect={setSel} onHide={(path,hidden)=>command(()=>editStyles(docRef.current,[path],{breakpoint:styleSelection.breakpoint,state:null},'display',hidden?'none':null,config.styleRegistry??DEFAULT_STYLE_REGISTRY))}/>
             <div style={{minWidth:0}}>
             {selection.paths.filter(path=>path!==sel).map(path=>{
@@ -450,7 +459,6 @@ export function CanvasWidget({
             <div
                 className="ve-canvas"
                 onClickCapture={onCanvasClick}
-                onDoubleClick={onCanvasDbl}
                 onContextMenu={onCanvasContextMenu}
             >
                 <CanvasSiblings nodes={doc} parent="" editing={editing} onEditText={() => {}}
