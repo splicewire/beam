@@ -155,4 +155,63 @@ describe('CalendarCellForm — §8a isolation mount', () => {
         fireEvent.click(save);
         await waitFor(() => expect(screen.getByText('That content is invalid.')).toBeDefined());
     });
+
+    // J3 "plan the calendar" (launch-00 item 1): Tower emits DOTTED Kind ids (`kind.series`,
+    // `kind.composition-ref`) since registry-kernel 58 D4. The form must read AND write them — the
+    // existing fixtures above use the legacy URL form, which is exactly why the suite stayed green
+    // while production (dotted) could create no repeating series. These feed the real dotted shape.
+    const dottedCalendarProfiles = () =>
+        vi.fn(() => Promise.resolve([{ name: 'calendar', cellKinds: [{ kind: 'kind.composition-ref' }, { kind: 'kind.series' }] }]));
+
+    it('reads a Tower dotted-id series cell as a Recurring series, not a Release', async () => {
+        const services: CalendarCellFormServices = {
+            client: fakeClient({ listProfiles: dottedCalendarProfiles() }),
+            renderContentPicker: pickerSlot,
+        };
+        mount(services, {
+            compositionId: 'cal-x',
+            initialCell: cell({ slots: { kind: 'kind.series', anchor: '2026-07-15', channel: 'default', rule: { freq: 'weekly' }, spawn: { mode: 'generate' } } }),
+            onSaved: vi.fn(),
+        });
+        // The dotted `kind.series` id must be recognized as Series — today the `/`-only parse misreads
+        // it as a one-off Release.
+        expect(await screen.findByText('Recurring series')).toBeDefined();
+        expect(screen.getByText('Repeats')).toBeDefined();
+        expect(screen.queryByText('One-off release')).toBeNull();
+    });
+
+    it('creates a repeating series: posts Tower\'s dotted kind.series id, not the bare suffix', async () => {
+        const saveCell = vi.fn((_c: string, _i: SaveCellInput) => Promise.resolve());
+        const services: CalendarCellFormServices = {
+            client: fakeClient({ saveCell, listCells: () => Promise.resolve([]), listProfiles: dottedCalendarProfiles() }),
+            renderContentPicker: pickerSlot,
+        };
+        mount(services, { compositionId: 'cal-x', initialDate: new Date(2026, 6, 20), onSaved: vi.fn() });
+
+        // Switch to Recurring (generate mode needs no content), wait for the profile list, then schedule.
+        fireEvent.click(await screen.findByText('Recurring'));
+        await waitFor(() => expect(services.client.listProfiles).toHaveBeenCalled());
+        fireEvent.click(screen.getByRole('button', { name: 'Schedule series' }));
+
+        await waitFor(() => expect(saveCell).toHaveBeenCalled());
+        const [, input] = saveCell.mock.calls[0];
+        // The wire must carry the resolved dotted id — today kindId() falls back to the bare 'series'
+        // because `endsWith('kind/series')` never matches the dotted id, which Tower then rejects.
+        expect(input.slots.kind).toBe('kind.series');
+    });
+
+    it('still reads a legacy URL-style series id as a Recurring series (both separators)', async () => {
+        const services: CalendarCellFormServices = {
+            client: fakeClient({
+                listProfiles: vi.fn(() => Promise.resolve([{ name: 'calendar', cellKinds: [{ kind: 'https://schemas.test/kind/composition-ref' }, { kind: 'https://schemas.test/kind/series' }] }])),
+            }),
+            renderContentPicker: pickerSlot,
+        };
+        mount(services, {
+            compositionId: 'cal-x',
+            initialCell: cell({ slots: { kind: 'https://schemas.test/kind/series', anchor: '2026-07-15', channel: 'default', rule: { freq: 'weekly' }, spawn: { mode: 'generate' } } }),
+            onSaved: vi.fn(),
+        });
+        expect(await screen.findByText('Recurring series')).toBeDefined();
+    });
 });

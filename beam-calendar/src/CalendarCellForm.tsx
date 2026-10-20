@@ -24,6 +24,15 @@ import type { CalendarCell, CellClientError, CellContentPickerProps } from './ce
 
 type Kind = 'release' | 'series';
 
+/**
+ * The last segment of a declared Kind id, separator-agnostic. Tower declares calendar Kinds as DOTTED
+ * ids (`kind.series`, `kind.composition-ref`) since registry-kernel 58 D4; before it they were schema-$id
+ * URLs (`…/kind/series`). Both read `series`. ONE helper drives BOTH the read (initialKind) and write
+ * (kindId) paths below so they can never drift onto one separator again — the host's own
+ * `calendar/services.ts` kindSegment does the same (J3, launch-00 item 1).
+ */
+const kindSuffix = (id: unknown): string => String(id ?? '').split(/[/.]/).pop() ?? '';
+
 // NOTE (frame-canonical-forms ticket 03): the old `isFriendlyCalendarKind` predicate lived here
 // and was re-exported so app surfaces could branch `if (friendly) <bespoke> else <generic>`. It is
 // GONE — which kinds get the bespoke form is now decided by the `@schemastud/frame` form resolver
@@ -128,8 +137,9 @@ export function CalendarCellForm({
 
     const isEdit = Boolean(initialCell?.id);
     const slots = (initialCell?.slots ?? {}) as Record<string, unknown>;
-    // A stored `kind` is the full schema-$id URL (…/kind/series) — match on its short suffix.
-    const initialKind: Kind = String(slots.kind ?? '').split('/').pop() === 'series' ? 'series' : 'release';
+    // A stored `kind` is a declared Kind id (dotted `kind.series` today, or a legacy `…/kind/series` URL)
+    // — recognize Series by its short suffix via the shared, separator-agnostic `kindSuffix`.
+    const initialKind: Kind = kindSuffix(slots.kind) === 'series' ? 'series' : 'release';
 
     const isoDate = (d?: Date | null): string =>
         d ? `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}` : '';
@@ -147,12 +157,14 @@ export function CalendarCellForm({
     }, [cells.data]);
     const showChannel = channels.length > 1;
 
-    // The REAL Kind ids are full schema-$id URLs (…/kind/composition-ref), not the short label
-    // the dropdown shows — the write path admits on the id, so the wire must carry it.
+    // The REAL Kind ids are the declared ids (dotted `kind.composition-ref` today, or a legacy
+    // `…/kind/composition-ref` URL), not the short label the dropdown shows — the write path admits on
+    // the id, so the wire must carry it. Match on the shared, separator-agnostic suffix (not a `/`-only
+    // `endsWith`), so a dotted id resolves; fall back to the bare suffix only if the profile lacks it.
     const profiles = useCompositionProfiles();
     const calendarKinds = profiles.data?.find((p) => p.name === 'calendar')?.cellKinds ?? [];
     const kindId = (suffix: string): string =>
-        calendarKinds.find((k) => k.kind.endsWith(`kind/${suffix}`))?.kind ?? suffix;
+        calendarKinds.find((k) => kindSuffix(k.kind) === suffix)?.kind ?? suffix;
 
     // ── State ────────────────────────────────────────────────────────────────────
     const [kind, setKind] = useState<Kind>(initialKind);
