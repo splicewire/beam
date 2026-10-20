@@ -13,6 +13,12 @@
  */
 
 export { RealmNav, type RealmNavProps } from './RealmNav.js';
+export {
+    SectionTabs,
+    type SectionTabsProps,
+    type SectionTabsClassNames,
+    type SectionTabLinkComponent,
+} from './SectionTabs.js';
 export { RealmSwitcher, type RealmSwitcherProps } from './RealmSwitcher.js';
 export { useCurrentRealm } from './useCurrentRealm.js';
 export { RealmHeader } from './RealmHeader.js';
