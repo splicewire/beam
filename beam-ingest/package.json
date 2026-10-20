@@ -1,6 +1,6 @@
 {
     "name": "@splicewire/beam-ingest",
-    "version": "0.1.3",
+    "version": "0.1.4",
     "description": "Portable progress for accepted ingest runs, typed from the generated IngestRunData projection.",
     "license": "MIT",
     "type": "module",
