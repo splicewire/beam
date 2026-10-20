@@ -26,7 +26,7 @@ export const publishBlueprintV1: WorkflowBlueprintData = {
     places: ['draft', 'in_review', 'published'],
     initial: ['draft'],
     transitions: [
-        { name: 'submit', from: ['draft'], to: ['in_review'], guard: null, effects: [], metadata: null },
+        { name: 'submit', from: ['draft'], to: ['in_review'], guard: null, effects: [], metadata: null, reason: null },
         {
             name: 'approve',
             from: ['in_review'],
@@ -37,8 +37,9 @@ export const publishBlueprintV1: WorkflowBlueprintData = {
                 guardParams: { minApprovals: '1' },
                 effect_params: { notify_owner: { principals: ['owner:', 'role:Editor'] } },
             },
+            reason: null,
         },
-        { name: 'revise', from: ['in_review'], to: ['draft'], guard: null, effects: [], metadata: null },
+        { name: 'revise', from: ['in_review'], to: ['draft'], guard: null, effects: [], metadata: null, reason: null },
     ],
     metadata: null,
 };
@@ -49,7 +50,7 @@ export const publishBlueprintV2: WorkflowBlueprintData = {
     places: ['draft', 'in_review', 'published', 'archived'],
     initial: ['draft'],
     transitions: [
-        { name: 'submit', from: ['draft'], to: ['in_review'], guard: null, effects: [], metadata: null },
+        { name: 'submit', from: ['draft'], to: ['in_review'], guard: null, effects: [], metadata: null, reason: null },
         {
             name: 'approve',
             from: ['in_review'],
@@ -57,9 +58,10 @@ export const publishBlueprintV2: WorkflowBlueprintData = {
             guard: null,
             effects: ['notify_owner', 'ping_webhook'],
             metadata: null,
+            reason: null,
         },
-        { name: 'revise', from: ['in_review'], to: ['draft'], guard: null, effects: [], metadata: null },
-        { name: 'archive', from: ['published'], to: ['archived'], guard: null, effects: [], metadata: null },
+        { name: 'revise', from: ['in_review'], to: ['draft'], guard: null, effects: [], metadata: null, reason: null },
+        { name: 'archive', from: ['published'], to: ['archived'], guard: null, effects: [], metadata: null, reason: null },
     ],
     metadata: null,
 };
@@ -88,15 +90,15 @@ export const largeBlueprint: WorkflowBlueprintData = {
     places: ['intake', 'triage', 'writing', 'review', 'legal', 'scheduled', 'published', 'spiked'],
     initial: ['intake'],
     transitions: [
-        { name: 'accept', from: ['intake'], to: ['triage'], guard: null, effects: [], metadata: null },
-        { name: 'assign', from: ['triage'], to: ['writing'], guard: null, effects: [], metadata: null },
-        { name: 'reject', from: ['triage'], to: ['spiked'], guard: null, effects: [], metadata: null },
-        { name: 'submit', from: ['writing'], to: ['review'], guard: 'require_review', effects: [], metadata: null },
-        { name: 'send_legal', from: ['review'], to: ['legal'], guard: null, effects: [], metadata: null },
-        { name: 'clear', from: ['legal'], to: ['scheduled'], guard: null, effects: ['ping_webhook'], metadata: null },
-        { name: 'schedule', from: ['review'], to: ['scheduled'], guard: null, effects: [], metadata: null },
-        { name: 'go_live', from: ['scheduled'], to: ['published'], guard: null, effects: ['notify_owner'], metadata: null },
-        { name: 'kick_back', from: ['review'], to: ['writing'], guard: null, effects: [], metadata: null },
+        { name: 'accept', from: ['intake'], to: ['triage'], guard: null, effects: [], metadata: null, reason: null },
+        { name: 'assign', from: ['triage'], to: ['writing'], guard: null, effects: [], metadata: null, reason: null },
+        { name: 'reject', from: ['triage'], to: ['spiked'], guard: null, effects: [], metadata: null, reason: null },
+        { name: 'submit', from: ['writing'], to: ['review'], guard: 'require_review', effects: [], metadata: null, reason: null },
+        { name: 'send_legal', from: ['review'], to: ['legal'], guard: null, effects: [], metadata: null, reason: null },
+        { name: 'clear', from: ['legal'], to: ['scheduled'], guard: null, effects: ['ping_webhook'], metadata: null, reason: null },
+        { name: 'schedule', from: ['review'], to: ['scheduled'], guard: null, effects: [], metadata: null, reason: null },
+        { name: 'go_live', from: ['scheduled'], to: ['published'], guard: null, effects: ['notify_owner'], metadata: null, reason: null },
+        { name: 'kick_back', from: ['review'], to: ['writing'], guard: null, effects: [], metadata: null, reason: null },
     ],
     metadata: null,
 };

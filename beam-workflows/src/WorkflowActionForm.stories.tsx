@@ -12,9 +12,9 @@ const meta = {
             type: 'article', current: 'draft', places: ['draft', 'review', 'published', 'unpublished'],
             available: ['submit_for_review'],
             transitions: [
-                { name: 'submit_for_review', from: ['draft'], to: ['review'], guard: null, effects: [], metadata: null },
-                { name: 'publish', from: ['review'], to: ['published'], guard: null, effects: [], metadata: null },
-                { name: 'unpublish', from: ['published'], to: ['unpublished'], guard: null, effects: [], metadata: null },
+                { name: 'submit_for_review', from: ['draft'], to: ['review'], guard: null, effects: [], metadata: null, reason: null },
+                { name: 'publish', from: ['review'], to: ['published'], guard: null, effects: [], metadata: null, reason: null },
+                { name: 'unpublish', from: ['published'], to: ['unpublished'], guard: null, effects: [], metadata: null, reason: null },
             ],
         },
         initialTransition: 'publish',

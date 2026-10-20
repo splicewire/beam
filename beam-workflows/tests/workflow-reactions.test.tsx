@@ -18,6 +18,7 @@ const projection: WorkflowProjectionData = {
             guard: null,
             effects: [],
             metadata: null,
+            reason: null,
         },
         {
             name: 'unpublish',
@@ -26,6 +27,7 @@ const projection: WorkflowProjectionData = {
             guard: null,
             effects: [],
             metadata: null,
+            reason: null,
         },
     ],
 };

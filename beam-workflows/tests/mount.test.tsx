@@ -46,7 +46,7 @@ const blueprint = (over: Partial<WorkflowBlueprintData> = {}): WorkflowBlueprint
     places: ['draft', 'published'],
     initial: ['draft'],
     transitions: [
-        { name: 'publish', from: ['draft'], to: ['published'], guard: null, effects: [], metadata: null },
+        { name: 'publish', from: ['draft'], to: ['published'], guard: null, effects: [], metadata: null, reason: null },
     ],
     metadata: null,
     ...over,

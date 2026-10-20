@@ -37,6 +37,7 @@ export function toDraft(blueprint: Partial<BlueprintDraft> & { name: string }): 
             guard: t.guard ?? null,
             effects: [...(t.effects ?? [])],
             metadata: t.metadata ?? null,
+            reason: t.reason ?? null,
         })),
         metadata: blueprint.metadata ?? null,
     };

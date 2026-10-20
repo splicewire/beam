@@ -22,6 +22,7 @@ const meta = {
                     guard: null,
                     effects: [],
                     metadata: null,
+                    reason: null,
                 },
                 {
                     name: 'unpublish',
@@ -30,6 +31,7 @@ const meta = {
                     guard: null,
                     effects: [],
                     metadata: null,
+                    reason: null,
                 },
             ],
         },
