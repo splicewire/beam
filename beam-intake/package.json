@@ -1,61 +1,61 @@
 {
-    "name": "@splicewire/beam-intake",
-    "version": "0.1.0",
-    "description": "Portable DTO-first entity intake section forms with host-injected transport.",
-    "license": "MIT",
-    "type": "module",
-    "main": "dist/index.js",
-    "types": "dist/index.d.ts",
-    "exports": {
-        ".": {
-            "types": "./dist/index.d.ts",
-            "import": "./dist/index.js"
-        }
-    },
-    "sideEffects": false,
-    "files": [
-        "dist",
-        "src",
-        "README.md"
-    ],
-    "publishConfig": {
-        "registry": "https://registry.npmjs.org",
-        "access": "public"
-    },
-    "repository": {
-        "type": "git",
-        "url": "https://github.com/splicewire/beam.git",
-        "directory": "beam-intake"
-    },
-    "scripts": {
-        "build": "tsup",
-        "test": "vitest run",
-        "typecheck": "tsc --noEmit",
-        "lint:imports": "node scripts/check-imports.mjs",
-        "prepublishOnly": "npm run build"
-    },
-    "dependencies": {
-        "@splicewire/_resources": "file:../../splicewire/_resources"
-    },
-    "peerDependencies": {
-        "@schemastud/ui": "*",
-        "@schemastud/seam": "*",
-        "@tanstack/react-query": ">=5",
-        "react": ">=18"
-    },
-    "devDependencies": {
-        "@schemastud/ui": "file:../../schemastud/ui",
-        "@schemastud/seam": "file:../../schemastud/seam",
-        "@tanstack/react-query": "^5.62.0",
-        "@testing-library/react": "^16.1.0",
-        "@testing-library/user-event": "^14.5.2",
-        "@types/react": "^19.0.0",
-        "@types/node": "^22.20.1",
-        "jsdom": "^25.0.1",
-        "react": "^19.2.0",
-        "react-dom": "^19.2.0",
-        "tsup": "^8.5.1",
-        "typescript": "^5.7.2",
-        "vitest": "^4.1.10"
+  "name": "@splicewire/beam-intake",
+  "version": "0.1.0",
+  "description": "Portable DTO-first entity intake section forms with host-injected transport.",
+  "license": "MIT",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
     }
+  },
+  "sideEffects": false,
+  "files": [
+    "dist",
+    "src",
+    "README.md"
+  ],
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org",
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/splicewire/beam.git",
+    "directory": "beam-intake"
+  },
+  "scripts": {
+    "build": "tsup",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "lint:imports": "node scripts/check-imports.mjs",
+    "prepublishOnly": "npm run build"
+  },
+  "dependencies": {
+    "@splicewire/_resources": "git+https://github.com/splicewire/_resources.git#6b7b7cffd0e17e18ef5b5e6d6d1b5ff981fcf123"
+  },
+  "peerDependencies": {
+    "@schemastud/ui": "*",
+    "@schemastud/seam": "*",
+    "@tanstack/react-query": ">=5",
+    "react": ">=18"
+  },
+  "devDependencies": {
+    "@schemastud/ui": "github:schemastud/js#31c67f455fe3b237504e7b73e99012b9df74c4c1&path:/ui",
+    "@schemastud/seam": "github:schemastud/js#72b9e79d72e3dbd9a14113988c67b72f065a5b87&path:/seam",
+    "@tanstack/react-query": "^5.62.0",
+    "@testing-library/react": "^16.1.0",
+    "@testing-library/user-event": "^14.5.2",
+    "@types/react": "^19.0.0",
+    "@types/node": "^22.20.1",
+    "jsdom": "^25.0.1",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "tsup": "^8.5.1",
+    "typescript": "^5.7.2",
+    "vitest": "^4.1.10"
+  }
 }
