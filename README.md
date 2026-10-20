@@ -15,7 +15,7 @@ Growing as FC mints `beam` / `beam-accounts` / `beam-notifications` / `beam-comm
 
 ## Scope note
 
-beam publishes under the **shared `@schemastud` npm scope** (so `@splicewire/beam-mdx` keeps its
+beam publishes under the **`@splicewire` npm scope** (so `@splicewire/beam-mdx` keeps its
 name — the core/beam split is repo-level, not name-level). Two repos, one scope, one public
 registry; no consumer breakage.
 
