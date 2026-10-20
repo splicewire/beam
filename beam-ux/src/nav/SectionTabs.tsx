@@ -24,12 +24,15 @@ import type { RealmNavNode } from './types.js';
 /**
  * A tab link, injected by the host. It speaks the intersection react-router's `NavLink` and the
  * host's existing `SectionTabLink` already share: a `to` path, an `end` exact-match flag, and the
- * label as children. The component passes no className — the link owns its own active styling.
+ * label as children. `children` is required: every strip tab renders its label, and a required
+ * `children` lets the host's existing appshell `SectionLinkComponent` (children required) satisfy
+ * this prop directly, so one link component drives both the rail and the strips. The component
+ * passes no className — the link owns its own active styling.
  */
 export type SectionTabLinkComponent = ComponentType<{
     to: string;
     end?: boolean;
-    children?: ReactNode;
+    children: ReactNode;
 }>;
 
 /** Class overrides for the rendered strips — each optional, defaulting to the packaged look. */
