@@ -7,8 +7,8 @@ afterEach(cleanup);
 const projection: WorkflowProjectionData = {
     type: 'article', current: 'draft', places: ['draft', 'published', 'unpublished'], available: ['publish'],
     transitions: [
-        { name: 'publish', from: ['draft'], to: ['published'], guard: null, effects: [], metadata: null },
-        { name: 'unpublish', from: ['published'], to: ['unpublished'], guard: null, effects: [], metadata: null },
+        { name: 'publish', from: ['draft'], to: ['published'], guard: null, effects: [], metadata: null, reason: null },
+        { name: 'unpublish', from: ['published'], to: ['unpublished'], guard: null, effects: [], metadata: null, reason: null },
     ],
 };
 

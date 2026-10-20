@@ -25,6 +25,7 @@ const lifecycle: BlueprintDraft = {
             guard: 'no_stale',
             effects: [],
             metadata: null,
+            reason: null,
         },
         {
             name: 'publish',
@@ -33,6 +34,7 @@ const lifecycle: BlueprintDraft = {
             guard: null,
             effects: ['notify'],
             metadata: null,
+            reason: null,
         },
         {
             name: 'unpublish',
@@ -41,6 +43,7 @@ const lifecycle: BlueprintDraft = {
             guard: null,
             effects: [],
             metadata: null,
+            reason: null,
         },
         {
             name: 'revise',
@@ -49,6 +52,7 @@ const lifecycle: BlueprintDraft = {
             guard: null,
             effects: [],
             metadata: null,
+            reason: null,
         },
     ],
     metadata: null,
@@ -116,6 +120,7 @@ describe('layoutBlueprint', () => {
                     guard: null,
                     effects: [],
                     metadata: null,
+                    reason: null,
                 },
                 {
                     name: 'ghost',
@@ -124,6 +129,7 @@ describe('layoutBlueprint', () => {
                     guard: null,
                     effects: [],
                     metadata: null,
+                    reason: null,
                 },
             ],
             metadata: null,
@@ -158,6 +164,7 @@ describe('graphCanvasSize — a fixed legible zoom, not a fit-to-pane shrink', (
                 guard: null,
                 effects: [],
                 metadata: null,
+                reason: null,
             })),
         };
         const short = graphCanvasSize(layoutBlueprint(lifecycle).nodes).minWidth;

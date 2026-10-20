@@ -107,6 +107,7 @@ export function WorkflowEditor({
                     guard: null,
                     effects: [],
                     metadata: null,
+                    reason: null,
                 },
             ],
         });
