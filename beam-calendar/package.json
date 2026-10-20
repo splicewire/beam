@@ -1,6 +1,6 @@
 {
     "name": "@splicewire/beam-calendar",
-    "version": "0.1.0",
+    "version": "0.1.2",
     "description": "The vocab-aware calendar satellite: ONE CompositionCalendar component, mounted twice (aggregate + single), sitting on the source-blind @schemastud/big-calendar foundation and the @splicewire/_resources calendar projection DTO. It knows 'calendar'/'composition'/'channel'/ADR-0070 exist and spreads the aggregate-vs-single difference across the vendor seam — while the foundation stays source-blind. Never imports react-big-calendar directly (foundation-only). Maps the projection DTO into FoundationCalendarEvent, encodes the (composition, cell/series, recurrence) write-target ref codec, resolves the per-mount hue axis (single = Kind, aggregate = provenance), and injects the vocab renderX chrome (event badge, provenance/status facets, lane headers). Mirrors the PHP splicewire/laravel-beam-calendar package by domain (deferred). big-calendar-surface PRD §3/§4/§5/§7.",
     "license": "MIT",
     "type": "module",
