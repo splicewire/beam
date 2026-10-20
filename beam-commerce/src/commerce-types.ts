@@ -9,33 +9,33 @@
 // subscription) land in beam-commerce as the CURRENT tier verdict. ADR-0116 defers the *final* home
 // of some of these commerce surfaces — that question stays OPEN; this promotion does not close it.
 import type {
-    BillData,
-    BillLineItemData,
-    BudgetOfferData,
-    BudgetVerdictData,
-    CreditEntryData,
-    EntitlementData,
-    PlanData,
-    SubscriptionData,
-    UpsellOfferData,
-    UsageModelBreakdownData,
-    UsageSummaryData,
-    WalletBalanceData,
-} from '@splicewire/beam-resources/types/commerce';
+  BillData,
+  BillLineItemData,
+  BudgetOfferData,
+  BudgetVerdictData,
+  CreditEntryData,
+  EntitlementData,
+  PlanData,
+  SubscriptionData,
+  UpsellOfferData,
+  UsageModelBreakdownData,
+  UsageSummaryData,
+  WalletBalanceData,
+} from "@splicewire/beam-resources/types/commerce";
 
 export type {
-    BillData,
-    BillLineItemData,
-    BudgetOfferData,
-    BudgetVerdictData,
-    CreditEntryData,
-    EntitlementData,
-    PlanData,
-    SubscriptionData,
-    UpsellOfferData,
-    UsageModelBreakdownData,
-    UsageSummaryData,
-    WalletBalanceData,
+  BillData,
+  BillLineItemData,
+  BudgetOfferData,
+  BudgetVerdictData,
+  CreditEntryData,
+  EntitlementData,
+  PlanData,
+  SubscriptionData,
+  UpsellOfferData,
+  UsageModelBreakdownData,
+  UsageSummaryData,
+  WalletBalanceData,
 };
 
 // ── Display-hint unions ─────────────────────────────────────────────────────
@@ -44,49 +44,53 @@ export type {
 // TS-only — NOT PHP `#[TypeScript]` types — so they live here, not in the projected `beam-resources` slice.
 
 /** The credit-ledger entry kind the ledger badges switch on. */
-export type CreditEntryType = 'credit' | 'debit' | string;
+export type CreditEntryType = "credit" | "debit" | string;
 
 /** The budget-offer action the raise-cap / upgrade CTA branches on. */
-export type BudgetOfferAction = 'raise_cap' | 'upgrade_plan' | string;
+export type BudgetOfferAction = "raise_cap" | "upgrade_plan" | string;
 
 /** The three real subscription lifecycle states the badge renders. */
 /** `SubscriptionViewData::$lifecycle` (beam-commerce `SubscriptionLifecycle`): declared on the wire, `none` included (APP-10). */
-export type LifecycleState = 'active' | 'cancels_at_period_end' | 'lapsed' | 'none';
+export type LifecycleState =
+  | "active"
+  | "cancels_at_period_end"
+  | "lapsed"
+  | "none";
 
 /** The resolved-entitlement source facet the grid isolates. */
-export type SourceFacet = 'all' | 'default' | 'plan' | 'tenant';
+export type SourceFacet = "all" | "default" | "plan" | "tenant";
 
 // ── Read-models (DTO + narrowed display-hint unions) ────────────────────────
 
 export type WalletBalance = WalletBalanceData;
 
-export type CreditLedgerEntry = Omit<CreditEntryData, 'type'> & {
-    type: CreditEntryType;
+export type CreditLedgerEntry = Omit<CreditEntryData, "type"> & {
+  type: CreditEntryType;
 };
 
 /** How a subscription is funded (purchase-walkthrough M14). Null: no funding recorded (it resolves as it always did). */
-export type Funding = 'card' | 'invoice' | 'comp' | 'none';
+export type Funding = "card" | "invoice" | "comp" | "none";
 
 /**
  * The subscription view, with M14's funding fields. Optional until a host regenerates its `beam-resources` projection
  * from the PHP `SubscriptionData`, which now carries them.
  */
 export type Subscription = SubscriptionData & {
-    funding?: Funding | null;
-    comp?: { actor: string; reason: string; expiresAt: string | null } | null;
-    awaitingPayment?: boolean;
+  funding?: Funding | null;
+  comp?: { actor: string; reason: string; expiresAt: string | null } | null;
+  awaitingPayment?: boolean;
 };
 export type Plan = PlanData;
 export type EntitlementRecord = EntitlementData;
 export type UpsellOffer = UpsellOfferData;
 
 /** The client-only budget-offer narrowing — `action` as a display-hint union. */
-export type BudgetOffer = Omit<BudgetOfferData, 'action'> & {
-    action: BudgetOfferAction;
+export type BudgetOffer = Omit<BudgetOfferData, "action"> & {
+  action: BudgetOfferAction;
 };
 
-export type BudgetVerdict = Omit<BudgetVerdictData, 'offer'> & {
-    offer: BudgetOffer | null;
+export type BudgetVerdict = Omit<BudgetVerdictData, "offer"> & {
+  offer: BudgetOffer | null;
 };
 
 export type UsageModelBreakdown = UsageModelBreakdownData;
@@ -105,11 +109,11 @@ export type BillLineItem = BillLineItemData;
 
 /** The engine's own money-in outcome. Only `succeeded` funded the wallet. */
 export type CreditReloadPaymentStatus =
-    | 'succeeded'
-    | 'failed'
-    | 'requires_action'
-    | 'pending'
-    | string;
+  | "succeeded"
+  | "failed"
+  | "requires_action"
+  | "pending"
+  | string;
 
 /**
  * One reload attempt's outcome on the host's configured money-in rail.
@@ -119,15 +123,15 @@ export type CreditReloadPaymentStatus =
  * nothing has a window in which it renders a wrong number.
  */
 export interface CreditReloadResult {
-    paymentStatus: CreditReloadPaymentStatus;
-    captured: boolean;
-    amountUsd: number;
-    /** The rail that answered — `fake` on a sandbox host, `stripe` in production. */
-    driver: string;
-    /** The rail's normalized decline code; null on a captured payment. */
-    declineCode: string | null;
-    providerRef: string | null;
-    wallet: WalletBalance;
+  paymentStatus: CreditReloadPaymentStatus;
+  captured: boolean;
+  amountUsd: number;
+  /** The rail that answered — `fake` on a sandbox host, `stripe` in production. */
+  driver: string;
+  /** The rail's normalized decline code; null on a captured payment. */
+  declineCode: string | null;
+  providerRef: string | null;
+  wallet: WalletBalance;
 }
 
 // ── Client-only wire shapes (no server DTO — write/preview shapes, not read-models) ──
@@ -138,15 +142,17 @@ export interface CreditReloadResult {
  * `beam-resources` projection.
  */
 export interface BillPreviewLineItem {
-    component_type: string;
-    description: string;
-    amount_usd: number;
-    metadata: Record<string, unknown>;
+  component_type: string;
+  description: string;
+  amount_usd: number;
+  metadata: Record<string, unknown>;
 }
 
 export interface BillPreview {
-    line_items: BillPreviewLineItem[];
-    total_usd: number;
+  line_items: BillPreviewLineItem[];
+  total_usd: number;
+  /** False only for the declared no-subscription empty state. */
+  has_active_plan: boolean;
 }
 
 /**
@@ -156,9 +162,9 @@ export interface BillPreview {
  * supplies human column names for the entitlement grid, whose resolved rows arrive separately.
  */
 export interface SubscriptionView {
-    subscription: Subscription | null;
-    hasStripeId: boolean;
-    stripePriceId: string | null;
-    capabilityLabels: Record<string, string>;
-    lifecycle: LifecycleState;
+  subscription: Subscription | null;
+  hasStripeId: boolean;
+  stripePriceId: string | null;
+  capabilityLabels: Record<string, string>;
+  lifecycle: LifecycleState;
 }
