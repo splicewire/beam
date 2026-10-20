@@ -1,172 +1,172 @@
 {
-    "name": "@splicewire/beam-ux",
-    "version": "0.7.1",
-    "description": "The beam UX-builder surfaces, authored pre-packaged and DTO-first (rehome-ui, ADR-0116). Mirrors the PHP splicewire/laravel-beam-ux package by domain. Ships the in-app visual editing surface for a beam site's OWN front-end \u2014 the docked region inspector, the floating in-context overlay editor, the live region canvas, and the layout\u203atemplate\u203apage composition structure panel with its component palette \u2014 as portable, tenancy-agnostic components: they own their react-query data logic, take their transport + feedback as injected services (never app-local imports), and type off the generated BeamUxEntryBody projection delivered via @splicewire/beam-resources. Generic UI comes from the @schemastud/ui foundation; the schema-driven form editor is the real @schemastud/seam SchemaForm, a host-provided peer.",
-    "license": "MIT",
-    "type": "module",
-    "main": "dist/index.js",
-    "types": "dist/index.d.ts",
-    "exports": {
-        ".": {
-            "types": "./dist/index.d.ts",
-            "import": "./dist/index.js"
-        },
-        "./canvas": {
-            "types": "./dist/canvas.d.ts",
-            "import": "./dist/canvas.js"
-        },
-        "./site": {
-            "types": "./dist/site.d.ts",
-            "import": "./dist/site.js"
-        },
-        "./docs": {
-            "types": "./dist/docs.d.ts",
-            "import": "./dist/docs.js"
-        },
-        "./appearance": {
-            "types": "./dist/appearance.d.ts",
-            "import": "./dist/appearance.js"
-        },
-        "./state": {
-            "types": "./dist/state.d.ts",
-            "import": "./dist/state.js"
-        },
-        "./pages": {
-            "types": "./dist/pages.d.ts",
-            "import": "./dist/pages.js"
-        },
-        "./shell": {
-            "types": "./dist/shell.d.ts",
-            "import": "./dist/shell.js"
-        },
-        "./desk": {
-            "types": "./dist/desk.d.ts",
-            "import": "./dist/desk.js"
-        },
-        "./appshell": {
-            "types": "./dist/appshell.d.ts",
-            "import": "./dist/appshell.js"
-        },
-        "./nav": {
-            "types": "./dist/nav.d.ts",
-            "import": "./dist/nav.js"
-        },
-        "./surgeon": {
-            "types": "./dist/surgeon.d.ts",
-            "import": "./dist/surgeon.js"
-        },
-        "./streaming": {
-            "types": "./dist/streaming.d.ts",
-            "import": "./dist/streaming.js"
-        },
-        "./admin": {
-            "types": "./dist/admin.d.ts",
-            "import": "./dist/admin.js"
-        },
-        "./tokens.css": "./dist/tokens.css",
-        "./theme.css": "./dist/theme.css",
-        "./tokens-docs.css": "./dist/tokens-docs.css",
-        "./tsx-lens": {
-            "types": "./dist/tsx-lens.d.ts",
-            "import": "./dist/tsx-lens.js"
-        },
-        "./jsondoc": {
-            "types": "./dist/jsondoc.d.ts",
-            "import": "./dist/jsondoc.js"
-        },
-        "./editor": {
-            "types": "./dist/editor.d.ts",
-            "import": "./dist/editor.js"
-        }
+  "name": "@splicewire/beam-ux",
+  "version": "0.7.1",
+  "description": "The beam UX-builder surfaces, authored pre-packaged and DTO-first (rehome-ui, ADR-0116). Mirrors the PHP splicewire/laravel-beam-ux package by domain. Ships the in-app visual editing surface for a beam site's OWN front-end — the docked region inspector, the floating in-context overlay editor, the live region canvas, and the layout›template›page composition structure panel with its component palette — as portable, tenancy-agnostic components: they own their react-query data logic, take their transport + feedback as injected services (never app-local imports), and type off the generated BeamUxEntryBody projection delivered via @splicewire/beam-resources. Generic UI comes from the @schemastud/ui foundation; the schema-driven form editor is the real @schemastud/seam SchemaForm, a host-provided peer.",
+  "license": "MIT",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
     },
-    "sideEffects": false,
-    "bin": {
-        "beam-ux-sdk-hook-migration": "bin/sdk-hook-migration.mjs",
-        "beam-ux-namespace-rename": "bin/namespace-rename.mjs"
+    "./canvas": {
+      "types": "./dist/canvas.d.ts",
+      "import": "./dist/canvas.js"
     },
-    "files": [
-        "dist",
-        "src",
-        "bin",
-        "README.md"
-    ],
-    "publishConfig": {
-        "registry": "https://registry.npmjs.org",
-        "access": "public"
+    "./site": {
+      "types": "./dist/site.d.ts",
+      "import": "./dist/site.js"
     },
-    "repository": {
-        "type": "git",
-        "url": "https://github.com/splicewire/beam.git",
-        "directory": "beam-ux"
+    "./docs": {
+      "types": "./dist/docs.d.ts",
+      "import": "./dist/docs.js"
     },
-    "scripts": {
-        "build": "tsup",
-        "dev": "tsup --watch",
-        "test": "vitest run",
-        "test:artifact-contract": "vitest run --config vitest.artifact-contract.config.ts",
-        "typecheck": "tsc --noEmit",
-        "lint:imports": "node scripts/check-imports.mjs",
-        "prepublishOnly": "npm run build"
+    "./appearance": {
+      "types": "./dist/appearance.d.ts",
+      "import": "./dist/appearance.js"
     },
-    "dependencies": {
-        "@babel/parser": "^7.29.7",
-        "@babel/types": "^7.29.7",
-        "@splicewire/beam-resources": "^0.1.3",
-        "recast": "^0.23.12",
-        "mdast-util-from-markdown": "^2.0.3"
+    "./state": {
+      "types": "./dist/state.d.ts",
+      "import": "./dist/state.js"
     },
-    "peerDependencies": {
-        "@splicewire/beam-workflows": "^0.1.0",
-        "@inertiajs/react": ">=2",
-        "@rjsf/core": ">=6",
-        "@rjsf/shadcn": ">=6",
-        "@rjsf/utils": ">=6",
-        "@rjsf/validator-ajv8": ">=6",
-        "@schemastud/blockdoc": "*",
-        "@schemastud/chat": "*",
-        "@schemastud/frame": "*",
-        "@schemastud/mainframe": "*",
-        "@schemastud/seam": "*",
-        "@schemastud/ui": "*",
-        "@tanstack/react-query": ">=5",
-        "lucide-react": ">=0.400.0",
-        "react": ">=18",
-        "zustand": ">=4"
+    "./pages": {
+      "types": "./dist/pages.d.ts",
+      "import": "./dist/pages.js"
     },
-    "peerDependenciesMeta": {
-        "@schemastud/chat": {
-            "optional": true
-        },
-        "@schemastud/mainframe": {
-            "optional": true
-        }
+    "./shell": {
+      "types": "./dist/shell.d.ts",
+      "import": "./dist/shell.js"
     },
-    "devDependencies": {
-        "@splicewire/beam-workflows": "file:../beam-workflows",
-        "@inertiajs/react": "^3.0.0",
-        "@schemastud/blockdoc": "file:../../schemastud/blockdoc",
-        "@schemastud/chat": "file:../../schemastud/chat",
-        "@schemastud/frame": "file:../../schemastud/frame",
-        "@schemastud/mainframe": "file:../../schemastud/mainframe",
-        "@schemastud/nav": "0.1.0",
-        "@schemastud/seam": "file:../../schemastud/seam",
-        "@schemastud/ui": "file:../../schemastud/ui",
-        "@tanstack/react-query": "^5.62.0",
-        "@testing-library/react": "^16.1.0",
-        "@testing-library/user-event": "^14.5.2",
-        "@types/node": "^22.20.1",
-        "@types/react": "^19.0.0",
-        "@types/react-dom": "19.2.3",
-        "esbuild": "0.27.7",
-        "jsdom": "^25.0.1",
-        "lucide-react": "^0.468.0",
-        "react": "^19.2.0",
-        "react-dom": "^19.2.0",
-        "react-rnd": "^10.5.3",
-        "react-router": "7.18.2",
-        "tsup": "^8.5.1",
-        "typescript": "^5.7.2",
-        "vite": "8.1.5",
-        "vitest": "^4.1.10"
+    "./desk": {
+      "types": "./dist/desk.d.ts",
+      "import": "./dist/desk.js"
+    },
+    "./appshell": {
+      "types": "./dist/appshell.d.ts",
+      "import": "./dist/appshell.js"
+    },
+    "./nav": {
+      "types": "./dist/nav.d.ts",
+      "import": "./dist/nav.js"
+    },
+    "./surgeon": {
+      "types": "./dist/surgeon.d.ts",
+      "import": "./dist/surgeon.js"
+    },
+    "./streaming": {
+      "types": "./dist/streaming.d.ts",
+      "import": "./dist/streaming.js"
+    },
+    "./admin": {
+      "types": "./dist/admin.d.ts",
+      "import": "./dist/admin.js"
+    },
+    "./tokens.css": "./dist/tokens.css",
+    "./theme.css": "./dist/theme.css",
+    "./tokens-docs.css": "./dist/tokens-docs.css",
+    "./tsx-lens": {
+      "types": "./dist/tsx-lens.d.ts",
+      "import": "./dist/tsx-lens.js"
+    },
+    "./jsondoc": {
+      "types": "./dist/jsondoc.d.ts",
+      "import": "./dist/jsondoc.js"
+    },
+    "./editor": {
+      "types": "./dist/editor.d.ts",
+      "import": "./dist/editor.js"
     }
+  },
+  "sideEffects": false,
+  "bin": {
+    "beam-ux-sdk-hook-migration": "bin/sdk-hook-migration.mjs",
+    "beam-ux-namespace-rename": "bin/namespace-rename.mjs"
+  },
+  "files": [
+    "dist",
+    "src",
+    "bin",
+    "README.md"
+  ],
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org",
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/splicewire/beam.git",
+    "directory": "beam-ux"
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "vitest run",
+    "test:artifact-contract": "vitest run --config vitest.artifact-contract.config.ts",
+    "typecheck": "tsc --noEmit",
+    "lint:imports": "node scripts/check-imports.mjs",
+    "prepublishOnly": "npm run build"
+  },
+  "dependencies": {
+    "@babel/parser": "^7.29.7",
+    "@babel/types": "^7.29.7",
+    "@splicewire/beam-resources": "github:splicewire/beam#55e2f427365817d9bdb8598b7af9718b26b3c746&path:/beam-resources",
+    "recast": "^0.23.12",
+    "mdast-util-from-markdown": "^2.0.3"
+  },
+  "peerDependencies": {
+    "@splicewire/beam-workflows": "^0.1.0",
+    "@inertiajs/react": ">=2",
+    "@rjsf/core": ">=6",
+    "@rjsf/shadcn": ">=6",
+    "@rjsf/utils": ">=6",
+    "@rjsf/validator-ajv8": ">=6",
+    "@schemastud/blockdoc": "*",
+    "@schemastud/chat": "*",
+    "@schemastud/frame": "*",
+    "@schemastud/mainframe": "*",
+    "@schemastud/seam": "*",
+    "@schemastud/ui": "*",
+    "@tanstack/react-query": ">=5",
+    "lucide-react": ">=0.400.0",
+    "react": ">=18",
+    "zustand": ">=4"
+  },
+  "peerDependenciesMeta": {
+    "@schemastud/chat": {
+      "optional": true
+    },
+    "@schemastud/mainframe": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@splicewire/beam-workflows": "github:splicewire/beam#6567fcad329682d5789e64d7ad1868e04cad11fe&path:/beam-workflows",
+    "@inertiajs/react": "^3.0.0",
+    "@schemastud/blockdoc": "github:schemastud/js#8f3775e02ac9b96205064de967a9f5c700953231&path:/blockdoc",
+    "@schemastud/chat": "github:schemastud/js#de4230a6c8a4691598c339302ea0b9e015b4dbe6&path:/chat",
+    "@schemastud/frame": "github:schemastud/js#67088a6ba42d4c0a754db04d96c384e91ea7c78a&path:/frame",
+    "@schemastud/mainframe": "github:schemastud/js#5b9aad9e0f2e72a266a57e721df516aa8c114bf7&path:/mainframe",
+    "@schemastud/nav": "github:schemastud/js#ea1bb1a06d83de66164e19f9b6798342ed2a8c51&path:/nav",
+    "@schemastud/seam": "github:schemastud/js#72b9e79d72e3dbd9a14113988c67b72f065a5b87&path:/seam",
+    "@schemastud/ui": "github:schemastud/js#31c67f455fe3b237504e7b73e99012b9df74c4c1&path:/ui",
+    "@tanstack/react-query": "^5.62.0",
+    "@testing-library/react": "^16.1.0",
+    "@testing-library/user-event": "^14.5.2",
+    "@types/node": "^22.20.1",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "19.2.3",
+    "esbuild": "0.27.7",
+    "jsdom": "^25.0.1",
+    "lucide-react": "^0.468.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "react-rnd": "^10.5.3",
+    "react-router": "7.18.2",
+    "tsup": "^8.5.1",
+    "typescript": "^5.7.2",
+    "vite": "8.1.5",
+    "vitest": "^4.1.10"
+  }
 }

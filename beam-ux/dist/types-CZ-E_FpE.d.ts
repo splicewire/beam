@@ -1,0 +1,74 @@
+import { ReactNode, ComponentType } from 'react';
+import { S as SiteNavData, L as LinkComponent } from './types-Bzws8ncP.js';
+
+/**
+ * The entry payload `PublicEntryController` composes (ADR-0209 §6, ADR-0213 §4). `layout`/`template`
+ * arrive already RESOLVED — the server walked the containment chain it was holding anyway, so the
+ * client never has to know an entry has ancestors at all.
+ */
+type EntryPayload = {
+    id: string;
+    slug: string;
+    title: string | null;
+    type: string | null;
+    format: string | null;
+    url: string | null;
+    /** The inherited chrome name, or null when nothing in the chain declares one. */
+    layout?: string | null;
+    template?: string | null;
+};
+type EntryArtifactPayload = {
+    url: string;
+    version: string | null;
+};
+/**
+ * The artifact addresses of chrome that resolved to **another entry** (ADR-0213 §7's second half),
+ * one slot per axis — null when the resolved name is not a nestable entry. The server hands these
+ * over because the client can only nest what it can address; the client still prefers a registered
+ * component of the same name, so a host registration is never overridden by a row.
+ */
+type ChromeArtifactsPayload = {
+    layout?: EntryArtifactPayload | null;
+    template?: EntryArtifactPayload | null;
+};
+/**
+ * The props every layout and every template receives. One shape for both, because the difference
+ * between them is what fills the hole (ADR-0213 §1) and not what they are told — a template that
+ * wanted the nav to render a "next page" pager should not have to be a layout to get it.
+ */
+type ChromeProps = {
+    entry: EntryPayload;
+    /** The already-gated realm projection. Null when the mount was made with `withNav: false`. */
+    nav: SiteNavData | null;
+    /** The host's router link. The package imports no router (ADR-0213 §2 invariant ii). */
+    linkComponent?: LinkComponent;
+    /** The current URL, for active-state and for re-scanning the on-this-page column. */
+    currentHref?: string;
+    /** Host chrome the layout places but never authors: a header, a footer, extra rail content. */
+    slots?: ChromeSlots;
+    /** Per-part class overrides. The package names no colour and no font (invariant i). */
+    classNames?: Record<string, string | undefined>;
+    /**
+     * The whole page-props object, as the body receives it under `page` (§6): the host's shared props and the props a
+     * package contributed for this layout (laravel-beam-ux `EntryPageProps`; `DocsLayout` reads `docsChrome`, DOCS-12).
+     */
+    page?: Record<string, unknown>;
+    children: ReactNode;
+};
+type ChromeSlots = {
+    header?: ReactNode;
+    footer?: ReactNode;
+    /** Rendered above the rail — a version switcher, a search box, a "back to site" link. */
+    railTop?: ReactNode;
+    /** Rendered above the body inside `main` — a breadcrumb is the intended occupant. */
+    breadcrumb?: ReactNode;
+    /** Author-only controls in a packaged header (DOCS-12): the one host hole a docs header keeps. */
+    headerActions?: ReactNode;
+    /** The packaged header's search box (filled by DOCS-14's DocsSearch). */
+    search?: ReactNode;
+    /** The packaged header's appearance toggle (filled by DOCS-13's DocsTheme). */
+    appearance?: ReactNode;
+};
+type ChromeComponent = ComponentType<ChromeProps>;
+
+export type { ChromeProps as C, EntryArtifactPayload as E, ChromeComponent as a, ChromeSlots as b, EntryPayload as c, ChromeArtifactsPayload as d };
