@@ -13,7 +13,7 @@ const require = createRequire(import.meta.url);
 const pkgDir = (id: string) => dirname(require.resolve(`${id}/package.json`));
 const react = pkgDir('react');
 const reactDom = pkgDir('react-dom');
-const self = dirname(fileURLToPath(import.meta.url));
+const entry = (id: string) => fileURLToPath(import.meta.resolve(id));
 
 export default defineConfig({
     resolve: {
@@ -25,7 +25,7 @@ export default defineConfig({
             'react-dom': reactDom,
             '@tanstack/react-query': pkgDir('@tanstack/react-query'),
             // Resolve the foundation UI to its built dist (its published entry), not its src.
-            '@schemastud/ui': join(self, '..', '..', 'schemastud', 'ui', 'dist', 'index.js'),
+            '@schemastud/ui': entry('@schemastud/ui'),
         },
     },
     test: {

@@ -12,7 +12,7 @@ const require = createRequire(import.meta.url);
 const pkgDir = (id: string) => dirname(require.resolve(`${id}/package.json`));
 const react = pkgDir('react');
 const reactDom = pkgDir('react-dom');
-const self = dirname(fileURLToPath(import.meta.url));
+const entry = (id: string) => fileURLToPath(import.meta.resolve(id));
 
 export default defineConfig({
     resolve: {
@@ -31,7 +31,7 @@ export default defineConfig({
             'react-big-calendar': pkgDir('react-big-calendar'),
             'date-fns': pkgDir('date-fns'),
             // Resolve the foundation to its BUILT dist (its published entry), not its src.
-            '@schemastud/big-calendar': join(self, '..', '..', 'schemastud', 'big-calendar', 'dist', 'index.js'),
+            '@schemastud/big-calendar': entry('@schemastud/big-calendar'),
         },
     },
     test: {
