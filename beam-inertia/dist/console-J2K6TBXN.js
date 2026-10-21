@@ -1,6 +1,6 @@
 import {
   TenantFrameProvider
-} from "./chunk-KUU3VSUX.js";
+} from "./chunk-4RAMXKLT.js";
 import "./chunk-O7ZKQDZR.js";
 import "./chunk-BBYPLYMO.js";
 import {
@@ -160,9 +160,27 @@ function FrameRoutes({ manifest }) {
             id: null,
             container: "page",
             form: formFromManifest(manifest, resource),
+            schemaPurpose: "write",
             onSaved: () => router.visit(realmHref(basename, entry.path))
           }
         ));
+      }
+      const definition = manifest.resources.find((candidate) => candidate.key === resource);
+      if (twin?.mounts === "detail" && definition?.editable === false && definition.showable !== false) {
+        routeRegistry.registerRoute(twin.routeName, function ReadDetail() {
+          const id = idFromParam(useParams().id);
+          return /* @__PURE__ */ jsx(
+            EditShell,
+            {
+              resource,
+              id,
+              readOnly: true,
+              schemaPurpose: "read",
+              container: "page",
+              form: formFromManifest(manifest, resource)
+            }
+          );
+        });
       }
     }
     const generated = buildRealmRoutes(manifest.routeContext, {
@@ -245,4 +263,4 @@ function ConsoleBody() {
 export {
   FrameConsole as default
 };
-//# sourceMappingURL=console-AN25QZHR.js.map
+//# sourceMappingURL=console-J2K6TBXN.js.map

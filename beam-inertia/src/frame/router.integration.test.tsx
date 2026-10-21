@@ -81,7 +81,7 @@ function fixture({ create = true, show = true, editable = false, host = false } 
         );
         const method = init?.method ?? 'GET';
         const body = typeof init?.body === 'string' ? JSON.parse(init.body) : undefined;
-        requests.push({ path: url.pathname, method, body });
+        requests.push({ path: url.pathname + (url.searchParams.has('purpose') ? url.search : ''), method, body });
         if (url.pathname === '/operator/frame/manifest') return Response.json(manifest);
         if (url.pathname.endsWith('/filters/schema'))
             return Response.json({ data: { type: 'object', properties: {} } });
@@ -89,7 +89,7 @@ function fixture({ create = true, show = true, editable = false, host = false } 
             return Response.json({
                 type: 'object',
                 required: ['name'],
-                properties: { name: { type: 'string', title: 'Name' } },
+                properties: { name: { type: 'string', title: 'Name' }, ...(url.searchParams.get('purpose') === 'read' ? { approvalState: { type: 'string', title: 'Approval' } } : {}) },
             });
         if (url.pathname === '/frame/resources/documents') {
             return Response.json(
@@ -108,7 +108,7 @@ function fixture({ create = true, show = true, editable = false, host = false } 
             url.pathname === '/frame/resources/documents/records/new'
         )
             return Response.json({
-                data: { id: url.pathname.split('/').pop(), name: 'Existing document' },
+                data: { id: url.pathname.split('/').pop(), name: 'Existing document', ...(editable ? {} : { approvalState: 'pending' }) },
             });
         throw new Error(`Unexpected ${method} ${url.pathname}`);
     };
@@ -200,6 +200,8 @@ describe('explicit Frame creation destinations', () => {
         fireEvent.click(await screen.findByText('Existing document'));
         expect(router.visit).toHaveBeenLastCalledWith('/operator/catalog/existing');
         await screen.findByDisplayValue('Existing document');
+        expect((await screen.findByRole('textbox', { name: /^Approval/ }) as HTMLInputElement).disabled).toBe(true);
+        expect(data.requests.some(({ path }) => path.endsWith('/schema?purpose=read'))).toBe(true);
         expect(data.requests.some(({ path }) => path.endsWith('/records/existing'))).toBe(true);
         expect(screen.queryByRole('button', { name: 'Save' })).toBeNull();
     });
@@ -224,6 +226,17 @@ describe('explicit Frame creation destinations', () => {
                 ({ method, path }) => method === 'PUT' && path.endsWith('/records/existing')
             )
         ).toBe(true);
+    });
+
+    it('keeps an actor-disabled editable record on its legacy write schema', async () => {
+        const data = fixture({ editable: true });
+        data.manifest.contexts.documents.can!.update = false;
+        mount(data, '/operator/catalog/existing');
+        const field = await screen.findByDisplayValue('Existing document');
+        expect((field as HTMLInputElement).disabled).toBe(true);
+        expect(screen.queryByRole('textbox', { name: /^Approval/ })).toBeNull();
+        expect(data.requests.some(({ path }) => path.includes('purpose=read'))).toBe(false);
+        expect(screen.queryByRole('button', { name: 'Save' })).toBeNull();
     });
 
     it.each([{ create: false }, { host: true }])(

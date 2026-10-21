@@ -14,7 +14,7 @@ import {
 } from "./chunk-J5BI4QL2.js";
 import {
   InertiaEditorKit
-} from "./chunk-2P2H4TJ5.js";
+} from "./chunk-RCVOWTEG.js";
 import {
   bodyClient
 } from "./chunk-7TJWWPG6.js";
@@ -28,7 +28,7 @@ import {
 } from "./chunk-44FAKLSM.js";
 import {
   resolveBeamPage
-} from "./chunk-RWXFPMKV.js";
+} from "./chunk-5CZFBGMC.js";
 import "./chunk-WB76RVEA.js";
 import "./chunk-QMLU62K5.js";
 import {
@@ -160,7 +160,7 @@ import { lazy, Suspense } from "react";
 import { CanvasOrRefusal as CanvasOrRefusal2 } from "@splicewire/beam-ux/editor";
 import { jsx as jsx5 } from "react/jsx-runtime";
 var VisualEditorMount = lazy(
-  () => import("./mount-LBOXDWIU.js").then((m) => ({ default: m.VisualEditorMount }))
+  () => import("./mount-BTFGWETR.js").then((m) => ({ default: m.VisualEditorMount }))
 );
 var SELF_MANAGED_COMPONENTS = /* @__PURE__ */ new Set(["site/home", "site/entry"]);
 var currentComponent = "";
@@ -233,7 +233,7 @@ import { Suspense as Suspense3, lazy as lazy3 } from "react";
 // src/os/page-properties.tsx
 import { lazy as lazy2, Suspense as Suspense2 } from "react";
 import { jsx as jsx7, jsxs as jsxs2 } from "react/jsx-runtime";
-var EntryPropertiesForm = lazy2(() => import("./entry-properties-form-24F62CGA.js"));
+var EntryPropertiesForm = lazy2(() => import("./entry-properties-form-E3QIEVV4.js"));
 function PageProperties({
   slug,
   entryId = null,

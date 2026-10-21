@@ -227,9 +227,21 @@ export function FrameRoutes({ manifest }: { manifest: FrameManifest }) {
                         id={null}
                         container="page"
                         form={formFromManifest(manifest, resource)}
+                        schemaPurpose="write"
                         onSaved={() => router.visit(realmHref(basename, entry.path))}
                     />
                 ));
+            }
+
+            // A statically noneditable resource's show already returns its read DTO.
+            // Actor-disabled editable resources retain the dispatcher's legacy edit schema.
+            const definition = manifest.resources.find((candidate) => candidate.key === resource);
+            if (twin?.mounts === 'detail' && definition?.editable === false && definition.showable !== false) {
+                routeRegistry.registerRoute(twin.routeName, function ReadDetail() {
+                    const id = idFromParam(useParams().id);
+                    return <EditShell resource={resource} id={id} readOnly schemaPurpose="read"
+                        container="page" form={formFromManifest(manifest, resource)} />;
+                });
             }
         }
 

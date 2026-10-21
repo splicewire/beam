@@ -4,6 +4,18 @@ import { frameTransport } from "./transport";
 
 afterEach(() => vi.unstubAllGlobals());
 
+it("sends read schema purpose explicitly and preserves the legacy write URL", async () => {
+  const fetch = vi.fn(async () => Response.json({ type: "object" }));
+  vi.stubGlobal("fetch", fetch);
+  await frameTransport.getFormSchema("requests", "bare");
+  await frameTransport.getFormSchema("requests", "enriched", "write");
+  await frameTransport.getFormSchema("requests", "bare", "read");
+  expect(fetch.mock.calls.map(call => call[0])).toEqual([
+    "/frame/resources/requests/schema", "/frame/resources/requests/schema",
+    "/frame/resources/requests/schema?purpose=read",
+  ]);
+});
+
 it("preserves a declared creation result and keeps row updates separate", async () => {
   const created = {
     hook: { id: "hook-1" },

@@ -86,8 +86,8 @@ export const frameTransport: FrameTransport = createResourceTransport(
 
             return body.data;
         },
-        async getFormSchema(resource): Promise<SchemaNode> {
-            return fetchJson<SchemaNode>(`${FRAME}/resources/${resource}/schema`);
+        async getFormSchema(resource, _form, purpose = 'write'): Promise<SchemaNode> {
+            return fetchJson<SchemaNode>(`${FRAME}/resources/${resource}/schema${purpose === 'read' ? '?purpose=read' : ''}`);
         },
         async create<Result>(resource: string, data: unknown): Promise<Result> {
             const body = await writeJson<{ data: Result }>(

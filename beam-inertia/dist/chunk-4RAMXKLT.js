@@ -131,8 +131,8 @@ var frameTransport = createResourceTransport(
       );
       return body.data;
     },
-    async getFormSchema(resource) {
-      return fetchJson(`${FRAME}/resources/${resource}/schema`);
+    async getFormSchema(resource, _form, purpose = "write") {
+      return fetchJson(`${FRAME}/resources/${resource}/schema${purpose === "read" ? "?purpose=read" : ""}`);
     },
     async create(resource, data) {
       const body = await writeJson(
@@ -213,4 +213,4 @@ function TenantFrameProvider({ children }) {
 export {
   TenantFrameProvider
 };
-//# sourceMappingURL=chunk-KUU3VSUX.js.map
+//# sourceMappingURL=chunk-4RAMXKLT.js.map
