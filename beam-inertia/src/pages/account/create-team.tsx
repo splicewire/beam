@@ -1,6 +1,8 @@
 import { Head, router, usePage } from '@inertiajs/react';
 import { CreateTeamForm } from '@splicewire/beam-accounts';
 import { useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import { resetFrameAfterTeamChange } from '../../frame/team-change';
 
 /**
  * `teams.create` — start a team (`splicewire/laravel-beam-accounts` `TeamController::create`).
@@ -21,6 +23,7 @@ type CreateTeamPageProps = {
 export default function CreateTeam() {
     const { action, cancelUrl, errors } = usePage<CreateTeamPageProps>().props;
     const [processing, setProcessing] = useState(false);
+    const queryClient = useQueryClient();
 
     return (
         <>
@@ -34,6 +37,7 @@ export default function CreateTeam() {
                         router.post(action, input, {
                             onStart: () => setProcessing(true),
                             onFinish: () => setProcessing(false),
+                            onSuccess: () => resetFrameAfterTeamChange(queryClient),
                         })
                     }
                 />

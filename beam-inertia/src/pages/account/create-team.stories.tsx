@@ -1,4 +1,5 @@
-import { useEffect, useState, type ComponentType } from 'react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { useEffect, useState, type ComponentType, type ReactNode } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { within, expect } from 'storybook/test';
 import { resolveBeamPage } from '@splicewire/beam-inertia';
@@ -23,10 +24,15 @@ function CreateTeamStage({ errors }: { errors?: Record<string, string> }) {
     return <Page />;
 }
 
+function QueryStage({ children }: { children: ReactNode }) {
+    const [client] = useState(() => new QueryClient());
+    return <QueryClientProvider client={client}>{children}</QueryClientProvider>;
+}
+
 const meta = {
     title: 'Inertia/Account/CreateTeam',
     parameters: { layout: 'padded' },
-    decorators: [(Story) => <div className="mx-auto w-full max-w-2xl">{Story()}</div>],
+    decorators: [(Story) => <QueryStage><div className="mx-auto w-full max-w-2xl"><Story /></div></QueryStage>],
 } satisfies Meta;
 export default meta;
 type Story = StoryObj;
