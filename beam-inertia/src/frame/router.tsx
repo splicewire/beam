@@ -6,6 +6,7 @@ import {
     createMountDispatcher,
     createRouteRegistry,
     ListShell,
+    EditShell,
 } from '@schemastud/frame';
 import type { RealmRouteObject, RouteContextEntry } from '@schemastud/frame';
 import type { ReactNode } from 'react';
@@ -215,6 +216,21 @@ export function FrameRoutes({ manifest }: { manifest: FrameManifest }) {
                     }
                 />
             ));
+
+            // A successful generic create returns to its own list. Only the explicit
+            // create leaf is overridden: record edits, details and heavyweight widgets
+            // keep their existing dispatcher behavior.
+            if (create?.mounts === 'edit') {
+                routeRegistry.registerRoute(create.routeName, () => (
+                    <EditShell
+                        resource={resource}
+                        id={null}
+                        container="page"
+                        form={formFromManifest(manifest, resource)}
+                        onSaved={() => router.visit(realmHref(basename, entry.path))}
+                    />
+                ));
+            }
         }
 
         const generated = buildRealmRoutes(manifest.routeContext, {

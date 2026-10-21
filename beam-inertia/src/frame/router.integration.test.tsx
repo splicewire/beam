@@ -165,6 +165,35 @@ describe('explicit Frame creation destinations', () => {
         expect(data.requests.some(({ path }) => path.includes('/records/'))).toBe(false);
     });
 
+    it('returns to the same-shell list only after a successful create, including a realm basename', async () => {
+        const data = fixture({ show: false });
+        data.manifest.routeContext.unshift(leaf('other.index', 'elsewhere', 'list', 'other'));
+        mount(data, '/operator/catalog/new');
+        fireEvent.change(await screen.findByRole('textbox', { name: /^Name/ }), {
+            target: { value: 'Created document' },
+        });
+        fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+        await waitFor(() => expect(router.visit).toHaveBeenLastCalledWith('/operator/catalog'));
+        expect(data.requests.filter(({ method }) => method === 'POST')).toHaveLength(1);
+        await screen.findByText('Existing document');
+    });
+
+    it('keeps a failed create on the form without navigating', async () => {
+        const data = fixture();
+        const original = data.fetch;
+        data.fetch = (input, init) => init?.method === 'POST'
+            ? Promise.resolve(Response.json({ message: 'Invalid input' }, { status: 422 }))
+            : original(input, init);
+        mount(data, '/operator/catalog/new');
+        fireEvent.change(await screen.findByRole('textbox', { name: /^Name/ }), {
+            target: { value: 'Rejected document' },
+        });
+        fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+        await screen.findByRole('alert');
+        expect(router.visit).not.toHaveBeenCalled();
+        expect(screen.getByDisplayValue('Rejected document')).toBeTruthy();
+    });
+
     it('opens immutable records through detail and never offers Save', async () => {
         const data = fixture();
         mount(data);
@@ -189,6 +218,7 @@ describe('explicit Frame creation destinations', () => {
                 name: 'Updated document',
             })
         );
+        expect(router.visit).not.toHaveBeenCalled();
         expect(
             data.requests.some(
                 ({ method, path }) => method === 'PUT' && path.endsWith('/records/existing')

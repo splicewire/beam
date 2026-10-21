@@ -3,7 +3,7 @@ import {
 } from "./chunk-7TJWWPG6.js";
 import {
   resolveBeamPage
-} from "./chunk-XOBFWNGB.js";
+} from "./chunk-3PG65ONC.js";
 import {
   featureEnabled
 } from "./chunk-MTKP2AW3.js";
@@ -101,4 +101,4 @@ export {
   canvasConfig,
   InertiaEditorKit
 };
-//# sourceMappingURL=chunk-RHYFBENH.js.map
+//# sourceMappingURL=chunk-LYRIMFYM.js.map

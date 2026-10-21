@@ -36,7 +36,8 @@ import {
   createGuardRegistry,
   createMountDispatcher,
   createRouteRegistry,
-  ListShell
+  ListShell,
+  EditShell
 } from "@schemastud/frame";
 import { useMemo } from "react";
 import { useParams, useRoutes } from "react-router";
@@ -151,6 +152,18 @@ function FrameRoutes({ manifest }) {
           } : void 0
         }
       ));
+      if (create?.mounts === "edit") {
+        routeRegistry.registerRoute(create.routeName, () => /* @__PURE__ */ jsx(
+          EditShell,
+          {
+            resource,
+            id: null,
+            container: "page",
+            form: formFromManifest(manifest, resource),
+            onSaved: () => router.visit(realmHref(basename, entry.path))
+          }
+        ));
+      }
     }
     const generated = buildRealmRoutes(manifest.routeContext, {
       routes: routeRegistry,
@@ -232,4 +245,4 @@ function ConsoleBody() {
 export {
   FrameConsole as default
 };
-//# sourceMappingURL=console-FANNO4BT.js.map
+//# sourceMappingURL=console-AN25QZHR.js.map

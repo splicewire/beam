@@ -1,8 +1,8 @@
 import {
   InertiaEditorKit
-} from "./chunk-RHYFBENH.js";
+} from "./chunk-LYRIMFYM.js";
 import "./chunk-7TJWWPG6.js";
-import "./chunk-XOBFWNGB.js";
+import "./chunk-3PG65ONC.js";
 import "./chunk-MTKP2AW3.js";
 
 // src/editor/mount.tsx
@@ -16,4 +16,4 @@ export {
   VisualEditorMount,
   mount_default as default
 };
-//# sourceMappingURL=mount-TDDM4GS6.js.map
+//# sourceMappingURL=mount-O6DMYNLB.js.map
