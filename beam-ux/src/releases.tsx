@@ -2,6 +2,16 @@ import { useState } from "react";
 import { Button } from "@schemastud/ui";
 import { WorkflowActionForm } from "@splicewire/beam-workflows/action-form";
 import type { WorkflowProjectionData } from "@splicewire/beam-workflows/action-form";
+import { ReleaseRecordingSummary } from "./recording";
+
+export interface ReleaseRecording {
+  releaseId: string;
+  status: string;
+  sha: string | null;
+  noChange: boolean;
+  canRetry: boolean;
+  message: string | null;
+}
 
 /** Wire projection of the package-owned PHP ReleaseData / ReleaseCommandData. */
 export interface ReleaseRecord {
@@ -20,6 +30,9 @@ export interface ReleaseRecord {
   workflow: WorkflowProjectionData | null;
   canSchedule: boolean;
   reviewRequired: boolean;
+  recording?: ReleaseRecording | null;
+  filesMemberId?: string | null;
+  filesHref?: string | null;
 }
 export interface ReleaseCommand {
   action:
@@ -91,6 +104,9 @@ export function ReleasePanel({
     >
       <h2 className="font-semibold">{release.title}</h2>
       <p>Status: {release.status.replace("_", " ")}</p>
+      {release.recording && (
+        <ReleaseRecordingSummary recording={release.recording} filesHref={release.filesHref} />
+      )}
       {release.reviewRequired && (
         <p>
           Review is required before publication. The server checks every

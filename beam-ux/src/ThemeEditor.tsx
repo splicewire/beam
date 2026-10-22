@@ -7,6 +7,7 @@ import { useUxBuilderServices } from "./provider";
 import { RegionInspector } from "./RegionInspector";
 import type { Region } from "./types";
 import { ReleasePanel, type ReleaseRecord } from "./releases";
+import { VersionRecordingReferences } from "./recording";
 
 /**
  * The THEME ENTRY's editor seat — the one surface that lets an author change a theme token through a
@@ -173,9 +174,11 @@ export function ThemeEditor({
         // last thing the server actually stored.
         onDiscard={draft === null ? undefined : () => setDraft(null)}
         saving={save.isPending || publish.isPending}
+        saveDisabled={!versions.data?.headVersion}
         saveLabel="Save draft"
       />
       {save.isError && <p role="alert">{save.error.message}</p>}
+      {versions.isError && <p role="alert">History could not be loaded. <button type="button" onClick={() => void versions.refetch()}>Retry history</button></p>}
       {save.isSuccess && (
         <p role="status">
           Theme draft saved. Readers still receive the published theme.
@@ -216,6 +219,7 @@ export function ThemeEditor({
                 {version.id === versions.data?.publishedVersion
                   ? " · Published"
                   : ""}
+                <VersionRecordingReferences recordings={version.recordings} />
               </li>
             ))}
           </ul>

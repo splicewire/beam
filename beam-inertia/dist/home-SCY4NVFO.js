@@ -1,15 +1,15 @@
 import {
   page_editor_default
-} from "./chunk-F6SMX2DU.js";
+} from "./chunk-26TVCGD7.js";
 import {
   SiteLayout
 } from "./chunk-J5BI4QL2.js";
 import {
   canvasConfig
-} from "./chunk-ELG4R6UY.js";
-import "./chunk-FKMI2SBT.js";
+} from "./chunk-OQXAOB6P.js";
+import "./chunk-BBDY2YPP.js";
 import "./chunk-44FAKLSM.js";
-import "./chunk-UWHZFKJ7.js";
+import "./chunk-AAQAZE3R.js";
 import "./chunk-WB76RVEA.js";
 import "./chunk-QMLU62K5.js";
 import "./chunk-6C5PVJOV.js";
@@ -67,4 +67,4 @@ function SiteHome({
 export {
   SiteHome as default
 };
-//# sourceMappingURL=home-SGWYOJST.js.map
+//# sourceMappingURL=home-SCY4NVFO.js.map

@@ -1,9 +1,9 @@
 import {
   bodyClient
-} from "./chunk-FKMI2SBT.js";
+} from "./chunk-BBDY2YPP.js";
 import {
   resolveBeamPage
-} from "./chunk-UWHZFKJ7.js";
+} from "./chunk-AAQAZE3R.js";
 import {
   featureEnabled
 } from "./chunk-MTKP2AW3.js";
@@ -101,4 +101,4 @@ export {
   canvasConfig,
   InertiaEditorKit
 };
-//# sourceMappingURL=chunk-ELG4R6UY.js.map
+//# sourceMappingURL=chunk-OQXAOB6P.js.map

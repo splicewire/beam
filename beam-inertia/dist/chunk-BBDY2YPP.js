@@ -50,6 +50,15 @@ var defaultBodyClient = {
   }
 };
 var publicationClient = {
+  recordReleaseFile: async (memberId, releaseId) => {
+    const response = await fetch(`/beam-ux-release-files/${encodeURIComponent(memberId)}/commit-now`, {
+      method: "POST",
+      credentials: "same-origin",
+      headers: { "Content-Type": "application/json", Accept: "application/json", "X-XSRF-TOKEN": csrfToken() },
+      body: JSON.stringify({ releaseId })
+    });
+    return await readData(response, "recording");
+  },
   listReleases: async () => {
     const response = await fetch("/beam-ux-releases", { credentials: "same-origin", headers: { Accept: "application/json" } });
     return await readData(response, "releases");
@@ -91,6 +100,10 @@ async function publicationPost(id, op, payload) {
   return readData(res, op);
 }
 var bodyClient = {
+  get recordReleaseFile() {
+    const client = getBeamInertiaConfig().entryClient ?? publicationClient;
+    return client.recordReleaseFile?.bind(client);
+  },
   get listReleases() {
     const client = getBeamInertiaConfig().entryClient ?? publicationClient;
     return client.listReleases?.bind(client);
@@ -132,4 +145,4 @@ var bodyClient = {
 export {
   bodyClient
 };
-//# sourceMappingURL=chunk-FKMI2SBT.js.map
+//# sourceMappingURL=chunk-BBDY2YPP.js.map

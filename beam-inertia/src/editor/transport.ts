@@ -94,6 +94,14 @@ const defaultBodyClient: UxBuilderClient = {
 // The same literal-URL hazard the block above describes applies verbatim: if a draft or publish 404s,
 // check these four against `php artisan route:list` before looking anywhere else.
 const publicationClient = {
+    recordReleaseFile: async (memberId: string, releaseId: string) => {
+        const response = await fetch(`/beam-ux-release-files/${encodeURIComponent(memberId)}/commit-now`, {
+            method: 'POST', credentials: 'same-origin',
+            headers: {'Content-Type': 'application/json', Accept: 'application/json', 'X-XSRF-TOKEN': csrfToken()},
+            body: JSON.stringify({releaseId}),
+        });
+        return await readData(response, 'recording') as import('@splicewire/beam-ux').ReleaseRecording;
+    },
     listReleases: async () => {
         const response = await fetch('/beam-ux-releases', {credentials:'same-origin',headers:{Accept:'application/json'}});
         return await readData(response, 'releases') as import('@splicewire/beam-ux').ReleaseRecord[];
@@ -148,6 +156,10 @@ async function publicationPost(
 }
 
 export const bodyClient: UxBuilderClient = {
+    get recordReleaseFile() {
+        const client = getBeamInertiaConfig().entryClient ?? publicationClient;
+        return client.recordReleaseFile?.bind(client);
+    },
     get listReleases() {
         const client = getBeamInertiaConfig().entryClient ?? publicationClient;
         return client.listReleases?.bind(client);

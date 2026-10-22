@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { ThemeEditor } from "./ThemeEditor";
@@ -75,6 +75,19 @@ const loadsTheTheme = () => ({
 });
 
 describe("the theme entry gets Frame’s form, addressed by entry id", () => {
+  it("waits for the independent version base before enabling Save", async () => {
+    let ready: (state: typeof themeState) => void = () => {};
+    const client = loadsTheTheme();
+    client.listVersions = vi.fn(() => new Promise<typeof themeState>(resolve => { ready = resolve; }));
+    mount(client);
+    await screen.findByText("Site theme");
+    const save = screen.getByRole("button", { name: "Save draft" });
+    expect(save.hasAttribute("disabled")).toBe(true);
+    expect(client.saveDraft).not.toHaveBeenCalled();
+    await act(async () => ready(themeState));
+    await waitFor(() => expect(save.hasAttribute("disabled")).toBe(false));
+  });
+
   it("loads the body through the injected client, by the id it was given", async () => {
     const client = loadsTheTheme();
     mount(client);

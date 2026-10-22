@@ -50,6 +50,7 @@ export interface UxBuilderClient<TBody = BeamUxEntryBodyData> {
     listReleases?(): Promise<import('./releases').ReleaseRecord[]>;
     releaseCommand?(releaseId: string, command: import('./releases').ReleaseCommand): Promise<import('./releases').ReleaseRecord>;
     listVersions?(id: string): Promise<EntryPublicationState>;
+    recordReleaseFile?(memberId: string, releaseId: string): Promise<import('./releases').ReleaseRecording>;
     /** Roll forward to a recorded version (a uuid or a readable handle like `v2`) and publish it. */
     restoreVersion?(id: string, ref: string, label?: string): Promise<EntryPublicationState>;
     /**
@@ -84,6 +85,7 @@ export interface EntryVersion {
     isHead: boolean;
     /** The published body — the one a guest reader is served. */
     isPublished: boolean;
+    recordings?: import('./releases').ReleaseRecording[];
 }
 
 /**

@@ -59,6 +59,7 @@ it('preserves publication absence on an injected body-only client without using 
     expect(bodyClient.publish).toBeUndefined();
     expect(bodyClient.listVersions).toBeUndefined();
     expect(bodyClient.restoreVersion).toBeUndefined();
+    expect(bodyClient.recordReleaseFile).toBeUndefined();
     expect(fetch).not.toHaveBeenCalled();
 });
 
@@ -149,4 +150,20 @@ it('uses the declared Release routes with cookie CSRF and retains absence on cus
     expect(await bodyClient.listReleases!()).toEqual([release]);
     configureBeamInertia({entryClient:client});
     expect(bodyClient.releaseCommand).toBeUndefined();expect(bodyClient.listReleases).toBeUndefined();
+});
+
+it('records only the explicitly selected Release through the addressed Files operation and retains refusal', async () => {
+    const recording = {releaseId:'r1',status:'recorded',sha:'abc',noChange:false,canRetry:false,message:'Recorded locally.'};
+    const fetch = vi.fn().mockResolvedValue(Response.json({data:recording}));
+    vi.stubGlobal('fetch',fetch);
+    vi.stubGlobal('document',{cookie:'XSRF-TOKEN=recording%20csrf'});
+    expect(await bodyClient.recordReleaseFile!('member/id','r1')).toEqual(recording);
+    expect(fetch).toHaveBeenCalledWith('/beam-ux-release-files/member%2Fid/commit-now',expect.objectContaining({
+        method:'POST',credentials:'same-origin',headers:expect.objectContaining({'X-XSRF-TOKEN':'recording csrf'}),
+        body:JSON.stringify({releaseId:'r1'}),
+    }));
+    fetch.mockResolvedValueOnce(Response.json({message:'The branch moved',errors:{releaseId:['The branch moved']}},{status:422}));
+    await expect(bodyClient.recordReleaseFile!('member','r1')).rejects.toMatchObject({status:422});
+    configureBeamInertia({entryClient:client});
+    expect(bodyClient.recordReleaseFile).toBeUndefined();
 });

@@ -43,4 +43,5 @@ export {
 } from "./UxBuilder";
 export { AuthorNote } from "./author/AuthorNote";
 
-export { ReleasePanel, type ReleaseRecord, type ReleaseCommand, type ReleaseEntryChoice } from './releases';
+export { ReleasePanel, type ReleaseRecord, type ReleaseCommand, type ReleaseEntryChoice, type ReleaseRecording } from './releases';
+export { ReleaseRecordingSummary, VersionRecordingReferences } from './recording';

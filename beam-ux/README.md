@@ -145,6 +145,13 @@ The AST lens is `./tsx-lens` (`TsxTree`); the browser-safe document projection i
 
 ### Theme draft and direct Release publication
 
+The optional recording projection adds local SHA/status to the existing ReleasePanel and history
+rows. Files owns Commit now through its declared stock action; the summary links to the host-derived
+Files route. Recording failure leaves publication live. One version can list several Release
+references, including an explicit no-new-commit result. The optional recordReleaseFile transport
+selects member and Release IDs, never paths or bodies. See the starter's
+docs/examples/service-desk-recording.md and PHP UX docs/local-recording.md for the protocol/limits.
+
 `ThemeEditor` requires the existing `listVersions`/`saveDraft` transport to save a draft against its
 expected head. Its explicit Publish calls `client.publish(entryId, selectedRef)`; the PHP operation
 creates the direct Release of one and owns fixed-version/review/authority checks. Theme never falls

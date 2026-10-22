@@ -1,6 +1,6 @@
 import {
   bodyClient
-} from "./chunk-FKMI2SBT.js";
+} from "./chunk-BBDY2YPP.js";
 import "./chunk-MTKP2AW3.js";
 
 // src/pages/account/theme.tsx
@@ -25,4 +25,4 @@ function AccountTheme({ entry }) {
 export {
   AccountTheme as default
 };
-//# sourceMappingURL=theme-ONXMUCVM.js.map
+//# sourceMappingURL=theme-UBRWUY65.js.map

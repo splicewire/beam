@@ -14,10 +14,10 @@ import {
 } from "./chunk-J5BI4QL2.js";
 import {
   InertiaEditorKit
-} from "./chunk-ELG4R6UY.js";
+} from "./chunk-OQXAOB6P.js";
 import {
   bodyClient
-} from "./chunk-FKMI2SBT.js";
+} from "./chunk-BBDY2YPP.js";
 import {
   BeamAccountLayout
 } from "./chunk-DKZRPX6S.js";
@@ -28,7 +28,7 @@ import {
 } from "./chunk-44FAKLSM.js";
 import {
   resolveBeamPage
-} from "./chunk-UWHZFKJ7.js";
+} from "./chunk-AAQAZE3R.js";
 import "./chunk-WB76RVEA.js";
 import "./chunk-QMLU62K5.js";
 import {
@@ -160,7 +160,7 @@ import { lazy, Suspense } from "react";
 import { CanvasOrRefusal as CanvasOrRefusal2 } from "@splicewire/beam-ux/editor";
 import { jsx as jsx5 } from "react/jsx-runtime";
 var VisualEditorMount = lazy(
-  () => import("./mount-ODHFG2NN.js").then((m) => ({ default: m.VisualEditorMount }))
+  () => import("./mount-PAIYST4Z.js").then((m) => ({ default: m.VisualEditorMount }))
 );
 var SELF_MANAGED_COMPONENTS = /* @__PURE__ */ new Set(["site/home", "site/entry"]);
 var currentComponent = "";

@@ -22,6 +22,7 @@ import { WidgetRegistryContext } from '@schemastud/seam';
 import { getAt, isJsonBlock } from '../blockdoc/json.js';
 import type { JsonDoc } from '../blockdoc/json.js';
 import type { EntryPublicationState, EntryVersion } from '../types.js';
+import { VersionRecordingReferences } from '../recording.js';
 import { useLocalSession } from '../editor/use-local-session.js';
 import { Breadcrumb } from './Breadcrumb.js';
 import { CanvasPalette } from './CanvasPalette.js';
@@ -665,6 +666,7 @@ export function PageEditor({
                                     <span className="pe-version-ref" title={version.readable}>
                                         {version.readable}
                                     </span>
+                                    <VersionRecordingReferences recordings={version.recordings} />
                                     {version.label && (
                                         <span className="pe-version-label" title={version.label}>
                                             {version.label}
