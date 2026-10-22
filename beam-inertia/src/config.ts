@@ -17,6 +17,8 @@ export interface BeamInertiaConfig {
   features?: Partial<Record<AuthFeature, boolean>>;
   pages?: Record<string, PageLoader>;
   entryClient?: UxBuilderClient;
+  /** Host-owned editor route for an inspected entry; absent means no Open Theme link. */
+  fileEditorHref?: (entryId: string) => string | undefined;
 }
 let configuration: BeamInertiaConfig = {};
 export function configureBeamInertia(config: BeamInertiaConfig): void {

@@ -4,7 +4,7 @@ import {
 } from "./chunk-WB76RVEA.js";
 import {
   getBeamInertiaConfig
-} from "./chunk-MTKP2AW3.js";
+} from "./chunk-2XTQOEA4.js";
 import {
   toUrl
 } from "./chunk-GBIJGQ7E.js";
@@ -124,4 +124,4 @@ export {
   InertiaRailLink,
   FrameRail
 };
-//# sourceMappingURL=chunk-44FAKLSM.js.map
+//# sourceMappingURL=chunk-UEQF4DVZ.js.map

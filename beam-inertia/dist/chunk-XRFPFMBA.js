@@ -7,6 +7,9 @@ import {
   Skeleton
 } from "./chunk-BBYPLYMO.js";
 import {
+  bodyClient
+} from "./chunk-OMCRMKUM.js";
+import {
   frameIcon,
   manifestLookup,
   useFrameManifest
@@ -24,6 +27,9 @@ import {
   Label
 } from "./chunk-563T736C.js";
 import {
+  getBeamInertiaConfig
+} from "./chunk-2XTQOEA4.js";
+import {
   Input
 } from "./chunk-UZPKVCAK.js";
 import {
@@ -34,6 +40,7 @@ import {
 import { Link } from "@inertiajs/react";
 import {
   createWidgetRegistry,
+  createFormResolver,
   FrameProvider,
   registerCardWidgets,
   registerResourceRefWidget
@@ -42,16 +49,42 @@ import { shadcnEditSlots, shadcnListSlots } from "@schemastud/frame/shadcn";
 import { useCallback, useMemo } from "react";
 import { toast } from "sonner";
 
+// src/frame/release-files-form.tsx
+import { useEffect } from "react";
+import { FilesComparisonPanel } from "@splicewire/beam-ux";
+import { jsx, jsxs } from "react/jsx-runtime";
+function ReleaseFilesForm({ formData, registerSubmit }) {
+  useEffect(() => {
+    registerSubmit(null);
+  }, [registerSubmit]);
+  return /* @__PURE__ */ jsxs("div", { className: "space-y-4", children: [
+    /* @__PURE__ */ jsx("h2", { className: "text-lg font-semibold", children: "Historical Release member" }),
+    /* @__PURE__ */ jsx("dl", { children: ["release", "entry", "versionId", "members", "recordingStatus", "sha", "message"].map((key) => /* @__PURE__ */ jsxs("div", { children: [
+      /* @__PURE__ */ jsx("dt", { children: key }),
+      /* @__PURE__ */ jsx("dd", { className: "break-all", children: String(formData[key] ?? "\u2014") })
+    ] }, key)) }),
+    typeof formData.id === "string" && /* @__PURE__ */ jsx(
+      FilesComparisonPanel,
+      {
+        memberId: formData.id,
+        client: bodyClient,
+        editorHref: getBeamInertiaConfig().fileEditorHref
+      },
+      formData.id
+    )
+  ] });
+}
+
 // src/frame/primitives.tsx
 import { Popover, PopoverContent, PopoverTrigger, SimpleSelect } from "@schemastud/ui";
-import { Fragment, jsx, jsxs } from "react/jsx-runtime";
-var Passthrough = ({ children }) => /* @__PURE__ */ jsx(Fragment, { children });
+import { Fragment, jsx as jsx2, jsxs as jsxs2 } from "react/jsx-runtime";
+var Passthrough = ({ children }) => /* @__PURE__ */ jsx2(Fragment, { children });
 function FrameSidePanel({
   open,
   onOpenChange,
   children
 }) {
-  return /* @__PURE__ */ jsx(Sheet, { open, onOpenChange, children: /* @__PURE__ */ jsx(SheetContent, { className: "w-full overflow-y-auto sm:max-w-lg", children }) });
+  return /* @__PURE__ */ jsx2(Sheet, { open, onOpenChange, children: /* @__PURE__ */ jsx2(SheetContent, { className: "w-full overflow-y-auto sm:max-w-lg", children }) });
 }
 var framePrimitives = {
   Button,
@@ -69,8 +102,8 @@ var framePrimitives = {
     onOpenChange,
     title,
     children
-  }) => /* @__PURE__ */ jsx(Dialog, { open, onOpenChange, children: /* @__PURE__ */ jsxs(DialogContent, { children: [
-    title ? /* @__PURE__ */ jsx(DialogHeader, { children: /* @__PURE__ */ jsx(DialogTitle, { children: title }) }) : null,
+  }) => /* @__PURE__ */ jsx2(Dialog, { open, onOpenChange, children: /* @__PURE__ */ jsxs2(DialogContent, { children: [
+    title ? /* @__PURE__ */ jsx2(DialogHeader, { children: /* @__PURE__ */ jsx2(DialogTitle, { children: title }) }) : null,
     children
   ] }) }),
   SidePanel: FrameSidePanel
@@ -166,13 +199,13 @@ var frameTransport = createResourceTransport(
 
 // src/frame/provider.tsx
 import { useBrowserUrlState } from "@schemastud/frame";
-import { jsx as jsx2 } from "react/jsx-runtime";
+import { jsx as jsx3 } from "react/jsx-runtime";
 var renderCardLink = ({
   href,
   className,
   children,
   "aria-label": ariaLabel
-}) => /* @__PURE__ */ jsx2(Link, { href, className, "aria-label": ariaLabel, children });
+}) => /* @__PURE__ */ jsx3(Link, { href, className, "aria-label": ariaLabel, children });
 function TenantFrameProvider({ children }) {
   const { data: manifest } = useFrameManifest();
   const can = useCallback(
@@ -191,7 +224,10 @@ function TenantFrameProvider({ children }) {
       iconFor: frameIcon,
       renderLink: renderCardLink
     });
+    const formResolver = createFormResolver();
+    formResolver.registerFormForSchema((schema) => schema.$id === "ReleaseFilesData", ReleaseFilesForm);
     return {
+      formResolver,
       transport: frameTransport,
       primitives: framePrimitives,
       useUrlState: useBrowserUrlState,
@@ -207,10 +243,10 @@ function TenantFrameProvider({ children }) {
       notify: ({ tone, message }) => tone === "error" ? toast.error(message) : toast.success(message)
     };
   }, [can, manifest]);
-  return /* @__PURE__ */ jsx2(FrameProvider, { value: injection, children });
+  return /* @__PURE__ */ jsx3(FrameProvider, { value: injection, children });
 }
 
 export {
   TenantFrameProvider
 };
-//# sourceMappingURL=chunk-4RAMXKLT.js.map
+//# sourceMappingURL=chunk-XRFPFMBA.js.map

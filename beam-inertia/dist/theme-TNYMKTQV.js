@@ -1,7 +1,7 @@
 import {
   bodyClient
-} from "./chunk-BBDY2YPP.js";
-import "./chunk-MTKP2AW3.js";
+} from "./chunk-OMCRMKUM.js";
+import "./chunk-2XTQOEA4.js";
 
 // src/pages/account/theme.tsx
 import { Head } from "@inertiajs/react";
@@ -25,4 +25,4 @@ function AccountTheme({ entry }) {
 export {
   AccountTheme as default
 };
-//# sourceMappingURL=theme-UBRWUY65.js.map
+//# sourceMappingURL=theme-TNYMKTQV.js.map

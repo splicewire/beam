@@ -2,7 +2,7 @@ import {
   AppLogoIcon,
   InertiaRailLink,
   useBrand
-} from "./chunk-44FAKLSM.js";
+} from "./chunk-UEQF4DVZ.js";
 import {
   useAppearance
 } from "./chunk-6C5PVJOV.js";
@@ -257,4 +257,4 @@ function SiteLayout({ children }) {
 export {
   SiteLayout
 };
-//# sourceMappingURL=chunk-J5BI4QL2.js.map
+//# sourceMappingURL=chunk-L3DFB4QY.js.map

@@ -6,29 +6,29 @@ import {
   AppSidebarLayout,
   OperatorLayout,
   TooltipProvider
-} from "./chunk-GEE7ZNUZ.js";
+} from "./chunk-TUELYIZM.js";
 import "./chunk-O7ZKQDZR.js";
 import "./chunk-BBYPLYMO.js";
 import {
   SiteLayout
-} from "./chunk-J5BI4QL2.js";
+} from "./chunk-L3DFB4QY.js";
 import {
   InertiaEditorKit
-} from "./chunk-OQXAOB6P.js";
+} from "./chunk-HO7QQL6M.js";
 import {
   bodyClient
-} from "./chunk-BBDY2YPP.js";
+} from "./chunk-OMCRMKUM.js";
 import {
   BeamAccountLayout
-} from "./chunk-DKZRPX6S.js";
+} from "./chunk-EFXMP2UY.js";
 import {
   AppLogoIcon,
   brandTitle,
   useCurrentUrl
-} from "./chunk-44FAKLSM.js";
+} from "./chunk-UEQF4DVZ.js";
 import {
   resolveBeamPage
-} from "./chunk-AAQAZE3R.js";
+} from "./chunk-J26C6NPR.js";
 import "./chunk-WB76RVEA.js";
 import "./chunk-QMLU62K5.js";
 import {
@@ -46,7 +46,7 @@ import {
   authFeaturesFrom,
   configureBeamInertia,
   featureEnabled
-} from "./chunk-MTKP2AW3.js";
+} from "./chunk-2XTQOEA4.js";
 import "./chunk-UZPKVCAK.js";
 import {
   Button
@@ -160,7 +160,7 @@ import { lazy, Suspense } from "react";
 import { CanvasOrRefusal as CanvasOrRefusal2 } from "@splicewire/beam-ux/editor";
 import { jsx as jsx5 } from "react/jsx-runtime";
 var VisualEditorMount = lazy(
-  () => import("./mount-PAIYST4Z.js").then((m) => ({ default: m.VisualEditorMount }))
+  () => import("./mount-LFWJG7UO.js").then((m) => ({ default: m.VisualEditorMount }))
 );
 var SELF_MANAGED_COMPONENTS = /* @__PURE__ */ new Set(["site/home", "site/entry"]);
 var currentComponent = "";
@@ -233,7 +233,7 @@ import { Suspense as Suspense3, lazy as lazy3 } from "react";
 // src/os/page-properties.tsx
 import { lazy as lazy2, Suspense as Suspense2 } from "react";
 import { jsx as jsx7, jsxs as jsxs2 } from "react/jsx-runtime";
-var EntryPropertiesForm = lazy2(() => import("./entry-properties-form-E3QIEVV4.js"));
+var EntryPropertiesForm = lazy2(() => import("./entry-properties-form-D5SS5TDL.js"));
 function PageProperties({
   slug,
   entryId = null,

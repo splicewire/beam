@@ -39,7 +39,8 @@ function csrfToken(): string {
 
 async function readData(res: Response, what: string): Promise<unknown> {
     if (!res.ok) {
-        throw Object.assign(new Error(`${what} ${res.status}`), { status: res.status });
+        const problem = await res.json().catch(() => ({}));
+        throw Object.assign(new Error(problem.message || `${what} ${res.status}`), { status: res.status });
     }
 
     return (await res.json()).data;
@@ -93,7 +94,23 @@ const defaultBodyClient: UxBuilderClient = {
 //
 // The same literal-URL hazard the block above describes applies verbatim: if a draft or publish 404s,
 // check these four against `php artisan route:list` before looking anywhere else.
+async function reconcilePost(memberId: string, op: string, input: import('@splicewire/beam-ux').FileReconcileInput) {
+    const response = await fetch(`/beam-ux-release-files/${encodeURIComponent(memberId)}/${op}`, {
+        method: 'POST', credentials: 'same-origin',
+        headers: {'Content-Type': 'application/json', Accept: 'application/json', 'X-XSRF-TOKEN': csrfToken()},
+        body: JSON.stringify(input),
+    });
+    return await readData(response, op) as import('@splicewire/beam-ux').FileReconcileResult;
+}
 const publicationClient = {
+    inspectReleaseFile: async (memberId: string) => {
+        const response = await fetch(`/beam-ux-release-files/${encodeURIComponent(memberId)}/inspect-file`, {
+            credentials: 'same-origin', headers: {Accept: 'application/json'},
+        });
+        return await readData(response, 'file inspection') as import('@splicewire/beam-ux').FileInspection;
+    },
+    takeReleaseFile: (id: string, input: import('@splicewire/beam-ux').FileReconcileInput) => reconcilePost(id, 'take-file-draft', input),
+    restoreMissingReleaseFile: (id: string, input: import('@splicewire/beam-ux').FileReconcileInput) => reconcilePost(id, 'restore-missing-file', input),
     recordReleaseFile: async (memberId: string, releaseId: string) => {
         const response = await fetch(`/beam-ux-release-files/${encodeURIComponent(memberId)}/commit-now`, {
             method: 'POST', credentials: 'same-origin',
@@ -156,6 +173,18 @@ async function publicationPost(
 }
 
 export const bodyClient: UxBuilderClient = {
+    get inspectReleaseFile() {
+        const client = getBeamInertiaConfig().entryClient ?? publicationClient;
+        return client.inspectReleaseFile?.bind(client);
+    },
+    get takeReleaseFile() {
+        const client = getBeamInertiaConfig().entryClient ?? publicationClient;
+        return client.takeReleaseFile?.bind(client);
+    },
+    get restoreMissingReleaseFile() {
+        const client = getBeamInertiaConfig().entryClient ?? publicationClient;
+        return client.restoreMissingReleaseFile?.bind(client);
+    },
     get recordReleaseFile() {
         const client = getBeamInertiaConfig().entryClient ?? publicationClient;
         return client.recordReleaseFile?.bind(client);

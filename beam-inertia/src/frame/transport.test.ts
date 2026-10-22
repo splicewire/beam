@@ -5,7 +5,7 @@ import { frameTransport } from "./transport";
 afterEach(() => vi.unstubAllGlobals());
 
 it("sends read schema purpose explicitly and preserves the legacy write URL", async () => {
-  const fetch = vi.fn(async () => Response.json({ type: "object" }));
+  const fetch = vi.fn(async (_input: RequestInfo | URL) => Response.json({ type: "object" }));
   vi.stubGlobal("fetch", fetch);
   await frameTransport.getFormSchema("requests", "bare");
   await frameTransport.getFormSchema("requests", "enriched", "write");

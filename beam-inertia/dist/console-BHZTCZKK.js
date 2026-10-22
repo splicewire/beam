@@ -1,8 +1,9 @@
 import {
   TenantFrameProvider
-} from "./chunk-4RAMXKLT.js";
+} from "./chunk-XRFPFMBA.js";
 import "./chunk-O7ZKQDZR.js";
 import "./chunk-BBYPLYMO.js";
+import "./chunk-OMCRMKUM.js";
 import {
   DefaultFrameRealm,
   FrameRealmProvider,
@@ -20,7 +21,7 @@ import "./chunk-FADCRF7N.js";
 import "./chunk-563T736C.js";
 import {
   getBeamInertiaConfig
-} from "./chunk-MTKP2AW3.js";
+} from "./chunk-2XTQOEA4.js";
 import "./chunk-UZPKVCAK.js";
 import "./chunk-SXSE375U.js";
 import "./chunk-GBIJGQ7E.js";
@@ -263,4 +264,4 @@ function ConsoleBody() {
 export {
   FrameConsole as default
 };
-//# sourceMappingURL=console-J2K6TBXN.js.map
+//# sourceMappingURL=console-BHZTCZKK.js.map

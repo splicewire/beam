@@ -1,27 +1,27 @@
 import {
   featureEnabled,
   getBeamInertiaConfig
-} from "./chunk-MTKP2AW3.js";
+} from "./chunk-2XTQOEA4.js";
 
 // src/pages.ts
 import { beamUxPages } from "@splicewire/beam-ux/pages";
 var defaults = {
   ...beamUxPages,
-  "os": () => import("./os-RM2YMPXD.js"),
-  "settings/profile": () => import("./profile-YX7WPFLU.js"),
+  "os": () => import("./os-ZNBJ5JHO.js"),
+  "settings/profile": () => import("./profile-BJO4IPAO.js"),
   "settings/appearance": () => import("./appearance-YGZ3GVCA.js"),
-  "settings/security": () => import("./security-UCTGAHIY.js"),
-  "auth/confirm-password": () => import("./confirm-password-4EPUQU3C.js"),
-  "auth/login": () => import("./login-NDXLGWMI.js"),
+  "settings/security": () => import("./security-U5BT3H7W.js"),
+  "auth/confirm-password": () => import("./confirm-password-DBXUACTG.js"),
+  "auth/login": () => import("./login-JHBZENRF.js"),
   "auth/two-factor-challenge": () => import("./two-factor-challenge-RLGREPUB.js"),
   "auth/register": () => import("./register-RN6SIGKV.js"),
-  "auth/entry": () => import("./entry-BY4PBEGW.js"),
+  "auth/entry": () => import("./entry-YM2UQGAO.js"),
   "auth/reset-password": () => import("./reset-password-MVW4VPLL.js"),
   "auth/forgot-password": () => import("./forgot-password-QGNC3NCS.js"),
   "auth/verify-email": () => import("./verify-email-L3CLVRJ7.js"),
-  "frame/console": () => import("./console-J2K6TBXN.js"),
-  "site/home": () => import("./home-SCY4NVFO.js"),
-  "account/theme": () => import("./theme-UBRWUY65.js"),
+  "frame/console": () => import("./console-BHZTCZKK.js"),
+  "site/home": () => import("./home-YUD575JO.js"),
+  "account/theme": () => import("./theme-TNYMKTQV.js"),
   "account/home": () => import("./home-RRWYEPAF.js"),
   // Getting onto a team (splicewire/laravel-beam-accounts `routes/teams.php`): `teams.create` renders
   // the first, the emailed `invitations.accept` link the second. Bodies are @splicewire/beam-accounts'.
@@ -31,7 +31,7 @@ var defaults = {
   "operator/platform-connection": () => import("./platform-connection-WTKX7KLG.js"),
   // The branded error page `splicewire/laravel-beam-accounts`' `ErrorPages` renders for a browser's
   // 403/404/419/500/503. It picks its own chrome (account shell or site shell), see pages/error.tsx.
-  "error": () => import("./error-6J45Y4BP.js")
+  "error": () => import("./error-QJYYTVWZ.js")
 };
 var pageFeatures = {
   "auth/register": "registration",
@@ -51,4 +51,4 @@ async function resolveBeamPage(name) {
 export {
   resolveBeamPage
 };
-//# sourceMappingURL=chunk-AAQAZE3R.js.map
+//# sourceMappingURL=chunk-J26C6NPR.js.map

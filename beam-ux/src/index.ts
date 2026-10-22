@@ -45,3 +45,6 @@ export { AuthorNote } from "./author/AuthorNote";
 
 export { ReleasePanel, type ReleaseRecord, type ReleaseCommand, type ReleaseEntryChoice, type ReleaseRecording } from './releases';
 export { ReleaseRecordingSummary, VersionRecordingReferences } from './recording';
+
+export { FilesComparisonPanel } from './FilesComparisonPanel';
+export type { FileInspection, FileReconcileInput, FileReconcileResult } from './files';

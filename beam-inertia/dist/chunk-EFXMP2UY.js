@@ -2,7 +2,7 @@ import {
   AppLogoIcon,
   InertiaRailLink,
   useBrand
-} from "./chunk-44FAKLSM.js";
+} from "./chunk-UEQF4DVZ.js";
 import {
   cn
 } from "./chunk-GBIJGQ7E.js";
@@ -180,4 +180,4 @@ export {
   NavUser,
   BeamAccountLayout
 };
-//# sourceMappingURL=chunk-DKZRPX6S.js.map
+//# sourceMappingURL=chunk-EFXMP2UY.js.map

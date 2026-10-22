@@ -62,6 +62,8 @@ interface BeamInertiaConfig {
     features?: Partial<Record<AuthFeature, boolean>>;
     pages?: Record<string, PageLoader>;
     entryClient?: UxBuilderClient;
+    /** Host-owned editor route for an inspected entry; absent means no Open Theme link. */
+    fileEditorHref?: (entryId: string) => string | undefined;
 }
 declare function configureBeamInertia(config: BeamInertiaConfig): void;
 declare function featureEnabled(feature: AuthFeature): boolean;

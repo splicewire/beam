@@ -1,9 +1,9 @@
 import {
   InertiaEditorKit
-} from "./chunk-OQXAOB6P.js";
-import "./chunk-BBDY2YPP.js";
-import "./chunk-AAQAZE3R.js";
-import "./chunk-MTKP2AW3.js";
+} from "./chunk-HO7QQL6M.js";
+import "./chunk-OMCRMKUM.js";
+import "./chunk-J26C6NPR.js";
+import "./chunk-2XTQOEA4.js";
 
 // src/editor/mount.tsx
 import { VisualEditorMount as KitComponent } from "@splicewire/beam-ux/editor";
@@ -16,4 +16,4 @@ export {
   VisualEditorMount,
   mount_default as default
 };
-//# sourceMappingURL=mount-PAIYST4Z.js.map
+//# sourceMappingURL=mount-LFWJG7UO.js.map

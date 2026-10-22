@@ -1,8 +1,9 @@
 import {
   TenantFrameProvider
-} from "./chunk-4RAMXKLT.js";
+} from "./chunk-XRFPFMBA.js";
 import "./chunk-O7ZKQDZR.js";
 import "./chunk-BBYPLYMO.js";
+import "./chunk-OMCRMKUM.js";
 import {
   DefaultFrameRealm,
   FrameRealmProvider,
@@ -12,6 +13,7 @@ import {
 import "./chunk-QMLU62K5.js";
 import "./chunk-FADCRF7N.js";
 import "./chunk-563T736C.js";
+import "./chunk-2XTQOEA4.js";
 import "./chunk-UZPKVCAK.js";
 import "./chunk-SXSE375U.js";
 import "./chunk-GBIJGQ7E.js";
@@ -55,4 +57,4 @@ export {
   ENTRY_RESOURCE,
   EntryPropertiesForm as default
 };
-//# sourceMappingURL=entry-properties-form-E3QIEVV4.js.map
+//# sourceMappingURL=entry-properties-form-D5SS5TDL.js.map

@@ -1,15 +1,15 @@
 import {
   BeamAccountLayout
-} from "./chunk-DKZRPX6S.js";
-import "./chunk-44FAKLSM.js";
+} from "./chunk-EFXMP2UY.js";
+import "./chunk-UEQF4DVZ.js";
 import {
   resolveBeamPage
-} from "./chunk-AAQAZE3R.js";
+} from "./chunk-J26C6NPR.js";
 import "./chunk-WB76RVEA.js";
 import "./chunk-QMLU62K5.js";
 import {
   getBeamInertiaConfig
-} from "./chunk-MTKP2AW3.js";
+} from "./chunk-2XTQOEA4.js";
 import "./chunk-GBIJGQ7E.js";
 
 // src/pages/os.tsx
@@ -457,4 +457,4 @@ function Os() {
 export {
   Os as default
 };
-//# sourceMappingURL=os-RM2YMPXD.js.map
+//# sourceMappingURL=os-ZNBJ5JHO.js.map

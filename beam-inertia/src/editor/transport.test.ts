@@ -167,3 +167,26 @@ it('records only the explicitly selected Release through the addressed Files ope
     configureBeamInertia({entryClient:client});
     expect(bodyClient.recordReleaseFile).toBeUndefined();
 });
+
+it('uses captured file preconditions, declared routes and CSRF without silent retries', async () => {
+    const fetch = vi.fn().mockImplementation(async () => Response.json({data: {status:'drafted'}}));
+    vi.stubGlobal('fetch', fetch);
+    vi.stubGlobal('document', {cookie:'XSRF-TOKEN=file%20csrf'});
+    const input = {expectedHeadVersion:'head',expectedPublishedVersion:'pin',expectedFileExists:false,expectedFileSha256:null,fingerprint:'placement',confirmed:true};
+    await bodyClient.inspectReleaseFile!('member/id');
+    await bodyClient.takeReleaseFile!('member/id',input);
+    await bodyClient.restoreMissingReleaseFile!('member/id',input);
+    expect(fetch).toHaveBeenNthCalledWith(1,'/beam-ux-release-files/member%2Fid/inspect-file',{credentials:'same-origin',headers:{Accept:'application/json'}});
+    for (const [position, op] of [[2,'take-file-draft'],[3,'restore-missing-file']] as const) {
+        expect(fetch).toHaveBeenNthCalledWith(position,`/beam-ux-release-files/member%2Fid/${op}`,{
+            method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json',Accept:'application/json','X-XSRF-TOKEN':'file csrf'},body:JSON.stringify(input),
+        });
+    }
+    fetch.mockResolvedValueOnce(Response.json({message:'Published pin moved'}, {status:409}));
+    await expect(bodyClient.takeReleaseFile!('member/id', input)).rejects.toThrow('Published pin moved');
+    expect(fetch).toHaveBeenCalledTimes(4);
+    configureBeamInertia({entryClient:client});
+    expect(bodyClient.inspectReleaseFile).toBeUndefined();
+    expect(bodyClient.takeReleaseFile).toBeUndefined();
+    expect(bodyClient.restoreMissingReleaseFile).toBeUndefined();
+});

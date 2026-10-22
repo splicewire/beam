@@ -1,12 +1,12 @@
 import {
   bodyClient
-} from "./chunk-BBDY2YPP.js";
+} from "./chunk-OMCRMKUM.js";
 import {
   resolveBeamPage
-} from "./chunk-AAQAZE3R.js";
+} from "./chunk-J26C6NPR.js";
 import {
   featureEnabled
-} from "./chunk-MTKP2AW3.js";
+} from "./chunk-2XTQOEA4.js";
 
 // src/editor/canvas-config.tsx
 import { defaultCanvasConfig } from "@splicewire/beam-ux/editor";
@@ -101,4 +101,4 @@ export {
   canvasConfig,
   InertiaEditorKit
 };
-//# sourceMappingURL=chunk-OQXAOB6P.js.map
+//# sourceMappingURL=chunk-HO7QQL6M.js.map

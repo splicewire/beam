@@ -63,7 +63,7 @@ const loadsTheTheme = () => ({
   saveDraft: vi.fn(
     async (
       _id: string,
-      body: Record<string, unknown>,
+      _body: Record<string, unknown>,
       _base: string | null,
     ) => ({ ...themeState, headVersion: "v2", draftPending: true }),
   ),
@@ -192,7 +192,7 @@ describe("direct Release publication", () => {
         target: { value: "#7c3aed" },
       });
       await userEvent.click(
-        screen.getByRole("button", { name: "Publish", exact: true }),
+        screen.getByRole("button", { name: "Publish" }),
       );
       await waitFor(() => expect(calls).toEqual(["draft", "publish"]));
       expect(client.saveBody).not.toHaveBeenCalled();
@@ -213,7 +213,7 @@ describe("direct Release publication", () => {
     mount(client);
     await screen.findByText("Site theme");
     await userEvent.click(
-      screen.getByRole("button", { name: "Publish", exact: true }),
+      screen.getByRole("button", { name: "Publish" }),
     );
     await screen.findByText("Permission revoked");
     expect(client.saveBody).not.toHaveBeenCalled();

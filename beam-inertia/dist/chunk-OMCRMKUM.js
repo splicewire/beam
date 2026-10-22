@@ -1,6 +1,6 @@
 import {
   getBeamInertiaConfig
-} from "./chunk-MTKP2AW3.js";
+} from "./chunk-2XTQOEA4.js";
 
 // src/editor/transport.ts
 function csrfToken() {
@@ -9,7 +9,8 @@ function csrfToken() {
 }
 async function readData(res, what) {
   if (!res.ok) {
-    throw Object.assign(new Error(`${what} ${res.status}`), { status: res.status });
+    const problem = await res.json().catch(() => ({}));
+    throw Object.assign(new Error(problem.message || `${what} ${res.status}`), { status: res.status });
   }
   return (await res.json()).data;
 }
@@ -49,7 +50,25 @@ var defaultBodyClient = {
     return await readData(res, "save");
   }
 };
+async function reconcilePost(memberId, op, input) {
+  const response = await fetch(`/beam-ux-release-files/${encodeURIComponent(memberId)}/${op}`, {
+    method: "POST",
+    credentials: "same-origin",
+    headers: { "Content-Type": "application/json", Accept: "application/json", "X-XSRF-TOKEN": csrfToken() },
+    body: JSON.stringify(input)
+  });
+  return await readData(response, op);
+}
 var publicationClient = {
+  inspectReleaseFile: async (memberId) => {
+    const response = await fetch(`/beam-ux-release-files/${encodeURIComponent(memberId)}/inspect-file`, {
+      credentials: "same-origin",
+      headers: { Accept: "application/json" }
+    });
+    return await readData(response, "file inspection");
+  },
+  takeReleaseFile: (id, input) => reconcilePost(id, "take-file-draft", input),
+  restoreMissingReleaseFile: (id, input) => reconcilePost(id, "restore-missing-file", input),
   recordReleaseFile: async (memberId, releaseId) => {
     const response = await fetch(`/beam-ux-release-files/${encodeURIComponent(memberId)}/commit-now`, {
       method: "POST",
@@ -100,6 +119,18 @@ async function publicationPost(id, op, payload) {
   return readData(res, op);
 }
 var bodyClient = {
+  get inspectReleaseFile() {
+    const client = getBeamInertiaConfig().entryClient ?? publicationClient;
+    return client.inspectReleaseFile?.bind(client);
+  },
+  get takeReleaseFile() {
+    const client = getBeamInertiaConfig().entryClient ?? publicationClient;
+    return client.takeReleaseFile?.bind(client);
+  },
+  get restoreMissingReleaseFile() {
+    const client = getBeamInertiaConfig().entryClient ?? publicationClient;
+    return client.restoreMissingReleaseFile?.bind(client);
+  },
   get recordReleaseFile() {
     const client = getBeamInertiaConfig().entryClient ?? publicationClient;
     return client.recordReleaseFile?.bind(client);
@@ -145,4 +176,4 @@ var bodyClient = {
 export {
   bodyClient
 };
-//# sourceMappingURL=chunk-BBDY2YPP.js.map
+//# sourceMappingURL=chunk-OMCRMKUM.js.map
