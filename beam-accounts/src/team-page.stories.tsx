@@ -85,7 +85,7 @@ export const InviteCancel: Story = {
     const dialog = within(document.body);
     await expect(await dialog.findByText(/revoke the pending invitation for/i)).toBeInTheDocument();
     await expect(dialog.getByRole("button", { name: "Revoke invitation" })).toBeInTheDocument();
-    await userEvent.click(dialog.getByRole("button", { name: "Cancel", exact: true }));
+    await userEvent.click(dialog.getByRole("button", { name: "Cancel" }));
     await waitFor(() => expect(dialog.queryByRole("dialog")).not.toBeInTheDocument());
     await waitFor(() => expect(trigger).toHaveFocus());
     await userEvent.click(trigger);
