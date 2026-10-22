@@ -1,6 +1,6 @@
 import {
   InertiaEditorKit
-} from "./chunk-RCVOWTEG.js";
+} from "./chunk-ELG4R6UY.js";
 
 // src/editor/page-editor.tsx
 import { PageEditor as KitComponent } from "@splicewire/beam-ux/editor";
@@ -14,4 +14,4 @@ var page_editor_default = PageEditor;
 export {
   page_editor_default
 };
-//# sourceMappingURL=chunk-3U4HLU3U.js.map
+//# sourceMappingURL=chunk-F6SMX2DU.js.map

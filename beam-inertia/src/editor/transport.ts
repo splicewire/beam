@@ -94,6 +94,19 @@ const defaultBodyClient: UxBuilderClient = {
 // The same literal-URL hazard the block above describes applies verbatim: if a draft or publish 404s,
 // check these four against `php artisan route:list` before looking anywhere else.
 const publicationClient = {
+    listReleases: async () => {
+        const response = await fetch('/beam-ux-releases', {credentials:'same-origin',headers:{Accept:'application/json'}});
+        return await readData(response, 'releases') as import('@splicewire/beam-ux').ReleaseRecord[];
+    },
+    releaseCommand: async (id: string, command: import('@splicewire/beam-ux').ReleaseCommand) => {
+        const response = await fetch(`/beam-ux-releases/${id}/command`, {
+            method:'POST', credentials:'same-origin',
+            headers:{'Content-Type':'application/json',Accept:'application/json','X-XSRF-TOKEN':csrfToken()},
+            body:JSON.stringify(command),
+        });
+        return await readData(response, 'release') as import('@splicewire/beam-ux').ReleaseRecord;
+    },
+
     listVersions: async (id: string) => {
         const res = await fetch(`/beam-ux-entries/${id}/versions`, {
             headers: { Accept: 'application/json' },
@@ -102,7 +115,7 @@ const publicationClient = {
 
         return (await readData(res, 'versions')) as EntryPublicationState;
     },
-    saveDraft: async (id: string, body: Record<string, unknown>, baseVersion: string, label?: string) =>
+    saveDraft: async (id: string, body: Record<string, unknown>, baseVersion: string | null, label?: string) =>
         (await publicationPost(id, 'save-draft', { body, baseVersion, label })) as EntryPublicationState,
     publish: async (id: string, ref: string, label?: string) =>
         (await publicationPost(id, 'publish', { ref, label })) as EntryPublicationState,
@@ -135,6 +148,15 @@ async function publicationPost(
 }
 
 export const bodyClient: UxBuilderClient = {
+    get listReleases() {
+        const client = getBeamInertiaConfig().entryClient ?? publicationClient;
+        return client.listReleases?.bind(client);
+    },
+    get releaseCommand() {
+        const client = getBeamInertiaConfig().entryClient ?? publicationClient;
+        return client.releaseCommand?.bind(client);
+    },
+
     get makeEditable() {
         const client = getBeamInertiaConfig().entryClient ?? defaultBodyClient;
         return client.makeEditable?.bind(client);

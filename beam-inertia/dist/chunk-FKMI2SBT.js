@@ -50,6 +50,19 @@ var defaultBodyClient = {
   }
 };
 var publicationClient = {
+  listReleases: async () => {
+    const response = await fetch("/beam-ux-releases", { credentials: "same-origin", headers: { Accept: "application/json" } });
+    return await readData(response, "releases");
+  },
+  releaseCommand: async (id, command) => {
+    const response = await fetch(`/beam-ux-releases/${id}/command`, {
+      method: "POST",
+      credentials: "same-origin",
+      headers: { "Content-Type": "application/json", Accept: "application/json", "X-XSRF-TOKEN": csrfToken() },
+      body: JSON.stringify(command)
+    });
+    return await readData(response, "release");
+  },
   listVersions: async (id) => {
     const res = await fetch(`/beam-ux-entries/${id}/versions`, {
       headers: { Accept: "application/json" },
@@ -78,6 +91,14 @@ async function publicationPost(id, op, payload) {
   return readData(res, op);
 }
 var bodyClient = {
+  get listReleases() {
+    const client = getBeamInertiaConfig().entryClient ?? publicationClient;
+    return client.listReleases?.bind(client);
+  },
+  get releaseCommand() {
+    const client = getBeamInertiaConfig().entryClient ?? publicationClient;
+    return client.releaseCommand?.bind(client);
+  },
   get makeEditable() {
     const client = getBeamInertiaConfig().entryClient ?? defaultBodyClient;
     return client.makeEditable?.bind(client);
@@ -111,4 +132,4 @@ var bodyClient = {
 export {
   bodyClient
 };
-//# sourceMappingURL=chunk-7TJWWPG6.js.map
+//# sourceMappingURL=chunk-FKMI2SBT.js.map

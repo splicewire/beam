@@ -43,10 +43,12 @@ export interface UxBuilderClient<TBody = BeamUxEntryBodyData> {
     // "this host's draft button is broken" are never the same picture.
 
     /** Record a body as a DRAFT: written and versioned, NOT published — readers keep the published body. */
-    saveDraft?(id: string, body: Record<string, unknown>, baseVersion: string, label?: string): Promise<EntryPublicationState>;
+    saveDraft?(id: string, body: Record<string, unknown>, baseVersion: string | null, label?: string): Promise<EntryPublicationState>;
     /** Publish the working copy: move the publication pin, mirror to disk, compile the artifact. */
     publish?(id: string, ref: string, label?: string): Promise<EntryPublicationState>;
     /** The recorded version history plus both pins. */
+    listReleases?(): Promise<import('./releases').ReleaseRecord[]>;
+    releaseCommand?(releaseId: string, command: import('./releases').ReleaseCommand): Promise<import('./releases').ReleaseRecord>;
     listVersions?(id: string): Promise<EntryPublicationState>;
     /** Roll forward to a recorded version (a uuid or a readable handle like `v2`) and publish it. */
     restoreVersion?(id: string, ref: string, label?: string): Promise<EntryPublicationState>;
@@ -93,6 +95,7 @@ export interface EntryVersion {
  * client must not compute or cache its own.
  */
 export interface EntryPublicationState {
+    release?: import('./releases').ReleaseRecord | null;
     id: string;
     draftPending: boolean;
     publishedVersion: string | null;

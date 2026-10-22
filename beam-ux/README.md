@@ -142,3 +142,18 @@ server's declared, `ux.author`-gated operation; client admission is only present
 
 The AST lens is `./tsx-lens` (`TsxTree`); the browser-safe document projection is
 `./jsondoc`. The old `./blockdoc` and `./blockdoc/json` exports have no aliases.
+
+### Theme draft and direct Release publication
+
+`ThemeEditor` requires the existing `listVersions`/`saveDraft` transport to save a draft against its
+expected head. Its explicit Publish calls `client.publish(entryId, selectedRef)`; the PHP operation
+creates the direct Release of one and owns fixed-version/review/authority checks. Theme never falls
+back to save-body when a draft or publication fails. The injected Release list/command methods let an
+independent reviewer reload the existing panel; version history continues to show head versus pin.
+Other editors retain their existing save paths. No Git record/status/retry control is implemented.
+
+ReleasePanel uses `@splicewire/beam-workflows/action-form` for the existing optional scheduling form.
+The small public subpath avoids loading graph/admin code; scheduling remains controlled by the
+server's canSchedule projection. A build-only `_resources/types/workflows` peer must be generated
+from the consuming host's installed workflow DTOs. See the starter Release guide's canonical
+transform/projection example. Missing types must fail preparation, not become ambient declarations.

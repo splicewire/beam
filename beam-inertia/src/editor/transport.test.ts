@@ -138,3 +138,15 @@ it('sends the draft base and named publish ref, and preserves a stale-base statu
     fetch.mockResolvedValueOnce(Response.json({ message: 'Stale base' }, { status: 409 }));
     await expect(bodyClient.saveDraft?.('e1', {}, 'v1')).rejects.toMatchObject({ status: 409 });
 });
+
+it('uses the declared Release routes with cookie CSRF and retains absence on custom transports', async () => {
+    const release = {id:'r1',title:'Theme',realm:'site',status:'in_review',reviewedBy:null,members:[],workflow:null,canSchedule:false,reviewRequired:true};
+    const fetch = vi.fn().mockResolvedValue(Response.json({data:release}));
+    vi.stubGlobal('fetch',fetch);vi.stubGlobal('document',{cookie:'XSRF-TOKEN=release%20csrf'});
+    expect(await bodyClient.releaseCommand!('r1',{action:'approve'})).toEqual(release);
+    expect(fetch).toHaveBeenCalledWith('/beam-ux-releases/r1/command',expect.objectContaining({method:'POST',credentials:'same-origin',headers:expect.objectContaining({'X-XSRF-TOKEN':'release csrf'}),body:JSON.stringify({action:'approve'})}));
+    fetch.mockResolvedValueOnce(Response.json({data:[release]}));
+    expect(await bodyClient.listReleases!()).toEqual([release]);
+    configureBeamInertia({entryClient:client});
+    expect(bodyClient.releaseCommand).toBeUndefined();expect(bodyClient.listReleases).toBeUndefined();
+});

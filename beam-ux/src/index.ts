@@ -42,3 +42,5 @@ export {
   type EditorPlacement,
 } from "./UxBuilder";
 export { AuthorNote } from "./author/AuthorNote";
+
+export { ReleasePanel, type ReleaseRecord, type ReleaseCommand, type ReleaseEntryChoice } from './releases';
