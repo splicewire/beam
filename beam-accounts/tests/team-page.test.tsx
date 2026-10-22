@@ -5,6 +5,7 @@ import {
   render,
   screen,
   waitFor,
+  within,
 } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { TeamPage } from "../src/team-page";
@@ -134,4 +135,39 @@ it("returns focus to the revoke trigger after Cancel and supports reopening", as
     await waitFor(() => expect(document.activeElement).toBe(trigger));
   }
   expect(client.revokeInvitation).not.toHaveBeenCalled();
+});
+
+it("returns focus to the remove trigger after Cancel and supports reopening", async () => {
+  const user = userEvent.setup();
+  const client = makeTeamClient();
+  client.removeMember = vi.fn(async () => undefined);
+  render(<MockTeamProvider client={client}><TeamPage currentUserId="owner" /></MockTeamProvider>);
+  const trigger = await screen.findByRole("button", { name: "Remove grace@example.test" });
+  for (let cycle = 0; cycle < 2; cycle++) {
+    await user.click(trigger);
+    expect(await screen.findByRole("dialog")).toBeTruthy();
+    await user.click(screen.getByRole("button", { name: "Cancel" }));
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    await waitFor(() => expect(document.activeElement).toBe(trigger));
+  }
+  expect(client.removeMember).not.toHaveBeenCalled();
+});
+
+it("returns focus to the role selector after canceling ownership transfer", async () => {
+  const user = userEvent.setup();
+  const client = makeTeamClient();
+  client.updateRole = vi.fn(async () => undefined);
+  render(<MockTeamProvider client={client}><TeamPage currentUserId="owner" /></MockTeamProvider>);
+  const row = (await screen.findByText("Grace Hopper")).closest("tr");
+  if (!row) throw new Error("Member row is missing");
+  const trigger = within(row).getByRole("combobox");
+  for (let cycle = 0; cycle < 2; cycle++) {
+    await user.click(trigger);
+    await user.click(await screen.findByRole("option", { name: "Owner" }));
+    expect(await screen.findByRole("dialog")).toBeTruthy();
+    await user.click(screen.getByRole("button", { name: "Cancel" }));
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    await waitFor(() => expect(document.activeElement).toBe(trigger));
+  }
+  expect(client.updateRole).not.toHaveBeenCalled();
 });

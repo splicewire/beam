@@ -106,3 +106,40 @@ export const WithCreateTeam: Story = {
     await expect(await canvas.findByRole("link", { name: /new team/i })).toHaveAttribute("href", "/teams/create");
   },
 };
+
+
+/** The member action uses the same controlled confirmation dialog as invitation revocation. */
+export const RemoveCancel: Story = {
+  render: (args) => <MockTeamProvider><TeamPage {...args} /></MockTeamProvider>,
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const trigger = await canvas.findByRole("button", { name: "Remove grace@example.test" });
+    for (let cycle = 0; cycle < 2; cycle++) {
+      await userEvent.click(trigger);
+      const dialog = within(await within(document.body).findByRole("dialog"));
+      await userEvent.click(dialog.getByRole("button", { name: "Cancel" }));
+      await waitFor(() => expect(within(document.body).queryByRole("dialog")).not.toBeInTheDocument());
+      await waitFor(() => expect(trigger).toHaveFocus());
+    }
+  },
+};
+
+/** Transfer Cancel returns to the member's role control, including on a second attempt. */
+export const TransferCancel: Story = {
+  render: (args) => <MockTeamProvider><TeamPage {...args} /></MockTeamProvider>,
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const member = await canvas.findByText("Grace Hopper");
+    const row = member.closest("tr");
+    if (!row) throw new Error("Member row is missing");
+    const trigger = within(row).getByRole("combobox");
+    for (let cycle = 0; cycle < 2; cycle++) {
+      await userEvent.click(trigger);
+      await userEvent.click(await within(document.body).findByRole("option", { name: "Owner" }));
+      const dialog = within(await within(document.body).findByRole("dialog"));
+      await userEvent.click(dialog.getByRole("button", { name: "Cancel" }));
+      await waitFor(() => expect(within(document.body).queryByRole("dialog")).not.toBeInTheDocument());
+      await waitFor(() => expect(trigger).toHaveFocus());
+    }
+  },
+};

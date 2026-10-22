@@ -10,7 +10,7 @@ import {
   UserPlus,
   X,
 } from "lucide-react";
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState, type SyntheticEvent } from "react";
 import {
   Button,
   buttonVariants,
@@ -121,7 +121,11 @@ function TeamInner({
   const [facet, setFacet] = useState<Facet>("All");
   const [inviting, setInviting] = useState(false);
   const [confirm, setConfirm] = useState<ConfirmIntent | null>(null);
-  const revokeTrigger = useRef<HTMLButtonElement | null>(null);
+  const confirmTrigger = useRef<HTMLElement | null>(null);
+
+  const rememberRoleTrigger = (event: SyntheticEvent<HTMLDivElement>) => {
+    confirmTrigger.current = event.currentTarget.querySelector('[role="combobox"]');
+  };
 
   const updateRole = useUpdateMemberRole();
   const removeMember = useRemoveMember();
@@ -226,7 +230,11 @@ function TeamInner({
           }
           const disabledSelf = r.isSelf && lastOwner; // last owner can't demote self
           return (
-            <div className="flex items-center gap-1.5">
+            <div
+              className="flex items-center gap-1.5"
+              onFocusCapture={rememberRoleTrigger}
+              onPointerDownCapture={rememberRoleTrigger}
+            >
               <SimpleSelect
                 className="h-8 w-32"
                 value={String(r.role)}
@@ -283,7 +291,7 @@ function TeamInner({
                   aria-label={`Revoke invitation for ${r.email}`}
                   disabled={revokeInvitation.isPending}
                   onClick={(event) => {
-                    revokeTrigger.current = event.currentTarget;
+                    confirmTrigger.current = event.currentTarget;
                     setConfirm({ kind: "revoke", row: r });
                   }}
                 >
@@ -307,7 +315,10 @@ function TeamInner({
                   ? "min-1-owner: the last owner can’t be removed"
                   : undefined
               }
-              onClick={() => setConfirm({ kind: "remove", row: r })}
+              onClick={(event) => {
+                confirmTrigger.current = event.currentTarget;
+                setConfirm({ kind: "remove", row: r });
+              }}
             >
               <UserMinus />
             </Button>
@@ -420,8 +431,8 @@ function TeamInner({
       >
         <DialogContent
           onCloseAutoFocus={(event) => {
-            const trigger = revokeTrigger.current;
-            revokeTrigger.current = null;
+            const trigger = confirmTrigger.current;
+            confirmTrigger.current = null;
             if (trigger?.isConnected) {
               event.preventDefault();
               trigger.focus();
