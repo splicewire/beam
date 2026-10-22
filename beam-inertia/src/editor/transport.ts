@@ -1,3 +1,4 @@
+import type { JsonDoc } from "@splicewire/beam-ux/jsondoc";
 import { getBeamInertiaConfig } from "../config";
 // The host-supplied entry-body transport — the ONE injection seam the promoted editor + Mainframe host
 // load/save an entry body through. Mirrors `splicewire/www`'s and `rushing/audiostud`'s: a same-origin,
