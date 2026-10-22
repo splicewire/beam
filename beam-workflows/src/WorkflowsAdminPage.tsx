@@ -88,7 +88,9 @@ export function WorkflowsAdminPage() {
     });
     const countByVersion = new Map((coverage.data?.versions ?? []).map((v) => [v.id, v.count]));
 
-    const selected = lineages.data?.find((l) => l.key === selectedKey) ?? null;
+    const selected = lineages.isSuccess
+        ? lineages.data?.find((l) => l.key === selectedKey) ?? null
+        : null;
     const activeVersion = selected?.versions.find((v) => v.isActive) ?? selected?.versions.at(-1);
 
     // The selection channel (ticket 08): announce the active lineage to the host so it can echo it in
@@ -99,6 +101,7 @@ export function WorkflowsAdminPage() {
 
     // The filtered master list — free-text over name+key, then the system/custom segment.
     const filteredLineages = useMemo(() => {
+        if (!lineages.isSuccess) return [];
         const needle = query.trim().toLowerCase();
         return (lineages.data ?? []).filter((l) => {
             if (scope === 'system' && !l.isSystem) return false;
@@ -106,7 +109,7 @@ export function WorkflowsAdminPage() {
             if (!needle) return true;
             return l.name.toLowerCase().includes(needle) || l.key.toLowerCase().includes(needle);
         });
-    }, [lineages.data, query, scope]);
+    }, [lineages.data, lineages.isSuccess, query, scope]);
 
     const invalidateLineages = () =>
         qc.invalidateQueries({ queryKey: ['beam-workflows', 'lineages'] });
@@ -193,7 +196,21 @@ export function WorkflowsAdminPage() {
                     {lineages.isPending && (
                         <p className="text-sm text-muted-foreground">Loading…</p>
                     )}
-                    {!lineages.isPending && filteredLineages.length === 0 && (
+                    {lineages.isError && (
+                        <div role="alert" className="space-y-2 text-sm text-destructive">
+                            <p>Could not load workflows. Check your access or try again.</p>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                disabled={lineages.isFetching}
+                                onClick={() => { void lineages.refetch(); }}
+                            >
+                                {lineages.isFetching ? 'Retrying…' : 'Retry'}
+                            </Button>
+                        </div>
+                    )}
+                    {lineages.isSuccess && filteredLineages.length === 0 && (
                         <p className="text-sm text-muted-foreground">No workflows match.</p>
                     )}
                     {filteredLineages.map((lineage) => (

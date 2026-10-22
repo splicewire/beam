@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import { expect, userEvent, within } from 'storybook/test';
 import { WorkflowsAdminPage } from './WorkflowsAdminPage';
 import { MockWorkflowsProvider, makeMockClient } from './story-harness';
 import { catalog, lineages } from './story-fixtures';
@@ -45,8 +46,11 @@ export const ListPopulated: Story = {
             </MockWorkflowsProvider>
         ),
     ],
-    play: async () => {
-        await new Promise((r) => setTimeout(r, 150));
+    play: async ({ canvasElement }) => {
+        const canvas = within(canvasElement);
+        await expect(await canvas.findByRole('button', { name: new RegExp(lineages[0].name) })).toBeInTheDocument();
+        await expect(canvas.queryByRole('alert')).not.toBeInTheDocument();
+        await expect(canvas.queryByText('No workflows match.')).not.toBeInTheDocument();
     },
 };
 
@@ -59,8 +63,10 @@ export const ListEmpty: Story = {
             </MockWorkflowsProvider>
         ),
     ],
-    play: async () => {
-        await new Promise((r) => setTimeout(r, 150));
+    play: async ({ canvasElement }) => {
+        const canvas = within(canvasElement);
+        await expect(await canvas.findByText('No workflows match.')).toBeInTheDocument();
+        await expect(canvas.queryByRole('alert')).not.toBeInTheDocument();
     },
 };
 
@@ -73,6 +79,12 @@ export const Loading: Story = {
             </MockWorkflowsProvider>
         ),
     ],
+    play: async ({ canvasElement }) => {
+        const canvas = within(canvasElement);
+        await expect(await canvas.findByText('Loading…')).toBeInTheDocument();
+        await expect(canvas.queryByRole('alert')).not.toBeInTheDocument();
+        await expect(canvas.queryByText('No workflows match.')).not.toBeInTheDocument();
+    },
 };
 
 /**
@@ -118,5 +130,71 @@ export const ReadOnly: Story = {
         const firstLineage = canvasElement.querySelector<HTMLButtonElement>('aside button[data-lineage-key]');
         firstLineage?.click();
         await new Promise((r) => setTimeout(r, 350));
+    },
+};
+
+
+/** A refused read is an error, never a successful empty lineage list. */
+export const ListForbidden: Story = {
+    decorators: [(Story) => {
+        const client = makeMockClient();
+        client.listLineages = async () => { throw Object.assign(new Error('Example private server detail'), { status: 403 }); };
+        return <MockWorkflowsProvider client={client}><Story /></MockWorkflowsProvider>;
+    }],
+    play: async ({ canvasElement }) => {
+        const canvas = within(canvasElement);
+        await expect(await canvas.findByRole('alert')).toHaveTextContent('Could not load workflows.');
+        await expect(canvas.queryByText('No workflows match.')).not.toBeInTheDocument();
+        await expect(canvas.queryByText('Example private server detail')).not.toBeInTheDocument();
+    },
+};
+
+/** Network failure follows the same safe read-failure path. */
+export const ListFailed: Story = {
+    decorators: [(Story) => {
+        const client = makeMockClient();
+        client.listLineages = async () => { throw new TypeError('Example private transport detail'); };
+        return <MockWorkflowsProvider client={client}><Story /></MockWorkflowsProvider>;
+    }],
+    play: async ({ canvasElement }) => {
+        const canvas = within(canvasElement);
+        await expect(await canvas.findByRole('alert')).toHaveTextContent('Could not load workflows.');
+        await expect(canvas.queryByText('No workflows match.')).not.toBeInTheDocument();
+        await expect(canvas.queryByText('Example private transport detail')).not.toBeInTheDocument();
+    },
+};
+
+function recoveryClient(empty: boolean) {
+    const client = makeMockClient();
+    let attempts = 0;
+    client.listLineages = async () => {
+        if (attempts++ === 0) throw Object.assign(new Error('Forbidden'), { status: 403 });
+        return empty ? [] : lineages;
+    };
+    return client;
+}
+
+/** Retry invokes the existing read transport again and recovers into a populated list. */
+export const RetryToPopulated: Story = {
+    decorators: [(Story) => <MockWorkflowsProvider client={recoveryClient(false)}><Story /></MockWorkflowsProvider>],
+    play: async ({ canvasElement }) => {
+        const canvas = within(canvasElement);
+        await canvas.findByRole('alert');
+        await userEvent.click(canvas.getByRole('button', { name: 'Retry' }));
+        await expect(await canvas.findByRole('button', { name: new RegExp(lineages[0].name) })).toBeInTheDocument();
+        await expect(canvas.queryByRole('alert')).not.toBeInTheDocument();
+        await expect(canvas.queryByText('No workflows match.')).not.toBeInTheDocument();
+    },
+};
+
+/** A successful retry may honestly return empty; it never infers permission from a role. */
+export const RetryToEmpty: Story = {
+    decorators: [(Story) => <MockWorkflowsProvider client={recoveryClient(true)}><Story /></MockWorkflowsProvider>],
+    play: async ({ canvasElement }) => {
+        const canvas = within(canvasElement);
+        await canvas.findByRole('alert');
+        await userEvent.click(canvas.getByRole('button', { name: 'Retry' }));
+        await expect(await canvas.findByText('No workflows match.')).toBeInTheDocument();
+        await expect(canvas.queryByRole('alert')).not.toBeInTheDocument();
     },
 };

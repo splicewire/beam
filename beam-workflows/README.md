@@ -40,6 +40,11 @@ dependency (the `import type … from '@splicewire/_resources/types/workflows'` 
 - **The root** — `WorkflowsAdminPage`, composing Editor + Diff + Migrate over the injected client
   (react-query `queryFn`/`mutationFn` all route through `WorkflowsClient`).
 
+`WorkflowsAdminPage` distinguishes a failed/refused lineage read from a successful empty list.
+Its accessible read-error message omits transport internals, and Retry calls the existing query
+refetch. After a failed refetch it hides stale list/editor data while retaining the selection key
+for recovery. This does not change server authority or submit writes.
+
 The full tree mounts in isolation off pure generated-DTO fixtures (the §8a bar) — Admin renders
 lineages, a save routes through the injected client, and the Stepper's `subscribe` adapter fires.
 
