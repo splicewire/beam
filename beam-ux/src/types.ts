@@ -1,9 +1,9 @@
-import type { SessionPageSettings } from './editor/local-session';
+import type { SessionPageSettings } from "./editor/local-session";
 // The generated DTO projection (rehome-ui), sliced off the app's single `generated.d.ts` and
 // delivered as a bundle. This build-time dependency is LOAD-BEARING — the builder's default typing
 // IS the projection, so the PHP source of truth genuinely travels into this package. tsup keeps the
 // `import type` in the shipped `dist/index.d.ts`.
-import type { BeamUxEntryBodyData } from '@splicewire/beam-resources/types/beam-ux';
+import type { BeamUxEntryBodyData } from "@splicewire/beam-resources/types/beam-ux";
 
 export type { BeamUxEntryBodyData };
 
@@ -17,53 +17,98 @@ export type { BeamUxEntryBodyData };
  * with a divergent shape can bind its own.
  */
 export interface UxBuilderClient<TBody = BeamUxEntryBodyData> {
-    /**
-     * Load the schema + body for an editable region's canonical record, addressed by the entry's
-     * **id** (`GET .../beam-ux-entries/{id}/op/body`).
-     *
-     * It used to take a `slug` plus an optional `namespace` to disambiguate one. Both are gone:
-     * ADR-0214 §2 moved the transport onto the particle pipeline's own `{id}` addressing, where the
-     * ambiguity the `namespace` argument mitigated (a `theme`-namespaced override and a null-namespace
-     * page sharing one slug, an ambiguous `first()` silently serving the WRONG entry) is not
-     * representable rather than merely guarded against.
-     */
-    loadBody(id: string): Promise<TBody>;
-    printSource?(id: string, body: import('./blockdoc/json').JsonDoc): Promise<{source:string}>;
-    readSource?(id: string, source:string, body: import('./blockdoc/json').JsonDoc): Promise<{body:import('./blockdoc/json').JsonDoc}>;
-    /** Create an absent page from its default tree; PHP EntryMakeEditableOp, under ux.author. */
-    makeEditable?(slug: string, body: Record<string, unknown>): Promise<{id: string; compileError?: string | null}>;
-    /**
-     * Persist a region's body — returns the fresh projection
-     * (`POST .../beam-ux-entries/{id}/op/save-body`). Addressed by id, same as {@link loadBody}.
-     */
-    saveBody(id: string, body: Record<string, unknown>): Promise<TBody>;
+  /**
+   * Load the schema + body for an editable region's canonical record, addressed by the entry's
+   * **id** (`GET .../beam-ux-entries/{id}/op/body`).
+   *
+   * It used to take a `slug` plus an optional `namespace` to disambiguate one. Both are gone:
+   * ADR-0214 §2 moved the transport onto the particle pipeline's own `{id}` addressing, where the
+   * ambiguity the `namespace` argument mitigated (a `theme`-namespaced override and a null-namespace
+   * page sharing one slug, an ambiguous `first()` silently serving the WRONG entry) is not
+   * representable rather than merely guarded against.
+   */
+  loadBody(id: string): Promise<TBody>;
+  printSource?(
+    id: string,
+    body: import("./blockdoc/json").JsonDoc,
+  ): Promise<{ source: string }>;
+  readSource?(
+    id: string,
+    source: string,
+    body: import("./blockdoc/json").JsonDoc,
+  ): Promise<{ body: import("./blockdoc/json").JsonDoc }>;
+  /** Create an absent page from its default tree; PHP EntryMakeEditableOp, under ux.author. */
+  makeEditable?(
+    slug: string,
+    body: Record<string, unknown>,
+  ): Promise<{ id: string; compileError?: string | null }>;
+  /**
+   * Persist a region's body — returns the fresh projection
+   * (`POST .../beam-ux-entries/{id}/op/save-body`). Addressed by id, same as {@link loadBody}.
+   */
+  saveBody(id: string, body: Record<string, unknown>): Promise<TBody>;
 
-    /* ── the OPTIONAL publication seam (G2-BEAM-DRAFT-PUBLISH) ───────────────────────────────── */
-    // Four methods, all optional, because a host mounts the draft/publish operations deliberately
-    // (`splicewire/laravel-beam-ux`'s `save-draft` / `publish` / `versions` / `restore`) and a host
-    // that has not is not broken — it has the immediate-publish write it always had. The surfaces
-    // render the affordance only when the methods are supplied, so "this host does not do drafts" and
-    // "this host's draft button is broken" are never the same picture.
+  /* ── the OPTIONAL publication seam (G2-BEAM-DRAFT-PUBLISH) ───────────────────────────────── */
+  // Four methods, all optional, because a host mounts the draft/publish operations deliberately
+  // (`splicewire/laravel-beam-ux`'s `save-draft` / `publish` / `versions` / `restore`) and a host
+  // that has not is not broken — it has the immediate-publish write it always had. The surfaces
+  // render the affordance only when the methods are supplied, so "this host does not do drafts" and
+  // "this host's draft button is broken" are never the same picture.
 
-    /** Record a body as a DRAFT: written and versioned, NOT published — readers keep the published body. */
-    saveDraft?(id: string, body: Record<string, unknown>, baseVersion: string | null, label?: string, pageSettings?: SessionPageSettings | null): Promise<EntryPublicationState>;
-    /** Publish the working copy: move the publication pin, mirror to disk, compile the artifact. */
-    publish?(id: string, ref: string, label?: string): Promise<EntryPublicationState>;
-    /** The recorded version history plus both pins. */
-    listVersions?(id: string): Promise<EntryPublicationState>;
-    /** Roll forward to a recorded version (a uuid or a readable handle like `v2`) and publish it. */
-    restoreVersion?(id: string, ref: string, label?: string): Promise<EntryPublicationState>;
-    /**
-     * REMOVE the entry's content and return it to the unauthored state
-     * (`POST .../beam-ux-entries/{id}/clear-body`): the stored body, its mirror file and its compiled
-     * artifact are deleted; the removed body stays in the version history. Optional — a host mounts it
-     * deliberately, and it declares the publish gate (`ux.author`). Distinct from saving `[]`, which
-     * is an authored empty body.
-     */
-    clearBody?(id: string, label?: string): Promise<EntryPublicationState>;
-    createRelease?(entryId: string, title: string): Promise<import('./releases').ReleaseRecord>;
-    releaseCommand?(releaseId: string, command: import('./releases').ReleaseCommand): Promise<import('./releases').ReleaseRecord>;
-    listReleases?(): Promise<Array<{id: string; title: string}>>;
+  /** Record a body as a DRAFT: written and versioned, NOT published — readers keep the published body. */
+  saveDraft?(
+    id: string,
+    body: Record<string, unknown>,
+    baseVersion: string | null,
+    label?: string,
+    pageSettings?: SessionPageSettings | null,
+  ): Promise<EntryPublicationState>;
+  /** Publish the working copy: move the publication pin, mirror to disk, compile the artifact. */
+  publish?(
+    id: string,
+    ref: string,
+    label?: string,
+  ): Promise<EntryPublicationState>;
+  /** The recorded version history plus both pins. */
+  listReleases?(): Promise<import("./releases").ReleaseRecord[]>;
+  releaseCommand?(
+    releaseId: string,
+    command: import("./releases").ReleaseCommand,
+  ): Promise<import("./releases").ReleaseRecord>;
+  listVersions?(id: string): Promise<EntryPublicationState>;
+  inspectReleaseFile?(
+    memberId: string,
+  ): Promise<import("./files").FileInspection>;
+  takeReleaseFile?(
+    memberId: string,
+    input: import("./files").FileReconcileInput,
+  ): Promise<import("./files").FileReconcileResult>;
+  restoreMissingReleaseFile?(
+    memberId: string,
+    input: import("./files").FileReconcileInput,
+  ): Promise<import("./files").FileReconcileResult>;
+  recordReleaseFile?(
+    memberId: string,
+    releaseId: string,
+  ): Promise<import("./releases").ReleaseRecording>;
+  /** Roll forward to a recorded version (a uuid or a readable handle like `v2`) and publish it. */
+  restoreVersion?(
+    id: string,
+    ref: string,
+    label?: string,
+  ): Promise<EntryPublicationState>;
+  /**
+   * REMOVE the entry's content and return it to the unauthored state
+   * (`POST .../beam-ux-entries/{id}/clear-body`): the stored body, its mirror file and its compiled
+   * artifact are deleted; the removed body stays in the version history. Optional — a host mounts it
+   * deliberately, and it declares the publish gate (`ux.author`). Distinct from saving `[]`, which
+   * is an authored empty body.
+   */
+  clearBody?(id: string, label?: string): Promise<EntryPublicationState>;
+  createRelease?(
+    entryId: string,
+    title: string,
+  ): Promise<import("./releases").ReleaseRecord>;
 }
 
 /**
@@ -78,16 +123,17 @@ export interface UxBuilderClient<TBody = BeamUxEntryBodyData> {
  * re-exported from the bundle instead of written here.
  */
 export interface EntryVersion {
-    id: string;
-    version: number;
-    readable: string;
-    label: string | null;
-    createdBy: string | null;
-    createdAt: string | null;
-    /** The working HEAD — the body an author currently edits. */
-    isHead: boolean;
-    /** The published body — the one a guest reader is served. */
-    isPublished: boolean;
+  id: string;
+  version: number;
+  readable: string;
+  label: string | null;
+  createdBy: string | null;
+  createdAt: string | null;
+  /** The working HEAD — the body an author currently edits. */
+  isHead: boolean;
+  /** The published body — the one a guest reader is served. */
+  isPublished: boolean;
+  recordings?: import("./releases").ReleaseRecording[];
 }
 
 /**
@@ -99,20 +145,20 @@ export interface EntryVersion {
  * client must not compute or cache its own.
  */
 export interface EntryPublicationState {
-    release?: import('./releases').ReleaseRecord | null;
-    id: string;
-    draftPending: boolean;
-    publishedVersion: string | null;
-    publishedReadable: string | null;
-    headVersion: string | null;
-    headReadable: string | null;
-    versions: EntryVersion[];
-    compileError: string | null;
+  release?: import("./releases").ReleaseRecord | null;
+  id: string;
+  draftPending: boolean;
+  publishedVersion: string | null;
+  publishedReadable: string | null;
+  headVersion: string | null;
+  headReadable: string | null;
+  versions: EntryVersion[];
+  compileError: string | null;
 }
 
 export interface NotifyEvent {
-    type: 'success' | 'error';
-    message: string;
+  type: "success" | "error";
+  message: string;
 }
 
 /**
@@ -120,9 +166,9 @@ export interface NotifyEvent {
  * optional with a dependency-free console default.
  */
 export interface UxBuilderServices {
-    client: UxBuilderClient;
-    /** Feedback sink; a dependency-free console default applies when omitted (no bundled toaster). */
-    notify?: (event: NotifyEvent) => void;
+  client: UxBuilderClient;
+  /** Feedback sink; a dependency-free console default applies when omitted (no bundled toaster). */
+  notify?: (event: NotifyEvent) => void;
 }
 
 /* ─────────────────────────── presentational domain shapes ─────────────────────────── */
@@ -131,47 +177,47 @@ export interface UxBuilderServices {
 // them (or a default demo set).
 
 /** Which editor the region mounts: form → SchemaForm; richtext/frame/list → preview editors. */
-export type RegionKind = 'richtext' | 'form' | 'frame' | 'list';
+export type RegionKind = "richtext" | "form" | "frame" | "list";
 
 export interface Region {
-    id: string;
-    /** placement label as it reads in the layout tree */
-    label: string;
-    kind: RegionKind;
-    /**
-     * The canonical record this region edits — the **entry id** the client loads/saves against
-     * (ADR-0214 §2).
-     *
-     * Renamed from `record` deliberately when the addressing moved. Both a slug and an id are
-     * `string`, so a host that kept feeding a slug into an id-addressed transport would have
-     * typechecked cleanly and 404'd at runtime on every editor open; the rename is what turns that
-     * into a compile error at every `Region` construction site.
-     */
-    recordId: string;
-    /**
-     * Optional human provenance line for the editor header (the small mono line under `label`).
-     * Falls back to `recordId`. It exists because the header used to show the slug and a raw uuid is
-     * strictly less useful there — a host that has the row should pass its slug.
-     */
-    recordLabel?: string;
-    /** one-line note shown in the editor header */
-    note: string;
+  id: string;
+  /** placement label as it reads in the layout tree */
+  label: string;
+  kind: RegionKind;
+  /**
+   * The canonical record this region edits — the **entry id** the client loads/saves against
+   * (ADR-0214 §2).
+   *
+   * Renamed from `record` deliberately when the addressing moved. Both a slug and an id are
+   * `string`, so a host that kept feeding a slug into an id-addressed transport would have
+   * typechecked cleanly and 404'd at runtime on every editor open; the rename is what turns that
+   * into a compile error at every `Region` construction site.
+   */
+  recordId: string;
+  /**
+   * Optional human provenance line for the editor header (the small mono line under `label`).
+   * Falls back to `recordId`. It exists because the header used to show the slug and a raw uuid is
+   * strictly less useful there — a host that has the row should pass its slug.
+   */
+  recordLabel?: string;
+  /** one-line note shown in the editor header */
+  note: string;
 }
 
 /** Structure-mode tree: layout → template → page → the region placements. */
 export interface TreeNode {
-    id: string;
-    label: string;
-    kind: 'layout' | 'template' | 'page' | 'region';
-    /** for region nodes, the region id it places */
-    regionId?: string;
-    children?: TreeNode[];
+  id: string;
+  label: string;
+  kind: "layout" | "template" | "page" | "region";
+  /** for region nodes, the region id it places */
+  regionId?: string;
+  children?: TreeNode[];
 }
 
 /** Component palette (Structure mode) — dropped into a placement, the page-composition layer. */
 export interface PaletteItem {
-    key: string;
-    label: string;
-    kind: RegionKind;
-    hint: string;
+  key: string;
+  label: string;
+  kind: RegionKind;
+  hint: string;
 }

@@ -19,6 +19,8 @@ export interface RegionEditorProps {
      */
     onDiscard?: () => void;
     saving?: boolean;
+    saveLabel?: string;
+    saveDisabled?: boolean;
 }
 
 /**
@@ -34,6 +36,8 @@ export function RegionInspector({
     onSave,
     onDiscard,
     saving,
+    saveLabel,
+    saveDisabled,
 }: RegionEditorProps) {
     const Icon = KIND_ICON[region.kind];
     return (
@@ -61,6 +65,8 @@ export function RegionInspector({
                     onSave={onSave}
                     onDiscard={onDiscard}
                     saving={saving}
+                    saveLabel={saveLabel}
+                    saveDisabled={saveDisabled}
                 />
                 <p className="mt-3 border-t pt-3 text-[11px] leading-relaxed text-muted-foreground">
                     {region.note}

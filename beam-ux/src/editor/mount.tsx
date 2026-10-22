@@ -5,6 +5,7 @@ import { ReleasePanel } from '../releases';
 import type { SessionPageSettings } from './local-session';
 // Window-mode authoring shares the package-owned Local Session and publication transport.
 import { useEffect, useState } from 'react';
+import { VersionRecordingReferences } from '../recording';
 import type { JsonDoc } from '../blockdoc/json';
 import type { EntryPublicationState } from '../types';
 import { CanvasProvider, VisualEditor } from '../canvas';
@@ -138,6 +139,7 @@ function AddressedVisualEditor({ entryRef }: { entryRef: EntryRef }) {
             }} />}
         {history && <aside aria-label="History">{loaded.state.versions.map(version => <div key={version.id}>
             <span>{version.readable} {version.label}</span>
+            <VersionRecordingReferences recordings={version.recordings} />
             <button disabled={busy || local.session!.dirty} onClick={() => void restore(version.id)}>Restore {version.readable} into draft</button>
         </div>)}</aside>}
         {!local.session.source && local.session.pageSettings && <PageSettings value={local.session.pageSettings} onChange={settings => local.change(local.session!.body, settings)} />}

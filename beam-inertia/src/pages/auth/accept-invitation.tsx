@@ -1,6 +1,8 @@
 import { Head, router, usePage } from '@inertiajs/react';
 import { AcceptInvitationPanel, type InvitationState } from '@splicewire/beam-accounts';
 import { useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import { resetFrameAfterTeamChange } from '../../frame/team-change';
 
 /**
  * `invitations.accept` — the page the invitation email links to
@@ -45,6 +47,7 @@ const TITLES: Record<InvitationState, string> = {
 export default function AcceptInvitation() {
     const props = usePage<AcceptInvitationPageProps>().props;
     const [processing, setProcessing] = useState(false);
+    const queryClient = useQueryClient();
 
     const accept = props.acceptUrl
         ? () =>
@@ -54,6 +57,7 @@ export default function AcceptInvitation() {
                   {
                       onStart: () => setProcessing(true),
                       onFinish: () => setProcessing(false),
+                            onSuccess: () => resetFrameAfterTeamChange(queryClient),
                   },
               )
         : undefined;

@@ -43,3 +43,16 @@ page and operator overlay. Import it and `DefaultOsDesktopProps` from `@splicewi
 opens the first three unlocked apps, and supplies Inertia navigation/error links to the portable
 realm/window helpers. Its existing surfaceMap, exclude, brand, status, backdrop, onNavigate and
 chrome overrides remain available.
+
+## Resource schema purpose
+
+The host Frame transport preserves the existing schema URL for omitted/write purpose and sends
+`?purpose=read` for explicit read. Pair it with the purpose-aware PHP Frame endpoint. Generic
+create requests write; statically noneditable, showable detail requests read. Permission-disabled
+editable resources retain their legacy write schema and edit-shaped record. Heavy widget dispatch
+is unchanged. `readOnly` controls interaction independently of schema selection.
+
+See the owning `@schemastud/frame/docs/schema-purpose.md` reference
+in the paired source candidate and installed PHP Frame `docs/resource-schemas.md` for defaults,
+cache identity, resolver obligations and narrowed public/custom projections. Remote loaders and
+sandbox/negotiation are separate contracts; this adapter does not prove them.

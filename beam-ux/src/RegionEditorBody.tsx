@@ -31,6 +31,8 @@ export function RegionEditorBody({
     onSave,
     onDiscard,
     saving,
+    saveLabel,
+    saveDisabled,
 }: {
     region: Region;
     schema: SchemaNode | null;
@@ -40,6 +42,8 @@ export function RegionEditorBody({
     /** Drop the in-flight edit buffer. Omitted ⇒ the Discard control renders disabled. */
     onDiscard?: () => void;
     saving?: boolean;
+    saveLabel?: string;
+    saveDisabled?: boolean;
 }) {
     switch (region.kind) {
         case 'form':
@@ -50,6 +54,8 @@ export function RegionEditorBody({
                         onSave={onSave}
                         onDiscard={onDiscard}
                         saving={saving}
+                        saveLabel={saveLabel}
+                        saveDisabled={saveDisabled}
                         // A real @schemastud/seam SchemaForm; graduates to EditShell (APP-10: author chrome stays out of copy).
                     />
                 </>
@@ -62,6 +68,8 @@ export function RegionEditorBody({
                         onSave={onSave}
                         onDiscard={onDiscard}
                         saving={saving}
+                        saveLabel={saveLabel}
+                        saveDisabled={saveDisabled}
                         // MDX source: content plus preserved frontmatter (APP-10).
                     />
                 </>
@@ -78,15 +86,19 @@ function EditorActions({
     onSave,
     onDiscard,
     saving,
+    saveLabel,
+    saveDisabled,
 }: {
     onSave: () => void;
     onDiscard?: () => void;
     saving?: boolean;
+    saveLabel?: string;
+    saveDisabled?: boolean;
 }) {
     return (
         <div className="mt-4 flex items-center gap-2 border-t pt-4">
-            <Button size="sm" onClick={onSave} disabled={saving}>
-                {saving ? 'Saving…' : 'Save'}
+            <Button size="sm" onClick={onSave} disabled={saving || saveDisabled}>
+                {saving ? 'Saving…' : (saveLabel ?? 'Save')}
             </Button>
             <Button size="sm" variant="ghost" onClick={onDiscard} disabled={saving || !onDiscard}>
                 Discard

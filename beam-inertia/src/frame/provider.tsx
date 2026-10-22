@@ -11,6 +11,7 @@ import type { SchemaNode } from '@schemastud/seam';
 import { useCallback, useMemo } from 'react';
 import { toast } from 'sonner';
 import type { ReactNode } from 'react';
+import { createReleaseFilesFormResolver } from './release-files-form';
 import { frameIcon } from './icons';
 import { manifestLookup, useFrameManifest } from './manifest';
 import { framePrimitives } from './primitives';
@@ -108,7 +109,9 @@ export function TenantFrameProvider({ children }: { children: ReactNode }) {
             renderLink: renderCardLink,
         });
 
+        const formResolver = createReleaseFilesFormResolver();
         return {
+            formResolver,
             transport: frameTransport,
             primitives: framePrimitives,
             useUrlState: useBrowserUrlState,

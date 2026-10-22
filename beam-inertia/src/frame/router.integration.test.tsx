@@ -84,7 +84,7 @@ function fixture({ create = true, show = true, editable = false, host = false, g
         );
         const method = init?.method ?? 'GET';
         const body = typeof init?.body === 'string' ? JSON.parse(init.body) : undefined;
-        requests.push({ path: url.pathname, method, body });
+        requests.push({ path: url.pathname + (url.searchParams.has('purpose') ? url.search : ''), method, body });
         if (url.pathname === '/operator/frame/manifest') return Response.json(manifest);
         if (url.pathname.endsWith('/filters/schema'))
             return Response.json({ data: { type: 'object', properties: {} } });
@@ -92,7 +92,7 @@ function fixture({ create = true, show = true, editable = false, host = false, g
             return Response.json({
                 type: 'object',
                 required: ['name'],
-                properties: { name: { type: 'string', title: 'Name' } },
+                properties: { name: { type: 'string', title: 'Name' }, ...(url.searchParams.get('purpose') === 'read' ? { approvalState: { type: 'string', title: 'Approval' } } : {}) },
             });
         if (url.pathname === '/frame/resources/documents') {
             return Response.json(
@@ -111,7 +111,7 @@ function fixture({ create = true, show = true, editable = false, host = false, g
             url.pathname === '/frame/resources/documents/records/new'
         )
             return Response.json({
-                data: { id: url.pathname.split('/').pop(), name: 'Existing document' },
+                data: { id: url.pathname.split('/').pop(), name: 'Existing document', ...(editable ? {} : { approvalState: 'pending' }) },
             });
         throw new Error(`Unexpected ${method} ${url.pathname}`);
     };
@@ -169,12 +169,43 @@ describe('explicit Frame creation destinations', () => {
         expect(data.requests.some(({ path }) => path.includes('/records/'))).toBe(false);
     });
 
+    it('returns to the same-shell list only after a successful create, including a realm basename', async () => {
+        const data = fixture({ show: false });
+        data.manifest.routeContext.unshift(leaf('other.index', 'elsewhere', 'list', 'other'));
+        mount(data, '/operator/catalog/new');
+        fireEvent.change(await screen.findByRole('textbox', { name: /^Name/ }), {
+            target: { value: 'Created document' },
+        });
+        fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+        await waitFor(() => expect(router.visit).toHaveBeenLastCalledWith('/operator/catalog'));
+        expect(data.requests.filter(({ method }) => method === 'POST')).toHaveLength(1);
+        await screen.findByText('Existing document');
+    });
+
+    it('keeps a failed create on the form without navigating', async () => {
+        const data = fixture();
+        const original = data.fetch;
+        data.fetch = (input, init) => init?.method === 'POST'
+            ? Promise.resolve(Response.json({ message: 'Invalid input' }, { status: 422 }))
+            : original(input, init);
+        mount(data, '/operator/catalog/new');
+        fireEvent.change(await screen.findByRole('textbox', { name: /^Name/ }), {
+            target: { value: 'Rejected document' },
+        });
+        fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+        await screen.findByRole('alert');
+        expect(router.visit).not.toHaveBeenCalled();
+        expect(screen.getByDisplayValue('Rejected document')).toBeTruthy();
+    });
+
     it('opens immutable records through detail and never offers Save', async () => {
         const data = fixture();
         mount(data);
         fireEvent.click(await screen.findByText('Existing document'));
         expect(router.visit).toHaveBeenLastCalledWith('/operator/catalog/existing');
         await screen.findByDisplayValue('Existing document');
+        expect((await screen.findByRole('textbox', { name: /^Approval/ }) as HTMLInputElement).disabled).toBe(true);
+        expect(data.requests.some(({ path }) => path.endsWith('/schema?purpose=read'))).toBe(true);
         expect(data.requests.some(({ path }) => path.endsWith('/records/existing'))).toBe(true);
         expect(screen.queryByRole('button', { name: 'Save' })).toBeNull();
     });
@@ -193,11 +224,23 @@ describe('explicit Frame creation destinations', () => {
                 name: 'Updated document',
             })
         );
+        expect(router.visit).not.toHaveBeenCalled();
         expect(
             data.requests.some(
                 ({ method, path }) => method === 'PUT' && path.endsWith('/records/existing')
             )
         ).toBe(true);
+    });
+
+    it('keeps an actor-disabled editable record on its legacy write schema', async () => {
+        const data = fixture({ editable: true });
+        data.manifest.contexts.documents.can!.update = false;
+        mount(data, '/operator/catalog/existing');
+        const field = await screen.findByDisplayValue('Existing document');
+        expect((field as HTMLInputElement).disabled).toBe(true);
+        expect(screen.queryByRole('textbox', { name: /^Approval/ })).toBeNull();
+        expect(data.requests.some(({ path }) => path.includes('purpose=read'))).toBe(false);
+        expect(screen.queryByRole('button', { name: 'Save' })).toBeNull();
     });
 
     it.each([{ create: false }, { host: true }])(

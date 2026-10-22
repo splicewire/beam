@@ -124,3 +124,12 @@ reloads applied history. It checks the actual portable surface at a 390px viewpo
 or page errors. `WORKFLOW_SCREENSHOTS` retains the screenshot. Stop the test server and remove only
 your session's SQLite file afterward. The story is development evidence; deployed hosts supply
 their own transport, subject resolver and principal/tenant authority.
+
+### Small action-form entry
+
+`@splicewire/beam-workflows/action-form` exports the existing `WorkflowActionForm`, its selection type
+and generated WorkflowProjectionData. `npm run build:action-form --workspace beam-workflows` builds
+that entry without replacing the existing barrel. It needs the existing generated
+`@splicewire/_resources/types/workflows` projection (WorkflowProjectionData and WorkflowTransitionData)
+as a type-only build/consumer input. It does not require graph/admin runtime peers. Scheduling
+transport/admission remains injected; the entry does not bind a scheduler or enable scheduling.
