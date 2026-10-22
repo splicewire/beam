@@ -96,3 +96,20 @@ it('preserves a pinned empty draft without replacing it with a seed', async () =
     await waitFor(() => expect(saveDraft).toHaveBeenCalledWith('a', [], 'v1'));
     expect(saveBody).not.toHaveBeenCalled();
 });
+
+it('projects all recording references in window history without writing the version or body', async () => {
+    loadBody.mockResolvedValue({body:SAVED});
+    const version={id:'v1',readable:'v1-published',label:'Published',recordings:[
+        {releaseId:'release-a',status:'recorded',sha:'123456789abcdef',noChange:false,canRetry:false,message:'Recorded locally.'},
+        {releaseId:'release-b',status:'failed',sha:null,noChange:false,canRetry:true,message:'Hook refused'},
+    ]};
+    const original=JSON.stringify(version);
+    listVersions.mockResolvedValue({headVersion:'v1',publishedVersion:'v1',draftPending:false,versions:[version]});
+    render(<VisualEditorMount entryRef={ref('a')} />);
+    await screen.findByRole('button',{name:'Save'});
+    fireEvent.click(screen.getByRole('button',{name:'History'}));
+    expect(screen.getByText(/Git 1234567.*release-a/)).toBeTruthy();
+    expect(screen.getByText(/Not committed.*release-b/)).toBeTruthy();
+    expect(JSON.stringify(version)).toBe(original);
+    expect(saveDraft).not.toHaveBeenCalled();expect(saveBody).not.toHaveBeenCalled();
+});
