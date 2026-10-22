@@ -59,9 +59,9 @@ function ReleaseFilesForm({ formData, registerSubmit }) {
   }, [registerSubmit]);
   return /* @__PURE__ */ jsxs("div", { className: "space-y-4", children: [
     /* @__PURE__ */ jsx("h2", { className: "text-lg font-semibold", children: "Historical Release member" }),
-    /* @__PURE__ */ jsx("dl", { children: ["release", "entry", "versionId", "members", "recordingStatus", "sha", "message"].map((key) => /* @__PURE__ */ jsxs("div", { children: [
-      /* @__PURE__ */ jsx("dt", { children: key }),
-      /* @__PURE__ */ jsx("dd", { className: "break-all", children: String(formData[key] ?? "\u2014") })
+    /* @__PURE__ */ jsx("dl", { children: [["release", "Release"], ["entry", "Entry"], ["versionId", "Historical saved version"], ["members", "Whole Release"], ["recordingStatus", "Local record"], ["sha", "Commit SHA"], ["message", "Recording result"]].map(([key, label]) => /* @__PURE__ */ jsxs("div", { children: [
+      /* @__PURE__ */ jsx("dt", { className: "text-sm text-muted-foreground", children: label }),
+      /* @__PURE__ */ jsx("dd", { className: "mb-3 break-all", children: String(formData[key] ?? "\u2014") })
     ] }, key)) }),
     typeof formData.id === "string" && /* @__PURE__ */ jsx(
       FilesComparisonPanel,
@@ -249,4 +249,4 @@ function TenantFrameProvider({ children }) {
 export {
   TenantFrameProvider
 };
-//# sourceMappingURL=chunk-XRFPFMBA.js.map
+//# sourceMappingURL=chunk-K25KHYKJ.js.map

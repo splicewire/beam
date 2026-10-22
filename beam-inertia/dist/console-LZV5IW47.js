@@ -1,6 +1,6 @@
 import {
   TenantFrameProvider
-} from "./chunk-XRFPFMBA.js";
+} from "./chunk-K25KHYKJ.js";
 import "./chunk-O7ZKQDZR.js";
 import "./chunk-BBYPLYMO.js";
 import "./chunk-OMCRMKUM.js";
@@ -264,4 +264,4 @@ function ConsoleBody() {
 export {
   FrameConsole as default
 };
-//# sourceMappingURL=console-BHZTCZKK.js.map
+//# sourceMappingURL=console-LZV5IW47.js.map

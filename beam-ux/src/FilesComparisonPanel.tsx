@@ -2,6 +2,8 @@ import { useEffect, useId, useRef, useState } from 'react';
 import type { FileInspection, FileReconcileInput } from './files';
 import type { UxBuilderClient } from './types';
 
+const buttonClassName = 'inline-flex items-center justify-center rounded-md border bg-background px-3 py-2 text-sm font-medium shadow-sm hover:bg-muted focus-visible:outline focus-visible:outline-2 disabled:cursor-not-allowed disabled:opacity-50';
+
 /** Deliberate current-pin comparison. Captured confirmation survives errors until explicit reload. */
 export function FilesComparisonPanel({memberId, client, editorHref}: {
     memberId: string; client: UxBuilderClient; editorHref?: (entryId: string) => string | undefined;
@@ -65,7 +67,7 @@ export function FilesComparisonPanel({memberId, client, editorHref}: {
     return <section aria-labelledby={headingId} className="space-y-4 rounded-lg border bg-card p-4 text-card-foreground">
         <h2 id={headingId} className="text-lg font-semibold">Current published file</h2>
         <p>Compare the local file with the entry’s current published pin. The historical Release member above stays fixed.</p>
-        <button type="button" disabled={busy} onClick={() => void load()}>Reload comparison</button>
+        <button className={buttonClassName} type="button" disabled={busy} onClick={() => void load()}>Reload comparison</button>
         {error && <p role="alert">{error} The captured inspection is retained. Reload explicitly before a new attempt.</p>}
         {result && <p role="status">{result}</p>}
         {drafted && href && <a href={href}>Open Theme</a>}
@@ -80,18 +82,18 @@ export function FilesComparisonPanel({memberId, client, editorHref}: {
                 <div><h3>Local bytes</h3><pre className="max-h-80 overflow-auto whitespace-pre-wrap text-xs">{inspection.localSource ?? (inspection.fileExists ? 'Unavailable' : 'Missing')}</pre></div>
             </div>
             {!confirmation && <div className="flex gap-4">
-                {inspection.canTake && client.takeReleaseFile && <button ref={takeButton} type="button" disabled={busy} onClick={() => capture('take')}>Take file as draft</button>}
-                {inspection.canRestore && client.restoreMissingReleaseFile && <button ref={restoreButton} type="button" disabled={busy} onClick={() => capture('restore')}>Restore missing published file</button>}
+                {inspection.canTake && client.takeReleaseFile && <button className={buttonClassName} ref={takeButton} type="button" disabled={busy} onClick={() => capture('take')}>Take file as draft</button>}
+                {inspection.canRestore && client.restoreMissingReleaseFile && <button className={buttonClassName} ref={restoreButton} type="button" disabled={busy} onClick={() => capture('restore')}>Restore missing published file</button>}
             </div>}
             {inspection.fileExists && inspection.state !== 'unchanged' && <p>Restore never overwrites an existing file. Preserve or move it before restoring a missing published file.</p>}
         </>}
-        {confirmation && <div role="group" aria-label="Confirm file reconciliation" className="space-y-3 rounded border p-3">
+        {confirmation && <div role="group" aria-label="Confirm file reconciliation" className="flex flex-wrap items-center gap-3 rounded border p-3">
             <p>{confirmation.action === 'take'
                 ? 'Replace the inspected working draft with this complete validated local Theme? The published pin, file and Git stay unchanged. Publish separately through ordinary review.'
                 : 'Create the missing file from the current published pin? Draft, history and Git stay unchanged. Any appearing file blocks creation. An incomplete file is preserved for explicit inspection or moving before retry.'}</p>
             <p className="break-all text-xs">Captured head {confirmation.input.expectedHeadVersion}; published {confirmation.input.expectedPublishedVersion}; file {confirmation.input.expectedFileSha256 ?? 'absent'}.</p>
-            <button ref={confirmButton} type="button" disabled={busy || !!error} onClick={() => void submit()}>{confirmation.action === 'take' ? 'Confirm take file as draft' : 'Confirm restore missing file'}</button>
-            <button type="button" disabled={busy} onClick={cancel}>Cancel</button>
+            <button className={buttonClassName} ref={confirmButton} type="button" disabled={busy || !!error} onClick={() => void submit()}>{confirmation.action === 'take' ? 'Confirm take file as draft' : 'Confirm restore missing file'}</button>
+            <button className={buttonClassName} type="button" disabled={busy} onClick={cancel}>Cancel</button>
         </div>}
     </section>;
 }
