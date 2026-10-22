@@ -51,6 +51,18 @@ function typeLabel(types: WorkflowTypeOptionData[], key: string): string {
     return types.find((t) => t.key === key)?.label ?? key;
 }
 
+// Match the family's statusOf transport seam without adding a beam-ux dependency/cycle.
+// Axios response.status takes precedence over fetch-style status; messages remain private.
+function lineageReadStatus(error: unknown): number | null {
+    if (error === null || typeof error !== 'object') return null;
+    const response = 'response' in error ? error.response : null;
+    if (response !== null && typeof response === 'object'
+        && 'status' in response && typeof response.status === 'number') {
+        return response.status;
+    }
+    return 'status' in error && typeof error.status === 'number' ? error.status : null;
+}
+
 export function WorkflowsAdminPage() {
     const qc = useQueryClient();
     const { client, onError, onSelectLineage } = useWorkflowsServices();
@@ -111,6 +123,15 @@ export function WorkflowsAdminPage() {
         });
     }, [lineages.data, lineages.isSuccess, query, scope]);
 
+    const readStatus = lineageReadStatus(lineages.error);
+    const forbidden = lineages.isError && (readStatus === 401 || readStatus === 403);
+    const retryable = readStatus === null || readStatus >= 500;
+    const pageState = lineages.isPending
+        ? 'loading'
+        : lineages.isError
+          ? (forbidden ? 'forbidden' : 'error')
+          : filteredLineages.length === 0 ? 'empty' : 'ready';
+
     const invalidateLineages = () =>
         qc.invalidateQueries({ queryKey: ['beam-workflows', 'lineages'] });
 
@@ -164,7 +185,7 @@ export function WorkflowsAdminPage() {
 
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-[260px_1fr]">
                 {/* Lineage list */}
-                <aside className="space-y-1.5">
+                <aside className="space-y-1.5" data-page-state={pageState}>
                     {/* Lineage-index filter (ticket 08) — router-agnostic search + system/custom segment. */}
                     <div className="mb-2 space-y-1.5">
                         <Input
@@ -198,16 +219,18 @@ export function WorkflowsAdminPage() {
                     )}
                     {lineages.isError && (
                         <div role="alert" className="space-y-2 text-sm text-destructive">
-                            <p>Could not load workflows. Check your access or try again.</p>
-                            <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                disabled={lineages.isFetching}
-                                onClick={() => { void lineages.refetch(); }}
-                            >
-                                {lineages.isFetching ? 'Retrying…' : 'Retry'}
-                            </Button>
+                            <p>{forbidden ? "You don't have access to workflows." : 'Could not load workflows.'}</p>
+                            {!forbidden && retryable && (
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    disabled={lineages.isFetching}
+                                    onClick={() => { void lineages.refetch(); }}
+                                >
+                                    {lineages.isFetching ? 'Retrying…' : 'Retry'}
+                                </Button>
+                            )}
                         </div>
                     )}
                     {lineages.isSuccess && filteredLineages.length === 0 && (

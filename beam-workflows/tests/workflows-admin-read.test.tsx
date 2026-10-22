@@ -42,25 +42,31 @@ function noWrites(client: WorkflowsClient) {
     }
 }
 it.each([
-    ['403 refusal', Object.assign(new Error('Sensitive server detail'), { status: 403 })],
-    ['network failure', new TypeError('Failed to fetch: secret transport URL')],
-    ['server failure', Object.assign(new Error('SQLSTATE private stack'), { status: 500 })],
-])('distinguishes %s from a successful empty read without exposing internals', async (_label, error) => {
+    ['403 fetch refusal', Object.assign(new Error('Sensitive server detail'), { status: 403 }), 'forbidden', false],
+    ['401 axios refusal', Object.assign(new Error('Sensitive authentication detail'), { response: { status: 401 } }), 'forbidden', false],
+    ['403 axios refusal', Object.assign(new Error('Sensitive server detail'), { response: { status: 403 } }), 'forbidden', false],
+    ['401 fetch refusal', Object.assign(new Error('Sensitive authentication detail'), { status: 401 }), 'forbidden', false],
+    ['network failure', new TypeError('Failed to fetch: secret transport URL'), 'error', true],
+    ['500 fetch failure', Object.assign(new Error('SQLSTATE private stack'), { status: 500 }), 'error', true],
+    ['500 response takes precedence', Object.assign(new Error('SQLSTATE private stack'), { response: { status: 500 }, status: 403 }), 'error', true],
+    ['422 client failure', Object.assign(new Error('Private validation detail'), { status: 422 }), 'error', false],
+])('distinguishes %s from empty with the family state marker and safe copy', async (_label, error, state, retry) => {
     const client = readClient();
     client.listLineages = vi.fn(async () => { throw error; });
     mount(client);
     const alert = await screen.findByRole('alert');
-    expect(alert.textContent).toContain('Could not load workflows.');
+    expect(alert.closest('[data-page-state]')?.getAttribute('data-page-state')).toBe(state);
+    expect(alert.textContent).toContain(state === 'forbidden' ? "You don't have access to workflows." : 'Could not load workflows.');
     expect(alert.textContent).not.toContain(error.message);
     expect(screen.queryByText('No workflows match.')).toBeNull();
-    expect(screen.getByRole('button', { name: 'Retry' })).toBeTruthy();
+    expect(Boolean(screen.queryByRole('button', { name: 'Retry' }))).toBe(retry);
     noWrites(client);
 });
 it('shows loading without an empty or failure claim while the transport is pending', async () => {
     const client = readClient();
     client.listLineages = vi.fn(() => new Promise<WorkflowLineageData[]>(() => {}));
     mount(client);
-    expect(await screen.findByText('Loading…')).toBeTruthy();
+    expect((await screen.findByText('Loading…')).closest('[data-page-state]')?.getAttribute('data-page-state')).toBe('loading');
     expect(screen.queryByRole('alert')).toBeNull();
     expect(screen.queryByText('No workflows match.')).toBeNull();
 });
@@ -68,14 +74,14 @@ it('reserves the empty message for a successful empty response', async () => {
     const client = readClient();
     client.listLineages = vi.fn(async () => []);
     mount(client);
-    expect(await screen.findByText('No workflows match.')).toBeTruthy();
+    expect((await screen.findByText('No workflows match.')).closest('[data-page-state]')?.getAttribute('data-page-state')).toBe('empty');
     expect(screen.queryByRole('alert')).toBeNull();
     expect(screen.queryByRole('button', { name: 'Retry' })).toBeNull();
 });
 it('retains the populated success state', async () => {
     const client = readClient();
     mount(client);
-    expect(await screen.findByRole('button', { name: new RegExp(lineages[0].name) })).toBeTruthy();
+    expect((await screen.findByRole('button', { name: new RegExp(lineages[0].name) })).closest('[data-page-state]')?.getAttribute('data-page-state')).toBe('ready');
     expect(screen.queryByRole('alert')).toBeNull();
     expect(screen.queryByText('No workflows match.')).toBeNull();
 });
@@ -84,7 +90,7 @@ it.each(['populated', 'empty'])('retries the actual read transport into %s witho
     const client = readClient();
     let complete: (value: WorkflowLineageData[]) => void = () => { throw new Error('Retry was not started'); };
     client.listLineages = vi.fn()
-        .mockRejectedValueOnce(Object.assign(new Error('Forbidden'), { status: 403 }))
+        .mockRejectedValueOnce(Object.assign(new Error('Unavailable'), { status: 503 }))
         .mockImplementationOnce(() => new Promise<WorkflowLineageData[]>((resolve) => { complete = resolve; }));
     mount(client);
     await screen.findByRole('alert');
@@ -112,21 +118,25 @@ it('does not present cached selection as current success after a refused refetch
     expect(screen.queryByRole('button', { name: new RegExp(lineages[0].name) })).toBeNull();
     expect(screen.queryByRole('button', { name: /Save as new version/ })).toBeNull();
     expect(screen.queryByText('No workflows match.')).toBeNull();
-    await user.click(screen.getByRole('button', { name: 'Retry' }));
+    expect(screen.queryByRole('button', { name: 'Retry' })).toBeNull();
+    await qc.refetchQueries({ queryKey: ['beam-workflows', 'lineages'] });
     await waitFor(() => expect(selected).toHaveBeenLastCalledWith(lineages[0]));
     expect(client.listLineages).toHaveBeenCalledTimes(3);
     noWrites(client);
 });
 
-it('keeps a repeated refusal as an error after Retry without empty success or writes', async () => {
+it('shows forbidden without Retry when a server-error retry is then refused', async () => {
     const user = userEvent.setup();
     const client = readClient();
-    client.listLineages = vi.fn(async () => { throw Object.assign(new Error('Forbidden'), { status: 403 }); });
+    client.listLineages = vi.fn().mockRejectedValueOnce(Object.assign(new Error('Unavailable'), { status: 503 }))
+        .mockRejectedValueOnce(Object.assign(new Error('Forbidden'), { status: 403 }));
     mount(client);
     await screen.findByRole('alert');
     await user.click(screen.getByRole('button', { name: 'Retry' }));
     await waitFor(() => expect(client.listLineages).toHaveBeenCalledTimes(2));
-    expect(await screen.findByRole('alert')).toBeTruthy();
+    const alert = await screen.findByRole('alert');
+    expect(alert.closest('[data-page-state]')?.getAttribute('data-page-state')).toBe('forbidden');
+    expect(screen.queryByRole('button', { name: 'Retry' })).toBeNull();
     expect(screen.queryByText('No workflows match.')).toBeNull();
     noWrites(client);
 });

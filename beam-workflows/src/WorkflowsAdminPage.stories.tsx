@@ -143,7 +143,9 @@ export const ListForbidden: Story = {
     }],
     play: async ({ canvasElement }) => {
         const canvas = within(canvasElement);
-        await expect(await canvas.findByRole('alert')).toHaveTextContent('Could not load workflows.');
+        await expect(await canvas.findByRole('alert')).toHaveTextContent("You don't have access to workflows.");
+        await expect(canvasElement.querySelector('[data-page-state]')).toHaveAttribute('data-page-state', 'forbidden');
+        await expect(canvas.queryByRole('button', { name: 'Retry' })).not.toBeInTheDocument();
         await expect(canvas.queryByText('No workflows match.')).not.toBeInTheDocument();
         await expect(canvas.queryByText('Example private server detail')).not.toBeInTheDocument();
     },
@@ -161,6 +163,8 @@ export const ListFailed: Story = {
         await expect(await canvas.findByRole('alert')).toHaveTextContent('Could not load workflows.');
         await expect(canvas.queryByText('No workflows match.')).not.toBeInTheDocument();
         await expect(canvas.queryByText('Example private transport detail')).not.toBeInTheDocument();
+        await expect(canvasElement.querySelector('[data-page-state]')).toHaveAttribute('data-page-state', 'error');
+        await expect(canvas.getByRole('button', { name: 'Retry' })).toBeInTheDocument();
     },
 };
 
@@ -168,7 +172,7 @@ function recoveryClient(empty: boolean) {
     const client = makeMockClient();
     let attempts = 0;
     client.listLineages = async () => {
-        if (attempts++ === 0) throw Object.assign(new Error('Forbidden'), { status: 403 });
+        if (attempts++ === 0) throw Object.assign(new Error('Service unavailable'), { status: 503 });
         return empty ? [] : lineages;
     };
     return client;
@@ -187,7 +191,7 @@ export const RetryToPopulated: Story = {
     },
 };
 
-/** A successful retry may honestly return empty; it never infers permission from a role. */
+/** A successful server-error retry may honestly return empty; it never infers permission from a role. */
 export const RetryToEmpty: Story = {
     decorators: [(Story) => <MockWorkflowsProvider client={recoveryClient(true)}><Story /></MockWorkflowsProvider>],
     play: async ({ canvasElement }) => {
@@ -196,5 +200,39 @@ export const RetryToEmpty: Story = {
         await userEvent.click(canvas.getByRole('button', { name: 'Retry' }));
         await expect(await canvas.findByText('No workflows match.')).toBeInTheDocument();
         await expect(canvas.queryByRole('alert')).not.toBeInTheDocument();
+    },
+};
+
+
+/** Authentication refusal is also forbidden, with no retry, for axios-shaped transports. */
+export const ListUnauthenticated: Story = {
+    decorators: [(Story) => {
+        const client = makeMockClient();
+        client.listLineages = async () => { throw Object.assign(new Error('Example private authentication detail'), { response: { status: 401 } }); };
+        return <MockWorkflowsProvider client={client}><Story /></MockWorkflowsProvider>;
+    }],
+    play: async ({ canvasElement }) => {
+        const canvas = within(canvasElement);
+        await expect(await canvas.findByRole('alert')).toHaveTextContent("You don't have access to workflows.");
+        await expect(canvasElement.querySelector('[data-page-state]')).toHaveAttribute('data-page-state', 'forbidden');
+        await expect(canvas.queryByRole('button', { name: 'Retry' })).not.toBeInTheDocument();
+        await expect(canvas.queryByText('No workflows match.')).not.toBeInTheDocument();
+    },
+};
+
+
+/** A server failure is an error with bounded manual recovery, never a forbidden/empty claim. */
+export const ListServerFailed: Story = {
+    decorators: [(Story) => {
+        const client = makeMockClient();
+        client.listLineages = async () => { throw Object.assign(new Error('Example private server failure'), { response: { status: 500 } }); };
+        return <MockWorkflowsProvider client={client}><Story /></MockWorkflowsProvider>;
+    }],
+    play: async ({ canvasElement }) => {
+        const canvas = within(canvasElement);
+        await expect(await canvas.findByRole('alert')).toHaveTextContent('Could not load workflows.');
+        await expect(canvasElement.querySelector('[data-page-state]')).toHaveAttribute('data-page-state', 'error');
+        await expect(canvas.getByRole('button', { name: 'Retry' })).toBeInTheDocument();
+        await expect(canvas.queryByText('No workflows match.')).not.toBeInTheDocument();
     },
 };

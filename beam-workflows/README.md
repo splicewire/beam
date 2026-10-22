@@ -41,8 +41,9 @@ dependency (the `import type … from '@splicewire/_resources/types/workflows'` 
   (react-query `queryFn`/`mutationFn` all route through `WorkflowsClient`).
 
 `WorkflowsAdminPage` distinguishes a failed/refused lineage read from a successful empty list.
-Its accessible read-error message omits transport internals, and Retry calls the existing query
-refetch. After a failed refetch it hides stale list/editor data while retaining the selection key
+Its accessible state marker distinguishes loading, ready, empty, forbidden and error. Numeric
+401/403 responses show safe access-refusal copy with no Retry; server/network errors offer Retry
+through the existing query refetch. Error messages omit transport internals. After a failed refetch it hides stale list/editor data while retaining the selection key
 for recovery. This does not change server authority or submit writes.
 
 The full tree mounts in isolation off pure generated-DTO fixtures (the §8a bar) — Admin renders
