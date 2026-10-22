@@ -10,7 +10,7 @@ import {
   UserPlus,
   X,
 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import {
   Button,
   buttonVariants,
@@ -121,6 +121,7 @@ function TeamInner({
   const [facet, setFacet] = useState<Facet>("All");
   const [inviting, setInviting] = useState(false);
   const [confirm, setConfirm] = useState<ConfirmIntent | null>(null);
+  const revokeTrigger = useRef<HTMLButtonElement | null>(null);
 
   const updateRole = useUpdateMemberRole();
   const removeMember = useRemoveMember();
@@ -281,7 +282,10 @@ function TeamInner({
                   className="size-7 text-destructive hover:text-destructive"
                   aria-label={`Revoke invitation for ${r.email}`}
                   disabled={revokeInvitation.isPending}
-                  onClick={() => setConfirm({ kind: "revoke", row: r })}
+                  onClick={(event) => {
+                    revokeTrigger.current = event.currentTarget;
+                    setConfirm({ kind: "revoke", row: r });
+                  }}
                 >
                   <X />
                 </Button>
@@ -414,7 +418,16 @@ function TeamInner({
         open={confirm !== null}
         onOpenChange={(o) => !o && setConfirm(null)}
       >
-        <DialogContent>
+        <DialogContent
+          onCloseAutoFocus={(event) => {
+            const trigger = revokeTrigger.current;
+            revokeTrigger.current = null;
+            if (trigger?.isConnected) {
+              event.preventDefault();
+              trigger.focus();
+            }
+          }}
+        >
           {confirm && (
             <>
               <DialogHeader>

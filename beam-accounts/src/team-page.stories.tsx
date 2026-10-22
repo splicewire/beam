@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { userEvent, within, expect } from "storybook/test";
+import { userEvent, within, expect, waitFor } from "storybook/test";
 import { TeamPage } from "./team-page";
 import { makeTeamClient, MockTeamProvider, TEAM_INVITATIONS, TEAM_MEMBERS } from "./team-story-harness";
 const meta = {
@@ -69,7 +69,7 @@ export const InvitePending: Story = {
   },
 };
 
-/** Invite cancel — `play` opens the revoke confirm dialog for the pending invitation. */
+/** Cancel returns focus to the pending invitation action, which can reopen the dialog. */
 export const InviteCancel: Story = {
   render: (args) => (
     <MockTeamProvider>
@@ -78,12 +78,18 @@ export const InviteCancel: Story = {
   ),
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    await userEvent.click(
-      await canvas.findByRole("button", { name: `Revoke invitation for ${TEAM_INVITATIONS[0].email}` }),
-    );
+    const trigger = await canvas.findByRole("button", {
+      name: `Revoke invitation for ${TEAM_INVITATIONS[0].email}`,
+    });
+    await userEvent.click(trigger);
     const dialog = within(document.body);
     await expect(await dialog.findByText(/revoke the pending invitation for/i)).toBeInTheDocument();
     await expect(dialog.getByRole("button", { name: "Revoke invitation" })).toBeInTheDocument();
+    await userEvent.click(dialog.getByRole("button", { name: "Cancel", exact: true }));
+    await waitFor(() => expect(dialog.queryByRole("dialog")).not.toBeInTheDocument());
+    await waitFor(() => expect(trigger).toHaveFocus());
+    await userEvent.click(trigger);
+    await expect(await dialog.findByRole("dialog")).toBeInTheDocument();
   },
 };
 

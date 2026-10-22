@@ -6,6 +6,7 @@ import {
   screen,
   waitFor,
 } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { TeamPage } from "../src/team-page";
 import {
   makeTeamClient,
@@ -111,4 +112,26 @@ it("calls the account concept a team everywhere on the page", async () => {
   await waitFor(() => expect(container.textContent).toMatch(/Team role/));
   expect(container.textContent).not.toMatch(/workspace/i);
   expect(container.querySelector('[aria-label="About team roles"]')).not.toBeNull();
+});
+
+it("returns focus to the revoke trigger after Cancel and supports reopening", async () => {
+  const user = userEvent.setup();
+  const client = makeTeamClient();
+  client.revokeInvitation = vi.fn(async () => undefined);
+  render(
+    <MockTeamProvider client={client}>
+      <TeamPage currentUserId="owner" />
+    </MockTeamProvider>,
+  );
+  const trigger = await screen.findByRole("button", {
+    name: `Revoke invitation for ${TEAM_INVITATIONS[0].email}`,
+  });
+  for (let cycle = 0; cycle < 2; cycle++) {
+    await user.click(trigger);
+    expect(await screen.findByRole("dialog")).toBeTruthy();
+    await user.click(screen.getByRole("button", { name: "Cancel", exact: true }));
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    await waitFor(() => expect(document.activeElement).toBe(trigger));
+  }
+  expect(client.revokeInvitation).not.toHaveBeenCalled();
 });
