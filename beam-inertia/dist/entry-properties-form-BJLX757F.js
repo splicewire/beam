@@ -1,6 +1,6 @@
 import {
   TenantFrameProvider
-} from "./chunk-K25KHYKJ.js";
+} from "./chunk-BWGUSSUS.js";
 import "./chunk-O7ZKQDZR.js";
 import "./chunk-BBYPLYMO.js";
 import "./chunk-OMCRMKUM.js";
@@ -57,4 +57,4 @@ export {
   ENTRY_RESOURCE,
   EntryPropertiesForm as default
 };
-//# sourceMappingURL=entry-properties-form-4JHB42RQ.js.map
+//# sourceMappingURL=entry-properties-form-BJLX757F.js.map

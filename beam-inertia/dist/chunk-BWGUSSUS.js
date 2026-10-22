@@ -40,7 +40,6 @@ import {
 import { Link } from "@inertiajs/react";
 import {
   createWidgetRegistry,
-  createFormResolver,
   FrameProvider,
   registerCardWidgets,
   registerResourceRefWidget
@@ -51,6 +50,7 @@ import { toast } from "sonner";
 
 // src/frame/release-files-form.tsx
 import { useEffect } from "react";
+import { createFormResolver } from "@schemastud/frame";
 import { FilesComparisonPanel } from "@splicewire/beam-ux";
 import { jsx, jsxs } from "react/jsx-runtime";
 function ReleaseFilesForm({ formData, registerSubmit }) {
@@ -73,6 +73,11 @@ function ReleaseFilesForm({ formData, registerSubmit }) {
       formData.id
     )
   ] });
+}
+function createReleaseFilesFormResolver() {
+  const resolver = createFormResolver();
+  resolver.registerFormForSchema((schema) => schema.$id === "ReleaseFilesData", ReleaseFilesForm);
+  return resolver;
 }
 
 // src/frame/primitives.tsx
@@ -224,8 +229,7 @@ function TenantFrameProvider({ children }) {
       iconFor: frameIcon,
       renderLink: renderCardLink
     });
-    const formResolver = createFormResolver();
-    formResolver.registerFormForSchema((schema) => schema.$id === "ReleaseFilesData", ReleaseFilesForm);
+    const formResolver = createReleaseFilesFormResolver();
     return {
       formResolver,
       transport: frameTransport,
@@ -249,4 +253,4 @@ function TenantFrameProvider({ children }) {
 export {
   TenantFrameProvider
 };
-//# sourceMappingURL=chunk-K25KHYKJ.js.map
+//# sourceMappingURL=chunk-BWGUSSUS.js.map

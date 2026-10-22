@@ -7,7 +7,7 @@ import {
 import { beamUxPages } from "@splicewire/beam-ux/pages";
 var defaults = {
   ...beamUxPages,
-  "os": () => import("./os-QTRQ4WAH.js"),
+  "os": () => import("./os-IAOONCUM.js"),
   "settings/profile": () => import("./profile-BJO4IPAO.js"),
   "settings/appearance": () => import("./appearance-YGZ3GVCA.js"),
   "settings/security": () => import("./security-U5BT3H7W.js"),
@@ -15,12 +15,12 @@ var defaults = {
   "auth/login": () => import("./login-JHBZENRF.js"),
   "auth/two-factor-challenge": () => import("./two-factor-challenge-RLGREPUB.js"),
   "auth/register": () => import("./register-RN6SIGKV.js"),
-  "auth/entry": () => import("./entry-EWOKWTG2.js"),
+  "auth/entry": () => import("./entry-MMLH5UDC.js"),
   "auth/reset-password": () => import("./reset-password-MVW4VPLL.js"),
   "auth/forgot-password": () => import("./forgot-password-QGNC3NCS.js"),
   "auth/verify-email": () => import("./verify-email-L3CLVRJ7.js"),
-  "frame/console": () => import("./console-LZV5IW47.js"),
-  "site/home": () => import("./home-EO2RBSJ7.js"),
+  "frame/console": () => import("./console-HH3AALNI.js"),
+  "site/home": () => import("./home-XWACTM4T.js"),
   "account/theme": () => import("./theme-TNYMKTQV.js"),
   "account/home": () => import("./home-RRWYEPAF.js"),
   // Getting onto a team (splicewire/laravel-beam-accounts `routes/teams.php`): `teams.create` renders
@@ -51,4 +51,4 @@ async function resolveBeamPage(name) {
 export {
   resolveBeamPage
 };
-//# sourceMappingURL=chunk-NW4YLBM6.js.map
+//# sourceMappingURL=chunk-BGX343GV.js.map

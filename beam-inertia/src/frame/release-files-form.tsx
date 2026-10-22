@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { createFormResolver } from '@schemastud/frame';
 import type { FormBodySlotProps } from '@schemastud/frame';
 import { FilesComparisonPanel } from '@splicewire/beam-ux';
 import { bodyClient } from '../editor/transport';
@@ -14,4 +15,11 @@ export function ReleaseFilesForm({formData, registerSubmit}: FormBodySlotProps) 
         {typeof formData.id === 'string' && <FilesComparisonPanel key={formData.id}
             memberId={formData.id} client={bodyClient} editorHref={getBeamInertiaConfig().fileEditorHref}/>}
     </div>;
+}
+
+/** Bind only the measured read identity; action and write schemas keep their ordinary forms. */
+export function createReleaseFilesFormResolver() {
+    const resolver = createFormResolver();
+    resolver.registerFormForSchema(schema => schema.$id === 'ReleaseFilesData', ReleaseFilesForm);
+    return resolver;
 }

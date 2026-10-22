@@ -1,7 +1,6 @@
 import { Link } from '@inertiajs/react';
 import {
     createWidgetRegistry,
-    createFormResolver,
     FrameProvider,
     registerCardWidgets,
     registerResourceRefWidget,
@@ -12,7 +11,7 @@ import type { SchemaNode } from '@schemastud/seam';
 import { useCallback, useMemo } from 'react';
 import { toast } from 'sonner';
 import type { ReactNode } from 'react';
-import { ReleaseFilesForm } from './release-files-form';
+import { createReleaseFilesFormResolver } from './release-files-form';
 import { frameIcon } from './icons';
 import { manifestLookup, useFrameManifest } from './manifest';
 import { framePrimitives } from './primitives';
@@ -110,8 +109,7 @@ export function TenantFrameProvider({ children }: { children: ReactNode }) {
             renderLink: renderCardLink,
         });
 
-        const formResolver = createFormResolver();
-        formResolver.registerFormForSchema(schema => schema.$id === 'ReleaseFilesData', ReleaseFilesForm);
+        const formResolver = createReleaseFilesFormResolver();
         return {
             formResolver,
             transport: frameTransport,
