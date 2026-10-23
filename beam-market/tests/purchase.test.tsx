@@ -3,6 +3,7 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReactNode } from "react";
 import { beforeAll, describe, expect, it, vi } from "vitest";
+import { EntitlementPanel } from "../src/EntitlementPanel";
 import {
   ExtensionDetailSheet,
   ExtensionsProvider,
@@ -239,5 +240,17 @@ describe("a member without the install ability", () => {
 
     const button = (await screen.findByRole("button", { name: "Install" })) as HTMLButtonElement;
     expect(button.disabled).toBe(false);
+  });
+});
+
+
+describe("ineffective buyer license history", () => {
+  it.each(["revoked", "unavailable"])("shows %s without exposing a cached key or deployment instructions", (status) => {
+    render(<EntitlementPanel entitlement={{ ...ENTITLEMENT, status }} />);
+    expect(screen.getByText(status === "revoked" ? "License revoked — acquisition unavailable" : "License unavailable — acquisition unavailable")).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Show key" })).toBeNull();
+    expect(screen.queryByText(/Authenticate Composer/)).toBeNull();
+    expect(screen.getByText(/payment fake_ch_1a2b3c/)).toBeTruthy();
+    expect(screen.queryByText(ENTITLEMENT.licenseKey!)).toBeNull();
   });
 });

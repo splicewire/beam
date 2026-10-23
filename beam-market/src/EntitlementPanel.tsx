@@ -27,7 +27,8 @@ export function EntitlementPanel({
   const [revealed, setRevealed] = useState(false);
   const registryHost = hostOf(entitlement.registryUrl);
   const repositoryKey = repositoryKeyFor(entitlement.registryUrl);
-  const key = entitlement.licenseKey;
+  const effective = entitlement.status === "active";
+  const key = effective ? entitlement.licenseKey : null;
 
   return (
     <div
@@ -45,12 +46,16 @@ export function EntitlementPanel({
             {entitlement.amountLabel ? ` · ${entitlement.amountLabel}` : null}
           </p>
           <p className="mt-0.5 text-sm text-muted-foreground">
-            {entitlement.registryUrl
-              ? "Authenticate Composer with this key, then run the deployment step."
-              : "This purchase is licensed. No package registry is configured on this host."}
+            {!effective
+              ? entitlement.status === "revoked"
+                ? "License revoked — acquisition unavailable"
+                : "License unavailable — acquisition unavailable"
+              : entitlement.registryUrl
+                ? "Authenticate Composer with this key, then run the deployment step."
+                : "This purchase is licensed. No package registry is configured on this host."}
           </p>
 
-          {entitlement.registryUrl && (
+          {effective && entitlement.registryUrl && (
             <pre className="mt-2 whitespace-pre-wrap break-all rounded bg-background p-2 text-xs leading-relaxed">
               <code>
                 {[
