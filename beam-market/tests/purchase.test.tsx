@@ -263,7 +263,10 @@ describe("a member without the install ability", () => {
     })) as HTMLButtonElement;
     expect(button.disabled).toBe(true);
     expect(screen.getByText(/don't have permission to install/i)).toBeTruthy();
-    expect(can).toHaveBeenCalledWith("market-extensions.install", expect.objectContaining({id: PAID.id}));
+    expect(can).toHaveBeenCalledWith(
+      "market-extensions.install",
+      expect.objectContaining({ id: PAID.id }),
+    );
   });
 
   it("keeps the Install button enabled when the host grants the ability or says nothing", async () => {
@@ -367,24 +370,47 @@ it.each([
   ["unentitled", PAID, false],
   ["revoked", { ...PAID, isEntitled: false }, false],
   ["effective paid", { ...PAID, isEntitled: true }, true],
-])("passes the actual %s listing to subject-bound install admission", async (_name, listing, allowed) => {
-  const seen: Array<MarketExtension | undefined> = [];
-  const can = (ability: string, subject?: MarketExtension) => {
-    if (ability !== "market-extensions.install") return true;
-    seen.push(subject);
-    return Boolean(subject && !subject.isFree && subject.isEntitled);
-  };
-  mount(<ExtensionDetailSheet listingId={PAID.id} onOpenChange={() => {}} />, client({getListing: vi.fn(async () => listing)}), {can});
-  if (listing.isFree || listing.isEntitled) {
-    const install = await screen.findByRole<HTMLButtonElement>("button", {name:"Install",exact:true});
-    expect(install.disabled).toBe(!allowed);
-  } else await screen.findByRole("button",{name:"Buy $19.00"});
-  await waitFor(()=>expect(seen.some(subject=>subject===listing)).toBe(true));
-  expect(seen).toContain(undefined);
-});
+])(
+  "passes the actual %s listing to subject-bound install admission",
+  async (_name, listing, allowed) => {
+    const seen: Array<MarketExtension | undefined> = [];
+    const can = (ability: string, subject?: MarketExtension) => {
+      if (ability !== "market-extensions.install") return true;
+      seen.push(subject);
+      return Boolean(subject && !subject.isFree && subject.isEntitled);
+    };
+    mount(
+      <ExtensionDetailSheet listingId={PAID.id} onOpenChange={() => {}} />,
+      client({ getListing: vi.fn(async () => listing) }),
+      { can },
+    );
+    if (listing.isFree || listing.isEntitled) {
+      const install = await screen.findByRole<HTMLButtonElement>("button", {
+        name: "Install",
+        exact: true,
+      });
+      expect(install.disabled).toBe(!allowed);
+    } else await screen.findByRole("button", { name: "Buy $19.00" });
+    await waitFor(() =>
+      expect(seen.some((subject) => subject === listing)).toBe(true),
+    );
+    expect(seen).toContain(undefined);
+  },
+);
 
 it("preserves one-argument operator permission for a free listing", async () => {
-  const listing = {...PAID, isFree:true};
-  mount(<ExtensionDetailSheet listingId={PAID.id} onOpenChange={() => {}} />, client({getListing:vi.fn(async()=>listing)}), {can: (ability)=>ability === "market-extensions.install"});
-  expect((await screen.findByRole<HTMLButtonElement>("button",{name:"Install",exact:true})).disabled).toBe(false);
+  const listing = { ...PAID, isFree: true };
+  mount(
+    <ExtensionDetailSheet listingId={PAID.id} onOpenChange={() => {}} />,
+    client({ getListing: vi.fn(async () => listing) }),
+    { can: (ability) => ability === "market-extensions.install" },
+  );
+  expect(
+    (
+      await screen.findByRole<HTMLButtonElement>("button", {
+        name: "Install",
+        exact: true,
+      })
+    ).disabled,
+  ).toBe(false);
 });

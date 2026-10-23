@@ -142,8 +142,7 @@ export function useExtensionsServices(): ExtensionsServices {
  */
 export function extensionsErrorMessage(err: unknown, fallback: string): string {
   const data = (err as { response?: { data?: unknown } })?.response?.data as
-    | { message?: string; errors?: Record<string, string[]> }
-    | undefined;
+    { message?: string; errors?: Record<string, string[]> } | undefined;
 
   const fieldErrors = Object.values(data?.errors ?? {}).flat();
   if (fieldErrors.length > 0) return fieldErrors.join(" ");

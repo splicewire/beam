@@ -49,7 +49,8 @@ export function ExtensionDetailSheet({
   const purchase = usePurchaseExtension();
   const { renderConnectCta, connectUrl, can } = useExtensionsServices();
   // The server refuses an install without `market-extensions.install`; ask the host the same question first.
-  const mayInstall = !isError && (can?.("market-extensions.install", data) ?? true);
+  const mayInstall =
+    !isError && (can?.("market-extensions.install", data) ?? true);
   const permittedPurchase = can?.("market-extensions.purchase") ?? true;
   const mayPurchase = !isError && permittedPurchase;
   const { reset: resetInstall } = install;
