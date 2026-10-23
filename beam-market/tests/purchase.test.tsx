@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen, waitFor } from "@testing-library/react";
+import { act, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReactNode } from "react";
 import { beforeAll, describe, expect, it, vi } from "vitest";
@@ -47,8 +47,8 @@ const PAID: MarketExtension = {
   description: "A paid Beam Extension.",
   changelog: [],
   marketName: null,
-    syncedAt: null,
-    createdAt: "2026-09-01T00:00:00Z",
+  syncedAt: null,
+  createdAt: "2026-09-01T00:00:00Z",
 };
 
 const ENTITLEMENT: MarketEntitlement = {
@@ -85,19 +85,25 @@ function client(overrides: Partial<ExtensionsClient> = {}): ExtensionsClient {
   } as unknown as ExtensionsClient;
 }
 
-function mount(node: ReactNode, services: ExtensionsClient, extra: { can?: (ability: string) => boolean } = {}) {
+function mount(
+  node: ReactNode,
+  services: ExtensionsClient,
+  extra: { can?: (ability: string) => boolean } = {},
+) {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
   });
   const Wrapper = ({ children }: { children: ReactNode }) => (
     <QueryClientProvider client={queryClient}>
-      <ExtensionsProvider services={{ client: services, notify: () => {}, ...extra }}>
+      <ExtensionsProvider
+        services={{ client: services, notify: () => {}, ...extra }}
+      >
         {children}
       </ExtensionsProvider>
     </QueryClientProvider>
   );
 
-  return render(node, { wrapper: Wrapper });
+  return { ...render(node, { wrapper: Wrapper }), queryClient };
 }
 
 describe("a paid listing the buyer does not own", () => {
@@ -108,7 +114,9 @@ describe("a paid listing the buyer does not own", () => {
       client({ install }),
     );
 
-    expect(await screen.findByRole("button", { name: "Buy $19.00" })).toBeTruthy();
+    expect(
+      await screen.findByRole("button", { name: "Buy $19.00" }),
+    ).toBeTruthy();
     expect(screen.queryByRole("button", { name: "Install" })).toBeNull();
     expect(install).not.toHaveBeenCalled();
   });
@@ -130,31 +138,46 @@ describe("a paid listing the buyer does not own", () => {
       client({ purchase } as unknown as Partial<ExtensionsClient>),
     );
 
-    await userEvent.click(await screen.findByRole("button", { name: "Buy $19.00" }));
+    await userEvent.click(
+      await screen.findByRole("button", { name: "Buy $19.00" }),
+    );
 
     const alert = await screen.findByRole("alert");
     expect(alert.textContent).toContain("card_declined");
     // The retry is the same control, relabelled — and the install is still not on offer.
-    expect(await screen.findByRole("button", { name: "Try again" })).toBeTruthy();
+    expect(
+      await screen.findByRole("button", { name: "Try again" }),
+    ).toBeTruthy();
     expect(screen.queryByRole("button", { name: "Install" })).toBeNull();
     expect(screen.queryByTestId("entitlement-panel")).toBeNull();
   });
 
   it("delivers the licence key the moment a purchase captures", async () => {
-    const purchase = vi.fn(async () => ({
-      productId: PAID.id,
-      alreadyEntitled: false,
-      entitlement: ENTITLEMENT,
-    }));
+    let entitled = false;
+    const purchase = vi.fn(async () => {
+      entitled = true;
+      return {
+        productId: PAID.id,
+        alreadyEntitled: false,
+        entitlement: ENTITLEMENT,
+      };
+    });
 
     mount(
       <ExtensionDetailSheet listingId={PAID.id} onOpenChange={() => {}} />,
-      client({ purchase } as unknown as Partial<ExtensionsClient>),
+      client({
+        purchase,
+        getListing: vi.fn(async () => ({ ...PAID, isEntitled: entitled })),
+      } as unknown as Partial<ExtensionsClient>),
     );
 
-    await userEvent.click(await screen.findByRole("button", { name: "Buy $19.00" }));
+    await userEvent.click(
+      await screen.findByRole("button", { name: "Buy $19.00" }),
+    );
 
-    await waitFor(() => expect(screen.getByTestId("entitlement-panel")).toBeTruthy());
+    await waitFor(() =>
+      expect(screen.getByTestId("entitlement-panel")).toBeTruthy(),
+    );
     // And the control becomes the acquisition it just unlocked — never a second Buy.
     expect(await screen.findByRole("button", { name: "Install" })).toBeTruthy();
     expect(screen.queryByRole("button", { name: /^Buy/ })).toBeNull();
@@ -169,7 +192,9 @@ describe("a paid listing the buyer owns", () => {
   it("offers the install", async () => {
     mount(
       <ExtensionDetailSheet listingId={PAID.id} onOpenChange={() => {}} />,
-      client({ getListing: vi.fn(async () => ({ ...PAID, isEntitled: true })) }),
+      client({
+        getListing: vi.fn(async () => ({ ...PAID, isEntitled: true })),
+      }),
     );
 
     expect(await screen.findByRole("button", { name: "Install" })).toBeTruthy();
@@ -203,7 +228,10 @@ describe("a paid listing the buyer owns", () => {
       },
     };
 
-    mount(<InstalledTab />, client({ getInstalled: vi.fn(async () => [installed]) }));
+    mount(
+      <InstalledTab />,
+      client({ getInstalled: vi.fn(async () => [installed]) }),
+    );
 
     expect(await screen.findByTestId("entitlement-panel")).toBeTruthy();
     expect(await screen.findByText(/Your licence · \$19\.00/)).toBeTruthy();
@@ -219,14 +247,20 @@ describe("a member without the install ability", () => {
   // member used to see an ENABLED Install button that answered 403 (ux-demo screenshot review 2026-09-24,
   // G4-FLAGSHIP-REVIEW). The host tells the package what the viewer may do; the button follows the same ability.
   it("sees the Install button disabled, with the reason", async () => {
-    const can = vi.fn((ability: string) => ability !== "market-extensions.install");
+    const can = vi.fn(
+      (ability: string) => ability !== "market-extensions.install",
+    );
     mount(
       <ExtensionDetailSheet listingId={PAID.id} onOpenChange={() => {}} />,
-      client({ getListing: vi.fn(async () => ({ ...PAID, isEntitled: true })) }),
+      client({
+        getListing: vi.fn(async () => ({ ...PAID, isEntitled: true })),
+      }),
       { can },
     );
 
-    const button = (await screen.findByRole("button", { name: "Install" })) as HTMLButtonElement;
+    const button = (await screen.findByRole("button", {
+      name: "Install",
+    })) as HTMLButtonElement;
     expect(button.disabled).toBe(true);
     expect(screen.getByText(/don't have permission to install/i)).toBeTruthy();
     expect(can).toHaveBeenCalledWith("market-extensions.install");
@@ -235,22 +269,80 @@ describe("a member without the install ability", () => {
   it("keeps the Install button enabled when the host grants the ability or says nothing", async () => {
     mount(
       <ExtensionDetailSheet listingId={PAID.id} onOpenChange={() => {}} />,
-      client({ getListing: vi.fn(async () => ({ ...PAID, isEntitled: true })) }),
+      client({
+        getListing: vi.fn(async () => ({ ...PAID, isEntitled: true })),
+      }),
     );
 
-    const button = (await screen.findByRole("button", { name: "Install" })) as HTMLButtonElement;
+    const button = (await screen.findByRole("button", {
+      name: "Install",
+    })) as HTMLButtonElement;
     expect(button.disabled).toBe(false);
   });
 });
 
-
 describe("ineffective buyer license history", () => {
-  it.each(["revoked", "unavailable"])("shows %s without exposing a cached key or deployment instructions", (status) => {
-    render(<EntitlementPanel entitlement={{ ...ENTITLEMENT, status }} />);
-    expect(screen.getByText(status === "revoked" ? "License revoked — acquisition unavailable" : "License unavailable — acquisition unavailable")).toBeTruthy();
-    expect(screen.queryByRole("button", { name: "Show key" })).toBeNull();
-    expect(screen.queryByText(/Authenticate Composer/)).toBeNull();
-    expect(screen.getByText(/payment fake_ch_1a2b3c/)).toBeTruthy();
-    expect(screen.queryByText(ENTITLEMENT.licenseKey!)).toBeNull();
+  it.each(["revoked", "unavailable"])(
+    "shows %s without exposing a cached key or deployment instructions",
+    (status) => {
+      render(<EntitlementPanel entitlement={{ ...ENTITLEMENT, status }} />);
+      expect(
+        screen.getByText(
+          status === "revoked"
+            ? "License revoked — acquisition unavailable"
+            : "License unavailable — acquisition unavailable",
+        ),
+      ).toBeTruthy();
+      expect(screen.queryByRole("button", { name: "Show key" })).toBeNull();
+      expect(screen.queryByText(/Authenticate Composer/)).toBeNull();
+      expect(screen.getByText(/payment fake_ch_1a2b3c/)).toBeTruthy();
+      expect(screen.queryByText(ENTITLEMENT.licenseKey!)).toBeNull();
+    },
+  );
+});
+
+it("removes a revealed purchase key after authoritative denial and keeps it absent on cached reopen", async () => {
+  let entitled = false;
+  const fake = client({
+    getListing: vi.fn(async () => ({ ...PAID, isEntitled: entitled })),
+    purchase: vi.fn(async () => {
+      entitled = true;
+      return {
+        productId: PAID.id,
+        alreadyEntitled: false,
+        entitlement: ENTITLEMENT,
+      };
+    }),
   });
+  const view = mount(
+    <ExtensionDetailSheet listingId={PAID.id} onOpenChange={() => {}} />,
+    fake,
+  );
+  await userEvent.click(
+    await screen.findByRole("button", { name: "Buy $19.00" }),
+  );
+  await userEvent.click(
+    await screen.findByRole("button", { name: "Show key" }),
+  );
+  expect(await screen.findByText(ENTITLEMENT.licenseKey!)).toBeTruthy();
+  entitled = false;
+  await act(async () => {
+    await view.queryClient.invalidateQueries({
+      queryKey: ["beam-market", "listing", PAID.id],
+    });
+  });
+  await waitFor(() =>
+    expect(screen.queryByTestId("entitlement-key")).toBeNull(),
+  );
+  expect(screen.queryByRole("button", { name: "Install" })).toBeNull();
+  view.rerender(
+    <ExtensionDetailSheet listingId={null} onOpenChange={() => {}} />,
+  );
+  view.rerender(
+    <ExtensionDetailSheet listingId={PAID.id} onOpenChange={() => {}} />,
+  );
+  expect(
+    await screen.findByRole("button", { name: "Buy $19.00" }),
+  ).toBeTruthy();
+  expect(screen.queryByTestId("entitlement-panel")).toBeNull();
 });

@@ -49,7 +49,7 @@ export function ExtensionDetailSheet({
   const purchase = usePurchaseExtension();
   const { renderConnectCta, connectUrl, can } = useExtensionsServices();
   // The server refuses an install without `market-extensions.install`; ask the host the same question first.
-  const mayInstall = can?.("market-extensions.install") ?? true;
+  const mayInstall = !isError && (can?.("market-extensions.install") ?? true);
   const { reset: resetInstall } = install;
   const { reset: resetPurchase } = purchase;
   useEffect(() => {
@@ -67,12 +67,9 @@ export function ExtensionDetailSheet({
   // ux-demo-convergence G5 — the paid-listing states, read off the server's own facts: `isFree` and
   // `isEntitled` are the row's, the mutation's own status is the rest. Nothing here decides whether
   // a buyer is entitled; it only decides what to show about the answer.
-  const justPurchased = purchase.data?.entitlement ?? null;
-  // `purchase.isSuccess` counts as owning it: the server has already written the entitlement, and
-  // the detail row's own refetch can land a moment later. Keeping Buy on screen in that gap would
-  // invite a second checkout for something the buyer just bought.
-  const needsPurchase =
-    Boolean(data) && !data!.isFree && !data!.isEntitled && !purchase.isSuccess;
+  const justPurchased =
+    !isError && data?.isEntitled ? (purchase.data?.entitlement ?? null) : null;
+  const needsPurchase = Boolean(data) && !data!.isFree && !data!.isEntitled;
 
   return (
     <Sheet open={listingId !== null} onOpenChange={onOpenChange}>
@@ -114,7 +111,7 @@ export function ExtensionDetailSheet({
                 )}
                 {/* Paid AND bought: the one badge that distinguishes "you may install this" from
                     "you may buy this", both of which otherwise look like a price. */}
-                {!data.isFree && (data.isEntitled || purchase.isSuccess) && (
+                {!data.isFree && data.isEntitled && (
                   <Badge
                     variant="outline"
                     className="font-normal text-emerald-600 dark:text-emerald-400"

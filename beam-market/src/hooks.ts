@@ -9,6 +9,7 @@ import type {
   InstalledExtension,
   MarketConnection,
   MarketConnectionInput,
+  MarketExtension,
 } from "./types";
 
 /**
@@ -253,6 +254,11 @@ export function usePurchaseExtension() {
   return useMutation({
     mutationFn: (id: number) => client.purchase(id),
     onSuccess: (purchase) => {
+      // The capture response bridges refetch latency; a subsequent authoritative read wins.
+      queryClient.setQueryData<MarketExtension>(
+        listingKey(purchase.productId),
+        (previous) => (previous ? { ...previous, isEntitled: true } : previous),
+      );
       // Both the catalog (`isEntitled`) and the Installed tab (the delivered credential) change.
       queryClient.invalidateQueries({ queryKey: ["beam-market"] });
       notify({
