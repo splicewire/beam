@@ -346,3 +346,18 @@ it("removes a revealed purchase key after authoritative denial and keeps it abse
   ).toBeTruthy();
   expect(screen.queryByTestId("entitlement-panel")).toBeNull();
 });
+
+it("does not offer an enabled checkout when the host denies purchase", async () => {
+  const purchase = vi.fn();
+  mount(
+    <ExtensionDetailSheet listingId={PAID.id} onOpenChange={() => {}} />,
+    client({ purchase }),
+    { can: (ability) => ability !== "market-extensions.purchase" },
+  );
+  const button = await screen.findByRole<HTMLButtonElement>("button", {
+    name: "Buy $19.00",
+  });
+  expect(button.disabled).toBe(true);
+  await userEvent.click(button);
+  expect(purchase).not.toHaveBeenCalled();
+});

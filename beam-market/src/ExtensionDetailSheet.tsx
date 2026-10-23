@@ -50,6 +50,8 @@ export function ExtensionDetailSheet({
   const { renderConnectCta, connectUrl, can } = useExtensionsServices();
   // The server refuses an install without `market-extensions.install`; ask the host the same question first.
   const mayInstall = !isError && (can?.("market-extensions.install") ?? true);
+  const permittedPurchase = can?.("market-extensions.purchase") ?? true;
+  const mayPurchase = !isError && permittedPurchase;
   const { reset: resetInstall } = install;
   const { reset: resetPurchase } = purchase;
   useEffect(() => {
@@ -183,7 +185,9 @@ export function ExtensionDetailSheet({
                   gate itself). */}
               {needsPurchase ? (
                 <Button
-                  disabled={purchase.isPending || gatedAndDisconnected}
+                  disabled={
+                    !mayPurchase || purchase.isPending || gatedAndDisconnected
+                  }
                   onClick={() => purchase.mutate(data.id)}
                 >
                   {purchase.isPending
@@ -220,6 +224,11 @@ export function ExtensionDetailSheet({
 
               {/* The failure state, on the surface rather than only in a toast: a decline is
                   recoverable and the buyer needs both the reason and the retry in front of them. */}
+              {needsPurchase && !permittedPurchase && (
+                <p className="text-sm text-muted-foreground">
+                  You do not have permission to purchase this extension.
+                </p>
+              )}
               {purchase.isError && (
                 <p
                   role="alert"
