@@ -5,6 +5,7 @@ export interface FileInspection {
     fileExists: boolean; fileSha256: string | null; fingerprint: string | null;
     path: string | null; publishedSource: string | null; localSource: string | null;
     canTake: boolean; canRestore: boolean; sourceTruncated: boolean;
+    format?: string | null;
 }
 export interface FileReconcileInput {
     expectedHeadVersion: string; expectedPublishedVersion: string;
@@ -14,4 +15,10 @@ export interface FileReconcileInput {
 export interface FileReconcileResult {
     status: string; message: string; entryId: string;
     headVersion: string | null; publishedVersion: string | null;
+    diagnostic?: FileDraftDiagnostic | null;
+}
+/** Response-only projection of the package-owned safe diagnostic Data. No raw compiler output. */
+export interface FileDraftDiagnostic {
+    code: 'compile-failed';
+    message: string;
 }

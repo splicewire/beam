@@ -47,4 +47,4 @@ export { ReleasePanel, type ReleaseRecord, type ReleaseCommand, type ReleaseEntr
 export { ReleaseRecordingSummary, VersionRecordingReferences } from './recording';
 
 export { FilesComparisonPanel } from './FilesComparisonPanel';
-export type { FileInspection, FileReconcileInput, FileReconcileResult } from './files';
+export type { FileInspection, FileReconcileInput, FileReconcileResult, FileDraftDiagnostic } from './files';
