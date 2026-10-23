@@ -9,7 +9,7 @@ import {
   SheetTitle,
 } from "@schemastud/ui";
 import { AlertTriangle, Lock } from "lucide-react";
-import { useEffect } from "react";
+import { useEffect, type ComponentProps } from "react";
 import { EntitlementPanel } from "./EntitlementPanel";
 import {
   useConnectionStatus,
@@ -37,9 +37,11 @@ const KIND_LABELS: Record<string, string> = {
 export function ExtensionDetailSheet({
   listingId,
   onOpenChange,
+  onCloseAutoFocus,
 }: {
   listingId: number | null;
   onOpenChange: (open: boolean) => void;
+  onCloseAutoFocus?: ComponentProps<typeof SheetContent>["onCloseAutoFocus"];
 }) {
   const { data, isError } = useExtensionListing(listingId);
   const { data: connectionStatus } = useConnectionStatus();
@@ -74,7 +76,11 @@ export function ExtensionDetailSheet({
 
   return (
     <Sheet open={listingId !== null} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className="w-full max-w-md overflow-y-auto">
+      <SheetContent
+        side="right"
+        className="w-full max-w-md overflow-y-auto"
+        onCloseAutoFocus={onCloseAutoFocus}
+      >
         {isError && <p role="alert">Could not load this extension.</p>}
         {data && (
           <>

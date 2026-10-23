@@ -70,3 +70,5 @@ Generic UI comes from the `@schemastud/ui` foundation; the DTO typing from `@spl
 ticket 09's manual-install-detection heartbeat is what adds real multi-site fan-out. Until then the
 Installed tab reads the whole install-log table as a single self-hosted site's own local installed
 set.
+
+Catalogue cards are keyboard reachable. Enter or Space opens their detail sheet; closing the controlled sheet returns focus to the opening card while it remains mounted. Standalone `ExtensionDetailSheet` consumers may forward their own `onCloseAutoFocus` callback to the underlying Sheet when their trigger is outside the area.

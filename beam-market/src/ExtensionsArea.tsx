@@ -1,5 +1,5 @@
 import { Button, cn } from '@schemastud/ui';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { ExtensionDetailSheet } from './ExtensionDetailSheet';
 import { ExtensionsCatalog } from './ExtensionsCatalog';
 import { InstalledTab } from './InstalledTab';
@@ -27,6 +27,7 @@ export function ExtensionsArea({
 }) {
     const [tab, setTab] = useState<Tab>('browse');
     const [selectedListingId, setSelectedListingId] = useState<number | null>(null);
+    const detailTrigger = useRef<HTMLElement | null>(null);
     const { client, can } = useExtensionsServices();
     const hasMarketActions = Boolean(client.connectMarket || client.syncMarket || client.disconnectMarket);
     const canConnectMarket = Boolean(client.connectMarket) && (can?.('market-connection.create') ?? true);
@@ -61,7 +62,13 @@ export function ExtensionsArea({
 
             {activeTab === 'browse' && (
                 <ExtensionsCatalog
-                    onSelect={setSelectedListingId}
+                    onSelect={(id) => {
+                        detailTrigger.current =
+                            document.activeElement instanceof HTMLElement && document.activeElement !== document.body
+                                ? document.activeElement
+                                : null;
+                        setSelectedListingId(id);
+                    }}
                     plays={plays}
                     onManageMarkets={canConnectMarket ? () => setTab('market') : undefined}
                 />
@@ -71,6 +78,13 @@ export function ExtensionsArea({
 
             <ExtensionDetailSheet
                 listingId={selectedListingId}
+                onCloseAutoFocus={(event) => {
+                    // Catalogue cards open a controlled sheet without a registered SheetTrigger.
+                    if (detailTrigger.current?.isConnected) {
+                        event.preventDefault();
+                        detailTrigger.current.focus({ preventScroll: true });
+                    }
+                }}
                 onOpenChange={(open) => {
                     if (!open) setSelectedListingId(null);
                 }}

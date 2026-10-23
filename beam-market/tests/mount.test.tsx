@@ -173,6 +173,21 @@ function mount(
 }
 
 describe("ExtensionsCatalog — isolation mount (no Laravel)", () => {
+  it("returns keyboard detail-sheet focus to the catalogue card on every Escape close", async () => {
+    mount(<ExtensionsArea />, fakeClient());
+    const first = await screen.findByRole("button", { name: /Acme Waveform/ });
+    const second = screen.getByRole("button", { name: /Satellite/ });
+    for (const card of [first, first, second]) {
+      card.focus();
+      expect(document.activeElement).toBe(card);
+      fireEvent.keyDown(card, { key: "Enter" });
+      const dialog = await screen.findByRole("dialog");
+      fireEvent.keyDown(dialog, { key: "Escape" });
+      await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+      await waitFor(() => expect(document.activeElement).toBe(card));
+    }
+  });
+
   it("keeps the Market seat and connection form for a host with connection support", async () => {
     mount(<ExtensionsArea />, fakeClient());
     fireEvent.click(screen.getByRole("button", { name: "Market" }));
