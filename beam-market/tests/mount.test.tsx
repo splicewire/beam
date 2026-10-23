@@ -1,5 +1,6 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import type { ReactNode } from "react";
 import { beforeAll, describe, expect, it, vi } from "vitest";
 // Import through the package barrel — the same entry a host consumes.
@@ -186,6 +187,25 @@ describe("ExtensionsCatalog — isolation mount (no Laravel)", () => {
       await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
       await waitFor(() => expect(document.activeElement).toBe(card));
     }
+  });
+
+  it.each([
+    ["Enter", "{Enter}"],
+    ["Space", " "],
+  ])("keeps detail open after complete %s activation until explicit Escape, then restores card focus", async (_name, key) => {
+    const user = userEvent.setup();
+    mount(<ExtensionsArea />, fakeClient());
+    const card = await screen.findByRole("button", { name: /Acme Waveform/ });
+    card.focus();
+    await user.keyboard(key);
+    await screen.findByRole("dialog");
+    // Let the controlled sheet settle after both keydown and keyup, including autofocus.
+    await new Promise((resolve) => setTimeout(resolve, 700));
+    expect(screen.queryByRole("dialog")).not.toBeNull();
+    await user.keyboard("{Escape}");
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    expect(card.isConnected).toBe(true);
+    await waitFor(() => expect(document.activeElement).toBe(card));
   });
 
   it("keeps the Market seat and connection form for a host with connection support", async () => {

@@ -62,7 +62,11 @@ function ListingCard({
       data-testid="extension-card"
       onClick={() => onSelect(listing.id)}
       onKeyDown={(e) => {
-        if (e.key === "Enter" || e.key === " ") onSelect(listing.id);
+        if (e.key === "Enter" || e.key === " ") {
+          // Consume activation before sheet autofocus moves to its Close button.
+          e.preventDefault();
+          onSelect(listing.id);
+        }
       }}
       className="cursor-pointer transition-colors hover:border-primary/40"
     >
