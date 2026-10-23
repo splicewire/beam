@@ -87,7 +87,7 @@ export interface ExtensionsServices {
    * remains the gate; when given, an action the viewer may not take is shown disabled with the reason,
    * rather than enabled and refused with a 403.
    */
-  can?: (ability: string) => boolean;
+  can?: (ability: string, listing?: ExtensionListingDetail) => boolean;
   /**
    * kind 3 — the host-chrome render slot for the `requires_splicewire` "Connect Splicewire to
    * install" CTA — a rendered host affordance the package can't own (the actual connect flow is
