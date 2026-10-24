@@ -43,6 +43,12 @@ const can = { create: isRoot, update: isRoot, delete: isRoot };
 
 The component holds **no tenant concept** — scoping is the adapter's job.
 
+List reads expose `data-page-state` (`loading`, `ready`, `empty`, `forbidden`, `error`).
+Only a successful empty result says "No transforms yet". A 401 or 403 shows safe access feedback;
+other 4xx errors have no Retry. Server/network failures show fixed feedback and Retry calls the
+existing query's refetch. Failed cached results are hidden while selection and unsaved draft
+remain available after recovery. The host still owns query retry defaults and write policy.
+
 ## Surface
 
 The editor pairs a transform library (left) with an authoring pane: a **runtime picker** (the runtime

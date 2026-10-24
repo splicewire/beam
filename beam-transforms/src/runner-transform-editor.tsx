@@ -44,8 +44,32 @@ const BLANK: Draft = { name: '', runtime: 'javy', code: '', requestedNet: 'none'
 const selectClass =
     'h-9 w-full rounded-md border border-input bg-background px-3 text-sm';
 
+// Match the family statusOf seam without depending on beam-ux or exposing transport messages.
+function transformReadStatus(error: unknown): number | null {
+    if (error === null || typeof error !== 'object') return null;
+    const response = 'response' in error ? error.response : null;
+    if (
+        response !== null &&
+        typeof response === 'object' &&
+        'status' in response &&
+        typeof response.status === 'number'
+    ) {
+        return response.status;
+    }
+    return 'status' in error && typeof error.status === 'number' ? error.status : null;
+}
+
 export function RunnerTransformEditor() {
-    const { data: transforms = [], isLoading } = useTransforms();
+    const query = useTransforms();
+    const transforms = query.isSuccess ? query.data : [];
+    const status = transformReadStatus(query.error);
+    const forbidden = query.isError && (status === 401 || status === 403);
+    const retryable = status === null || status >= 500;
+    const pageState = query.isPending
+        ? 'loading'
+        : query.isError
+          ? (forbidden ? 'forbidden' : 'error')
+          : transforms.length === 0 ? 'empty' : 'ready';
     const { renderHeaderExtra } = useTransformsServices();
     const can = useTransformsCan();
     const readOnly = !can.create && !can.update && !can.delete;
@@ -66,11 +90,11 @@ export function RunnerTransformEditor() {
     }
 
     return (
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-[320px_1fr]">
+        <div data-page-state={pageState} className="grid grid-cols-1 gap-6 lg:grid-cols-[320px_1fr]">
             <aside className="space-y-3">
                 <div className="flex items-center justify-between">
                     <h1 className="text-lg font-semibold">Transforms</h1>
-                    {can.create && (
+                    {query.isSuccess && can.create && (
                         <Button
                             size="sm"
                             onClick={() => {
@@ -91,8 +115,27 @@ export function RunnerTransformEditor() {
                         You can view and test transforms, but not change them.
                     </p>
                 )}
-                {isLoading && <p className="text-sm text-muted-foreground">Loading…</p>}
-                {!isLoading && transforms.length === 0 && (
+                {query.isPending && <p className="text-sm text-muted-foreground">Loading…</p>}
+                {query.isError && (
+                    <div role="alert" className="space-y-2 rounded-md border p-4 text-sm">
+                        <p>
+                            {forbidden
+                                ? 'You do not have access to transforms.'
+                                : 'Could not load transforms.'}
+                        </p>
+                        {!forbidden && retryable && (
+                            <Button
+                                size="sm"
+                                variant="outline"
+                                disabled={query.isFetching}
+                                onClick={() => void query.refetch()}
+                            >
+                                Retry
+                            </Button>
+                        )}
+                    </div>
+                )}
+                {query.isSuccess && transforms.length === 0 && (
                     <div className="rounded-md border border-dashed p-4 text-sm">
                         <p className="font-medium">No transforms yet</p>
                         {can.create && (
@@ -127,7 +170,7 @@ export function RunnerTransformEditor() {
                 </ul>
             </aside>
 
-            {selected || can.create ? (
+            {query.isSuccess && (selected || can.create ? (
                 <TransformEditorPane
                     key={selectedId ?? 'new'}
                     transform={selected}
@@ -138,7 +181,7 @@ export function RunnerTransformEditor() {
                 />
             ) : (
                 <p className="text-sm text-muted-foreground">Choose a transform to view and test it.</p>
-            )}
+            ))}
         </div>
     );
 }

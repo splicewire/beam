@@ -1,12 +1,129 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { expect, it, vi } from 'vitest';
 import { TransformsProvider } from './provider';
 import { RunnerTransformEditor } from './runner-transform-editor';
 import { makeTransformsClient, MockTransformsProvider, SAMPLE_TRANSFORMS } from './story-harness';
-import type { RunnerTransformInput } from './types';
+import type { RunnerTransformInput, TransformsClient } from './types';
 
 const READ_ONLY_NOTICE = 'You can view and test transforms, but not change them.';
+
+function readFixture(list: TransformsClient['list']) {
+    const queryClient = new QueryClient({
+        defaultOptions: { queries: { retry: false, gcTime: 0 } },
+    });
+    const client = { ...makeTransformsClient(), list };
+    const view = render(
+        <QueryClientProvider client={queryClient}>
+            <TransformsProvider services={{ client }}>
+                <RunnerTransformEditor />
+            </TransformsProvider>
+        </QueryClientProvider>
+    );
+    return { ...view, queryClient };
+}
+
+it.each([
+    ['fetch401', { status: 401, message: 'PRIVATE transport detail' }, 'forbidden', false],
+    [
+        'axios403',
+        {
+            response: { status: 403, data: { message: 'PRIVATE transport detail' } },
+        },
+        'forbidden',
+        false,
+    ],
+    ['response precedence', { status: 500, response: { status: 403 } }, 'forbidden', false],
+    ['404', { status: 404 }, 'error', false],
+    ['422', { status: 422 }, 'error', false],
+    ['500', { status: 500, message: 'PRIVATE transport detail' }, 'error', true],
+    ['network', new Error('PRIVATE transport detail'), 'error', true],
+] as const)(
+    'represents refused/failed list reads honestly: %s',
+    async (_name, error, state, retry) => {
+        const list = vi.fn().mockRejectedValue(error);
+        const { container } = readFixture(list);
+        await waitFor(() => expect(screen.getByRole('alert')).toBeTruthy());
+        expect(container.firstElementChild?.getAttribute('data-page-state')).toBe(state);
+        expect(screen.queryByText('No transforms yet')).toBeNull();
+        expect(screen.queryByLabelText('Name')).toBeNull();
+        expect(screen.queryByText(/PRIVATE transport detail/)).toBeNull();
+        expect(Boolean(screen.queryByRole('button', { name: 'Retry' }))).toBe(retry);
+        expect(screen.getByRole('alert').textContent).toContain(
+            state === 'forbidden'
+                ? 'You do not have access to transforms.'
+                : 'Could not load transforms.'
+        );
+        expect(list).toHaveBeenCalledTimes(1);
+    }
+);
+
+it('marks loading and reserves the empty message for a successful empty read', async () => {
+    let finish!: (rows: []) => void;
+    const { container } = readFixture(
+        () =>
+            new Promise((resolve) => {
+                finish = resolve;
+            })
+    );
+    expect(container.firstElementChild?.getAttribute('data-page-state')).toBe('loading');
+    expect(screen.queryByText('No transforms yet')).toBeNull();
+    await act(async () => finish([]));
+    await waitFor(() => expect(screen.getByText('No transforms yet')).toBeTruthy());
+    expect(container.firstElementChild?.getAttribute('data-page-state')).toBe('empty');
+});
+
+it('retries the real failed query and renders its recovered list', async () => {
+    const list = vi
+        .fn()
+        .mockRejectedValueOnce({ status: 503 })
+        .mockResolvedValue(SAMPLE_TRANSFORMS);
+    const { container } = readFixture(list);
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Retry' })).toBeTruthy());
+    fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
+    await waitFor(() => expect(screen.getByText('Shape payload')).toBeTruthy());
+    expect(list).toHaveBeenCalledTimes(2);
+    expect(screen.queryByRole('alert')).toBeNull();
+    expect(container.firstElementChild?.getAttribute('data-page-state')).toBe('ready');
+});
+
+it.each([403, 503])(
+    'hides a failed cached list without losing selection/draft: %s',
+    async (status) => {
+        const list = vi.fn().mockResolvedValue(SAMPLE_TRANSFORMS);
+        const { container, queryClient } = readFixture(list);
+        await waitFor(() => expect(screen.getByText('Shape payload')).toBeTruthy());
+        fireEvent.click(screen.getByText('Shape payload'));
+        fireEvent.change(screen.getByLabelText('Name'), {
+            target: { value: 'Unsaved draft' },
+        });
+        list.mockRejectedValue({ status });
+        await act(async () => {
+            await queryClient.refetchQueries({ queryKey: ['beam-transforms'] });
+        });
+        await waitFor(() => expect(screen.getByRole('alert')).toBeTruthy());
+        expect(container.firstElementChild?.getAttribute('data-page-state')).toBe(
+            status === 403 ? 'forbidden' : 'error'
+        );
+        expect(screen.queryByText('Shape payload')).toBeNull();
+        expect(screen.queryByText('No transforms yet')).toBeNull();
+        expect(screen.queryByLabelText('Name')).toBeNull();
+        expect(Boolean(screen.queryByRole('button', { name: 'Retry' }))).toBe(status === 503);
+        list.mockResolvedValue(SAMPLE_TRANSFORMS);
+        if (status === 503) {
+            fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
+        } else {
+            await act(async () => {
+                await queryClient.refetchQueries({ queryKey: ['beam-transforms'] });
+            });
+        }
+        await waitFor(() =>
+            expect(screen.getByLabelText('Name').getAttribute('value')).toBe('Unsaved draft')
+        );
+        expect(screen.getByText('Edit transform')).toBeTruthy();
+        expect(container.firstElementChild?.getAttribute('data-page-state')).toBe('ready');
+    }
+);
 
 // Isolation-mount bar (ADR-0116 §8a): the surface mounts and renders off a pure fixture provider —
 // no Laravel, no app, no @/ — proving it is genuinely portable. If this compiles + mounts, the
