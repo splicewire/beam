@@ -22,6 +22,28 @@ function setup(inspection = inspected) {
     return {inspectReleaseFile, takeReleaseFile, restoreMissingReleaseFile};
 }
 describe('deliberate file reconciliation', () => {
+    it('restores missing canonical MDX with exact absence tokens, cancel focus and no Theme editor link', async () => {
+        const client = setup({...inspected,format:'mdx',path:'help/page/intro.mdx',state:'missing',localSource:null,fileExists:false,fileSha256:null,canTake:false,canRestore:true});
+        const restore = await screen.findByRole('button', {name:'Restore missing published file'});
+        fireEvent.click(restore);
+        await waitFor(() => expect(document.activeElement).toBe(screen.getByRole('button',{name:'Confirm restore missing file'})));
+        fireEvent.click(screen.getByRole('button',{name:'Cancel'}));
+        expect(document.activeElement).toBe(screen.getByRole('button',{name:'Restore missing published file'}));
+        expect(client.restoreMissingReleaseFile).not.toHaveBeenCalled();
+        fireEvent.click(screen.getByRole('button',{name:'Restore missing published file'}));
+        fireEvent.click(screen.getByRole('button',{name:'Confirm restore missing file'}));
+        await screen.findByText('Restored.');
+        expect(client.restoreMissingReleaseFile).toHaveBeenCalledExactlyOnceWith('member', {expectedHeadVersion:'head-a',expectedPublishedVersion:'pin-a',expectedFileExists:false,expectedFileSha256:null,fingerprint:'placement-a',confirmed:true});
+        expect(client.takeReleaseFile).not.toHaveBeenCalled();
+        expect(screen.queryByRole('link')).toBeNull();
+    });
+    it('explains no-overwrite for an existing different MDX file as well as Theme', async () => {
+        setup({...inspected,format:'mdx',path:'help/page/intro.mdx'});
+        await screen.findByRole('button',{name:'Take file as draft'});
+        expect(screen.getByText(/Restore never overwrites an existing file/)).toBeTruthy();
+        expect(screen.queryByRole('button',{name:'Restore missing published file'})).toBeNull();
+    });
+
     it('captures exact inspection, cancel restores focus, confirms draft and uses host href', async () => {
         const client = setup();
         const take = await screen.findByRole('button', {name: 'Take file as draft'});

@@ -8,8 +8,8 @@ const base: FileInspection = {
     path:'resources/beam/theme/default.css',publishedSource:':root {\n  --theme-site-accent: #334455;\n}',localSource:':root {\n  --theme-site-accent: #abcdef;\n}',
     canTake:true,canRestore:false,sourceTruncated:false,
 };
-function client(state: string): UxBuilderClient {
-    let current = {...base,state};
+function client(state: string, mdx = false): UxBuilderClient {
+    let current = {...base,state,...(mdx ? {format:'mdx',path:'help/page/intro.mdx',publishedSource:'---\ntitle: Help\nnavOrder: 2\n---\n\n# Published help\n',localSource:'---\ntitle: Help\nnavOrder: 2\n---\n\n# Edited help\n'} : {})};
     if(state === 'missing') current = {...current,fileExists:false,fileSha256:null,localSource:null,canTake:false,canRestore:true,message:'The local published file is missing.'};
     if(state === 'invalid') current = {...current,canTake:false,localSource:'body { arbitrary: css; }',message:'Only the exact canonical complete Theme format is supported.'};
     return {
@@ -21,7 +21,7 @@ function client(state: string): UxBuilderClient {
             return {status:'drafted',message:'Draft saved. Publish separately through ordinary review.',entryId:'theme',headVersion:'imported-v4',publishedVersion:'published-v2'};
         },
         restoreMissingReleaseFile:async () => {
-            current = {...current,state:'unchanged',fileExists:true,fileSha256:'restored-sha256',localSource:base.publishedSource,canRestore:false,message:'The file matches the current published version.'};
+            current = {...current,state:'unchanged',fileExists:true,fileSha256:'restored-sha256',localSource:current.publishedSource,canRestore:false,message:'The file matches the current published version.'};
             return {status:'restored',message:'Missing published file restored. Draft, history and Git unchanged.',entryId:'theme',headVersion:'working-v3',publishedVersion:'published-v2'};
         },
     };
@@ -33,3 +33,6 @@ export const Differs: Story = {args:{memberId:'member',client:client('differs'),
 export const Missing: Story = {args:{memberId:'member',client:client('missing')}};
 export const Invalid: Story = {args:{memberId:'member',client:client('invalid')}};
 export const Conflict: Story = {args:{memberId:'member',client:client('conflict')}};
+
+export const MissingMdx: Story = {args:{memberId:'member',client:client('missing',true)}};
+export const MdxRestoreConflict: Story = {args:{memberId:'member',client:{...client('missing',true),restoreMissingReleaseFile:async () => {throw Error('The file appeared. Nothing was overwritten. Reload comparison.');}}}};
