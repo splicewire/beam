@@ -65,6 +65,6 @@ it('gives every select its label alone as an accessible name', () => {
     fileLanguages={['tsx', 'mdx']} pageFields={{ names: ['recipe'], schema: null }} />);
   fireEvent.click(screen.getByText('Page settings', { selector: 'summary' }));
   for (const name of ['Page type', 'File language', 'Child page fields']) {
-    expect(screen.getByRole('combobox', { name, exact: true })).toBe(screen.getByLabelText(name, { exact: true }));
+    expect(screen.getByRole('combobox', { name })).toBe(screen.getByLabelText(name, { exact: true }));
   }
 });
