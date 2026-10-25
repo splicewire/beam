@@ -27,6 +27,9 @@ vi.mock('@splicewire/beam-ux/site', () => ({
 
 const editMode = vi.hoisted(() => ({ value: false }));
 vi.mock('@splicewire/beam-ux/canvas', () => ({ useEditMode: () => editMode.value }));
+vi.mock('../../editor/intake', () => ({
+    IntakeFormsFromPage: ({ children }: { children: unknown }) => <div data-testid="intake-forms">{children as never}</div>,
+}));
 
 import SiteHome from './home';
 
@@ -58,6 +61,14 @@ describe('site/home — read fork', () => {
         render(<SiteHome entry={ENTRY} />);
 
         expect(screen.getByTestId('artifact').getAttribute('data-components')).toContain('DemoHero');
+    });
+
+    it("gives the body's forms the schemas the server put on the page, as the entry page does", () => {
+        // EP-07d, starter receipt 2026-10-25: a form published on `/` read 'This form is not available.', because this
+        // page, unlike the packaged entry page, never handed its body the page's `intakeForms`.
+        render(<SiteHome entry={ENTRY} />);
+
+        expect(screen.getByTestId('intake-forms').contains(screen.getByTestId('artifact'))).toBe(true);
     });
 
     it('falls back to the packaged default tree when the entry has NO artifact', () => {

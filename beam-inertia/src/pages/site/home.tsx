@@ -3,6 +3,7 @@ import type { ComponentType } from 'react';
 import { useEditMode } from '@splicewire/beam-ux/canvas';
 import { EntryBody } from '@splicewire/beam-ux/site';
 import { canvasConfig } from '../../editor/canvas-config';
+import { IntakeFormsFromPage } from '../../editor/intake';
 import PageEditor from '../../editor/page-editor';
 import SiteLayout from '../../layouts/site-layout';
 
@@ -60,35 +61,38 @@ export default function SiteHome({
     return (
         <SiteLayout>
             <Head title="Home" />
-            <div
-                style={{
-                    maxWidth: 900,
-                    margin: '0 auto',
-                    padding: 'clamp(24px,5vw,48px) clamp(18px,5vw,40px)',
-                }}
-            >
-                {!editing && artifact ? (
-                    // The reader's path: the compiled body at its version-pinned address, the same one
-                    // every rendered entry takes. No client-side compile fallback (ADR-0209 §7).
-                    <EntryBody
-                        artifact={artifact}
-                        // `EntryBodyProps.components` is declared `ComponentType<never>` (a body's
-                        // props are the artifact's business, not this page's); the canvas registry is
-                        // typed by what it renders. Same map, two vantage points.
-                        components={canvasConfig.registry as Record<string, ComponentType<never>>}
-                    />
-                ) : (
-                    /* The editable page body, and the no-artifact default. slug `home` → its default
-                       JsonDoc (editor/defaults.ts) until a save persists a real body. `entryId` is the
-                       ADDRESS the save goes to (ADR-0214 §2), shared server-side by
-                       `App\Support\PageEntryRef`; the slug is only the seed key and the editor label. */
-                    <PageEditor
-                        slug="home"
-                        body={null}
-                        entryId={entry?.id ?? null}
-                    />
-                )}
-            </div>
+            {/* EP-07d: as on the packaged entry page, the body's forms read the schemas the server put on the page. */}
+            <IntakeFormsFromPage>
+                <div
+                    style={{
+                        maxWidth: 900,
+                        margin: '0 auto',
+                        padding: 'clamp(24px,5vw,48px) clamp(18px,5vw,40px)',
+                    }}
+                >
+                    {!editing && artifact ? (
+                        // The reader's path: the compiled body at its version-pinned address, the same one
+                        // every rendered entry takes. No client-side compile fallback (ADR-0209 §7).
+                        <EntryBody
+                            artifact={artifact}
+                            // `EntryBodyProps.components` is declared `ComponentType<never>` (a body's
+                            // props are the artifact's business, not this page's); the canvas registry is
+                            // typed by what it renders. Same map, two vantage points.
+                            components={canvasConfig.registry as Record<string, ComponentType<never>>}
+                        />
+                    ) : (
+                        /* The editable page body, and the no-artifact default. slug `home` → its default
+                           JsonDoc (editor/defaults.ts) until a save persists a real body. `entryId` is the
+                           ADDRESS the save goes to (ADR-0214 §2), shared server-side by
+                           `App\Support\PageEntryRef`; the slug is only the seed key and the editor label. */
+                        <PageEditor
+                            slug="home"
+                            body={null}
+                            entryId={entry?.id ?? null}
+                        />
+                    )}
+                </div>
+            </IntakeFormsFromPage>
         </SiteLayout>
     );
 }
