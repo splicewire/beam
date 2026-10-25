@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@schemastud/ui";
 import { WorkflowActionForm } from "@splicewire/beam-workflows/action-form";
 import type { WorkflowProjectionData } from "@splicewire/beam-workflows/action-form";
@@ -301,6 +301,141 @@ export function ReleasePanel({
           Scheduling is unavailable on this host. Reviewed Releases can still
           publish now.
         </p>
+      )}
+    </section>
+  );
+}
+
+/** Create and assemble a built Release from the saved version in each entry editor. */
+export function BuiltReleaseAssembly({
+  entryId,
+  entryTitle,
+  versions,
+  listReleases,
+  createRelease,
+  releaseCommand,
+}: {
+  entryId: string;
+  entryTitle: string;
+  versions: ReleaseEntryChoice["versions"];
+  listReleases: () => Promise<ReleaseRecord[]>;
+  createRelease: (entryId: string, title: string) => Promise<ReleaseRecord>;
+  releaseCommand: (
+    releaseId: string,
+    command: ReleaseCommand,
+  ) => Promise<ReleaseRecord>;
+}) {
+  const [releases, setReleases] = useState<ReleaseRecord[]>([]);
+  const [releaseId, setReleaseId] = useState("");
+  const [title, setTitle] = useState("");
+  const [pending, setPending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const activeRelease = releases.find((release) => release.id === releaseId);
+
+  useEffect(() => {
+    let live = true;
+    void listReleases()
+      .then((records) => {
+        if (!live) return;
+        const editable = records.filter((record) => record.status !== "published");
+        setReleases(editable);
+        setReleaseId((current) =>
+          editable.some((record) => record.id === current)
+            ? current
+            : editable[0]?.id ?? "",
+        );
+      })
+      .catch((reason) => {
+        if (live) {
+          setError(
+            reason instanceof Error
+              ? reason.message
+              : "Could not load Releases.",
+          );
+        }
+      });
+    return () => {
+      live = false;
+    };
+    // AddressedVisualEditor is keyed by entry; refreshes after mutations use the returned record.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [entryId]);
+
+  const create = async () => {
+    const name = title.trim();
+    if (!name) return;
+    setPending(true);
+    setError(null);
+    try {
+      const release = await createRelease(entryId, name);
+      setReleases((current) => [
+        release,
+        ...current.filter((item) => item.id !== release.id),
+      ]);
+      setReleaseId(release.id);
+      setTitle("");
+    } catch (reason) {
+      setError(
+        reason instanceof Error
+          ? reason.message
+          : "Could not create the Release.",
+      );
+    } finally {
+      setPending(false);
+    }
+  };
+
+  const command = async (input: ReleaseCommand) => {
+    if (!activeRelease) return;
+    const updated = await releaseCommand(activeRelease.id, input);
+    setReleases((current) =>
+      current.map((item) => (item.id === updated.id ? updated : item)),
+    );
+  };
+
+  return (
+    <section aria-label="Build a Release" className="mt-4 space-y-3">
+      <fieldset disabled={pending} className="space-y-2 rounded border p-3">
+        <legend>Create a built Release</legend>
+        <label>
+          Release title{" "}
+          <input
+            value={title}
+            onChange={(event) => setTitle(event.target.value)}
+          />
+        </label>
+        <Button
+          size="sm"
+          variant="secondary"
+          disabled={!title.trim()}
+          onClick={() => void create()}
+        >
+          Create built Release
+        </Button>
+      </fieldset>
+      {releases.length > 0 && (
+        <label>
+          Release to assemble{" "}
+          <select
+            value={releaseId}
+            onChange={(event) => setReleaseId(event.target.value)}
+          >
+            <option value="">Choose a Release</option>
+            {releases.map((release) => (
+              <option key={release.id} value={release.id}>
+                {release.title}
+              </option>
+            ))}
+          </select>
+        </label>
+      )}
+      {error && <p role="alert">{error}</p>}
+      {activeRelease && (
+        <ReleasePanel
+          release={activeRelease}
+          entries={[{ id: entryId, title: entryTitle, versions }]}
+          onCommand={command}
+        />
       )}
     </section>
   );
