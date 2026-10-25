@@ -17,6 +17,9 @@ const saveDraft = vi.hoisted(() => vi.fn());
 const publishVersion = vi.hoisted(() => vi.fn());
 const listVersions = vi.hoisted(() => vi.fn());
 const restoreVersion = vi.hoisted(() => vi.fn());
+const listReleases = vi.hoisted(() => vi.fn());
+const createRelease = vi.hoisted(() => vi.fn());
+const releaseCommand = vi.hoisted(() => vi.fn());
 const provided = vi.hoisted(() => ({ profile: undefined as unknown }));
 vi.mock("./local-session", async (importOriginal) => {
   const original = await importOriginal<typeof import("./local-session")>();
@@ -40,6 +43,9 @@ vi.mock("./context", () => ({
       saveBody,
       saveDraft,
       listVersions,
+      listReleases,
+      createRelease,
+      releaseCommand,
       publish: publishVersion,
       restoreVersion,
     },
@@ -101,6 +107,7 @@ beforeEach(() => {
     versions: [],
   };
   listVersions.mockResolvedValue(state);
+  listReleases.mockResolvedValue([]);
   saveDraft.mockResolvedValue(state);
 });
 afterEach(() => {
@@ -109,6 +116,9 @@ afterEach(() => {
   saveBody.mockReset();
   saveDraft.mockReset();
   listVersions.mockReset();
+  listReleases.mockReset();
+  createRelease.mockReset();
+  releaseCommand.mockReset();
   publishVersion.mockReset();
   restoreVersion.mockReset();
 });
@@ -242,6 +252,153 @@ it("first Publish saves a null-base draft then publishes its returned ref", asyn
   await waitFor(() =>
     expect(publishVersion).toHaveBeenCalledWith("publish-first", "v1"),
   );
+});
+
+it("creates a built Release and assembles saved versions from multiple entries", async () => {
+  const created = {
+    id: "release-launch",
+    title: "Launch",
+    realm: "site",
+    status: "draft",
+    reviewedBy: null,
+    members: [],
+    workflow: null,
+    canSchedule: false,
+    reviewRequired: false,
+  };
+  const firstState = {
+    headVersion: "first-v2",
+    publishedVersion: "first-v1",
+    draftPending: true,
+    versions: [
+      { id: "first-v1", readable: "v1" },
+      { id: "first-v2", readable: "v2" },
+    ],
+  };
+  const secondState = {
+    headVersion: "second-v3",
+    publishedVersion: "second-v2",
+    draftPending: true,
+    versions: [{ id: "second-v3", readable: "v3" }],
+  };
+  listVersions.mockImplementation(async (id: string) =>
+    id === "first-entry" ? firstState : secondState,
+  );
+  createRelease.mockResolvedValue(created);
+  releaseCommand.mockImplementation(async (releaseId, command) => ({
+    ...created,
+    id: releaseId,
+    members: [
+      {
+        entryId: command.entryId,
+        versionId: command.ref,
+        observedPin: null,
+        redirectTarget: null,
+        stale: false,
+      },
+    ],
+  }));
+  loadBody.mockResolvedValue({ body: SAVED });
+
+  const first = render(<VisualEditorMount entryRef={ref("first-entry")} />);
+  fireEvent.change(await screen.findByLabelText("Release title"), {
+    target: { value: "Launch" },
+  });
+  fireEvent.click(screen.getByRole("button", { name: "Create built Release" }));
+  await waitFor(() =>
+    expect(createRelease).toHaveBeenCalledWith("first-entry", "Launch"),
+  );
+
+  expect(await screen.findByRole("region", { name: "Release" })).toBeTruthy();
+  fireEvent.change(screen.getByLabelText("Entry"), {
+    target: { value: "first-entry" },
+  });
+  fireEvent.change(screen.getByLabelText("Saved version"), {
+    target: { value: "first-v2" },
+  });
+  fireEvent.click(screen.getByRole("button", { name: "Add to Release" }));
+  await waitFor(() =>
+    expect(releaseCommand).toHaveBeenLastCalledWith("release-launch", {
+      action: "member",
+      entryId: "first-entry",
+      ref: "first-v2",
+      redirectTarget: null,
+    }),
+  );
+
+  const assembled = {
+    ...created,
+    members: [
+      {
+        entryId: "first-entry",
+        versionId: "first-v2",
+        observedPin: null,
+        redirectTarget: null,
+        stale: false,
+      },
+    ],
+  };
+  listReleases.mockResolvedValue([assembled]);
+  first.rerender(<VisualEditorMount entryRef={ref("second-entry")} />);
+  fireEvent.change(await screen.findByLabelText("Release to assemble"), {
+    target: { value: "release-launch" },
+  });
+  fireEvent.change(screen.getByLabelText("Entry"), {
+    target: { value: "second-entry" },
+  });
+  fireEvent.change(screen.getByLabelText("Saved version"), {
+    target: { value: "second-v3" },
+  });
+  fireEvent.click(screen.getByRole("button", { name: "Add to Release" }));
+
+  await waitFor(() =>
+    expect(releaseCommand).toHaveBeenLastCalledWith("release-launch", {
+      action: "member",
+      entryId: "second-entry",
+      ref: "second-v3",
+      redirectTarget: null,
+    }),
+  );
+});
+
+it("offers only draft Releases for adding an entry", async () => {
+  const release = (id: string, status: string) => ({
+    id,
+    title: status,
+    realm: "site",
+    status,
+    reviewedBy: null,
+    members: [],
+    workflow: null,
+    canSchedule: false,
+    reviewRequired: false,
+  });
+  listVersions.mockResolvedValue({
+    headVersion: "v1",
+    publishedVersion: "v1",
+    draftPending: false,
+    versions: [{ id: "v1", readable: "v1" }],
+  });
+  listReleases.mockResolvedValue([
+    release("draft-release", "draft"),
+    release("review-release", "in_review"),
+    release("approved-release", "approved"),
+    release("scheduled-release", "scheduled"),
+    release("terminal-release", "cancelled"),
+  ]);
+  loadBody.mockResolvedValue({ body: SAVED });
+  render(<VisualEditorMount entryRef={ref("entry-draft-only")} />);
+
+  const releases = await screen.findByLabelText("Release to assemble");
+  expect(releases.querySelector('option[value="draft-release"]')).not.toBeNull();
+  for (const id of [
+    "review-release",
+    "approved-release",
+    "scheduled-release",
+    "terminal-release",
+  ]) {
+    expect(releases.querySelector(`option[value="${id}"]`)).toBeNull();
+  }
 });
 it("refuses a missing pin when history exists even if head is missing", async () => {
   listVersions.mockResolvedValue({

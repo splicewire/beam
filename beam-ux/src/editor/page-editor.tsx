@@ -189,6 +189,8 @@ export function PageEditor({ slug, body = null, entryId: suppliedId = null }: Pa
                                   settings ? saveDraft(entryId, asBody(doc), baseVersion, undefined, settings) : saveDraft(entryId, asBody(doc), baseVersion),
                               publish: (_s: string, ref: string) => publish(entryId, ref),
                               releaseCommand: bodyClient.releaseCommand?.bind(bodyClient),
+                              listReleases: bodyClient.listReleases?.bind(bodyClient),
+                              createRelease: bodyClient.createRelease?.bind(bodyClient),
                               listVersions: () => listVersions(entryId),
                               restoreVersion: (_s: string, ref: string) =>
                                   restoreVersion(entryId, ref),

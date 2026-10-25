@@ -1,7 +1,7 @@
 import { canMountPublication, isUnauthored } from './publication-state';
 import { PageSettings, type PageFieldsOffer } from './PageSettings';
 import { SourceMode } from './SourceMode';
-import { ReleasePanel } from '../releases';
+import { BuiltReleaseAssembly, ReleasePanel } from '../releases';
 import type { SessionPageSettings } from './local-session';
 // Window-mode authoring shares the package-owned Local Session and publication transport.
 import { useEffect, useState } from 'react';
@@ -157,6 +157,17 @@ function AddressedVisualEditor({ entryRef }: { entryRef: EntryRef }) {
                 const state = await transport.listVersions!(id!);
                 setLoaded(previous => previous && {...previous,state:{...state,release}});
             }} />}
+        {id && loaded.state.headVersion && loaded.state.versions.length > 0 && transport.listReleases && transport.createRelease && transport.releaseCommand && (
+            <BuiltReleaseAssembly
+                entryId={id}
+                entryTitle={entryRef.slug ?? 'This entry'}
+                versions={loaded.state.versions.map(version => ({id:version.id,label:version.readable ?? version.id}))}
+                canTakeDown={loaded.state.publishedVersion !== null}
+                listReleases={() => transport.listReleases!()}
+                createRelease={(entryId, title) => transport.createRelease!(entryId, title)}
+                releaseCommand={(releaseId, command) => transport.releaseCommand!(releaseId, command)}
+            />
+        )}
         {history && <aside aria-label="History">{loaded.state.versions.map(version => <div key={version.id}>
             <span>{version.readable} {version.label}</span>
             <VersionRecordingReferences recordings={version.recordings} />

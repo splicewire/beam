@@ -607,6 +607,68 @@ describe('PageEditor — mode fork + transport', async () => {
         expect(dockButton(container, 'Publish')!.getAttribute('title')).toMatch(/readers see it now/i);
     });
 
+    it('creates a built multi-entry Release through the primary page editor', async () => {
+        let release: import('../releases').ReleaseRecord = {
+            id: 'release-launch',
+            title: 'Launch',
+            realm: 'site',
+            status: 'draft',
+            reviewedBy: null,
+            members: [],
+            workflow: null,
+            canSchedule: false,
+            reviewRequired: false,
+        };
+        const transport = {
+            ...publishingTransport(),
+            listVersions: vi.fn(async (id: string) => state({
+                id,
+                versions: [version({ id: id === 'entry-1' ? 'v-v1' : 'v-v2', readable: id === 'entry-1' ? 'v1' : 'v2' })],
+            })),
+            listReleases: vi.fn(async () => release.members.length ? [release] : []),
+            createRelease: vi.fn().mockResolvedValue(release),
+            releaseCommand: vi.fn(async (_id: string, command: { entryId?: string; ref?: string | null }) => {
+                release = {
+                    ...release,
+                    members: [...release.members, {
+                        entryId: command.entryId!,
+                        versionId: command.ref!,
+                        observedPin: command.ref!,
+                        redirectTarget: null,
+                        stale: false,
+                    }],
+                };
+                return release;
+            }),
+        };
+        await enterEditMode(transport);
+
+        fireEvent.change(screen.getByLabelText('Release title'), { target: { value: 'Launch' } });
+        fireEvent.click(screen.getByRole('button', { name: 'Create built Release' }));
+        await waitFor(() => expect(transport.createRelease).toHaveBeenCalledWith('entry-1', 'Launch'));
+        fireEvent.change(screen.getByLabelText('Release to assemble'), { target: { value: 'release-launch' } });
+        fireEvent.change(screen.getByLabelText('Saved version'), { target: { value: 'v-v1' } });
+        fireEvent.click(screen.getByRole('button', { name: 'Add to Release' }));
+        await waitFor(() => expect(transport.releaseCommand).toHaveBeenCalledWith('release-launch', {
+            action: 'member', entryId: 'entry-1', ref: 'v-v1', redirectTarget: null,
+        }));
+
+        const firstPage = document.querySelector('[aria-label="Build a Release"]');
+        expect(firstPage).not.toBeNull();
+        // A second page editor for another entry finds the same mutable Release and contributes its own saved version.
+        cleanup();
+        await act(async () => { __resetEditMode(); });
+        const second = render(wrapProse(<PageEditor entryId="entry-2" userId="author-1" slug="about" body={doc()} transport={transport as never} />));
+        await act(async () => { fireEvent(window, new CustomEvent('beam-ux:mode', { detail: { mode: 'window' } })); await Promise.resolve(); });
+        await waitFor(() => expect(screen.getByLabelText('Release to assemble')).toBeTruthy());
+        fireEvent.change(screen.getByLabelText('Saved version'), { target: { value: 'v-v2' } });
+        fireEvent.click(screen.getByRole('button', { name: 'Add to Release' }));
+        await waitFor(() => expect(transport.releaseCommand).toHaveBeenNthCalledWith(2, 'release-launch', {
+            action: 'member', entryId: 'entry-2', ref: 'v-v2', redirectTarget: null,
+        }));
+        expect(second.container.querySelector('[aria-label="Build a Release"]')).not.toBeNull();
+    });
+
     it('Publish on a clean canvas publishes the pending draft', async () => {
         const transport = publishingTransport();
         const { container } = await enterEditMode(transport);
