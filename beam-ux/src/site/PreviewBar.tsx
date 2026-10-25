@@ -77,7 +77,7 @@ export function PreviewBar({ preview }: { preview: PreviewBarData }) {
                 ) : preview.switchUrl === null ? (
                     <span>New in this Release</span>
                 ) : null}
-                <span>Forms validate but do not submit in Preview.</span>
+                {live ? null : <span>Forms validate but do not submit in Preview.</span>}
                 {preview.viewAsMeUrl ? <a href={preview.viewAsMeUrl} style={link}>View as me</a> : null}
                 <a href={preview.exitUrl} style={link}>Exit preview</a>
             </div>
@@ -166,15 +166,22 @@ function Readiness({ readiness }: { readiness: NonNullable<PreviewBarData['readi
     );
 }
 
-/** Keep authored forms usable for native validation without sending real submissions from a Preview. */
+/**
+ * Keep authored forms usable for native validation without sending real submissions from a Preview (ADR-0232 d12).
+ * The live site at the same URL (d13) is the live site, so its forms submit.
+ */
 export function PreviewBoundary({ preview, children }: { preview: PreviewBarData; children: ReactNode }) {
     return (
         <div
             data-beam-preview-root
-            onSubmitCapture={(event) => {
-                event.preventDefault();
-                event.stopPropagation();
-            }}
+            onSubmitCapture={
+                preview.mode === 'live'
+                    ? undefined
+                    : (event) => {
+                          event.preventDefault();
+                          event.stopPropagation();
+                      }
+            }
         >
             <PreviewBar preview={preview} />
             {children}

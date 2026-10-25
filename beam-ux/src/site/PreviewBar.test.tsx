@@ -1,6 +1,6 @@
-import { render, screen, within } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
-import { PreviewBar, type PreviewBarData } from './PreviewBar.js';
+import { fireEvent, render, screen, within } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
+import { PreviewBar, PreviewBoundary, type PreviewBarData } from './PreviewBar.js';
 
 // ADR-0232 d10, d11, d13 (EP-18): the bar lists what the Release changes and what would stop Publish, and switches
 // the same URL between the Preview and the live site.
@@ -71,6 +71,24 @@ describe('PreviewBar (Release)', () => {
         expect(screen.getByText(/You are seeing the live site/)).toBeTruthy();
         expect(screen.getByRole('link', { name: 'Back to the Preview' }).getAttribute('href')).toBe('/_beam/preview/switch?to=preview&path=%2Fabout');
         expect(screen.getByRole('link', { name: 'About' }).getAttribute('href')).toBe('/_beam/preview/switch?to=preview&path=%2Fabout');
+    });
+
+    it('holds forms only in the Preview: the live site at this URL is the live site (review of e9610b37)', () => {
+        const submit = vi.fn((event: { preventDefault: () => void }) => event.preventDefault());
+        const form = (
+            <form onSubmit={submit}>
+                <button type="submit">Send</button>
+            </form>
+        );
+        const { rerender } = render(<PreviewBoundary preview={base}>{form}</PreviewBoundary>);
+        fireEvent.submit(screen.getByRole('button', { name: 'Send' }).closest('form')!);
+        expect(submit).not.toHaveBeenCalled();
+        expect(screen.getByText(/forms validate but do not submit/i)).toBeTruthy();
+
+        rerender(<PreviewBoundary preview={{ ...base, mode: 'live' }}>{form}</PreviewBoundary>);
+        fireEvent.submit(screen.getByRole('button', { name: 'Send' }).closest('form')!);
+        expect(submit).toHaveBeenCalledTimes(1);
+        expect(screen.queryByText(/forms validate but do not submit/i)).toBeNull();
     });
 
     it('offers no live page for a page the Release adds', () => {
