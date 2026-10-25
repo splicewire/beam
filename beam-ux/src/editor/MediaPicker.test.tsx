@@ -34,3 +34,17 @@ it('shows a refused read separately from an empty library and permits cancel wit
  fireEvent.click(screen.getByRole('button',{name:'Cancel image choice'}));
  expect(choose).not.toHaveBeenCalled();
 });
+
+it('finishes an upload through the latest selection callback after a parent edit',async()=>{
+ let finish!:(value:typeof image)=>void;
+ const upload=vi.fn(()=>new Promise<typeof image>(resolve=>{finish=resolve;}));
+ const before=vi.fn();const after=vi.fn();const library={list:async()=>({items:[]}),upload};
+ const view=render(<MediaPicker label="src" library={library} onChoose={before}/>);
+ fireEvent.click(screen.getByRole('button',{name:'Choose image for src'}));
+ await screen.findByText('No images for this entry yet.');
+ fireEvent.change(screen.getByLabelText('Upload image for src'),{target:{files:[new File(['raster'],'cat.png')]}});
+ view.rerender(<MediaPicker label="src" library={library} onChoose={after}/>);
+ finish(image);
+ await waitFor(()=>expect(after).toHaveBeenCalledExactlyOnceWith(image.url));
+ expect(before).not.toHaveBeenCalled();
+});

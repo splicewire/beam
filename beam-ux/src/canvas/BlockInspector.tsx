@@ -104,7 +104,7 @@ export function BlockInspector(){
   {selected.length<=1&&config.mediaLibrary&&Object.entries(properties).filter(([name,schema])=>
     (node.type==='img'&&name==='src')||(schema as Record<string,unknown>)?.['x-component-prop-type']==='image'
   ).map(([name])=><MediaPicker key={`${id}:${name}`} label={name} library={config.mediaLibrary!}
-    onChoose={url=>mount.setNodeAttrs(id,{...attrs,[name]:url})}/>)}
+    onChoose={url=>{const current=mount.getNode(id) as Node|null;if(current)mount.setNodeAttrs(id,{...current.attrs,[name]:url});}}/>)}
   {!rootStyles?<p>Style panels are unavailable: this component does not declare root-style forwarding.</p>:<>
    <label>Breakpoint<select aria-label="Breakpoint" value={selection.breakpoint??''} onChange={event=>select({...selection,breakpoint:event.target.value||null})}>
     <option value="">Base</option>{Object.entries(registry.breakpoints).map(([name,width])=><option key={name} value={name}>{name} ({width})</option>)}</select></label>

@@ -78,3 +78,16 @@ it('chooses an entry image into socialImage without publishing or changing the o
   fireEvent.click(await screen.findByRole('button',{name:'Use cover.png'}));
   await waitFor(()=>expect(onChange).toHaveBeenCalledWith({title:'Guide',description:'Keep',socialImage:'/storage/i/cover.png'}));
 });
+
+it('keeps intervening page settings when an image upload completes',async()=>{
+ let finish!:(value:{id:string;name:string;url:string})=>void;
+ const library={list:async()=>({items:[]}),upload:()=>new Promise<{id:string;name:string;url:string}>(resolve=>{finish=resolve;})};
+ const change=vi.fn();
+ const view=render(<PageSettings value={{title:'Before'}} onChange={change} mediaLibrary={library}/>);
+ fireEvent.click(screen.getByRole('button',{name:'Choose image for Social image'}));
+ await screen.findByText('No images for this entry yet.');
+ fireEvent.change(screen.getByLabelText('Upload image for Social image'),{target:{files:[new File(['raster'],'cat.png')]}});
+ view.rerender(<PageSettings value={{title:'After',description:'New text'}} onChange={change} mediaLibrary={library}/>);
+ finish({id:'a',name:'photo',url:'/new.png'});
+ await waitFor(()=>expect(change).toHaveBeenCalledWith({title:'After',description:'New text',socialImage:'/new.png'}));
+});

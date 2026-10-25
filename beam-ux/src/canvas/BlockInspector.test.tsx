@@ -59,7 +59,7 @@ it('hides style panels for code components without a forwarding declaration',()=
  expect(screen.queryByLabelText('className')).toBeNull();
 });
 
-function ImageHarness({type='img',declared=true}:{type?:string;declared?:boolean}) {
+function ImageHarness({type='img',declared=true,upload=vi.fn()}:{type?:string;declared?:boolean;upload?:(file:File)=>Promise<{id:string;name:string;url:string}>}) {
  const [attrs,setAttrs]=useState<Record<string,unknown>>({src:'/old.png',hero:'/old.png',className:'keep',bdStyle:{layers:[]}});
  const registry=createWidgetRegistry();
  function Canvas(){const mount=useEditShellMount();
@@ -67,8 +67,9 @@ function ImageHarness({type='img',declared=true}:{type?:string;declared?:boolean
   return <button onClick={()=>mount.selectNode('0')}>Select image</button>;
  }
  registry.registerWidget('image',Canvas);
- return <CanvasProvider config={{registry:{},mediaLibrary:{list:async()=>({items:[{id:'a',name:'photo.png',url:'/new.png'}]}),upload:vi.fn()}}}>
+ return <CanvasProvider config={{registry:{},mediaLibrary:{list:async()=>({items:[{id:'a',name:'photo.png',url:'/new.png'}]}),upload}}}>
   <FiveRegionEditShell widget="image" schema={{type:'object'}} registry={registry} inspector={<BlockInspector/>}/>
+  <button onClick={()=>setAttrs(current=>({...current,className:"changed while uploading"}))}>Edit image class</button>
   <output data-testid="image-attrs">{JSON.stringify(attrs)}</output>
  </CanvasProvider>;
 }
@@ -87,4 +88,16 @@ it('uses only the declared component image type marker, never a generic URI heur
  expect(JSON.parse(screen.getByTestId('image-attrs').textContent!).hero).toBe('/new.png');
  cleanup();render(<ImageHarness type="Hero" declared={false}/>);fireEvent.click(screen.getByText('Select image'));
  expect(screen.queryByRole('button',{name:'Choose image for hero'})).toBeNull();
+});
+
+it('applies delayed image uploads to the current node attributes',async()=>{
+ let finish!:(value:{id:string;name:string;url:string})=>void;
+ render(<ImageHarness upload={()=>new Promise(resolve=>{finish=resolve;})}/>);
+ fireEvent.click(screen.getByText('Select image'));
+ fireEvent.click(screen.getByRole('button',{name:'Choose image for src'}));
+ await screen.findByRole('button',{name:'Use photo.png'});
+ fireEvent.change(screen.getByLabelText('Upload image for src'),{target:{files:[new File(['raster'],'cat.png')]}});
+ fireEvent.click(screen.getByText('Edit image class'));
+ finish({id:'a',name:'photo',url:'/uploaded.png'});
+ await waitFor(()=>expect(JSON.parse(screen.getByTestId('image-attrs').textContent!)).toEqual({src:'/uploaded.png',hero:'/old.png',className:'changed while uploading',bdStyle:{layers:[]}}));
 });

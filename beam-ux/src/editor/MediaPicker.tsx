@@ -14,6 +14,8 @@ export function MediaPicker({label,library,onChoose}:{label:string;library:Entry
   const [busy,setBusy]=useState(false);
   const [error,setError]=useState<string|null>(null);
   const sequence=useRef(0);
+  const choose=useRef(onChoose);
+  choose.current=onChoose;
   const trigger=useRef<HTMLButtonElement>(null);
   useEffect(()=>()=>{sequence.current++;},[]);
   const close=()=>{sequence.current++;setOpen(false);setBusy(false);trigger.current?.focus();};
@@ -25,7 +27,7 @@ export function MediaPicker({label,library,onChoose}:{label:string;library:Entry
   };
   const upload=async(file:File)=>{
     const request=++sequence.current;setBusy(true);setError(null);
-    try {const image=await library.upload(file);if(request===sequence.current){onChoose(image.url);close();}}
+    try {const image=await library.upload(file);if(request===sequence.current){choose.current(image.url);close();}}
     catch(reason){if(request===sequence.current)setError(reason instanceof Error?reason.message:'Could not upload image.');}
     finally{if(request===sequence.current)setBusy(false);}
   };
@@ -36,7 +38,7 @@ export function MediaPicker({label,library,onChoose}:{label:string;library:Entry
       {busy&&<p role="status">Loading images…</p>}
       {error&&<p role="alert">{error}</p>}
       {items!==null&&items.length===0&&<p>No images for this entry yet.</p>}
-      {items?.map(image=><button key={image.id} type="button" disabled={busy} onClick={()=>{onChoose(image.url);close();}}>
+      {items?.map(image=><button key={image.id} type="button" disabled={busy} onClick={()=>{choose.current(image.url);close();}}>
         <img src={image.url} alt="" width={64} height={48} style={{objectFit:'contain'}}/>Use {image.name}
       </button>)}
       <label>Upload image for {label}<input type="file" disabled={busy} accept="image/jpeg,image/png,image/gif,image/webp,image/avif"
