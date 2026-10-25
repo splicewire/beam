@@ -29,6 +29,13 @@ route macros + `beam-mdx:doctor`).
   manifest, descriptors, schema inspector, and toolbar. Import
   **`@splicewire/beam-mdx/editor/css`** for its layout styles. Its MDXEditor and RJSF peers are
   optional unless a host loads this subpath.
+- **`@splicewire/beam-mdx/lens`** — the server-side MDX Lens (ux-0233 d2). `readMdx(body, context)` reads an
+  MDX page body (no frontmatter) into a JsonDoc: Markdown as the HTML profile's nodes, JSX as components whose
+  attributes the TSX Lens reads, and any comment, other expression or spread tag as an Opaque Island. Code outside
+  the JSX refuses (`MdxLensError`), except `export const meta = {…}`, which comes back as `meta`. `printMdx(doc)`
+  prints canonical MDX: Markdown wherever Markdown can say it, one line per paragraph, and JSX with the TSX
+  printer's attributes otherwise. Printing reaches a fixed point. It runs in Node and needs the optional
+  `@splicewire/beam-ux` peer.
 - **`@splicewire/beam-mdx/css`** — the token-driven base `.site-prose` typography (apps override
   the shadcn semantic `--foreground`/`--primary`/`--muted-foreground`/`--border` + `--font-*` tokens it reads).
 
