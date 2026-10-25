@@ -12,7 +12,10 @@ import { CanvasProvider, VisualEditor } from '../canvas';
 import { useEditorKit } from './context';
 import { useLocalSession } from './use-local-session';
 
-type EntryRef = { id: string | null; slug: string | null; format?: string | null };
+/** The File Languages Source Mode prints and reads (beam JS ADR-0006 d4); the server's lens refuses the rest. */
+const SOURCE_LANGUAGES: readonly string[] = ['tsx', 'mdx'];
+
+type EntryRef = { id: string | null; slug: string | null; format?: string | null; bodyKind?: string | null };
 export function VisualEditorMount({ entryRef }: { entryRef: EntryRef }) {
     const { userId, canAuthor } = useEditorKit();
     // An address or actor change retires the previous editor before the new read starts.
@@ -143,7 +146,8 @@ function AddressedVisualEditor({ entryRef }: { entryRef: EntryRef }) {
             <button disabled={busy || local.session!.dirty} onClick={() => void restore(version.id)}>Restore {version.readable} into draft</button>
         </div>)}</aside>}
         {!local.session.source && local.session.pageSettings && <PageSettings value={local.session.pageSettings} onChange={settings => local.change(local.session!.body, settings)} />}
-        <SourceMode local={local} allowed={(!loaded.profile || !('x-admits-code' in loaded.profile) || loaded.profile['x-admits-code'] !== false) && (!entryRef.format || entryRef.format === 'tsx')}
+        <SourceMode local={local} allowed={(!loaded.profile || !('x-admits-code' in loaded.profile) || loaded.profile['x-admits-code'] !== false) && (!entryRef.format || SOURCE_LANGUAGES.includes(entryRef.format))}
+            language={entryRef.format ?? 'tsx'}
             conversion={id && transport.printSource && transport.readSource ? {print:body=>transport.printSource!(id,body),read:(source,body)=>transport.readSource!(id,source,body)} : undefined}>
         <VisualEditor value={local.session.body as JsonDoc} onChange={local.change}
             onSave={save} onUndo={local.undo} onRedo={local.redo}

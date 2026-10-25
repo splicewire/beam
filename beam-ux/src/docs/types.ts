@@ -12,6 +12,11 @@ export type EntryPayload = {
     title: string | null;
     type: string | null;
     format: string | null;
+    /**
+     * The entry's declared Body Kind (`blocks` | `source` | `form`, ADR-0228 d1). It chooses the editor surface
+     * (beam JS ADR-0006 d1); absent from an older server, which leaves the format gate to answer.
+     */
+    bodyKind?: string | null;
     url: string | null;
     /** The inherited chrome name, or null when nothing in the chain declares one. */
     layout?: string | null;

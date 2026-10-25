@@ -33,12 +33,13 @@ vi.mock('./page-editor', () => ({
 
 import { EditableEntryBody } from './entry-body-editor';
 
-const entry = (format: string) => ({
+const entry = (format: string, bodyKind?: string) => ({
     id: '01a07898-4dd7-7386-8166-e0e4725e83f3',
     slug: 'about',
     title: 'About',
     type: 'page',
     format,
+    ...(bodyKind === undefined ? {} : { bodyKind }),
     url: '/about',
 });
 
@@ -66,6 +67,22 @@ describe('EditableEntryBody', () => {
         // In PLACE of the body — the defect was an editor beside an unchanged page.
         expect(screen.queryByTestId('read-body')).toBeNull();
         expect(mounted.at(-1)).toEqual({ slug: 'about', entryId: '01a07898-4dd7-7386-8166-e0e4725e83f3' });
+    });
+
+    it('opens the PageEditor on an mdx page that holds blocks: the Body Kind chooses the surface (ADR-0006 d1)', async () => {
+        editMode.value = true;
+        render(<EditableEntryBody entry={entry('mdx', 'blocks')}>{BODY}</EditableEntryBody>);
+
+        expect(await screen.findByTestId('page-editor')).toBeTruthy();
+        expect(screen.queryByRole('note')).toBeNull();
+    });
+
+    it('refuses an mdx page its host keeps as source, as the server declares it', () => {
+        editMode.value = true;
+        render(<EditableEntryBody entry={entry('mdx', 'source')}>{BODY}</EditableEntryBody>);
+
+        expect(screen.getByRole('note').textContent).toContain('mdx');
+        expect(mounted).toEqual([]);
     });
 
     it('states the refusal in the body region for a format the canvas cannot store', () => {

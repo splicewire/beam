@@ -257,6 +257,37 @@ describe('createMainframeHost — the entry REF (ticket 37)', () => {
         expect(seen[0].format).toBe('mdx');
     });
 
+    it('carries the entry BODY KIND from the props branch, which chooses the editor surface (beam JS ADR-0006 d1)', async () => {
+        // An MDX page holds blocks on a host that converted its MDX (ux-0233 d1); the format alone cannot say so.
+        const seen: EntryRef[] = [];
+        const modes: Array<Record<string, unknown>> = [];
+        const listener = (e: Event) => modes.push((e as CustomEvent).detail as Record<string, unknown>);
+        window.addEventListener('beam-ux:mode', listener);
+        const Host = createMainframeHost(
+            stubConfig({
+                usePageContext: () => ({
+                    component: 'site/entry',
+                    canAuthor: true,
+                    slug: 'docs',
+                    entryId: '01a001bc-0000-7000-8000-0000000000bb',
+                    entryFormat: 'mdx',
+                    entryBodyKind: 'blocks',
+                }),
+                loadEntryBody: async (ref) => {
+                    seen.push(ref);
+                    return null;
+                },
+            }),
+        );
+        render(<Host>{PAGE}</Host>);
+
+        await waitFor(() => expect(seen).toHaveLength(1));
+        await waitFor(() => expect(modes.length).toBeGreaterThan(0));
+        window.removeEventListener('beam-ux:mode', listener);
+        expect(seen[0]).toEqual({ id: '01a001bc-0000-7000-8000-0000000000bb', slug: 'docs', format: 'mdx', bodyKind: 'blocks' });
+        expect(modes.at(-1)?.bodyKind).toBe('blocks');
+    });
+
     it('a branch that cannot know the format reports null — unknown, never a guessed default', async () => {
         // `?beam_entry=<slug>` and the component-name guess carry no format. Defaulting them to the
         // canvas's own would re-open the hole for exactly the refs nobody verified.

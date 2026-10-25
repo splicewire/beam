@@ -113,8 +113,10 @@ async function loadEntryBody(ref: EntryRef): Promise<HostEntryBody | null> {
 }
 
 /**
- * The FORMAT gate in front of both authoring renderers: the visual editor mounts only for an entry
- * whose codec can carry a block document; every other format gets a stated refusal, never the canvas.
+ * The BODY-KIND gate in front of both authoring renderers (beam JS ADR-0006 d1): the visual editor mounts only
+ * for an entry that holds blocks — whose codec can carry a block document, MDX pages included on a host that holds
+ * MDX as blocks — and every other entry gets a stated refusal, never the canvas. An entry whose server did not say
+ * its body kind falls back to the format gate.
  *
  * Why a refusal panel and not a missing control: the author DID ask to edit this page, and the dock's
  * affordance is generic. Rendering nothing would read as "the editor is broken"; rendering the canvas
@@ -137,7 +139,7 @@ export default createMainframeHost({
         const page = usePage<{
             auth: { canAuthorUx?: boolean };
             slug?: string;
-            entry?: { id?: string; slug?: string; format?: string };
+            entry?: { id?: string; slug?: string; format?: string; bodyKind?: string };
         }>();
         currentComponent = page.component;
 
@@ -175,6 +177,12 @@ export default createMainframeHost({
             entryFormat:
                 typeof entry?.format === 'string' && entry.format !== ''
                     ? entry.format
+                    : null,
+            // The BODY KIND half (beam JS ADR-0006 d1): it, not the format, chooses the surface. A host that
+            // holds MDX as blocks (ux-0233 d1) opens its MDX pages in the canvas; null leaves the format gate.
+            entryBodyKind:
+                typeof entry?.bodyKind === 'string' && entry.bodyKind !== ''
+                    ? entry.bodyKind
                     : null,
         };
     },

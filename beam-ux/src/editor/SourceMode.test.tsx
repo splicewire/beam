@@ -25,10 +25,10 @@ beforeEach(() => {
 });
 afterEach(() => { cleanup(); vi.restoreAllMocks(); });
 
-function Editor({ conversion, allowed = true }: { conversion: SourceConversion; allowed?: boolean }) {
+function Editor({ conversion, allowed = true, language }: { conversion: SourceConversion; allowed?: boolean; language?: string }) {
   const local = useLocalSession('entry', 'author', 'version-1', original, true);
   return <>
-    <SourceMode local={local} conversion={conversion} allowed={allowed}>
+    <SourceMode local={local} conversion={conversion} allowed={allowed} language={language}>
       <p>Canvas</p>
       <div contentEditable suppressContentEditableWarning aria-label="Pending prose" onBlur={() => local.change(edited)}>edited</div>
     </SourceMode>
@@ -45,6 +45,15 @@ it('drains the focused prose edit before printing its Local Session snapshot', a
   fireEvent.click(screen.getByRole('button', { name: 'Source Mode' }));
   await screen.findByRole('textbox', { name: 'TSX source' });
   expect(conversion.print).toHaveBeenCalledWith(edited);
+});
+
+it('shows an MDX page as MDX source: the text is the page in its File Language (ADR-0006 d4)', async () => {
+  const conversion = { print: vi.fn().mockResolvedValue({ source: 'edited' }), read: vi.fn() };
+  render(<Editor conversion={conversion} language="mdx" />);
+  await waitFor(() => expect((screen.getByRole('button', { name: 'Source Mode' }) as HTMLButtonElement).disabled).toBe(false));
+  fireEvent.click(screen.getByRole('button', { name: 'Source Mode' }));
+  expect(await screen.findByRole('textbox', { name: 'MDX source' })).toBeTruthy();
+  expect(screen.queryByRole('textbox', { name: 'TSX source' })).toBeNull();
 });
 
 it('hides Source Mode in the Hosted profile without invoking conversion', async () => {

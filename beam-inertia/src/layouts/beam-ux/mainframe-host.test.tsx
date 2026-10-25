@@ -14,10 +14,11 @@ import type { EntryRef } from '@splicewire/beam-mainframe';
 
 import { CanvasOrRefusal } from './mainframe-host';
 
-const ref = (format: string | null): EntryRef => ({
+const ref = (format: string | null, bodyKind?: string | null): EntryRef => ({
     id: '01a001bc-0000-7000-8000-0000000000bb',
     slug: 'docs',
     format,
+    ...(bodyKind === undefined ? {} : { bodyKind }),
 });
 
 const CANVAS = <div data-testid="canvas">the visual editor</div>;
@@ -49,6 +50,24 @@ describe('CanvasOrRefusal', () => {
 
         expect(screen.queryByTestId('canvas')).toBeNull();
         expect(screen.getByRole('note').textContent).toContain('css');
+    });
+
+    it('mounts the canvas for an mdx page that HOLDS BLOCKS: the Body Kind chooses the surface (ADR-0006 d1)', () => {
+        // A host that converted its MDX (ux-0233 d1) declares its MDX pages blocks-kind, so they open like tsx.
+        render(<CanvasOrRefusal entry={ref('mdx', 'blocks')}>{CANVAS}</CanvasOrRefusal>);
+
+        expect(screen.getByTestId('canvas')).toBeTruthy();
+    });
+
+    it('refuses an entry the server declares source, whatever its format', () => {
+        render(<CanvasOrRefusal entry={ref('mdx', 'source')}>{CANVAS}</CanvasOrRefusal>);
+        expect(screen.queryByTestId('canvas')).toBeNull();
+        expect(screen.getByRole('note').textContent).toContain('mdx');
+        cleanup();
+
+        // A Component entry is tsx but holds source (ADR-0228 d1): the declared kind wins over the format.
+        render(<CanvasOrRefusal entry={ref('tsx', 'source')}>{CANVAS}</CanvasOrRefusal>);
+        expect(screen.queryByTestId('canvas')).toBeNull();
     });
 
     it('refuses an UNKNOWN format — null is "the page did not say", never "anything goes"', () => {

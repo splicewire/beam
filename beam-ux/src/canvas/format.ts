@@ -14,8 +14,31 @@
 // gate — it is what keeps an author from being shown an editor whose every Save will be refused. Where
 // they disagree, the server wins and the client is the thing to fix.
 
-/** The entry formats whose codec can carry a JsonDoc. Extend only alongside a PHP `AcceptsJsonDoc`. */
+/**
+ * The entry formats whose codec can carry a JsonDoc wherever the host runs — the LEGACY answer, used only when the
+ * server did not say the entry's body kind. Extend only alongside a PHP `AcceptsJsonDoc`.
+ */
 export const CANVAS_FORMATS: readonly string[] = ['tsx'];
+
+/**
+ * An entry's **Body Kind**, as the server declares it (`BeamUxEntry::bodyKind()`, ADR-0228 d1): `blocks` when its codec
+ * carries a JsonDoc. It is per host for MDX: a host that holds MDX as blocks (ADR-0233 d1) declares its MDX pages
+ * `blocks`, and one that keeps MDX as source declares them `source`.
+ */
+export type BodyKind = 'blocks' | 'source' | 'form';
+
+/**
+ * May the canvas open this entry? The Body Kind chooses the surface (beam JS ADR-0006 d1): the canvas opens every
+ * entry that holds blocks, MDX pages included. An entry whose server did not say its body kind falls back to the
+ * format gate, so an older server never has the canvas offered on an MDX page it keeps as source.
+ */
+export function canvasAccepts(entry: { format?: string | null; bodyKind?: string | null }): boolean {
+    if (typeof entry.bodyKind === 'string' && entry.bodyKind !== '') {
+        return entry.bodyKind === 'blocks';
+    }
+
+    return canvasAcceptsFormat(entry.format);
+}
 
 /**
  * May the canvas open an entry of this format?
