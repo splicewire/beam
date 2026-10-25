@@ -1,6 +1,6 @@
 import {useEffect,useState} from 'react';
 import {render,screen,fireEvent,cleanup,waitFor} from '@testing-library/react';
-import {afterEach,expect,it} from 'vitest';
+import {afterEach,expect,it,vi} from 'vitest';
 import {FiveRegionEditShell,useEditShellMount} from '@schemastud/frame';
 import {createWidgetRegistry} from '@schemastud/seam';
 import {BlockInspector} from './BlockInspector';
@@ -57,4 +57,34 @@ it('hides style panels for code components without a forwarding declaration',()=
  expect(screen.queryByText('Size')).toBeNull();
  expect(screen.getByText(/does not declare root-style forwarding/)).toBeTruthy();
  expect(screen.queryByLabelText('className')).toBeNull();
+});
+
+function ImageHarness({type='img',declared=true}:{type?:string;declared?:boolean}) {
+ const [attrs,setAttrs]=useState<Record<string,unknown>>({src:'/old.png',hero:'/old.png',className:'keep',bdStyle:{layers:[]}});
+ const registry=createWidgetRegistry();
+ function Canvas(){const mount=useEditShellMount();
+  useEffect(()=>mount.registerNodeAccess({getNode:()=>({type,attrs,attrsSchema:{type:'object',properties:{src:{type:'string'},hero:{type:'string',...(declared?{'x-component-prop-type':'image'}:{format:'uri'})}}}}),setNodeAttrs:(_id,next)=>setAttrs(next)}),[mount]);
+  return <button onClick={()=>mount.selectNode('0')}>Select image</button>;
+ }
+ registry.registerWidget('image',Canvas);
+ return <CanvasProvider config={{registry:{},mediaLibrary:{list:async()=>({items:[{id:'a',name:'photo.png',url:'/new.png'}]}),upload:vi.fn()}}}>
+  <FiveRegionEditShell widget="image" schema={{type:'object'}} registry={registry} inspector={<BlockInspector/>}/>
+  <output data-testid="image-attrs">{JSON.stringify(attrs)}</output>
+ </CanvasProvider>;
+}
+it('chooses img.src while preserving every other node attribute',async()=>{
+ render(<ImageHarness/>);fireEvent.click(screen.getByText('Select image'));
+ fireEvent.click(screen.getByRole('button',{name:'Choose image for src'}));
+ fireEvent.click(await screen.findByRole('button',{name:'Use photo.png'}));
+ const value=JSON.parse(screen.getByTestId('image-attrs').textContent!);
+ expect(value).toEqual({src:'/new.png',hero:'/old.png',className:'keep',bdStyle:{layers:[]}});
+});
+it('uses only the declared component image type marker, never a generic URI heuristic',async()=>{
+ render(<ImageHarness type="Hero"/>);fireEvent.click(screen.getByText('Select image'));
+ expect(screen.queryByRole('button',{name:'Choose image for src'})).toBeNull();
+ fireEvent.click(screen.getByRole('button',{name:'Choose image for hero'}));
+ fireEvent.click(await screen.findByRole('button',{name:'Use photo.png'}));
+ expect(JSON.parse(screen.getByTestId('image-attrs').textContent!).hero).toBe('/new.png');
+ cleanup();render(<ImageHarness type="Hero" declared={false}/>);fireEvent.click(screen.getByText('Select image'));
+ expect(screen.queryByRole('button',{name:'Choose image for hero'})).toBeNull();
 });

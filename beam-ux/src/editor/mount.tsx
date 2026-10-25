@@ -28,6 +28,7 @@ interface LoadedEnvelope {
     pageSettings?: SessionPageSettings;
     pageFields: PageFieldsOffer | null;
     fileLanguages: string[];
+    mediaLibrary?: boolean;
     styleRegistry?: import('../blockdoc/style-runtime.js').StyleRegistry;
     profile?: import('@schemastud/blockdoc').BlockdocManifest;
 }
@@ -39,7 +40,7 @@ interface LoadedEnvelope {
 function readEnvelope(envelope: unknown, missing: string): LoadedEnvelope {
     const read = (envelope ?? {}) as Partial<LoadedEnvelope> & { body?: unknown };
     if (!Array.isArray(read.body)) throw new Error(missing);
-    return { body: read.body as JsonDoc, pageSettings: read.pageSettings, pageFields: read.pageFields ?? null, fileLanguages: read.fileLanguages ?? [], styleRegistry: read.styleRegistry, profile: read.profile };
+    return { mediaLibrary: read.mediaLibrary===true, body: read.body as JsonDoc, pageSettings: read.pageSettings, pageFields: read.pageFields ?? null, fileLanguages: read.fileLanguages ?? [], styleRegistry: read.styleRegistry, profile: read.profile };
 }
 
 function AddressedVisualEditor({ entryRef }: { entryRef: EntryRef }) {
@@ -65,6 +66,9 @@ function AddressedVisualEditor({ entryRef }: { entryRef: EntryRef }) {
         // The transport may be a new object each render; the address owns the load lifecycle.
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [id, userId, canAuthor]);
+    const mediaLibrary = loaded?.mediaLibrary && id && transport.listImages && transport.uploadImage ? {
+        list: () => transport.listImages!(id), upload: (file:File) => transport.uploadImage!(id,file),
+    } : undefined;
     const run = async (action: () => Promise<void>) => {
         setBusy(true);
         try { await action(); }
@@ -159,7 +163,7 @@ function AddressedVisualEditor({ entryRef }: { entryRef: EntryRef }) {
             notify.error(reason instanceof Error ? reason.message : 'Could not open the version preview');
         }
     };
-    return <CanvasProvider config={{ ...canvasConfig, profile: loaded.profile, styleRegistry: loaded.styleRegistry }}>
+    return <CanvasProvider config={{ ...canvasConfig, mediaLibrary, profile: loaded.profile, styleRegistry: loaded.styleRegistry }}>
         {conflict && <div role="alertdialog" aria-label="Save conflict">
             <p>The server draft changed.</p>
             <button disabled={busy} onClick={() => void resolveConflict(false)}>Reload theirs</button>
@@ -196,7 +200,7 @@ function AddressedVisualEditor({ entryRef }: { entryRef: EntryRef }) {
             )}
             <button disabled={busy || local.session!.dirty} onClick={() => void restore(version.id)}>Restore {version.readable} into draft</button>
         </div>)}</aside>}
-        {!local.session.source && local.session.pageSettings && <PageSettings value={local.session.pageSettings} pageFields={loaded.pageFields} fileLanguages={loaded.fileLanguages} onChange={settings => local.change(local.session!.body, settings)} />}
+        {!local.session.source && local.session.pageSettings && <PageSettings value={local.session.pageSettings} pageFields={loaded.pageFields} fileLanguages={loaded.fileLanguages} mediaLibrary={mediaLibrary} onChange={settings => local.change(local.session!.body, settings)} />}
         <SourceMode local={local} allowed={(!loaded.profile || !('x-admits-code' in loaded.profile) || loaded.profile['x-admits-code'] !== false) && (!entryRef.format || SOURCE_LANGUAGES.includes(entryRef.format))}
             language={entryRef.format ?? 'tsx'}
             conversion={id && transport.printSource && transport.readSource ? {print:body=>transport.printSource!(id,body),read:(source,body)=>transport.readSource!(id,source,body)} : undefined}>

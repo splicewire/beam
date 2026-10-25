@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, within, waitFor } from '@testing-library/react';
 import { afterEach, expect, it, vi } from 'vitest';
 import { PageSettings } from './PageSettings';
 
@@ -67,4 +67,14 @@ it('gives every select its label alone as an accessible name', () => {
   for (const name of ['Page type', 'File language', 'Child page fields']) {
     expect(screen.getByRole('combobox', { name })).toBe(screen.getByLabelText(name, { exact: true }));
   }
+});
+
+it('chooses an entry image into socialImage without publishing or changing the other page settings', async () => {
+  const onChange=vi.fn();
+  render(<PageSettings value={{title:'Guide',description:'Keep'}} onChange={onChange}
+    mediaLibrary={{list:async()=>({items:[{id:'i',name:'cover.png',url:'/storage/i/cover.png'}]}),upload:vi.fn()}}/>);
+  fireEvent.click(screen.getByText('Page settings',{selector:'summary'}));
+  fireEvent.click(screen.getByRole('button',{name:'Choose image for Social image'}));
+  fireEvent.click(await screen.findByRole('button',{name:'Use cover.png'}));
+  await waitFor(()=>expect(onChange).toHaveBeenCalledWith({title:'Guide',description:'Keep',socialImage:'/storage/i/cover.png'}));
 });

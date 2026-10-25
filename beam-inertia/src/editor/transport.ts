@@ -324,7 +324,31 @@ async function publicationPost(
   return readData(res, op);
 }
 
+const imageClient = {
+  async listImages(id: string) {
+    const res = await fetch(`/beam-ux-entries/${encodeURIComponent(id)}/media`, {
+      credentials: 'same-origin', headers: {Accept:'application/json'},
+    });
+    return await readData(res, 'entry images') as import('@splicewire/beam-ux').EntryImageLibraryData;
+  },
+  async uploadImage(id: string, file: File) {
+    const body = new FormData();body.append('file',file);
+    const res = await fetch(`/beam-ux-entries/${encodeURIComponent(id)}/upload-image`, {
+      method:'POST',credentials:'same-origin',headers:{Accept:'application/json','X-XSRF-TOKEN':csrfToken()},body,
+    });
+    return await readData(res, 'uploaded image') as import('@splicewire/beam-ux').EntryImageData;
+  },
+};
+
 export const bodyClient: UxBuilderClient = {
+  get listImages() {
+    const client = getBeamInertiaConfig().entryClient ?? imageClient;
+    return client.listImages?.bind(client);
+  },
+  get uploadImage() {
+    const client = getBeamInertiaConfig().entryClient ?? imageClient;
+    return client.uploadImage?.bind(client);
+  },
   get createRelease() {
     const client = getBeamInertiaConfig().entryClient ?? publicationClient;
     return client.createRelease?.bind(client);

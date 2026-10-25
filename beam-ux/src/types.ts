@@ -28,6 +28,8 @@ export interface UxBuilderClient<TBody = BeamUxEntryBodyData> {
    * representable rather than merely guarded against.
    */
   loadBody(id: string): Promise<TBody>;
+  listImages?(id: string): Promise<import("./generated/entry-images").EntryImageLibraryData>;
+  uploadImage?(id: string, file: File): Promise<import("./generated/entry-images").EntryImageData>;
   printSource?(
     id: string,
     body: import("./blockdoc/json").JsonDoc,
