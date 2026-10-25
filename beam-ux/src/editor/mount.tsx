@@ -199,7 +199,8 @@ function AddressedVisualEditor({ entryRef }: { entryRef: EntryRef }) {
                 const release = await transport.releaseCommand!(loaded.state.release!.id, command);
                 const state = await transport.listVersions!(id!);
                 setLoaded(previous => previous && {...previous,state:{...state,release}});
-            }} />}
+            }}
+            onRemoveRedirect={transport.removeRedirect && (redirectId => transport.removeRedirect!(redirectId))} />}
         {id && loaded.state.headVersion && loaded.state.versions.length > 0 && transport.listReleases && transport.createRelease && transport.releaseCommand && (
             <BuiltReleaseAssembly
                 entryId={id}
@@ -210,6 +211,7 @@ function AddressedVisualEditor({ entryRef }: { entryRef: EntryRef }) {
                 listReleases={() => transport.listReleases!()}
                 createRelease={(entryId, title) => transport.createRelease!(entryId, title)}
                 releaseCommand={(releaseId, command) => transport.releaseCommand!(releaseId, command)}
+                removeRedirect={transport.removeRedirect && (redirectId => transport.removeRedirect!(redirectId))}
             />
         )}
         {history && <aside aria-label="History">{loaded.state.versions.map(version => <div key={version.id}>

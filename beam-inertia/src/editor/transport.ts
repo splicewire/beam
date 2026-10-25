@@ -271,6 +271,17 @@ const publicationClient = {
       "release",
     )) as import("@splicewire/beam-ux").ReleaseRecord;
   },
+  // ux-0236 d2: an unwanted Redirect a Release left is removed through the Redirect resource.
+  removeRedirect: async (id: string) => {
+    const response = await fetch(`/beam-ux-redirects/${id}`, {
+      method: "DELETE",
+      credentials: "same-origin",
+      headers: { Accept: "application/json", "X-XSRF-TOKEN": csrfToken() },
+    });
+    if (!response.ok) {
+      await readData(response, "redirect");
+    }
+  },
 
   listVersions: async (id: string) => {
     const res = await fetch(`/beam-ux-entries/${id}/versions`, {
@@ -406,6 +417,10 @@ export const bodyClient: UxBuilderClient = {
   get releaseCommand() {
     const client = getBeamInertiaConfig().entryClient ?? publicationClient;
     return client.releaseCommand?.bind(client);
+  },
+  get removeRedirect() {
+    const client = getBeamInertiaConfig().entryClient ?? publicationClient;
+    return client.removeRedirect?.bind(client);
   },
 
   get makeEditable() {

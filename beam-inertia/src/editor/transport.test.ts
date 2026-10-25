@@ -497,3 +497,17 @@ it('reads live canvas bindings via one addressed stateful POST, with no refusal 
  await expect(bodyClient.canvasBindings?.('entry-id',[])).rejects.toMatchObject({status:403});expect(fetch).toHaveBeenCalledTimes(3);
  configureBeamInertia({entryClient:client});expect(bodyClient.canvasBindings).toBeUndefined();
 });
+
+it("removes a Redirect through the Redirect resource (ux-0236 d2)", async () => {
+  const fetch = vi.fn().mockResolvedValue(new Response(null, { status: 204 }));
+  vi.stubGlobal("fetch", fetch);
+  vi.stubGlobal("document", { cookie: "XSRF-TOKEN=token" });
+
+  await bodyClient.removeRedirect!("rd1");
+
+  expect(fetch.mock.calls[0][0]).toBe("/beam-ux-redirects/rd1");
+  expect(fetch.mock.calls[0][1].method).toBe("DELETE");
+  expect(fetch.mock.calls[0][1].headers["X-XSRF-TOKEN"]).toBe("token");
+  fetch.mockResolvedValueOnce(Response.json({ message: "This action is unauthorized." }, { status: 403 }));
+  await expect(bodyClient.removeRedirect!("rd2")).rejects.toThrow("This action is unauthorized.");
+});

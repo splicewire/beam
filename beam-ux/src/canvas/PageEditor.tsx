@@ -96,6 +96,8 @@ export interface PageEditorTransport {
     id: string,
     command: ReleaseCommand,
   ) => Promise<ReleaseRecord>;
+  /** Remove a Redirect a Release left (ux-0236 d2), through the Redirect resource. */
+  removeRedirect?: (id: string) => Promise<void>;
   /** Browse and create mutable built Releases from the page editor. */
   listReleases?: () => Promise<ReleaseRecord[]>;
   createRelease?: (entryId: string, title: string) => Promise<ReleaseRecord>;
@@ -1068,6 +1070,7 @@ export function PageEditor({
               const state = await transport.listVersions!(slug);
               setPublication({ ...state, release });
             }}
+            onRemoveRedirect={transport.removeRedirect}
           />
         )}
         {publication &&
@@ -1086,6 +1089,7 @@ export function PageEditor({
               listReleases={transport.listReleases}
               createRelease={transport.createRelease}
               releaseCommand={transport.releaseCommand}
+              removeRedirect={transport.removeRedirect}
             />
           )}
         {versionsOpen && (

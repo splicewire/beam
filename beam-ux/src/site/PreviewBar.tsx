@@ -47,7 +47,15 @@ export type PreviewBarData = {
     readiness?: { ready: boolean; blockers: PreviewReadinessItem[]; notes: PreviewReadinessItem[] } | null;
     /** The Release's own page, where its fixes are pressed; null where this host mounts none. */
     releaseHref?: string | null;
+    /**
+     * Each URL the Release moves or takes down and where it goes once it publishes (ux-0236 d12); `to` is null for a
+     * Take-down that names no page, whose URLs are then not found.
+     */
+    redirects?: PreviewRedirect[];
 };
+
+/** A URL a Release moves or takes down, and where it will go. */
+export type PreviewRedirect = { from: string; to: string | null; reason: 'moved' | 'takedown' };
 
 const bar: CSSProperties = { background: '#171717', color: 'white', fontSize: 14, padding: '10px 16px' };
 const row: CSSProperties = { alignItems: 'center', display: 'flex', flexWrap: 'wrap', gap: 16, justifyContent: 'center' };
@@ -84,6 +92,7 @@ export function PreviewBar({ preview }: { preview: PreviewBarData }) {
                 <a href={preview.exitUrl} style={link}>Exit preview</a>
             </div>
             {preview.changes ? <ChangedPages preview={preview} open={open} /> : null}
+            {preview.redirects && preview.redirects.length > 0 ? <Redirects redirects={preview.redirects} /> : null}
             {preview.readiness ? <Readiness preview={preview} open={open} /> : null}
         </aside>
     );
@@ -111,6 +120,24 @@ function ChangedPages({ preview, open }: { preview: PreviewBarData; open: (path:
 }
 
 /** A page to open in the Preview. A Record Page opens on a Record the viewer may read, so each one is its own link. */
+/** ux-0236 d12: what a reviewer's old links will do once the Release publishes. */
+function Redirects({ redirects }: { redirects: PreviewRedirect[] }) {
+    return (
+        <details style={panel}>
+            <summary>Redirects this Release leaves ({redirects.length})</summary>
+            <section aria-label="Redirects this Release leaves">
+                <ul style={list}>
+                    {redirects.map((redirect) => (
+                        <li key={redirect.from}>
+                            {redirect.from} → {redirect.to ?? 'not found'} ({redirect.reason === 'moved' ? 'moved' : 'taken down'})
+                        </li>
+                    ))}
+                </ul>
+            </section>
+        </details>
+    );
+}
+
 function PageLink({ page, open, choices }: { page: PreviewReachPage; open: (path: string) => string; choices?: { label: string; path: string }[] }) {
     const title = page.title ?? page.path ?? page.entryId;
     if (page.path === null) {
