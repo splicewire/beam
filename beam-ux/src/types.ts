@@ -87,6 +87,14 @@ export interface UxBuilderClient<TBody = BeamUxEntryBodyData> {
     memberId: string,
     input: import("./files").FileReconcileInput,
   ): Promise<import("./files").FileReconcileResult>;
+  remirrorReleaseFile?(
+    memberId: string,
+    input: import("./files").FileReconcileInput,
+  ): Promise<import("./files").FileReconcileResult>;
+  takeAllReleaseFiles?(
+    memberId: string,
+    input: import("./files").FileBatchReconcileInput,
+  ): Promise<import("./files").FileBatchReconcileResult>;
   recordReleaseFile?(
     memberId: string,
     releaseId: string,

@@ -1,23 +1,31 @@
 import { useEffect, useId, useRef, useState } from 'react';
-import type { FileInspection, FileReconcileInput, FileReconcileResult } from './files';
+import type { FileBatchReconcileInput, FileBatchReconcileResult, FileInspection, FileReconcileInput, FileReconcileResult } from './files';
 import type { UxBuilderClient } from './types';
 
 const buttonClassName = 'inline-flex items-center justify-center rounded-md border bg-background px-3 py-2 text-sm font-medium shadow-sm hover:bg-muted focus-visible:outline focus-visible:outline-2 disabled:cursor-not-allowed disabled:opacity-50';
+type FileConfirmation =
+    | {action: 'take'; input: FileReconcileInput}
+    | {action: 'restore'; input: FileReconcileInput}
+    | {action: 'remirror'; input: FileReconcileInput}
+    | {action: 'takeAll'; input: FileBatchReconcileInput};
 
 /** Deliberate current-pin comparison. Captured confirmation survives errors until explicit reload. */
 export function FilesComparisonPanel({memberId, client, editorHref}: {
     memberId: string; client: UxBuilderClient; editorHref?: (entryId: string) => string | undefined;
 }) {
     const [inspection, setInspection] = useState<FileInspection | null>(null);
-    const [confirmation, setConfirmation] = useState<{action: 'take' | 'restore'; input: FileReconcileInput} | null>(null);
+    const [confirmation, setConfirmation] = useState<FileConfirmation | null>(null);
     const [busy, setBusy] = useState(false);
     const [error, setError] = useState('');
     const [result, setResult] = useState<FileReconcileResult | null>(null);
+    const [batchResult, setBatchResult] = useState<FileBatchReconcileResult | null>(null);
     const [resultFormat, setResultFormat] = useState<string | null>(null);
     const confirmButton = useRef<HTMLButtonElement>(null);
     const takeButton = useRef<HTMLButtonElement>(null);
     const restoreButton = useRef<HTMLButtonElement>(null);
-    const returnFocus = useRef<'take' | 'restore' | null>(null);
+    const remirrorButton = useRef<HTMLButtonElement>(null);
+    const takeAllButton = useRef<HTMLButtonElement>(null);
+    const returnFocus = useRef<'take' | 'restore' | 'remirror' | 'takeAll' | null>(null);
     const reloadButton = useRef<HTMLButtonElement>(null);
     const requestEpoch = useRef(0);
     const headingId = useId();
@@ -35,14 +43,14 @@ export function FilesComparisonPanel({memberId, client, editorHref}: {
         finally { if (epoch === requestEpoch.current) setBusy(false); }
     };
     useEffect(() => {
-        setResult(null); setResultFormat(null);
+        setResult(null); setBatchResult(null); setResultFormat(null);
         void load();
         return () => { requestEpoch.current++; };
     }, [memberId, client]);
     useEffect(() => {
         if (confirmation && !busy && !error) confirmButton.current?.focus();
         else if (!confirmation && !busy && returnFocus.current) {
-            ((returnFocus.current === 'take' ? takeButton : restoreButton).current ?? reloadButton.current)?.focus();
+            ((returnFocus.current === 'take' ? takeButton : returnFocus.current === 'restore' ? restoreButton : returnFocus.current === 'remirror' ? remirrorButton : takeAllButton).current ?? reloadButton.current)?.focus();
             returnFocus.current = null;
         }
     }, [confirmation, busy, error]);
@@ -50,7 +58,7 @@ export function FilesComparisonPanel({memberId, client, editorHref}: {
         returnFocus.current = confirmation?.action ?? null;
         setConfirmation(null);
     };
-    const capture = (action: 'take' | 'restore') => {
+    const capture = (action: 'take' | 'restore' | 'remirror') => {
         if (!inspection?.workingHeadVersion || !inspection.publishedVersion || !inspection.fingerprint) return;
         setConfirmation({action, input: {
             expectedHeadVersion: inspection.workingHeadVersion,
@@ -61,18 +69,31 @@ export function FilesComparisonPanel({memberId, client, editorHref}: {
         }});
         setError('');
     };
+    const captureAll = () => {
+        if (!inspection?.canTakeAll || !inspection.takeAllItems || inspection.takeAllItems.length < 1) return;
+        setConfirmation({action: 'takeAll', input: {items: inspection.takeAllItems.map(({path: _path, ...item}) => ({...item})), confirmed: true}});
+        setError('');
+    };
     const submit = async () => {
         if (!confirmation) return;
-        const operation = confirmation.action === 'take' ? client.takeReleaseFile : client.restoreMissingReleaseFile;
-        if (!operation) return;
+        const action = confirmation.action;
+        if (action === 'take' && !client.takeReleaseFile || action === 'restore' && !client.restoreMissingReleaseFile
+            || action === 'remirror' && !client.remirrorReleaseFile || action === 'takeAll' && !client.takeAllReleaseFiles) return;
         const epoch = requestEpoch.current;
         const format = inspection?.format ?? null;
         setBusy(true); setError('');
         try {
-            const response = await operation.call(client, memberId, confirmation.input);
-            if (epoch !== requestEpoch.current) return;
-            setResult(response); setResultFormat(format);
-            returnFocus.current = confirmation.action;
+            if (action === 'takeAll') {
+                const response = await client.takeAllReleaseFiles!(memberId, confirmation.input);
+                if (epoch !== requestEpoch.current) return;
+                setBatchResult(response); setResult(null);
+            } else {
+                const operation = action === 'take' ? client.takeReleaseFile! : action === 'restore' ? client.restoreMissingReleaseFile! : client.remirrorReleaseFile!;
+                const response = await operation.call(client, memberId, confirmation.input);
+                if (epoch !== requestEpoch.current) return;
+                setResult(response); setBatchResult(null); setResultFormat(format);
+            }
+            returnFocus.current = action;
             setConfirmation(null);
             if (client.inspectReleaseFile) {
                 const updated = await client.inspectReleaseFile(memberId);
@@ -102,6 +123,7 @@ export function FilesComparisonPanel({memberId, client, editorHref}: {
             <p className="break-all text-sm">Returned working head: {result.headVersion ?? 'Unavailable'}. Published pin: {result.publishedVersion ?? 'Unavailable'}.</p>
             {compileFailed && <p className="text-sm">This warning describes the save response; later comparison reads do not provide stored compilation history.</p>}
         </div>}
+        {batchResult && <p role="status">{batchResult.count} files were taken as drafts. Published pins and local files are unchanged.</p>}
         {drafted && href && <a href={href}>Open entry</a>}
         {inspection && <>
             <p><strong>{inspection.state}</strong> — {inspection.message}</p>
@@ -116,15 +138,23 @@ export function FilesComparisonPanel({memberId, client, editorHref}: {
             {!confirmation && <div className="flex gap-4">
                 {inspection.canTake && client.takeReleaseFile && <button className={buttonClassName} ref={takeButton} type="button" disabled={busy} onClick={() => capture('take')}>Take file as draft</button>}
                 {inspection.canRestore && client.restoreMissingReleaseFile && <button className={buttonClassName} ref={restoreButton} type="button" disabled={busy} onClick={() => capture('restore')}>Restore missing published file</button>}
+                {inspection.state === 'differs' && inspection.canRemirror && client.remirrorReleaseFile && <button className={buttonClassName} ref={remirrorButton} type="button" disabled={busy} onClick={() => capture('remirror')}>Re-mirror published file</button>}
+                {inspection.canTakeAll && client.takeAllReleaseFiles && <button className={buttonClassName} ref={takeAllButton} type="button" disabled={busy} onClick={captureAll}>Take all as drafts</button>}
             </div>}
             {inspection.fileExists && inspection.state !== 'unchanged' && <p>Restore never overwrites an existing file. Preserve or move it before restoring a missing published file.</p>}
         </>}
         {confirmation && <div role="group" aria-label="Confirm file reconciliation" className="flex flex-wrap items-center gap-3 rounded border p-3">
             <p>{confirmation.action === 'take'
                 ? 'Replace the inspected working draft with this admitted local file body? Prior versions remain in history. The published pin, local file and Git stay unchanged. Publish separately through ordinary review.'
-                : 'Create the missing file from the current published pin? Draft, history and Git stay unchanged. Any appearing file blocks creation. An incomplete file is preserved for explicit inspection or moving before retry.'}</p>
-            <p className="break-all text-xs">Captured head {confirmation.input.expectedHeadVersion}; published {confirmation.input.expectedPublishedVersion}; file {confirmation.input.expectedFileSha256 ?? 'absent'}.</p>
-            <button className={buttonClassName} ref={confirmButton} type="button" disabled={busy || !!error} onClick={() => void submit()}>{confirmation.action === 'take' ? 'Confirm take file as draft' : 'Confirm restore missing file'}</button>
+                : confirmation.action === 'restore'
+                    ? 'Create the missing file from the current published pin? Draft, history and Git stay unchanged. Any appearing file blocks creation. An incomplete file is preserved for explicit inspection or moving before retry.'
+                    : confirmation.action === 'remirror'
+                        ? 'Replace this exact local file with the current published version? Draft and history stay unchanged. If the file changes after inspection, the server refuses and preserves it.'
+                        : `Take all ${confirmation.input.items.length} changed files as drafts? Published pins and local files remain unchanged; any stale member blocks the entire batch.`}</p>
+            {confirmation.action === 'takeAll'
+                ? <><p className="break-all text-xs">Captured {confirmation.input.items.length} member file states for this batch:</p><ul className="list-disc pl-5">{inspection?.takeAllItems?.map(item => <li className="break-all" key={item.memberId}>{item.path}</li>)}</ul></>
+                : <p className="break-all text-xs">Captured head {confirmation.input.expectedHeadVersion}; published {confirmation.input.expectedPublishedVersion}; file {confirmation.input.expectedFileSha256 ?? 'absent'}.</p>}
+            <button className={buttonClassName} ref={confirmButton} type="button" disabled={busy || !!error} onClick={() => void submit()}>{confirmation.action === 'take' ? 'Confirm take file as draft' : confirmation.action === 'restore' ? 'Confirm restore missing file' : confirmation.action === 'remirror' ? 'Confirm Re-mirror' : 'Confirm take all as drafts'}</button>
             <button className={buttonClassName} type="button" disabled={busy} onClick={cancel}>Cancel</button>
         </div>}
     </section>;
