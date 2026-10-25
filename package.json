@@ -8,12 +8,12 @@
   "workspaces": [
     "beam-resources",
     "beam-ux-canvas",
-    "beam-mdx",
     "beam-content",
     "beam-ux-prototype",
     "beam-mainframe",
     "beam-workflows",
     "beam-ux",
+    "beam-mdx",
     "beam-accounts",
     "beam-docs",
     "beam-commerce",
@@ -29,7 +29,7 @@
   "scripts": {
     "build": "npm run build --workspaces --if-present",
     "dev": "npm run dev --workspaces --if-present",
-    "test": "npm run test:editor-kit && npm run test:ownership && npm run test --workspaces --if-present",
+    "test": "npm run test:editor-kit && npm run test:build-order && npm run test:ownership && npm run test --workspaces --if-present",
     "test:ownership": "npm exec --workspace beam-accounts -- vitest run --root .. tests/account-ownership.test.ts",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "changeset": "changeset",
@@ -39,7 +39,8 @@
     "build-storybook": "storybook build",
     "test-storybook": "test-storybook --url http://127.0.0.1:6007",
     "lint:tokens": "node scripts/lint-tokens.mjs",
-    "test:editor-kit": "node --test tests/editor-kit-boundary.test.mjs"
+    "test:editor-kit": "node --test tests/editor-kit-boundary.test.mjs",
+        "test:build-order": "node --test tests/workspace-build-order.test.mjs"
   },
   "devDependencies": {
     "@changesets/cli": "^2.27.9",
