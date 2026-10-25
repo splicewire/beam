@@ -14,8 +14,16 @@ export interface PageFieldsOffer {
   schema: { properties?: Record<string, FieldSchema> } | null;
 }
 
+/** A Redirect that leads to the page (ux-0236 d14), as the server lists it with the page. */
+export interface RedirectToPage {
+  path: string;
+  match: string;
+  permanent: boolean;
+  origin: string;
+}
+
 /** These controls change the Local Session, never the published entry row. */
-export function PageSettings({ value, onChange, pageFields = null, fileLanguages = [], mediaLibrary }: { value: SessionPageSettings; onChange: (value: SessionPageSettings) => void; pageFields?: PageFieldsOffer | null; fileLanguages?: string[] | null; mediaLibrary?: EntryImageLibrary }) {
+export function PageSettings({ value, onChange, pageFields = null, fileLanguages = [], mediaLibrary, redirects = null }: { value: SessionPageSettings; onChange: (value: SessionPageSettings) => void; pageFields?: PageFieldsOffer | null; fileLanguages?: string[] | null; mediaLibrary?: EntryImageLibrary; redirects?: RedirectToPage[] | null }) {
   const labelId = useId();
   const fields = [
     ['title', 'Title'], ['parentId', 'Parent entry ID'], ['segment', 'URL segment'],
@@ -46,6 +54,7 @@ export function PageSettings({ value, onChange, pageFields = null, fileLanguages
     </select></label>}
     {pageFields?.schema && <PageFieldInputs schema={pageFields.schema} value={value.fields ?? {}} onChange={fields => onChange({ ...value, fields })} />}
     <UnclaimedKeys value={value.unclaimed ?? {}} onChange={unclaimed => onChange({ ...value, unclaimed })} />
+    {redirects && <RedirectsToPage redirects={redirects} />}
     </div>
   </details>;
 }
@@ -73,6 +82,22 @@ function PageFieldInputs({ schema, value, onChange }: {
       return <label key={name}>{label}<input type={numeric ? 'number' : 'text'} value={value[name] === undefined ? '' : String(value[name])}
         onChange={event => set(name, event.target.value === '' ? null : numeric ? Number(event.target.value) : event.target.value)} /></label>;
     })}
+  </fieldset>;
+}
+
+const ORIGINS: Record<string, string> = { author: 'made by an author', release: 'from a Release', takedown: 'from a Take-down', record: 'from a Record' };
+
+/**
+ * ux-0236 d14: the Redirects leading to the page, so an author sees what moving or deleting it would strand. They are
+ * managed in the site's Redirects, not here.
+ */
+function RedirectsToPage({ redirects }: { redirects: RedirectToPage[] }) {
+  return <fieldset aria-label="Redirects to this page">
+    <legend>Redirects to this page</legend>
+    {redirects.length === 0 ? <p>No Redirects lead here.</p> : <ul>{redirects.map(redirect => <li key={`${redirect.path} ${redirect.match}`}>
+      {[redirect.path + (redirect.match === 'prefix' ? ' and below' : ''), redirect.permanent ? null : 'temporary', ORIGINS[redirect.origin] ?? null]
+        .filter(Boolean).join(' · ')}
+    </li>)}</ul>}
   </fieldset>;
 }
 

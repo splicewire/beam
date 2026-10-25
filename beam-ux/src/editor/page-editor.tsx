@@ -99,6 +99,7 @@ export function PageEditor({ slug, body = null, entryId: suppliedId = null }: Pa
         pageSettings?: EntryPageSettings | null;
         pageFields?: import('./PageSettings').PageFieldsOffer | null;
         fileLanguages?: string[] | null;
+        redirects?: import('./PageSettings').RedirectToPage[] | null;
         mediaLibrary?: boolean;
         styleRegistry?: import('../blockdoc/style-runtime.js').StyleRegistry; profile?: import('@schemastud/blockdoc').BlockdocManifest;
         failed?: boolean;
@@ -118,7 +119,7 @@ export function PageEditor({ slug, body = null, entryId: suppliedId = null }: Pa
             .loadBody(entryId)
             .then(
                 (env) =>
-                    live && setLoaded({ mediaLibrary: (env as {mediaLibrary?:boolean}).mediaLibrary===true, entryId, authoredComponents: (env as { authoredComponents?: import('@splicewire/beam-resources/types/beam-ux').ComponentCanvasData[] }).authoredComponents, body: (env as { body?: unknown })?.body ?? null, pageSettings: (env as { pageSettings?: EntryPageSettings | null }).pageSettings, pageFields: (env as { pageFields?: import('./PageSettings').PageFieldsOffer | null }).pageFields ?? null, fileLanguages: (env as { fileLanguages?: string[] | null }).fileLanguages ?? null, bindings: (env as { bindings?: import('../bindings/runtime.js').BindingPayload }).bindings, styleRegistry: (env as { styleRegistry?: import("../blockdoc/style-runtime.js").StyleRegistry }).styleRegistry, profile: (env as { styleRegistry?: import('../blockdoc/style-runtime.js').StyleRegistry; profile?: import('@schemastud/blockdoc').BlockdocManifest }).profile }),
+                    live && setLoaded({ mediaLibrary: (env as {mediaLibrary?:boolean}).mediaLibrary===true, entryId, authoredComponents: (env as { authoredComponents?: import('@splicewire/beam-resources/types/beam-ux').ComponentCanvasData[] }).authoredComponents, body: (env as { body?: unknown })?.body ?? null, pageSettings: (env as { pageSettings?: EntryPageSettings | null }).pageSettings, pageFields: (env as { pageFields?: import('./PageSettings').PageFieldsOffer | null }).pageFields ?? null, fileLanguages: (env as { fileLanguages?: string[] | null }).fileLanguages ?? null, redirects: (env as { redirects?: import('./PageSettings').RedirectToPage[] | null }).redirects ?? null, bindings: (env as { bindings?: import('../bindings/runtime.js').BindingPayload }).bindings, styleRegistry: (env as { styleRegistry?: import("../blockdoc/style-runtime.js").StyleRegistry }).styleRegistry, profile: (env as { styleRegistry?: import('../blockdoc/style-runtime.js').StyleRegistry; profile?: import('@schemastud/blockdoc').BlockdocManifest }).profile }),
             )
             // A refused read is not an empty body: keep replacement writes unavailable.
             .catch(() => {
@@ -177,6 +178,7 @@ export function PageEditor({ slug, body = null, entryId: suppliedId = null }: Pa
                 pageSettings={current?.pageSettings}
                 pageFields={current?.pageFields}
                 fileLanguages={current?.fileLanguages}
+                redirects={current?.redirects}
                 transport={{
                     // CanvasPageEditor's transport seam is keyed by its `slug` prop, which stays a slug
                     // — it is the editor's display label and `defaultTreeFor()` key. The BODY transport

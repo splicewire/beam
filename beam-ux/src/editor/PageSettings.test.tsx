@@ -91,3 +91,24 @@ it('keeps intervening page settings when an image upload completes',async()=>{
  finish({id:'a',name:'photo',url:'/new.png'});
  await waitFor(()=>expect(change).toHaveBeenCalledWith({title:'After',description:'New text',socialImage:'/new.png'}));
 });
+
+it('lists the Redirects that lead to the page, and says so when none do (ux-0236 d14)', () => {
+  const redirects = [
+    { path: '/old-pricing', match: 'prefix', permanent: false, origin: 'author' },
+    { path: '/plans', match: 'exact', permanent: true, origin: 'release' },
+  ];
+  const { rerender } = render(<PageSettings value={{ title: 'Pricing' }} redirects={redirects} onChange={vi.fn()} />);
+
+  const list = screen.getByRole('group', { name: 'Redirects to this page' });
+  expect(within(list).getAllByRole('listitem').map(item => item.textContent)).toEqual([
+    '/old-pricing and below · temporary · made by an author',
+    '/plans · from a Release',
+  ]);
+
+  rerender(<PageSettings value={{ title: 'Pricing' }} redirects={[]} onChange={vi.fn()} />);
+  expect(within(screen.getByRole('group', { name: 'Redirects to this page' })).getByText('No Redirects lead here.')).toBeTruthy();
+
+  // A server that sends none (an older one) shows no group at all.
+  rerender(<PageSettings value={{ title: 'Pricing' }} onChange={vi.fn()} />);
+  expect(screen.queryByRole('group', { name: 'Redirects to this page' })).toBeNull();
+});
