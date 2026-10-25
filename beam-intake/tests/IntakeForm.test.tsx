@@ -1,10 +1,13 @@
 import { afterEach, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, render, screen, waitFor } from '@testing-library/react';
 import { IntakeForm, PublicIntakeProvider, submitToIntakeDoor, type PublicIntakeServices } from '../src/IntakeForm';
+import { IntakeProvider } from '../src/provider';
+import type { IntakeFormRenderProps } from '../src/types';
 
 afterEach(() => {
     cleanup();
     vi.unstubAllGlobals();
+    document.cookie = 'XSRF-TOKEN=; expires=Thu, 01 Jan 1970 00:00:00 GMT';
 });
 
 const CONTACT = {
@@ -13,52 +16,69 @@ const CONTACT = {
     required: ['email'],
 };
 
+/** Mount through a host renderForm, the seam IntakeSectionForm shares, and capture what the form hands it. */
 function mount(services: Partial<PublicIntakeServices>, props: Partial<Parameters<typeof IntakeForm>[0]> = {}) {
-    return render(<PublicIntakeProvider value={{ schemas: { contact: CONTACT }, ...services }}>
-        <IntakeForm captureKey="contact" {...props} />
-    </PublicIntakeProvider>);
+    const rendered: { current?: IntakeFormRenderProps } = {};
+    render(<IntakeProvider services={{ client: { submit: vi.fn() }, renderForm: form => { rendered.current = form; return <p>host form</p>; } }}>
+        <PublicIntakeProvider value={{ schemas: { contact: CONTACT }, ...services }}>
+            <IntakeForm captureKey="contact" {...props} />
+        </PublicIntakeProvider>
+    </IntakeProvider>);
+
+    return rendered;
 }
 
-it('renders the schema fields and sends a typed payload with the honeypot field, then shows the success message (EP-07d)', async () => {
+it('sends the submission with the honeypot field the page names, leaving empty fields out, then shows the success message (EP-07d)', async () => {
     const submit = vi.fn().mockResolvedValue({ ok: true });
-    mount({ submit }, { submitLabel: 'Join', successMessage: 'You are on the list.' });
+    const rendered = mount({ submit, honeypotField: 'nickname' }, { submitLabel: 'Join', successMessage: 'You are on the list.' });
+    expect(rendered.current?.schema).toBe(CONTACT);
+    expect(rendered.current?.submitLabel).toBe('Join');
 
-    fireEvent.change(screen.getByLabelText('Email'), { target: { value: 'ada@example.test' } });
-    fireEvent.change(screen.getByLabelText('Seats'), { target: { value: '3' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Join' }));
+    act(() => rendered.current!.onSubmit({ email: 'ada@example.test', seats: 3, note: '' }));
 
-    await waitFor(() => expect(submit).toHaveBeenCalledWith('contact', { email: 'ada@example.test', seats: 3, website: '' }));
+    await waitFor(() => expect(submit).toHaveBeenCalledWith('contact', { email: 'ada@example.test', seats: 3, nickname: '' }));
     expect(await screen.findByRole('status')).toHaveProperty('textContent', 'You are on the list.');
 });
 
-it("maps the door's 422 errors onto their fields and a 429 onto the throttle message", async () => {
+it("hands the door's 422 errors to the renderer and turns a 429 into the throttle message", async () => {
     const submit = vi.fn()
-        .mockResolvedValueOnce({ ok: false, status: 422, message: 'The submission for [contact] is invalid.', errors: { '/email': ['Must be an email.'], '': ['Root problem.'] } })
+        .mockResolvedValueOnce({ ok: false, status: 422, message: 'The submission for [contact] is invalid.', errors: { '/email': ['Must be an email.'] } })
         .mockResolvedValueOnce({ ok: false, status: 429, errors: {} });
-    mount({ submit });
+    const rendered = mount({ submit });
 
-    fireEvent.click(screen.getByRole('button', { name: 'Send' }));
-    expect(await screen.findByText('Must be an email.')).toBeTruthy();
-    expect(screen.getByText('Root problem.')).toBeTruthy();
-    expect(screen.getByLabelText('Email').getAttribute('aria-invalid')).toBe('true');
+    act(() => rendered.current!.onSubmit({ email: 'nope' }));
+    await waitFor(() => expect(rendered.current?.errors).toEqual({ '/email': ['Must be an email.'] }));
+    expect(screen.getByRole('alert').textContent).toBe('The submission for [contact] is invalid.');
 
-    fireEvent.click(screen.getByRole('button', { name: 'Send' }));
+    act(() => rendered.current!.onSubmit({ email: 'nope' }));
     expect(await screen.findByText(/Too many submissions/)).toBeTruthy();
 });
 
-it('is a sealed preview in the editor, and a key the page was given no schema for renders a notice', () => {
+it('is a sealed preview in the editor, and a key with no schema renders a notice', () => {
     const submit = vi.fn();
-    mount({ submit }, { preview: true });
-    expect((screen.getByLabelText('Email') as HTMLInputElement).disabled).toBe(true);
-    fireEvent.submit(screen.getByRole('button', { name: 'Send' }).closest('form')!);
+    const rendered = mount({ submit }, { preview: true });
+    expect(rendered.current?.disabled).toBe(true);
+    act(() => rendered.current!.onSubmit({ email: 'a@b.test' }));
     expect(submit).not.toHaveBeenCalled();
     cleanup();
 
     render(<PublicIntakeProvider value={{ schemas: {} }}><IntakeForm captureKey="private" /></PublicIntakeProvider>);
     expect(screen.getByRole('note').textContent).toBe('This form is not available.');
+    cleanup();
+    render(<PublicIntakeProvider value={{ schemas: {} }}><IntakeForm captureKey="contact" preview /></PublicIntakeProvider>);
+    expect(screen.getByRole('note').textContent).toBe('Intake form · contact');
 });
 
-it('posts to the public intake door and reads its error body', async () => {
+it('draws its fields with SchemaForm when no host renderer is mounted', () => {
+    const { container } = render(<PublicIntakeProvider value={{ schemas: { contact: CONTACT } }}><IntakeForm captureKey="contact" /></PublicIntakeProvider>);
+
+    expect(container.querySelector('#root_email')).not.toBeNull();
+    expect(screen.getByRole('button', { name: 'Send' })).toBeTruthy();
+    expect(container.querySelector('input[name="website"][aria-hidden="true"]')).not.toBeNull();
+});
+
+it('posts to the public intake door with the CSRF header the other transports send, and reads its error body', async () => {
+    document.cookie = 'XSRF-TOKEN=abc%3D';
     const fetchMock = vi.fn()
         .mockResolvedValueOnce(new Response(null, { status: 201 }))
         .mockResolvedValueOnce(new Response(JSON.stringify({ message: 'Invalid.', errors: { '/email': ['Required.'] } }), { status: 422 }));
@@ -66,6 +86,6 @@ it('posts to the public intake door and reads its error body', async () => {
 
     expect(await submitToIntakeDoor('forms/contact', { email: 'a@b.test' })).toEqual({ ok: true });
     expect(fetchMock.mock.calls[0][0]).toBe('/beam/intake/forms/contact');
-    expect(fetchMock.mock.calls[0][1]).toMatchObject({ method: 'POST', body: JSON.stringify({ email: 'a@b.test' }) });
+    expect(fetchMock.mock.calls[0][1]).toMatchObject({ method: 'POST', body: JSON.stringify({ email: 'a@b.test' }), headers: { 'X-XSRF-TOKEN': 'abc=' } });
     expect(await submitToIntakeDoor('contact', {})).toEqual({ ok: false, status: 422, message: 'Invalid.', errors: { '/email': ['Required.'] } });
 });

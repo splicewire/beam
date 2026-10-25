@@ -1,6 +1,7 @@
 import { lazy, Suspense } from 'react';
 import { resolveBeamPage } from '../pages';
-import { featureEnabled } from '../config';
+import { featureEnabled, intakeFormsEnabled } from '../config';
+import { IntakeFormIsland } from './intake';
 // Component registry for the visual editor's OPAQUE ISLANDS. A tree node whose `name` is a registered key
 // (PascalCase) renders the REAL designed component (sealed block: select / reorder / delete, no drill-in)
 // instead of an intrinsic element. Host CONFIG only — the "is this an island" test lives in the package
@@ -50,6 +51,9 @@ export function defaultComponents(): Record<
     
     
     ...(featureEnabled('email-verification') ? { AuthVerifyEmail: VerifyEmail } : {}),
+    // EP-07d: the packaged form, where the host turned on its public intake door (laravel-beam-ux offers the node
+    // there too, so the doctor's registry check agrees).
+    ...(intakeFormsEnabled() ? { IntakeForm: IntakeFormIsland } : {}),
     
 }; }
 

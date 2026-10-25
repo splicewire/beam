@@ -15,6 +15,11 @@ export interface BeamInertiaConfig {
   development?: boolean;
   logo?: ComponentType<SVGAttributes<SVGElement>>;
   features?: Partial<Record<AuthFeature, boolean>>;
+  /**
+   * EP-07d: register the packaged IntakeForm. A host turns it on where it turns on laravel-beam's public intake door
+   * (`beam.core.intake.enabled`), which is where laravel-beam-ux's Manifest Profile offers the node.
+   */
+  intakeForms?: boolean;
   pages?: Record<string, PageLoader>;
   entryClient?: UxBuilderClient;
   /** Host-owned editor route for an inspected entry; absent means no Open Theme link. */
@@ -26,6 +31,10 @@ export function configureBeamInertia(config: BeamInertiaConfig): void {
 }
 export function getBeamInertiaConfig(): BeamInertiaConfig {
   return configuration;
+}
+/** EP-07d: does this host register the packaged IntakeForm (its public intake door is on)? */
+export function intakeFormsEnabled(): boolean {
+  return configuration.intakeForms === true;
 }
 export function featureEnabled(feature: AuthFeature): boolean {
   if (feature === "2fa-or-passkeys")

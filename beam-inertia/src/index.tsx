@@ -19,6 +19,7 @@ import OperatorLayout from "./layouts/operator-layout";
 import OsLayout from "./layouts/os-layout";
 import SettingsLayout from "./layouts/settings/layout";
 import SiteLayout from "./layouts/site-layout";
+import { IntakeFormsFromPage } from "./editor/intake";
 
 /**
  * One client for the whole app. Any `@splicewire/beam-ux` surface that owns its own data logic uses
@@ -65,7 +66,8 @@ export function beamInertiaOptions(config: BeamInertiaConfig = {}) {
   if (typeof window !== "undefined") initializeTheme();
   configureEntryPage({
     linkComponent: Link,
-    wrap: (node) => <SiteLayout>{node}</SiteLayout>,
+    // EP-07d: the page's forms read the schemas and honeypot field the server put on it.
+    wrap: (node) => <SiteLayout><IntakeFormsFromPage>{node}</IntakeFormsFromPage></SiteLayout>,
     // "Edit content" on a rendered entry opens the in-place editor WHERE THE BODY IS, inside the
     // entry's layout and template — not beside the page (beam.test `/about`, 2026-09-24). The
     // MainframeHost treats `site/entry` as self-managed accordingly (layouts/beam-ux/mainframe-host).

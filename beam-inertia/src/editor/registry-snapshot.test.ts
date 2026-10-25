@@ -15,3 +15,9 @@ it('lists the components the canvas registers, sorted, gated by the configured a
     expect(names).not.toContain('AuthVerifyEmail');
     expect(registrySnapshot({ Banner: null, Callout: null })).toEqual(['Banner', 'Callout']);
 });
+
+it('lists IntakeForm only where the host turned on its public intake door (EP-07d)', () => {
+    expect(registrySnapshot()).not.toContain('IntakeForm');
+    configureBeamInertia({ intakeForms: true });
+    expect(registrySnapshot()).toContain('IntakeForm');
+});
