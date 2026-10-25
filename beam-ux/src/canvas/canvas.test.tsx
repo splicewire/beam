@@ -401,6 +401,8 @@ describe('StyleRowsWidget', () => {
 const doc = (): JsonDoc => [block({ name: 'div', children: [block({ name: 'h1', children: [{ kind: 'text', value: 'Hi' }] })] })];
 
 describe('PageEditor — mode fork + transport', async () => {
+    afterEach(() => vi.restoreAllMocks());
+
     it('renders read-only (TreeRender) until window mode is broadcast', async () => {
         const transport = publishingTransport();
         const { container } = render(wrap(<PageEditor entryId="entry-1" userId="author-1" slug="home" body={doc()} transport={transport} />));
@@ -723,6 +725,39 @@ describe('PageEditor — mode fork + transport', async () => {
         const text = rows[1].querySelector('.pe-version-text');
         expect(text?.querySelector('.pe-version-ref')?.textContent).toBe('v1');
         expect(text?.querySelector('.pe-version-label')?.textContent).toBe('baseline');
+    });
+
+    it('opens a saved version through the author preview transport without restoring it', async () => {
+        const transport = {
+            ...publishingTransport({
+                versions: [version({ id: 'v-v1', readable: 'v1', isPublished: true })],
+            }),
+            previewVersion: vi.fn().mockResolvedValue({ url: '/beam-ux/preview/signed' }),
+        };
+        const popup = {
+            opener: window,
+            location: { href: 'about:blank' },
+            close: vi.fn(),
+        } as unknown as Window;
+        vi.spyOn(window, 'open').mockReturnValue(popup);
+        const { container } = await enterEditMode(transport);
+
+        await act(async () => {
+            fireEvent.click(dockButton(container, 'Versions')!);
+            await Promise.resolve();
+        });
+        await act(async () => {
+            fireEvent.click(container.querySelector('[aria-label="Open v1"]') as HTMLElement);
+            await Promise.resolve();
+        });
+
+        expect(transport.previewVersion).toHaveBeenCalledWith('home', 'v-v1');
+        expect(popup.location.href).toBe(
+            `${window.location.origin}/beam-ux/preview/signed`,
+        );
+        expect(popup.opener).toBeNull();
+        expect(transport.restoreVersion).not.toHaveBeenCalled();
+        expect(transport.saveDraft).not.toHaveBeenCalled();
     });
 
     it('Restore is confirmed, and only then re-reads the body so the canvas is not left stale', async () => {

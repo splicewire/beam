@@ -16,6 +16,7 @@ const saveBody = vi.hoisted(() => vi.fn());
 const saveDraft = vi.hoisted(() => vi.fn());
 const publishVersion = vi.hoisted(() => vi.fn());
 const listVersions = vi.hoisted(() => vi.fn());
+const previewVersion = vi.hoisted(() => vi.fn());
 const provided = vi.hoisted(() => ({ profile: undefined as unknown }));
 vi.mock("./local-session", async (importOriginal) => {
   const original = await importOriginal<typeof import("./local-session")>();
@@ -39,6 +40,7 @@ vi.mock("./context", () => ({
       saveBody,
       saveDraft,
       listVersions,
+      previewVersion,
       publish: publishVersion,
       restoreVersion: vi.fn(),
     },
@@ -104,10 +106,12 @@ beforeEach(() => {
 });
 afterEach(() => {
   cleanup();
+  vi.restoreAllMocks();
   loadBody.mockReset();
   saveBody.mockReset();
   saveDraft.mockReset();
   listVersions.mockReset();
+  previewVersion.mockReset();
   publishVersion.mockReset();
 });
 
@@ -294,6 +298,39 @@ it("projects all recording references in window history without writing the vers
   expect(screen.getByText(/Git 1234567.*release-a/)).toBeTruthy();
   expect(screen.getByText(/Not committed.*release-b/)).toBeTruthy();
   expect(JSON.stringify(version)).toBe(original);
+  expect(saveDraft).not.toHaveBeenCalled();
+  expect(saveBody).not.toHaveBeenCalled();
+});
+
+it("opens a saved history version through the author preview transport without writing it", async () => {
+  loadBody.mockResolvedValue({ body: SAVED });
+  listVersions.mockResolvedValue({
+    headVersion: "v2",
+    publishedVersion: "v2",
+    draftPending: false,
+    versions: [{ id: "v1", readable: "v1-old", label: "Older" }],
+  });
+  previewVersion.mockResolvedValue({ url: "/beam-ux/preview/signed" });
+  const popup = {
+    opener: window,
+    location: { href: "about:blank" },
+    close: vi.fn(),
+  } as unknown as Window;
+  vi.spyOn(window, "open").mockReturnValue(popup);
+
+  render(<VisualEditorMount entryRef={ref("entry-a")} />);
+  await screen.findByRole("button", { name: "Save" });
+  fireEvent.click(screen.getByRole("button", { name: "History" }));
+  fireEvent.click(await screen.findByRole("button", { name: "Open" }));
+
+  await waitFor(() =>
+    expect(popup.location.href).toBe(
+      `${window.location.origin}/beam-ux/preview/signed`,
+    ),
+  );
+  expect(window.open).toHaveBeenCalledWith("about:blank", "_blank");
+  expect(popup.opener).toBeNull();
+  expect(previewVersion).toHaveBeenCalledWith("entry-a", "v1");
   expect(saveDraft).not.toHaveBeenCalled();
   expect(saveBody).not.toHaveBeenCalled();
 });

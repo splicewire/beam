@@ -96,6 +96,11 @@ export interface PageEditorTransport {
   ) => Promise<ReleaseRecord>;
   /** The recorded history plus both pins — refetched whenever the panel opens. */
   listVersions?: (slug: string) => Promise<EntryPublicationState>;
+  /** Mint and open an author-only preview for one saved version. */
+  previewVersion?: (
+    slug: string,
+    versionId: string,
+  ) => Promise<{ url: string }>;
   /** Roll forward to a recorded version and publish it. */
   restoreVersion?: (
     slug: string,
@@ -571,6 +576,27 @@ export function PageEditor({
     }
   };
 
+  const openPreview = async (version: EntryVersion) => {
+    if (!transport.previewVersion) return;
+    const popup = window.open("about:blank", "_blank");
+    if (!popup) {
+      notify?.error("Allow popups to open a version preview");
+      return;
+    }
+    popup.opener = null;
+    try {
+      const preview = await transport.previewVersion(slug, version.id);
+      const target = new URL(preview.url, window.location.href);
+      if (target.origin !== window.location.origin) {
+        throw new Error("Preview URL must stay on this host");
+      }
+      popup.location.href = target.href;
+    } catch {
+      popup.close();
+      notify?.error(`Could not open ${version.readable}`);
+    }
+  };
+
   /**
    * Remove the page's content, after the confirm step — and re-seed the canvas to the UNAUTHORED
    * document, because that is what the server now holds. Without the re-seed the author would keep
@@ -944,6 +970,16 @@ export function PageEditor({
                 )}
                 {version.isHead && !version.isPublished && (
                   <span className="pe-version-tag head">draft</span>
+                )}
+                {transport.previewVersion && (
+                  <button
+                    className="pe-btn"
+                    aria-label={`Open ${version.readable}`}
+                    onClick={() => void openPreview(version)}
+                    disabled={busy}
+                  >
+                    Open
+                  </button>
                 )}
                 {!version.isPublished && (
                   <button

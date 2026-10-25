@@ -62,6 +62,7 @@ it("preserves publication absence on an injected body-only client without using 
   expect(bodyClient.saveDraft).toBeUndefined();
   expect(bodyClient.publish).toBeUndefined();
   expect(bodyClient.listVersions).toBeUndefined();
+  expect(bodyClient.previewVersion).toBeUndefined();
   expect(bodyClient.restoreVersion).toBeUndefined();
   expect(bodyClient.createRelease).toBeUndefined();
   expect(bodyClient.releaseCommand).toBeUndefined();
@@ -124,7 +125,34 @@ it("retains a supplied method receiver and switches back to starter defaults onl
   expect(bodyClient.publish).toBeTypeOf("function");
   expect(bodyClient.saveDraft).toBeTypeOf("function");
   expect(bodyClient.listVersions).toBeTypeOf("function");
+  expect(bodyClient.previewVersion).toBeTypeOf("function");
   expect(bodyClient.restoreVersion).toBeTypeOf("function");
+});
+
+it("requests an author preview URL for one saved version through the stateful preview operation", async () => {
+  const fetch = vi.fn().mockResolvedValue(
+    Response.json({ data: { url: "https://example.test/signed-preview" } }),
+  );
+  vi.stubGlobal("fetch", fetch);
+  vi.stubGlobal("document", { cookie: "XSRF-TOKEN=csrf%20token" });
+  configureBeamInertia({});
+
+  await expect(bodyClient.previewVersion?.("entry-uuid", "version-uuid")).resolves.toEqual({
+    url: "https://example.test/signed-preview",
+  });
+  expect(fetch).toHaveBeenCalledWith(
+    "/beam-ux-entries/entry-uuid/preview",
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-XSRF-TOKEN": "csrf token",
+        Accept: "application/json",
+      },
+      credentials: "same-origin",
+      body: JSON.stringify({ versionId: "version-uuid" }),
+    },
+  );
 });
 
 it("clears through the canonical clear-body route, and an injected client without it offers none", async () => {

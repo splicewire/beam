@@ -141,7 +141,14 @@ export function PageEditor({ slug, body = null, entryId: suppliedId = null }: Pa
         return <div role="alert">Could not load this page’s saved content.</div>;
     }
 
-    const { saveDraft, publish, listVersions, restoreVersion, clearBody } = bodyClient;
+    const {
+        saveDraft,
+        publish,
+        listVersions,
+        restoreVersion,
+        previewVersion,
+        clearBody,
+    } = bodyClient;
     // "Remove content" is offered only to a viewer who holds the ability `clear-body` declares
     // (`ux.author`, shared as `auth.canAuthorUx`), and only when there is a row to address. The server
     // refuses everyone else anyway; the gate here keeps the button from being a guaranteed 403.
@@ -186,6 +193,12 @@ export function PageEditor({ slug, body = null, entryId: suppliedId = null }: Pa
                               publish: (_s: string, ref: string) => publish(entryId, ref),
                               releaseCommand: bodyClient.releaseCommand?.bind(bodyClient),
                               listVersions: () => listVersions(entryId),
+                              ...(previewVersion
+                                  ? {
+                                        previewVersion: (_s: string, versionId: string) =>
+                                            previewVersion(entryId, versionId),
+                                    }
+                                  : {}),
                               restoreVersion: (_s: string, ref: string) =>
                                   restoreVersion(entryId, ref),
                               // The canvas re-seeds itself from this after a restore; without it an
