@@ -1,5 +1,5 @@
 import { assertBlockStyle, legacyStyle, type BlockStyle } from './style.js';
-import { declaredProp, declaredSlot, type LensContext } from './component-interface.js';
+import { declaredProp, declaredSlot, componentLensContext, readComponentDefinition, type LensContext } from './component-interface.js';
 import { assertFieldPath, assertRepeat, assertCondition, type RepeatDeclaration, type DataCondition } from './bindings.js';
 /**
  * TsxTree lens core — lossless `.tsx` ⟷ TsxTree.
@@ -74,8 +74,19 @@ function buildBlock(
     let legacy: BlockStyle | undefined;
     let repeat: RepeatDeclaration | undefined;
     let when: DataCondition | undefined;
+    let component: import('@splicewire/beam-resources/types/beam-ux').ComponentDefinitionData | undefined;
     let dynamic = !isElement ? false : opening!.attributes.some((a) => t.isJSXSpreadAttribute(a));
     if (opening) {
+        // Resolve the interface before any expression or Slot, regardless of JSX attribute order.
+        const declarations = opening.attributes.filter((attr) => t.isJSXAttribute(attr)
+            && t.isJSXIdentifier(attr.name) && attr.name.name === 'bdComponent');
+        if (declarations.length > 1) throw new Error('A root has only one component interface');
+        const declaration = declarations[0];
+        if (declaration && t.isJSXAttribute(declaration)) {
+            if (!t.isJSXExpressionContainer(declaration.value)) throw new Error('bdComponent requires a literal object');
+            component = readComponentDefinition(styleLiteral(declaration.value.expression));
+            context = componentLensContext(component, context);
+        }
         for (const attr of opening.attributes) {
             if (t.isJSXAttribute(attr)) {
                 const value = t.isJSXExpressionContainer(attr.value) ? attr.value.expression : attr.value;
@@ -85,7 +96,9 @@ function buildBlock(
                     slots[slot.name] = t.isJSXFragment(value) ? slotBlock.children : [slotBlock];
                     continue;
                 }
-                if (t.isJSXIdentifier(attr.name) && attr.name.name === 'bdStyle') {
+                if (t.isJSXIdentifier(attr.name) && attr.name.name === 'bdComponent') {
+                    continue;
+                } else if (t.isJSXIdentifier(attr.name) && attr.name.name === 'bdStyle') {
                     if (!t.isJSXExpressionContainer(attr.value)) throw new Error('bdStyle requires a literal object');
                     const value = styleLiteral(attr.value.expression);
                     assertBlockStyle(value);
@@ -166,6 +179,7 @@ function buildBlock(
         ...(style || legacy ? { style: { layers: [...(legacy?.layers ?? []), ...(style?.layers ?? [])] } } : {}),
         ...(repeat ? { repeat } : {}),
         ...(when ? { when } : {}),
+        ...(component ? {component} : {}),
         node: el,
     };
 }
@@ -482,7 +496,9 @@ function walk(node: unknown, visit: (n: t.Node) => void): void {
 
 /** The ONLY object-literal prop the lens interprets. Never eval; spreads/calls/computed keys refuse. */
 function styleLiteral(node: t.Node): unknown {
-    if (t.isStringLiteral(node)) return node.value;
+    if (t.isStringLiteral(node) || t.isBooleanLiteral(node)) return node.value;
+    if (t.isNumericLiteral(node) && Number.isFinite(node.value)) return node.value;
+    if (t.isUnaryExpression(node, {operator: '-'}) && t.isNumericLiteral(node.argument) && Number.isFinite(node.argument.value)) return -node.argument.value;
     if (t.isNullLiteral(node)) return null;
     if (t.isArrayExpression(node)) return node.elements.map(n => {
         if (!n || t.isSpreadElement(n)) throw new Error('bdStyle requires literal array elements');

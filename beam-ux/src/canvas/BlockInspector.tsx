@@ -73,7 +73,8 @@ export function BlockInspector(){
  // Components expose declared props; className remains source-owned, never an inspector edit.
  delete properties.className;
  const props=Object.fromEntries(Object.entries(attrs).filter(([key])=>Object.hasOwn(properties,key)));
- const rootStyles=!/^[A-Z]/.test(node.type)&&selected.every(path=>{const n=canvasSelection.commands?getAt(canvasSelection.commands.doc,path):null;return !n||!isJsonBlock(n)||!n.isComponent&&!/^[A-Z]/.test(n.name??'');}); // Root forwarding marker is explicitly deferred to ticket 00.
+ const forwardsRoot=(name:string)=>!/^[A-Z]/.test(name)||config.profile?.nodes.some(entry=>entry.name===name&&'x-forwards-root-style' in entry&&entry['x-forwards-root-style']===true)===true;
+ const rootStyles=forwardsRoot(node.type)&&selected.every(path=>{const n=canvasSelection.commands?getAt(canvasSelection.commands.doc,path):null;return !n||!isJsonBlock(n)||forwardsRoot(n.name??'');});
  const foreground=resolve(effectiveDeclaration(style,'color',selection,registry)?.value||rendered.color||'');
  const background=resolve(effectiveDeclaration(style,'background-color',selection,registry)?.value||rendered['background-color']||'');
  const ratio=contrastRatio(foreground,background);

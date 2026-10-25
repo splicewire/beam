@@ -137,6 +137,7 @@ export interface UxBuilderClient<TBody = BeamUxEntryBodyData> {
  * client must not compute or cache its own.
  */
 export interface EntryPublicationState {
+  diagnostics?: string[];
   release?: import("./releases").ReleaseRecord | null;
   id: string;
   draftPending: boolean;

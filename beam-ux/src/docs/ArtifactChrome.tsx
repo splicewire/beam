@@ -1,5 +1,6 @@
 import type { ComponentType } from 'react';
-import { useEntryArtifact } from '../site/EntryBody.js';
+import { bindingRuntime } from '../bindings/runtime.js';
+import { useAuthoredArtifacts, useEntryArtifact } from '../site/EntryBody.js';
 import type { ChromeProps, EntryArtifactPayload } from './types.js';
 
 /**
@@ -25,13 +26,14 @@ export type ArtifactChromeProps = ChromeProps & {
 
 export function ArtifactChrome({ artifact, components, children, ...chrome }: ArtifactChromeProps) {
     const { Body } = useEntryArtifact(artifact.url, artifact.version);
+    const resolvedComponents = useAuthoredArtifacts(artifact.components, components, artifact.styleRegistry);
 
     if (Body === null) {
         return <>{children}</>;
     }
 
     return (
-        <Body {...chrome} components={components ?? {}}>
+        <Body {...chrome} components={resolvedComponents} bindingRuntime={bindingRuntime} styleRegistry={artifact.styleRegistry}>
             {children}
         </Body>
     );

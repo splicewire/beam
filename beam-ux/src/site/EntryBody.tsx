@@ -1,4 +1,5 @@
-import { Fragment, createElement, useEffect, useState, type ComponentType, type ReactNode } from 'react';
+import { Fragment, createElement, useEffect, useMemo, useState, type ComponentType, type ReactNode } from 'react';
+import type { ComponentArtifactData } from '@splicewire/beam-resources/types/beam-ux';
 import { jsx, jsxs } from 'react/jsx-runtime';
 import { bindingRuntime } from '../bindings/runtime.js';
 import { richFieldComponents } from '../bindings/rich-field.js';
@@ -47,6 +48,7 @@ type ArtifactModule = {
 };
 
 export type EntryArtifact = {
+    components?: ComponentArtifactData[];
     responsiveCss?: string;
     styleRegistry?: import("../blockdoc/style-runtime.js").StyleRegistry;
     url: string;
@@ -147,6 +149,30 @@ export function useEntryArtifact(url: string, version?: string | null): UseEntry
     return { Body, status, failed: status === 'failed' };
 }
 
+/** Each entry owns its record scope. Caller props never replace its resolved bindings/runtime. */
+export function useAuthoredArtifacts(
+    entries: ComponentArtifactData[] | undefined,
+    registered: Record<string, ComponentType<never>> | undefined,
+    styleRegistry: EntryArtifact['styleRegistry'],
+): Record<string, ComponentType<never>> {
+    return useMemo(() => {
+        const authored: Record<string, ComponentType<never>> = {};
+        const components: Record<string, ComponentType<never>> = { ...richFieldComponents, ...registered };
+        for (const entry of entries ?? []) {
+            const AuthoredArtifact = (props: Record<string, unknown>) => {
+                const { Body } = useEntryArtifact(entry.url ?? '', entry.version);
+                return Body === null ? null : <Body {...props} components={components}
+                    bindings={entry.bindings ?? {}} bindingRuntime={bindingRuntime} styleRegistry={styleRegistry} />;
+            };
+            AuthoredArtifact.displayName = `Authored(${entry.name})`;
+            authored[entry.name] = AuthoredArtifact;
+        }
+        // Explicit code registrations retain priority over same-named authored entries.
+        Object.assign(components, authored, richFieldComponents, registered);
+        return components;
+    }, [entries, registered, styleRegistry]);
+}
+
 export type EntryBodyProps = {
     artifact: EntryArtifact;
     /**
@@ -203,6 +229,7 @@ const DEFAULT_FALLBACK = (
 
 export function EntryBody({ artifact, components, fallback, empty, loading = null, bodyProps }: EntryBodyProps) {
     const { Body, status } = useEntryArtifact(artifact.url, artifact.version);
+    const resolvedComponents = useAuthoredArtifacts(artifact.components, components, artifact.styleRegistry);
 
     if (status === 'unauthored') {
         return <>{empty ?? DEFAULT_EMPTY}</>;
@@ -218,5 +245,5 @@ export function EntryBody({ artifact, components, fallback, empty, loading = nul
 
     // The compiler runs without `providerImportSource`, so the compiled body takes its component map
     // as a PROP. An `<MDXProvider>` wrapper around this would be inert.
-    return <>{artifact.responsiveCss ? <style data-beam-responsive-theme="">{artifact.responsiveCss}</style> : null}<Body {...(bodyProps ?? {})} components={{ ...components, ...richFieldComponents }} styleRegistry={artifact.styleRegistry} bindingRuntime={bindingRuntime} /></>;
+    return <>{artifact.responsiveCss ? <style data-beam-responsive-theme="">{artifact.responsiveCss}</style> : null}<Body {...(bodyProps ?? {})} components={resolvedComponents} styleRegistry={artifact.styleRegistry} bindingRuntime={bindingRuntime} /></>;
 }
