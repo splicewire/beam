@@ -83,6 +83,25 @@ describe('PreviewBar (Release)', () => {
         expect(within(readiness).getByRole('link', { name: 'Open the page' }).getAttribute('href')).toBe('/about');
     });
 
+    it('links the fix to the member\'s page where the host mounts no Release page (orch-lead ruling A)', () => {
+        // A starter has no Frame Release page; the author fixes a member in the page editor's Release panel.
+        render(<PreviewBar preview={{
+            ...base,
+            mode: 'live',
+            releaseHref: null,
+            readiness: {
+                ready: false,
+                blockers: [{ code: 'stale', entryId: 'about', message: 'A publication pin moved.', fixes: ['rebase', 'drop'] }],
+                notes: [],
+            },
+        }} />);
+
+        const readiness = screen.getByRole('region', { name: 'Publish' });
+        expect(within(readiness).queryByRole('link', { name: 'Fix in the Release' })).toBeNull();
+        expect(within(readiness).getByRole('link', { name: 'Fix on the page' }).getAttribute('href'))
+            .toBe('/_beam/preview/switch?to=preview&path=%2Fabout');
+    });
+
     it('switches this URL to the live site, and from the live site links back into the Preview', () => {
         const { rerender } = render(<PreviewBar preview={base} />);
         expect(screen.getByRole('link', { name: 'Live site' }).getAttribute('href')).toBe('/_beam/preview/switch?to=live&path=%2Fabout');
