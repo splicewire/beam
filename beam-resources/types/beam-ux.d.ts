@@ -93,6 +93,26 @@ hasMore: boolean,
 page: number,
 };
 
+export type EntryCanvasBindingsInputData = {
+body: JsonNode[],
+recordValue?: string | null,
+};
+
+export type EntryCanvasBindingsOutputData = {
+bindings: Record<string, RepeatRecordsData>,
+record: Record<string, unknown> | null,
+choices: CanvasRecordChoiceData[],
+hasMore: boolean,
+recordPage: boolean,
+selectedValue: string | null,
+pagePublic: boolean | null,
+};
+
+export type CanvasRecordChoiceData = {
+value: string,
+label: string,
+};
+
 export type RecordPageData = {
 collection: string,
 field: string,

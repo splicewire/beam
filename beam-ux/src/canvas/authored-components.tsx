@@ -20,7 +20,7 @@ function authored(entry: ComponentCanvasData, config: CanvasConfig): ComponentTy
     return function AuthoredWorkingHead(incoming) {
         const defaults = Object.fromEntries((entry.definition.props ?? [])
             .filter(prop => prop.default != null).map(prop => [prop.name, prop.default]));
-        const scope: CanvasConfig = { ...config, bindings: entry.bindings ?? {},
+        const scope: CanvasConfig = { ...config, record: undefined, bindings: entry.bindings ?? {},
             componentProps: { ...defaults, ...incoming } };
         return <>{entry.body.map((node, index) => {
             const root = node.kind === 'block' && incoming.className ? { ...node, props: [

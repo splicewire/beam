@@ -480,3 +480,20 @@ it('uses entry-addressed image routes with FormData and session CSRF, preserving
   configureBeamInertia({entryClient:client});
   expect(bodyClient.listImages).toBeUndefined();expect(bodyClient.uploadImage).toBeUndefined();
 });
+
+it('reads live canvas bindings via one addressed stateful POST, with no refusal fallback',async()=>{
+ const payload={bindings:{},record:null,choices:[],hasMore:false,recordPage:false,selectedValue:null};
+ const fetch=vi.fn().mockResolvedValue(Response.json({data:payload}));vi.stubGlobal('fetch',fetch);
+ vi.stubGlobal('document',{cookie:'XSRF-TOKEN=author%20csrf'});
+ expect(await bodyClient.canvasBindings?.('entry-id',[],null)).toEqual(payload);
+ expect(fetch).toHaveBeenCalledWith('/beam-ux-entries/entry-id/canvas-bindings',{
+  method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json',Accept:'application/json','X-XSRF-TOKEN':'author csrf'},body:JSON.stringify({body:[],recordValue:null}),
+ });
+ fetch.mockResolvedValueOnce(Response.json({data:payload}));
+ const controller=new AbortController();
+ await bodyClient.canvasBindings?.('entry-id',[],null,{signal:controller.signal});
+ expect(fetch.mock.calls[1]?.[1].signal).toBe(controller.signal);
+ fetch.mockResolvedValueOnce(Response.json({message:'denied'},{status:403}));
+ await expect(bodyClient.canvasBindings?.('entry-id',[])).rejects.toMatchObject({status:403});expect(fetch).toHaveBeenCalledTimes(3);
+ configureBeamInertia({entryClient:client});expect(bodyClient.canvasBindings).toBeUndefined();
+});

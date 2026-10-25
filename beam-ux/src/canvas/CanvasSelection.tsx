@@ -1,9 +1,10 @@
 import {createContext,useCallback,useContext,useState,type ReactNode} from 'react';
-import type {JsonDoc} from '../blockdoc/json';
+import type {JsonBlock,JsonDoc} from '../blockdoc/json';
 import type {StyleSelection} from './inspector-style';
 export interface CanvasCommands {
  doc:JsonDoc;
  readOnly:boolean;
+ editBinding?:(path:string,change:(block:JsonBlock)=>JsonBlock)=>void;
  editStyle:(paths:string[],layer:StyleSelection,property:string,value:string|null)=>void;
 }
 const Context=createContext<{

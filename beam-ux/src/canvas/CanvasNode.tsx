@@ -14,6 +14,7 @@ import type { JsonNode } from '../blockdoc/json.js';
 import { isEditGated, isIsland, useCanvas } from './context.js';
 import { blockToProps, editGateOf, islandProps } from './props.js';
 import { renderNode } from './TreeRender.js';
+import { bindingRuntime } from '../bindings/runtime.js';
 import { RetiredMdxIsland } from './mdx-island.js';
 
 /** Which half of a hovered block's box a drag is over — the mount inserts on that edge. */
@@ -63,7 +64,7 @@ export function CanvasNode({ node, path, editing, onEditMd, onEditProse, dnd }: 
     const isEditingThis = editing === path;
 
     // Text leaf — rendered as bare content (the parent element hosts it; contentEditable is applied there).
-    if (isJsonText(node)) return <>{node.value}</>;
+    if (isJsonText(node)) return <>{node.field ? bindingRuntime.text(config.record,node.field,node.value) : node.value}</>;
 
     // Opaque island (a dynamic map/conditional the lens couldn't decompose) — sealed, selectable, movable.
     // Render its verbatim source read-only; a click selects the block itself (pointer-events:none inner).
@@ -150,7 +151,7 @@ export function CanvasNode({ node, path, editing, onEditMd, onEditProse, dnd }: 
     // (via TreeRender's renderNode) rather than editable. (MDX blocks are exempted for now — they
     // already fork their own edit/view rendering via MdxEdit/MdxView, a separate follow-up to route
     // through this same gate.)
-    if (isEditGated(config, block) || block.repeat) {
+    if (isEditGated(config, block) || block.repeat || block.when || block.props.some(prop=>prop.kind==='field') || block.children.some(child=>child.kind==='text'&&child.field)) {
         return (
             <div
                 data-bd-path={path}
@@ -171,7 +172,7 @@ export function CanvasNode({ node, path, editing, onEditMd, onEditProse, dnd }: 
                     dnd.onDrop(e.dataTransfer);
                 }}
                 onDragEnd={dnd.onDragEnd}
-                title={isEditGated(config, block) ? `Sealed — editing requires "${editGateOf(block)}"` : 'Repeat — Records from your current read'}
+                title={isEditGated(config, block) ? `Sealed — editing requires "${editGateOf(block)}"` : block.repeat ? 'Repeat — Records from your current read' : 'Bound content — preview from your current read'}
             >
                 <div style={{ pointerEvents: 'none' }}>{renderNode(block, path, config)}</div>
             </div>

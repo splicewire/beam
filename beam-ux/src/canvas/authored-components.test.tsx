@@ -31,3 +31,10 @@ describe('authored Working Head canvas rendering', () => {
             .toBe('<div><strong>Code</strong></div>');
     });
 });
+
+it('keeps a caller root Record outside an authored component body',()=>{
+ const bound={...card,body:[block('p',[{kind:'text',field:'fields.title',value:'Component fallback'}])]};
+ const config=withAuthoredComponents({registry:{},authoredComponents:[bound],record:{fields:{title:'Caller Record'}}});
+ expect(renderToStaticMarkup(createElement('div',{},renderNode(block('Card'),'0',config))))
+  .toBe('<div><p>Component fallback</p></div>');
+});

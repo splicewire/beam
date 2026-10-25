@@ -1,3 +1,4 @@
+import {useBindingPreviewPort} from './use-binding-preview-port';
 // In-place page editor — a THIN host wrapper over @splicewire/beam-ux/canvas's promoted PageEditor. All
 // machinery (read/edit-mode fork, floating panels, canvas, inspector) lives in the package; the host
 // injects only its CanvasConfig, transport, toast, theme, and defaults. Mount `<PageEditor slug body/>`
@@ -132,6 +133,8 @@ export function PageEditor({ slug, body = null, entryId: suppliedId = null }: Pa
         };
     }, [editing, entryId, current]);
 
+    const bindingPreview=useBindingPreviewPort(bodyClient,entryId,userId,editing&&canAuthor,current?.pageSettings?.recordPage?.collection);
+
     // Do not mount the canvas until the body is in hand. `CanvasPageEditor` seeds its document ONCE, on
     // mount, so a body arriving afterwards can only be applied by re-seeding — and a re-seed discards
     // whatever the author has already done. Measured on beam.test 2026-09-11 (tools/explore-editor.mjs
@@ -161,7 +164,7 @@ export function PageEditor({ slug, body = null, entryId: suppliedId = null }: Pa
     return (
         <CanvasProvider config={{ ...canvasConfig, mediaLibrary: current?.mediaLibrary && entryId && bodyClient.listImages && bodyClient.uploadImage ? {
             list:()=>bodyClient.listImages!(entryId),upload:(file:File)=>bodyClient.uploadImage!(entryId,file),
-        }:undefined, profile: current?.profile, styleRegistry: current?.styleRegistry, bindings: current?.bindings, authoredComponents: current?.authoredComponents }}>
+        }:undefined, bindingPreview:editing?bindingPreview:undefined, profile: current?.profile, styleRegistry: current?.styleRegistry, bindings: current?.bindings, authoredComponents: current?.authoredComponents }}>
             {entryId === null && canAuthor && bodyClient.makeEditable && seed && (
                 <button type="button" disabled={creating} onClick={makeEditable}>Make this page editable</button>
             )}

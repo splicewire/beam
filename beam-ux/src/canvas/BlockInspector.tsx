@@ -10,6 +10,7 @@ import {DEFAULT_VAR_SUGGESTIONS} from './templates';
 import {useCanvasSelection} from './CanvasSelection';
 import {getAt,isJsonBlock} from '../blockdoc/json';
 import {MediaPicker} from '../editor/MediaPicker';
+import {BindingInspector} from './BindingInspector';
 import {blockStyleFields} from './block-style';
 
 const PANELS:Record<string,string[]>={
@@ -98,6 +99,7 @@ export function BlockInspector(){
  };
  return <div data-frame-region="inspector" data-node-type={node.type} style={{padding:12,overflow:'auto'}}>
   {error&&<p role="alert">{error}</p>}
+  {selected.length<=1&&<BindingInspector key={id} path={id}/>}
   {selected.length>1&&<p>{selected.length} blocks selected — Block Style edits apply together.</p>}
   {effectiveDeclaration(style,'display',{breakpoint:selection.breakpoint,state:null},registry)?.value==='none'&&<p>Hidden for visitors at {selection.breakpoint?`${selection.breakpoint}+`:'all widths'} after publish. An earlier layer may still hide this block when this override is cleared.</p>}
   {selected.length<=1&&<section aria-label="Element properties"><h3>{node.type} properties</h3><SchemaForm key={id} schema={{...node.attrsSchema,properties}} formData={props}

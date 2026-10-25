@@ -54,6 +54,8 @@ export function profileAttrs(block: JsonBlock, profile: BlockdocManifest) {
             if (prop.kind !== 'expression' && !Object.hasOwn(properties, prop.name)) properties[prop.name] = { type: prop.kind };
         }
     }
+    // Bound values are edited by BindingInspector, not normalized into literal props by SchemaForm.
+    for (const prop of block.props) if (prop.kind === 'field') delete properties[prop.name];
     const noCode = 'x-admits-code' in profile && profile['x-admits-code'] === false;
     if (noCode) {
         for (const prop of block.props) if (prop.kind === 'expression') delete properties[prop.name];
