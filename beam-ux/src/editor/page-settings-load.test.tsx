@@ -34,3 +34,16 @@ it('loads server page settings into the real PageEditor and saves the edited set
     await waitFor(() => expect(saveDraft).toHaveBeenCalledWith('settings-entry', body, 'v1', undefined,
         {...settings, title: 'Edited title'}));
 });
+
+it('uses the typed canvas write when supplied and keeps legacy saveBody as a host fallback', async () => {
+    const body = [{ kind: 'block' as const, name: 'p', isComponent: false, dynamic: false, props: [], children: [{ kind: 'text' as const, value: 'Body' }] }];
+    const state = { headVersion: 'v1', publishedVersion: 'v1', draftPending: false, versions: [] };
+    const saveBlocks = vi.fn().mockResolvedValue({ body });
+    const saveBody = vi.fn().mockResolvedValue({ body });
+    render(<EditorKitProvider canAuthor userId="author" transport={{ loadBody: async () => ({ body }), saveBody, saveBlocks,
+        listVersions: async () => state }}><PageEditor slug="typed" entryId="typed-entry" /></EditorKitProvider>);
+    act(() => window.dispatchEvent(new CustomEvent('beam-ux:mode', { detail: { mode: 'window' } })));
+    fireEvent.click(await screen.findByRole('button', { name: 'Publish', exact: true }));
+    await waitFor(() => expect(saveBlocks).toHaveBeenCalledWith('typed-entry', body));
+    expect(saveBody).not.toHaveBeenCalled();
+});

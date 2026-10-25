@@ -83,6 +83,24 @@ const defaultBodyClient: UxBuilderClient = {
       ReturnType<UxBuilderClient["loadBody"]>
     >;
   },
+  saveBlocks: async (id, body) => {
+    const request = {
+      method: "POST",
+      credentials: "same-origin" as const,
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+        "X-XSRF-TOKEN": csrfToken(),
+      },
+      body: JSON.stringify({ body }),
+    };
+    let response = await fetch(`/beam-ux-entries/${id}/save-blocks`, request);
+    // Older hosts may not mount the typed operation yet. Never bypass a validation/auth refusal.
+    if (response.status === 404 || response.status === 405) {
+      response = await fetch(`/beam-ux-entries/${id}/save-body`, request);
+    }
+    return await readData(response, "save-blocks") as Awaited<ReturnType<UxBuilderClient["saveBody"]>>;
+  },
   saveBody: async (id, body) => {
     const res = await fetch(`/beam-ux-entries/${id}/save-body`, {
       method: "POST",
@@ -356,6 +374,10 @@ export const bodyClient: UxBuilderClient = {
   get makeEditable() {
     const client = getBeamInertiaConfig().entryClient ?? defaultBodyClient;
     return client.makeEditable?.bind(client);
+  },
+  get saveBlocks() {
+    const client = getBeamInertiaConfig().entryClient ?? defaultBodyClient;
+    return client.saveBlocks?.bind(client);
   },
   loadBody: (id) =>
     (getBeamInertiaConfig().entryClient ?? defaultBodyClient).loadBody(id),

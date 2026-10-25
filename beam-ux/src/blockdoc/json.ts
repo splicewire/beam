@@ -1,7 +1,7 @@
-import { assertBlockStyle, type BlockStyle } from './style.js';
+import { assertBlockStyle } from './style.js';
 import { freshBlockIds } from './identity.js';
 import { assertReferenceName } from './component-interface.js';
-import { assertFieldPath, assertRepeat, assertCondition, type RepeatDeclaration, type DataCondition } from './bindings.js';
+import { assertFieldPath, assertRepeat, assertCondition } from './bindings.js';
 /**
  * `@splicewire/beam-ux/jsondoc` — the **browser-safe** JSON projection of a TsxTree.
  *
@@ -28,56 +28,12 @@ import type { BlockChild, TsxTree, BlockNode, PropKind } from './types.js';
 // The JSON shape — an AST-free mirror of BlockChild, discriminated by `kind`.
 // ---------------------------------------------------------------------------
 
-/** A prop on a {@link JsonBlock} — mirrors `BlockProp` minus the AST `node` handle. */
-export interface JsonProp {
-    name: string;
-    kind: PropKind;
-    /**
-     * Decoded literal for string/number/boolean; source text (`{…}` stripped) for `expression`.
-     * `null` is a legitimate string-kind value — e.g. Laravel's default `ConvertEmptyStringsToNull`
-     * middleware turns a cleared string attr's `''` into a real `null` before it's ever persisted, so
-     * a round-tripped doc can carry `null` here even though nothing in this package writes it directly.
-     */
-    value: string | number | boolean | null;
-}
-
-/** An intrinsic element or component node. `isComponent` ⇒ a registered PascalCase component. */
-export interface JsonBlock {
-    slots?: Record<string, JsonNode[]>;
-    repeat?: RepeatDeclaration;
-    when?: DataCondition;
-    id?: string;
-    style?: BlockStyle;
-    kind: 'block';
-    /** `null` for a fragment (`<>…</>`). */
-    name: string | null;
-    isComponent: boolean;
-    props: JsonProp[];
-    children: JsonNode[];
-    /** Mirrors `BlockNode.dynamic` (an undecomposable spread attribute, etc). Descriptive. */
-    dynamic: boolean;
-}
-
-/** A text leaf. */
-export interface JsonText {
-    prop?: string;
-    field?: string;
-    kind: 'text';
-    value: string;
-}
-
-/**
- * A sealed dynamic island — the AST-free mirror of `OpaqueNode`. Carried verbatim; the canvas
- * renders it read-only (position/delete only) and `jsonToTsx` re-emits its `source` unchanged.
- */
-export interface JsonOpaque {
-    kind: 'opaque';
-    reason: 'map' | 'conditional' | 'ternary' | 'expression' | 'spread';
-    /** Verbatim source of the expression, `{…}` braces included. */
-    source: string;
-}
-
-export type JsonNode = JsonBlock | JsonText | JsonOpaque;
+// Generated from PHP JsonNode's declared morph union; no browser hand-mirror of its arms.
+import type { JsonNode, JsonBlockNode, JsonTextNode, JsonOpaqueNode, JsonProp } from '@splicewire/beam-resources/types/beam-ux';
+export type { JsonNode, JsonBlockNode, JsonTextNode, JsonOpaqueNode, JsonProp };
+export type JsonBlock = JsonBlockNode;
+export type JsonText = JsonTextNode;
+export type JsonOpaque = JsonOpaqueNode;
 
 /** A JSON document — the roots of a page body. Edit ops address into this array. */
 export type JsonDoc = JsonNode[];

@@ -3,9 +3,9 @@ import type { SessionPageSettings } from "./editor/local-session";
 // delivered as a bundle. This build-time dependency is LOAD-BEARING — the builder's default typing
 // IS the projection, so the PHP source of truth genuinely travels into this package. tsup keeps the
 // `import type` in the shipped `dist/index.d.ts`.
-import type { BeamUxEntryBodyData } from "@splicewire/beam-resources/types/beam-ux";
+import type { BeamUxEntryBodyData, EntryVersionData as EntryVersion } from "@splicewire/beam-resources/types/beam-ux";
 
-export type { BeamUxEntryBodyData };
+export type { BeamUxEntryBodyData, EntryVersion };
 
 /* ─────────────────────────── the injection seam ─────────────────────────── */
 
@@ -47,6 +47,8 @@ export interface UxBuilderClient<TBody = BeamUxEntryBodyData> {
    * (`POST .../beam-ux-entries/{id}/op/save-body`). Addressed by id, same as {@link loadBody}.
    */
   saveBody(id: string, body: Record<string, unknown>): Promise<TBody>;
+  /** Blocks-only typed write. Absent on legacy injected hosts; the canvas retains saveBody fallback. */
+  saveBlocks?(id: string, body: import("./blockdoc/json").JsonDoc): Promise<TBody>;
 
   /* ── the OPTIONAL publication seam (G2-BEAM-DRAFT-PUBLISH) ───────────────────────────────── */
   // Four methods, all optional, because a host mounts the draft/publish operations deliberately
@@ -119,31 +121,6 @@ export interface UxBuilderClient<TBody = BeamUxEntryBodyData> {
     entryId: string,
     title: string,
   ): Promise<import("./releases").ReleaseRecord>;
-}
-
-/**
- * One recorded version of an entry body — the projection of
- * `Splicewire\Beam\Ux\Data\EntryVersionData`.
- *
- * ⚠️ **Hand-declared here, unlike {@link BeamUxEntryBodyData}, and that is a known gap rather than a
- * design.** The generated projection travels through `@splicewire/beam-resources`, whose `types/` are
- * emitted by the flagship's `resources:beam` pipeline from its own `typescript:transform` run — a
- * regeneration this pass did not run. The fields below are the PHP DTO's fields and nothing else; the
- * first `resources:beam` run after this lands should emit them and these two declarations should be
- * re-exported from the bundle instead of written here.
- */
-export interface EntryVersion {
-  id: string;
-  version: number;
-  readable: string;
-  label: string | null;
-  createdBy: string | null;
-  createdAt: string | null;
-  /** The working HEAD — the body an author currently edits. */
-  isHead: boolean;
-  /** The published body — the one a guest reader is served. */
-  isPublished: boolean;
-  recordings?: import("./releases").ReleaseRecording[];
 }
 
 /**
