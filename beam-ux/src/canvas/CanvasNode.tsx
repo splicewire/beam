@@ -14,6 +14,7 @@ import type { JsonNode } from '../blockdoc/json.js';
 import { isEditGated, isIsland, useCanvas } from './context.js';
 import { blockToProps, editGateOf, islandProps } from './props.js';
 import { renderNode } from './TreeRender.js';
+import { RetiredMdxIsland } from './mdx-island.js';
 
 /** Which half of a hovered block's box a drag is over — the mount inserts on that edge. */
 export type DropEdge = 'before' | 'after';
@@ -128,13 +129,18 @@ export function CanvasNode({ node, path, editing, onEditMd, onEditProse, dnd }: 
                 >
                     ◆ content{file ? ` · ${String(file)}` : ''}
                 </div>
-                <div data-mdx-edit>
-                    <MdxEdit
-                        file={file !== undefined ? String(file) : undefined}
-                        md={md !== undefined ? String(md) : undefined}
-                        onChange={(next) => onEditMd?.(path, next)}
-                    />
-                </div>
+                {/* ux-0233: without an island (it retires per host, EP-42) the node is read-only and its clicks select it. */}
+                {MdxEdit ? (
+                    <div data-mdx-edit>
+                        <MdxEdit
+                            file={file !== undefined ? String(file) : undefined}
+                            md={md !== undefined ? String(md) : undefined}
+                            onChange={(next) => onEditMd?.(path, next)}
+                        />
+                    </div>
+                ) : (
+                    <RetiredMdxIsland file={file !== undefined ? String(file) : undefined} md={md !== undefined ? String(md) : undefined} />
+                )}
             </div>
         );
     }

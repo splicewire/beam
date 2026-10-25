@@ -11,6 +11,7 @@ import { attrsSchemaFor } from './attrsSchema.js';
 import { Breadcrumb } from './Breadcrumb.js';
 import { CanvasNode, edgeAt } from './CanvasNode.js';
 import { CanvasWidget } from './CanvasWidget.js';
+import { TreeRender } from './TreeRender.js';
 import { ContextMenu } from './ContextMenu.js';
 import { CanvasProvider, isEditGated } from './context.js';
 import type { CanvasConfig } from './context.js';
@@ -60,6 +61,25 @@ it('constrains layout width from the same registry selection without emitting a 
     fireEvent.click(screen.getByText('Set layout width'));
     expect((container.querySelector('.ve-canvas-widget') as HTMLElement).style.width).toBe('48rem');
     expect(onChange).not.toHaveBeenCalled();
+});
+
+it('offers no new Mdx node where the host supplies no MDX island (ux-0233: it retires per host)', () => {
+    const mount = () => ({
+        selectedNodeId: null, selectNode: vi.fn(), markDirty: vi.fn(),
+        registerNodeAccess: vi.fn(() => () => {}), registerInsertHandler: vi.fn((_handler: unknown) => () => {}),
+        publishCandidates: vi.fn(), publishConformance: vi.fn(), registerFlush: vi.fn(() => () => {}),
+    });
+    const labels = (published: ReturnType<typeof mount>) =>
+        (published.publishCandidates.mock.calls.at(-1)![0] as Array<{ label: string }>).map((candidate) => candidate.label);
+    const withIsland = mount();
+    const { unmount } = render(<CanvasProvider config={config}><CanvasWidget value={[]} onChange={vi.fn()} editShellMount={withIsland as never} /></CanvasProvider>);
+    expect(labels(withIsland)).toContain('Content');
+    unmount();
+
+    const without = mount();
+    render(<CanvasProvider config={{ registry: { Hero } }}><CanvasWidget value={[]} onChange={vi.fn()} editShellMount={without as never} /></CanvasProvider>);
+    expect(labels(without)).not.toContain('Content');
+    expect(labels(without)).toContain('Text');
 });
 
 it('publishes and inserts only the server profile palette', () => {
@@ -292,6 +312,23 @@ describe('CanvasNode — MDX island', () => {
         expect(ta.value).toBe('hello');
         fireEvent.change(ta, { target: { value: 'world' } });
         expect(onEditMd).toHaveBeenCalledWith('0', 'world');
+    });
+});
+
+describe('an Mdx node without an island (ux-0233: the island retires per host)', () => {
+    const node = block({ name: 'Mdx', isComponent: true, props: [{ name: 'md', kind: 'string', value: 'kept text' }] });
+
+    it('shows its MDX text read-only in the canvas, and its clicks select it', () => {
+        const { container } = render(
+            <CanvasProvider config={{ registry: {} }}><CanvasNode node={node} path="0" editing={null} onEditText={vi.fn()} onEditMd={vi.fn()} dnd={noopDnd} /></CanvasProvider>,
+        );
+        expect(container.querySelector('[data-beam-mdx-island="retired"]')?.textContent).toBe('kept text');
+        expect(container.querySelector('[data-mdx-edit]')).toBeNull();
+    });
+
+    it('shows its MDX text on the read page', () => {
+        const { container } = render(<CanvasProvider config={{ registry: {} }}><TreeRender tree={[node]} /></CanvasProvider>);
+        expect(container.querySelector('[data-beam-mdx-island="retired"]')?.textContent).toBe('kept text');
     });
 });
 

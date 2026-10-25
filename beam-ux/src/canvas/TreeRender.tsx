@@ -16,6 +16,7 @@ import { isIsland, useCanvas } from './context.js';
 import type { CanvasConfig } from './context.js';
 import { blockToProps, islandProps } from './props.js';
 import { bindingRuntime, type BindingRecord, type BindingPayload } from '../bindings/runtime.js';
+import { RetiredMdxIsland } from './mdx-island.js';
 
 /**
  * Render a single node (and its subtree) read-only. Exported so CanvasNode can reuse it for an
@@ -42,8 +43,9 @@ export function renderNode(node: JsonNode, path: string, config: CanvasConfig, r
     if (block.name === 'Mdx') {
         const file = propValue(block, 'file');
         const md = propValue(block, 'md');
+        const View = config.MdxView ?? RetiredMdxIsland;
         return (
-            <config.MdxView
+            <View
                 key={path}
                 file={file !== undefined ? String(file) : undefined}
                 md={md !== undefined ? String(md) : undefined}

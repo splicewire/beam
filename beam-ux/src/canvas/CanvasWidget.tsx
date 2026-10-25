@@ -116,7 +116,9 @@ export function CanvasWidget({
     const [commandError,setCommandError] = useState<string|null>(null);
     const { selection: styleSelection } = useStyleSelection();
     const doc: JsonDoc = value ?? formData ?? EMPTY_DOC;
-    const allTemplates = config.blockTemplates ?? DEFAULT_BLOCK_TEMPLATES;
+    // ux-0233: without an MDX island (it retires per host, EP-42) the palette offers no new `Mdx` node.
+    const allTemplates = useMemo(() => (config.blockTemplates ?? DEFAULT_BLOCK_TEMPLATES)
+        .filter((template) => config.MdxEdit !== undefined || template.make().name !== 'Mdx'), [config.blockTemplates, config.MdxEdit]);
     // Was hardcoded to a fixed blue regardless of the host's actual theme — found live: it clashed
     // (near-invisible) against block content whose own background happened to be a similar hue.
     const accent = theme?.accent ?? DEFAULT_CANVAS_THEME.accent;

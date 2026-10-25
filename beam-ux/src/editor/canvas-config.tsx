@@ -4,7 +4,6 @@
 // machinery" surface a fresh beam host writes (frontend-surfaces.md, editor).
 import type { JsonBlock } from '../blockdoc/json';
 import type { BlockTemplate, CanvasConfig } from '../canvas';
-import { MdxEdit, MdxView } from './mdx';
 import { defaultComponents } from './registry';
 
 const str = (name: string, value: string) => ({
@@ -112,8 +111,6 @@ const VAR_SUGGESTIONS = [
 
 export const canvasConfig: CanvasConfig = {
     get registry() { return defaultComponents(); },
-    MdxView,
-    MdxEdit,
     blockTemplates: BLOCK_TEMPLATES,
     classSuggestions: CLASS_SUGGESTIONS,
     varSuggestions: VAR_SUGGESTIONS,
