@@ -184,6 +184,10 @@ describe('printMdx: canonical MDX', () => {
         expect(printMdx([list])).toBe('- Readings\n  - Person\n  - Tier 3\n- Gifts\n');
     });
 
+    it('never takes an inherited name for a heading', () => {
+        expect(printMdx([block('constructor', [text('x')]), block('toString', [text('y')])])).toBe('<constructor>x</constructor>\n\n<toString>y</toString>\n');
+    });
+
     it('prints a paragraph on one line', () => {
         expect(printMdx(read('One line\nand the next\nand a third.\n'))).toBe('One line and the next and a third.\n');
     });

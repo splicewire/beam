@@ -84,7 +84,7 @@ function isInlineOnly(node: JsonNode): boolean {
 
 function blockOf(node: JsonBlock): RootContent[] {
     const name = node.name;
-    if (name !== null && name in HEADINGS && plain(node)) {
+    if (name !== null && Object.hasOwn(HEADINGS, name) && plain(node)) {
         return [{ type: 'heading', depth: HEADINGS[name], children: phrasingOf(node.children) }];
     }
     // A paragraph holding only one tag or island would print as that tag alone on its line, which reads back as a
