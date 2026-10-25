@@ -34,6 +34,16 @@ it('multi-style edit preserves unrelated declarations and is atomic on invalid C
  expect(()=>editStyles(doc,['0','1'],{breakpoint:null,state:null},'color','red;}',DEFAULT_STYLE_REGISTRY)).toThrow();
  expect(doc[1].style).toBeUndefined();
 });
+it('multi-style edit preserves ancestor and descendant edits in either selection order',()=>{
+ for(const paths of [['0.0','0'],['0','0.0']]){
+  const doc=[block('parent',[block('child')])];
+  const result=editStyles(doc,paths,{breakpoint:null,state:null},'font-size','18px',DEFAULT_STYLE_REGISTRY);
+  const parent=result[0] as JsonBlock;
+  const child=parent.children[0] as JsonBlock;
+  expect(parent.style?.layers[0].declarations['font-size']).toBe('18px');
+  expect(child.style?.layers[0].declarations['font-size']).toBe('18px');
+ }
+});
 it('checks the target profile recursively, including categories, attributes and code',()=>{
  const profile={profile:'test',version:1,'x-admits-code':false,doc:{admitsChildCategories:['html']},nodes:[{name:'div',category:'html',admitsChildCategories:['html'],attrsSchema:{type:'object',properties:{title:{type:'string'}},additionalProperties:false}}]};
  expect(()=>assertPasteProfile([block('ok')],profile,null)).not.toThrow();
