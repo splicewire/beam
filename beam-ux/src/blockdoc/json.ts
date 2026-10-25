@@ -174,22 +174,13 @@ function printNode(node: JsonNode, depth: number): string {
     }
 
     const tag = node.name ?? '';
-    if (node.style) assertBlockStyle(node.style);
-    if (node.repeat) assertRepeat(node.repeat);
-    if (node.when) assertCondition(node.when);
-    const attrs = node.props.map(printProp).join('') + (node.style ? ` bdStyle={${JSON.stringify(node.style)}}` : '')
-        + (node.repeat ? ` bdRepeat={${JSON.stringify(node.repeat)}}` : '')
-        + (node.when ? ` bdWhen={${JSON.stringify(node.when)}}` : '');
-    const slotAttrs = Object.entries(node.slots ?? {}).map(([name, children]) => {
-        assertReferenceName(name);
-        return ` ${name}={${printSlotValue(children, depth)}}`;
-    }).join('');
-    const open = node.name === null ? '<>' : `<${tag}${attrs}${slotAttrs}>`;
+    const attrs = jsxAttributes(node, depth);
+    const open = node.name === null ? '<>' : `<${tag}${attrs}>`;
     const close = node.name === null ? '</>' : `</${tag}>`;
 
     if (node.children.length === 0) {
         // A fragment always uses the paired form; a self-closing element otherwise.
-        return node.name === null ? pad + '<></>' : pad + `<${tag}${attrs}${slotAttrs} />`;
+        return node.name === null ? pad + '<></>' : pad + `<${tag}${attrs} />`;
     }
 
     // A leaf (text-only children) prints inline for readability + stable round-trip.
@@ -200,6 +191,25 @@ function printNode(node: JsonNode, depth: number): string {
 
     const kids = node.children.map((c) => printNode(c, depth + 1)).join('\n');
     return `${pad}${open}\n${kids}\n${pad}${close}`;
+}
+
+/**
+ * A block's JSX attributes, each with its leading space: its props, then the lens-owned fields (`bdStyle`,
+ * `bdRepeat`, `bdWhen`), then its named slots. Exported so the MDX printer (`@splicewire/beam-mdx/lens`)
+ * prints a component's attributes exactly as here (ux-0233 d2).
+ */
+export function jsxAttributes(node: JsonBlock, depth = 0): string {
+    if (node.style) assertBlockStyle(node.style);
+    if (node.repeat) assertRepeat(node.repeat);
+    if (node.when) assertCondition(node.when);
+    const attrs = node.props.map(printProp).join('') + (node.style ? ` bdStyle={${JSON.stringify(node.style)}}` : '')
+        + (node.repeat ? ` bdRepeat={${JSON.stringify(node.repeat)}}` : '')
+        + (node.when ? ` bdWhen={${JSON.stringify(node.when)}}` : '');
+    const slotAttrs = Object.entries(node.slots ?? {}).map(([name, children]) => {
+        assertReferenceName(name);
+        return ` ${name}={${printSlotValue(children, depth)}}`;
+    }).join('');
+    return attrs + slotAttrs;
 }
 
 function printProp(p: JsonProp): string {

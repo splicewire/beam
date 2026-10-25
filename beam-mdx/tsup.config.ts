@@ -8,7 +8,9 @@ export default defineConfig({
     // node-side build plugin + MDX preset; `index` is the browser React surface.
     // `editor` is the heavy authoring surface (mdxeditor + RJSF), kept a separate entry so `.`/`./kit`
     // stay light (ADR-0116); the host lazy-loads it.
-    entry: { index: 'src/index.ts', vite: 'src/vite/index.ts', kit: 'src/kit/index.ts', editor: 'src/editor/index.ts' },
+    // `lens` is the server-side MDX Lens (ux-0233 d2), run in Node through laravel-beam-mdx; it reads tags through
+    // beam-ux's TSX Lens, so it stays a separate, server-only entry.
+    entry: { index: 'src/index.ts', vite: 'src/vite/index.ts', kit: 'src/kit/index.ts', editor: 'src/editor/index.ts', lens: 'src/lens/index.ts' },
     format: ['esm'],
     dts: true,
     sourcemap: true,
@@ -24,6 +26,10 @@ export default defineConfig({
         '@mdx-js/mdx',
         'remark-frontmatter',
         'remark-mdx-frontmatter',
+        // The lens reads JSX through beam-ux's TSX Lens and prints with its JSON printer; the host has beam-ux.
+        '@splicewire/beam-ux',
+        '@splicewire/beam-ux/jsondoc',
+        '@splicewire/beam-ux/tsx-lens',
         // The editor's heavy deps — bundled by the host, never inlined into dist.
         '@mdxeditor/editor',
         '@rjsf/core',

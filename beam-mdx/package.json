@@ -23,6 +23,10 @@
             "types": "./dist/editor.d.ts",
             "import": "./dist/editor.js"
         },
+        "./lens": {
+            "types": "./dist/lens.d.ts",
+            "import": "./dist/lens.js"
+        },
         "./editor/css": "./dist/editor.css",
         "./kit/css": "./dist/kit.css",
         "./css": "./dist/site-prose.css"
@@ -51,6 +55,12 @@
         "typecheck": "tsc --noEmit"
     },
     "dependencies": {
+        "mdast-util-from-markdown": "^2.0.0",
+        "mdast-util-gfm-table": "^2.0.0",
+        "mdast-util-mdx": "^3.0.0",
+        "mdast-util-to-markdown": "^2.1.0",
+        "micromark-extension-gfm-table": "^2.1.0",
+        "micromark-extension-mdxjs": "^3.0.0",
         "unified": "^11.0.5"
     },
     "peerDependencies": {
@@ -62,6 +72,7 @@
         "@rjsf/shadcn": "^6",
         "@rjsf/utils": "^6",
         "@rjsf/validator-ajv8": "^6",
+        "@splicewire/beam-ux": "^0.7.0",
         "react": ">=18",
         "remark-frontmatter": "^5",
         "remark-mdx-frontmatter": "^5",
@@ -89,6 +100,9 @@
         "@rjsf/validator-ajv8": {
             "optional": true
         },
+        "@splicewire/beam-ux": {
+            "optional": true
+        },
         "remark-frontmatter": {
             "optional": true
         },
@@ -108,6 +122,8 @@
         "@rjsf/shadcn": "^6.0.0",
         "@rjsf/utils": "^6.0.0",
         "@rjsf/validator-ajv8": "^6.0.0",
+        "@splicewire/beam-ux": "file:../beam-ux",
+        "@types/mdast": "^4.0.0",
         "@types/node": "^22.20.1",
         "@types/react": "^19.0.0",
         "@types/react-dom": "^19.0.0",
