@@ -55,7 +55,7 @@ export function defaultComponents(): Record<
     // there too, so the doctor's registry check agrees).
     ...(intakeFormsEnabled() ? { IntakeForm: IntakeFormIsland } : {}),
     // The host's own components (configureBeamInertia({ components })), its sections and its MDX kit.
-    ...getBeamInertiaConfig().components,
+    ...(getBeamInertiaConfig().components as Record<string, ComponentType<Record<string, unknown>>> | undefined),
 
 }; }
 
