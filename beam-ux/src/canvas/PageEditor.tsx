@@ -926,7 +926,7 @@ export function PageEditor({
           transport.createRelease &&
           transport.releaseCommand && (
             <BuiltReleaseAssembly
-              entryId={publication.id}
+              entryId={entryId ?? publication.id}
               entryTitle={slug}
               versions={publication.versions.map((version) => ({
                 id: version.id,

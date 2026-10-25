@@ -492,6 +492,8 @@ it("keeps the page settings and the Page Fields offer after a History restore", 
   await waitFor(() => expect(loadBody).toHaveBeenCalledTimes(2));
   expect(screen.getByLabelText("Child page fields")).toBeTruthy();
   expect((screen.getByLabelText("Title") as HTMLInputElement).value).toBe("Pie");
+});
+
 it("opens a saved history version through the author preview transport without writing it", async () => {
   loadBody.mockResolvedValue({ body: SAVED });
   listVersions.mockResolvedValue({
