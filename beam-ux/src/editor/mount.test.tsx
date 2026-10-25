@@ -16,6 +16,7 @@ const saveBody = vi.hoisted(() => vi.fn());
 const saveDraft = vi.hoisted(() => vi.fn());
 const publishVersion = vi.hoisted(() => vi.fn());
 const listVersions = vi.hoisted(() => vi.fn());
+const restoreVersion = vi.hoisted(() => vi.fn());
 const provided = vi.hoisted(() => ({ profile: undefined as unknown }));
 vi.mock("./local-session", async (importOriginal) => {
   const original = await importOriginal<typeof import("./local-session")>();
@@ -40,7 +41,7 @@ vi.mock("./context", () => ({
       saveDraft,
       listVersions,
       publish: publishVersion,
-      restoreVersion: vi.fn(),
+      restoreVersion,
     },
     theme: {},
     canAuthor: true,
@@ -109,6 +110,7 @@ afterEach(() => {
   saveDraft.mockReset();
   listVersions.mockReset();
   publishVersion.mockReset();
+  restoreVersion.mockReset();
 });
 
 it("withholds replacement writes after a refused window read", async () => {
@@ -296,4 +298,37 @@ it("projects all recording references in window history without writing the vers
   expect(JSON.stringify(version)).toBe(original);
   expect(saveDraft).not.toHaveBeenCalled();
   expect(saveBody).not.toHaveBeenCalled();
+});
+
+// review-r1 (EP-26 E): every load path keeps the Page Fields offer, not only the first mount.
+const OFFERED = { body: SAVED, pageSettings: { title: "Pie" }, pageFields: { names: ["recipe"], schema: null } };
+
+it("keeps the Page Fields offer after a conflict's Reload theirs", async () => {
+  loadBody.mockResolvedValue(OFFERED);
+  saveDraft.mockRejectedValueOnce({ status: 409 });
+  render(<VisualEditorMount entryRef={ref("offer-reload")} />);
+  await screen.findByLabelText("Child page fields");
+  fireEvent.change(screen.getByLabelText("Title"), { target: { value: "Local pie" } });
+  fireEvent.click(screen.getByRole("button", { name: "Save" }));
+  fireEvent.click(await screen.findByRole("button", { name: "Reload theirs" }));
+
+  await waitFor(() => expect(loadBody).toHaveBeenCalledTimes(2));
+  await waitFor(() => expect((screen.getByLabelText("Title") as HTMLInputElement).value).toBe("Pie"));
+  expect(screen.getByLabelText("Child page fields")).toBeTruthy();
+});
+
+it("keeps the page settings and the Page Fields offer after a History restore", async () => {
+  loadBody.mockResolvedValue(OFFERED);
+  const old = { id: "v0", readable: "v0", label: "Older", recordings: [] };
+  listVersions.mockResolvedValue({ headVersion: "v1", publishedVersion: "v1", draftPending: false, versions: [old] });
+  restoreVersion.mockResolvedValue({ headVersion: "v2", publishedVersion: "v1", draftPending: true, versions: [old] });
+  render(<VisualEditorMount entryRef={ref("offer-restore")} />);
+  await screen.findByLabelText("Child page fields");
+  fireEvent.click(screen.getByRole("button", { name: "History" }));
+  fireEvent.click(screen.getByRole("button", { name: "Restore v0 into draft" }));
+
+  await waitFor(() => expect(restoreVersion).toHaveBeenCalledWith("offer-restore", "v0"));
+  await waitFor(() => expect(loadBody).toHaveBeenCalledTimes(2));
+  expect(screen.getByLabelText("Child page fields")).toBeTruthy();
+  expect((screen.getByLabelText("Title") as HTMLInputElement).value).toBe("Pie");
 });

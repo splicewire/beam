@@ -22,9 +22,28 @@ export function VisualEditorMount({ entryRef }: { entryRef: EntryRef }) {
     // Its loaded document, pending session and write callbacks must never cross that boundary.
     return <AddressedVisualEditor key={JSON.stringify([entryRef.id, userId, canAuthor])} entryRef={entryRef} />;
 }
+/** What the editor keeps of a body envelope. */
+interface LoadedEnvelope {
+    body: JsonDoc;
+    pageSettings?: SessionPageSettings;
+    pageFields: PageFieldsOffer | null;
+    styleRegistry?: import('../blockdoc/style-runtime.js').StyleRegistry;
+    profile?: import('@schemastud/blockdoc').BlockdocManifest;
+}
+
+/**
+ * One reading of the body envelope for every load: the first mount, a conflict's Reload theirs and a History restore,
+ * so none of them drops what the others keep (the page settings, the Page Fields offer, the profile, the styles).
+ */
+function readEnvelope(envelope: unknown, missing: string): LoadedEnvelope {
+    const read = (envelope ?? {}) as Partial<LoadedEnvelope> & { body?: unknown };
+    if (!Array.isArray(read.body)) throw new Error(missing);
+    return { body: read.body as JsonDoc, pageSettings: read.pageSettings, pageFields: read.pageFields ?? null, styleRegistry: read.styleRegistry, profile: read.profile };
+}
+
 function AddressedVisualEditor({ entryRef }: { entryRef: EntryRef }) {
     const { transport, theme, canvasConfig, userId, canAuthor, notify } = useEditorKit();
-    const [loaded, setLoaded] = useState<{ body: JsonDoc; state: EntryPublicationState; pageSettings?: SessionPageSettings; pageFields?: PageFieldsOffer | null; styleRegistry?: import('../blockdoc/style-runtime.js').StyleRegistry; profile?: import('@schemastud/blockdoc').BlockdocManifest } | null>(null);
+    const [loaded, setLoaded] = useState<(LoadedEnvelope & { state: EntryPublicationState }) | null>(null);
     const [error, setError] = useState<string | null>(null);
     const [conflict, setConflict] = useState(false);
     const [busy, setBusy] = useState(false);
@@ -39,9 +58,7 @@ function AddressedVisualEditor({ entryRef }: { entryRef: EntryRef }) {
         Promise.all([transport.loadBody(id), transport.listVersions(id)]).then(([envelope, state]) => {
             if (!live) return;
             if (!canMountPublication(state)) throw new Error('This entry has no Publication Pin. Publish its baseline before mounting the editor.');
-            const body = (envelope as { body?: unknown }).body;
-            if (!Array.isArray(body)) throw new Error('The entry has no editable document.');
-            setLoaded({ body: body as JsonDoc, state, pageSettings: (envelope as unknown as { pageSettings?: SessionPageSettings }).pageSettings, pageFields: (envelope as { pageFields?: PageFieldsOffer | null }).pageFields ?? null, styleRegistry: (envelope as { styleRegistry?: import("../blockdoc/style-runtime.js").StyleRegistry }).styleRegistry, profile: (envelope as { pageSettings?: SessionPageSettings; styleRegistry?: import('../blockdoc/style-runtime.js').StyleRegistry; profile?: import('@schemastud/blockdoc').BlockdocManifest }).profile });
+            setLoaded({ ...readEnvelope(envelope, 'The entry has no editable document.'), state });
         }).catch(reason => live && setError(reason instanceof Error ? reason.message : 'Could not load editor history. Verify the versions and publication-pin migrations.'));
         return () => { live = false; };
         // The transport may be a new object each render; the address owns the load lifecycle.
@@ -78,10 +95,9 @@ function AddressedVisualEditor({ entryRef }: { entryRef: EntryRef }) {
             if (!state.headVersion) throw new Error('Save returned no version.');
             local.saved(state.headVersion, sent, sentSettings); setLoaded(previous => previous && { ...previous, state });
         } else {
-            const envelope = await transport.loadBody(id) as { body?: unknown; pageSettings?: SessionPageSettings; styleRegistry?: import('../blockdoc/style-runtime.js').StyleRegistry; profile?: import('@schemastud/blockdoc').BlockdocManifest };
-            if (!Array.isArray(envelope.body)) throw new Error('No current body.');
+            const envelope = readEnvelope(await transport.loadBody(id), 'No current body.');
             local.reset(current.headVersion, envelope.body, envelope.pageSettings);
-            setLoaded({ body: envelope.body as JsonDoc, state: current, pageSettings: envelope.pageSettings, profile: envelope.profile, styleRegistry: envelope.styleRegistry });
+            setLoaded({ ...envelope, state: current });
         }
         setConflict(false);
     });
@@ -116,10 +132,10 @@ function AddressedVisualEditor({ entryRef }: { entryRef: EntryRef }) {
         if (local.session!.dirty) throw new Error('Save or discard unsaved changes before restoring History.');
         if (!id || !transport.restoreVersion) return;
         const state = await transport.restoreVersion(id, ref);
-        const envelope = await transport.loadBody(id) as { body?: unknown; pageSettings?: SessionPageSettings; styleRegistry?: import('../blockdoc/style-runtime.js').StyleRegistry; profile?: import('@schemastud/blockdoc').BlockdocManifest };
-        if (!state.headVersion || !Array.isArray(envelope.body)) throw new Error('Could not load the restored draft.');
+        const envelope = readEnvelope(await transport.loadBody(id), 'Could not load the restored draft.');
+        if (!state.headVersion) throw new Error('Could not load the restored draft.');
         local.reset(state.headVersion, envelope.body, envelope.pageSettings);
-        setLoaded({ body: envelope.body as JsonDoc, state, profile: envelope.profile, styleRegistry: envelope.styleRegistry });
+        setLoaded({ ...envelope, state });
         notify.success('Restored into a draft');
     });
     return <CanvasProvider config={{ ...canvasConfig, profile: loaded.profile, styleRegistry: loaded.styleRegistry }}>
