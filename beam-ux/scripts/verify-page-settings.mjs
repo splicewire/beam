@@ -98,6 +98,25 @@ try {
         await summary.click();
         await title.fill('Editable after reload');
         assert.equal(await title.inputValue(), 'Editable after reload');
+        // GO 32 / leg 2b (2026-10-25): with Versions open, Remove content's confirm rendered beneath that panel, so its
+        // buttons took no clicks (62 intercepted retries in the receipt trace). It is a modal over every editor panel now.
+        await summary.click();
+        await page.getByRole('button', { name: 'Versions', exact: true }).click();
+        await page.getByRole('complementary', { name: 'Versions' }).waitFor();
+        await page.getByRole('button', { name: 'Remove content', exact: true }).click();
+        const removal = page.getByRole('alertdialog', { name: 'Confirm remove content' });
+        await removal.getByRole('button', { name: 'Confirm remove' }).waitFor();
+        assert.ok(await removal.evaluate(el => el.contains(document.activeElement)), 'focus moves into the remove confirm');
+        for (const button of await removal.getByRole('button').all()) {
+            assert.ok(await button.evaluate(el => {
+                const rect = el.getBoundingClientRect();
+                const hit = document.elementFromPoint((rect.left + rect.right) / 2, (rect.top + rect.bottom) / 2);
+                return hit === el || el.contains(hit);
+            }), 'remove confirm buttons receive pointer events while Versions is open');
+        }
+        if (out) await page.screenshot({ path: resolve(out, `${viewport.width}-remove-confirm.png`) });
+        await removal.getByRole('button', { name: 'Cancel' }).click();
+        await removal.waitFor({ state: 'detached' });
         assert.deepEqual(errors, []);
         await page.close();
     }

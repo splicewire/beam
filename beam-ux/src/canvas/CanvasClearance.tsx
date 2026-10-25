@@ -19,7 +19,7 @@ export function CanvasClearance({children,panels}:{children:ReactNode;panels:str
    const box=parent.getBoundingClientRect(),style=getComputedStyle(parent);
    const left=box.left+parent.clientLeft+(parseFloat(style.paddingLeft)||0);
    const right=box.left+parent.clientLeft+parent.clientWidth-(parseFloat(style.paddingRight)||0);
-   const lp=parent.querySelector('.pe-left'),rp=parent.querySelector('.pe-versions,.pe-clear,.pe-right');
+   const lp=parent.querySelector('.pe-left'),rp=parent.querySelector('.pe-versions,.pe-right');
    const next=canvasClearance(left,right,lp?.getBoundingClientRect().right??null,rp?.getBoundingClientRect().left??null);
    setSpace(old=>old.marginLeft===next.marginLeft&&old.marginRight===next.marginRight?old:next);
   };

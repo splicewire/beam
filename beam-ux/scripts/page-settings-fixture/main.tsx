@@ -11,6 +11,7 @@ createRoot(document.getElementById('root')!).render(<>
             pageSettings={{ title: 'Original' }} transport={{
                 saveBody: async () => null, listVersions: async () => state, publish: async () => state,
                 restoreVersion: async () => state,
+                clearBody: async () => state,
                 saveDraft: async () => { throw Object.assign(new Error('Conflict'), { status: 409 }); },
                 loadBody: async () => ({ body, pageSettings: { title: 'Reloaded' } }),
             }} />

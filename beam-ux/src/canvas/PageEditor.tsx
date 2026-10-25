@@ -22,6 +22,7 @@ import type { SessionPageSettings } from "../editor/local-session";
 // the SAME canvas widget registry (class-chips/style-rows) itself, or className/style would silently
 // fall back to plain text inputs instead of the chip/row UX.
 import {
+  type ReactNode,
   useEffect,
   useMemo,
   useRef,
@@ -279,6 +280,33 @@ export function __resetEditMode(): void {
   for (const listener of editModeStore.listeners) listener();
 }
 
+/**
+ * An alert the author must answer before going on: the save conflict, the remove-content confirm. It is a modal layer
+ * above the editor's bar and every floating panel (afa5fb8b), so no open panel can cover its buttons; focus moves into
+ * it, Tab stays inside it, and focus goes back where it was when it closes.
+ */
+function ModalAlert({ label, children }: { label: string; children: ReactNode }) {
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const previous = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    ref.current?.querySelector('button')?.focus();
+    return () => { if (previous?.isConnected) previous.focus(); };
+  }, []);
+
+  return (
+    <div ref={ref} className="pe-modal" role="alertdialog" aria-label={label} aria-modal="true"
+      onKeyDown={event => {
+        if (event.key !== 'Tab') return;
+        const buttons = Array.from(event.currentTarget.querySelectorAll('button'));
+        const first = buttons[0], last = buttons[buttons.length - 1];
+        if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus(); }
+        else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); }
+      }}>
+      <div className="pe-modal-content">{children}</div>
+    </div>
+  );
+}
+
 export function PageEditor({
   slug,
   format,
@@ -351,13 +379,6 @@ export function PageEditor({
   );
   const [publicationError, setPublicationError] = useState<string | null>(null);
   const [conflict, setConflict] = useState(false);
-  const conflictRef = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    if (!conflict) return;
-    const previous = document.activeElement instanceof HTMLElement ? document.activeElement : null;
-    conflictRef.current?.querySelector('button')?.focus();
-    return () => { if (previous?.isConnected) previous.focus(); };
-  }, [conflict]);
   const canvasConfig = useCanvas();
   const local = useLocalSession(
     entryId ?? slug,
@@ -721,15 +742,7 @@ export function PageEditor({
         />
 
         {conflict && (
-          <div ref={conflictRef} className="pe-conflict" role="alertdialog" aria-label="Save conflict" aria-modal="true"
-            onKeyDown={event => {
-              if (event.key !== 'Tab') return;
-              const buttons = Array.from(event.currentTarget.querySelectorAll('button'));
-              const first = buttons[0], last = buttons[buttons.length - 1];
-              if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus(); }
-              else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); }
-            }}>
-            <div className="pe-conflict-content">
+          <ModalAlert label="Save conflict">
             <p>The server draft changed. Choose which work to keep.</p>
             <button onClick={() => void resolveConflict(false)}>
               Reload theirs
@@ -737,8 +750,7 @@ export function PageEditor({
             <button onClick={() => void resolveConflict(true)}>
               Save ours as a new version
             </button>
-            </div>
-          </div>
+          </ModalAlert>
         )}
         {/* Reserve space for floating panels without changing the published page layout. */}
         <CanvasClearance
@@ -872,12 +884,8 @@ export function PageEditor({
         {/* Removing content is CONFIRMED, never one click, for the same reason restore is:
                     it changes what every reader of the page is served. */}
         {confirmClear && (
-          <div className="pe-panel pe-clear">
-            <div
-              className="pe-confirm"
-              role="alertdialog"
-              aria-label="Confirm remove content"
-            >
+          <ModalAlert label="Confirm remove content">
+            <div className="pe-confirm">
               <span>
                 Clear this draft? The published page stays unchanged until
                 Publish. Earlier bodies remain in History.
@@ -898,7 +906,7 @@ export function PageEditor({
                 </button>
               </div>
             </div>
-          </div>
+          </ModalAlert>
         )}
 
         {leftOpen && (
