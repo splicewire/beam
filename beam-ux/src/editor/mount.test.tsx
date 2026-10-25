@@ -358,6 +358,46 @@ it("creates a built Release and assembles saved versions from multiple entries",
     }),
   );
 });
+
+it("offers only draft Releases for adding an entry", async () => {
+  const release = (id: string, status: string) => ({
+    id,
+    title: status,
+    realm: "site",
+    status,
+    reviewedBy: null,
+    members: [],
+    workflow: null,
+    canSchedule: false,
+    reviewRequired: false,
+  });
+  listVersions.mockResolvedValue({
+    headVersion: "v1",
+    publishedVersion: "v1",
+    draftPending: false,
+    versions: [{ id: "v1", readable: "v1" }],
+  });
+  listReleases.mockResolvedValue([
+    release("draft-release", "draft"),
+    release("review-release", "in_review"),
+    release("approved-release", "approved"),
+    release("scheduled-release", "scheduled"),
+    release("terminal-release", "cancelled"),
+  ]);
+  loadBody.mockResolvedValue({ body: SAVED });
+  render(<VisualEditorMount entryRef={ref("entry-draft-only")} />);
+
+  const releases = await screen.findByLabelText("Release to assemble");
+  expect(releases.querySelector('option[value="draft-release"]')).not.toBeNull();
+  for (const id of [
+    "review-release",
+    "approved-release",
+    "scheduled-release",
+    "terminal-release",
+  ]) {
+    expect(releases.querySelector(`option[value="${id}"]`)).toBeNull();
+  }
+});
 it("refuses a missing pin when history exists even if head is missing", async () => {
   listVersions.mockResolvedValue({
     headVersion: null,

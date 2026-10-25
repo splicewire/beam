@@ -339,7 +339,7 @@ export function BuiltReleaseAssembly({
     void listReleases()
       .then((records) => {
         if (!live) return;
-        const editable = records.filter((record) => record.status !== "published");
+        const editable = records.filter((record) => record.status === "draft");
         setReleases(editable);
         setReleaseId((current) =>
           editable.some((record) => record.id === current)
