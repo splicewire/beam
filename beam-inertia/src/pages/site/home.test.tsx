@@ -25,6 +25,9 @@ vi.mock('@splicewire/beam-ux/site', () => ({
             {artifact.url}
         </div>
     ),
+    PreviewBoundary: ({ preview, children }: { preview: { label: string }; children: unknown }) => (
+        <div data-testid="preview" data-label={preview.label}>{children as never}</div>
+    ),
 }));
 
 const editMode = vi.hoisted(() => ({ value: false }));
@@ -62,6 +65,22 @@ describe('site/home — head', () => {
         render(<SiteHome entry={ENTRY} />);
 
         expect(document.querySelector('title')?.textContent).toBe('Home');
+    });
+});
+
+describe('site/home — Preview (ADR-0232 d15, EP-18)', () => {
+    it('renders inside the Preview bar when its route passes one, as the packaged entry page does', () => {
+        render(<SiteHome entry={ENTRY} preview={{ label: 'Spring release', exitUrl: '/_beam/preview/exit', mode: 'preview' }} />);
+
+        expect(screen.getByTestId('preview').getAttribute('data-label')).toBe('Spring release');
+        expect(screen.getByTestId('preview').contains(screen.getByTestId('artifact'))).toBe(true);
+    });
+
+    it('renders no bar outside a Preview', () => {
+        render(<SiteHome entry={ENTRY} />);
+
+        expect(screen.queryByTestId('preview')).toBeNull();
+        expect(screen.getByTestId('artifact')).toBeTruthy();
     });
 });
 

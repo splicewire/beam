@@ -2,7 +2,7 @@ import { Head } from '@inertiajs/react';
 import type { ComponentType } from 'react';
 import { useEditMode } from '@splicewire/beam-ux/canvas';
 import { entryPageConfig } from '@splicewire/beam-ux/docs';
-import { EntryBody } from '@splicewire/beam-ux/site';
+import { EntryBody, PreviewBoundary, type PreviewBarData } from '@splicewire/beam-ux/site';
 import { canvasConfig } from '../../editor/canvas-config';
 import { IntakeFormsFromPage } from '../../editor/intake';
 import PageEditor from '../../editor/page-editor';
@@ -49,6 +49,7 @@ import SiteLayout from '../../layouts/site-layout';
 export default function SiteHome({
     entry = null,
     head = null,
+    preview = null,
 }: {
     entry?: {
         id: string;
@@ -58,13 +59,15 @@ export default function SiteHome({
     } | null;
     /** The Page Head the route composed from the home row (ADR-0234 d2), as elements Inertia's server head prints. */
     head?: string[] | null;
+    /** Inside a Preview, the bar the route composed (ADR-0232 d15, EP-18); the entry's artifact is then the Preview's. */
+    preview?: PreviewBarData | null;
 }) {
     const editing = useEditMode();
     const artifact = entry?.artifact ?? null;
     // As on the packaged entry page: where the host takes the server's head, its title is the page's.
     const serverHead = entryPageConfig().serverHead === true && (head?.length ?? 0) > 0;
 
-    return (
+    const page = (
         <SiteLayout>
             {!serverHead && <Head title="Home" />}
             {/* EP-07d: as on the packaged entry page, the body's forms read the schemas the server put on the page. */}
@@ -101,4 +104,7 @@ export default function SiteHome({
             </IntakeFormsFromPage>
         </SiteLayout>
     );
+
+    // As on the packaged entry page: inside a Preview, the page renders under its bar, and its forms hold.
+    return preview ? <PreviewBoundary preview={preview}>{page}</PreviewBoundary> : page;
 }
