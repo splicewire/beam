@@ -70,9 +70,48 @@ export type SiteEntryProps = {
     nav: SiteNavData | null;
     /** Artifact addresses for chrome that resolved to another entry (§7). Absent from older servers. */
     chrome?: ChromeArtifactsPayload | null;
+    /** Present only when the server attached a verified, live Preview context. */
+    preview?: { label: string; exitUrl: string; viewAsMeUrl?: string | null } | null;
     /** Whatever else the host shares (auth, ziggy, flash) — passed through to the body under `page`. */
     [key: string]: unknown;
 };
+
+export function PreviewBar({ preview }: { preview: NonNullable<SiteEntryProps['preview']> }) {
+    return (
+        <aside
+            aria-label="Preview mode"
+            data-beam-preview-bar
+            style={{ alignItems: 'center', background: '#171717', color: 'white', display: 'flex', gap: 16, justifyContent: 'center', padding: '10px 16px' }}
+        >
+            <span>Previewing {preview.label}</span>
+            <span>Forms validate but do not submit in Preview.</span>
+            {preview.viewAsMeUrl ? <a href={preview.viewAsMeUrl} style={{ color: 'white' }}>View as me</a> : null}
+            <a href={preview.exitUrl} style={{ color: 'white' }}>Exit preview</a>
+        </aside>
+    );
+}
+
+/** Keep authored forms usable for native validation without sending real submissions from a Preview. */
+export function PreviewBoundary({
+    preview,
+    children,
+}: {
+    preview: NonNullable<SiteEntryProps['preview']>;
+    children: ReactNode;
+}) {
+    return (
+        <div
+            data-beam-preview-root
+            onSubmitCapture={(event) => {
+                event.preventDefault();
+                event.stopPropagation();
+            }}
+        >
+            <PreviewBar preview={preview} />
+            {children}
+        </div>
+    );
+}
 
 /** A layout that declares nothing frames nothing. Not a component, so it adds no element to the DOM. */
 function Passthrough({ children }: ChromeProps) {
@@ -173,5 +212,7 @@ export default function SiteEntry(props: SiteEntryProps) {
         </>
     );
 
-    return <>{config.wrap ? config.wrap(page) : page}</>;
+    const rendered = config.wrap ? config.wrap(page) : page;
+
+    return props.preview ? <PreviewBoundary preview={props.preview}>{rendered}</PreviewBoundary> : rendered;
 }
