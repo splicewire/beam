@@ -47,3 +47,15 @@ it('edits the Page Fields the parent declares, typed by its schema, and an empty
   expect(onChange).toHaveBeenLastCalledWith({ title: 'Pie', fields: { servings: 4 } });
   expect(screen.queryByLabelText('Child page fields')).toBeNull();
 });
+
+it('changes the File Language where the host writes more than one, and hides it otherwise (ux-0233 d5)', () => {
+  const onChange = vi.fn();
+  render(<PageSettings value={{ title: 'Guide', fileLanguage: 'tsx' }} fileLanguages={['tsx', 'mdx']} onChange={onChange} />);
+
+  fireEvent.change(screen.getByLabelText('File language'), { target: { value: 'mdx' } });
+
+  expect(onChange).toHaveBeenCalledWith({ title: 'Guide', fileLanguage: 'mdx' });
+  cleanup();
+  render(<PageSettings value={{ title: 'Guide', fileLanguage: 'tsx' }} fileLanguages={['tsx']} onChange={vi.fn()} />);
+  expect(screen.queryByLabelText('File language')).toBeNull();
+});

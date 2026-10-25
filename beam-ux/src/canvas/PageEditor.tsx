@@ -128,6 +128,8 @@ export interface PageEditorProps {
   pageSettings?: SessionPageSettings | null;
   /** The Page Fields the server offers this page (ux-0233 d4), from its body envelope. */
   pageFields?: PageFieldsOffer | null;
+  /** The File Languages the server lets this page take (ux-0233 d5). */
+  fileLanguages?: string[] | null;
   transport: PageEditorTransport;
   notify?: Notify;
   theme?: Partial<CanvasTheme>;
@@ -274,6 +276,7 @@ export function PageEditor({
   body = null,
   pageSettings = null,
   pageFields = null,
+  fileLanguages = null,
   transport,
   notify,
   theme,
@@ -733,6 +736,7 @@ export function PageEditor({
             <PageSettings
               value={local.session.pageSettings}
               pageFields={pageFields}
+              fileLanguages={fileLanguages}
               onChange={(settings) =>
                 local.change(local.session!.body, settings)
               }

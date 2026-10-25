@@ -27,6 +27,7 @@ interface LoadedEnvelope {
     body: JsonDoc;
     pageSettings?: SessionPageSettings;
     pageFields: PageFieldsOffer | null;
+    fileLanguages: string[];
     styleRegistry?: import('../blockdoc/style-runtime.js').StyleRegistry;
     profile?: import('@schemastud/blockdoc').BlockdocManifest;
 }
@@ -38,7 +39,7 @@ interface LoadedEnvelope {
 function readEnvelope(envelope: unknown, missing: string): LoadedEnvelope {
     const read = (envelope ?? {}) as Partial<LoadedEnvelope> & { body?: unknown };
     if (!Array.isArray(read.body)) throw new Error(missing);
-    return { body: read.body as JsonDoc, pageSettings: read.pageSettings, pageFields: read.pageFields ?? null, styleRegistry: read.styleRegistry, profile: read.profile };
+    return { body: read.body as JsonDoc, pageSettings: read.pageSettings, pageFields: read.pageFields ?? null, fileLanguages: read.fileLanguages ?? [], styleRegistry: read.styleRegistry, profile: read.profile };
 }
 
 function AddressedVisualEditor({ entryRef }: { entryRef: EntryRef }) {
@@ -161,7 +162,7 @@ function AddressedVisualEditor({ entryRef }: { entryRef: EntryRef }) {
             <VersionRecordingReferences recordings={version.recordings} />
             <button disabled={busy || local.session!.dirty} onClick={() => void restore(version.id)}>Restore {version.readable} into draft</button>
         </div>)}</aside>}
-        {!local.session.source && local.session.pageSettings && <PageSettings value={local.session.pageSettings} pageFields={loaded.pageFields} onChange={settings => local.change(local.session!.body, settings)} />}
+        {!local.session.source && local.session.pageSettings && <PageSettings value={local.session.pageSettings} pageFields={loaded.pageFields} fileLanguages={loaded.fileLanguages} onChange={settings => local.change(local.session!.body, settings)} />}
         <SourceMode local={local} allowed={(!loaded.profile || !('x-admits-code' in loaded.profile) || loaded.profile['x-admits-code'] !== false) && (!entryRef.format || SOURCE_LANGUAGES.includes(entryRef.format))}
             language={entryRef.format ?? 'tsx'}
             conversion={id && transport.printSource && transport.readSource ? {print:body=>transport.printSource!(id,body),read:(source,body)=>transport.readSource!(id,source,body)} : undefined}>

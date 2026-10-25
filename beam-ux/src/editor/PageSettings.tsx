@@ -13,7 +13,7 @@ export interface PageFieldsOffer {
 }
 
 /** These controls change the Local Session, never the published entry row. */
-export function PageSettings({ value, onChange, pageFields = null }: { value: SessionPageSettings; onChange: (value: SessionPageSettings) => void; pageFields?: PageFieldsOffer | null }) {
+export function PageSettings({ value, onChange, pageFields = null, fileLanguages = [] }: { value: SessionPageSettings; onChange: (value: SessionPageSettings) => void; pageFields?: PageFieldsOffer | null; fileLanguages?: string[] | null }) {
   const fields = [
     ['title', 'Title'], ['parentId', 'Parent entry ID'], ['segment', 'URL segment'],
     ['navGroup', 'Navigation group'], ['layout', 'Layout'], ['template', 'Template'],
@@ -29,6 +29,11 @@ export function PageSettings({ value, onChange, pageFields = null }: { value: Se
     <label>Page type<select value={value.pageType ?? 'WebPage'} onChange={event => onChange({ ...value, pageType: event.target.value })}>
       {['WebPage', 'Article', 'CollectionPage', 'ProfilePage'].map(type => <option key={type}>{type}</option>)}
     </select></label>
+    {/* ux-0233 d5: the File Language; Publish moves the page's file. Shown only where the host writes more than one. */}
+    {(fileLanguages ?? []).length > 1 && <label>File language<select value={value.fileLanguage ?? ''}
+      onChange={event => onChange({ ...value, fileLanguage: event.target.value })}>
+      {(fileLanguages ?? []).map(language => <option key={language} value={language}>{language.toUpperCase()}</option>)}
+    </select></label>}
     {pageFields && pageFields.names.length > 0 && <label>Child page fields<select value={value.childFields ?? ''}
       onChange={event => onChange({ ...value, childFields: event.target.value || null })}>
       <option value="">None</option>
