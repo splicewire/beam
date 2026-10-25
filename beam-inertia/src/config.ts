@@ -23,7 +23,7 @@ export interface BeamInertiaConfig {
   /**
    * The host's own components for the canvas registry: its designed sections, and the kit its MDX pages offer where
    * they hold blocks. They join the packaged islands, so the canvas, a compiled body and the doctor's registry
-   * snapshot read one map.
+   * snapshot read one map. The host owns its registry: a host component replaces a packaged one of the same name.
    */
   components?: Record<string, ComponentType<Record<string, unknown>>>;
   pages?: Record<string, PageLoader>;
