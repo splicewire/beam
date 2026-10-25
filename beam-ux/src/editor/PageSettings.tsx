@@ -7,7 +7,8 @@ export function PageSettings({ value, onChange }: { value: SessionPageSettings; 
     ['navGroup', 'Navigation group'], ['layout', 'Layout'], ['template', 'Template'],
     ['description', 'Description'], ['socialImage', 'Social image'], ['publishedDate', 'Published date'],
   ] as const;
-  return <details><summary>Page settings</summary>
+  return <details className="pe-page-settings"><summary>Page settings</summary>
+    <div className="pe-page-settings-fields" role="region" aria-label="Page settings fields">
     <p>Saved with your draft. Publish makes these settings visible.</p>
     {fields.map(([key, label]) => <label key={key}>{label}
       <input type={key === 'publishedDate' ? 'date' : 'text'} value={value[key] ?? ''}
@@ -17,5 +18,6 @@ export function PageSettings({ value, onChange }: { value: SessionPageSettings; 
     <label>Page type<select value={value.pageType ?? 'WebPage'} onChange={event => onChange({ ...value, pageType: event.target.value })}>
       {['WebPage', 'Article', 'CollectionPage', 'ProfilePage'].map(type => <option key={type}>{type}</option>)}
     </select></label>
+    </div>
   </details>;
 }
