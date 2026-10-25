@@ -1,6 +1,7 @@
 import { Head } from '@inertiajs/react';
 import { useMemo, type ReactNode } from 'react';
 import { EntryBody } from '../site/EntryBody.js';
+import { PreviewBar, PreviewBoundary, type PreviewBarData } from '../site/PreviewBar.js';
 import { ManifestTable } from '../site/ManifestTable.js';
 import { SiteNav } from '../site/SiteNav.js';
 import { ArtifactChrome } from '../docs/ArtifactChrome.js';
@@ -70,50 +71,16 @@ export type SiteEntryProps = {
     nav: SiteNavData | null;
     /** Artifact addresses for chrome that resolved to another entry (§7). Absent from older servers. */
     chrome?: ChromeArtifactsPayload | null;
-    /** Present only when the server attached a verified, live Preview context. */
-    preview?: { label: string; exitUrl: string; viewAsMeUrl?: string | null } | null;
+    /** Present only inside a verified Preview, in either mode (ADR-0232 d13). */
+    preview?: PreviewBarData | null;
     /** The server's Page Head (ADR-0234 d1), as elements Inertia's server head prints. Absent from older servers. */
     head?: string[] | null;
     /** Whatever else the host shares (auth, ziggy, flash) — passed through to the body under `page`. */
     [key: string]: unknown;
 };
 
-export function PreviewBar({ preview }: { preview: NonNullable<SiteEntryProps['preview']> }) {
-    return (
-        <aside
-            aria-label="Preview mode"
-            data-beam-preview-bar
-            style={{ alignItems: 'center', background: '#171717', color: 'white', display: 'flex', gap: 16, justifyContent: 'center', padding: '10px 16px' }}
-        >
-            <span>Previewing {preview.label}</span>
-            <span>Forms validate but do not submit in Preview.</span>
-            {preview.viewAsMeUrl ? <a href={preview.viewAsMeUrl} style={{ color: 'white' }}>View as me</a> : null}
-            <a href={preview.exitUrl} style={{ color: 'white' }}>Exit preview</a>
-        </aside>
-    );
-}
-
-/** Keep authored forms usable for native validation without sending real submissions from a Preview. */
-export function PreviewBoundary({
-    preview,
-    children,
-}: {
-    preview: NonNullable<SiteEntryProps['preview']>;
-    children: ReactNode;
-}) {
-    return (
-        <div
-            data-beam-preview-root
-            onSubmitCapture={(event) => {
-                event.preventDefault();
-                event.stopPropagation();
-            }}
-        >
-            <PreviewBar preview={preview} />
-            {children}
-        </div>
-    );
-}
+// The bar and the form guard live in `/site` so a host's own page (a starter's home) renders them without this page map.
+export { PreviewBar, PreviewBoundary };
 
 /** A layout that declares nothing frames nothing. Not a component, so it adds no element to the DOM. */
 function Passthrough({ children }: ChromeProps) {
