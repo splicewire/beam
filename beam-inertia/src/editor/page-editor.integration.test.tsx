@@ -22,6 +22,7 @@ const envelope = {
     schema: null,
     source: null,
     compileError: null,
+    authoredComponents: [],
     body: [
         {
             kind: 'block',
@@ -94,6 +95,7 @@ it('retains the complete publication dock when the injected host supplies it', a
         headReadable: null,
         versions: [],
         compileError: null,
+        authoredComponents: [],
     };
     const listVersions = vi.fn(async () => state);
     configureBeamInertia({
@@ -176,6 +178,7 @@ const cleared = {
     headReadable: null,
     versions: [],
     compileError: null,
+    authoredComponents: [],
 };
 
 it('an author clears the working draft only after confirming', async () => {

@@ -12,6 +12,7 @@ const envelope = {
   body: {},
   source: null,
   compileError: null,
+  authoredComponents: [],
 };
 const client: UxBuilderClient = {
   loadBody: async () => envelope,
@@ -107,6 +108,7 @@ it("retains a supplied method receiver and switches back to starter defaults onl
     headReadable: null,
     versions: [],
     compileError: null,
+    authoredComponents: [],
   };
   const supplied: UxBuilderClient = {
     ...client,
@@ -165,6 +167,7 @@ it("clears through the canonical clear-body route, and an injected client withou
     headReadable: null,
     versions: [],
     compileError: null,
+    authoredComponents: [],
   };
   const fetch = vi.fn().mockResolvedValue(Response.json({ data: state }));
   vi.stubGlobal("fetch", fetch);

@@ -1,7 +1,7 @@
 import { afterEach, expect, it, vi } from 'vitest';
 import { configureBeamInertia } from '../config';
 import { bodyClient } from './transport';
-const envelope = { id: 'entry', slug: 'home', type: 'page', format: 'tsx', schema: null, body: {}, source: null, compileError: null };
+const envelope = { id: 'entry', slug: 'home', type: 'page', format: 'tsx', schema: null, body: {}, source: null, compileError: null, authoredComponents: [] };
 const body = [{ kind: 'text' as const, value: 'Typed canvas' }];
 afterEach(() => { configureBeamInertia({}); vi.unstubAllGlobals(); });
 function setup(...responses: Response[]) {
