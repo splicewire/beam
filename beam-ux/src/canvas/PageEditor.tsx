@@ -119,7 +119,7 @@ export interface Notify {
 
 export interface PageEditorProps {
   slug: string;
-  /** The entry format; source conversion is available only for TSX entries. */
+  /** The entry format; an absent format preserves the legacy TSX behavior. */
   format?: string | null;
   entryId?: string;
   userId?: string;
@@ -695,7 +695,7 @@ export function PageEditor({
           <SourceMode
             local={local}
             allowed={
-              format === "tsx" &&
+              (format == null || format === "tsx") &&
               (!canvasConfig.profile ||
                 !("x-admits-code" in canvasConfig.profile) ||
                 canvasConfig.profile["x-admits-code"] !== false)

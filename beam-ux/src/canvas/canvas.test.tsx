@@ -418,8 +418,11 @@ describe('PageEditor — mode fork + transport', async () => {
             printSource: vi.fn().mockResolvedValue({ source: 'export default () => <div />' }),
             readSource: vi.fn().mockResolvedValue({ body: doc() }),
         };
-        const { rerender } = render(wrap(<PageEditor entryId="entry-1" userId="author-1" format="mdx" slug="home" body={doc()} transport={transport} />));
+        const { rerender } = render(wrap(<PageEditor entryId="entry-1" userId="author-1" slug="home" body={doc()} transport={transport} />));
         await act(async () => { fireEvent(window, new CustomEvent('beam-ux:mode', { detail: { mode: 'window' } })); await Promise.resolve(); });
+        expect(screen.getByRole('button', { name: 'Source Mode' })).toBeTruthy();
+
+        rerender(wrap(<PageEditor entryId="entry-1" userId="author-1" format="mdx" slug="home" body={doc()} transport={transport} />));
         expect(screen.queryByRole('button', { name: 'Source Mode' })).toBeNull();
 
         rerender(wrap(<PageEditor entryId="entry-1" userId="author-1" format="tsx" slug="home" body={doc()} transport={transport} />));
