@@ -155,6 +155,8 @@ export function beamInertiaOptions(config: BeamInertiaConfig = {}) {
 }
 
 export { resolveBeamPage } from "./pages";
+// EP-07 (ux-0228 d6): the canvas registry's names, for beam:doctor's Manifest Profile vs JS registry check.
+export { registrySnapshot } from "./editor/registry-snapshot";
 export {
   configureBeamInertia,
   featureEnabled,
