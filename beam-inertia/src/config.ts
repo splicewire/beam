@@ -20,6 +20,14 @@ export interface BeamInertiaConfig {
    * (`beam.core.intake.enabled`), which is where laravel-beam-ux's Manifest Profile offers the node.
    */
   intakeForms?: boolean;
+  /**
+   * The host's own components for the canvas registry: its designed sections, and the kit its MDX pages offer where
+   * they hold blocks. They join the packaged islands, so the canvas, a compiled body and the doctor's registry
+   * snapshot read one map. The host owns its registry: a host component replaces a packaged one of the same name.
+   * Typed as any component, since one declares its own props (a kit's required `heading`) and the canvas hands it
+   * whatever its block stores.
+   */
+  components?: Record<string, ComponentType<never>>;
   pages?: Record<string, PageLoader>;
   entryClient?: UxBuilderClient;
   /** Host-owned editor route for an inspected entry; absent means no Open Theme link. */

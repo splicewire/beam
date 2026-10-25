@@ -23,6 +23,19 @@ describe('server Manifest Profile canvas bridge', () => {
         expect(profileTemplates(templates, profile, [], null).map(t => t.label)).toEqual(['p']);
         expect(profileTemplates(templates, profile, [block('p')], '0').map(t => t.label)).toEqual([]);
     });
+    it("offers the profile's placeable components too, not only the presentation templates", () => {
+        // EP-07: a host's placeable components are its profile's NodeTypes. A component without a presentation template
+        // (the packaged IntakeForm) was never offered, so an author could not place it (starter receipt 2026-10-25).
+        const withComponents = { ...profile, nodes: [...profile.nodes,
+            { name: 'IntakeForm', category: 'html', admitsChildCategories: [] },
+            { name: 'Card', category: 'html', admitsChildCategories: [] },
+            { name: 'Panel', category: 'layout', admitsChildCategories: [] }] };
+        const templates = ['p', 'Card'].map(name => ({ label: name, make: () => block(name) }));
+        const offered = profileTemplates(templates, withComponents, [], null);
+
+        expect(offered.map(t => t.label)).toEqual(['p', 'Card', 'Intake Form']);
+        expect(offered[2].make()).toEqual({ kind: 'block', name: 'IntakeForm', isComponent: true, dynamic: false, props: [], children: [] });
+    });
     it('uses declared attrs and hides expression props without deleting their stored value', () => {
         const node = block('p');
         node.props = [{ name: 'title', kind: 'string', value: 'Hello' }, { name: 'click', kind: 'expression', value: 'run()' }];

@@ -1,6 +1,6 @@
 import { lazy, Suspense } from 'react';
 import { resolveBeamPage } from '../pages';
-import { featureEnabled, intakeFormsEnabled } from '../config';
+import { featureEnabled, getBeamInertiaConfig, intakeFormsEnabled } from '../config';
 import { IntakeFormIsland } from './intake';
 // Component registry for the visual editor's OPAQUE ISLANDS. A tree node whose `name` is a registered key
 // (PascalCase) renders the REAL designed component (sealed block: select / reorder / delete, no drill-in)
@@ -54,7 +54,9 @@ export function defaultComponents(): Record<
     // EP-07d: the packaged form, where the host turned on its public intake door (laravel-beam-ux offers the node
     // there too, so the doctor's registry check agrees).
     ...(intakeFormsEnabled() ? { IntakeForm: IntakeFormIsland } : {}),
-    
+    // The host's own components (configureBeamInertia({ components })), its sections and its MDX kit.
+    ...(getBeamInertiaConfig().components as Record<string, ComponentType<Record<string, unknown>>> | undefined),
+
 }; }
 
 const LoginPage = lazy(async () => ({ default: await resolveBeamPage('auth/login') }));

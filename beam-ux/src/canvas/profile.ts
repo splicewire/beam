@@ -29,7 +29,13 @@ export function profileParentDeclaration(profile: BlockdocManifest, doc: JsonDoc
 export function profileTemplatesAtParent(templates: BlockTemplate[], profile: BlockdocManifest, doc: JsonDoc, parentPath: string): BlockTemplate[] {
     const declaration = profileParentDeclaration(profile, doc, parentPath);
     const categories = declaration?.admitsChildCategories;
-    return templates.filter(template => {
+    // EP-07: a profile's components are placeable whether or not a template presents them; one without is offered empty.
+    const presented = new Set(templates.map(template => template.make().name));
+    const components = profile.nodes.filter(node => /^[A-Z]/.test(node.name) && !presented.has(node.name)).map(node => ({
+        label: node.name.replace(/(?<=[a-z0-9])(?=[A-Z])/g, ' '),
+        make: (): JsonBlock => ({ kind: 'block', name: node.name, isComponent: true, dynamic: false, props: [], children: [] }),
+    }));
+    return [...templates, ...components].filter(template => {
         const block = template.make();
         const candidate = profile.nodes.find(n => n.name === block.name);
         if ('x-admits-code' in profile && profile['x-admits-code'] === false && block.props.some(prop => prop.kind === 'expression')) return false;
