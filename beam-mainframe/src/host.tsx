@@ -121,6 +121,13 @@ export interface EntryRef {
      * keeps the client from making a request the server will refuse.
      */
     format: string | null;
+    /**
+     * The entry's declared **Body Kind** (`'blocks' | 'source' | 'form'`, beam-ux ADR-0228 d1) when the host could
+     * supply one. It, not the format, chooses the editor surface (beam JS ADR-0006 d1): an MDX page holds blocks on a
+     * host that converted its MDX (ux-0233 d1) and source on one that has not. Optional and additive, as `format`
+     * is: absent or null leaves a renderer to the format gate.
+     */
+    bodyKind?: string | null;
 }
 
 /** Display label for a ref — the slug when there is one, else the id. Never blank for a real ref. */
@@ -204,6 +211,8 @@ export interface HostPageContext {
      * `ref.format === null` (unknown) rather than a wrong answer. See {@link EntryRef.format}.
      */
     entryFormat?: string | null;
+    /** The entry's Body Kind off the page's props (`props.entry.bodyKind`). Additive; see {@link EntryRef.bodyKind}. */
+    entryBodyKind?: string | null;
 }
 
 export interface MainframeHostConfig {
@@ -509,7 +518,7 @@ export function createMainframeHost(config: MainframeHostConfig) {
     const ribbon = config.ribbon ?? defaultRibbon;
 
     return function MainframeHost({ children }: { children: ReactNode }) {
-        const { component, canAuthor, slug, entryId, entryFormat } = config.usePageContext();
+        const { component, canAuthor, slug, entryId, entryFormat, entryBodyKind } = config.usePageContext();
 
         // A `beam-page` component carries its entry key as explicit props (its component NAME is
         // `beam-page` — or `site/entry` for a rendered entry — for EVERY such page, so the name→slug map
@@ -517,6 +526,7 @@ export function createMainframeHost(config: MainframeHostConfig) {
         const propSlug = nonEmpty(slug);
         const propId = nonEmpty(entryId);
         const propFormat = nonEmpty(entryFormat);
+        const propBodyKind = nonEmpty(entryBodyKind);
 
         // The three branches, in order. Only the first can be an id-only ref; only the props branch can
         // carry BOTH — and it is the branch every migrated page lands on, so the common case addresses
@@ -525,10 +535,10 @@ export function createMainframeHost(config: MainframeHostConfig) {
             () =>
                 overrideEntryRef() ??
                 (propId !== null || propSlug !== null
-                    ? { id: propId, slug: propSlug, format: propFormat }
+                    ? { id: propId, slug: propSlug, format: propFormat, ...(propBodyKind === null ? {} : { bodyKind: propBodyKind }) }
                     : null) ??
                 componentEntryRef(component, componentToEntry, componentSlugFallback),
-            [component, propSlug, propId, propFormat],
+            [component, propSlug, propId, propFormat, propBodyKind],
         );
         const [entry, setEntry] = useState<HostEntryBody | null>(null);
         const [mode, setMode] = useState<'domain' | 'window'>('domain');
@@ -539,7 +549,7 @@ export function createMainframeHost(config: MainframeHostConfig) {
         const refKey =
             entryRef === null
                 ? null
-                : `${entryRef.id ?? ''}\u0000${entryRef.slug ?? ''}\u0000${entryRef.format ?? ''}`;
+                : `${entryRef.id ?? ''}\u0000${entryRef.slug ?? ''}\u0000${entryRef.format ?? ''}\u0000${entryRef.bodyKind ?? ''}`;
 
         // "Not an author" is the OTHER answer that must not reach the transport, and it is the far more
         // common one: it is every anonymous view of every public page. See
@@ -600,6 +610,7 @@ export function createMainframeHost(config: MainframeHostConfig) {
                         // affordance for a format its editor cannot open. Additive beside the two
                         // above, for the same untyped-CustomEvent reason.
                         format: entryRef?.format ?? null,
+                        bodyKind: entryRef?.bodyKind ?? null,
                     },
                 }),
             );

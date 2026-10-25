@@ -1,5 +1,5 @@
 export { IntakeSectionForm } from './IntakeSectionForm';
-export { IntakeProvider } from './provider';
+export { IntakeProvider, useOptionalIntakeServices } from './provider';
 export { useIntakeSubmission } from './hooks';
 export type {
     EntityIntakeFormSectionData,
@@ -9,3 +9,5 @@ export type {
     IntakeServices,
     IntakeFormRenderProps,
 } from './types';
+export { IntakeForm, PublicIntakeProvider, pointerTokens, submitToIntakeDoor, toErrorSchema } from './IntakeForm';
+export type { IntakeFormProps, PublicIntakeSchema, PublicIntakeResult, PublicIntakeServices } from './IntakeForm';

@@ -23,3 +23,8 @@ export function useIntakeServices(): IntakeServices {
         throw new Error('IntakeSectionForm requires an IntakeProvider.');
     return services;
 }
+
+/** The host's intake services when an IntakeProvider is mounted, else null (a public page form needs none). */
+export function useOptionalIntakeServices(): IntakeServices | null {
+    return useContext(IntakeContext);
+}

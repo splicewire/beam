@@ -44,6 +44,11 @@ export interface KitManifest {
 // `foo="bar"`; the inspector form omits it (v1) and it stays editable in source mode.
 const expr = { type: 'string', 'x-expression': true } as const;
 
+/**
+ * @deprecated ux-0233 d7: the kit is declared on the server as `#[NodeType]` Code Components in
+ * `splicewire/laravel-beam-mdx` (`MdxKitNodeSource`), and the Manifest Profile carries it. This client copy retires
+ * with MdxDocumentEditor as each consumer converts (EP-42).
+ */
 export const KIT_MANIFEST: KitManifest = {
     profile: 'beam-mdx-kit',
     version: 1,

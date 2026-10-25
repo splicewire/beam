@@ -83,6 +83,7 @@
     "@types/react-dom": "^19.0.0"
   },
   "dependencies": {
+    "@splicewire/beam-intake": "file:../beam-intake",
     "@splicewire/beam-resources": "^0.1.3"
   }
 }

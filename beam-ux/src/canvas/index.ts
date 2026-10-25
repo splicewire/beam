@@ -92,4 +92,5 @@ export {
 export { insertRelativeTo } from './insert.js';
 
 // Which entry formats this canvas may open (the client mirror of the server's `AcceptsJsonDoc`).
-export { CANVAS_FORMATS, canvasAcceptsFormat, canvasRefusalFor } from './format.js';
+export { CANVAS_FORMATS, canvasAccepts, canvasAcceptsFormat, canvasRefusalFor } from './format.js';
+export type { BodyKind } from './format.js';

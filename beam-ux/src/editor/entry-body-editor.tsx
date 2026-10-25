@@ -23,12 +23,13 @@ export function EditableEntryBody({ entry, children }: { entry: EntryPayload; ch
         return <>{children}</>;
     }
 
-    const ref = { id: entry.id, slug: entry.slug, format: entry.format };
+    const ref = { id: entry.id, slug: entry.slug, format: entry.format, bodyKind: entry.bodyKind ?? null };
 
     return (
         <div data-beam-entry-editor={entry.slug}>
-            {/* The format gate stays in front of the canvas: an mdx entry gets the stated refusal, in
-                the body region where the author was looking, never a JsonDoc canvas. */}
+            {/* The body-kind gate stays in front of the canvas: an entry that holds source (an mdx page on a
+                host that keeps MDX as source) gets the stated refusal, in the body region where the author
+                was looking, never a JsonDoc canvas. An mdx page that holds blocks opens like a tsx page. */}
             <CanvasOrRefusal entry={ref}>
                 <Suspense
                     fallback={

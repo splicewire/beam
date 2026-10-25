@@ -1,8 +1,8 @@
 import type { ReactNode } from 'react';
-import { canvasAcceptsFormat, canvasRefusalFor } from '../canvas/format';
-type EntryRef = { format?: string | null };
+import { canvasAccepts, canvasRefusalFor } from '../canvas/format';
+type EntryRef = { format?: string | null; bodyKind?: string | null };
 export function CanvasOrRefusal({ entry, children }: { entry: EntryRef; children: ReactNode }) {
-    if (canvasAcceptsFormat(entry.format)) {
+    if (canvasAccepts(entry)) {
         return <>{children}</>;
     }
 

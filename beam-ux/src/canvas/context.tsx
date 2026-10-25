@@ -14,10 +14,18 @@ import { StyleSelectionProvider } from './StyleSelection';
 import { CanvasSelectionProvider } from './CanvasSelection';
 import { richFieldComponents } from '../bindings/rich-field.js';
 
-/** The MDX island read view — a host-provided component (the package never imports @splicewire/beam-mdx). */
+/**
+ * The MDX island read view — a host-provided component (the package never imports @splicewire/beam-mdx).
+ *
+ * @deprecated ux-0233: an MDX page holds blocks; the island retires as each host converts (EP-42).
+ */
 export type MdxViewComponent = ComponentType<{ file?: string; md?: string }>;
 
-/** The MDX island edit view — in-place mdxeditor, emits the edited body back through `onChange`. */
+/**
+ * The MDX island edit view — in-place mdxeditor, emits the edited body back through `onChange`.
+ *
+ * @deprecated ux-0233: an MDX page holds blocks; the island retires as each host converts (EP-42).
+ */
 export type MdxEditComponent = ComponentType<{
     file?: string;
     md?: string;
@@ -38,10 +46,18 @@ export interface CanvasConfig {
     profile?: BlockdocManifest;
     /** PascalCase component map — a tree block whose `name` is a key renders SEALED as this component. */
     registry: Record<string, ComponentType<Record<string, unknown>>>;
-    /** The MDX island read component. */
-    MdxView: MdxViewComponent;
-    /** The MDX island edit component. */
-    MdxEdit: MdxEditComponent;
+    /**
+     * The MDX island read component. Optional: without one an `Mdx` node shows its text read-only.
+     *
+     * @deprecated ux-0233: an MDX page holds blocks; the island retires as each host converts (EP-42).
+     */
+    MdxView?: MdxViewComponent;
+    /**
+     * The MDX island edit component. Optional: without one an `Mdx` node is read-only and the palette offers none.
+     *
+     * @deprecated ux-0233: an MDX page holds blocks; the island retires as each host converts (EP-42).
+     */
+    MdxEdit?: MdxEditComponent;
     /** Class-name autocomplete pool for the inspector's class chips. Defaults to a generic set. */
     classSuggestions?: string[];
     /** CSS-value / `var(--…)` autocomplete pool for the inspector's style rows. Defaults to generic. */

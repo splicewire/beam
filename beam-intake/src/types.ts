@@ -21,6 +21,10 @@ export interface IntakeFormRenderProps {
     disabled: boolean;
     onChange(fields: IntakeFields): void;
     onSubmit(fields: IntakeFields): void;
+    /** The server's errors for the last submission, keyed by JSON pointer (`/field`; `''` for the document). */
+    errors?: Record<string, string[]>;
+    /** The submit control's label, where the caller names one (a page IntakeForm does). */
+    submitLabel?: string;
 }
 
 export interface IntakeServices<

@@ -7,8 +7,11 @@ export interface SourceConversion {
  read(source:string, body:JsonDoc): Promise<{body:JsonDoc}>;
 }
 
-/** Read-only conversion. Pending text lives in LocalSession, not component state or another save. */
-export function SourceMode({local,conversion,allowed,children}:{local:ReturnType<typeof useLocalSession>;conversion?:SourceConversion;allowed:boolean;children:ReactNode}) {
+/**
+ * Read-only conversion. Pending text lives in LocalSession, not component state or another save. The text is the
+ * page in its File Language (beam JS ADR-0006 d4): `language` names it, `tsx` unless the entry says otherwise.
+ */
+export function SourceMode({local,conversion,allowed,language='tsx',children}:{local:ReturnType<typeof useLocalSession>;conversion?:SourceConversion;allowed:boolean;language?:string;children:ReactNode}) {
  const [busy,setBusy]=useState(false);
  const [error,setError]=useState<string|null>(null);
  const run=async(fn:()=>Promise<void>)=>{setBusy(true);setError(null);try{await fn();}catch(e){setError(e instanceof Error?e.message:String(e));}finally{setBusy(false);}};
@@ -29,7 +32,7 @@ export function SourceMode({local,conversion,allowed,children}:{local:ReturnType
    local.beginSource(printed.source,body);
   })}>Source Mode</button>{children}</> :
    <section aria-label="Source Mode">
-    <textarea aria-label="TSX source" value={source.text} disabled={busy} onChange={event=>local.editSource(event.target.value)}/>
+    <textarea aria-label={`${language.toUpperCase()} source`} value={source.text} disabled={busy} onChange={event=>local.editSource(event.target.value)}/>
     <button disabled={busy} onClick={()=>void run(async()=>{const parsed=await conversion.read(source.text,source.body as JsonDoc);local.applySource(parsed.body);})}>Apply source</button>
     <button disabled={busy} onClick={local.discardSource}>Discard source</button>
    </section>}

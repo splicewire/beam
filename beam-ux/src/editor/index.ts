@@ -9,5 +9,4 @@ export { canvasConfig as defaultCanvasConfig } from './canvas-config';
 export { defaultTreeFor, DEFAULT_TREES } from './defaults';
 export { DemoHero, DemoFeatureRow } from './islands';
 export { RichMarkdown, RichBlockdoc, richFieldComponents } from '../bindings/rich-field';
-export { MdxView, MdxEdit } from './mdx';
 export { NEUTRAL_THEME } from './theme';

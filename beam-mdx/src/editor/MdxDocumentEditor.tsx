@@ -61,6 +61,10 @@ export interface MdxDocumentEditorProps {
 // A CodeMirror language token per fenced-code lang so the source/code blocks highlight.
 const CODE_LANGS = { '': 'text', text: 'Text', ts: 'TypeScript', tsx: 'TSX', js: 'JavaScript', json: 'JSON', bash: 'Shell', php: 'PHP', mdx: 'MDX', md: 'Markdown', html: 'HTML', css: 'CSS' };
 
+/**
+ * @deprecated ux-0233 d2: an MDX page holds blocks and is edited in the canvas through Prose Runs (beam JS ADR-0006).
+ * This raw-MDX-string editor retires as each consumer converts (EP-42); a new caller edits blocks instead.
+ */
 export function MdxDocumentEditor({
     value,
     onChange,
