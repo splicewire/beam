@@ -458,3 +458,22 @@ it("remirrors one file and takes all release files through the declared routes",
   expect(bodyClient.remirrorReleaseFile).toBeUndefined();
   expect(bodyClient.takeAllReleaseFiles).toBeUndefined();
 });
+
+it('uses entry-addressed image routes with FormData and session CSRF, preserving a missing injected seam', async () => {
+  const image={id:'m1',name:'photo.png',url:'/storage/m1/photo.png'};
+  const fetch=vi.fn().mockResolvedValue(Response.json({data:{items:[image]}}));
+  vi.stubGlobal('fetch',fetch);vi.stubGlobal('document',{cookie:'XSRF-TOKEN=csrf%20token'});
+  configureBeamInertia({});
+  expect(await bodyClient.listImages?.('entry-uuid')).toEqual({items:[image]});
+  expect(fetch.mock.calls[0][0]).toBe('/beam-ux-entries/entry-uuid/media');
+  fetch.mockResolvedValueOnce(Response.json({data:image}));
+  const file=new File(['png'],'photo.png',{type:'image/png'});
+  expect(await bodyClient.uploadImage?.('entry-uuid',file)).toEqual(image);
+  const [url,options]=fetch.mock.calls[1];
+  expect(url).toBe('/beam-ux-entries/entry-uuid/upload-image');
+  expect(options.method).toBe('POST');expect(options.credentials).toBe('same-origin');
+  expect(options.headers).toEqual({Accept:'application/json','X-XSRF-TOKEN':'csrf token'});
+  expect(options.body.get('file')).toBe(file);
+  configureBeamInertia({entryClient:client});
+  expect(bodyClient.listImages).toBeUndefined();expect(bodyClient.uploadImage).toBeUndefined();
+});

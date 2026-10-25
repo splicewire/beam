@@ -14,12 +14,13 @@ it('executes the PHP-generated module with request-only records, nested repeats 
     const module = { exports: {} as { default?: React.ComponentType<Record<string, unknown>> } };
     new Function('React', 'module', 'exports', code)(React, module, module.exports);
     const Body = module.exports.default!;
-    const props = { bindingRuntime, components: richFieldComponents };
+    const props = { bindingRuntime, components: richFieldComponents, record: { fields: { title: "Record <title>" } } };
     const bindings = { outer: { records: [
         { title: '<visitor>', body: '**Rich**', bindings: { inner: { records: [{ title: 'Related' }] } } },
         { title: '', body: 'Hidden by condition' },
     ] } };
     const html = renderToStaticMarkup(React.createElement(Body, { ...props, bindings }));
+    expect(html).toContain('<h1>Record &lt;title&gt;</h1>');
     expect(html).toContain('&lt;visitor&gt;');
     expect(html).toContain('<strong>Rich</strong>');
     expect(html).toContain('<p>Related</p>');

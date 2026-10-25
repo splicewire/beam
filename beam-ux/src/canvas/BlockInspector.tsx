@@ -9,6 +9,7 @@ import {contrastRatio,effectiveDeclaration,readableShade,validatedEdit} from './
 import {DEFAULT_VAR_SUGGESTIONS} from './templates';
 import {useCanvasSelection} from './CanvasSelection';
 import {getAt,isJsonBlock} from '../blockdoc/json';
+import {MediaPicker} from '../editor/MediaPicker';
 import {blockStyleFields} from './block-style';
 
 const PANELS:Record<string,string[]>={
@@ -100,6 +101,10 @@ export function BlockInspector(){
   {effectiveDeclaration(style,'display',{breakpoint:selection.breakpoint,state:null},registry)?.value==='none'&&<p>Hidden for visitors at {selection.breakpoint?`${selection.breakpoint}+`:'all widths'} after publish. An earlier layer may still hide this block when this override is cleared.</p>}
   {selected.length<=1&&<section aria-label="Element properties"><h3>{node.type} properties</h3><SchemaForm key={id} schema={{...node.attrsSchema,properties}} formData={props}
    uiSchema={{'ui:submitButtonOptions':{norender:true}}} onChange={(event:{formData?:unknown})=>mount.setNodeAttrs(id,{...(event.formData as Record<string,unknown>),...(Object.hasOwn(attrs,'className')?{className:attrs.className}:{}),bdStyle:style})}/></section>}
+  {selected.length<=1&&config.mediaLibrary&&Object.entries(properties).filter(([name,schema])=>
+    (node.type==='img'&&name==='src')||(schema as Record<string,unknown>)?.['x-component-prop-type']==='image'
+  ).map(([name])=><MediaPicker key={`${id}:${name}`} label={name} library={config.mediaLibrary!}
+    onChoose={url=>{const current=mount.getNode(id) as Node|null;if(current)mount.setNodeAttrs(id,{...current.attrs,[name]:url});}}/>)}
   {!rootStyles?<p>Style panels are unavailable: this component does not declare root-style forwarding.</p>:<>
    <label>Breakpoint<select aria-label="Breakpoint" value={selection.breakpoint??''} onChange={event=>select({...selection,breakpoint:event.target.value||null})}>
     <option value="">Base</option>{Object.entries(registry.breakpoints).map(([name,width])=><option key={name} value={name}>{name} ({width})</option>)}</select></label>

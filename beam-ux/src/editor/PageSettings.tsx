@@ -1,3 +1,4 @@
+import {MediaPicker,type EntryImageLibrary} from './MediaPicker';
 import { useId } from 'react';
 import type { SessionPageSettings } from './local-session';
 
@@ -14,7 +15,7 @@ export interface PageFieldsOffer {
 }
 
 /** These controls change the Local Session, never the published entry row. */
-export function PageSettings({ value, onChange, pageFields = null, fileLanguages = [] }: { value: SessionPageSettings; onChange: (value: SessionPageSettings) => void; pageFields?: PageFieldsOffer | null; fileLanguages?: string[] | null }) {
+export function PageSettings({ value, onChange, pageFields = null, fileLanguages = [], mediaLibrary }: { value: SessionPageSettings; onChange: (value: SessionPageSettings) => void; pageFields?: PageFieldsOffer | null; fileLanguages?: string[] | null; mediaLibrary?: EntryImageLibrary }) {
   const labelId = useId();
   const fields = [
     ['title', 'Title'], ['parentId', 'Parent entry ID'], ['segment', 'URL segment'],
@@ -28,6 +29,7 @@ export function PageSettings({ value, onChange, pageFields = null, fileLanguages
       <input type={key === 'publishedDate' ? 'date' : 'text'} value={value[key] ?? ''}
         onChange={event => onChange({ ...value, [key]: event.target.value || (key === 'title' ? '' : null) })} />
     </label>)}
+    {mediaLibrary&&<MediaPicker label="Social image" library={mediaLibrary} onChoose={url=>onChange({...value,socialImage:url})}/>}
     <label>Navigation order<input type="number" value={value.navOrder ?? ''} onChange={event => onChange({ ...value, navOrder: event.target.value === '' ? null : Number(event.target.value) })} /></label>
     <label><span id={`${labelId}-page-type`}>Page type</span><select aria-labelledby={`${labelId}-page-type`} value={value.pageType ?? 'WebPage'} onChange={event => onChange({ ...value, pageType: event.target.value })}>
       {['WebPage', 'Article', 'CollectionPage', 'ProfilePage'].map(type => <option key={type}>{type}</option>)}
