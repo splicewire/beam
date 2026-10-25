@@ -146,7 +146,7 @@ describe("Preview from the Release (ADR-0232 d8, d15; EP-18)", () => {
     const command = vi.fn(async () => undefined);
     render(
       <ReleasePanel
-        release={{ ...release, previewHref: "/_beam/preview/open/r1", previewLinksEnabled: false }}
+        release={{ ...release, previewHref: "/_beam/preview/open/r1", previewLinksEnabled: false, canManagePreviewLinks: true }}
         entries={entries}
         onCommand={command}
       />,
@@ -164,7 +164,7 @@ describe("Preview from the Release (ADR-0232 d8, d15; EP-18)", () => {
     const command = vi.fn(async () => undefined);
     render(
       <ReleasePanel
-        release={{ ...release, previewLinksEnabled: true, previewLink: link }}
+        release={{ ...release, previewLinksEnabled: true, previewLink: link, canManagePreviewLinks: true }}
         entries={entries}
         onCommand={command}
       />,
@@ -177,6 +177,28 @@ describe("Preview from the Release (ADR-0232 d8, d15; EP-18)", () => {
     await waitFor(() => expect(command).toHaveBeenCalledWith({ action: "rotate-links" }));
     fireEvent.click(screen.getByRole("button", { name: "Turn links off" }));
     await waitFor(() => expect(command).toHaveBeenCalledWith({ action: "links-off" }));
+  });
+
+  it("shows no link controls to a reader who can't edit every member (review of 3d7565ec)", () => {
+    const { rerender } = render(
+      <ReleasePanel
+        release={{ ...release, previewLinksEnabled: false, canManagePreviewLinks: false }}
+        entries={entries}
+        onCommand={vi.fn()}
+      />,
+    );
+    expect(screen.queryByRole("button", { name: "Turn on Preview Links" })).toBeNull();
+
+    rerender(
+      <ReleasePanel
+        release={{ ...release, previewLinksEnabled: true, previewLink: null, canManagePreviewLinks: false }}
+        entries={entries}
+        onCommand={vi.fn()}
+      />,
+    );
+    expect(screen.getByText("Preview Links are on.")).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Rotate links" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Turn links off" })).toBeNull();
   });
 
   it("has no Preview or links on a published Release", () => {

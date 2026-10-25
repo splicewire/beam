@@ -38,6 +38,8 @@ export interface ReleaseRecord {
   previewLink?: string | null;
   /** ADR-0232 d15: where a signed-in author opens this Release's Preview; null with nothing saved to render. */
   previewHref?: string | null;
+  /** Whether this reader may turn the links on or off and rotate them: edit on every member, as the actions check. */
+  canManagePreviewLinks?: boolean;
 }
 export interface ReleaseCommand {
   action:
@@ -120,7 +122,8 @@ export function ReleasePanel({
           Preview
         </a>
       )}
-      {!immutable && release.previewLinksEnabled !== undefined && (
+      {!immutable && release.previewLinksEnabled && !release.canManagePreviewLinks && <p>Preview Links are on.</p>}
+      {!immutable && release.previewLinksEnabled !== undefined && release.canManagePreviewLinks && (
         <div role="group" aria-label="Preview Links" className="space-y-2 rounded border p-3">
           <p>
             A Preview Link lets anyone who has it preview this Release, signed in or not, for 7 days. Rotating ends

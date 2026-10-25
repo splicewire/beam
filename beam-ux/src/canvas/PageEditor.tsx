@@ -576,7 +576,10 @@ export function PageEditor({
     let releases: ReleaseRecord[] = [];
     if (transport.listReleases && transport.releaseCommand) {
       try {
-        releases = (await transport.listReleases()).filter((release) => release.status === "draft");
+        // Every open Release takes a member, a scheduled or reviewed one included (its review or schedule is revised).
+        releases = (await transport.listReleases()).filter((release) =>
+          ["draft", "in_review", "approved", "scheduled"].includes(release.status),
+        );
       } catch {
         notify?.error("Could not load the open Releases");
       }

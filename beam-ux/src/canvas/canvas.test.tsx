@@ -704,7 +704,12 @@ describe('PageEditor — mode fork + transport', async () => {
         const choosing = () => ({
             ...publishingTransport(),
             previewVersion: vi.fn().mockResolvedValue({ url: '/_beam/preview/signed' }),
-            listReleases: vi.fn().mockResolvedValue([open, { ...open, id: 'release-shipped', title: 'Shipped', status: 'published' }]),
+            listReleases: vi.fn().mockResolvedValue([
+                open,
+                { ...open, id: 'release-new-year', title: 'New year', status: 'scheduled' },
+                { ...open, id: 'release-review', title: 'In review', status: 'in_review' },
+                { ...open, id: 'release-shipped', title: 'Shipped', status: 'published' },
+            ]),
             createRelease: vi.fn(),
             releaseCommand: vi.fn(async () => ({
                 ...open, members: [{ entryId: 'entry-1', versionId: 'v-v1', observedPin: 'v-v1', redirectTarget: null, stale: false }],
@@ -722,7 +727,8 @@ describe('PageEditor — mode fork + transport', async () => {
             expect(within(dialog).getByRole('button', { name: 'Publish now' })).toBeTruthy();
             expect(within(dialog).getByRole('button', { name: 'Preview' })).toBeTruthy();
             const releases = within(dialog).getByLabelText('Open Release') as HTMLSelectElement;
-            expect(Array.from(releases.options).map((option) => option.textContent)).toEqual(['Spring']);
+            // Every open Release, scheduled ones included (ADR-0232 d15; review of 3d7565ec); a published one is closed.
+            expect(Array.from(releases.options).map((option) => option.textContent)).toEqual(['Spring', 'New year', 'In review']);
 
             await act(async () => { fireEvent.click(within(dialog).getByRole('button', { name: 'Add to the Release' })); await Promise.resolve(); });
 
