@@ -17,9 +17,11 @@ function setup(inspection = inspected) {
         status: 'drafted', message: 'Draft saved.', entryId: 'entry', headVersion: 'head-b', publishedVersion: 'pin-a',
     }));
     const restoreMissingReleaseFile = vi.fn(async () => ({status: 'restored', message: 'Restored.', entryId: 'entry', headVersion: 'head-a', publishedVersion: 'pin-a'}));
-    const client: UxBuilderClient = {loadBody: vi.fn(), saveBody: vi.fn(), inspectReleaseFile, takeReleaseFile, restoreMissingReleaseFile};
+    const remirrorReleaseFile = vi.fn(async () => ({status: 'remirrored', message: 'Re-mirrored.', entryId: 'entry', headVersion: 'head-a', publishedVersion: 'pin-a'}));
+    const takeAllReleaseFiles = vi.fn(async () => ({count: 2, entries: []}));
+    const client: UxBuilderClient = {loadBody: vi.fn(), saveBody: vi.fn(), inspectReleaseFile, takeReleaseFile, restoreMissingReleaseFile, remirrorReleaseFile, takeAllReleaseFiles};
     render(<FilesComparisonPanel memberId="member" client={client} editorHref={id => `/host/theme/${id}`}/>);
-    return {inspectReleaseFile, takeReleaseFile, restoreMissingReleaseFile};
+    return {inspectReleaseFile, takeReleaseFile, restoreMissingReleaseFile, remirrorReleaseFile, takeAllReleaseFiles};
 }
 describe('deliberate file reconciliation', () => {
     it('restores missing canonical MDX with exact absence tokens, cancel focus and no Theme editor link', async () => {
@@ -141,5 +143,36 @@ describe('deliberate file reconciliation', () => {
         fireEvent.click(screen.getByRole('button',{name:'Confirm take file as draft'}));
         await screen.findByText('Draft saved.');
         expect(screen.queryByRole('link')).toBeNull();
+    });
+
+    it('requires explicit confirmation before re-mirroring the inspected file', async () => {
+        const client = setup({...inspected, canRemirror: true});
+        fireEvent.click(await screen.findByRole('button', {name: 'Re-mirror published file'}));
+        expect(screen.getByText(/replace this exact local file with the current published version/i)).toBeTruthy();
+        expect(client.remirrorReleaseFile).not.toHaveBeenCalled();
+        fireEvent.click(screen.getByRole('button', {name: 'Cancel'}));
+        fireEvent.click(screen.getByRole('button', {name: 'Re-mirror published file'}));
+        fireEvent.click(screen.getByRole('button', {name: 'Confirm Re-mirror'}));
+        await screen.findByText('Re-mirrored.');
+        expect(client.remirrorReleaseFile).toHaveBeenCalledExactlyOnceWith('member', {
+            expectedHeadVersion:'head-a', expectedPublishedVersion:'pin-a', expectedFileExists:true,
+            expectedFileSha256:'hash-a', fingerprint:'placement-a', confirmed:true,
+        });
+    });
+
+    it('takes every inspected changed file as drafts only after explicit batch confirmation', async () => {
+        const batchItems = [
+            {memberId:'member-a', path:'theme/site.css', expectedHeadVersion:'head-a', expectedPublishedVersion:'pin-a', expectedFileExists:true, expectedFileSha256:'a'.repeat(64), fingerprint:'f'.repeat(64)},
+            {memberId:'member-b', path:'pages/help.mdx', expectedHeadVersion:'head-b', expectedPublishedVersion:'pin-b', expectedFileExists:true, expectedFileSha256:'b'.repeat(64), fingerprint:'e'.repeat(64)},
+        ];
+        const client = setup({...inspected, canTakeAll: true, takeAllItems: batchItems});
+        fireEvent.click(await screen.findByRole('button', {name: 'Take all as drafts'}));
+        expect(screen.getByText(/2 changed files as drafts/i)).toBeTruthy();
+        expect(screen.getByText('theme/site.css')).toBeTruthy();
+        expect(screen.getByText('pages/help.mdx')).toBeTruthy();
+        expect(client.takeAllReleaseFiles).not.toHaveBeenCalled();
+        fireEvent.click(screen.getByRole('button', {name: 'Confirm take all as drafts'}));
+        await screen.findByText(/2 files were taken as drafts/);
+        expect(client.takeAllReleaseFiles).toHaveBeenCalledExactlyOnceWith('member', {items:batchItems.map(({path: _path, ...item}) => item), confirmed:true});
     });
 });
