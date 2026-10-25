@@ -138,7 +138,10 @@ export function ComponentProps({
                   )}`}
                   defaultValue={String(value)}
                   type={prop.type === "number" ? "number" : "text"}
-                  onBlur={(event) => literal(prop, event.target.value)}
+                  onBlur={(event) => {
+                    if (event.target.value !== String(value))
+                      literal(prop, event.target.value);
+                  }}
                 />
               </label>
             )}

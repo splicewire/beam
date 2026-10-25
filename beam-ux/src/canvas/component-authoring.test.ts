@@ -206,3 +206,127 @@ describe("component authoring transforms", () => {
     ).toThrow();
   });
 });
+
+it.each(["root", "child", "attribute"])(
+  "refuses moving a caller field into an internal %s Repeat on Detach",
+  (where) => {
+    const text = { kind: "text" as const, value: "", prop: "title" };
+    const repeated = { ...block("p", [text]), repeat: { collection: "posts" } };
+    const body =
+      where === "root"
+        ? { ...block("section", [text]), repeat: { collection: "posts" } }
+        : where === "attribute"
+        ? block("section", [
+            {
+              ...block("img"),
+              repeat: { collection: "posts" },
+              props: [{ name: "alt", kind: "prop" as const, value: "title" }],
+            },
+          ])
+        : block("section", [repeated]);
+    const entry = { ...card, body: [body] };
+    const instance = {
+      ...block("Card"),
+      props: [{ name: "title", kind: "field" as const, value: "fields.title" }],
+    };
+    const before = JSON.stringify({ entry, instance });
+    expect(() => detachComponent(instance, entry)).toThrow(/Repeat/);
+    expect(JSON.stringify({ entry, instance })).toBe(before);
+  }
+);
+it.each(["children", "media"])(
+  "refuses moving filled caller %s Slot content into a component Repeat",
+  (name) => {
+    const slot = {
+      ...block("Slot"),
+      props:
+        name === "children"
+          ? []
+          : [{ name: "name", kind: "string" as const, value: name }],
+    };
+    const entry = {
+      ...card,
+      body: [
+        block("section", [
+          { ...block("div", [slot]), repeat: { collection: "posts" } },
+        ]),
+      ],
+    };
+    const content = [
+      block("p", [
+        { kind: "text" as const, value: "Fallback", field: "fields.title" },
+      ]),
+    ];
+    const instance = {
+      ...block("Card", name === "children" ? content : []),
+      ...(name === "children" ? {} : { slots: { media: content } }),
+    };
+    expect(() => detachComponent(instance, entry)).toThrow(/Repeat/);
+  }
+);
+it("refuses collapsing simultaneous instance and component root Repeats", () => {
+  const entry = {
+    ...card,
+    body: [{ ...block("section"), repeat: { collection: "posts" } }],
+  };
+  expect(() =>
+    detachComponent(
+      { ...block("Card"), repeat: { collection: "pages" } },
+      entry
+    )
+  ).toThrow(/Repeat/);
+});
+
+it("keeps literal substitutions inside Repeats and caller fields in a Repeat empty branch valid", () => {
+  const entry = {
+    ...card,
+    body: [
+      {
+        ...block("section", [
+          { kind: "text" as const, value: "", prop: "title" },
+        ]),
+        repeat: {
+          collection: "posts",
+          empty: [
+            block("p", [{ kind: "text" as const, value: "", prop: "title" }]),
+          ],
+        },
+      },
+    ],
+  };
+  const literal = detachComponent(
+    {
+      ...block("Card"),
+      props: [{ name: "title", kind: "string", value: "Same for each post" }],
+    },
+    entry
+  );
+  expect(literal.children[0]).toEqual({
+    kind: "text",
+    value: "Same for each post",
+  });
+  const emptyOnly = {
+    ...card,
+    body: [
+      {
+        ...block("section"),
+        repeat: {
+          collection: "posts",
+          empty: [
+            block("p", [{ kind: "text" as const, value: "", prop: "title" }]),
+          ],
+        },
+      },
+    ],
+  };
+  const bound = detachComponent(
+    {
+      ...block("Card"),
+      props: [{ name: "title", kind: "field", value: "fields.title" }],
+    },
+    emptyOnly
+  );
+  expect(bound.repeat?.empty?.[0]).toMatchObject({
+    children: [{ kind: "text", value: "", field: "fields.title" }],
+  });
+});

@@ -94,7 +94,7 @@ const version = {
   isHead: true,
   isPublished: false,
 };
-function fixture(allow = true) {
+function fixture(allow = true, reachEntries = 2) {
   const saveDraft = vi.fn(async (id: string) => ({
     id,
     headVersion: "next",
@@ -139,7 +139,7 @@ function fixture(allow = true) {
     componentCapabilities: vi.fn(async () => ({
       id: "component",
       canEdit: allow,
-      reachEntries: allow ? 2 : null,
+      reachEntries: allow ? reachEntries : null,
       reachLimit: 500,
       reachUnavailable: false,
     })),
@@ -168,7 +168,7 @@ it("retains the dirty parent session while component undo/save address only the 
   const dialog = await screen.findByRole("dialog", {
     name: "Edit component Card",
   });
-  expect(within(dialog).getByText(/used by 2 entries/)).toBeTruthy();
+  expect(within(dialog).getByText(/used directly by 2 entries/)).toBeTruthy();
   const child = await within(dialog).findByTestId("session-canvas");
   fireEvent.click(within(child).getByText("Edit local"));
   fireEvent.click(within(child).getByText("Undo local"));
@@ -203,3 +203,34 @@ it("refused component admission never opens a child session or calls a write", a
   expect(screen.queryByRole("dialog")).toBeNull();
   expect(saveDraft).not.toHaveBeenCalled();
 });
+
+it.each([0, 1, 2])(
+  "labels %i direct referrers with correct units and the transitive-page limit",
+  async (count) => {
+    const { client } = fixture(true, count);
+    render(
+      <EditorKitProvider
+        userId="author"
+        canAuthor
+        transport={client}
+        canvasConfig={{ registry: {} }}
+      >
+        <Open />
+      </EditorKitProvider>
+    );
+    fireEvent.click(screen.getByText("Open Card"));
+    const dialog = await screen.findByRole("dialog", {
+      name: "Edit component Card",
+    });
+    expect(
+      within(dialog).getByText(
+        new RegExp(
+          `used directly by ${count} ${count === 1 ? "entry" : "entries"}$`
+        )
+      )
+    ).toBeTruthy();
+    expect(
+      within(dialog).getByText("Transitive page reach is not included.")
+    ).toBeTruthy();
+  }
+);

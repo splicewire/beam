@@ -8,7 +8,7 @@ import {
 } from "@testing-library/react";
 import { afterEach, it, expect, vi } from "vitest";
 import type { ComponentCanvasData } from "@splicewire/beam-resources/types/beam-ux";
-import type { JsonDoc } from "../blockdoc/json";
+import type { JsonDoc, JsonProp } from "../blockdoc/json";
 import { CanvasProvider } from "./context";
 import { CanvasWidget } from "./CanvasWidget";
 import { ComponentProps } from "./ComponentProps";
@@ -85,9 +85,11 @@ afterEach(cleanup);
 function Fixture({
   readOnly = false,
   change = () => {},
+  initialProps = [{ name: "title", kind: "string", value: "Original" }],
 }: {
   readOnly?: boolean;
   change?: (next: JsonDoc) => void;
+  initialProps?: JsonProp[];
 }) {
   const [doc, setDoc] = useState<JsonDoc>([
     {
@@ -96,7 +98,7 @@ function Fixture({
       id: "instance",
       dynamic: false,
       isComponent: true,
-      props: [{ name: "title", kind: "string", value: "Original" }],
+      props: initialProps,
       children: [],
     },
   ]);
@@ -169,5 +171,48 @@ it("keeps a read-only instance immutable", async () => {
   render(<Fixture readOnly change={change} />);
   await screen.findByLabelText("Prop title");
   fireEvent.click(screen.getByText("Unset prop count"));
+  expect(change).not.toHaveBeenCalled();
+});
+
+it("preserves a field binding on unchanged blur and still accepts an intentional literal replacement", async () => {
+  const change = vi.fn();
+  render(<Fixture change={change} />);
+  await screen.findByLabelText("Prop title");
+  fireEvent.change(screen.getByLabelText("Bind prop title"), {
+    target: { value: "fields.title" },
+  });
+  const before = screen.getByTestId("props-doc").textContent;
+  const writes = change.mock.calls.length;
+  fireEvent.focus(screen.getByLabelText("Prop title"));
+  fireEvent.blur(screen.getByLabelText("Prop title"));
+  expect(screen.getByTestId("props-doc").textContent).toBe(before);
+  expect(change).toHaveBeenCalledTimes(writes);
+  fireEvent.change(screen.getByLabelText("Prop title"), {
+    target: { value: "Intentional literal" },
+  });
+  fireEvent.blur(screen.getByLabelText("Prop title"));
+  expect(
+    JSON.parse(screen.getByTestId("props-doc").textContent!)[0].props
+  ).toContainEqual({
+    name: "title",
+    kind: "string",
+    value: "Intentional literal",
+  });
+});
+it("keeps an enclosing prop reference and an inherited default unchanged while tabbing through their inputs", async () => {
+  const change = vi.fn();
+  render(
+    <Fixture
+      change={change}
+      initialProps={[{ name: "title", kind: "prop", value: "heading" }]}
+    />
+  );
+  await screen.findByLabelText("Prop title");
+  const before = screen.getByTestId("props-doc").textContent;
+  for (const label of ["Prop title", "Prop count"]) {
+    fireEvent.focus(screen.getByLabelText(label));
+    fireEvent.blur(screen.getByLabelText(label));
+  }
+  expect(screen.getByTestId("props-doc").textContent).toBe(before);
   expect(change).not.toHaveBeenCalled();
 });

@@ -128,12 +128,15 @@ export function ComponentSessionHost({
           <header>
             <strong>{active.entry.definition.name}</strong> —{" "}
             {active.admission.reachEntries === null
-              ? `reach unavailable (over ${active.admission.reachLimit} entries)`
-              : `used by ${active.admission.reachEntries} entries`}
+              ? `direct reach unavailable (over ${active.admission.reachLimit} entries)`
+              : `used directly by ${active.admission.reachEntries} ${
+                  active.admission.reachEntries === 1 ? "entry" : "entries"
+                }`}
             <button type="button" autoFocus onClick={close}>
               Back to parent
             </button>
           </header>
+          <p>Transitive page reach is not included.</p>
           <p>
             Undo and Save belong to this component. The parent’s unsaved work
             waits unchanged. Closing retains this component’s Local Session.

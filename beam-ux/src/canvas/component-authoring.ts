@@ -71,6 +71,10 @@ export function detachComponent(
     throw Error("The instance must match the component name");
   if (entry.body.length !== 1 || !isJsonBlock(entry.body[0]))
     throw Error("An Authored Component must have one root");
+  if (entry.body[0].repeat && instance.repeat)
+    throw Error(
+      "Detach cannot combine the instance Repeat and the component root Repeat. Keep the instance or remove one Repeat before detaching."
+    );
   const values = new Map<string, JsonProp>();
   for (const prop of entry.definition.props) {
     const supplied = instance.props.find((value) => value.name === prop.name);
@@ -82,7 +86,7 @@ export function detachComponent(
     else if (prop.required)
       throw Error(`The required prop ${prop.name} is missing`);
   }
-  const substitute = (nodes: JsonDoc): JsonDoc =>
+  const substitute = (nodes: JsonDoc, repeatScope = false): JsonDoc =>
     nodes.flatMap((node): JsonDoc => {
       if (node.kind === "opaque")
         throw Error("Detach cannot copy executable source");
@@ -90,12 +94,18 @@ export function detachComponent(
         if (!node.prop) return [structuredClone(node)];
         const value = values.get(node.prop);
         const { prop: _, field: __, ...text } = node;
-        if (value?.kind === "field")
+        if (value?.kind === "field") {
+          if (repeatScope)
+            throw Error(
+              "Detach would move a caller field into a component Repeat. Use a literal prop value or keep the component instance."
+            );
           return [{ ...text, field: String(value.value) }];
+        }
         if (value?.kind === "prop")
           return [{ ...text, prop: String(value.value) }];
         return [{ ...text, value: value ? String(literal(value) ?? "") : "" }];
       }
+      const scoped = repeatScope || !!node.repeat;
       if (node.name === "Slot") {
         const name =
           node.props.find((value) => value.name === "name")?.value ??
@@ -106,8 +116,12 @@ export function detachComponent(
               ? instance.children
               : undefined
             : instance.slots?.[String(name)];
+        if (scoped && supplied?.length)
+          throw Error(
+            "Detach would move caller Slot content into a component Repeat. Move the Slot outside that Repeat or keep the component instance."
+          );
         return supplied === undefined
-          ? substitute(node.children)
+          ? substitute(node.children, scoped)
           : structuredClone(supplied);
       }
       return [
@@ -116,17 +130,21 @@ export function detachComponent(
           props: node.props.map((prop) => {
             if (prop.kind !== "prop") return structuredClone(prop);
             const value = values.get(String(prop.value));
+            if (scoped && value?.kind === "field")
+              throw Error(
+                "Detach would move a caller field into a component Repeat. Use a literal prop value or keep the component instance."
+              );
             return value
               ? { ...structuredClone(value), name: prop.name }
               : scalar(prop.name, null);
           }),
-          children: substitute(node.children),
+          children: substitute(node.children, scoped),
           ...(node.slots
             ? {
                 slots: Object.fromEntries(
                   Object.entries(node.slots).map(([name, content]) => [
                     name,
-                    substitute(content),
+                    substitute(content, scoped),
                   ])
                 ),
               }
@@ -135,7 +153,8 @@ export function detachComponent(
             ? {
                 repeat: {
                   ...structuredClone(node.repeat),
-                  empty: substitute(node.repeat.empty ?? []),
+                  // Empty runs in the incoming Record scope, outside this node's Repeat.
+                  empty: substitute(node.repeat.empty ?? [], repeatScope),
                 },
               }
             : {}),
