@@ -12,7 +12,7 @@ afterEach(() => { cleanup(); __resetEditMode(); });
 
 it('keeps expanded settings below the toolbar and reachable after Reload theirs', async () => {
     const body = [{ kind: 'block' as const, name: 'p', isComponent: false, dynamic: false, props: [], children: [{ kind: 'text' as const, value: 'Body' }] }];
-    const state = { headVersion: 'v1', publishedVersion: 'v1', draftPending: false, versions: [] };
+    const state = { id: 'settings-layout', headVersion: 'v1', headReadable: 'v1', publishedVersion: 'v1', publishedReadable: 'v1', draftPending: false, versions: [], compileError: null };
     const saveDraft = vi.fn().mockRejectedValue(Object.assign(new Error('Conflict'), { status: 409 }));
     render(<CanvasProvider config={{ registry: {}, MdxView: () => null, MdxEdit: () => null }}>
         <PageEditor slug="settings-layout" entryId="settings-layout" userId="author" body={body}
