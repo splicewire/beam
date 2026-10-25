@@ -21,6 +21,7 @@ function Harness({type='p'}:{type?:string}){
 it('offers six panels and writes a selected layer while preserving className',async()=>{
  render(<Harness/>);fireEvent.click(screen.getByText('Select node'));
  for(const panel of ['Size','Layout','Text','Appearance','Effects','Advanced'])expect(screen.getByText(panel)).toBeTruthy();
+ expect(screen.getByRole('region',{name:'Text contrast'}).textContent).toContain('Contrast unknown');
  fireEvent.change(screen.getByLabelText('Breakpoint'),{target:{value:'md'}});
  fireEvent.change(screen.getByLabelText('State'),{target:{value:'hover'}});
  fireEvent.change(screen.getByLabelText('color token'),{target:{value:'var(--brand)'}});
@@ -29,6 +30,27 @@ it('offers six panels and writes a selected layer while preserving className',as
  expect(result.className).toBe('developer-class');
  expect(result.bdStyle.layers).toContainEqual({breakpoint:'md',state:'hover',declarations:{color:'var(--brand)'}});
  expect(screen.getByText(/Layout-width preview only/)).toBeTruthy();
+ expect(screen.getByText('Base: red')).toBeTruthy();
+});
+it('offers theme tokens before custom values for gradient stops and Advanced values',()=>{
+ render(<Harness/>);fireEvent.click(screen.getByText('Select node'));
+ fireEvent.click(screen.getByText('Gradient stops'));
+ const start=screen.getByLabelText('Start colour token') as HTMLSelectElement;
+ expect([...start.options].map(option=>option.value)).toEqual(['','var(--brand)']);
+ fireEvent.change(start,{target:{value:'var(--brand)'}});
+ expect((screen.getByLabelText('Start colour') as HTMLInputElement).value).toBe('var(--brand)');
+ fireEvent.click(screen.getByText('Advanced'));
+ const value=screen.getByLabelText('CSS value token') as HTMLSelectElement;
+ expect([...value.options].map(option=>option.value)).toEqual(['','var(--brand)']);
+ fireEvent.change(value,{target:{value:'var(--brand)'}});
+ expect((screen.getByLabelText('CSS value') as HTMLInputElement).value).toBe('var(--brand)');
+});
+it('renders and writes schema-declared element fields',async()=>{
+ render(<Harness/>);fireEvent.click(screen.getByText('Select node'));
+ const title=screen.getByLabelText('Title');
+ expect(title).toBeTruthy();
+ fireEvent.change(title,{target:{value:'Updated title'}});
+ await waitFor(()=>expect(screen.getByTestId('attrs').textContent).toContain('Updated title'));
 });
 it('hides style panels for code components without a forwarding declaration',()=>{
  render(<Harness type="Hero"/>);fireEvent.click(screen.getByText('Select node'));

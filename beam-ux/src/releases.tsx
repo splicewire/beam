@@ -133,7 +133,7 @@ export function ReleasePanel({
             )}
             {member.stale && (
               <p role="status">
-                The published version changed. Rebase or drop this member.
+                The published version changed. Rebase onto theirs or drop the entry.
               </p>
             )}
             {!immutable && (
@@ -146,7 +146,7 @@ export function ReleasePanel({
                     void act({ action: "rebase", entryId: member.entryId })
                   }
                 >
-                  Rebase
+                  Rebase onto theirs
                 </Button>
                 {member.versionId !== null && (
                   <Button
@@ -171,7 +171,7 @@ export function ReleasePanel({
                     void act({ action: "drop", entryId: member.entryId })
                   }
                 >
-                  Drop
+                  Drop the entry
                 </Button>
               </span>
             )}

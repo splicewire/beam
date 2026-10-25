@@ -119,6 +119,8 @@ export interface Notify {
 
 export interface PageEditorProps {
   slug: string;
+  /** The entry format; source conversion is available only for TSX entries. */
+  format?: string | null;
   entryId?: string;
   userId?: string;
   /** The initial body (a JsonDoc, or a legacy/absent body → falls back to `fallbackDoc` or empty). */
@@ -266,6 +268,7 @@ export function __resetEditMode(): void {
 
 export function PageEditor({
   slug,
+  format,
   body = null,
   pageSettings = null,
   transport,
@@ -692,9 +695,10 @@ export function PageEditor({
           <SourceMode
             local={local}
             allowed={
-              !canvasConfig.profile ||
-              !("x-admits-code" in canvasConfig.profile) ||
-              canvasConfig.profile["x-admits-code"] !== false
+              format === "tsx" &&
+              (!canvasConfig.profile ||
+                !("x-admits-code" in canvasConfig.profile) ||
+                canvasConfig.profile["x-admits-code"] !== false)
             }
             conversion={
               transport.printSource && transport.readSource

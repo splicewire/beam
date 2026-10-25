@@ -76,7 +76,7 @@ export function attrsView(block: JsonBlock): Record<string, string> {
     return out;
 }
 
-/** Read a leaf block's text content (the concatenated text children). */
+/** @deprecated Prefer reading the JsonNode children directly; retained as a compatibility shim. */
 export const blockText = (block: JsonBlock): string =>
     block.children.filter(isJsonText).map((c) => c.value).join('');
 

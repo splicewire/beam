@@ -6,7 +6,20 @@ import {proseRole,proseRuns,toProse} from './prose';
 import {blockToProps} from './props';
 const ProseRun=lazy(()=>import('./ProseRun'));
 export type ProseChange=(parent:string,start:number,end:number,body:JsonDoc)=>void;
-export function CanvasSiblings({nodes,parent,editing,onEditProse,...props}:{nodes:JsonDoc;parent:string;onEditProse?:ProseChange}&Omit<CanvasNodeProps,'node'|'path'|'onEditProse'>){
+export function CanvasSiblings({
+    nodes,
+    parent,
+    editing,
+    onEditProse,
+    onEditText: _onEditText,
+    ...props
+}: {
+    nodes: JsonDoc;
+    parent: string;
+    onEditProse?: ProseChange;
+    /** @deprecated Text leaves use the prose seam. */
+    onEditText?: CanvasNodeProps['onEditText'];
+} & Omit<CanvasNodeProps, 'node' | 'path' | 'onEditProse' | 'onEditText'>) {
  const config=useCanvas();
  const path=(index:number)=>parent?`${parent}.${index}`:String(index);
  const profile=config.profile;
