@@ -900,7 +900,7 @@ export function PageEditor({
         {publication?.release && transport.releaseCommand && (
           <ReleasePanel
             release={publication.release}
-            initialEntryId={publication.id}
+            initialEntryId={entryId ?? publication.id}
             entries={[
               {
                 id: publication.id,
