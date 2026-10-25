@@ -53,6 +53,14 @@ async function readData(res: Response, what: string): Promise<unknown> {
 }
 
 const defaultBodyClient: UxBuilderClient = {
+  canvasBindings: async (id, body, recordValue) => {
+    const response = await fetch(`/beam-ux-entries/${id}/canvas-bindings`, {
+      method: 'POST', credentials: 'same-origin',
+      headers: {'Content-Type':'application/json', Accept:'application/json', 'X-XSRF-TOKEN':csrfToken()},
+      body: JSON.stringify({body,recordValue:recordValue ?? null}),
+    });
+    return await readData(response,'canvas bindings') as Awaited<ReturnType<NonNullable<UxBuilderClient['canvasBindings']>>>;
+  },
   makeEditable: async (slug, body) => {
     const res = await fetch("/beam-ux-entries/make-editable", {
       method: "POST",
@@ -341,6 +349,10 @@ const imageClient = {
 };
 
 export const bodyClient: UxBuilderClient = {
+  get canvasBindings() {
+    const client = getBeamInertiaConfig().entryClient ?? defaultBodyClient;
+    return client.canvasBindings?.bind(client);
+  },
   get listImages() {
     const client = getBeamInertiaConfig().entryClient ?? imageClient;
     return client.listImages?.bind(client);

@@ -35,7 +35,9 @@ import { proseRole } from './prose';
 import type { DropEdge } from './CanvasNode.js';
 import { ContextMenu } from './ContextMenu.js';
 import type { ContextMenuState } from './ContextMenu.js';
-import { useCanvas, isEditGated, isIsland } from './context.js';
+import { useCanvasBindings } from './use-canvas-bindings';
+import { CanvasRecordPicker } from './CanvasRecordPicker';
+import { CanvasRuntimeProvider, useCanvas, isEditGated, isIsland } from './context.js';
 import { DEFAULT_CANVAS_THEME, dropIndicatorCss, selectionCss } from './css.js';
 import type { CanvasTheme } from './css.js';
 import { setAttrs } from './props.js';
@@ -116,6 +118,8 @@ export function CanvasWidget({
     const [commandError,setCommandError] = useState<string|null>(null);
     const { selection: styleSelection } = useStyleSelection();
     const doc: JsonDoc = value ?? formData ?? EMPTY_DOC;
+    const preview = useCanvasBindings(config.bindingPreview, doc);
+    const runtime = config.bindingPreview ? {...config, bindings: preview.data?.bindings ?? {}, record: preview.data?.record ?? undefined} : config;
     // ux-0233: without an MDX island (it retires per host, EP-42) the palette offers no new `Mdx` node.
     const allTemplates = useMemo(() => (config.blockTemplates ?? DEFAULT_BLOCK_TEMPLATES)
         .filter((template) => config.MdxEdit !== undefined || template.make().name !== 'Mdx'), [config.blockTemplates, config.MdxEdit]);
@@ -181,12 +185,18 @@ export function CanvasWidget({
 
     // One commit for a batch edit: the host's Local Session supplies its single undo step.
     useEffect(()=>{
-        selection.register({doc,readOnly,editStyle:(paths,layer,property,value)=>{
+        selection.register({doc,readOnly,editBinding:(path,change)=>{
+            if(readOnlyRef.current)return;
+            const node=getAt(docRef.current,path);
+            if(!node||!isJsonBlock(node)||isEditGated(config,node))return;
+            const next=change(node);
+            if(next!==node)emitFromRef(updateAt(docRef.current,path,()=>next));
+        },editStyle:(paths,layer,property,value)=>{
             if(readOnly)return;
             emitFromRef(editStyles(docRef.current,paths,layer,property,value,config.styleRegistry??DEFAULT_STYLE_REGISTRY));
         }});
         return ()=>selection.register(null);
-    },[doc,readOnly,config.styleRegistry,selection.register]);
+    },[doc,readOnly,config.styleRegistry,config.can,selection.register]);
     useEffect(()=>{
         if(sel&&!selection.paths.includes(sel))selection.setPaths([sel]);
         if(!sel&&selection.paths.length)selection.setPaths([]);
@@ -416,7 +426,7 @@ export function CanvasWidget({
     };
 
     return (
-        <div className="ve-canvas-widget" onDoubleClick={onCanvasDbl} onClickCapture={event=>{
+        <CanvasRuntimeProvider config={runtime}><div className="ve-canvas-widget" onDoubleClick={onCanvasDbl} onClickCapture={event=>{
             if (event.detail === 1 && !(event.target as HTMLElement).closest('.ve-canvas')) firstClickPath.current = null;
         }} onKeyDown={event=>{
             if(!(event.ctrlKey||event.metaKey)||(event.target as HTMLElement).closest('input,textarea,[contenteditable="true"]'))return;
@@ -432,6 +442,7 @@ export function CanvasWidget({
                 <button className="ve-command-button" type="button" disabled={readOnly||selection.paths.length!==1} onClick={()=>command(()=>unwrapBlock(docRef.current,selection.paths[0],config.profile))}>Unwrap</button>
                 <span>{selection.paths.length} blocks selected</span>
             </div>
+            {config.bindingPreview && <CanvasRecordPicker preview={preview}/> }
             {commandError&&<p role="alert">{commandError}</p>}
             <div className="ve-canvas-layout">
             <CanvasOutline doc={doc} onSelect={setSel} onHide={(path,hidden)=>command(()=>editStyles(docRef.current,[path],{breakpoint:styleSelection.breakpoint,state:null},'display',hidden?'none':null,config.styleRegistry??DEFAULT_STYLE_REGISTRY))}/>
@@ -482,6 +493,6 @@ export function CanvasWidget({
                 />
             )}
             </div></div>
-        </div>
+        </div></CanvasRuntimeProvider>
     );
 }

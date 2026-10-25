@@ -28,6 +28,9 @@ export interface UxBuilderClient<TBody = BeamUxEntryBodyData> {
    * representable rather than merely guarded against.
    */
   loadBody(id: string): Promise<TBody>;
+  /** Addressed author-only POST read; absent hosts explicitly cannot preview live bindings. */
+  canvasBindings?(id: string, body: import('./blockdoc/json').JsonDoc, recordValue?: string | null):
+    Promise<import('@splicewire/beam-resources/types/beam-ux').EntryCanvasBindingsOutputData>;
   listImages?(id: string): Promise<import("./generated/entry-images").EntryImageLibraryData>;
   uploadImage?(id: string, file: File): Promise<import("./generated/entry-images").EntryImageData>;
   printSource?(

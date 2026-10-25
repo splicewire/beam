@@ -24,7 +24,7 @@ import { RetiredMdxIsland } from './mdx-island.js';
  * entitlement-sealed node's content (same "sealed but real" rendering an opaque/component island
  * already gets — just gated on the viewer's can-map instead of source-reachability).
  */
-export function renderNode(node: JsonNode, path: string, config: CanvasConfig, record?: BindingRecord): ReactNode {
+export function renderNode(node: JsonNode, path: string, config: CanvasConfig, record: BindingRecord | undefined = config.record): ReactNode {
     if (isJsonText(node)) return node.prop != null ? componentValue(config, node.prop)
         : node.field == null ? node.value : bindingRuntime.text(record, node.field, node.value);
     // A sealed opaque island renders its verbatim source read-only (mirrors the canvas seal, view-side).

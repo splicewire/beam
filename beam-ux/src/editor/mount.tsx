@@ -1,3 +1,4 @@
+import {useBindingPreviewPort} from './use-binding-preview-port';
 import { componentDependencies } from './component-dependencies';
 import { canMountPublication, isUnauthored } from './publication-state';
 import { PageSettings, type PageFieldsOffer } from './PageSettings';
@@ -69,6 +70,7 @@ function AddressedVisualEditor({ entryRef }: { entryRef: EntryRef }) {
         // The transport may be a new object each render; the address owns the load lifecycle.
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [id, userId, canAuthor]);
+    const bindingPreview = useBindingPreviewPort(transport,id,userId,canAuthor,loaded?.pageSettings?.recordPage?.collection);
     const mediaLibrary = loaded?.mediaLibrary && id && transport.listImages && transport.uploadImage ? {
         list: () => transport.listImages!(id), upload: (file:File) => transport.uploadImage!(id,file),
     } : undefined;
@@ -171,7 +173,7 @@ function AddressedVisualEditor({ entryRef }: { entryRef: EntryRef }) {
     const componentChoices = pendingComponents.map(entry => ({id: entry.id, title: entry.definition.name ?? 'Component',
         versions: [{id: entry.headVersion!, label: 'Pending component draft'}]}));
     return <CanvasProvider config={{ ...canvasConfig, mediaLibrary, profile: loaded.profile, styleRegistry: loaded.styleRegistry,
-        bindings: loaded.bindings, authoredComponents: loaded.authoredComponents }}>
+        bindingPreview, bindings: loaded.bindings, authoredComponents: loaded.authoredComponents }}>
         {conflict && <div role="alertdialog" aria-label="Save conflict">
             <p>The server draft changed.</p>
             <button disabled={busy} onClick={() => void resolveConflict(false)}>Reload theirs</button>

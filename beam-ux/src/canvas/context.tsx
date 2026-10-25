@@ -45,6 +45,13 @@ export interface CanvasConfig {
     mediaLibrary?: import("../editor/MediaPicker").EntryImageLibrary;
     authoredComponents?: import("@splicewire/beam-resources/types/beam-ux").ComponentCanvasData[];
     componentProps?: Record<string, unknown>;
+    /** Live reads use the addressed optional client port; selection is not document state. */
+    bindingPreview?: {
+        resolve?: import('../types').UxBuilderClient['canvasBindings'];
+        entryId: string;
+        recordCollection?: string | null;
+    };
+    record?: import('../bindings/runtime.js').BindingRecord;
     bindings?: import('../bindings/runtime.js').BindingPayload;
     styleRegistry?: import("../blockdoc/style-runtime.js").StyleRegistry;
     /** Resolved by the server for the entry; the save guard reads this same profile. */
@@ -95,6 +102,11 @@ export function CanvasProvider({ config, children }: { config: CanvasConfig; chi
     config = { ...config, registry: { ...config.registry, ...richFieldComponents } };
     if (config.profile) assertProfileRegistry(config.profile, config.registry);
     return <CanvasContext.Provider value={config}><StyleSelectionProvider><CanvasSelectionProvider>{children}</CanvasSelectionProvider></StyleSelectionProvider></CanvasContext.Provider>;
+}
+
+/** Merge read results without replacing the editor's selection/undo providers. */
+export function CanvasRuntimeProvider({config,children}:{config:CanvasConfig;children:ReactNode}) {
+    return <CanvasContext.Provider value={config}>{children}</CanvasContext.Provider>;
 }
 
 /** Read the injected CanvasConfig. Throws if used outside a <CanvasProvider>. */
