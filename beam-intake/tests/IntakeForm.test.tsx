@@ -130,9 +130,13 @@ it('never lets a server error path reach Object.prototype (__proto__, constructo
     expect(Object.keys(schema)).toEqual(['email']);
     expect((schema.email as Record<string, unknown>).__errors).toEqual(['Kept.']);
 
-    const submit = vi.fn().mockResolvedValue({ ok: false, status: 422, errors: JSON.parse('{"/__proto__":["polluted"],"/a/__proto__":["polluted"]}') });
-    render(<PublicIntakeProvider value={{ schemas: { contact: CONTACT }, submit }}><IntakeForm captureKey="contact" /></PublicIntakeProvider>);
+    const submit = vi.fn().mockResolvedValue({ ok: false, status: 422, message: 'Invalid.', errors: JSON.parse('{"/__proto__":["polluted"],"/a/__proto__":["polluted"]}') });
+    const { container } = render(<PublicIntakeProvider value={{ schemas: { contact: CONTACT }, submit }}><IntakeForm captureKey="contact" /></PublicIntakeProvider>);
+    // The email is required: left empty, the validator stops the submit before any server error exists.
+    fireEvent.change(container.querySelector('#root_email')!, { target: { value: 'ada@example.test' } });
     fireEvent.click(screen.getByRole('button', { name: 'Send' }));
-    await waitFor(() => expect(submit).toHaveBeenCalled());
+    // The 422 message shows only once the hostile errors have been drawn through SchemaForm.
+    expect(await screen.findByText('Invalid.')).toBeTruthy();
+    expect(submit).toHaveBeenCalledOnce();
     expect(Object.prototype).not.toHaveProperty('__errors');
 });
