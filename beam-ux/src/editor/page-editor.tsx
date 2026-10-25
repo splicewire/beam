@@ -164,7 +164,9 @@ export function PageEditor({ slug, body = null, entryId: suppliedId = null }: Pa
                     // — it is the editor's display label and `defaultTreeFor()` key. The BODY transport
                     // underneath is addressed by the entry ID (ADR-0214 §2). So the incoming `s` is
                     // deliberately unused: it names the page, not the row.
-                    saveBody: (_s, doc) => bodyClient.saveBody(addressed(entryId), asBody(doc)),
+                    saveBody: (_s, doc) => bodyClient.saveBlocks
+                        ? bodyClient.saveBlocks(addressed(entryId), doc)
+                        : bodyClient.saveBody(addressed(entryId), asBody(doc)),
                     ...(entryId && bodyClient.printSource && bodyClient.readSource ? {
                         printSource: (_s: string, body: JsonDoc) => bodyClient.printSource!(entryId, body),
                         readSource: (_s: string, source: string, body: JsonDoc) => bodyClient.readSource!(entryId, source, body),
