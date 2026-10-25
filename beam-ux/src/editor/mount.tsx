@@ -1,5 +1,5 @@
 import { canMountPublication, isUnauthored } from './publication-state';
-import { PageSettings } from './PageSettings';
+import { PageSettings, type PageFieldsOffer } from './PageSettings';
 import { SourceMode } from './SourceMode';
 import { ReleasePanel } from '../releases';
 import type { SessionPageSettings } from './local-session';
@@ -24,7 +24,7 @@ export function VisualEditorMount({ entryRef }: { entryRef: EntryRef }) {
 }
 function AddressedVisualEditor({ entryRef }: { entryRef: EntryRef }) {
     const { transport, theme, canvasConfig, userId, canAuthor, notify } = useEditorKit();
-    const [loaded, setLoaded] = useState<{ body: JsonDoc; state: EntryPublicationState; pageSettings?: SessionPageSettings; styleRegistry?: import('../blockdoc/style-runtime.js').StyleRegistry; profile?: import('@schemastud/blockdoc').BlockdocManifest } | null>(null);
+    const [loaded, setLoaded] = useState<{ body: JsonDoc; state: EntryPublicationState; pageSettings?: SessionPageSettings; pageFields?: PageFieldsOffer | null; styleRegistry?: import('../blockdoc/style-runtime.js').StyleRegistry; profile?: import('@schemastud/blockdoc').BlockdocManifest } | null>(null);
     const [error, setError] = useState<string | null>(null);
     const [conflict, setConflict] = useState(false);
     const [busy, setBusy] = useState(false);
@@ -41,7 +41,7 @@ function AddressedVisualEditor({ entryRef }: { entryRef: EntryRef }) {
             if (!canMountPublication(state)) throw new Error('This entry has no Publication Pin. Publish its baseline before mounting the editor.');
             const body = (envelope as { body?: unknown }).body;
             if (!Array.isArray(body)) throw new Error('The entry has no editable document.');
-            setLoaded({ body: body as JsonDoc, state, pageSettings: (envelope as unknown as { pageSettings?: SessionPageSettings }).pageSettings, styleRegistry: (envelope as { styleRegistry?: import("../blockdoc/style-runtime.js").StyleRegistry }).styleRegistry, profile: (envelope as { pageSettings?: SessionPageSettings; styleRegistry?: import('../blockdoc/style-runtime.js').StyleRegistry; profile?: import('@schemastud/blockdoc').BlockdocManifest }).profile });
+            setLoaded({ body: body as JsonDoc, state, pageSettings: (envelope as unknown as { pageSettings?: SessionPageSettings }).pageSettings, pageFields: (envelope as { pageFields?: PageFieldsOffer | null }).pageFields ?? null, styleRegistry: (envelope as { styleRegistry?: import("../blockdoc/style-runtime.js").StyleRegistry }).styleRegistry, profile: (envelope as { pageSettings?: SessionPageSettings; styleRegistry?: import('../blockdoc/style-runtime.js').StyleRegistry; profile?: import('@schemastud/blockdoc').BlockdocManifest }).profile });
         }).catch(reason => live && setError(reason instanceof Error ? reason.message : 'Could not load editor history. Verify the versions and publication-pin migrations.'));
         return () => { live = false; };
         // The transport may be a new object each render; the address owns the load lifecycle.
@@ -145,7 +145,7 @@ function AddressedVisualEditor({ entryRef }: { entryRef: EntryRef }) {
             <VersionRecordingReferences recordings={version.recordings} />
             <button disabled={busy || local.session!.dirty} onClick={() => void restore(version.id)}>Restore {version.readable} into draft</button>
         </div>)}</aside>}
-        {!local.session.source && local.session.pageSettings && <PageSettings value={local.session.pageSettings} onChange={settings => local.change(local.session!.body, settings)} />}
+        {!local.session.source && local.session.pageSettings && <PageSettings value={local.session.pageSettings} pageFields={loaded.pageFields} onChange={settings => local.change(local.session!.body, settings)} />}
         <SourceMode local={local} allowed={(!loaded.profile || !('x-admits-code' in loaded.profile) || loaded.profile['x-admits-code'] !== false) && (!entryRef.format || SOURCE_LANGUAGES.includes(entryRef.format))}
             language={entryRef.format ?? 'tsx'}
             conversion={id && transport.printSource && transport.readSource ? {print:body=>transport.printSource!(id,body),read:(source,body)=>transport.readSource!(id,source,body)} : undefined}>

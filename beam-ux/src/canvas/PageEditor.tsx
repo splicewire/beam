@@ -1,7 +1,7 @@
 import { CanvasClearance } from "./CanvasClearance";
 import { SourceMode } from "../editor/SourceMode";
 import { useCanvas } from "./context";
-import { PageSettings } from "../editor/PageSettings";
+import { PageSettings, type PageFieldsOffer } from "../editor/PageSettings";
 import type { SessionPageSettings } from "../editor/local-session";
 // In-place page editor: renders the entry's body INSIDE the real page (host layout chrome + full class
 // hierarchy intact, so styles are correct), read-only until an operator enters window mode (via the host's
@@ -126,6 +126,8 @@ export interface PageEditorProps {
   /** The initial body (a JsonDoc, or a legacy/absent body → falls back to `fallbackDoc` or empty). */
   body?: JsonDoc | null;
   pageSettings?: SessionPageSettings | null;
+  /** The Page Fields the server offers this page (ux-0233 d4), from its body envelope. */
+  pageFields?: PageFieldsOffer | null;
   transport: PageEditorTransport;
   notify?: Notify;
   theme?: Partial<CanvasTheme>;
@@ -271,6 +273,7 @@ export function PageEditor({
   format,
   body = null,
   pageSettings = null,
+  pageFields = null,
   transport,
   notify,
   theme,
@@ -729,6 +732,7 @@ export function PageEditor({
           {!local.session.source && local.session.pageSettings && (
             <PageSettings
               value={local.session.pageSettings}
+              pageFields={pageFields}
               onChange={(settings) =>
                 local.change(local.session!.body, settings)
               }

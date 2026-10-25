@@ -22,3 +22,28 @@ it('shows no kept-keys group for a page that keeps none', () => {
 
   expect(screen.queryByRole('group', { name: 'Kept frontmatter keys' })).toBeNull();
 });
+
+it('offers the registered Page Fields a parent may declare for its child pages (ux-0233 d4)', () => {
+  const onChange = vi.fn();
+  render(<PageSettings value={{ title: 'Recipes' }} pageFields={{ names: ['recipe'], schema: null }} onChange={onChange} />);
+
+  fireEvent.change(screen.getByLabelText('Child page fields'), { target: { value: 'recipe' } });
+
+  expect(onChange).toHaveBeenCalledWith({ title: 'Recipes', childFields: 'recipe' });
+  expect(screen.queryByRole('group', { name: 'Page fields' })).toBeNull();
+});
+
+it('edits the Page Fields the parent declares, typed by its schema, and an empty input clears one', () => {
+  const onChange = vi.fn();
+  const schema = { properties: { servings: { type: ['integer', 'null'] }, cuisine: { type: ['string', 'null'] }, vegetarian: { type: ['boolean', 'null'] } } };
+  render(<PageSettings value={{ title: 'Pie', fields: { servings: 4, cuisine: 'French' } }} pageFields={{ names: [], schema }} onChange={onChange} />);
+  const fields = screen.getByRole('group', { name: 'Page fields' });
+
+  fireEvent.change(within(fields).getByLabelText('servings'), { target: { value: '6' } });
+  expect(onChange).toHaveBeenLastCalledWith({ title: 'Pie', fields: { servings: 6, cuisine: 'French' } });
+  fireEvent.click(within(fields).getByLabelText('vegetarian'));
+  expect(onChange).toHaveBeenLastCalledWith({ title: 'Pie', fields: { servings: 4, cuisine: 'French', vegetarian: true } });
+  fireEvent.change(within(fields).getByLabelText('cuisine'), { target: { value: '' } });
+  expect(onChange).toHaveBeenLastCalledWith({ title: 'Pie', fields: { servings: 4 } });
+  expect(screen.queryByLabelText('Child page fields')).toBeNull();
+});

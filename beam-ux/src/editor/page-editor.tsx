@@ -96,6 +96,7 @@ export function PageEditor({ slug, body = null, entryId: suppliedId = null }: Pa
         entryId: string;
         body: unknown;
         pageSettings?: EntryPageSettings | null;
+        pageFields?: import('./PageSettings').PageFieldsOffer | null;
         styleRegistry?: import('../blockdoc/style-runtime.js').StyleRegistry; profile?: import('@schemastud/blockdoc').BlockdocManifest;
         failed?: boolean;
         bindings?: import('../bindings/runtime.js').BindingPayload;
@@ -113,7 +114,7 @@ export function PageEditor({ slug, body = null, entryId: suppliedId = null }: Pa
             .loadBody(entryId)
             .then(
                 (env) =>
-                    live && setLoaded({ entryId, body: (env as { body?: unknown })?.body ?? null, pageSettings: (env as { pageSettings?: EntryPageSettings | null }).pageSettings, bindings: (env as { bindings?: import('../bindings/runtime.js').BindingPayload }).bindings, styleRegistry: (env as { styleRegistry?: import("../blockdoc/style-runtime.js").StyleRegistry }).styleRegistry, profile: (env as { styleRegistry?: import('../blockdoc/style-runtime.js').StyleRegistry; profile?: import('@schemastud/blockdoc').BlockdocManifest }).profile }),
+                    live && setLoaded({ entryId, body: (env as { body?: unknown })?.body ?? null, pageSettings: (env as { pageSettings?: EntryPageSettings | null }).pageSettings, pageFields: (env as { pageFields?: import('./PageSettings').PageFieldsOffer | null }).pageFields ?? null, bindings: (env as { bindings?: import('../bindings/runtime.js').BindingPayload }).bindings, styleRegistry: (env as { styleRegistry?: import("../blockdoc/style-runtime.js").StyleRegistry }).styleRegistry, profile: (env as { styleRegistry?: import('../blockdoc/style-runtime.js').StyleRegistry; profile?: import('@schemastud/blockdoc').BlockdocManifest }).profile }),
             )
             // A refused read is not an empty body: keep replacement writes unavailable.
             .catch(() => {
@@ -159,6 +160,7 @@ export function PageEditor({ slug, body = null, entryId: suppliedId = null }: Pa
                 userId={userId}
                 body={asDoc(current?.body) ?? asDoc(body)}
                 pageSettings={current?.pageSettings}
+                pageFields={current?.pageFields}
                 transport={{
                     // CanvasPageEditor's transport seam is keyed by its `slug` prop, which stays a slug
                     // — it is the editor's display label and `defaultTreeFor()` key. The BODY transport
