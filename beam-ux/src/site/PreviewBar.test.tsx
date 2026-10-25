@@ -143,9 +143,9 @@ describe('PreviewBar (Redirects)', () => {
     // will go once it publishes; a Take-down with no target leaves its URLs not found.
     it('lists the Redirects the Release leaves, and the URLs it leaves not found', () => {
         render(<PreviewBar preview={{ ...base, redirects: [
-            { from: '/about', to: '/company', reason: 'moved' },
-            { from: '/legacy', to: '/pricing', reason: 'takedown' },
-            { from: '/gone', to: null, reason: 'takedown' },
+            { from: '/about', match: 'exact', to: '/company', reason: 'moved' },
+            { from: '/legacy', match: 'exact', to: '/pricing', reason: 'takedown' },
+            { from: '/gone', match: 'exact', to: null, reason: 'takedown' },
         ] }} />);
 
         const redirects = screen.getByRole('region', { name: 'Redirects this Release leaves' });
@@ -155,6 +155,21 @@ describe('PreviewBar (Redirects)', () => {
             '/gone → not found (taken down)',
         ]);
         expect(screen.getByText('Redirects this Release leaves (3)')).toBeTruthy();
+    });
+
+    it('says when a Redirect covers a path and everything under it, beside an exact one at the same path', () => {
+        // Review of 8e03ab79: a Record Page that moves leaves a path-and-below Redirect (ux-0236 d2), and an exact one
+        // may share its path (its parent page moved too).
+        render(<PreviewBar preview={{ ...base, redirects: [
+            { from: '/blog', match: 'exact', to: '/posts', reason: 'moved' },
+            { from: '/blog', match: 'prefix', to: '/posts', reason: 'moved' },
+        ] }} />);
+
+        const redirects = screen.getByRole('region', { name: 'Redirects this Release leaves' });
+        expect(within(redirects).getAllByRole('listitem').map((item) => item.textContent)).toEqual([
+            '/blog → /posts (moved)',
+            '/blog and below → /posts (moved)',
+        ]);
     });
 
     it('shows no Redirects list when the Release leaves none, or the server predates EP-31', () => {

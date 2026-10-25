@@ -54,8 +54,11 @@ export type PreviewBarData = {
     redirects?: PreviewRedirect[];
 };
 
-/** A URL a Release moves or takes down, and where it will go. */
-export type PreviewRedirect = { from: string; to: string | null; reason: 'moved' | 'takedown' };
+/**
+ * A URL a Release moves or takes down, and where it will go. `match` is `prefix` for a Redirect that covers the path
+ * and everything under it (a Record Page's move), `exact` for that path only.
+ */
+export type PreviewRedirect = { from: string; match?: 'exact' | 'prefix'; to: string | null; reason: 'moved' | 'takedown' };
 
 const bar: CSSProperties = { background: '#171717', color: 'white', fontSize: 14, padding: '10px 16px' };
 const row: CSSProperties = { alignItems: 'center', display: 'flex', flexWrap: 'wrap', gap: 16, justifyContent: 'center' };
@@ -128,8 +131,9 @@ function Redirects({ redirects }: { redirects: PreviewRedirect[] }) {
             <section aria-label="Redirects this Release leaves">
                 <ul style={list}>
                     {redirects.map((redirect) => (
-                        <li key={redirect.from}>
-                            {redirect.from} → {redirect.to ?? 'not found'} ({redirect.reason === 'moved' ? 'moved' : 'taken down'})
+                        <li key={`${redirect.from} ${redirect.match ?? 'exact'}`}>
+                            {redirect.from}
+                            {redirect.match === 'prefix' ? ' and below' : ''} → {redirect.to ?? 'not found'} ({redirect.reason === 'moved' ? 'moved' : 'taken down'})
                         </li>
                     ))}
                 </ul>
