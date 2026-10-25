@@ -103,7 +103,7 @@ export function unwrapBlock(doc:JsonDoc,path:string,profile?:BlockdocManifest):J
 export function editStyles(doc:JsonDoc,paths:string[],selection:StyleSelection,property:string,value:string|null,registry:StyleRegistry):JsonDoc{
  let next=doc;
  for(const path of [...new Set(paths)]){
-  const node=getAt(doc,path);if(!node||!isJsonBlock(node))throw Error('Selection no longer exists');
+  const node=getAt(next,path);if(!node||!isJsonBlock(node))throw Error('Selection no longer exists');
   if(node.isComponent||/^[A-Z]/.test(node.name??''))throw Error('Component does not declare root-style forwarding');
   const style=blockStyleFields(node,{schema:{},attrs:{}}).attrs.bdStyle;
   const changed=applyBlockStyle(node,validatedEdit(style,selection,property,value,registry));
