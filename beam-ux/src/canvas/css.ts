@@ -226,6 +226,8 @@ export function peCss(t?: Partial<CanvasTheme>): string {
 .pe-bar{box-sizing:border-box;position:fixed;top:0;left:0;right:0;z-index:2147483201;display:flex;align-items:center;gap:8px;height:40px;padding:0 14px;background:${c.panelBg};color:${c.panelFg};border-bottom:1px solid rgba(255,255,255,.1);font-family:${c.fontBody};font-size:11px}
 /* Keep the summary in the 40px bar; expanding fields must not change its flex-item height.
    The bar stacks above the floating panels so this dropdown remains clickable over Insert. */
+.pe-conflict{position:fixed;inset:0;z-index:2147483202;display:grid;place-items:center;background:rgba(0,0,0,.45);padding:14px;box-sizing:border-box}
+.pe-conflict-content{box-sizing:border-box;width:min(440px,100%);max-height:calc(100dvh - 28px);overflow:auto;padding:20px;border-radius:8px;background:${c.panelBg};color:${c.panelFg};font-family:${c.fontBody}}
 .pe-page-settings{flex:none}
 .pe-page-settings summary{cursor:pointer}
 .pe-page-settings-fields{position:fixed;top:40px;left:14px;box-sizing:border-box;width:min(360px,calc(100vw - 28px));max-height:calc(100dvh - 54px);overflow:auto;display:grid;gap:10px;padding:14px;background:${c.panelBg};color:${c.panelFg};border:1px solid rgba(255,255,255,.16);border-radius:0 0 8px 8px;box-shadow:0 12px 30px rgba(0,0,0,.3);font-size:12px}

@@ -38,7 +38,13 @@ it('keeps expanded settings below the toolbar and reachable after Reload theirs'
     fireEvent.change(screen.getByLabelText('Title'), { target: { value: 'Unsaved' } });
     fireEvent.click(summary);
     fireEvent.click(screen.getByRole('button', { name: 'Save draft' }));
-    fireEvent.click(await screen.findByRole('button', { name: 'Reload theirs' }));
+    const reload = await screen.findByRole('button', { name: 'Reload theirs' });
+    const dialog = screen.getByRole('alertdialog', { name: 'Save conflict' });
+    expect(dialog.getAttribute('aria-modal')).toBe('true');
+    expect(getComputedStyle(dialog).position).toBe('fixed');
+    expect(Number(getComputedStyle(dialog).zIndex)).toBeGreaterThan(2147483201);
+    await waitFor(() => expect(document.activeElement).toBe(reload));
+    fireEvent.click(reload);
     await waitFor(() => expect((screen.getByLabelText('Title') as HTMLInputElement).value).toBe('Reloaded'));
     fireEvent.click(summary);
     checkLayout();

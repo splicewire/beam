@@ -50,12 +50,46 @@ try {
         };
         await measure('expanded');
         // All controls remain reachable inside the bounded scrolling panel.
-        await page.getByLabel('Page type', { exact: true }).selectOption('Article');
+        // Clean accessible name, real scroll/hit access; no forced actions.
+        const pageType = page.getByLabel('Page type', { exact: true });
+        assert.equal(await pageType.count(), 1);
+        await pageType.scrollIntoViewIfNeeded();
+        const access = await pageType.evaluate(select => {
+            const panel = select.closest('[role="region"]');
+            const field = select.getBoundingClientRect();
+            const bounds = panel.getBoundingClientRect();
+            const hit = document.elementFromPoint((field.left + field.right) / 2, (field.top + field.bottom) / 2);
+            return { top: field.top, bottom: field.bottom, panelTop: bounds.top, panelBottom: bounds.bottom,
+                scrollTop: panel.scrollTop, receivesPointer: hit === select || select.contains(hit) };
+        });
+        observations.push({ viewport, phase: 'page-type-access', ...access });
+        assert.ok(access.top >= access.panelTop && access.bottom <= access.panelBottom, JSON.stringify(access));
+        assert.ok(access.receivesPointer, 'Page type must receive pointer input after scrolling');
+        await pageType.click();
+        await page.keyboard.press('Escape');
+        await pageType.selectOption('Article');
+        assert.equal(await pageType.inputValue(), 'Article');
         await title.fill('Unsaved');
         await summary.click();
         await page.getByRole('button', { name: 'Save draft', exact: true }).click();
         // Scope to the real conflict alert so an overlay cannot be bypassed programmatically.
-        await page.getByRole('alertdialog', { name: 'Save conflict' }).getByRole('button', { name: 'Reload theirs' }).click();
+        const conflict = page.getByRole('alertdialog', { name: 'Save conflict' });
+        const reload = conflict.getByRole('button', { name: 'Reload theirs' });
+        await reload.waitFor();
+        assert.ok(await conflict.evaluate(el => el.contains(document.activeElement)), 'focus moves into the conflict dialog');
+        for (const button of await conflict.getByRole('button').all()) {
+            assert.ok(await button.evaluate(el => {
+                const rect = el.getBoundingClientRect();
+                const hit = document.elementFromPoint((rect.left + rect.right) / 2, (rect.top + rect.bottom) / 2);
+                return hit === el || el.contains(hit);
+            }), 'conflict buttons receive pointer events while Insert is open');
+        }
+        await page.keyboard.press('Shift+Tab');
+        assert.ok(await conflict.getByRole('button', { name: 'Save ours as a new version' }).evaluate(el => el === document.activeElement), 'backward tab stays in dialog');
+        await page.keyboard.press('Tab');
+        assert.ok(await reload.evaluate(el => el === document.activeElement), 'forward tab wraps to Reload theirs');
+        if (out) await page.screenshot({ path: resolve(out, `${viewport.width}-conflict.png`) });
+        await reload.click();
         await page.waitForFunction(() => document.querySelector('input')?.value === 'Reloaded');
         await summary.click();
         await measure('reloaded');

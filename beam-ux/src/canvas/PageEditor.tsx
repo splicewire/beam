@@ -351,6 +351,13 @@ export function PageEditor({
   );
   const [publicationError, setPublicationError] = useState<string | null>(null);
   const [conflict, setConflict] = useState(false);
+  const conflictRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!conflict) return;
+    const previous = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    conflictRef.current?.querySelector('button')?.focus();
+    return () => { if (previous?.isConnected) previous.focus(); };
+  }, [conflict]);
   const canvasConfig = useCanvas();
   const local = useLocalSession(
     entryId ?? slug,
@@ -714,7 +721,15 @@ export function PageEditor({
         />
 
         {conflict && (
-          <div role="alertdialog" aria-label="Save conflict">
+          <div ref={conflictRef} className="pe-conflict" role="alertdialog" aria-label="Save conflict" aria-modal="true"
+            onKeyDown={event => {
+              if (event.key !== 'Tab') return;
+              const buttons = Array.from(event.currentTarget.querySelectorAll('button'));
+              const first = buttons[0], last = buttons[buttons.length - 1];
+              if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus(); }
+              else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); }
+            }}>
+            <div className="pe-conflict-content">
             <p>The server draft changed. Choose which work to keep.</p>
             <button onClick={() => void resolveConflict(false)}>
               Reload theirs
@@ -722,6 +737,7 @@ export function PageEditor({
             <button onClick={() => void resolveConflict(true)}>
               Save ours as a new version
             </button>
+            </div>
           </div>
         )}
         {/* Reserve space for floating panels without changing the published page layout. */}

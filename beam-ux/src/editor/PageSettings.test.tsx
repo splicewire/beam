@@ -59,3 +59,12 @@ it('changes the File Language where the host writes more than one, and hides it 
   render(<PageSettings value={{ title: 'Guide', fileLanguage: 'tsx' }} fileLanguages={['tsx']} onChange={vi.fn()} />);
   expect(screen.queryByLabelText('File language')).toBeNull();
 });
+
+it('gives every select its label alone as an accessible name', () => {
+  render(<PageSettings value={{ title: 'Guide' }} onChange={vi.fn()}
+    fileLanguages={['tsx', 'mdx']} pageFields={{ names: ['recipe'], schema: null }} />);
+  fireEvent.click(screen.getByText('Page settings', { selector: 'summary' }));
+  for (const name of ['Page type', 'File language', 'Child page fields']) {
+    expect(screen.getByRole('combobox', { name, exact: true })).toBe(screen.getByLabelText(name, { exact: true }));
+  }
+});

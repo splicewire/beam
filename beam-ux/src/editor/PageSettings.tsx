@@ -1,3 +1,4 @@
+import { useId } from 'react';
 import type { SessionPageSettings } from './local-session';
 
 type FieldSchema = { type?: string | string[]; title?: string };
@@ -14,6 +15,7 @@ export interface PageFieldsOffer {
 
 /** These controls change the Local Session, never the published entry row. */
 export function PageSettings({ value, onChange, pageFields = null, fileLanguages = [] }: { value: SessionPageSettings; onChange: (value: SessionPageSettings) => void; pageFields?: PageFieldsOffer | null; fileLanguages?: string[] | null }) {
+  const labelId = useId();
   const fields = [
     ['title', 'Title'], ['parentId', 'Parent entry ID'], ['segment', 'URL segment'],
     ['navGroup', 'Navigation group'], ['layout', 'Layout'], ['template', 'Template'],
@@ -27,15 +29,15 @@ export function PageSettings({ value, onChange, pageFields = null, fileLanguages
         onChange={event => onChange({ ...value, [key]: event.target.value || (key === 'title' ? '' : null) })} />
     </label>)}
     <label>Navigation order<input type="number" value={value.navOrder ?? ''} onChange={event => onChange({ ...value, navOrder: event.target.value === '' ? null : Number(event.target.value) })} /></label>
-    <label>Page type<select value={value.pageType ?? 'WebPage'} onChange={event => onChange({ ...value, pageType: event.target.value })}>
+    <label><span id={`${labelId}-page-type`}>Page type</span><select aria-labelledby={`${labelId}-page-type`} value={value.pageType ?? 'WebPage'} onChange={event => onChange({ ...value, pageType: event.target.value })}>
       {['WebPage', 'Article', 'CollectionPage', 'ProfilePage'].map(type => <option key={type}>{type}</option>)}
     </select></label>
     {/* ux-0233 d5: the File Language; Publish moves the page's file. Shown only where the host writes more than one. */}
-    {(fileLanguages ?? []).length > 1 && <label>File language<select value={value.fileLanguage ?? ''}
+    {(fileLanguages ?? []).length > 1 && <label><span id={`${labelId}-file-language`}>File language</span><select aria-labelledby={`${labelId}-file-language`} value={value.fileLanguage ?? ''}
       onChange={event => onChange({ ...value, fileLanguage: event.target.value })}>
       {(fileLanguages ?? []).map(language => <option key={language} value={language}>{language.toUpperCase()}</option>)}
     </select></label>}
-    {pageFields && pageFields.names.length > 0 && <label>Child page fields<select value={value.childFields ?? ''}
+    {pageFields && pageFields.names.length > 0 && <label><span id={`${labelId}-child-fields`}>Child page fields</span><select aria-labelledby={`${labelId}-child-fields`} value={value.childFields ?? ''}
       onChange={event => onChange({ ...value, childFields: event.target.value || null })}>
       <option value="">None</option>
       {pageFields.names.map(name => <option key={name}>{name}</option>)}
