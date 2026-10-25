@@ -65,16 +65,25 @@ export function pointerTokens(pointer: string): string[] {
     return pointer === '' ? [] : pointer.split('/').slice(1).map(token => token.replace(/~1/g, '/').replace(/~0/g, '~'));
 }
 
-/** The door's JSON-pointer errors as an RJSF error schema: `/email` becomes `{ email: { __errors } }`, `''` the root. */
-function errorSchema(errors: Record<string, string[]>): Record<string, unknown> {
-    const out: Record<string, unknown> = {};
+/** Tokens no form field can be named and an error path must never walk: they reach an object's prototype. */
+const UNSAFE_TOKENS = new Set(['__proto__', 'constructor', 'prototype']);
+
+/**
+ * The door's JSON-pointer errors as an RJSF error schema: `/email` becomes `{ email: { __errors } }`, `''` the root.
+ * The error keys come from the server, so every level is a null-prototype object, only own keys are walked, and a
+ * path naming `__proto__`, `constructor` or `prototype` is skipped whole: no error path can reach Object.prototype.
+ */
+export function toErrorSchema(errors: Record<string, string[]>): Record<string, unknown> {
+    const out: Record<string, unknown> = Object.create(null);
     for (const [pointer, messages] of Object.entries(errors)) {
         const path = pointerTokens(pointer);
+        if (path.some(token => UNSAFE_TOKENS.has(token))) continue;
         let cursor = out;
-        for (const part of path) {
-            cursor = (cursor[part] ??= {}) as Record<string, unknown>;
+        for (const token of path) {
+            if (!Object.hasOwn(cursor, token)) cursor[token] = Object.create(null);
+            cursor = cursor[token] as Record<string, unknown>;
         }
-        cursor.__errors = [...((cursor.__errors as string[] | undefined) ?? []), ...messages];
+        cursor.__errors = [...(Object.hasOwn(cursor, '__errors') ? (cursor.__errors as string[]) : []), ...messages];
     }
 
     return out;
@@ -143,7 +152,7 @@ export function IntakeForm({ captureKey, submitLabel = 'Send', successMessage = 
                 schema={schema}
                 formData={form.formData}
                 disabled={form.disabled}
-                extraErrors={errorSchema(state.errors) as never}
+                extraErrors={toErrorSchema(state.errors) as never}
                 onChange={({ formData: next }) => setFormData(next ?? {})}
                 onSubmit={({ formData: next }) => form.onSubmit(next ?? {})}
             >

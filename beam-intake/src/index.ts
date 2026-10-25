@@ -9,5 +9,5 @@ export type {
     IntakeServices,
     IntakeFormRenderProps,
 } from './types';
-export { IntakeForm, PublicIntakeProvider, pointerTokens, submitToIntakeDoor } from './IntakeForm';
+export { IntakeForm, PublicIntakeProvider, pointerTokens, submitToIntakeDoor, toErrorSchema } from './IntakeForm';
 export type { IntakeFormProps, PublicIntakeSchema, PublicIntakeResult, PublicIntakeServices } from './IntakeForm';

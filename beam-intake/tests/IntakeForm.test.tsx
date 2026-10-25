@@ -1,6 +1,6 @@
 import { afterEach, expect, it, vi } from 'vitest';
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { IntakeForm, PublicIntakeProvider, pointerTokens, submitToIntakeDoor, type PublicIntakeServices } from '../src/IntakeForm';
+import { IntakeForm, PublicIntakeProvider, pointerTokens, submitToIntakeDoor, toErrorSchema, type PublicIntakeServices } from '../src/IntakeForm';
 import { IntakeProvider } from '../src/provider';
 import type { IntakeFormRenderProps } from '../src/types';
 
@@ -119,4 +119,20 @@ it('a network failure leaves the form usable with a retryable error, and no unha
     await waitFor(() => expect(rendered.current?.disabled).toBe(false));
     act(() => rendered.current!.onSubmit({ email: 'ada@example.test' }));
     expect(await screen.findByRole('status')).toBeTruthy();
+});
+
+it('never lets a server error path reach Object.prototype (__proto__, constructor, prototype)', async () => {
+    const schema = toErrorSchema({ '/__proto__': ['polluted'], '/a/__proto__': ['polluted'], '/constructor/prototype': ['polluted'], '/b/prototype': ['polluted'], '/email': ['Kept.'] });
+
+    expect(Object.prototype).not.toHaveProperty('__errors');
+    expect(({} as Record<string, unknown>).__errors).toBeUndefined();
+    expect(Object.getPrototypeOf(schema)).toBeNull();
+    expect(Object.keys(schema)).toEqual(['email']);
+    expect((schema.email as Record<string, unknown>).__errors).toEqual(['Kept.']);
+
+    const submit = vi.fn().mockResolvedValue({ ok: false, status: 422, errors: JSON.parse('{"/__proto__":["polluted"],"/a/__proto__":["polluted"]}') });
+    render(<PublicIntakeProvider value={{ schemas: { contact: CONTACT }, submit }}><IntakeForm captureKey="contact" /></PublicIntakeProvider>);
+    fireEvent.click(screen.getByRole('button', { name: 'Send' }));
+    await waitFor(() => expect(submit).toHaveBeenCalled());
+    expect(Object.prototype).not.toHaveProperty('__errors');
 });
