@@ -24,9 +24,12 @@ const DOCK_CLEARANCE = '72px';
  * place, so the in-place editor leaves every non-site case. It overlays `site/*` pages only; app realms get no dock.
  */
 export default function OsLayout({ children }: { children: ReactNode }) {
-    const page = usePage<{ can?: Record<string, boolean> }>();
+    const page = usePage<{ can?: Record<string, boolean>; preview?: unknown }>();
     const can = (page.props.can as Record<string, boolean> | undefined) ?? {};
-    const entitled = !!can[OS_ENTER_KEY] && (page.component ?? '').startsWith('site/');
+    // A preview may retain the reviewer's signed-in session, but it is a read-only guest surface:
+    // do not mount the operator's in-place editor over it.
+    const entitled =
+        page.props.preview == null && !!can[OS_ENTER_KEY] && (page.component ?? '').startsWith('site/');
 
     useEffect(() => {
         if (!entitled) return;

@@ -6,7 +6,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
  * ux-walkthrough UX-12a, probe PR-1: no author edited an app page in place, so the in-place editor (the OS dock)
  * overlays `site/*` pages only. An app-realm page gets no dock even for an `os.enter` principal.
  */
-const page = vi.hoisted(() => ({ component: 'site/home', props: { can: { 'os.enter': true } as Record<string, boolean> } }));
+const page = vi.hoisted(() => ({ component: 'site/home', props: { can: { 'os.enter': true } as Record<string, boolean>, preview: null as { label: string } | null } }));
 
 vi.mock('@inertiajs/react', () => ({ usePage: () => page }));
 vi.mock('../os/operator-desk', () => ({ default: () => <div data-testid="dock" /> }));
@@ -18,12 +18,21 @@ afterEach(cleanup);
 describe('OsLayout', () => {
     it('overlays the editor on a site page for an os.enter principal', () => {
         page.component = 'site/home';
+        page.props.preview = null;
         render(<OsLayout><p>page</p></OsLayout>);
         expect(screen.queryByTestId('dock')).not.toBeNull();
     });
 
+    it('suppresses the editor overlay while the page is in preview context', () => {
+        page.component = 'site/entry';
+        page.props.preview = { label: 'saved version' };
+        render(<OsLayout><p>preview page</p></OsLayout>);
+        expect(screen.queryByTestId('dock')).toBeNull();
+    });
+
     it('leaves an app-realm page without the editor', () => {
         page.component = 'operator/dashboard';
+        page.props.preview = null;
         render(<OsLayout><p>page</p></OsLayout>);
         expect(screen.queryByTestId('dock')).toBeNull();
         page.component = 'dashboard';
@@ -37,6 +46,7 @@ describe('OsLayout', () => {
     it('publishes the dock clearance only while the dock is mounted', () => {
         const clearance = () => document.documentElement.style.getPropertyValue('--beam-page-dock-clearance');
         page.component = 'site/home';
+        page.props.preview = null;
         const { unmount } = render(<OsLayout><p>page</p></OsLayout>);
         expect(clearance()).not.toBe('');
         unmount();
