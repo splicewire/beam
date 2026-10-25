@@ -40,7 +40,7 @@
     "test-storybook": "test-storybook --url http://127.0.0.1:6007",
     "lint:tokens": "node scripts/lint-tokens.mjs",
     "test:editor-kit": "node --test tests/editor-kit-boundary.test.mjs",
-        "test:build-order": "node --test tests/workspace-build-order.test.mjs"
+    "test:build-order": "node --test tests/workspace-build-order.test.mjs"
   },
   "devDependencies": {
     "@changesets/cli": "^2.27.9",
