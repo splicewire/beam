@@ -4,7 +4,7 @@ vi.mock('../editor/local-session.js', async (original) => {
     const module = await original<typeof import('../editor/local-session.js')>();
     return { ...module, IndexedDbSessions: class { async forEntry() { return []; } async write() {} async close() {} } };
 });
-import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import type { JsonBlock, JsonDoc } from '../blockdoc/json.js';
 import { attrsSchemaFor } from './attrsSchema.js';
@@ -694,6 +694,57 @@ describe('PageEditor — mode fork + transport', async () => {
 
         expect(transport.publish).toHaveBeenCalledWith('home', 'v-v1');
         expect(transport.saveBody).not.toHaveBeenCalled();
+    });
+
+    describe('the Publish dialog (ADR-0232 d15, EP-18 ruling 2)', () => {
+        const open = {
+            id: 'release-spring', title: 'Spring', realm: 'site', status: 'draft', reviewedBy: null, members: [], workflow: null,
+            canSchedule: false, reviewRequired: false, previewHref: '/_beam/preview/open/release-spring',
+        };
+        const choosing = () => ({
+            ...publishingTransport(),
+            previewVersion: vi.fn().mockResolvedValue({ url: '/_beam/preview/signed' }),
+            listReleases: vi.fn().mockResolvedValue([open, { ...open, id: 'release-shipped', title: 'Shipped', status: 'published' }]),
+            createRelease: vi.fn(),
+            releaseCommand: vi.fn(async () => ({
+                ...open, members: [{ entryId: 'entry-1', versionId: 'v-v1', observedPin: 'v-v1', redirectTarget: null, stale: false }],
+            })),
+        });
+
+        it('asks: now as a Release of one, or into an open Release, each with Preview', async () => {
+            const transport = choosing();
+            const { container } = await enterEditMode(transport);
+
+            await act(async () => { fireEvent.click(dockButton(container, 'Publish')!); await Promise.resolve(); });
+
+            const dialog = await screen.findByRole('alertdialog', { name: 'Publish' });
+            expect(transport.publish).not.toHaveBeenCalled();
+            expect(within(dialog).getByRole('button', { name: 'Publish now' })).toBeTruthy();
+            expect(within(dialog).getByRole('button', { name: 'Preview' })).toBeTruthy();
+            const releases = within(dialog).getByLabelText('Open Release') as HTMLSelectElement;
+            expect(Array.from(releases.options).map((option) => option.textContent)).toEqual(['Spring']);
+
+            await act(async () => { fireEvent.click(within(dialog).getByRole('button', { name: 'Add to the Release' })); await Promise.resolve(); });
+
+            expect(transport.releaseCommand).toHaveBeenCalledWith('release-spring', { action: 'member', entryId: 'entry-1', ref: 'v-v1' });
+            expect(transport.publish).not.toHaveBeenCalled();
+            const opened = vi.spyOn(window, 'open').mockReturnValue(null);
+            fireEvent.click(within(dialog).getByRole('button', { name: 'Preview the Release' }));
+            expect(opened).toHaveBeenCalledWith('/_beam/preview/open/release-spring', '_blank', 'noopener');
+            opened.mockRestore();
+        });
+
+        it('Publish now publishes the saved version as a Release of one', async () => {
+            const transport = choosing();
+            const { container } = await enterEditMode(transport);
+
+            await act(async () => { fireEvent.click(dockButton(container, 'Publish')!); await Promise.resolve(); });
+            const dialog = await screen.findByRole('alertdialog', { name: 'Publish' });
+            await act(async () => { fireEvent.click(within(dialog).getByRole('button', { name: 'Publish now' })); await Promise.resolve(); });
+
+            expect(transport.publish).toHaveBeenCalledWith('home', 'v-v1');
+            expect(screen.queryByRole('alertdialog', { name: 'Publish' })).toBeNull();
+        });
     });
 
     it('Publish refuses unsaved edits and never calls programmatic save-body', async () => {

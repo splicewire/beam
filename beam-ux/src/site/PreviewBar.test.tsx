@@ -63,6 +63,26 @@ describe('PreviewBar (Release)', () => {
         expect(screen.getByText('Nothing stops Publish')).toBeTruthy();
     });
 
+    it('links each fix to where it is pressed: the Release\'s page, or the page itself', () => {
+        render(<PreviewBar preview={{
+            ...base,
+            releaseHref: '/operator/releases/r1',
+            readiness: {
+                ready: false,
+                blockers: [
+                    { code: 'stale', entryId: 'about', message: 'A publication pin moved.', fixes: ['rebase', 'drop'] },
+                    { code: 'content', entryId: 'about', message: 'The body is refused.', fixes: ['open', 'drop'] },
+                ],
+                notes: [],
+            },
+        }} />);
+
+        const readiness = screen.getByRole('region', { name: 'Publish' });
+        expect(within(readiness).getAllByRole('link', { name: 'Fix in the Release' }).map((a) => a.getAttribute('href')))
+            .toEqual(['/operator/releases/r1', '/operator/releases/r1']);
+        expect(within(readiness).getByRole('link', { name: 'Open the page' }).getAttribute('href')).toBe('/about');
+    });
+
     it('switches this URL to the live site, and from the live site links back into the Preview', () => {
         const { rerender } = render(<PreviewBar preview={base} />);
         expect(screen.getByRole('link', { name: 'Live site' }).getAttribute('href')).toBe('/_beam/preview/switch?to=live&path=%2Fabout');

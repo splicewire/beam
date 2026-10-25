@@ -33,6 +33,11 @@ export interface ReleaseRecord {
   recording?: ReleaseRecording | null;
   filesMemberId?: string | null;
   filesHref?: string | null;
+  /** ADR-0232 d8: whether the Release's Preview Links are on, and a link minted for this read (managers only). */
+  previewLinksEnabled?: boolean;
+  previewLink?: string | null;
+  /** ADR-0232 d15: where a signed-in author opens this Release's Preview; null with nothing saved to render. */
+  previewHref?: string | null;
 }
 export interface ReleaseCommand {
   action:
@@ -44,7 +49,10 @@ export interface ReleaseCommand {
     | "approve"
     | "publish"
     | "schedule"
-    | "rollback";
+    | "rollback"
+    | "links-on"
+    | "links-off"
+    | "rotate-links";
   entryId?: string;
   ref?: string | null;
   redirectTarget?: string | null;
@@ -106,6 +114,51 @@ export function ReleasePanel({
     >
       <h2 className="font-semibold">{release.title}</h2>
       <p>Status: {release.status.replace("_", " ")}</p>
+      {!immutable && release.previewHref && (
+        // ADR-0232 d15: the Release page's Preview, signed in; a new tab, so the panel stays open.
+        <a href={release.previewHref} target="_blank" rel="noopener noreferrer" className="underline">
+          Preview
+        </a>
+      )}
+      {!immutable && release.previewLinksEnabled !== undefined && (
+        <div role="group" aria-label="Preview Links" className="space-y-2 rounded border p-3">
+          <p>
+            A Preview Link lets anyone who has it preview this Release, signed in or not, for 7 days. Rotating ends
+            every link at once.
+          </p>
+          {release.previewLinksEnabled ? (
+            <div className="flex flex-wrap items-center gap-2">
+              {release.previewLink && (
+                <>
+                  <input
+                    readOnly
+                    aria-label="Preview Link"
+                    className="min-w-0 flex-1 rounded border bg-background px-2 py-1"
+                    value={release.previewLink}
+                  />
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    onClick={() => void navigator.clipboard?.writeText(release.previewLink!)}
+                  >
+                    Copy link
+                  </Button>
+                </>
+              )}
+              <Button size="sm" variant="secondary" disabled={pending} onClick={() => void act({ action: "rotate-links" })}>
+                Rotate links
+              </Button>
+              <Button size="sm" variant="secondary" disabled={pending} onClick={() => void act({ action: "links-off" })}>
+                Turn links off
+              </Button>
+            </div>
+          ) : (
+            <Button size="sm" variant="secondary" disabled={pending} onClick={() => void act({ action: "links-on" })}>
+              Turn on Preview Links
+            </Button>
+          )}
+        </div>
+      )}
       {release.recording && (
         <ReleaseRecordingSummary
           recording={release.recording}

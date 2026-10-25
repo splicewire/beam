@@ -45,6 +45,8 @@ export type PreviewBarData = {
     /** A few Records the Preview's viewer may read, by Record Page id, to open that page on. */
     recordChoices?: Record<string, { label: string; path: string }[]>;
     readiness?: { ready: boolean; blockers: PreviewReadinessItem[]; notes: PreviewReadinessItem[] } | null;
+    /** The Release's own page, where its fixes are pressed; null where this host mounts none. */
+    releaseHref?: string | null;
 };
 
 const bar: CSSProperties = { background: '#171717', color: 'white', fontSize: 14, padding: '10px 16px' };
@@ -82,7 +84,7 @@ export function PreviewBar({ preview }: { preview: PreviewBarData }) {
                 <a href={preview.exitUrl} style={link}>Exit preview</a>
             </div>
             {preview.changes ? <ChangedPages preview={preview} open={open} /> : null}
-            {preview.readiness ? <Readiness readiness={preview.readiness} /> : null}
+            {preview.readiness ? <Readiness preview={preview} open={open} /> : null}
         </aside>
     );
 }
@@ -136,8 +138,12 @@ function PageLink({ page, open, choices }: { page: PreviewReachPage; open: (path
     );
 }
 
-function Readiness({ readiness }: { readiness: NonNullable<PreviewBarData['readiness']> }) {
+/** Every reason Publish would refuse (ADR-0232 d11), each linked to where its fix is pressed. */
+function Readiness({ preview, open }: { preview: PreviewBarData; open: (path: string) => string }) {
+    const readiness = preview.readiness!;
     const count = readiness.blockers.length;
+    // A page the Release changes opens in the Preview, where its author edits it; a Record Page has no one path.
+    const paths = new Map((preview.changes?.pages ?? []).filter((p) => p.path && !p.recordPage).map((p) => [p.entryId, p.path!]));
 
     return (
         <section aria-label="Publish" style={panel}>
@@ -148,6 +154,12 @@ function Readiness({ readiness }: { readiness: NonNullable<PreviewBarData['readi
                         <li key={`${item.code}-${item.entryId ?? ''}-${index}`}>
                             {item.message}
                             {item.fixes.length > 0 ? <span> {`Fix: ${item.fixes.join(' or ')}`}</span> : null}
+                            {item.fixes.includes('open') && item.entryId && paths.has(item.entryId) ? (
+                                <> <a href={open(paths.get(item.entryId)!)} style={link}>Open the page</a></>
+                            ) : null}
+                            {preview.releaseHref && item.fixes.some((fix) => fix !== 'open') ? (
+                                <> <a href={preview.releaseHref} style={link}>Fix in the Release</a></>
+                            ) : null}
                         </li>
                     ))}
                 </ul>

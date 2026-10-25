@@ -140,3 +140,55 @@ describe("Release assembly", () => {
     );
   });
 });
+
+describe("Preview from the Release (ADR-0232 d8, d15; EP-18)", () => {
+  it("opens the Release's Preview and turns its Preview Links on", async () => {
+    const command = vi.fn(async () => undefined);
+    render(
+      <ReleasePanel
+        release={{ ...release, previewHref: "/_beam/preview/open/r1", previewLinksEnabled: false }}
+        entries={entries}
+        onCommand={command}
+      />,
+    );
+
+    expect(screen.getByRole("link", { name: "Preview" }).getAttribute("href")).toBe("/_beam/preview/open/r1");
+    fireEvent.click(screen.getByRole("button", { name: "Turn on Preview Links" }));
+    await waitFor(() => expect(command).toHaveBeenCalledWith({ action: "links-on" }));
+  });
+
+  it("offers the link to copy, rotate or turn off", async () => {
+    const link = "https://site.test/_beam/preview/release/r1?expires=1&signature=a";
+    const writeText = vi.fn(async () => undefined);
+    Object.defineProperty(navigator, "clipboard", { value: { writeText }, configurable: true });
+    const command = vi.fn(async () => undefined);
+    render(
+      <ReleasePanel
+        release={{ ...release, previewLinksEnabled: true, previewLink: link }}
+        entries={entries}
+        onCommand={command}
+      />,
+    );
+
+    expect((screen.getByLabelText("Preview Link") as HTMLInputElement).value).toBe(link);
+    fireEvent.click(screen.getByRole("button", { name: "Copy link" }));
+    expect(writeText).toHaveBeenCalledWith(link);
+    fireEvent.click(screen.getByRole("button", { name: "Rotate links" }));
+    await waitFor(() => expect(command).toHaveBeenCalledWith({ action: "rotate-links" }));
+    fireEvent.click(screen.getByRole("button", { name: "Turn links off" }));
+    await waitFor(() => expect(command).toHaveBeenCalledWith({ action: "links-off" }));
+  });
+
+  it("has no Preview or links on a published Release", () => {
+    render(
+      <ReleasePanel
+        release={{ ...release, status: "published", previewHref: null, previewLinksEnabled: false }}
+        entries={entries}
+        onCommand={vi.fn()}
+      />,
+    );
+
+    expect(screen.queryByRole("link", { name: "Preview" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Turn on Preview Links" })).toBeNull();
+  });
+});

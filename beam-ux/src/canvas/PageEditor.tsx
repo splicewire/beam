@@ -416,6 +416,8 @@ export function PageEditor({
     null,
   );
   const [confirmClear, setConfirmClear] = useState(false);
+  // The Publish dialog's choice (EP-18 ruling 2); see openPublish.
+  const [publishChoice, setPublishChoice] = useState<{ releases: ReleaseRecord[]; releaseId: string } | null>(null);
   const [busy, setBusy] = useState(false);
   // One attempt, not one per render: `transport` is an object literal at most call sites, so a
   // dependency on it re-runs every render, and a FAILED load would then retry forever. The ref is
@@ -552,6 +554,59 @@ export function PageEditor({
     return publish();
   };
 
+  /**
+   * The Publish dialog (ADR-0232 d15, EP-18 ruling 2): publish the saved version now as a Release of one, or add it to
+   * an open Release to publish with others, each with Preview. It opens only where there is a choice to make (the host
+   * offers a version Preview or Releases) and a saved version to make it with; otherwise Publish is publishNow.
+   */
+  const savedRef = local.session?.identity.base ?? null;
+  const offersChoice = !!(transport.previewVersion || (transport.listReleases && transport.releaseCommand));
+  const openPublish = async () => {
+    await mount.flush();
+    if (
+      !offersChoice ||
+      !savedRef ||
+      !publication ||
+      isUnauthored(publication) ||
+      local.session?.dirty ||
+      editedRef.current
+    ) {
+      return publishNow();
+    }
+    let releases: ReleaseRecord[] = [];
+    if (transport.listReleases && transport.releaseCommand) {
+      try {
+        releases = (await transport.listReleases()).filter((release) => release.status === "draft");
+      } catch {
+        notify?.error("Could not load the open Releases");
+      }
+    }
+    setPublishChoice({ releases, releaseId: releases[0]?.id ?? "" });
+  };
+  const addToRelease = async () => {
+    if (!publishChoice?.releaseId || !transport.releaseCommand || !savedRef) return;
+    setBusy(true);
+    try {
+      const updated = await transport.releaseCommand(publishChoice.releaseId, {
+        action: "member",
+        entryId: entryId ?? publication?.id ?? "",
+        ref: savedRef,
+      });
+      setPublishChoice((current) =>
+        current && {
+          ...current,
+          releases: current.releases.map((release) => (release.id === updated.id ? updated : release)),
+        },
+      );
+      notify?.success(`Added to ${updated.title}`);
+    } catch (failure) {
+      notify?.error(failure instanceof Error ? failure.message : "Could not add it to the Release");
+    } finally {
+      setBusy(false);
+    }
+  };
+  const chosenRelease = publishChoice?.releases.find((release) => release.id === publishChoice.releaseId);
+
   /** Open/close the history panel, refetching on every open so it can never show a stale HEAD. */
   const toggleVersions = async () => {
     const opening = !versionsOpen;
@@ -614,7 +669,7 @@ export function PageEditor({
     }
   };
 
-  const openPreview = async (version: EntryVersion) => {
+  const openPreview = async (version: Pick<EntryVersion, "id" | "readable">) => {
     if (!transport.previewVersion) return;
     const popup = window.open("about:blank", "_blank");
     if (!popup) {
@@ -870,7 +925,7 @@ export function PageEditor({
           {/* Publish replaces plain Save (ruling 3): see publishNow. Primary, because it is the act readers see. */}
           <button
             className="pe-btn primary"
-            onClick={publishNow}
+            onClick={() => void openPublish()}
             disabled={busy}
             title="Publish what is on the canvas: readers see it now"
           >
@@ -880,6 +935,69 @@ export function PageEditor({
             Exit
           </button>
         </div>
+
+        {publishChoice && (
+          <ModalAlert label="Publish">
+            <div className="pe-confirm">
+              <span>
+                Publish this page now, as a Release of its own, or add it to an open Release to publish it with the
+                rest.
+              </span>
+              <div className="pe-confirm-actions">
+                <button
+                  className="pe-btn primary"
+                  disabled={busy}
+                  onClick={() => {
+                    setPublishChoice(null);
+                    void publishNow();
+                  }}
+                >
+                  Publish now
+                </button>
+                {transport.previewVersion && savedRef && (
+                  <button className="pe-btn" onClick={() => void openPreview({ id: savedRef, readable: "this version" })}>
+                    Preview
+                  </button>
+                )}
+              </div>
+              {publishChoice.releases.length > 0 && (
+                <div className="pe-confirm-actions">
+                  <label>
+                    Open Release{" "}
+                    <select
+                      value={publishChoice.releaseId}
+                      onChange={(event) =>
+                        setPublishChoice((current) => current && { ...current, releaseId: event.target.value })
+                      }
+                    >
+                      {publishChoice.releases.map((release) => (
+                        <option key={release.id} value={release.id}>
+                          {release.title}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <button className="pe-btn" disabled={busy || !publishChoice.releaseId} onClick={() => void addToRelease()}>
+                    Add to the Release
+                  </button>
+                  {chosenRelease?.previewHref && (
+                    <button
+                      className="pe-btn"
+                      onClick={() => window.open(chosenRelease.previewHref!, "_blank", "noopener")}
+                    >
+                      Preview the Release
+                    </button>
+                  )}
+                </div>
+              )}
+              <div className="pe-confirm-actions">
+                <button className="pe-btn" onClick={() => setPublishChoice(null)}>
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </ModalAlert>
+        )}
 
         {/* Removing content is CONFIRMED, never one click, for the same reason restore is:
                     it changes what every reader of the page is served. */}
