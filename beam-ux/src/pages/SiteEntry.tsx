@@ -196,7 +196,10 @@ export default function SiteEntry(props: SiteEntryProps) {
 
     const page = (
         <>
-            <Head title={entry.title ?? entry.slug} />
+            <Head title={entry.title ?? entry.slug}>
+                {entry.description && <meta name="description" content={entry.description} />}
+                {entry.socialImage && <meta property="og:image" content={entry.socialImage} />}
+            </Head>
 
             {frame(
                 Layout,
@@ -206,7 +209,7 @@ export default function SiteEntry(props: SiteEntryProps) {
                     Template,
                     templateArtifact,
                     ProseTemplate,
-                    editable(<EntryBody artifact={artifact} components={components} bodyProps={{ page: props, bindings: props.bindings }} />),
+                    editable(<EntryBody artifact={artifact} components={components} bodyProps={{ page: props, bindings: props.bindings, record: props.record }} />),
                 ),
             )}
         </>

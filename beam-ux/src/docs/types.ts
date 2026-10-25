@@ -17,6 +17,8 @@ export type EntryPayload = {
      * (beam JS ADR-0006 d1); absent from an older server, which leaves the format gate to answer.
      */
     bodyKind?: string | null;
+    description?: string | null;
+    socialImage?: string | null;
     url: string | null;
     /** The inherited chrome name, or null when nothing in the chain declares one. */
     layout?: string | null;
