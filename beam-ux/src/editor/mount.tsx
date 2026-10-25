@@ -139,6 +139,26 @@ function AddressedVisualEditor({ entryRef }: { entryRef: EntryRef }) {
         setLoaded({ ...envelope, state });
         notify.success('Restored into a draft');
     });
+    const openPreview = async (versionId: string) => {
+        if (!id || !transport.previewVersion) return;
+        const popup = window.open('about:blank', '_blank');
+        if (!popup) {
+            notify.error('Allow popups to open a version preview');
+            return;
+        }
+        popup.opener = null;
+        try {
+            const preview = await transport.previewVersion(id, versionId);
+            const target = new URL(preview.url, window.location.href);
+            if (target.origin !== window.location.origin) {
+                throw new Error('Preview URL must stay on this host');
+            }
+            popup.location.href = target.href;
+        } catch (reason) {
+            popup.close();
+            notify.error(reason instanceof Error ? reason.message : 'Could not open the version preview');
+        }
+    };
     return <CanvasProvider config={{ ...canvasConfig, profile: loaded.profile, styleRegistry: loaded.styleRegistry }}>
         {conflict && <div role="alertdialog" aria-label="Save conflict">
             <p>The server draft changed.</p>
@@ -171,6 +191,9 @@ function AddressedVisualEditor({ entryRef }: { entryRef: EntryRef }) {
         {history && <aside aria-label="History">{loaded.state.versions.map(version => <div key={version.id}>
             <span>{version.readable} {version.label}</span>
             <VersionRecordingReferences recordings={version.recordings} />
+            {transport.previewVersion && (
+                <button disabled={busy} onClick={() => void openPreview(version.id)}>Open</button>
+            )}
             <button disabled={busy || local.session!.dirty} onClick={() => void restore(version.id)}>Restore {version.readable} into draft</button>
         </div>)}</aside>}
         {!local.session.source && local.session.pageSettings && <PageSettings value={local.session.pageSettings} pageFields={loaded.pageFields} fileLanguages={loaded.fileLanguages} onChange={settings => local.change(local.session!.body, settings)} />}

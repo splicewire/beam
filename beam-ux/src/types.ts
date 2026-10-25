@@ -76,6 +76,8 @@ export interface UxBuilderClient<TBody = BeamUxEntryBodyData> {
     command: import("./releases").ReleaseCommand,
   ): Promise<import("./releases").ReleaseRecord>;
   listVersions?(id: string): Promise<EntryPublicationState>;
+  /** Mint an author-only, version-scoped preview URL for a saved entry version. */
+  previewVersion?(id: string, versionId: string): Promise<{ url: string }>;
   inspectReleaseFile?(
     memberId: string,
   ): Promise<import("./files").FileInspection>;

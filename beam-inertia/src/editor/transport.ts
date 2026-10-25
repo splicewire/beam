@@ -253,6 +253,8 @@ const publicationClient = {
 
     return (await readData(res, "versions")) as EntryPublicationState;
   },
+  previewVersion: async (id: string, versionId: string) =>
+    (await publicationPost(id, "preview", { versionId })) as { url: string },
   saveDraft: async (
     id: string,
     body: Record<string, unknown>,
@@ -367,6 +369,10 @@ export const bodyClient: UxBuilderClient = {
   get listVersions() {
     const client = getBeamInertiaConfig().entryClient ?? publicationClient;
     return client.listVersions?.bind(client);
+  },
+  get previewVersion() {
+    const client = getBeamInertiaConfig().entryClient ?? publicationClient;
+    return client.previewVersion?.bind(client);
   },
   get saveDraft() {
     const client = getBeamInertiaConfig().entryClient ?? publicationClient;

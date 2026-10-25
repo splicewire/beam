@@ -20,6 +20,7 @@ const restoreVersion = vi.hoisted(() => vi.fn());
 const listReleases = vi.hoisted(() => vi.fn());
 const createRelease = vi.hoisted(() => vi.fn());
 const releaseCommand = vi.hoisted(() => vi.fn());
+const previewVersion = vi.hoisted(() => vi.fn());
 const provided = vi.hoisted(() => ({ profile: undefined as unknown }));
 vi.mock("./local-session", async (importOriginal) => {
   const original = await importOriginal<typeof import("./local-session")>();
@@ -46,6 +47,7 @@ vi.mock("./context", () => ({
       listReleases,
       createRelease,
       releaseCommand,
+      previewVersion,
       publish: publishVersion,
       restoreVersion,
     },
@@ -112,6 +114,7 @@ beforeEach(() => {
 });
 afterEach(() => {
   cleanup();
+  vi.restoreAllMocks();
   loadBody.mockReset();
   saveBody.mockReset();
   saveDraft.mockReset();
@@ -119,6 +122,7 @@ afterEach(() => {
   listReleases.mockReset();
   createRelease.mockReset();
   releaseCommand.mockReset();
+  previewVersion.mockReset();
   publishVersion.mockReset();
   restoreVersion.mockReset();
 });
@@ -488,4 +492,35 @@ it("keeps the page settings and the Page Fields offer after a History restore", 
   await waitFor(() => expect(loadBody).toHaveBeenCalledTimes(2));
   expect(screen.getByLabelText("Child page fields")).toBeTruthy();
   expect((screen.getByLabelText("Title") as HTMLInputElement).value).toBe("Pie");
+it("opens a saved history version through the author preview transport without writing it", async () => {
+  loadBody.mockResolvedValue({ body: SAVED });
+  listVersions.mockResolvedValue({
+    headVersion: "v2",
+    publishedVersion: "v2",
+    draftPending: false,
+    versions: [{ id: "v1", readable: "v1-old", label: "Older" }],
+  });
+  previewVersion.mockResolvedValue({ url: "/beam-ux/preview/signed" });
+  const popup = {
+    opener: window,
+    location: { href: "about:blank" },
+    close: vi.fn(),
+  } as unknown as Window;
+  vi.spyOn(window, "open").mockReturnValue(popup);
+
+  render(<VisualEditorMount entryRef={ref("entry-a")} />);
+  await screen.findByRole("button", { name: "Save" });
+  fireEvent.click(screen.getByRole("button", { name: "History" }));
+  fireEvent.click(await screen.findByRole("button", { name: "Open" }));
+
+  await waitFor(() =>
+    expect(popup.location.href).toBe(
+      `${window.location.origin}/beam-ux/preview/signed`,
+    ),
+  );
+  expect(window.open).toHaveBeenCalledWith("about:blank", "_blank");
+  expect(popup.opener).toBeNull();
+  expect(previewVersion).toHaveBeenCalledWith("entry-a", "v1");
+  expect(saveDraft).not.toHaveBeenCalled();
+  expect(saveBody).not.toHaveBeenCalled();
 });
