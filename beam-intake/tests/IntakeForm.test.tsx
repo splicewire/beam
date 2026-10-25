@@ -1,6 +1,6 @@
 import { afterEach, expect, it, vi } from 'vitest';
-import { act, cleanup, render, screen, waitFor } from '@testing-library/react';
-import { IntakeForm, PublicIntakeProvider, submitToIntakeDoor, type PublicIntakeServices } from '../src/IntakeForm';
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { IntakeForm, PublicIntakeProvider, pointerTokens, submitToIntakeDoor, type PublicIntakeServices } from '../src/IntakeForm';
 import { IntakeProvider } from '../src/provider';
 import type { IntakeFormRenderProps } from '../src/types';
 
@@ -88,4 +88,35 @@ it('posts to the public intake door with the CSRF header the other transports se
     expect(fetchMock.mock.calls[0][0]).toBe('/beam/intake/forms/contact');
     expect(fetchMock.mock.calls[0][1]).toMatchObject({ method: 'POST', body: JSON.stringify({ email: 'a@b.test' }), headers: { 'X-XSRF-TOKEN': 'abc=' } });
     expect(await submitToIntakeDoor('contact', {})).toEqual({ ok: false, status: 422, message: 'Invalid.', errors: { '/email': ['Required.'] } });
+});
+
+it('decodes the door\'s JSON Pointer error paths per RFC 6901 (~1 is /, ~0 is ~)', () => {
+    expect(pointerTokens('')).toEqual([]);
+    expect(pointerTokens('/email')).toEqual(['email']);
+    expect(pointerTokens('/a~1b')).toEqual(['a/b']);
+    expect(pointerTokens('/m~0n')).toEqual(['m~n']);
+    expect(pointerTokens('/~01'), '~0 is decoded after ~1, so ~01 is ~1, not /').toEqual(['~1']);
+    expect(pointerTokens('/address/street')).toEqual(['address', 'street']);
+});
+
+it('puts a field named with / or ~ in its own error when SchemaForm draws it', async () => {
+    const schema = { type: 'object', properties: { 'a/b': { type: 'string', title: 'Slash' } } };
+    const submit = vi.fn().mockResolvedValue({ ok: false, status: 422, errors: { '/a~1b': ['Slash is wrong.'] } });
+    render(<PublicIntakeProvider value={{ schemas: { slash: schema }, submit }}><IntakeForm captureKey="slash" /></PublicIntakeProvider>);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Send' }));
+
+    expect(await screen.findByText('Slash is wrong.')).toBeTruthy();
+});
+
+it('a network failure leaves the form usable with a retryable error, and no unhandled rejection', async () => {
+    const submit = vi.fn().mockRejectedValueOnce(new TypeError('Failed to fetch')).mockResolvedValueOnce({ ok: true });
+    const rendered = mount({ submit });
+
+    act(() => rendered.current!.onSubmit({ email: 'ada@example.test' }));
+
+    expect(await screen.findByText(/could not be sent/)).toBeTruthy();
+    await waitFor(() => expect(rendered.current?.disabled).toBe(false));
+    act(() => rendered.current!.onSubmit({ email: 'ada@example.test' }));
+    expect(await screen.findByRole('status')).toBeTruthy();
 });

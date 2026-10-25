@@ -60,11 +60,16 @@ export async function submitToIntakeDoor(
     return { ok: false, status: response.status, message: body.message, errors: body.errors ?? {} };
 }
 
+/** A JSON Pointer's reference tokens (RFC 6901): split on `/`, then `~1` decodes to `/` and `~0` to `~`, in that order. */
+export function pointerTokens(pointer: string): string[] {
+    return pointer === '' ? [] : pointer.split('/').slice(1).map(token => token.replace(/~1/g, '/').replace(/~0/g, '~'));
+}
+
 /** The door's JSON-pointer errors as an RJSF error schema: `/email` becomes `{ email: { __errors } }`, `''` the root. */
 function errorSchema(errors: Record<string, string[]>): Record<string, unknown> {
     const out: Record<string, unknown> = {};
     for (const [pointer, messages] of Object.entries(errors)) {
-        const path = pointer.split('/').filter(Boolean);
+        const path = pointerTokens(pointer);
         let cursor = out;
         for (const part of path) {
             cursor = (cursor[part] ??= {}) as Record<string, unknown>;
@@ -111,10 +116,15 @@ export function IntakeForm({ captureKey, submitLabel = 'Send', successMessage = 
         if (preview || state.status === 'sending') return;
         setState({ status: 'sending', errors: {} });
         const payload = Object.fromEntries(Object.entries(fields).filter(([, value]) => value !== undefined && value !== ''));
-        const result = await submit(captureKey, { ...payload, [honeypotField]: honeypot.current?.value ?? '' });
-        setState(result.ok
-            ? { status: 'sent', errors: {} }
-            : { status: 'idle', errors: result.errors, message: result.status === 429 ? 'Too many submissions. Please wait a minute and try again.' : result.message });
+        try {
+            const result = await submit(captureKey, { ...payload, [honeypotField]: honeypot.current?.value ?? '' });
+            setState(result.ok
+                ? { status: 'sent', errors: {} }
+                : { status: 'idle', errors: result.errors, message: result.status === 429 ? 'Too many submissions. Please wait a minute and try again.' : result.message });
+        } catch {
+            // A network failure never strands the form: it is usable again, the author's entries kept, to retry.
+            setState({ status: 'idle', errors: {}, message: 'Your submission could not be sent. Check your connection and try again.' });
+        }
     };
     const form: IntakeFormRenderProps = {
         schema,
