@@ -19,7 +19,8 @@ export function PageSettings({ value, onChange, pageFields = null, fileLanguages
     ['navGroup', 'Navigation group'], ['layout', 'Layout'], ['template', 'Template'],
     ['description', 'Description'], ['socialImage', 'Social image'], ['publishedDate', 'Published date'],
   ] as const;
-  return <details><summary>Page settings</summary>
+  return <details className="pe-page-settings"><summary>Page settings</summary>
+    <div className="pe-page-settings-fields" role="region" aria-label="Page settings fields">
     <p>Saved with your draft. Publish makes these settings visible.</p>
     {fields.map(([key, label]) => <label key={key}>{label}
       <input type={key === 'publishedDate' ? 'date' : 'text'} value={value[key] ?? ''}
@@ -41,6 +42,7 @@ export function PageSettings({ value, onChange, pageFields = null, fileLanguages
     </select></label>}
     {pageFields?.schema && <PageFieldInputs schema={pageFields.schema} value={value.fields ?? {}} onChange={fields => onChange({ ...value, fields })} />}
     <UnclaimedKeys value={value.unclaimed ?? {}} onChange={unclaimed => onChange({ ...value, unclaimed })} />
+    </div>
   </details>;
 }
 

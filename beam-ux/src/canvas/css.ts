@@ -223,7 +223,15 @@ export function peCss(t?: Partial<CanvasTheme>): string {
 .pe-canvas [data-bd-component]:hover{outline:1.5px dotted ${c.accent};outline-offset:1px}
 .pe-canvas [contenteditable="true"]{outline:2px solid ${c.editAccent} !important;cursor:text}
 .pe-canvas .ve-island{position:relative}
-.pe-bar{position:fixed;top:0;left:0;right:0;z-index:2147483200;display:flex;align-items:center;gap:8px;height:40px;padding:0 14px;background:${c.panelBg};color:${c.panelFg};border-bottom:1px solid rgba(255,255,255,.1);font-family:${c.fontBody};font-size:11px}
+.pe-bar{box-sizing:border-box;position:fixed;top:0;left:0;right:0;z-index:2147483201;display:flex;align-items:center;gap:8px;height:40px;padding:0 14px;background:${c.panelBg};color:${c.panelFg};border-bottom:1px solid rgba(255,255,255,.1);font-family:${c.fontBody};font-size:11px}
+/* Keep the summary in the 40px bar; expanding fields must not change its flex-item height.
+   The bar stacks above the floating panels so this dropdown remains clickable over Insert. */
+.pe-page-settings{flex:none}
+.pe-page-settings summary{cursor:pointer}
+.pe-page-settings-fields{position:fixed;top:40px;left:14px;box-sizing:border-box;width:min(360px,calc(100vw - 28px));max-height:calc(100dvh - 54px);overflow:auto;display:grid;gap:10px;padding:14px;background:${c.panelBg};color:${c.panelFg};border:1px solid rgba(255,255,255,.16);border-radius:0 0 8px 8px;box-shadow:0 12px 30px rgba(0,0,0,.3);font-size:12px}
+.pe-page-settings-fields p{margin:0;line-height:1.4}
+.pe-page-settings-fields label{display:grid;gap:4px}
+.pe-page-settings-fields input,.pe-page-settings-fields select{box-sizing:border-box;width:100%;min-width:0;padding:6px 8px;border:1px solid rgba(255,255,255,.24);border-radius:4px;background:${c.rootBg};color:${c.panelFg};font:inherit}
 .pe-brand{display:flex;align-items:center;gap:8px;color:#fff}
 .pe-mark{width:14px;height:14px;border-radius:23%;background:${c.accent}}
 .pe-btn{background:none;border:1px solid rgba(255,255,255,.16);border-radius:8px;color:${c.panelFg};cursor:pointer;font:inherit;font-size:11px;padding:5px 12px}
