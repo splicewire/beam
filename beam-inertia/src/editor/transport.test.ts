@@ -360,3 +360,73 @@ it("uses captured file preconditions, declared routes and CSRF without silent re
   expect(bodyClient.takeReleaseFile).toBeUndefined();
   expect(bodyClient.restoreMissingReleaseFile).toBeUndefined();
 });
+
+it("remirrors one file and takes all release files through the declared routes", async () => {
+  const remirrorResult = {
+    status: "remirrored",
+    message: "Published file restored.",
+    entryId: "entry-1",
+    headVersion: "head-2",
+    publishedVersion: "release-1",
+  };
+  const batchResult = { count: 1, entries: [remirrorResult] };
+  const fetch = vi
+    .fn()
+    .mockResolvedValueOnce(Response.json({ data: remirrorResult }))
+    .mockResolvedValueOnce(Response.json({ data: batchResult }));
+  vi.stubGlobal("fetch", fetch);
+  vi.stubGlobal("document", { cookie: "XSRF-TOKEN=files%20csrf" });
+  configureBeamInertia({});
+
+  const input = {
+    expectedHeadVersion: "head-2",
+    expectedPublishedVersion: "release-1",
+    expectedFileExists: true,
+    expectedFileSha256: "abc123",
+    fingerprint: "entry-1:path/to/file",
+    confirmed: true,
+  };
+  const batchInput = {
+    items: [
+      {
+        memberId: "member/id",
+        expectedHeadVersion: "head-2",
+        expectedPublishedVersion: "release-1",
+        expectedFileExists: true,
+        expectedFileSha256: "abc123",
+        fingerprint: "entry-1:path/to/file",
+      },
+    ],
+    confirmed: true,
+  };
+
+  expect(
+    await bodyClient.remirrorReleaseFile!("member/id", input),
+  ).toEqual(remirrorResult);
+  expect(
+    await bodyClient.takeAllReleaseFiles!("member/id", batchInput),
+  ).toEqual(batchResult);
+  for (const [position, op, payload] of [
+    [1, "remirror-file", input],
+    [2, "take-all-drafts", batchInput],
+  ] as const) {
+    expect(fetch).toHaveBeenNthCalledWith(
+      position,
+      `/beam-ux-release-files/member%2Fid/${op}`,
+      {
+        method: "POST",
+        credentials: "same-origin",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+          "X-XSRF-TOKEN": "files csrf",
+        },
+        body: JSON.stringify(payload),
+      },
+    );
+  }
+
+  configureBeamInertia({ entryClient: client });
+  expect(bodyClient.remirrorReleaseFile).toBeUndefined();
+  expect(bodyClient.takeAllReleaseFiles).toBeUndefined();
+});

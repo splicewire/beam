@@ -109,12 +109,18 @@ export function BlockInspector(){
    <datalist id={tokenId}>{tokens.map(token=><option key={token} value={token}>{resolve(token)}</option>)}</datalist>
    {Object.entries(PANELS).map(([name,fields])=><details key={name}><summary>{name}</summary>{fields.map(field)}</details>)}
    <details><summary>Gradient stops</summary>
-    <label>Start colour<input type="color" value={gradientStart} onChange={event=>setGradientStart(event.target.value)}/></label>
-    <label>End colour<input type="color" value={gradientEnd} onChange={event=>setGradientEnd(event.target.value)}/></label>
+    <label>Start colour token<select aria-label="Start colour token" value={tokens.includes(gradientStart)?gradientStart:''} onChange={event=>{if(event.target.value)setGradientStart(event.target.value);}}>
+     <option value="">Custom colour</option>{tokens.map(token=><option key={token} value={token}>{token}</option>)}</select></label>
+    <label>Start colour<input type={tokens.includes(gradientStart)?'text':'color'} value={gradientStart} onChange={event=>setGradientStart(event.target.value)}/></label>
+    <label>End colour token<select aria-label="End colour token" value={tokens.includes(gradientEnd)?gradientEnd:''} onChange={event=>{if(event.target.value)setGradientEnd(event.target.value);}}>
+     <option value="">Custom colour</option>{tokens.map(token=><option key={token} value={token}>{token}</option>)}</select></label>
+    <label>End colour<input type={tokens.includes(gradientEnd)?'text':'color'} value={gradientEnd} onChange={event=>setGradientEnd(event.target.value)}/></label>
     <button type="button" onClick={()=>write('background-image',`linear-gradient(${gradientStart}, ${gradientEnd})`)}>Apply gradient</button>
    </details>
    <details><summary>Advanced</summary>{[...new Set(style.layers.flatMap(layer=>Object.keys(layer.declarations)))].filter(property=>!Object.values(PANELS).flat().includes(property)).map(field)}
     <label>CSS property<input value={rawProperty} onChange={event=>setRawProperty(event.target.value)}/></label>
+    <label>CSS value token<select aria-label="CSS value token" value={tokens.includes(rawValue)?rawValue:''} onChange={event=>{if(event.target.value)setRawValue(event.target.value);}}>
+     <option value="">Custom value</option>{tokens.map(token=><option key={token} value={token}>{token}</option>)}</select></label>
     <label>CSS value<input list={tokenId} value={rawValue} onChange={event=>setRawValue(event.target.value)}/></label><button type="button" onClick={()=>write(rawProperty,rawValue)}>Set declaration</button>
    </details>
    <section aria-label="Text contrast"><h3>Text contrast</h3><p>{ratio===null?'Contrast unknown: use opaque resolved colours.':`${ratio.toFixed(2)}:1 — ${ratio>=4.5?'meets':'below'} normal-text AA`}</p>

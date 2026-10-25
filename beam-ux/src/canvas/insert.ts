@@ -3,6 +3,7 @@
 // The body is a single-root JsonDoc `[root]`, so path "0" is the root — this subsumes the host's model.
 import { getAt, indexOf, insertInto, isJsonBlock, isLeafText, parentOf } from '../blockdoc/json.js';
 import type { JsonBlock, JsonDoc } from '../blockdoc/json.js';
+import { freshBlockIds } from '../blockdoc/identity.js';
 
 /**
  * Insert a fresh block relative to the current selection. When the target is the root container (path
@@ -29,13 +30,13 @@ export function insertRelativeTo(
 
     // No root at all: this is the document's first block. Append to the root ARRAY.
     if (doc.length === 0) {
-        return insertInto(doc, '', 0, make());
+        return insertInto(doc, '', 0, freshBlockIds(make()));
     }
 
     if (!node || !isJsonBlock(node)) return doc;
 
     if (isLeafText(node) || target !== '0') {
-        return insertInto(doc, parentOf(target) || '', indexOf(target) + 1, make());
+        return insertInto(doc, parentOf(target) || '', indexOf(target) + 1, freshBlockIds(make()));
     }
-    return insertInto(doc, target, node.children.length, make());
+    return insertInto(doc, target, node.children.length, freshBlockIds(make()));
 }

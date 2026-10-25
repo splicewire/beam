@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { parse } from './lens.js';
+import { parse, print } from './lens.js';
 import { fromJson } from './index.js';
 import {
     toJson,
@@ -46,6 +46,13 @@ describe('toJson — AST-free projection', () => {
             { name: 'title', kind: 'string', value: 'x' },
             { name: 'disabled', kind: 'boolean-shorthand', value: true },
         ]);
+    });
+
+    it('preserves declared prop kinds through print and parse', () => {
+        const source = '<Hero count={3} flag={a + b} title="x" disabled />';
+        const first = toJson(parse(source));
+        const second = toJson(parse(print(fromJson(first))));
+        expect((second[0] as JsonBlock).props).toEqual((first[0] as JsonBlock).props);
     });
 });
 

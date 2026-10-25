@@ -166,6 +166,36 @@ const publicationClient = {
     id: string,
     input: import("@splicewire/beam-ux").FileReconcileInput,
   ) => reconcilePost(id, "restore-missing-file", input),
+  remirrorReleaseFile: (
+    id: string,
+    input: import("@splicewire/beam-ux").FileReconcileInput,
+  ) => reconcilePost(id, "remirror-file", input),
+  takeAllReleaseFiles: async (
+    id: string,
+    input: Parameters<
+      NonNullable<UxBuilderClient["takeAllReleaseFiles"]>
+    >[1],
+  ) => {
+    const response = await fetch(
+      `/beam-ux-release-files/${encodeURIComponent(id)}/take-all-drafts`,
+      {
+        method: "POST",
+        credentials: "same-origin",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+          "X-XSRF-TOKEN": csrfToken(),
+        },
+        body: JSON.stringify(input),
+      },
+    );
+    return (await readData(
+      response,
+      "take-all-drafts",
+    )) as Awaited<
+      ReturnType<NonNullable<UxBuilderClient["takeAllReleaseFiles"]>>
+    >;
+  },
   recordReleaseFile: async (memberId: string, releaseId: string) => {
     const response = await fetch(
       `/beam-ux-release-files/${encodeURIComponent(memberId)}/commit-now`,
@@ -299,6 +329,14 @@ export const bodyClient: UxBuilderClient = {
   get restoreMissingReleaseFile() {
     const client = getBeamInertiaConfig().entryClient ?? publicationClient;
     return client.restoreMissingReleaseFile?.bind(client);
+  },
+  get remirrorReleaseFile() {
+    const client = getBeamInertiaConfig().entryClient ?? publicationClient;
+    return client.remirrorReleaseFile?.bind(client);
+  },
+  get takeAllReleaseFiles() {
+    const client = getBeamInertiaConfig().entryClient ?? publicationClient;
+    return client.takeAllReleaseFiles?.bind(client);
   },
   get recordReleaseFile() {
     const client = getBeamInertiaConfig().entryClient ?? publicationClient;

@@ -80,6 +80,19 @@ it('publishes and inserts only the server profile palette', () => {
     expect(onChange).not.toHaveBeenCalled();
     act(() => insert({ nodeType: 'Text' }));
     expect(onChange).toHaveBeenCalledOnce();
+    expect((onChange.mock.calls[0][0][0] as JsonBlock).id).toMatch(/^[\da-f]{8}-[\da-f]{4}-7[\da-f]{3}-[89ab][\da-f]{3}-[\da-f]{12}$/);
+});
+
+it('mints a fresh UUIDv7 when a palette template is dropped onto the canvas', () => {
+    const onChange = vi.fn();
+    const { container } = render(wrap(<CanvasWidget value={[block({ name: 'div' })]} onChange={onChange} />));
+    const target = container.querySelector('[data-bd-path="0"]') as HTMLElement;
+    const dataTransfer = { getData: vi.fn(() => 'Heading') } as unknown as DataTransfer;
+    fireEvent.dragOver(target, { dataTransfer });
+    fireEvent.drop(target, { dataTransfer });
+    expect(onChange).toHaveBeenCalledOnce();
+    const inserted = onChange.mock.calls[0][0].find((node: JsonBlock) => node.id !== undefined && node.id !== '');
+    expect(inserted?.id).toMatch(/^[\da-f]{8}-[\da-f]{4}-7[\da-f]{3}-[89ab][\da-f]{3}-[\da-f]{12}$/);
 });
 
 const block = (over: Partial<JsonBlock>): JsonBlock => ({
@@ -397,6 +410,33 @@ describe('PageEditor — mode fork + transport', async () => {
         // enter window mode
         await act(async () => { fireEvent(window, new CustomEvent('beam-ux:mode', { detail: { mode: 'window' } })); });
         expect(container.querySelector('.pe-bar')).not.toBeNull();
+    });
+
+    it('offers Source Mode only for TSX entries', async () => {
+        const transport = {
+            ...publishingTransport(),
+            printSource: vi.fn().mockResolvedValue({ source: 'export default () => <div />' }),
+            readSource: vi.fn().mockResolvedValue({ body: doc() }),
+        };
+        const { rerender } = render(wrap(<PageEditor entryId="entry-1" userId="author-1" slug="home" body={doc()} transport={transport} />));
+        await act(async () => { fireEvent(window, new CustomEvent('beam-ux:mode', { detail: { mode: 'window' } })); await Promise.resolve(); });
+        expect(screen.getByRole('button', { name: 'Source Mode' })).toBeTruthy();
+
+        rerender(wrap(<PageEditor entryId="entry-1" userId="author-1" format="mdx" slug="home" body={doc()} transport={transport} />));
+        expect(screen.queryByRole('button', { name: 'Source Mode' })).toBeNull();
+
+        rerender(wrap(<PageEditor entryId="entry-1" userId="author-1" format="tsx" slug="home" body={doc()} transport={transport} />));
+        expect(screen.getByRole('button', { name: 'Source Mode' })).toBeTruthy();
+    });
+
+    it('shows the moved-base conflict dialog after the server rejects a stale draft save', async () => {
+        const transport = publishingTransport();
+        transport.saveDraft.mockRejectedValueOnce(Object.assign(new Error('stale base'), { status: 409 }));
+        const { container } = await enterEditMode(transport);
+        await act(async () => { fireEvent.click(dockButton(container, 'Save draft')!); await Promise.resolve(); });
+        expect(screen.getByRole('alertdialog', { name: 'Save conflict' })).toBeTruthy();
+        expect(screen.getByRole('button', { name: 'Reload theirs' })).toBeTruthy();
+        expect(screen.getByRole('button', { name: 'Save ours as a new version' })).toBeTruthy();
     });
 
     it('refuses editing when only programmatic save-body is available', async () => {

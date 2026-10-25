@@ -386,7 +386,7 @@ export function removeProp(block: JsonBlock, name: string): JsonBlock {
     return { ...block, props: block.props.filter((p) => p.name !== name) };
 }
 
-/** Set a leaf block's text (replaces its children with a single text node), immutably. */
+/** @deprecated Prefer immutable JsonNode transforms; retained for the documented jsondoc API. */
 export function setText(block: JsonBlock, value: string): JsonBlock {
     return { ...block, children: [{ kind: 'text', value }] };
 }

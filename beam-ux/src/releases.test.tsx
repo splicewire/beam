@@ -57,6 +57,7 @@ describe("Release assembly", () => {
     ).toBeNull();
   });
   it("offers explicit rebase and drop for a moved pin and blocks publish", () => {
+    const command = vi.fn();
     render(
       <ReleasePanel
         release={{
@@ -74,15 +75,17 @@ describe("Release assembly", () => {
           ],
         }}
         entries={entries}
-        onCommand={vi.fn()}
+        onCommand={command}
       />,
     );
     expect(
       (screen.getByRole("button", { name: "Publish now" }) as HTMLButtonElement)
         .disabled,
     ).toBe(true);
-    expect(screen.getByRole("button", { name: "Rebase" })).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Drop" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Rebase onto theirs" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Drop the entry" })).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Drop the entry" }));
+    expect(command).toHaveBeenCalledWith({ action: "drop", entryId: "page" });
   });
   it("keeps a failed admission visible and never reports success", async () => {
     render(

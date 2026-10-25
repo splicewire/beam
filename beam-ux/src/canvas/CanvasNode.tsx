@@ -43,7 +43,8 @@ export interface CanvasNodeProps {
     path: string;
     /** The path currently being inline-text-edited, or null. */
     editing: string | null;
-    onEditText: (path: string, text: string) => void;
+    /** @deprecated Text leaves are edited by the prose seam; this callback is no longer called. */
+    onEditText?: (path: string, text: string) => void;
     onEditProse?: ProseChange;
     onEditMd?: (path: string, md: string) => void;
     dnd: Dnd;
@@ -55,7 +56,7 @@ export function edgeAt(el: HTMLElement, clientY: number): DropEdge {
     return clientY - rect.top < rect.height / 2 ? 'before' : 'after';
 }
 
-export function CanvasNode({ node, path, editing, onEditText, onEditMd, onEditProse, dnd }: CanvasNodeProps) {
+export function CanvasNode({ node, path, editing, onEditMd, onEditProse, dnd }: CanvasNodeProps) {
     const config = useCanvas();
     const { MdxEdit, registry } = config;
     const isEditingThis = editing === path;
@@ -214,7 +215,7 @@ export function CanvasNode({ node, path, editing, onEditText, onEditMd, onEditPr
         const subtree = (nodes: JsonNode[], parent: string) => <div style={{pointerEvents:'auto', minHeight: nodes.length ? undefined : 24}} data-bd-slot={parent}
             onDragOver={event => {event.preventDefault(); event.stopPropagation(); dnd.onDragOverNode(`${parent}.${nodes.length}`, 'before');}}
             onDrop={event => {event.preventDefault(); event.stopPropagation(); dnd.onDrop(event.dataTransfer);}}>
-            <CanvasSiblings nodes={nodes} parent={parent} editing={editing} onEditText={onEditText} onEditMd={onEditMd} onEditProse={onEditProse} dnd={dnd}/>
+            <CanvasSiblings nodes={nodes} parent={parent} editing={editing} onEditMd={onEditMd} onEditProse={onEditProse} dnd={dnd}/>
         </div>;
         const declaration = config.profile?.nodes.find(entry => entry.name === block.name);
         const names = new Set([...(declaration?.slots ?? []).map(slot => slot.name), ...Object.keys(block.slots ?? {})]);
@@ -240,7 +241,7 @@ export function CanvasNode({ node, path, editing, onEditText, onEditMd, onEditPr
     return React.createElement(
         tag,
         props,
-        <CanvasSiblings nodes={block.children} parent={path} editing={editing} onEditText={onEditText}
+        <CanvasSiblings nodes={block.children} parent={path} editing={editing}
             onEditMd={onEditMd} onEditProse={onEditProse} dnd={dnd}/>,
     );
 }

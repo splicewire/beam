@@ -40,6 +40,7 @@ import { DEFAULT_CANVAS_THEME, dropIndicatorCss, selectionCss } from './css.js';
 import type { CanvasTheme } from './css.js';
 import { setAttrs } from './props.js';
 import { insertRelativeTo } from './insert.js';
+import { freshBlockIds } from '../blockdoc/identity.js';
 import { DEFAULT_BLOCK_TEMPLATES } from './templates.js';
 import { profileAttrs, profileTemplates, profileTemplatesAtParent, setProfileAttrs } from './profile';
 
@@ -353,7 +354,7 @@ export function CanvasWidget({
                 const template = offered.find((t) => t.label === templateNodeType);
                 if (template) {
                     const index = indexOf(dropTarget.path) + (dropTarget.edge === 'after' ? 1 : 0);
-                    emit(insertInto(doc, parentOf(dropTarget.path), index, template.make()));
+                    emit(insertInto(doc, parentOf(dropTarget.path), index, freshBlockIds(template.make())));
                 }
             } else if (dropTarget && dragPath) {
                 const move = dropTarget.edge === 'before' ? moveBefore : moveAfter;
@@ -461,7 +462,7 @@ export function CanvasWidget({
                 onClickCapture={onCanvasClick}
                 onContextMenu={onCanvasContextMenu}
             >
-                <CanvasSiblings nodes={doc} parent="" editing={editing} onEditText={() => {}}
+                <CanvasSiblings nodes={doc} parent="" editing={editing}
                     onEditProse={(parent,start,end,body)=>{
                         const replace=(children:JsonDoc)=>[...children.slice(0,start),...body,...children.slice(end)];
                         emit(parent ? updateAt(doc,parent,node=>isJsonBlock(node)?{...node,children:replace(node.children)}:node) : replace(doc));

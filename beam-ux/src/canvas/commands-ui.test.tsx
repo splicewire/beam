@@ -4,17 +4,18 @@ import {afterEach,it,expect,vi} from 'vitest';
 import {FiveRegionEditShell} from '@schemastud/frame';
 import {createWidgetRegistry} from '@schemastud/seam';
 import {CanvasProvider} from './context';
+import type {CanvasConfig} from './context';
 import {CanvasWidget} from './CanvasWidget';
 import {BlockInspector} from './BlockInspector';
 import type {JsonBlock,JsonDoc} from '../blockdoc/json';
 const block=(id:string,color:string):JsonBlock=>({kind:'block',id,name:'div',dynamic:false,isComponent:false,props:[],children:[],style:{layers:[{declarations:{color}}]}});
 const config={registry:{},MdxView:()=>null,MdxEdit:()=>null};
 afterEach(()=>{cleanup();vi.restoreAllMocks();});
-function Harness({readOnly=false,onChange=()=>{},initial}:{readOnly?:boolean;onChange?:(doc:JsonDoc)=>void;initial?:JsonDoc}){
+function Harness({readOnly=false,onChange=()=>{},initial,profile}:{readOnly?:boolean;onChange?:(doc:JsonDoc)=>void;initial?:JsonDoc;profile?:CanvasConfig['profile']}){
  const [doc,setDoc]=useState<JsonDoc>(initial??[block('a','red'),block('b','blue')]);
  const state=useRef({doc,readOnly,onChange});state.current={doc,readOnly,onChange};
  const registry=useMemo(()=>{const r=createWidgetRegistry();r.registerWidget('canvas',props=><CanvasWidget {...props} value={state.current.doc} readOnly={state.current.readOnly} onChange={next=>{setDoc(next);state.current.onChange(next);}}/>);return r;},[]);
- return <CanvasProvider config={config}><button onClick={()=>setDoc([block('replacement','yellow')])}>Replace document</button><FiveRegionEditShell widget="canvas" schema={{type:'object'}} registry={registry} record={doc as unknown as Record<string,unknown>} inspector={<BlockInspector/>}/><output data-testid="doc">{JSON.stringify(doc)}</output></CanvasProvider>;
+ return <CanvasProvider config={{...config,profile}}><button onClick={()=>setDoc([block('replacement','yellow')])}>Replace document</button><FiveRegionEditShell widget="canvas" schema={{type:'object'}} registry={registry} record={doc as unknown as Record<string,unknown>} inspector={<BlockInspector/>}/><output data-testid="doc">{JSON.stringify(doc)}</output></CanvasProvider>;
 }
 it('selects several outline blocks and applies one mixed-value style edit',async()=>{
  const change=vi.fn();render(<Harness onChange={change}/>);
@@ -46,6 +47,26 @@ it('a failed clipboard write never cuts the document',async()=>{
  await act(async()=>fireEvent.click(screen.getByText('Cut blocks')));
  expect(screen.getByRole('alert').textContent).toContain('denied');expect(change).not.toHaveBeenCalled();
 });
+it('copies and cuts selected blocks only after the clipboard write succeeds',async()=>{
+ const writeText=vi.fn().mockResolvedValue(undefined);
+ Object.defineProperty(navigator,'clipboard',{configurable:true,value:{writeText}});
+ const change=vi.fn();render(<Harness onChange={change}/>);fireEvent.click(screen.getByText('div 0'));
+ await act(async()=>fireEvent.click(screen.getByText('Copy blocks')));
+ expect(writeText).toHaveBeenCalledTimes(1);expect(change).not.toHaveBeenCalled();
+ await act(async()=>fireEvent.click(screen.getByText('Cut blocks')));
+ expect(writeText).toHaveBeenCalledTimes(2);expect(change).toHaveBeenCalledTimes(1);
+ expect(JSON.parse(screen.getByTestId('doc').textContent!).map((node:JsonBlock)=>node.id)).toEqual(['b']);
+});
+it('supports copy and cut keyboard shortcuts outside editable fields',async()=>{
+ const writeText=vi.fn().mockResolvedValue(undefined);
+ Object.defineProperty(navigator,'clipboard',{configurable:true,value:{writeText}});
+ const change=vi.fn();render(<Harness onChange={change}/>);fireEvent.click(screen.getByText('div 0'));
+ const canvas=document.querySelector('.ve-canvas-widget')!;
+ await act(async()=>fireEvent.keyDown(canvas,{key:'c',ctrlKey:true}));
+ expect(writeText).toHaveBeenCalledTimes(1);expect(change).not.toHaveBeenCalled();
+ await act(async()=>fireEvent.keyDown(canvas,{key:'x',metaKey:true}));
+ expect(writeText).toHaveBeenCalledTimes(2);expect(change).toHaveBeenCalledTimes(1);
+});
 it('a delayed cut cannot delete a replacement document',async()=>{
  let finish!:()=>void;const pending=new Promise<void>(resolve=>{finish=resolve;});
  Object.defineProperty(navigator,'clipboard',{configurable:true,value:{writeText:()=>pending}});
@@ -64,6 +85,13 @@ it('wrap is one mutation and outline supports collapse and keyboard navigation',
  expect(screen.getByText('div 0.0')).toBeTruthy();fireEvent.keyDown(parent,{key:'ArrowDown'});
  expect(document.activeElement).toBe(screen.getByText('div 0.0'));
 });
+it('unwraps a selected container in the command UI while preserving child identity',()=>{
+ const wrapper=block('wrapper','red');wrapper.children=[block('child','blue')];
+ const change=vi.fn();render(<Harness initial={[wrapper]} onChange={change}/>);
+ fireEvent.click(screen.getByText('div 0'));fireEvent.click(screen.getByText('Unwrap'));
+ expect(change).toHaveBeenCalledTimes(1);
+ expect(JSON.parse(screen.getByTestId('doc').textContent!).map((node:JsonBlock)=>node.id)).toEqual(['child']);
+});
 it('pastes clipboard blocks into another entry with fresh identity',async()=>{
  const source=block('other-entry','purple');
  Object.defineProperty(navigator,'clipboard',{configurable:true,value:{readText:async()=>JSON.stringify({format:'beam-blocks',version:1,nodes:[source]})}});
@@ -72,6 +100,14 @@ it('pastes clipboard blocks into another entry with fresh identity',async()=>{
  expect(change).toHaveBeenCalledTimes(1);
  const pasted=JSON.parse(screen.getByTestId('doc').textContent!)[0].children[0];
  expect(pasted.id).not.toBe('other-entry');expect(pasted.style).toEqual(source.style);
+});
+it('refuses pasted blocks outside the active UI profile',async()=>{
+ const forbidden={...block('outside','purple'),name:'Unknown'};
+ Object.defineProperty(navigator,'clipboard',{configurable:true,value:{readText:async()=>JSON.stringify({format:'beam-blocks',version:1,nodes:[forbidden]})}});
+ const profile={profile:'test',version:1,doc:{admitsChildCategories:['html']},nodes:[{name:'div',category:'html',admitsChildCategories:['html'],attrsSchema:{type:'object',properties:{}}}]} as CanvasConfig['profile'];
+ const change=vi.fn();render(<Harness onChange={change} profile={profile}/>);fireEvent.click(screen.getByText('div 0'));
+ await act(async()=>fireEvent.click(screen.getByText('Paste into 0')));
+ expect(await screen.findByRole('alert')).toBeTruthy();expect(change).not.toHaveBeenCalled();
 });
 it('labels inherited hiding after clearing only the selected breakpoint override',()=>{
  const node=block('hidden','red');node.style={layers:[{declarations:{display:'none'}},{breakpoint:'md',declarations:{display:'none'}}]};
