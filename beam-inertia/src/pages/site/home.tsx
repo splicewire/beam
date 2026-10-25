@@ -1,6 +1,7 @@
 import { Head } from '@inertiajs/react';
 import type { ComponentType } from 'react';
 import { useEditMode } from '@splicewire/beam-ux/canvas';
+import { entryPageConfig } from '@splicewire/beam-ux/docs';
 import { EntryBody } from '@splicewire/beam-ux/site';
 import { canvasConfig } from '../../editor/canvas-config';
 import { IntakeFormsFromPage } from '../../editor/intake';
@@ -47,6 +48,7 @@ import SiteLayout from '../../layouts/site-layout';
  */
 export default function SiteHome({
     entry = null,
+    head = null,
 }: {
     entry?: {
         id: string;
@@ -54,13 +56,17 @@ export default function SiteHome({
         format?: string | null;
         artifact?: { url: string; version?: string | null } | null;
     } | null;
+    /** The Page Head the route composed from the home row (ADR-0234 d2), as elements Inertia's server head prints. */
+    head?: string[] | null;
 }) {
     const editing = useEditMode();
     const artifact = entry?.artifact ?? null;
+    // As on the packaged entry page: where the host takes the server's head, its title is the page's.
+    const serverHead = entryPageConfig().serverHead === true && (head?.length ?? 0) > 0;
 
     return (
         <SiteLayout>
-            <Head title="Home" />
+            {!serverHead && <Head title="Home" />}
             {/* EP-07d: as on the packaged entry page, the body's forms read the schemas the server put on the page. */}
             <IntakeFormsFromPage>
                 <div

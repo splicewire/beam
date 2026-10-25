@@ -11,7 +11,9 @@
 import { cleanup, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-vi.mock('@inertiajs/react', () => ({ Head: () => null }));
+vi.mock('@inertiajs/react', () => ({ Head: ({ title }: { title?: string }) => <title>{title}</title> }));
+const pageConfig = vi.hoisted(() => ({ value: {} as { serverHead?: boolean } }));
+vi.mock('@splicewire/beam-ux/docs', () => ({ entryPageConfig: () => pageConfig.value }));
 vi.mock('../../layouts/site-layout', () => ({ default: ({ children }: { children: unknown }) => <>{children as never}</> }));
 vi.mock('../../editor/page-editor', () => ({
     default: ({ entryId }: { entryId?: string | null }) => <div data-testid="editor">editor:{String(entryId)}</div>,
@@ -43,6 +45,24 @@ const ENTRY = {
 afterEach(() => {
     cleanup();
     editMode.value = false;
+    pageConfig.value = {};
+});
+
+describe('site/home — head', () => {
+    it("leaves the head to the server's Page Head when the host takes it (ADR-0234 d1)", () => {
+        // The starter's `/` passes the head it composes from the home row; a "Home" title here would replace it.
+        pageConfig.value = { serverHead: true };
+        render(<SiteHome entry={ENTRY} head={['<title data-inertia="title">Home - Acme</title>']} />);
+
+        expect(document.querySelector('title')).toBeNull();
+    });
+
+    it('keeps its own title when the route passed no head', () => {
+        pageConfig.value = { serverHead: true };
+        render(<SiteHome entry={ENTRY} />);
+
+        expect(document.querySelector('title')?.textContent).toBe('Home');
+    });
 });
 
 describe('site/home — read fork', () => {

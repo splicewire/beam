@@ -62,6 +62,13 @@ export type EntryPageConfig = {
      * the host's call.
      */
     editableBody?: ComponentType<{ entry: EntryPayload; children: ReactNode }>;
+    /**
+     * The host's Inertia app takes the server's Page Head (ADR-0234 d1): the server composes the title, description and
+     * social tags as the page's `head` prop, and Inertia keeps them current. A page that carries one then sets no head
+     * of its own, which would replace the server's title and brand it a second time. `beamInertiaOptions` turns it on;
+     * off, or on a page from an older server, the page keeps its own title.
+     */
+    serverHead?: boolean;
 };
 
 let config: EntryPageConfig = {};

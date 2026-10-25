@@ -1,6 +1,7 @@
 import { brandTitle } from "./hooks/use-brand";
 import type { Brand } from "./types/brand";
 import "./types/global";
+import type { Page } from "@inertiajs/core";
 import { Link } from "@inertiajs/react";
 import { configureEntryPage } from "@splicewire/beam-ux/docs";
 import { resolveBeamPage } from "./pages";
@@ -72,10 +73,26 @@ export function beamInertiaOptions(config: BeamInertiaConfig = {}) {
     // entry's layout and template — not beside the page (beam.test `/about`, 2026-09-24). The
     // MainframeHost treats `site/entry` as self-managed accordingly (layouts/beam-ux/mainframe-host).
     editableBody: EditableEntryBody,
+    // ADR-0234 d1: the server's Page Head is this app's head, so the packaged pages set none of their own over it.
+    serverHead: true,
   });
 
+  // ADR-0234 d1: the server composes each page's head as its `head` prop and Inertia keeps it current on navigation.
+  // Its title arrives branded (the template applies once, on the server), so a page that brought one has its title
+  // passed through; every other page's title is branded here as before. Inertia reads `serverHead` for a page before
+  // it builds that page's title.
+  let serverTitled = false;
+  const serverHead = (page: Page): string[] => {
+    const head = (page.props as { head?: unknown }).head;
+    const elements = Array.isArray(head) ? head.filter((element): element is string => typeof element === "string") : [];
+    serverTitled = elements.some((element) => element.trimStart().startsWith("<title"));
+
+    return elements;
+  };
+
   return {
-    title: (title: string) => brandTitle(title, initialBrand()),
+    title: (title: string) => (serverTitled ? title : brandTitle(title, initialBrand())),
+    serverHead,
     /**
      * Own glob first, the package's page map second (ADR-0213 §3). Written out rather than left to
      * `@inertiajs/vite`'s injected resolver, because the injected one throws on a name it cannot find

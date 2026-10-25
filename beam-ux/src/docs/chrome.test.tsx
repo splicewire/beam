@@ -134,6 +134,28 @@ describe('the packaged entry page', () => {
         expect(container.querySelector('.beam-tpl-spread')).not.toBeNull();
     });
 
+    it("leaves the head to the server's Page Head when the host takes it (ADR-0234 d1)", () => {
+        // The server's elements already hold the branded title and the description; a second title from here would
+        // replace the server's in Inertia's head and brand it again.
+        configureEntryPage({ serverHead: true });
+        render(
+            <SiteEntry entry={entry} artifact={artifact} nav={null} head={['<title data-inertia="title">API keys - Acme</title>']} />,
+        );
+
+        expect(document.querySelector('title')).toBeNull();
+    });
+
+    it('keeps its own title where the server sent no head or the host does not take it', () => {
+        configureEntryPage({ serverHead: true });
+        const older = render(<SiteEntry entry={entry} artifact={artifact} nav={null} />);
+        expect(document.querySelector('title')?.textContent).toBe('API keys');
+        older.unmount();
+
+        resetEntryPageConfig();
+        render(<SiteEntry entry={entry} artifact={artifact} nav={null} head={['<title data-inertia="title">x</title>']} />);
+        expect(document.querySelector('title')?.textContent).toBe('API keys');
+    });
+
     it('defaults to the prose measure and to no layout at all', () => {
         // The template default is what all five host copies did with a className list. The LAYOUT
         // default is deliberately nothing: today's hosts wrap this page in their own SiteLayout via

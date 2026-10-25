@@ -72,6 +72,8 @@ export type SiteEntryProps = {
     chrome?: ChromeArtifactsPayload | null;
     /** Present only when the server attached a verified, live Preview context. */
     preview?: { label: string; exitUrl: string; viewAsMeUrl?: string | null } | null;
+    /** The server's Page Head (ADR-0234 d1), as elements Inertia's server head prints. Absent from older servers. */
+    head?: string[] | null;
     /** Whatever else the host shares (auth, ziggy, flash) — passed through to the body under `page`. */
     [key: string]: unknown;
 };
@@ -194,12 +196,17 @@ export default function SiteEntry(props: SiteEntryProps) {
     const editable = (body: ReactNode) =>
         EditableBody ? <EditableBody entry={entry}>{body}</EditableBody> : body;
 
+    // ADR-0234 d1: where the host takes the server's Page Head, the server's elements are the head, title included.
+    const serverHead = config.serverHead === true && (props.head?.length ?? 0) > 0;
+
     const page = (
         <>
-            <Head title={entry.title ?? entry.slug}>
-                {entry.description && <meta name="description" content={entry.description} />}
-                {entry.socialImage && <meta property="og:image" content={entry.socialImage} />}
-            </Head>
+            {!serverHead && (
+                <Head title={entry.title ?? entry.slug}>
+                    {entry.description && <meta name="description" content={entry.description} />}
+                    {entry.socialImage && <meta property="og:image" content={entry.socialImage} />}
+                </Head>
+            )}
 
             {frame(
                 Layout,
