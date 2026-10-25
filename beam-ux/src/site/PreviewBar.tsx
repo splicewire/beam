@@ -157,8 +157,14 @@ function Readiness({ preview, open }: { preview: PreviewBarData; open: (path: st
                             {item.fixes.includes('open') && item.entryId && paths.has(item.entryId) ? (
                                 <> <a href={open(paths.get(item.entryId)!)} style={link}>Open the page</a></>
                             ) : null}
-                            {preview.releaseHref && item.fixes.some((fix) => fix !== 'open') ? (
-                                <> <a href={preview.releaseHref} style={link}>Fix in the Release</a></>
+                            {item.fixes.some((fix) => fix !== 'open') ? (
+                                preview.releaseHref ? (
+                                    <> <a href={preview.releaseHref} style={link}>Fix in the Release</a></>
+                                ) : item.entryId && paths.has(item.entryId) ? (
+                                    // No Release page on this host (a starter): the member's page, where the editor's
+                                    // Release panel offers rebase and drop (orch-lead ruling A, EP-18).
+                                    <> <a href={open(paths.get(item.entryId)!)} style={link}>Fix on the page</a></>
+                                ) : null
                             ) : null}
                         </li>
                     ))}
