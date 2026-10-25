@@ -165,7 +165,7 @@ export function ComponentSessionHost({
 
 /** Scoped to this nested window; the mounted parent keeps its own viewport chrome. */
 const componentSessionCss = `
-.component-session{position:fixed;inset:12px;z-index:2147483300;box-sizing:border-box;display:flex;flex-direction:column;min-width:0;overflow:hidden;background:var(--component-panel);color:var(--component-ink);border:1px solid var(--component-muted);border-radius:10px;box-shadow:0 16px 80px #0008;font-size:14px;line-height:1.5;isolation:isolate}
+.component-session{position:fixed;inset:12px;margin:0;max-width:none;width:auto;height:auto;z-index:2147483300;box-sizing:border-box;display:flex;flex-direction:column;min-width:0;overflow:hidden;background:var(--component-panel);color:var(--component-ink);border:1px solid var(--component-muted);border-radius:10px;box-shadow:0 16px 80px #0008;font-size:14px;line-height:1.5;isolation:isolate}
 .component-session-heading{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:12px 16px;border-bottom:1px solid var(--stud-line)}
 .component-session-heading button{margin-left:auto}
 .component-session>p{margin:6px 16px;flex:none}
