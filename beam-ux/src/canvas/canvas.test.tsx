@@ -657,7 +657,7 @@ describe('PageEditor — mode fork + transport', async () => {
         fireEvent.click(screen.getByRole('button', { name: 'Create built Release' }));
         await waitFor(() => expect(transport.createRelease).toHaveBeenCalledWith('entry-1', 'Launch'));
         fireEvent.change(screen.getByLabelText('Release to assemble'), { target: { value: 'release-launch' } });
-        fireEvent.change(screen.getByLabelText('Entry'), { target: { value: 'entry-1' } });
+        expect((screen.getByLabelText('Entry') as HTMLSelectElement).value).toBe('entry-1');
         fireEvent.change(screen.getByLabelText('Saved version'), { target: { value: 'v-v1' } });
         expect((screen.getByRole('button', { name: 'Add to Release' }) as HTMLButtonElement).disabled).toBe(false);
         fireEvent.click(screen.getByRole('button', { name: 'Add to Release' }));
@@ -673,7 +673,7 @@ describe('PageEditor — mode fork + transport', async () => {
         const second = render(wrapProse(<PageEditor entryId="entry-2" userId="author-1" slug="about" body={doc()} transport={transport as never} />));
         await act(async () => { fireEvent(window, new CustomEvent('beam-ux:mode', { detail: { mode: 'window' } })); await Promise.resolve(); });
         await waitFor(() => expect(screen.getByLabelText('Release to assemble')).toBeTruthy());
-        fireEvent.change(screen.getByLabelText('Entry'), { target: { value: 'entry-2' } });
+        expect((screen.getByLabelText('Entry') as HTMLSelectElement).value).toBe('entry-2');
         fireEvent.change(screen.getByLabelText('Saved version'), { target: { value: 'v-v2' } });
         expect((screen.getByRole('button', { name: 'Add to Release' }) as HTMLButtonElement).disabled).toBe(false);
         fireEvent.click(screen.getByRole('button', { name: 'Add to Release' }));

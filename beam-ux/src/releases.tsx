@@ -62,13 +62,15 @@ export interface ReleaseEntryChoice {
 export function ReleasePanel({
   release,
   entries,
+  initialEntryId = "",
   onCommand,
 }: {
   release: ReleaseRecord;
   entries: ReleaseEntryChoice[];
+  initialEntryId?: string;
   onCommand: (command: ReleaseCommand) => Promise<unknown>;
 }) {
-  const [entryId, setEntryId] = useState("");
+  const [entryId, setEntryId] = useState(initialEntryId);
   const [ref, setRef] = useState("");
   const [redirect, setRedirect] = useState("");
   const [pending, setPending] = useState(false);
@@ -436,6 +438,7 @@ export function BuiltReleaseAssembly({
         <ReleasePanel
           release={activeRelease}
           entries={[{ id: entryId, title: entryTitle, versions, canTakeDown }]}
+          initialEntryId={entryId}
           onCommand={command}
         />
       )}
