@@ -142,6 +142,7 @@ function AddressedVisualEditor({ entryRef }: { entryRef: EntryRef }) {
                 entryId={id}
                 entryTitle={entryRef.slug ?? 'This entry'}
                 versions={loaded.state.versions.map(version => ({id:version.id,label:version.readable ?? version.id}))}
+                canTakeDown={loaded.state.publishedVersion !== null}
                 listReleases={() => transport.listReleases!()}
                 createRelease={(entryId, title) => transport.createRelease!(entryId, title)}
                 releaseCommand={(releaseId, command) => transport.releaseCommand!(releaseId, command)}

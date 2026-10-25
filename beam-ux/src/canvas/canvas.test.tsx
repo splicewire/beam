@@ -570,6 +570,39 @@ describe('PageEditor — mode fork + transport', async () => {
         expect(dockButton(container, 'Publish')!.getAttribute('title')).toMatch(/readers see it now/i);
     });
 
+    it('creates a built Release from the primary page editor and adds this entry’s saved version', async () => {
+        const release = {
+            id: 'release-launch',
+            title: 'Launch',
+            realm: 'site',
+            status: 'draft',
+            reviewedBy: null,
+            members: [],
+            workflow: null,
+            canSchedule: false,
+            reviewRequired: false,
+        };
+        const transport = {
+            ...publishingTransport(),
+            listReleases: vi.fn().mockResolvedValue([]),
+            createRelease: vi.fn().mockResolvedValue(release),
+            releaseCommand: vi.fn().mockResolvedValue({ ...release, members: [{ entryId: 'entry-1', versionId: 'v-v1', observedPin: 'v-v1', redirectTarget: null, stale: false }] }),
+        };
+        const { container } = await enterEditMode(transport);
+
+        fireEvent.change(screen.getByLabelText('Release title'), { target: { value: 'Launch' } });
+        fireEvent.click(screen.getByRole('button', { name: 'Create built Release' }));
+        await waitFor(() => expect(transport.createRelease).toHaveBeenCalledWith('entry-1', 'Launch'));
+        fireEvent.change(screen.getByLabelText('Release to assemble'), { target: { value: 'release-launch' } });
+        fireEvent.change(screen.getByLabelText('Saved version'), { target: { value: 'v-v1' } });
+        fireEvent.click(screen.getByRole('button', { name: 'Add to Release' }));
+
+        await waitFor(() => expect(transport.releaseCommand).toHaveBeenCalledWith('release-launch', {
+            action: 'member', entryId: 'entry-1', ref: 'v-v1', redirectTarget: null,
+        }));
+        expect(container.querySelector('[aria-label="Build a Release"]')).not.toBeNull();
+    });
+
     it('Publish on a clean canvas publishes the pending draft', async () => {
         const transport = publishingTransport();
         const { container } = await enterEditMode(transport);

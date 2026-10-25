@@ -311,6 +311,7 @@ export function BuiltReleaseAssembly({
   entryId,
   entryTitle,
   versions,
+  canTakeDown = false,
   listReleases,
   createRelease,
   releaseCommand,
@@ -318,6 +319,7 @@ export function BuiltReleaseAssembly({
   entryId: string;
   entryTitle: string;
   versions: ReleaseEntryChoice["versions"];
+  canTakeDown?: boolean;
   listReleases: () => Promise<ReleaseRecord[]>;
   createRelease: (entryId: string, title: string) => Promise<ReleaseRecord>;
   releaseCommand: (
@@ -433,7 +435,7 @@ export function BuiltReleaseAssembly({
       {activeRelease && (
         <ReleasePanel
           release={activeRelease}
-          entries={[{ id: entryId, title: entryTitle, versions }]}
+          entries={[{ id: entryId, title: entryTitle, versions, canTakeDown }]}
           onCommand={command}
         />
       )}

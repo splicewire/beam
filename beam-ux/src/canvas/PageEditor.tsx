@@ -38,6 +38,7 @@ import { getAt, isJsonBlock } from "../blockdoc/json.js";
 import type { JsonDoc } from "../blockdoc/json.js";
 import type { EntryPublicationState, EntryVersion } from "../types.js";
 import {
+  BuiltReleaseAssembly,
   ReleasePanel,
   type ReleaseCommand,
   type ReleaseRecord,
@@ -94,6 +95,9 @@ export interface PageEditorTransport {
     id: string,
     command: ReleaseCommand,
   ) => Promise<ReleaseRecord>;
+  /** Browse and create mutable built Releases from the page editor. */
+  listReleases?: () => Promise<ReleaseRecord[]>;
+  createRelease?: (entryId: string, title: string) => Promise<ReleaseRecord>;
   /** The recorded history plus both pins — refetched whenever the panel opens. */
   listVersions?: (slug: string) => Promise<EntryPublicationState>;
   /** Roll forward to a recorded version and publish it. */
@@ -882,6 +886,24 @@ export function PageEditor({
             }}
           />
         )}
+        {publication &&
+          publication.versions.length > 0 &&
+          transport.listReleases &&
+          transport.createRelease &&
+          transport.releaseCommand && (
+            <BuiltReleaseAssembly
+              entryId={publication.id}
+              entryTitle={slug}
+              versions={publication.versions.map((version) => ({
+                id: version.id,
+                label: version.readable ?? version.id,
+              }))}
+              canTakeDown={publication.publishedVersion !== null}
+              listReleases={transport.listReleases}
+              createRelease={transport.createRelease}
+              releaseCommand={transport.releaseCommand}
+            />
+          )}
         {versionsOpen && (
           <aside className="pe-panel pe-versions" aria-label="Versions">
             <h3>Versions</h3>
