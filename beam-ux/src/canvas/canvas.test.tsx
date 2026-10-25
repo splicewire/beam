@@ -623,10 +623,18 @@ describe('PageEditor — mode fork + transport', async () => {
         };
         const transport = {
             ...publishingTransport(),
-            listVersions: vi.fn(async (id: string) => state({
-                id,
-                versions: [version({ id: id === 'entry-1' ? 'v-v1' : 'v-v2', readable: id === 'entry-1' ? 'v1' : 'v2' })],
-            })),
+            listVersions: vi.fn(async (slug: string) => {
+                const entry = {
+                    home: { id: 'entry-1', versionId: 'v-v1', readable: 'v1' },
+                    about: { id: 'entry-2', versionId: 'v-v2', readable: 'v2' },
+                }[slug as 'home' | 'about'];
+                if (!entry) throw new Error(`Unexpected entry slug: ${slug}`);
+
+                return state({
+                    id: entry.id,
+                    versions: [version({ id: entry.versionId, readable: entry.readable })],
+                });
+            }),
             listReleases: vi.fn(async () => release.members.length ? [release] : []),
             createRelease: vi.fn().mockResolvedValue(release),
             releaseCommand: vi.fn(async (_id: string, command: { entryId?: string; ref?: string | null }) => {
