@@ -47,7 +47,10 @@ export interface UxBuilderClient<TBody = BeamUxEntryBodyData> {
    * (`POST .../beam-ux-entries/{id}/op/save-body`). Addressed by id, same as {@link loadBody}.
    */
   saveBody(id: string, body: Record<string, unknown>): Promise<TBody>;
-  /** Blocks-only typed write. Absent on legacy injected hosts; the canvas retains saveBody fallback. */
+  /**
+   * Blocks-only typed write (`save-blocks`). Absent on legacy injected hosts. The canvas editor does not call it: it
+   * saves through the publication seam's drafts.
+   */
   saveBlocks?(id: string, body: import("./blockdoc/json").JsonDoc): Promise<TBody>;
 
   /* ── the OPTIONAL publication seam (G2-BEAM-DRAFT-PUBLISH) ───────────────────────────────── */
