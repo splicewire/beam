@@ -41,7 +41,6 @@ export function BindingInspector({path}:{path:string}){
    <label>Collection<select aria-label="Collection" value={node.repeat?.collection??''} onChange={event=>edit(block=>repeatCollection(block,event.target.value))}>
     <option value="">No Repeat</option>{offers.map(item=><option key={item.name} value={item.name}>{item.name}</option>)}</select></label>
    {node.repeat?.relation&&<p>This nested Repeat uses its declared relation. Relation editing is unavailable here.</p>}
-   {(repeatOffer??offer)&&(repeatOffer??offer)!.publicRead!==true&&<p role="status">{(repeatOffer??offer)!.publicRead===false?'This Collection has no Public Read. Records may be unavailable on a public page.':'Public Read is unknown for this Collection. Check its reader guards before publishing a public page.'}</p>}
    {node.repeat?.collection&&<>
     <label>Record limit<input aria-label="Record limit" type="number" min={1} max={100} value={query.limit??25} onChange={event=>queryChange({...query,limit:Number(event.target.value)})}/></label>
     {fieldSelect('Sort field',sort.replace(/^-/,'')?sortFields.find(field=>field.sortName===sort.replace(/^-/,''))?.path??'':'',field=>queryChange({...query,sort:field?`${sort.startsWith('-')?'-':''}${sortName(field)}`:null}),sortFields)}

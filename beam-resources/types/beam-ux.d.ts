@@ -105,6 +105,7 @@ choices: CanvasRecordChoiceData[],
 hasMore: boolean,
 recordPage: boolean,
 selectedValue: string | null,
+pagePublic: boolean | null,
 };
 
 export type CanvasRecordChoiceData = {

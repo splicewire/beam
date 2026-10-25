@@ -7,10 +7,10 @@ export function useBindingPreviewPort(client:UxBuilderClient,id:string|null,user
  const available=enabled&&!!id&&!!client.canvasBindings;
  return useMemo<NonNullable<CanvasConfig['bindingPreview']>>(()=>({
   entryId:id??'',recordCollection:collection??null,
-  resolve:available?(entry,body,value)=>{
+  resolve:available?(entry,body,value,options)=>{
    const read=latest.current.canvasBindings;
    if(!read)return Promise.reject(new Error('Live binding preview unavailable'));
-   return read.call(latest.current,entry,body,value);
+   return read.call(latest.current,entry,body,value,options);
   }:undefined,
  }),[id,userId,available,collection]);
 }

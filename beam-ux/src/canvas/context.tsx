@@ -50,6 +50,8 @@ export interface CanvasConfig {
         resolve?: import('../types').UxBuilderClient['canvasBindings'];
         entryId: string;
         recordCollection?: string | null;
+        /** Optional addressed guest access projection; unknown is never assumed public. */
+        pagePublic?: boolean | null;
     };
     record?: import('../bindings/runtime.js').BindingRecord;
     bindings?: import('../bindings/runtime.js').BindingPayload;

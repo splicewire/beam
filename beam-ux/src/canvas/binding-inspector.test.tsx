@@ -14,7 +14,7 @@ afterEach(cleanup);
 function Harness({readOnly=false,change=()=>{}}:{readOnly?:boolean;change?:(doc:JsonDoc)=>void}){
  const [doc,setDoc]=useState(initial);const state=useRef({doc,readOnly});state.current={doc,readOnly};
  const registry=useMemo(()=>{const r=createWidgetRegistry();r.registerWidget('canvas',props=><CanvasWidget {...props} value={state.current.doc} readOnly={state.current.readOnly} onChange={next=>{setDoc(next);change(next);}}/>);return r;},[]);
- return <CanvasProvider config={{registry:{},profile}}><FiveRegionEditShell widget="canvas" schema={{type:'object'}} registry={registry} record={doc as unknown as Record<string,unknown>} inspector={<BlockInspector/>}/><output data-testid="doc">{JSON.stringify(doc)}</output></CanvasProvider>;
+ return <CanvasProvider config={{registry:{},profile,bindingPreview:{entryId:'page',pagePublic:true}}}><FiveRegionEditShell widget="canvas" schema={{type:'object'}} registry={registry} record={doc as unknown as Record<string,unknown>} inspector={<BlockInspector/>}/><output data-testid="doc">{JSON.stringify(doc)}</output></CanvasProvider>;
 }
 it('writes profile Collection, first-page query, field binding and typed when rules through canvas commands',()=>{
  const change=vi.fn();render(<Harness change={change}/>);fireEvent.click(screen.getByText('p 0'));

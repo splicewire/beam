@@ -15,13 +15,14 @@ export function useCanvasBindings(port:Port,doc:JsonDoc){
  useEffect(()=>{
   let live=true;
   if(!port?.resolve)return;
+  const controller=new AbortController();
   const timer=setTimeout(()=>{
-   void port.resolve!(port.entryId,JSON.parse(body) as JsonDoc,selection).then(
+   void port.resolve!(port.entryId,JSON.parse(body) as JsonDoc,selection,{signal:controller.signal}).then(
     data=>{if(live)setResult({port,body,selection,data});},
     ()=>{if(live)setResult({port,body,selection,error:'Live binding preview was refused or failed. Check this entry’s author access and binding declarations.'});},
    );
   },150);
-  return()=>{live=false;clearTimeout(timer);};
+  return()=>{live=false;clearTimeout(timer);controller.abort();};
  },[port,body,selection]);
  return {
   data:current?.data,

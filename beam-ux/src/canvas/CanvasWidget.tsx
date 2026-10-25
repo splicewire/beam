@@ -36,6 +36,7 @@ import type { DropEdge } from './CanvasNode.js';
 import { ContextMenu } from './ContextMenu.js';
 import type { ContextMenuState } from './ContextMenu.js';
 import { useCanvasBindings } from './use-canvas-bindings';
+import { CanvasBindingWarnings } from './CanvasBindingWarnings';
 import { CanvasRecordPicker } from './CanvasRecordPicker';
 import { CanvasRuntimeProvider, useCanvas, isEditGated, isIsland } from './context.js';
 import { DEFAULT_CANVAS_THEME, dropIndicatorCss, selectionCss } from './css.js';
@@ -119,7 +120,7 @@ export function CanvasWidget({
     const { selection: styleSelection } = useStyleSelection();
     const doc: JsonDoc = value ?? formData ?? EMPTY_DOC;
     const preview = useCanvasBindings(config.bindingPreview, doc);
-    const runtime = config.bindingPreview ? {...config, bindings: preview.data?.bindings ?? {}, record: preview.data?.record ?? undefined} : config;
+    const runtime = config.bindingPreview ? {...config, bindings: preview.data?.bindings ?? config.bindings, record: preview.data?.record ?? undefined} : config;
     // ux-0233: without an MDX island (it retires per host, EP-42) the palette offers no new `Mdx` node.
     const allTemplates = useMemo(() => (config.blockTemplates ?? DEFAULT_BLOCK_TEMPLATES)
         .filter((template) => config.MdxEdit !== undefined || template.make().name !== 'Mdx'), [config.blockTemplates, config.MdxEdit]);
@@ -443,6 +444,7 @@ export function CanvasWidget({
                 <span>{selection.paths.length} blocks selected</span>
             </div>
             {config.bindingPreview && <CanvasRecordPicker preview={preview}/> }
+            <CanvasBindingWarnings doc={doc} profile={config.profile} pagePublic={preview.data?.pagePublic ?? config.bindingPreview?.pagePublic} recordCollection={config.bindingPreview?.recordCollection}/>
             {commandError&&<p role="alert">{commandError}</p>}
             <div className="ve-canvas-layout">
             <CanvasOutline doc={doc} onSelect={setSel} onHide={(path,hidden)=>command(()=>editStyles(docRef.current,[path],{breakpoint:styleSelection.breakpoint,state:null},'display',hidden?'none':null,config.styleRegistry??DEFAULT_STYLE_REGISTRY))}/>

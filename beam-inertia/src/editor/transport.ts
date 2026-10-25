@@ -53,11 +53,12 @@ async function readData(res: Response, what: string): Promise<unknown> {
 }
 
 const defaultBodyClient: UxBuilderClient = {
-  canvasBindings: async (id, body, recordValue) => {
+  canvasBindings: async (id, body, recordValue, options) => {
     const response = await fetch(`/beam-ux-entries/${id}/canvas-bindings`, {
       method: 'POST', credentials: 'same-origin',
       headers: {'Content-Type':'application/json', Accept:'application/json', 'X-XSRF-TOKEN':csrfToken()},
       body: JSON.stringify({body,recordValue:recordValue ?? null}),
+      ...(options?.signal ? {signal:options.signal} : {}),
     });
     return await readData(response,'canvas bindings') as Awaited<ReturnType<NonNullable<UxBuilderClient['canvasBindings']>>>;
   },
