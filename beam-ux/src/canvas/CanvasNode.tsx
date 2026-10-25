@@ -1,3 +1,5 @@
+import {CanvasInstance} from './CanvasInstance';
+import {componentValue} from './authored-components';
 // The editable canvas recursion — stamps `data-bd-path`, makes blocks draggable, edits leaf text inline,
 // and renders opaque islands / opaque nodes SEALED. A faithful port of the host `CanvasNode`, re-based on
 // the `JsonNode` tree from `@splicewire/beam-ux/jsondoc` + the injected CanvasConfig (registry / MDX
@@ -64,7 +66,7 @@ export function CanvasNode({ node, path, editing, onEditMd, onEditProse, dnd }: 
     const isEditingThis = editing === path;
 
     // Text leaf — rendered as bare content (the parent element hosts it; contentEditable is applied there).
-    if (isJsonText(node)) return <>{node.field ? bindingRuntime.text(config.record,node.field,node.value) : node.value}</>;
+    if (isJsonText(node)) return <>{node.prop?componentValue(config,node.prop):node.field ? bindingRuntime.text(config.record,node.field,node.value) : node.value}</>;
 
     // Opaque island (a dynamic map/conditional the lens couldn't decompose) — sealed, selectable, movable.
     // Render its verbatim source read-only; a click selects the block itself (pointer-events:none inner).
@@ -146,12 +148,19 @@ export function CanvasNode({ node, path, editing, onEditMd, onEditProse, dnd }: 
         );
     }
 
+    if(isIsland(config,block.name)&&!isEditGated(config,block))return <CanvasInstance node={block} path={path} editing={editing} onEditMd={onEditMd} onEditProse={onEditProse} dnd={dnd}/>;
+    if(block.name==='Slot'){
+        const name=String(block.props.find(prop=>prop.name==='name')?.value??'children');
+        const supplied=config.componentProps?.[name];
+        return <div data-bd-path={path} data-component-slot={name}>{supplied==null?<CanvasSiblings nodes={block.children} parent={path} editing={editing} onEditMd={onEditMd} onEditProse={onEditProse} dnd={dnd}/>:<div style={{pointerEvents:'none'}}>{supplied as React.ReactNode}</div>}</div>;
+    }
+
     // Entitlement-sealed: this author's can-map doesn't clear the block's data-edit-gate key. Rendered
     // like an opaque/component island — selectable/movable/deletable, its real content shown read-only
     // (via TreeRender's renderNode) rather than editable. (MDX blocks are exempted for now — they
     // already fork their own edit/view rendering via MdxEdit/MdxView, a separate follow-up to route
     // through this same gate.)
-    if (isEditGated(config, block) || block.repeat || block.when || block.props.some(prop=>prop.kind==='field') || block.children.some(child=>child.kind==='text'&&child.field)) {
+    if (isEditGated(config, block) || block.repeat || block.when || block.props.some(prop=>prop.kind==='field'||prop.kind==='prop') || block.children.some(child=>child.kind==='text'&&(child.field||child.prop))) {
         return (
             <div
                 data-bd-path={path}

@@ -31,6 +31,9 @@ export interface UxBuilderClient<TBody = BeamUxEntryBodyData> {
   /** Addressed author-only POST read; absent hosts explicitly cannot preview live bindings. */
   canvasBindings?(id: string, body: import('./blockdoc/json').JsonDoc, recordValue?: string | null, options?: {signal?: AbortSignal}):
     Promise<import('@splicewire/beam-resources/types/beam-ux').EntryCanvasBindingsOutputData>;
+  componentCapabilities?(id: string): Promise<import('@splicewire/beam-resources/types/beam-ux').EntryComponentCapabilitiesOutputData>;
+  createComponent?(contextId: string, input: import('@splicewire/beam-resources/types/beam-ux').EntryComponentCreateInputData): Promise<import('@splicewire/beam-resources/types/beam-ux').EntryComponentCreateOutputData>;
+  duplicateComponent?(id: string): Promise<import('@splicewire/beam-resources/types/beam-ux').EntryComponentDuplicateOutputData>;
   listImages?(id: string): Promise<import("./generated/entry-images").EntryImageLibraryData>;
   uploadImage?(id: string, file: File): Promise<import("./generated/entry-images").EntryImageData>;
   printSource?(

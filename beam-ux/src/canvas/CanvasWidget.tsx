@@ -37,6 +37,7 @@ import { ContextMenu } from './ContextMenu.js';
 import type { ContextMenuState } from './ContextMenu.js';
 import { useCanvasBindings } from './use-canvas-bindings';
 import { CanvasBindingWarnings } from './CanvasBindingWarnings';
+import { ComponentTools } from './ComponentTools';
 import { CanvasRecordPicker } from './CanvasRecordPicker';
 import { CanvasRuntimeProvider, useCanvas, isEditGated, isIsland } from './context.js';
 import { DEFAULT_CANVAS_THEME, dropIndicatorCss, selectionCss } from './css.js';
@@ -443,6 +444,10 @@ export function CanvasWidget({
                 <button className="ve-command-button" type="button" disabled={readOnly||selection.paths.length!==1} onClick={()=>command(()=>unwrapBlock(docRef.current,selection.paths[0],config.profile))}>Unwrap</button>
                 <span>{selection.paths.length} blocks selected</span>
             </div>
+            <ComponentTools doc={doc} paths={selection.paths} readOnly={readOnly} onChange={(next,expected)=>{
+                if(readOnlyRef.current||docRef.current!==expected)throw Error('The Local Session changed while the component operation was running.');
+                emitFromRef(next);setSel(null);
+            }}/>
             {config.bindingPreview && <CanvasRecordPicker preview={preview}/> }
             <CanvasBindingWarnings doc={doc} profile={config.profile} pagePublic={preview.data?.pagePublic ?? config.bindingPreview?.pagePublic} recordCollection={config.bindingPreview?.recordCollection}/>
             {commandError&&<p role="alert">{commandError}</p>}

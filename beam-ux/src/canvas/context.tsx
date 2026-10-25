@@ -45,6 +45,13 @@ export interface CanvasConfig {
     mediaLibrary?: import("../editor/MediaPicker").EntryImageLibrary;
     authoredComponents?: import("@splicewire/beam-resources/types/beam-ux").ComponentCanvasData[];
     componentProps?: Record<string, unknown>;
+    /** Optional native canvas authoring adapters. Missing operations stay unavailable. */
+    componentAuthoring?: {
+        entryId: string;
+        client: Pick<import('../types').UxBuilderClient, 'componentCapabilities'|'createComponent'|'duplicateComponent'>;
+        refresh(): Promise<void>;
+        open?(entry: import('@splicewire/beam-resources/types/beam-ux').ComponentCanvasData, props: Record<string,unknown>, element: HTMLElement): void;
+    };
     /** Live reads use the addressed optional client port; selection is not document state. */
     bindingPreview?: {
         resolve?: import('../types').UxBuilderClient['canvasBindings'];

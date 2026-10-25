@@ -1,6 +1,7 @@
+import {useComponentAuthoring} from './use-component-authoring';
 import {useBindingPreviewPort} from './use-binding-preview-port';
 import { componentDependencies } from './component-dependencies';
-import { canMountPublication, isUnauthored } from './publication-state';
+import { canMountPublication, isUnauthored, isAuthoredComponentEnvelope } from './publication-state';
 import { PageSettings, type PageFieldsOffer } from './PageSettings';
 import { SourceMode } from './SourceMode';
 import { BuiltReleaseAssembly, ReleasePanel } from '../releases';
@@ -55,6 +56,11 @@ function AddressedVisualEditor({ entryRef }: { entryRef: EntryRef }) {
     const [busy, setBusy] = useState(false);
     const [history, setHistory] = useState(false);
     const id = entryRef.id;
+    const componentAuthoring=useComponentAuthoring(id,true,async()=>{
+        if(!id)return;
+        const fresh=readEnvelope(await transport.loadBody(id),'The entry body is unavailable.');
+        setLoaded(previous=>previous?{...previous,profile:fresh.profile,authoredComponents:fresh.authoredComponents}:previous);
+    });
     const local = useLocalSession(id ?? '', userId, loaded?.state.headVersion, loaded?.body ?? [], !!loaded && !!id, loaded?.pageSettings ?? null);
     useEffect(() => {
         if (!id || !userId || !canAuthor || !transport.listVersions || !transport.saveDraft || !transport.publish || !transport.restoreVersion) {
@@ -63,7 +69,7 @@ function AddressedVisualEditor({ entryRef }: { entryRef: EntryRef }) {
         let live = true;
         Promise.all([transport.loadBody(id), transport.listVersions(id)]).then(([envelope, state]) => {
             if (!live) return;
-            if (!canMountPublication(state)) throw new Error('This entry has no Publication Pin. Publish its baseline before mounting the editor.');
+            if (!canMountPublication(state,isAuthoredComponentEnvelope(envelope))) throw new Error('This entry has no Publication Pin. Publish its baseline before mounting the editor.');
             setLoaded({ ...readEnvelope(envelope, 'The entry has no editable document.'), state });
         }).catch(reason => live && setError(reason instanceof Error ? reason.message : 'Could not load editor history. Verify the versions and publication-pin migrations.'));
         return () => { live = false; };
@@ -173,7 +179,8 @@ function AddressedVisualEditor({ entryRef }: { entryRef: EntryRef }) {
     const componentChoices = pendingComponents.map(entry => ({id: entry.id, title: entry.definition.name ?? 'Component',
         versions: [{id: entry.headVersion!, label: 'Pending component draft'}]}));
     return <CanvasProvider config={{ ...canvasConfig, mediaLibrary, profile: loaded.profile, styleRegistry: loaded.styleRegistry,
-        bindingPreview, bindings: loaded.bindings, authoredComponents: loaded.authoredComponents }}>
+        bindingPreview, bindings: loaded.bindings, authoredComponents: loaded.authoredComponents,
+        componentAuthoring }}>
         {conflict && <div role="alertdialog" aria-label="Save conflict">
             <p>The server draft changed.</p>
             <button disabled={busy} onClick={() => void resolveConflict(false)}>Reload theirs</button>

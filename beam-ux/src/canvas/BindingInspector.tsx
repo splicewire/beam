@@ -2,6 +2,7 @@ import {useState} from 'react';
 import type {ConditionOperator,ConditionRule} from '../blockdoc/bindings.js';
 import {assertRepeat} from '../blockdoc/bindings.js';
 import {getAt,isJsonBlock,VOID_TAGS,type JsonBlock} from '../blockdoc/json.js';
+import {authoredEntry} from './authored-components';
 import {useCanvas} from './context.js';
 import {useCanvasSelection} from './CanvasSelection.js';
 import {bindingFields,collectionOffers,recordOffer,repeatCollection,bindText,scalarValue,condition,type BindingField} from './binding-edit.js';
@@ -51,7 +52,7 @@ export function BindingInspector({path}:{path:string}){
   </fieldset>
   {!fields.length&&<p>No Record fields are in scope. Choose a Repeat Collection or save a Record Page declaration first.</p>}
   {!node.isComponent&&!VOID_TAGS.has(node.name??'')&&fieldSelect('Text field',node.children.find(child=>child.kind==='text')?.field??'',field=>edit(block=>bindText(block,field)),plainFields)}
-  {Object.keys(properties).filter(name=>name!=='className'&&!/^on/i.test(name)&&!['dangerouslySetInnerHTML','srcDoc'].includes(name)).map(name=>fieldSelect(`Bind ${name}`,String(node.props.find(prop=>prop.name===name&&prop.kind==='field')?.value??''),field=>edit(block=>({...block,props:[...block.props.filter(prop=>prop.name!==name),...(field?[{kind:'field' as const,name,value:field}]:[])]})),fields.filter(field=>!rich(field)||(node.name==='RichMarkdown'&&name==='content'&&field.format==='markdown'))))}
+  {!authoredEntry(config,node.name)&&Object.keys(properties).filter(name=>name!=='className'&&!/^on/i.test(name)&&!['dangerouslySetInnerHTML','srcDoc'].includes(name)).map(name=>fieldSelect(`Bind ${name}`,String(node.props.find(prop=>prop.name===name&&prop.kind==='field')?.value??''),field=>edit(block=>({...block,props:[...block.props.filter(prop=>prop.name!==name),...(field?[{kind:'field' as const,name,value:field}]:[])]})),fields.filter(field=>!rich(field)||(node.name==='RichMarkdown'&&name==='content'&&field.format==='markdown'))))}
   <fieldset disabled={disabled||!fields.length}><legend>Display condition</legend>
    <label>Match<select aria-label="Condition match" value={join} onChange={event=>{const next=event.target.value==='any'?'any':'all';setMode(next);if(rules.length)setRules(rules,next);}}><option value="all">All rules</option><option value="any">Any rule</option></select></label>
    {rules.map((rule,index)=><div key={index}>

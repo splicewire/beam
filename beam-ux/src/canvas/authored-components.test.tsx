@@ -1,7 +1,7 @@
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
-import { withAuthoredComponents } from './authored-components.js';
+import { authoredEntry, withAuthoredComponents } from './authored-components.js';
 import { renderNode } from './TreeRender.js';
 import type { JsonBlock } from '../blockdoc/json.js';
 import type { ComponentCanvasData } from '@splicewire/beam-resources/types/beam-ux';
@@ -29,6 +29,16 @@ describe('authored Working Head canvas rendering', () => {
         const config = withAuthoredComponents({registry: {Card: () => createElement('strong', {}, 'Code')}, authoredComponents: [card]});
         expect(renderToStaticMarkup(createElement('div', {}, renderNode(block('Card'), '0', config))))
             .toBe('<div><strong>Code</strong></div>');
+    });
+    it('retires prior authored renderers when the readable catalogue becomes empty, preserving Code components', () => {
+        const Code = () => createElement('strong', {}, 'Code');
+        const original = withAuthoredComponents({registry: {Code}, authoredComponents: [card]});
+        expect(authoredEntry(original, 'Card')?.id).toBe('card');
+        const cleared = withAuthoredComponents({...original, authoredComponents: []});
+        expect(cleared.registry.Card).toBeUndefined();
+        expect(authoredEntry(cleared, 'Card')).toBeUndefined();
+        expect(cleared.registry.Code).toBe(Code);
+        expect(original.registry.Card).toBeDefined();
     });
 });
 

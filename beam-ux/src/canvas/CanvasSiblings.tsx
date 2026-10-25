@@ -28,7 +28,7 @@ export function CanvasSiblings({
   run=proseRuns(nodes,profile).find(r=>Array.from({length:r.end-r.start},(_,i)=>path(r.start+i)).some(p=>editing===p||editing.startsWith(`${p}.`)));
   if(run){
    const body=nodes.slice(run.start,run.end);
-   const gated=(doc:JsonDoc):boolean=>doc.some(n=>n.kind==='block'&&(isEditGated(config,n)||!!n.repeat||!!n.when||n.props.some(p=>p.kind==='field')||n.children.some(c=>c.kind==='text'&&!!c.field)||gated(n.children)));
+   const gated=(doc:JsonDoc):boolean=>doc.some(n=>n.kind==='block'&&(isEditGated(config,n)||!!n.repeat||!!n.when||n.props.some(p=>p.kind==='field'||p.kind==='prop')||n.children.some(c=>c.kind==='text'&&(!!c.field||!!c.prop))||gated(n.children)));
    try{if(gated(body))run=undefined;else toProse(body,profile);}catch{run=undefined;}
   }
  }

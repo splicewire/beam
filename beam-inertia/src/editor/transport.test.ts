@@ -68,7 +68,24 @@ it("preserves publication absence on an injected body-only client without using 
   expect(bodyClient.createRelease).toBeUndefined();
   expect(bodyClient.releaseCommand).toBeUndefined();
   expect(bodyClient.listReleases).toBeUndefined();
+  expect(bodyClient.componentCapabilities).toBeUndefined();
+  expect(bodyClient.createComponent).toBeUndefined();
+  expect(bodyClient.duplicateComponent).toBeUndefined();
   expect(fetch).not.toHaveBeenCalled();
+});
+
+it("uses addressed GET admission and CSRF-protected native component writes", async () => {
+  const fetch = vi.fn().mockImplementation(async()=>Response.json({data:{id:"component"}}));
+  vi.stubGlobal("fetch", fetch);
+  vi.stubGlobal("document", {cookie:"XSRF-TOKEN=component%20token"});
+  configureBeamInertia({});
+  await bodyClient.componentCapabilities!("component");
+  expect(fetch).toHaveBeenNthCalledWith(1,"/beam-ux-entries/component/component-capabilities",{credentials:"same-origin",headers:{Accept:"application/json"}});
+  const input:Parameters<NonNullable<UxBuilderClient["createComponent"]>>[1]={title:"Card",body:[{kind:"block",name:"section",isComponent:false,dynamic:false,props:[],children:[],component:{name:"Card",props:[]}}]};
+  await bodyClient.createComponent!("page",input);
+  expect(fetch).toHaveBeenNthCalledWith(2,"/beam-ux-entries/page/create-component",{method:"POST",credentials:"same-origin",headers:{"Content-Type":"application/json",Accept:"application/json","X-XSRF-TOKEN":"component token"},body:JSON.stringify(input)});
+  await bodyClient.duplicateComponent!("component");
+  expect(fetch).toHaveBeenNthCalledWith(3,"/beam-ux-entries/component/duplicate-component",{method:"POST",credentials:"same-origin",headers:{"Content-Type":"application/json",Accept:"application/json","X-XSRF-TOKEN":"component token"},body:"{}"});
 });
 
 it("assembles and schedules Releases using the mounted package operations", async () => {

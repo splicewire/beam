@@ -12,6 +12,8 @@ import {getAt,isJsonBlock} from '../blockdoc/json';
 import {MediaPicker} from '../editor/MediaPicker';
 import {BindingInspector} from './BindingInspector';
 import {blockStyleFields} from './block-style';
+import {authoredEntry} from './authored-components';
+import {ComponentProps} from './ComponentProps';
 
 const PANELS:Record<string,string[]>={
  Size:['width','height','min-width','max-width','min-height','max-height','aspect-ratio','object-fit'],
@@ -39,6 +41,7 @@ export function BlockInspector(){
  const id=mount.selectedNodeId;
  const node=id!==null?mount.getNode(id) as Node|null:null;
  const attrs=node?.attrs??{};
+ const component=authoredEntry(config,node?.type);
  const style=(attrs.bdStyle??{layers:[]}) as BlockStyle;
  const selected=canvasSelection.commands&&canvasSelection.paths.includes(id??'')?canvasSelection.paths:[...(id?[id]:[])];
  const styles=selected.map(path=>{
@@ -102,7 +105,8 @@ export function BlockInspector(){
   {selected.length<=1&&<BindingInspector key={id} path={id}/>}
   {selected.length>1&&<p>{selected.length} blocks selected — Block Style edits apply together.</p>}
   {effectiveDeclaration(style,'display',{breakpoint:selection.breakpoint,state:null},registry)?.value==='none'&&<p>Hidden for visitors at {selection.breakpoint?`${selection.breakpoint}+`:'all widths'} after publish. An earlier layer may still hide this block when this override is cleared.</p>}
-  {selected.length<=1&&<section aria-label="Element properties"><h3>{node.type} properties</h3><SchemaForm key={id} schema={{...node.attrsSchema,properties}} formData={props}
+  {selected.length<=1&&component&&<ComponentProps key={id} path={id} entry={component}/>}
+  {selected.length<=1&&!component&&<section aria-label="Element properties"><h3>{node.type} properties</h3><SchemaForm key={id} schema={{...node.attrsSchema,properties}} formData={props}
    uiSchema={{'ui:submitButtonOptions':{norender:true}}} onChange={(event:{formData?:unknown})=>mount.setNodeAttrs(id,{...(event.formData as Record<string,unknown>),...(Object.hasOwn(attrs,'className')?{className:attrs.className}:{}),bdStyle:style})}/></section>}
   {selected.length<=1&&config.mediaLibrary&&Object.entries(properties).filter(([name,schema])=>
     (node.type==='img'&&name==='src')||(schema as Record<string,unknown>)?.['x-component-prop-type']==='image'

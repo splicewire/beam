@@ -1,3 +1,4 @@
+import {ComponentSessionHost} from './ComponentSessionHost';
 import { createContext, useContext, type ReactNode } from "react";
 import type { UxBuilderClient } from "../types";
 import type { CanvasConfig, CanvasTheme } from "../canvas";
@@ -39,7 +40,7 @@ export function EditorKitProvider({
         notify,
       }}
     >
-      {children}
+      <ComponentSessionHost kit={{...inputs,userId,theme,canvasConfig,defaultTreeFor,notify}}>{children}</ComponentSessionHost>
     </KitContext.Provider>
   );
 }

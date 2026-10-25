@@ -93,6 +93,31 @@ hasMore: boolean,
 page: number,
 };
 
+export type EntryComponentCapabilitiesInputData = object;
+
+export type EntryComponentCapabilitiesOutputData = {
+id: string,
+canEdit: boolean,
+reachEntries: number | null,
+reachLimit: number,
+reachUnavailable: boolean,
+};
+
+export type EntryComponentCreateInputData = {
+title: string,
+body: JsonNode[],
+};
+
+export type EntryComponentCreateOutputData = {
+id: string,
+};
+
+export type EntryComponentDuplicateInputData = object;
+
+export type EntryComponentDuplicateOutputData = {
+id: string,
+};
+
 export type EntryCanvasBindingsInputData = {
 body: JsonNode[],
 recordValue?: string | null,

@@ -53,6 +53,9 @@ async function readData(res: Response, what: string): Promise<unknown> {
 }
 
 const defaultBodyClient: UxBuilderClient = {
+  componentCapabilities: async id => readData(await fetch(`/beam-ux-entries/${id}/component-capabilities`, {credentials:'same-origin',headers:{Accept:'application/json'}}),'component capabilities') as ReturnType<NonNullable<UxBuilderClient['componentCapabilities']>>,
+  createComponent: async (id,input) => readData(await fetch(`/beam-ux-entries/${id}/create-component`, {method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json',Accept:'application/json','X-XSRF-TOKEN':csrfToken()},body:JSON.stringify(input)}),'create component') as ReturnType<NonNullable<UxBuilderClient['createComponent']>>,
+  duplicateComponent: async id => readData(await fetch(`/beam-ux-entries/${id}/duplicate-component`, {method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json',Accept:'application/json','X-XSRF-TOKEN':csrfToken()},body:JSON.stringify({})}),'duplicate component') as ReturnType<NonNullable<UxBuilderClient['duplicateComponent']>>,
   canvasBindings: async (id, body, recordValue, options) => {
     const response = await fetch(`/beam-ux-entries/${id}/canvas-bindings`, {
       method: 'POST', credentials: 'same-origin',
@@ -350,6 +353,9 @@ const imageClient = {
 };
 
 export const bodyClient: UxBuilderClient = {
+  get componentCapabilities() { const client=getBeamInertiaConfig().entryClient ?? defaultBodyClient;return client.componentCapabilities?.bind(client); },
+  get createComponent() { const client=getBeamInertiaConfig().entryClient ?? defaultBodyClient;return client.createComponent?.bind(client); },
+  get duplicateComponent() { const client=getBeamInertiaConfig().entryClient ?? defaultBodyClient;return client.duplicateComponent?.bind(client); },
   get canvasBindings() {
     const client = getBeamInertiaConfig().entryClient ?? defaultBodyClient;
     return client.canvasBindings?.bind(client);

@@ -1,3 +1,4 @@
+import {useComponentAuthoring} from './use-component-authoring';
 import {useBindingPreviewPort} from './use-binding-preview-port';
 // In-place page editor — a THIN host wrapper over @splicewire/beam-ux/canvas's promoted PageEditor. All
 // machinery (read/edit-mode fork, floating panels, canvas, inspector) lives in the package; the host
@@ -133,6 +134,11 @@ export function PageEditor({ slug, body = null, entryId: suppliedId = null }: Pa
         };
     }, [editing, entryId, current]);
 
+    const componentAuthoring=useComponentAuthoring(entryId,editing,async()=>{
+        if(!entryId)return;
+        const fresh=await bodyClient.loadBody(entryId) as {profile?:import('@schemastud/blockdoc').BlockdocManifest;authoredComponents?:import('@splicewire/beam-resources/types/beam-ux').ComponentCanvasData[]};
+        setLoaded(previous=>previous?.entryId===entryId?{...previous,profile:fresh.profile,authoredComponents:fresh.authoredComponents}:previous);
+    });
     const bindingPreview=useBindingPreviewPort(bodyClient,entryId,userId,editing&&canAuthor,current?.pageSettings?.recordPage?.collection);
 
     // Do not mount the canvas until the body is in hand. `CanvasPageEditor` seeds its document ONCE, on
@@ -164,7 +170,7 @@ export function PageEditor({ slug, body = null, entryId: suppliedId = null }: Pa
     return (
         <CanvasProvider config={{ ...canvasConfig, mediaLibrary: current?.mediaLibrary && entryId && bodyClient.listImages && bodyClient.uploadImage ? {
             list:()=>bodyClient.listImages!(entryId),upload:(file:File)=>bodyClient.uploadImage!(entryId,file),
-        }:undefined, bindingPreview:editing?bindingPreview:undefined, profile: current?.profile, styleRegistry: current?.styleRegistry, bindings: current?.bindings, authoredComponents: current?.authoredComponents }}>
+        }:undefined, bindingPreview:editing?bindingPreview:undefined, profile: current?.profile, styleRegistry: current?.styleRegistry, bindings: current?.bindings, authoredComponents: current?.authoredComponents,componentAuthoring }}>
             {entryId === null && canAuthor && bodyClient.makeEditable && seed && (
                 <button type="button" disabled={creating} onClick={makeEditable}>Make this page editable</button>
             )}

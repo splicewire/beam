@@ -3,16 +3,23 @@ import type { ComponentCanvasData } from '@splicewire/beam-resources/types/beam-
 import { renderNode } from './TreeRender.js';
 import type { CanvasConfig } from './context.js';
 
+const authoredRenderers=new WeakSet<ComponentType<Record<string,unknown>>>();
+
+export function authoredEntry(config:CanvasConfig,name:string|null|undefined):ComponentCanvasData|undefined {
+    return name&&config.registry[name]&&authoredRenderers.has(config.registry[name])?config.authoredComponents?.find(entry=>entry.definition.name===name):undefined;
+}
+
 /** Working Head bodies for authoring only. Public EntryBody loads separately pinned artifacts. */
 export function withAuthoredComponents(config: CanvasConfig): CanvasConfig {
-    if (!config.authoredComponents?.length) return config;
+    if (!config.authoredComponents?.length
+        && !Object.values(config.registry).some(render => authoredRenderers.has(render))) return config;
     const registry: Record<string, ComponentType<Record<string, unknown>>> = {};
     const resolved: CanvasConfig = { ...config, registry };
-    for (const entry of config.authoredComponents) {
+    for (const entry of config.authoredComponents ?? []) {
         const name = entry.definition.name;
-        if (name) registry[name] = authored(entry, resolved);
+        if (name) {registry[name] = authored(entry, resolved);authoredRenderers.add(registry[name]);}
     }
-    Object.assign(registry, config.registry);
+    Object.assign(registry,Object.fromEntries(Object.entries(config.registry).filter(([,render])=>!authoredRenderers.has(render))));
     return resolved;
 }
 
