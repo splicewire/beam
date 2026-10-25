@@ -86,6 +86,7 @@ export const cardEntryBody: BeamUxEntryBodyData = {
     // TsxBodyCodec decodes an object body without a source key to an empty string.
     source: '',
     compileError: null,
+    authoredComponents: [],
 };
 
 /**
@@ -145,6 +146,7 @@ export const themeEntryBody: BeamUxEntryBodyData = {
     // for it (`EntryBodyEnvelope::sourceFor()` answers null for every non-JsonDoc body).
     source: null,
     compileError: null,
+    authoredComponents: [],
 };
 
 /**
@@ -162,6 +164,7 @@ export function plainEntryBody(id: string, slug: string = id): BeamUxEntryBodyDa
         body: {},
         source: null,
         compileError: null,
+        authoredComponents: [],
     };
 }
 

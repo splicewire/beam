@@ -102,6 +102,7 @@ export function PageEditor({ slug, body = null, entryId: suppliedId = null }: Pa
         styleRegistry?: import('../blockdoc/style-runtime.js').StyleRegistry; profile?: import('@schemastud/blockdoc').BlockdocManifest;
         failed?: boolean;
         bindings?: import('../bindings/runtime.js').BindingPayload;
+        authoredComponents?: import('@splicewire/beam-resources/types/beam-ux').ComponentCanvasData[];
     } | null>(null);
 
     const current = loaded?.entryId === entryId ? loaded : null;
@@ -116,7 +117,7 @@ export function PageEditor({ slug, body = null, entryId: suppliedId = null }: Pa
             .loadBody(entryId)
             .then(
                 (env) =>
-                    live && setLoaded({ mediaLibrary: (env as {mediaLibrary?:boolean}).mediaLibrary===true, entryId, body: (env as { body?: unknown })?.body ?? null, pageSettings: (env as { pageSettings?: EntryPageSettings | null }).pageSettings, pageFields: (env as { pageFields?: import('./PageSettings').PageFieldsOffer | null }).pageFields ?? null, fileLanguages: (env as { fileLanguages?: string[] | null }).fileLanguages ?? null, bindings: (env as { bindings?: import('../bindings/runtime.js').BindingPayload }).bindings, styleRegistry: (env as { styleRegistry?: import("../blockdoc/style-runtime.js").StyleRegistry }).styleRegistry, profile: (env as { styleRegistry?: import('../blockdoc/style-runtime.js').StyleRegistry; profile?: import('@schemastud/blockdoc').BlockdocManifest }).profile }),
+                    live && setLoaded({ mediaLibrary: (env as {mediaLibrary?:boolean}).mediaLibrary===true, entryId, authoredComponents: (env as { authoredComponents?: import('@splicewire/beam-resources/types/beam-ux').ComponentCanvasData[] }).authoredComponents, body: (env as { body?: unknown })?.body ?? null, pageSettings: (env as { pageSettings?: EntryPageSettings | null }).pageSettings, pageFields: (env as { pageFields?: import('./PageSettings').PageFieldsOffer | null }).pageFields ?? null, fileLanguages: (env as { fileLanguages?: string[] | null }).fileLanguages ?? null, bindings: (env as { bindings?: import('../bindings/runtime.js').BindingPayload }).bindings, styleRegistry: (env as { styleRegistry?: import("../blockdoc/style-runtime.js").StyleRegistry }).styleRegistry, profile: (env as { styleRegistry?: import('../blockdoc/style-runtime.js').StyleRegistry; profile?: import('@schemastud/blockdoc').BlockdocManifest }).profile }),
             )
             // A refused read is not an empty body: keep replacement writes unavailable.
             .catch(() => {
@@ -160,7 +161,7 @@ export function PageEditor({ slug, body = null, entryId: suppliedId = null }: Pa
     return (
         <CanvasProvider config={{ ...canvasConfig, mediaLibrary: current?.mediaLibrary && entryId && bodyClient.listImages && bodyClient.uploadImage ? {
             list:()=>bodyClient.listImages!(entryId),upload:(file:File)=>bodyClient.uploadImage!(entryId,file),
-        }:undefined, profile: current?.profile, styleRegistry: current?.styleRegistry, bindings: current?.bindings }}>
+        }:undefined, profile: current?.profile, styleRegistry: current?.styleRegistry, bindings: current?.bindings, authoredComponents: current?.authoredComponents }}>
             {entryId === null && canAuthor && bodyClient.makeEditable && seed && (
                 <button type="button" disabled={creating} onClick={makeEditable}>Make this page editable</button>
             )}

@@ -82,6 +82,7 @@ function childToJson(child: BlockChild): JsonNode {
         ...(child.style ? { style: child.style } : {}),
         ...(child.repeat ? { repeat: child.repeat } : {}),
         ...(child.when ? { when: child.when } : {}),
+        ...(child.component ? {component: child.component} : {}),
     };
 }
 
@@ -104,10 +105,11 @@ const INDENT = '  ';
  * parent's tags already) is untouched.
  */
 export function jsonToTsx(doc: JsonDoc, depth = 0): string {
-    return doc.map((n) => printNode(n, depth) + ';').join('\n');
+    const componentBody = doc.length === 1 && isJsonBlock(doc[0]) && !!doc[0].component;
+    return doc.map((n) => printNode(n, depth, componentBody) + ';').join('\n');
 }
 
-function printNode(node: JsonNode, depth: number): string {
+function printNode(node: JsonNode, depth: number, componentBody = false): string {
     const pad = INDENT.repeat(depth);
     if (isJsonText(node)) {
         if (node.prop != null) {
@@ -122,7 +124,7 @@ function printNode(node: JsonNode, depth: number): string {
     }
     if (isJsonOpaque(node)) return pad + node.source;
 
-    if (node.name === 'Slot') {
+    if (node.name === 'Slot' && !componentBody) {
         const name = node.props.find(prop => prop.name === 'name')?.value ?? 'children';
         assertReferenceName(name);
         const fallback = node.children.length === 0 ? '' : ` ?? ${printSlotValue(node.children, depth)}`;
@@ -130,7 +132,7 @@ function printNode(node: JsonNode, depth: number): string {
     }
 
     const tag = node.name ?? '';
-    const attrs = jsxAttributes(node, depth);
+    const attrs = jsxAttributes(node, depth, componentBody);
     const open = node.name === null ? '<>' : `<${tag}${attrs}>`;
     const close = node.name === null ? '</>' : `</${tag}>`;
 
@@ -145,7 +147,7 @@ function printNode(node: JsonNode, depth: number): string {
         return `${pad}${open}${inner}${close}`;
     }
 
-    const kids = node.children.map((c) => printNode(c, depth + 1)).join('\n');
+    const kids = node.children.map((c) => printNode(c, depth + 1, componentBody)).join('\n');
     return `${pad}${open}\n${kids}\n${pad}${close}`;
 }
 
@@ -154,16 +156,17 @@ function printNode(node: JsonNode, depth: number): string {
  * `bdRepeat`, `bdWhen`), then its named slots. Exported so the MDX printer (`@splicewire/beam-mdx/lens`)
  * prints a component's attributes exactly as here (ux-0233 d2).
  */
-export function jsxAttributes(node: JsonBlock, depth = 0): string {
+export function jsxAttributes(node: JsonBlock, depth = 0, componentBody = false): string {
     if (node.style) assertBlockStyle(node.style);
     if (node.repeat) assertRepeat(node.repeat);
     if (node.when) assertCondition(node.when);
     const attrs = node.props.map(printProp).join('') + (node.style ? ` bdStyle={${JSON.stringify(node.style)}}` : '')
         + (node.repeat ? ` bdRepeat={${JSON.stringify(node.repeat)}}` : '')
-        + (node.when ? ` bdWhen={${JSON.stringify(node.when)}}` : '');
+        + (node.when ? ` bdWhen={${JSON.stringify(node.when)}}` : '')
+        + (node.component ? ` bdComponent={${JSON.stringify(node.component)}}` : '');
     const slotAttrs = Object.entries(node.slots ?? {}).map(([name, children]) => {
         assertReferenceName(name);
-        return ` ${name}={${printSlotValue(children, depth)}}`;
+        return ` ${name}={${printSlotValue(children, depth, componentBody)}}`;
     }).join('');
     return attrs + slotAttrs;
 }
@@ -195,9 +198,9 @@ function printProp(p: JsonProp): string {
     }
 }
 
-function printSlotValue(children: JsonNode[], depth: number): string {
-    if (children.length === 1 && isJsonBlock(children[0]) && children[0].name !== 'Slot') return printNode(children[0], depth).trimStart();
-    return `<>${children.map(child => printNode(child, depth + 1)).join('\n')}</>`;
+function printSlotValue(children: JsonNode[], depth: number, componentBody = false): string {
+    if (children.length === 1 && isJsonBlock(children[0]) && children[0].name !== 'Slot') return printNode(children[0], depth, componentBody).trimStart();
+    return `<>${children.map(child => printNode(child, depth + 1, componentBody)).join('\n')}</>`;
 }
 
 /** Escape a text leaf for JSX body content (only `{`, `}`, `<`, `>` are special). */

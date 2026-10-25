@@ -26,6 +26,8 @@ export type EntryPayload = {
 };
 
 export type EntryArtifactPayload = {
+    components?: import("@splicewire/beam-resources/types/beam-ux").ComponentArtifactData[];
+    styleRegistry?: import("../blockdoc/style-runtime.js").StyleRegistry;
     url: string;
     version: string | null;
 };

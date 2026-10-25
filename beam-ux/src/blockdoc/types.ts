@@ -78,6 +78,7 @@ export interface TextNode {
 }
 
 export interface BlockNode {
+    component?: import('@splicewire/beam-resources/types/beam-ux').ComponentDefinitionData;
     slots?: Record<string, BlockChild[]>;
     repeat?: RepeatDeclaration;
     when?: DataCondition;

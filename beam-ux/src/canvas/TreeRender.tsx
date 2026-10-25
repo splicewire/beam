@@ -16,6 +16,7 @@ import { isIsland, useCanvas } from './context.js';
 import type { CanvasConfig } from './context.js';
 import { blockToProps, islandProps } from './props.js';
 import { bindingRuntime, type BindingRecord, type BindingPayload } from '../bindings/runtime.js';
+import { componentValue } from './authored-components.js';
 import { RetiredMdxIsland } from './mdx-island.js';
 
 /**
@@ -24,13 +25,21 @@ import { RetiredMdxIsland } from './mdx-island.js';
  * already gets — just gated on the viewer's can-map instead of source-reachability).
  */
 export function renderNode(node: JsonNode, path: string, config: CanvasConfig, record?: BindingRecord): ReactNode {
-    if (isJsonText(node)) return node.field == null ? node.value : bindingRuntime.text(record, node.field, node.value);
+    if (isJsonText(node)) return node.prop != null ? componentValue(config, node.prop)
+        : node.field == null ? node.value : bindingRuntime.text(record, node.field, node.value);
     // A sealed opaque island renders its verbatim source read-only (mirrors the canvas seal, view-side).
     if (isJsonOpaque(node)) {
         return createElement('pre', { key: path, className: 've-opaque-src' }, node.source);
     }
 
     const block = node;
+    if (block.name === 'Slot') {
+        const name = block.props.find(prop => prop.name === 'name')?.value ?? 'children';
+        const value = typeof name === 'string' ? config.componentProps?.[name] : undefined;
+        return value == null
+            ? block.children.map((child, index) => renderNode(child, `${path}.fallback.${index}`, config, record))
+            : value as ReactNode;
+    }
     if (block.repeat) {
         const template = { ...block, repeat: undefined };
         return bindingRuntime.repeat(config.bindings?.[block.id ?? ''],
@@ -38,6 +47,8 @@ export function renderNode(node: JsonNode, path: string, config: CanvasConfig, r
             () => (block.repeat?.empty ?? []).map((child, index) => renderNode(child, `${path}.empty.${index}`, config, record)));
     }
     if (block.when && !bindingRuntime.when(block.when, record)) return null;
+    const references = Object.fromEntries(block.props.filter(prop => prop.kind === 'prop')
+        .map(prop => [prop.name, typeof prop.value === 'string' ? componentValue(config, prop.value) : null]));
     const fields = Object.fromEntries(block.props.filter((prop) => prop.kind === 'field').map((prop) => [prop.name, bindingRuntime.attribute(record, String(prop.value), prop.name)]));
 
     if (block.name === 'Mdx') {
@@ -60,12 +71,13 @@ export function renderNode(node: JsonNode, path: string, config: CanvasConfig, r
             key: path,
             ...islandProps(block, config.styleRegistry),
             ...fields,
+            ...references,
             ...slots,
         }, ...block.children.map((child, index) => renderNode(child, `${path}.${index}`, config, record)));
     }
 
     const tag = block.name ?? 'div';
-    const props = { key: path, ...blockToProps(block, config.styleRegistry), ...fields };
+    const props = { key: path, ...blockToProps(block, config.styleRegistry), ...fields, ...references };
 
     if (VOID_TAGS.has(tag)) return createElement(tag, props);
 

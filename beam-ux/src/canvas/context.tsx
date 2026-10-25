@@ -12,6 +12,7 @@ import { editGateOf } from './props.js';
 import { assertProfileRegistry } from './profile';
 import { StyleSelectionProvider } from './StyleSelection';
 import { CanvasSelectionProvider } from './CanvasSelection';
+import { withAuthoredComponents } from './authored-components.js';
 import { richFieldComponents } from '../bindings/rich-field.js';
 
 /**
@@ -42,6 +43,8 @@ export interface BlockTemplate {
 export interface CanvasConfig {
     /** Present only after the addressed body read admits this author to the entry media library. */
     mediaLibrary?: import("../editor/MediaPicker").EntryImageLibrary;
+    authoredComponents?: import("@splicewire/beam-resources/types/beam-ux").ComponentCanvasData[];
+    componentProps?: Record<string, unknown>;
     bindings?: import('../bindings/runtime.js').BindingPayload;
     styleRegistry?: import("../blockdoc/style-runtime.js").StyleRegistry;
     /** Resolved by the server for the entry; the save guard reads this same profile. */
@@ -88,6 +91,7 @@ export interface CanvasConfig {
 const CanvasContext = createContext<CanvasConfig | null>(null);
 
 export function CanvasProvider({ config, children }: { config: CanvasConfig; children: ReactNode }) {
+    config = withAuthoredComponents(config);
     config = { ...config, registry: { ...config.registry, ...richFieldComponents } };
     if (config.profile) assertProfileRegistry(config.profile, config.registry);
     return <CanvasContext.Provider value={config}><StyleSelectionProvider><CanvasSelectionProvider>{children}</CanvasSelectionProvider></StyleSelectionProvider></CanvasContext.Provider>;

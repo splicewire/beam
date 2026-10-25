@@ -81,6 +81,7 @@ const cardBody: BeamUxEntryBodyData = {
     body: { title: 'Frontend Foundations', ctaLabel: 'Enroll' },
     source: '',
     compileError: null,
+    authoredComponents: [],
 };
 
 /** An in-memory client that records the last save and resolves the fixture body. */
@@ -99,6 +100,7 @@ function makeClient(saveBody: UxBuilderClient['saveBody']): UxBuilderClient {
                         body: {},
                         source: null,
                         compileError: null,
+                        authoredComponents: [],
                     },
             ),
         saveBody,

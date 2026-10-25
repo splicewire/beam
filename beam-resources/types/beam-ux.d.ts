@@ -17,6 +17,8 @@ bindings?: Array<any>,
 pageFields?: Record<string, any> | null,
 fileLanguages?: string[] | null,
 intakeForms?: Record<string, Record<string, any>>,
+mediaLibrary?: boolean,
+authoredComponents: ComponentCanvasData[],
 };
 
 export type EntryVersionData = {
@@ -51,6 +53,52 @@ style?: BlockStyleData | null,
 repeat?: RepeatData | null,
 when?: ConditionData | null,
 slots?: Record<string, JsonNode[]>,
+component?: ComponentDefinitionData | null,
+};
+
+export type ComponentDefinitionData = {
+name: string | null,
+props: ComponentPropData[],
+};
+
+export type ComponentPropData = {
+name: string,
+type: ComponentPropType,
+required: boolean,
+default: string | number | boolean | null,
+choices: string[],
+};
+
+export type ComponentPropType = 'text' | 'number' | 'toggle' | 'choice' | 'link' | 'image';
+
+export type ComponentCanvasData = {
+id: string,
+definition: ComponentDefinitionData,
+body: JsonNode[],
+bindings: Record<string, RepeatRecordsData>,
+headVersion: string | null,
+publishedVersion: string | null,
+};
+
+export type ComponentArtifactData = {
+name: string,
+url: string | null,
+version: string | null,
+bindings: Record<string, RepeatRecordsData>,
+};
+
+export type RepeatRecordsData = {
+records: Record<string, unknown>[],
+hasMore: boolean,
+page: number,
+};
+
+export type RecordPageData = {
+collection: string,
+field: string,
+titleField: string | null,
+descriptionField: string | null,
+socialImageField: string | null,
 };
 
 export type JsonTextNode = {
@@ -96,6 +144,7 @@ fileLanguage: string | null,
 childFields: string | null,
 fields: Record<string, string | number | boolean>,
 unclaimed: Record<string, string>,
+recordPage?: RecordPageData | null,
 };
 
 export type ReleaseRecordingData = {

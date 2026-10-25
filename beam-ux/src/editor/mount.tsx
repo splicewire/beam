@@ -1,3 +1,4 @@
+import { componentDependencies } from './component-dependencies';
 import { canMountPublication, isUnauthored } from './publication-state';
 import { PageSettings, type PageFieldsOffer } from './PageSettings';
 import { SourceMode } from './SourceMode';
@@ -24,6 +25,8 @@ export function VisualEditorMount({ entryRef }: { entryRef: EntryRef }) {
 }
 /** What the editor keeps of a body envelope. */
 interface LoadedEnvelope {
+    authoredComponents?: import("@splicewire/beam-resources/types/beam-ux").ComponentCanvasData[];
+    bindings?: import("../bindings/runtime.js").BindingPayload;
     body: JsonDoc;
     pageSettings?: SessionPageSettings;
     pageFields: PageFieldsOffer | null;
@@ -40,7 +43,7 @@ interface LoadedEnvelope {
 function readEnvelope(envelope: unknown, missing: string): LoadedEnvelope {
     const read = (envelope ?? {}) as Partial<LoadedEnvelope> & { body?: unknown };
     if (!Array.isArray(read.body)) throw new Error(missing);
-    return { mediaLibrary: read.mediaLibrary===true, body: read.body as JsonDoc, pageSettings: read.pageSettings, pageFields: read.pageFields ?? null, fileLanguages: read.fileLanguages ?? [], styleRegistry: read.styleRegistry, profile: read.profile };
+    return { mediaLibrary: read.mediaLibrary===true, authoredComponents: read.authoredComponents, bindings: read.bindings, body: read.body as JsonDoc, pageSettings: read.pageSettings, pageFields: read.pageFields ?? null, fileLanguages: read.fileLanguages ?? [], styleRegistry: read.styleRegistry, profile: read.profile };
 }
 
 function AddressedVisualEditor({ entryRef }: { entryRef: EntryRef }) {
@@ -163,12 +166,25 @@ function AddressedVisualEditor({ entryRef }: { entryRef: EntryRef }) {
             notify.error(reason instanceof Error ? reason.message : 'Could not open the version preview');
         }
     };
-    return <CanvasProvider config={{ ...canvasConfig, mediaLibrary, profile: loaded.profile, styleRegistry: loaded.styleRegistry }}>
+    const dependencies = componentDependencies(local.session.body as JsonDoc, loaded.authoredComponents ?? []);
+    const pendingComponents = dependencies.filter(entry => entry.headVersion && entry.headVersion !== entry.publishedVersion);
+    const componentChoices = pendingComponents.map(entry => ({id: entry.id, title: entry.definition.name ?? 'Component',
+        versions: [{id: entry.headVersion!, label: 'Pending component draft'}]}));
+    return <CanvasProvider config={{ ...canvasConfig, mediaLibrary, profile: loaded.profile, styleRegistry: loaded.styleRegistry,
+        bindings: loaded.bindings, authoredComponents: loaded.authoredComponents }}>
         {conflict && <div role="alertdialog" aria-label="Save conflict">
             <p>The server draft changed.</p>
             <button disabled={busy} onClick={() => void resolveConflict(false)}>Reload theirs</button>
             <button disabled={busy} onClick={() => void resolveConflict(true)}>Save ours as a new version</button>
         </div>}
+        {!!loaded.state.diagnostics?.length && <aside role="status" aria-label="Saved interface diagnostics"><ul>
+            {loaded.state.diagnostics.map(message => <li key={message}>{message}</li>)}
+        </ul></aside>}
+        {pendingComponents.length > 0 && <aside aria-label="Component drafts">
+            <p>These components have pending drafts: {pendingComponents.map(entry => entry.definition.name).join(', ')}.
+                Add their saved drafts to the same built Release below to publish them together.
+                Otherwise this entry uses their published versions; never-published components must be included.</p>
+        </aside>}
         <div aria-label="Publication controls">
             <button disabled={busy || (local.session.dirty && !isUnauthored(loaded.state))} onClick={() => void publish()}>Publish</button>
             <button onClick={() => setHistory(!history)}>History</button>
@@ -187,6 +203,7 @@ function AddressedVisualEditor({ entryRef }: { entryRef: EntryRef }) {
                 entryTitle={entryRef.slug ?? 'This entry'}
                 versions={loaded.state.versions.map(version => ({id:version.id,label:version.readable ?? version.id}))}
                 canTakeDown={loaded.state.publishedVersion !== null}
+                relatedEntries={componentChoices}
                 listReleases={() => transport.listReleases!()}
                 createRelease={(entryId, title) => transport.createRelease!(entryId, title)}
                 releaseCommand={(releaseId, command) => transport.releaseCommand!(releaseId, command)}
