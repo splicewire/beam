@@ -9,6 +9,7 @@ import {
   type ReactNode,
   type CSSProperties,
 } from "react";
+import { createPortal } from "react-dom";
 import type {
   ComponentCanvasData,
   EntryComponentCapabilitiesOutputData,
@@ -96,7 +97,7 @@ export function ComponentSessionHost({
       >
         {children}
       </div>
-      {active && (
+      {active && createPortal(
         <section
           className="component-session"
           role="dialog"
@@ -157,7 +158,8 @@ export function ComponentSessionHost({
               </Suspense>
             </EditorKitProvider>
           </div>
-        </section>
+        </section>,
+        document.body
       )}
     </Context.Provider>
   );
