@@ -478,6 +478,14 @@ it("keeps the Page Fields offer after a conflict's Reload theirs", async () => {
   expect(screen.getByLabelText("Child page fields")).toBeTruthy();
 });
 
+it("shows the Redirects the server lists with the page in its settings (ux-0236 d14)", async () => {
+  loadBody.mockResolvedValue({ ...OFFERED, redirects: [{ path: "/old-pie", match: "prefix", permanent: true, origin: "author" }] });
+  render(<VisualEditorMount entryRef={ref("redirects-to-page")} />);
+
+  const group = await screen.findByRole("group", { name: "Redirects to this page" });
+  expect(group.textContent).toContain("/old-pie and below · made by an author");
+});
+
 it("keeps the page settings and the Page Fields offer after a History restore", async () => {
   loadBody.mockResolvedValue(OFFERED);
   const old = { id: "v0", readable: "v0", label: "Older", recordings: [] };

@@ -40,6 +40,19 @@ export interface ReleaseRecord {
   previewHref?: string | null;
   /** Whether this reader may turn the links on or off and rotate them: edit on every member, as the actions check. */
   canManagePreviewLinks?: boolean;
+  /**
+   * ux-0236 d2: the Redirects the Release leaves: while open, the ones it would leave (no id yet); once published, the
+   * ones it left, each with its id.
+   */
+  redirects?: ReleaseRedirect[];
+}
+/** A Redirect a Release leaves (ux-0236 d2); `to` is null where it leads nowhere a page answers now. */
+export interface ReleaseRedirect {
+  id: string | null;
+  path: string;
+  match: string;
+  to: string | null;
+  origin: string;
 }
 export interface ReleaseCommand {
   action:
@@ -74,11 +87,14 @@ export function ReleasePanel({
   entries,
   initialEntryId = "",
   onCommand,
+  onRemoveRedirect,
 }: {
   release: ReleaseRecord;
   entries: ReleaseEntryChoice[];
   initialEntryId?: string;
   onCommand: (command: ReleaseCommand) => Promise<unknown>;
+  /** Removes a Redirect the Release left, through the Redirect resource; absent, none is offered. */
+  onRemoveRedirect?: (id: string) => Promise<unknown>;
 }) {
   const [entryId, setEntryId] = useState(initialEntryId);
   const [ref, setRef] = useState("");
@@ -360,6 +376,62 @@ export function ReleasePanel({
           publish now.
         </p>
       )}
+      {release.redirects && release.redirects.length > 0 && (
+        <ReleaseRedirects redirects={release.redirects} onRemove={onRemoveRedirect} />
+      )}
+    </section>
+  );
+}
+
+/**
+ * ux-0236 d2: the Redirects a Release leaves. There is no per-URL switch: an unwanted one is removed once it exists,
+ * through the Redirect resource, which takes the rights publishing takes.
+ */
+function ReleaseRedirects({
+  redirects,
+  onRemove,
+}: {
+  redirects: ReleaseRedirect[];
+  onRemove?: (id: string) => Promise<unknown>;
+}) {
+  const [removed, setRemoved] = useState<string[]>([]);
+  const [error, setError] = useState<string | null>(null);
+  const remove = async (id: string) => {
+    setError(null);
+    try {
+      await onRemove!(id);
+      setRemoved((current) => [...current, id]);
+    } catch (failure) {
+      setError(failure instanceof Error ? failure.message : "The Redirect could not be removed.");
+    }
+  };
+  return (
+    <section aria-label="Redirects this Release leaves">
+      <h3 className="font-semibold">Redirects this Release leaves</h3>
+      <ul>
+        {redirects
+          .filter((redirect) => redirect.id === null || !removed.includes(redirect.id))
+          .map((redirect) => (
+            <li key={`${redirect.path} ${redirect.match}`}>
+              <span>
+                {redirect.path}
+                {redirect.match === "prefix" ? " and below" : ""} → {redirect.to ?? "not found"}
+                {redirect.origin === "takedown" ? " (taken down)" : ""}
+              </span>
+              {redirect.id !== null && onRemove && (
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  aria-label={`Remove the Redirect from ${redirect.path}`}
+                  onClick={() => void remove(redirect.id!)}
+                >
+                  Remove
+                </Button>
+              )}
+            </li>
+          ))}
+      </ul>
+      {error && <p role="alert">{error}</p>}
     </section>
   );
 }
@@ -374,6 +446,7 @@ export function BuiltReleaseAssembly({
   listReleases,
   createRelease,
   releaseCommand,
+  removeRedirect,
 }: {
   entryId: string;
   entryTitle: string;
@@ -386,6 +459,7 @@ export function BuiltReleaseAssembly({
     releaseId: string,
     command: ReleaseCommand,
   ) => Promise<ReleaseRecord>;
+  removeRedirect?: (id: string) => Promise<unknown>;
 }) {
   const [releases, setReleases] = useState<ReleaseRecord[]>([]);
   const [releaseId, setReleaseId] = useState("");
@@ -498,6 +572,7 @@ export function BuiltReleaseAssembly({
           entries={[{ id: entryId, title: entryTitle, versions, canTakeDown }, ...relatedEntries.filter(entry => entry.id !== entryId)]}
           initialEntryId={entryId}
           onCommand={command}
+          onRemoveRedirect={removeRedirect}
         />
       )}
     </section>

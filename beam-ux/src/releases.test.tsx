@@ -214,3 +214,48 @@ describe("Preview from the Release (ADR-0232 d8, d15; EP-18)", () => {
     expect(screen.queryByRole("button", { name: "Turn on Preview Links" })).toBeNull();
   });
 });
+
+describe("A Release's Redirects", () => {
+  // ux-0236 d2 (EP-31 slice 5): the Release page lists the Redirects it leaves: those it would leave while open, and
+  // those it left once published, where an unwanted one is removed from the list.
+  it("lists the Redirects it would leave while open, with nothing to remove yet", () => {
+    render(
+      <ReleasePanel
+        release={{ ...release, redirects: [
+          { id: null, path: "/about", match: "exact", to: "/company", origin: "release" },
+          { id: null, path: "/legacy", match: "exact", to: "/pricing", origin: "takedown" },
+        ] }}
+        entries={entries}
+        onCommand={vi.fn()}
+        onRemoveRedirect={vi.fn()}
+      />,
+    );
+    const list = screen.getByRole("region", { name: "Redirects this Release leaves" });
+    expect(Array.from(list.querySelectorAll("li")).map((item) => item.textContent)).toEqual([
+      "/about → /company",
+      "/legacy → /pricing (taken down)",
+    ]);
+    expect(screen.queryByRole("button", { name: /^Remove/ })).toBeNull();
+  });
+
+  it("removes one it left, once published", async () => {
+    const remove = vi.fn(async () => undefined);
+    render(
+      <ReleasePanel
+        release={{ ...release, status: "published", redirects: [
+          { id: "rd1", path: "/about", match: "exact", to: "/company", origin: "release" },
+          { id: "rd2", path: "/blog", match: "prefix", to: "/posts", origin: "release" },
+        ] }}
+        entries={entries}
+        onCommand={vi.fn()}
+        onRemoveRedirect={remove}
+      />,
+    );
+    expect(screen.getByText("/blog and below → /posts")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Remove the Redirect from /about" }));
+
+    await waitFor(() => expect(remove).toHaveBeenCalledWith("rd1"));
+    await waitFor(() => expect(screen.queryByText("/about → /company")).toBeNull());
+    expect(screen.getByText("/blog and below → /posts")).toBeTruthy();
+  });
+});

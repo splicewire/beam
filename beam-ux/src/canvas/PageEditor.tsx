@@ -1,7 +1,7 @@
 import { CanvasClearance } from "./CanvasClearance";
 import { SourceMode } from "../editor/SourceMode";
 import { useCanvas } from "./context";
-import { PageSettings, type PageFieldsOffer } from "../editor/PageSettings";
+import { PageSettings, type PageFieldsOffer, type RedirectToPage } from "../editor/PageSettings";
 import type { SessionPageSettings } from "../editor/local-session";
 // In-place page editor: renders the entry's body INSIDE the real page (host layout chrome + full class
 // hierarchy intact, so styles are correct), read-only until an operator enters window mode (via the host's
@@ -96,6 +96,8 @@ export interface PageEditorTransport {
     id: string,
     command: ReleaseCommand,
   ) => Promise<ReleaseRecord>;
+  /** Remove a Redirect a Release left (ux-0236 d2), through the Redirect resource. */
+  removeRedirect?: (id: string) => Promise<void>;
   /** Browse and create mutable built Releases from the page editor. */
   listReleases?: () => Promise<ReleaseRecord[]>;
   createRelease?: (entryId: string, title: string) => Promise<ReleaseRecord>;
@@ -140,6 +142,8 @@ export interface PageEditorProps {
   pageFields?: PageFieldsOffer | null;
   /** The File Languages the server lets this page take (ux-0233 d5). */
   fileLanguages?: string[] | null;
+  /** The Redirects that lead to this page (ux-0236 d14), from its body envelope. */
+  redirects?: RedirectToPage[] | null;
   transport: PageEditorTransport;
   notify?: Notify;
   theme?: Partial<CanvasTheme>;
@@ -314,6 +318,7 @@ export function PageEditor({
   pageSettings = null,
   pageFields = null,
   fileLanguages = null,
+  redirects = null,
   transport,
   notify,
   theme,
@@ -853,6 +858,7 @@ export function PageEditor({
               value={local.session.pageSettings}
               pageFields={pageFields}
               fileLanguages={fileLanguages}
+              redirects={redirects}
               onChange={(settings) =>
                 local.change(local.session!.body, settings)
               }
@@ -1064,6 +1070,7 @@ export function PageEditor({
               const state = await transport.listVersions!(slug);
               setPublication({ ...state, release });
             }}
+            onRemoveRedirect={transport.removeRedirect}
           />
         )}
         {publication &&
@@ -1082,6 +1089,7 @@ export function PageEditor({
               listReleases={transport.listReleases}
               createRelease={transport.createRelease}
               releaseCommand={transport.releaseCommand}
+              removeRedirect={transport.removeRedirect}
             />
           )}
         {versionsOpen && (

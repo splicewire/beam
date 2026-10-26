@@ -88,6 +88,8 @@ export interface UxBuilderClient<TBody = BeamUxEntryBodyData> {
     releaseId: string,
     command: import("./releases").ReleaseCommand,
   ): Promise<import("./releases").ReleaseRecord>;
+  /** Remove a Redirect a Release left, through the Redirect resource (ux-0236 d2). */
+  removeRedirect?(id: string): Promise<void>;
   listVersions?(id: string): Promise<EntryPublicationState>;
   /** Mint an author-only, version-scoped preview URL for a saved entry version. */
   previewVersion?(id: string, versionId: string): Promise<{ url: string }>;
