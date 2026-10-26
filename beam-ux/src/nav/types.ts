@@ -66,8 +66,9 @@ export type LinkComponent = ComponentType<{
  *    node falls back to itself as a lone item). For a realm whose rail owns the whole IA with no
  *    top-bar section strip (splicewire's operator `/admin` realm).
  *  - `flat-with-headers` — top-level nodes render as items; a node with no `href` OPENS a new labeled
- *    group (the §7 convention). For a realm whose sections live in a top bar and the rail is flat
- *    (splicewire's tenant realm).
+ *    group (the §7 convention). A linked parent with children also labels a group of those children,
+ *    so its section landing can be represented as one of the child links. For a realm whose sections
+ *    live in a top bar and the rail is otherwise flat (splicewire's tenant realm).
  */
 export type RealmNavVariant = 'section-groups' | 'flat-with-headers';
 

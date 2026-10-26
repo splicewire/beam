@@ -150,11 +150,12 @@ function toGroups(items: RealmNavNode[], variant: RealmNavVariant): RailGroup[] 
     // entries. Seeding the new group with them keeps one convention rather than two: a heading followed
     // by flat siblings (a host frame manifest) and a heading holding its members (the containment-tree
     // projection) both render as one labeled group. Nothing regresses, because no manifest emitting the
-    // flat shape gives an href-less node children.
+    // flat shape gives an href-less node children. Linked section parents with children also label a
+    // group: the landing page is represented by its child link, alongside the section's other pages.
     const groups: RailGroup[] = [];
     let current: RailGroup = { items: [] };
     for (const node of items) {
-        if (!node.href && !node.locked) {
+        if ((!node.href || (node.children?.length ?? 0) > 0) && !node.locked) {
             if (current.items.length > 0) groups.push(current);
             current = { label: node.title, items: (node.children ?? []).filter(isRailable) };
         } else {

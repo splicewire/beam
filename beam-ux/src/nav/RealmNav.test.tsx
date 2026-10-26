@@ -14,6 +14,31 @@ const node = (over: Partial<RealmNavNode> & { title: string }): RealmNavNode => 
 });
 
 describe('RealmNav — flat-with-headers (tenant realm)', () => {
+    it('renders the children of a linked section as its tenant navigation group', () => {
+        const items: RealmNavNode[] = [
+            {
+                kind: 'nav/section',
+                title: 'Site',
+                href: '/site',
+                active: false,
+                activeTrail: false,
+                children: [
+                    node({ title: 'Overview', href: '/site' }),
+                    node({ title: 'Entries', href: '/site/entries' }),
+                    node({ title: 'Releases', href: '/site/releases' }),
+                ],
+            },
+        ];
+
+        render(<RealmNav items={items} variant="flat-with-headers" />);
+
+        expect(screen.getByText('Site')).toBeTruthy();
+        expect(screen.queryByRole('link', { name: 'Site' })).toBeNull();
+        expect(screen.getByRole('link', { name: 'Overview' }).getAttribute('href')).toBe('/site');
+        expect(screen.getByRole('link', { name: 'Entries' }).getAttribute('href')).toBe('/site/entries');
+        expect(screen.getByRole('link', { name: 'Releases' }).getAttribute('href')).toBe('/site/releases');
+    });
+
     it('renders a header from an href-less node and groups the items under it', () => {
         const items: RealmNavNode[] = [
             node({ title: 'Home', href: '/' }),
