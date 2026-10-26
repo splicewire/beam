@@ -39,6 +39,27 @@ describe('RealmNav — flat-with-headers (tenant realm)', () => {
         expect(screen.getByRole('link', { name: 'Releases' }).getAttribute('href')).toBe('/site/releases');
     });
 
+    it('keeps a linked section destination when none of its children points there', () => {
+        const items: RealmNavNode[] = [
+            {
+                kind: 'nav/section',
+                title: 'Site',
+                href: '/site',
+                active: false,
+                activeTrail: false,
+                children: [node({ title: 'Entries', href: '/site/entries' })],
+            },
+        ];
+
+        render(<RealmNav items={items} variant="flat-with-headers" />);
+
+        const links = screen.getAllByRole('link');
+        expect(links.map((link) => [link.textContent, link.getAttribute('href')])).toEqual([
+            ['Site', '/site'],
+            ['Entries', '/site/entries'],
+        ]);
+    });
+
     it('renders a header from an href-less node and groups the items under it', () => {
         const items: RealmNavNode[] = [
             node({ title: 'Home', href: '/' }),
