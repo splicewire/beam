@@ -219,29 +219,40 @@ function RichtextEditor({
     );
 }
 
-function firstTextValue(nodes: JsonDoc): string {
-    for (const node of nodes) {
-        if (node.kind === 'text') return node.value;
-        if (node.kind === 'block') {
-            const childText = firstTextValue(node.children);
-            if (childText !== '') return childText;
-            for (const slotNodes of Object.values(node.slots ?? {})) {
-                const slotText = firstTextValue(slotNodes);
-                if (slotText !== '') return slotText;
+function findEditableTextNode(nodes: JsonDoc): Extract<JsonNode, { kind: 'text' }> | null {
+    let firstText: Extract<JsonNode, { kind: 'text' }> | null = null;
+    const visit = (items: JsonDoc): Extract<JsonNode, { kind: 'text' }> | null => {
+        for (const node of items) {
+            if (node.kind === 'text') {
+                firstText ??= node;
+                if (node.value !== '') return node;
+            } else if (node.kind === 'block') {
+                const child = visit(node.children);
+                if (child?.value !== undefined && child.value !== '') return child;
+                for (const slotNodes of Object.values(node.slots ?? {})) {
+                    const slot = visit(slotNodes);
+                    if (slot?.value !== undefined && slot.value !== '') return slot;
+                }
             }
         }
-    }
 
-    return '';
+        return null;
+    };
+
+    return visit(nodes) ?? firstText;
+}
+
+function firstTextValue(nodes: JsonDoc): string {
+    return findEditableTextNode(nodes)?.value ?? '';
 }
 
 function replaceFirstTextValue(nodes: JsonDoc, value: string): JsonDoc {
-    let replaced = false;
+    const target = findEditableTextNode(nodes);
+    if (!target) return [...nodes, { kind: 'text', value }];
+
     const replace = (node: JsonNode): JsonNode => {
         if (node.kind === 'text') {
-            if (replaced) return node;
-            replaced = true;
-            return { ...node, value };
+            return node === target ? { ...node, value } : node;
         }
         if (node.kind !== 'block') return node;
 
@@ -252,9 +263,7 @@ function replaceFirstTextValue(nodes: JsonDoc, value: string): JsonDoc {
 
         return slots === undefined ? { ...node, children } : { ...node, children, slots };
     };
-    const next = nodes.map(replace);
-
-    return replaced ? next : [...next, { kind: 'text', value }];
+    return nodes.map(replace);
 }
 
 function FrameEditor() {

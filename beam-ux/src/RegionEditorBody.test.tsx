@@ -97,6 +97,29 @@ describe('the richtext editor is bound to the body', () => {
             children: [{ kind: 'text', value: 'Updated heading' }],
         }]);
     });
+
+    it('displays and edits the same non-empty text node when an earlier node is empty', () => {
+        const body: JsonDoc = [
+            {
+                kind: 'block',
+                name: 'p',
+                isComponent: false,
+                props: [],
+                children: [{ kind: 'text', value: '' }],
+                dynamic: false,
+            },
+            { kind: 'text', value: 'Visible later text' },
+        ];
+        const { onChange } = mount('richtext', body as unknown as Record<string, unknown>);
+
+        expect(source().value).toBe('Visible later text');
+        fireEvent.change(source(), { target: { value: 'Edited later text' } });
+
+        expect(onChange).toHaveBeenLastCalledWith([
+            body[0],
+            { kind: 'text', value: 'Edited later text' },
+        ]);
+    });
 });
 
 describe('the commit row wraps every body-bound editor', () => {
