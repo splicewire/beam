@@ -157,6 +157,61 @@ describe('§8a — @splicewire/beam-ux UxBuilder mounts off pure DTO fixtures (n
         );
     });
 
+    it('uses the draft seam when the host supplies it, without calling immediate-publish save-body', async () => {
+        const publication = {
+            id: CARD_ID,
+            draftPending: true,
+            publishedVersion: 'published-v1',
+            publishedReadable: 'published-v1',
+            headVersion: 'draft-v2',
+            headReadable: 'draft-v2',
+            versions: [],
+            compileError: null,
+        };
+        const saveBody = vi.fn<UxBuilderClient['saveBody']>();
+        const listVersions = vi.fn(async (_id: string) => publication);
+        const saveDraft = vi.fn(async (
+            _id: string,
+            _body: Record<string, unknown>,
+            _baseVersion: string | null,
+            _label?: string,
+        ) => publication);
+        const notify = vi.fn();
+        const Wrapper = withProviders({
+            client: {
+                ...makeClient(saveBody),
+                listVersions,
+                saveDraft,
+            },
+            notify,
+        });
+
+        render(
+            <UxBuilder
+                regions={regions}
+                pageTree={pageTree}
+                palette={palette}
+                initialEngaged="card"
+                editorPlacement="inspector"
+            />,
+            { wrapper: Wrapper },
+        );
+
+        const title = await screen.findByLabelText(/Card title/);
+        fireEvent.change(title, { target: { value: 'Tenant draft title' } });
+        fireEvent.click(screen.getByRole('button', { name: /^Save$/ }));
+
+        await waitFor(() => expect(saveDraft).toHaveBeenCalledWith(
+            CARD_ID,
+            expect.objectContaining({ title: 'Tenant draft title' }),
+            'draft-v2',
+            expect.any(String),
+        ));
+        expect(listVersions).toHaveBeenCalledWith(CARD_ID);
+        expect(saveBody).not.toHaveBeenCalled();
+        expect(notify).toHaveBeenCalledWith({ type: 'success', message: 'Draft saved.' });
+    });
+
     it('sends a JsonDoc page body to save-body as an array', async () => {
         const original: JsonDoc = [{
             kind: 'block',
@@ -219,5 +274,71 @@ describe('§8a — @splicewire/beam-ux UxBuilder mounts off pure DTO fixtures (n
         fireEvent.click(screen.getByRole('button', { name: /^Save$/ }));
 
         await waitFor(() => expect(saveBody).toHaveBeenCalledWith(HERO_ID, changed));
+    });
+
+    it('keeps a JsonDoc page body as an array when the host saves a draft', async () => {
+        const original: JsonDoc = [{
+            kind: 'block',
+            name: 'h2',
+            isComponent: false,
+            props: [],
+            children: [{ kind: 'text', value: 'Published heading' }],
+            dynamic: false,
+        }];
+        const changed: JsonDoc = [{
+            kind: 'block',
+            name: 'h2',
+            isComponent: false,
+            props: [],
+            children: [{ kind: 'text', value: 'Draft heading' }],
+            dynamic: false,
+        }];
+        const pageBody: BeamUxEntryBodyData = {
+            slug: 'page.programs',
+            id: HERO_ID,
+            type: 'page',
+            format: 'mdx',
+            schema: null,
+            body: original as unknown as Record<string, unknown>,
+            source: null,
+            compileError: null,
+            authoredComponents: [],
+        };
+        const publication = {
+            id: HERO_ID,
+            draftPending: true,
+            publishedVersion: 'published-v1',
+            publishedReadable: 'published-v1',
+            headVersion: 'draft-v2',
+            headReadable: 'draft-v2',
+            versions: [],
+            compileError: null,
+        };
+        const saveBody = vi.fn<UxBuilderClient['saveBody']>();
+        const listVersions = vi.fn(async () => publication);
+        const saveDraft = vi.fn(async () => publication);
+        const Wrapper = withProviders({
+            client: { loadBody: async () => pageBody, saveBody, listVersions, saveDraft },
+            notify: vi.fn(),
+        });
+
+        render(
+            <UxBuilder
+                regions={regions}
+                pageTree={pageTree}
+                palette={palette}
+                initialEngaged="hero"
+                editorPlacement="inspector"
+            />,
+            { wrapper: Wrapper },
+        );
+
+        const editor = await screen.findByLabelText('MDX source');
+        await waitFor(() => expect(editor).toHaveProperty('value', 'Published heading'));
+        fireEvent.change(editor, { target: { value: 'Draft heading' } });
+        fireEvent.click(screen.getByRole('button', { name: /^Save$/ }));
+
+        await waitFor(() => expect(saveDraft).toHaveBeenCalledWith(HERO_ID, changed, 'draft-v2', expect.any(String)));
+        expect(saveBody).not.toHaveBeenCalled();
     });
 });

@@ -23,20 +23,41 @@ export function useEntryBody(id: string | null) {
 }
 
 /**
- * Save a region's body through the injected `client.saveBody`. On success it seeds the fresh
- * projection back into the query cache, invalidates the entry-body key, and fires the feedback sink.
+ * Save a region's body through the host's declared write contract. Hosts that expose the optional
+ * publication seam record a draft against the current head; legacy hosts retain immediate publish.
+ * On success it seeds the fresh projection back into the query cache, invalidates the entry-body
+ * key, and fires the feedback sink.
  */
 export function useSaveEntryBody() {
     const { client } = useUxBuilderServices();
     const notify = useNotify();
     const qc = useQueryClient();
+    const savesDraft = Boolean(client.saveDraft && client.listVersions);
     return useMutation({
-        mutationFn: ({ id, body }: { id: string; body: EntryBody }) =>
-            client.saveBody(id, body),
+        mutationFn: async ({ id, body }: { id: string; body: EntryBody }) => {
+            if (client.saveDraft && client.listVersions) {
+                const current = await client.listVersions(id);
+                return client.saveDraft(
+                    id,
+                    body,
+                    current.headVersion,
+                    'UX builder draft',
+                );
+            }
+
+            return client.saveBody(id, body);
+        },
         onSuccess: (data, { id }) => {
-            qc.setQueryData(entryBodyKey(id), data);
+            // The draft op returns publication state, not the body DTO cached by useEntryBody.
+            // Keep the existing body projection until its invalidation fetch replaces it.
+            if (!savesDraft) {
+                qc.setQueryData(entryBodyKey(id), data);
+            }
             qc.invalidateQueries({ queryKey: entryBodyKey(id) });
-            notify({ type: 'success', message: 'Saved.' });
+            notify({
+                type: 'success',
+                message: savesDraft ? 'Draft saved.' : 'Saved.',
+            });
         },
         onError: () => {
             notify({ type: 'error', message: 'Save failed.' });

@@ -73,7 +73,7 @@ export interface UxBuilderClient<TBody = BeamUxEntryBodyData> {
   /** Record a body as a DRAFT: written and versioned, NOT published — readers keep the published body. */
   saveDraft?(
     id: string,
-    body: Record<string, unknown>,
+    body: EntryBody,
     baseVersion: string | null,
     label?: string,
     pageSettings?: SessionPageSettings | null,
