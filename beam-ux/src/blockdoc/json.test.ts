@@ -235,6 +235,49 @@ describe('jsonToTsx printer (Babel-free)', () => {
         expect(() => parse(out)).not.toThrow();
     });
 
+    // Found by the EP-27 receipt (mirrors laravel-beam-ux's JsonDocPrinterTest): each child of a mixed block prints on its
+    // own line, and JSX drops whitespace that touches a line break, so "Read this " before <em> rendered "Read thisfirst".
+    // A space a reader sees prints as {" "}; whitespace that touches a line break is layout.
+    const el = (name: string, children: JsonDoc): JsonBlock => ({ kind: 'block', name, isComponent: false, dynamic: false, props: [], children });
+    const txt = (value: string) => ({ kind: 'text' as const, value });
+
+    it('keeps the space between a text run and an inline element', () => {
+        const out = jsonToTsx([el('p', [txt('Read this '), el('em', [txt('first')]), txt(': nothing here is advice.')])]);
+        expect(out).toBe('<p>\n  Read this\n  {" "}\n  <em>first</em>\n  : nothing here is advice.\n</p>;');
+    });
+
+    it('prints a leading space and a space-only run as markers, and layout whitespace as nothing', () => {
+        const out = jsonToTsx([el('p', [
+            el('em', [txt('a')]), txt(' and '), el('em', [txt('b')]), txt(' '), el('em', [txt('c')]), txt('\n    '), el('em', [txt('d')]),
+        ])]);
+        expect(out).toBe('<p>\n  <em>a</em>\n  {" "}\n  and\n  {" "}\n  <em>b</em>\n  {" "}\n  <em>c</em>\n  <em>d</em>\n</p>;');
+    });
+
+    it('keeps the spaces a reader sees in a text-only leaf', () => {
+        expect(jsonToTsx([el('p', [txt(' hi ')])])).toBe('<p>{" "}hi{" "}</p>;');
+        expect(jsonToTsx([el('p', [txt('a '), txt('b')])])).toBe('<p>a b</p>;');
+        expect(jsonToTsx([el('p', [txt('\n  Title\n')])])).toBe('<p>Title</p>;');
+    });
+
+    it('treats only the whitespace JSX trims as an edge; a no-break or em space is content', () => {
+        // Review of cbc1dd74: one exact set in both printers, the one JSX trims (space, tab, line breaks). A no-break space
+        // (U+00A0) or an em space (U+2003) is text as written, never a marker. laravel-beam-ux's JsonDocPrinterTest asserts
+        // the same outputs for the same inputs.
+        expect(jsonToTsx([el('p', [txt('\u00A0hi\u00A0')])])).toBe('<p>\u00A0hi\u00A0</p>;');
+        expect(jsonToTsx([el('p', [txt(' \u00A0hi')])])).toBe('<p>{" "}\u00A0hi</p>;');
+        expect(jsonToTsx([el('p', [txt('Read\u2003'), el('em', [txt('x')])])])).toBe('<p>\n  Read\u2003\n  <em>x</em>\n</p>;');
+    });
+
+    it('prints the same source after a parse of what it printed', () => {
+        const doc: JsonDoc = [
+            el('p', [txt('Read this '), el('em', [txt('first')]), txt(': nothing here is advice.')]),
+            el('p', [el('em', [txt('a')]), txt(' and '), el('em', [txt('b')])]),
+            el('p', [txt(' hi ')]),
+        ];
+        const printed = jsonToTsx(doc);
+        expect(jsonToTsx(toJson(parse(printed)))).toBe(printed);
+    });
+
     it('separates multiple top-level roots so the printed source stays re-parseable', () => {
         // A real page is never single-root (several top-level sections) — bare adjacent JSX with no
         // separator is a syntax error ("Adjacent JSX elements must be wrapped..."), so this is the

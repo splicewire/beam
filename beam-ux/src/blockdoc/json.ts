@@ -120,7 +120,10 @@ function printNode(node: JsonNode, depth: number, componentBody = false): string
             assertFieldPath(node.field);
             return pad + `{bdText(${JSON.stringify(node.field)}, ${JSON.stringify(node.value)})}`;
         }
-        return pad + escapeText(node.value.trim());
+        const [lead, run, trail] = textRun(node.value);
+        return [lead ? pad + SPACE : '', run !== '' ? pad + escapeText(run) : '', trail ? pad + SPACE : '']
+            .filter((line) => line !== '')
+            .join('\n');
     }
     if (isJsonOpaque(node)) return pad + node.source;
 
@@ -143,12 +146,34 @@ function printNode(node: JsonNode, depth: number, componentBody = false): string
 
     // A leaf (text-only children) prints inline for readability + stable round-trip.
     if (isLeafText(node) && node.children.every((child) => !('field' in child) && !('prop' in child))) {
-        const inner = node.children.map((c) => escapeText((c as JsonText).value.trim())).join('');
-        return `${pad}${open}${inner}${close}`;
+        const [lead, run, trail] = textRun(node.children.map((c) => (c as JsonText).value).join(''));
+        return `${pad}${open}${lead ? SPACE : ''}${escapeText(run)}${trail ? SPACE : ''}${close}`;
     }
 
-    const kids = node.children.map((c) => printNode(c, depth + 1, componentBody)).join('\n');
+    // A run of layout whitespace prints nothing, and takes no line.
+    const kids = node.children.map((c) => printNode(c, depth + 1, componentBody)).filter((part) => part !== '').join('\n');
     return `${pad}${open}\n${kids}\n${pad}${close}`;
+}
+
+/** A space a reader sees, where a line break would otherwise drop it (JSX trims whitespace that touches one). */
+const SPACE = '{" "}';
+
+/**
+ * A text run as JSX reads it back: whitespace that touches a line break is layout, and drops; a leading or trailing
+ * space on the line of its neighbour is one the reader sees, and must survive the run printing on its own line. The
+ * lens reads the `{" "}` that carries it back as a text node " ", so print, parse and print again agree. Mirrors
+ * laravel-beam-ux's `JsonDocPrinter::textRun()`.
+ *
+ * Whitespace here is exactly what JSX collapses at a line boundary: ASCII space, tab, CR and LF (an explicit class, not
+ * `\s`, which also matches Unicode spaces). A no-break space, an em space or any other Unicode space is content, kept as
+ * written and never a marker. The PHP printer uses the same set.
+ */
+function textRun(value: string): [lead: boolean, run: string, trail: boolean] {
+    const [, edgeLead, run, edgeTrail] = /^([ \t\r\n]*)([\s\S]*?)([ \t\r\n]*)$/.exec(value) as RegExpExecArray;
+    const lead = edgeLead !== '' && !/[\r\n]/.test(edgeLead);
+    const trail = edgeTrail !== '' && !/[\r\n]/.test(edgeTrail);
+    // Whitespace only: one space if a reader sees it, nothing if it is layout.
+    return run === '' ? [lead, '', false] : [lead, run, trail];
 }
 
 /**
@@ -200,7 +225,7 @@ function printProp(p: JsonProp): string {
 
 function printSlotValue(children: JsonNode[], depth: number, componentBody = false): string {
     if (children.length === 1 && isJsonBlock(children[0]) && children[0].name !== 'Slot') return printNode(children[0], depth, componentBody).trimStart();
-    return `<>${children.map(child => printNode(child, depth + 1, componentBody)).join('\n')}</>`;
+    return `<>${children.map(child => printNode(child, depth + 1, componentBody)).filter((part) => part !== '').join('\n')}</>`;
 }
 
 /** Escape a text leaf for JSX body content (only `{`, `}`, `<`, `>` are special). */
