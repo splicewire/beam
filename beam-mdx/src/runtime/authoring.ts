@@ -1,11 +1,8 @@
 // =============================================================================
-// The authoring counterpart to the runtime render path: split/rejoin frontmatter and a
-// save/load transport. The write-side twin of `fetchMdx` — generic by construction: it knows
-// nothing about routes, gates, tenants, or "docs". The caller supplies the URL and (optionally)
-// the transport; the app layer injects the resolved-by-name URL and CSRF.
+// The authoring counterpart to the runtime render path: split/rejoin frontmatter. (Its raw-file
+// save/load transport, `loadRawMdx`/`saveMdx`/`putMdx`, retired with the hosts' raw-file write path:
+// laravel-beam-ux ADR-0233 decision 10, EP-42 S2. An MDX page is written through the entry operations.)
 // =============================================================================
-
-import { fetchMdx } from './runtime-mdx';
 
 /**
  * The flat-scalar frontmatter map — one `key: value` per line, values kept as their raw string
@@ -80,47 +77,4 @@ export function serializeMdx(parsed: ParsedMdx): string {
  */
 export function serializeFrontmatter(frontmatter: MdxFrontmatter, body: string): string {
     return serializeMdx({ frontmatter, body, hasFrontmatter: Object.keys(frontmatter).length > 0 });
-}
-
-/** A transport that resolves a URL to raw MDX text (throws on failure). Defaults to {@link fetchMdx}. */
-export type MdxLoader = (url: string) => Promise<string>;
-
-/** A transport that persists a raw MDX body to a URL (throws on failure). */
-export type MdxSaver = (url: string, body: string) => Promise<void>;
-
-/**
- * Persist raw MDX to a URL with a same-origin `PUT` of `text/markdown`. The write twin of
- * {@link fetchMdx}: content rides as a raw document body (not a JSON field), so the bytes are
- * exact end to end. Carries **no** CSRF — the app layer overrides the saver to add its token.
- * Exported so a consumer can compose it.
- */
-export const putMdx: MdxSaver = async (url, body) => {
-    const response = await fetch(url, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'text/markdown' },
-        credentials: 'same-origin',
-        body,
-    });
-
-    if (!response.ok) {
-        throw new Error(`Failed to save MDX (${response.status})`);
-    }
-};
-
-/**
- * Load the raw MDX source at a URL, seeding an editor. Thin over the transport so the URL is
- * caller-supplied and the transport is overridable (auth headers, a stub in tests); it hardcodes
- * no path. Defaults to {@link fetchMdx} (same-origin `text/markdown` GET).
- */
-export async function loadRawMdx(url: string, loader: MdxLoader = fetchMdx): Promise<string> {
-    return loader(url);
-}
-
-/**
- * Save an edited MDX body to a URL. Mirrors {@link loadRawMdx}: caller-supplied URL, overridable
- * transport (defaults to {@link putMdx}), no hardcoded path. The app passes a `saver` that adds
- * CSRF + the resolved-by-name endpoint.
- */
-export async function saveMdx(url: string, body: string, saver: MdxSaver = putMdx): Promise<void> {
-    return saver(url, body);
 }
