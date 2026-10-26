@@ -37,6 +37,9 @@ describe('RealmNav — flat-with-headers (tenant realm)', () => {
         expect(screen.getByRole('link', { name: 'Overview' }).getAttribute('href')).toBe('/site');
         expect(screen.getByRole('link', { name: 'Entries' }).getAttribute('href')).toBe('/site/entries');
         expect(screen.getByRole('link', { name: 'Releases' }).getAttribute('href')).toBe('/site/releases');
+        expect(screen.getAllByRole('link', { name: 'Overview' })).toHaveLength(1);
+        expect(screen.getAllByRole('link', { name: 'Entries' })).toHaveLength(1);
+        expect(screen.getAllByRole('link', { name: 'Releases' })).toHaveLength(1);
     });
 
     it('keeps a linked section destination when none of its children points there', () => {
@@ -51,13 +54,24 @@ describe('RealmNav — flat-with-headers (tenant realm)', () => {
             },
         ];
 
-        render(<RealmNav items={items} variant="flat-with-headers" />);
+        render(
+            <RealmNav
+                items={items}
+                variant="flat-with-headers"
+                icon={(rendered) => (
+                    <i data-nav-node={rendered.title} data-child-count={rendered.children?.length ?? 0} />
+                )}
+            />,
+        );
 
         const links = screen.getAllByRole('link');
         expect(links.map((link) => [link.textContent, link.getAttribute('href')])).toEqual([
             ['Site', '/site'],
             ['Entries', '/site/entries'],
         ]);
+        expect(screen.getAllByRole('link', { name: 'Site' })).toHaveLength(1);
+        expect(screen.getAllByRole('link', { name: 'Entries' })).toHaveLength(1);
+        expect(document.querySelector('[data-nav-node="Site"]')?.getAttribute('data-child-count')).toBe('0');
     });
 
     it('renders a header from an href-less node and groups the items under it', () => {

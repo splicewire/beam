@@ -161,7 +161,10 @@ function toGroups(items: RealmNavNode[], variant: RealmNavVariant): RailGroup[] 
             const landingIsAlreadyAChild = children.some((child) => child.href === node.href);
             current = {
                 label: node.title,
-                items: node.href && !landingIsAlreadyAChild ? [node, ...children] : children,
+                items:
+                    node.href && !landingIsAlreadyAChild
+                        ? [{ ...node, children: [] }, ...children]
+                        : children,
             };
         } else {
             current.items.push(node);
