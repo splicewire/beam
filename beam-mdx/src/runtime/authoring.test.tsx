@@ -1,17 +1,9 @@
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 
-import {
-    loadRawMdx,
-    parseFrontmatter,
-    putMdx,
-    saveMdx,
-    serializeFrontmatter,
-    serializeMdx,
-    type MdxSaver,
-} from './authoring';
+import { parseFrontmatter, serializeFrontmatter, serializeMdx } from './authoring';
 import { MdxEditor } from './mdx-editor';
 
 describe('parseFrontmatter / serializeMdx — split and rejoin', () => {
@@ -50,47 +42,6 @@ describe('parseFrontmatter / serializeMdx — split and rejoin', () => {
         const raw = serializeFrontmatter({ title: 'X' }, '\n# Hi\n');
         expect(raw).toBe('---\ntitle: X\n---\n\n# Hi\n');
         expect(parseFrontmatter(raw).frontmatter).toEqual({ title: 'X' });
-    });
-});
-
-describe('loadRawMdx / saveMdx — transport', () => {
-    it('saveMdx calls the saver with the caller URL + body (transport is overridable)', async () => {
-        const saver = vi.fn<MdxSaver>().mockResolvedValue(undefined);
-
-        await saveMdx('/api/v1/beam/content/docs/build/sample', '# edited', saver);
-
-        expect(saver).toHaveBeenCalledWith('/api/v1/beam/content/docs/build/sample', '# edited');
-    });
-
-    it('loadRawMdx delegates to a supplied loader', async () => {
-        const loader = vi.fn().mockResolvedValue('# from loader');
-
-        expect(await loadRawMdx('/x', loader)).toBe('# from loader');
-        expect(loader).toHaveBeenCalledWith('/x');
-    });
-
-    it('putMdx (the default saver) PUTs raw text/markdown same-origin and throws on non-2xx', async () => {
-        const calls: Array<[string, RequestInit | undefined]> = [];
-        const original = globalThis.fetch;
-        globalThis.fetch = ((url: string, init?: RequestInit) => {
-            calls.push([url, init]);
-            return Promise.resolve({ ok: true } as Response);
-        }) as typeof fetch;
-
-        try {
-            await putMdx('/api/v1/beam/content/docs/build/sample', '# edited');
-
-            expect(calls[0][0]).toBe('/api/v1/beam/content/docs/build/sample');
-            expect(calls[0][1]?.method).toBe('PUT');
-            expect(calls[0][1]?.credentials).toBe('same-origin');
-            expect((calls[0][1]?.headers as Record<string, string>)['Content-Type']).toBe('text/markdown');
-            expect(calls[0][1]?.body).toBe('# edited');
-
-            globalThis.fetch = (() => Promise.resolve({ ok: false, status: 403 } as Response)) as typeof fetch;
-            await expect(putMdx('/x', 'y')).rejects.toThrow('403');
-        } finally {
-            globalThis.fetch = original;
-        }
     });
 });
 

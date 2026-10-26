@@ -47,19 +47,16 @@ export { RuntimeMdx, RemoteMdx, compileMdx, fetchMdx } from './runtime/runtime-m
 export type { RuntimeMdxProps, RemoteMdxProps, RuntimeMdxOptions, MdxComponentMap } from './runtime/runtime-mdx';
 
 // Authoring primitives — the write-side twin of the runtime render path. The MdxEditor (buffer +
-// live RuntimeMdx preview), frontmatter split/rejoin, and a caller-supplied-URL save/load transport.
-// Generic: no route, gate, tenant, or "docs" knowledge; the app injects the resolved URL + CSRF.
+// live RuntimeMdx preview) and frontmatter split/rejoin. (The raw-file save/load transport retired:
+// laravel-beam-ux ADR-0233 decision 10, EP-42 S2.)
 export { MdxEditor } from './runtime/mdx-editor';
 export type { MdxEditorProps } from './runtime/mdx-editor';
 export {
     parseFrontmatter,
     serializeMdx,
     serializeFrontmatter,
-    loadRawMdx,
-    saveMdx,
-    putMdx,
 } from './runtime/authoring';
-export type { MdxFrontmatter, ParsedMdx, MdxLoader, MdxSaver } from './runtime/authoring';
+export type { MdxFrontmatter, ParsedMdx } from './runtime/authoring';
 
 // Render surface.
 export { Ref, Receipts } from './components/reference';
