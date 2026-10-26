@@ -1,5 +1,7 @@
 import type { ComponentType } from 'react';
 
+import { camelKeys } from './frontmatter-keys';
+
 export type ContentLayout = 'site' | 'app' | 'bare';
 
 /** One platform's ledger metadata on a broadcast (Facebook cut, LinkedIn cut, …). */
@@ -146,7 +148,7 @@ export function createContent(
     const byName: Record<string, ContentModule> = {};
 
     for (const [name, mod] of Object.entries(modules)) {
-        const fm = (mod.frontmatter ?? {}) as RawFrontmatter;
+        const fm = camelKeys(mod.frontmatter ?? {}) as RawFrontmatter;
         byName[name] = {
             Component: mod.default,
             frontmatter: {

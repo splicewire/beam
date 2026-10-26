@@ -32,6 +32,11 @@ export interface MdxRead {
     doc: JsonDoc;
     /** The verbatim source of an `export const meta = {…}` statement, when the body has one. */
     meta: string | null;
+    /**
+     * That statement's value when it is static (literals, arrays and objects of them), which a host's conversion writes
+     * as frontmatter (ux-0233 d9); null when there is no meta, or when only running code could give its value.
+     */
+    metaData: Record<string, unknown> | null;
 }
 
 export class MdxLensError extends Error {
@@ -52,17 +57,19 @@ export function readMdx(mdx: string, context: LensContext = {}): MdxRead {
     const reader = new Reader(mdx, context, definitionsOf(tree));
     const doc: JsonDoc = [];
     let meta: string | null = null;
+    let metaData: Record<string, unknown> | null = null;
     for (const node of tree.children) {
         if (node.type === 'mdxjsEsm') {
             if (meta === null && isMetaExport(node)) {
                 meta = reader.source(node);
+                metaData = metaValue(node);
                 continue;
             }
             throw new MdxLensError('An MDX page holds no code outside its JSX: only `export const meta = {…}` is read (ux-0233 d2).');
         }
         doc.push(...reader.flow(node));
     }
-    return { doc, meta };
+    return { doc, meta, metaData };
 }
 
 type Definitions = Map<string, { url: string; title: string | null }>;
@@ -86,6 +93,55 @@ function isMetaExport(node: MdxjsEsm): boolean {
     return declaration.type === 'VariableDeclaration' && declaration.kind === 'const' && declaration.declarations.length === 1
         && declaration.declarations[0].id.type === 'Identifier' && declaration.declarations[0].id.name === 'meta'
         && declaration.declarations[0].init?.type === 'ObjectExpression';
+}
+
+/** The meta export's object, when every part of it is a literal (an `isMetaExport` node). */
+function metaValue(node: MdxjsEsm): Record<string, unknown> | null {
+    const statement = node.data!.estree!.body[0] as { declaration: { declarations: Array<{ init: unknown }> } };
+    const value = staticValue(statement.declaration.declarations[0].init);
+
+    return value === NOT_STATIC ? null : (value as Record<string, unknown>);
+}
+
+const NOT_STATIC = Symbol('not static');
+
+/** An ESTree expression's value without running it, or NOT_STATIC when only running code could give it. */
+function staticValue(expression: unknown): unknown {
+    const node = expression as { type: string; [key: string]: unknown };
+    switch (node?.type) {
+        case 'Literal': {
+            const value = node.value;
+            return value === null || ['string', 'number', 'boolean'].includes(typeof value) ? value : NOT_STATIC;
+        }
+        case 'TemplateLiteral': {
+            const quasis = node.quasis as Array<{ value: { cooked: string | null } }>;
+            return (node.expressions as unknown[]).length === 0 && quasis[0].value.cooked !== null ? quasis[0].value.cooked : NOT_STATIC;
+        }
+        case 'UnaryExpression': {
+            const operand = staticValue(node.argument);
+            return node.operator === '-' && typeof operand === 'number' ? -operand : NOT_STATIC;
+        }
+        case 'ArrayExpression': {
+            const values = (node.elements as unknown[]).map((element) => (element === null ? NOT_STATIC : staticValue(element)));
+            return values.includes(NOT_STATIC) ? NOT_STATIC : values;
+        }
+        case 'ObjectExpression': {
+            const out: Record<string, unknown> = {};
+            for (const property of node.properties as Array<{ type: string; computed: boolean; method: boolean; kind: string; key: { type: string; name?: string; value?: unknown }; value: unknown }>) {
+                if (property.type !== 'Property' || property.computed || property.method || property.kind !== 'init') return NOT_STATIC;
+                const key = property.key.type === 'Identifier' ? property.key.name : property.key.type === 'Literal' ? property.key.value : undefined;
+                // A literal's `__proto__:` sets its prototype and holds no data, so it has no frontmatter form.
+                if ((typeof key !== 'string' && typeof key !== 'number') || key === '__proto__') return NOT_STATIC;
+                const value = staticValue(property.value);
+                if (value === NOT_STATIC) return NOT_STATIC;
+                // An own data property, never an assignment that could reach a setter.
+                Object.defineProperty(out, String(key), { value, enumerable: true, writable: true, configurable: true });
+            }
+            return out;
+        }
+        default:
+            return NOT_STATIC;
+    }
 }
 
 const block = (name: string, children: JsonNode[], props: JsonProp[] = []): JsonBlock =>

@@ -170,6 +170,26 @@ describe('readMdx: islands and refusals', () => {
         expect(withMeta.meta).toBe("export const meta = {title: 'Hi'}");
         expect(withMeta.doc).toEqual([block('h1', [text('Hi')])]);
     });
+
+    it('gives `export const meta`\'s value when it is static, so conversion can make it frontmatter (ux-0233 d9)', () => {
+        const meta = "export const meta = { title: 'Start', order: 0, draft: false, offset: -2, tags: ['a', `b`], nav: { group: \"Docs\", 'sort-key': 1 }, none: null };";
+        expect(readMdx(`${meta}\n\n# Hi\n`).metaData).toEqual({
+            title: 'Start', order: 0, draft: false, offset: -2, tags: ['a', 'b'], nav: { group: 'Docs', 'sort-key': 1 }, none: null,
+        });
+        // A value only running code could give has no frontmatter form: the source is kept, the value is null.
+        for (const dynamic of ['{ title: name }', '{ title: `Hi ${name}` }', '{ ...base }', '{ [key]: 1 }', '{ list: [...more] }', '{ at: new Date() }', '{ fn() {} }']) {
+            const read = readMdx(`export const meta = ${dynamic}\n\n# Hi\n`);
+            expect(read.meta, dynamic).not.toBeNull();
+            expect(read.metaData, dynamic).toBeNull();
+        }
+        expect(readMdx('# Hi\n').metaData).toBeNull();
+        // Review of 10dc0683: in an object literal, `__proto__:` (quoted or not) sets the prototype, it holds no data,
+        // so such a meta has no frontmatter form either; and nothing here ever writes through the prototype setter.
+        for (const proto of ['{ __proto__: { polluted: true } }', "{ '__proto__': { polluted: true } }", '{ title: \'x\', nav: { __proto__: null } }']) {
+            expect(readMdx(`export const meta = ${proto}\n\n# Hi\n`).metaData, proto).toBeNull();
+        }
+        expect(({} as Record<string, unknown>).polluted).toBeUndefined();
+    });
 });
 
 describe('printMdx: canonical MDX', () => {
