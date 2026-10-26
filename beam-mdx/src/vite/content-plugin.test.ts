@@ -60,6 +60,15 @@ describe('beamMdxContent — MODULES bundle exclusion', () => {
         expect(names).not.toContain('docs/guarded-list');
     });
 
+    it('reads a converted file\'s snake-case date_published, so a dated essay is not a draft', () => {
+        // ux-0233 d9: a converted file's unclaimed keys are printed in snake case; the gate reads both spellings.
+        write(root, 'essays/converted.mdx', '---\ntitle: Converted\ndate_published: 2026-10-01\n---\nbody\n');
+        const names = moduleNames({ currentEnv: 'production', previewEnvs: [] });
+
+        expect(names).toContain('essays/converted');
+        expect(names).not.toContain('essays/draft');
+    });
+
     it('keeps public files and still excludes plain drafts in a production build', () => {
         const names = moduleNames({ currentEnv: 'production', previewEnvs: [] });
 

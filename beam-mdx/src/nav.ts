@@ -1,4 +1,5 @@
 import type { RawContentModules } from './content';
+import { camelKeys } from './frontmatter-keys';
 
 // =============================================================================
 // contentNavNodes — beam-mdx's frontmatter → nav-node mapping.
@@ -65,7 +66,7 @@ export function contentNavNodes(
         .map(([name, mod]) => ({
             name,
             track: trackOf(name),
-            fm: (mod.frontmatter ?? {}) as NavFrontmatter,
+            fm: camelKeys(mod.frontmatter ?? {}) as NavFrontmatter,
         }))
         .filter(
             (e): e is { name: string; track: string; fm: NavFrontmatter } =>

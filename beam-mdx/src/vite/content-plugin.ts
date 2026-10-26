@@ -3,6 +3,8 @@ import path from 'node:path';
 
 import type { Plugin } from 'vite';
 
+import { camelKeys } from '../frontmatter-keys';
+
 /**
  * beam-mdx — build-time draft exclusion for the file-driven MDX content plane.
  *
@@ -152,7 +154,7 @@ export function beamMdxContent(options: BeamMdxContentOptions): Plugin {
             const included = collectMdx(contentDir)
                 .map((abs) => ({ abs, name: nameOf(abs) }))
                 .filter(({ abs, name }) => {
-                    const fm = readFrontmatter(fs.readFileSync(abs, 'utf8'));
+                    const fm = camelKeys(readFrontmatter(fs.readFileSync(abs, 'utf8')));
 
                     // Gated (access:) content never enters the bundle, in any env —
                     // it is delivered only over the host's authenticated route.
