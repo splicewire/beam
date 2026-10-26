@@ -163,11 +163,15 @@ const SPACE = '{" "}';
  * space on the line of its neighbour is one the reader sees, and must survive the run printing on its own line. The
  * lens reads the `{" "}` that carries it back as a text node " ", so print, parse and print again agree. Mirrors
  * laravel-beam-ux's `JsonDocPrinter::textRun()`.
+ *
+ * Whitespace here is exactly what JSX collapses at a line boundary: ASCII space, tab, CR and LF (an explicit class, not
+ * `\s`, which also matches Unicode spaces). A no-break space, an em space or any other Unicode space is content, kept as
+ * written and never a marker. The PHP printer uses the same set.
  */
 function textRun(value: string): [lead: boolean, run: string, trail: boolean] {
-    const [, edgeLead, run, edgeTrail] = /^(\s*)([\s\S]*?)(\s*)$/.exec(value) as RegExpExecArray;
-    const lead = edgeLead !== '' && !edgeLead.includes('\n');
-    const trail = edgeTrail !== '' && !edgeTrail.includes('\n');
+    const [, edgeLead, run, edgeTrail] = /^([ \t\r\n]*)([\s\S]*?)([ \t\r\n]*)$/.exec(value) as RegExpExecArray;
+    const lead = edgeLead !== '' && !/[\r\n]/.test(edgeLead);
+    const trail = edgeTrail !== '' && !/[\r\n]/.test(edgeTrail);
     // Whitespace only: one space if a reader sees it, nothing if it is layout.
     return run === '' ? [lead, '', false] : [lead, run, trail];
 }

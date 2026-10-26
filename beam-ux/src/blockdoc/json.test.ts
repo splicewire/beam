@@ -259,6 +259,15 @@ describe('jsonToTsx printer (Babel-free)', () => {
         expect(jsonToTsx([el('p', [txt('\n  Title\n')])])).toBe('<p>Title</p>;');
     });
 
+    it('treats only the whitespace JSX trims as an edge; a no-break or em space is content', () => {
+        // Review of cbc1dd74: one exact set in both printers, the one JSX trims (space, tab, line breaks). A no-break space
+        // (U+00A0) or an em space (U+2003) is text as written, never a marker. laravel-beam-ux's JsonDocPrinterTest asserts
+        // the same outputs for the same inputs.
+        expect(jsonToTsx([el('p', [txt('\u00A0hi\u00A0')])])).toBe('<p>\u00A0hi\u00A0</p>;');
+        expect(jsonToTsx([el('p', [txt(' \u00A0hi')])])).toBe('<p>{" "}\u00A0hi</p>;');
+        expect(jsonToTsx([el('p', [txt('Read\u2003'), el('em', [txt('x')])])])).toBe('<p>\n  Read\u2003\n  <em>x</em>\n</p>;');
+    });
+
     it('prints the same source after a parse of what it printed', () => {
         const doc: JsonDoc = [
             el('p', [txt('Read this '), el('em', [txt('first')]), txt(': nothing here is advice.')]),
