@@ -130,9 +130,12 @@ function staticValue(expression: unknown): unknown {
             for (const property of node.properties as Array<{ type: string; computed: boolean; method: boolean; kind: string; key: { type: string; name?: string; value?: unknown }; value: unknown }>) {
                 if (property.type !== 'Property' || property.computed || property.method || property.kind !== 'init') return NOT_STATIC;
                 const key = property.key.type === 'Identifier' ? property.key.name : property.key.type === 'Literal' ? property.key.value : undefined;
+                // A literal's `__proto__:` sets its prototype and holds no data, so it has no frontmatter form.
+                if ((typeof key !== 'string' && typeof key !== 'number') || key === '__proto__') return NOT_STATIC;
                 const value = staticValue(property.value);
-                if ((typeof key !== 'string' && typeof key !== 'number') || value === NOT_STATIC) return NOT_STATIC;
-                out[String(key)] = value;
+                if (value === NOT_STATIC) return NOT_STATIC;
+                // An own data property, never an assignment that could reach a setter.
+                Object.defineProperty(out, String(key), { value, enumerable: true, writable: true, configurable: true });
             }
             return out;
         }

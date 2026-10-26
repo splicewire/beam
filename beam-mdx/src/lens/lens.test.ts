@@ -183,6 +183,12 @@ describe('readMdx: islands and refusals', () => {
             expect(read.metaData, dynamic).toBeNull();
         }
         expect(readMdx('# Hi\n').metaData).toBeNull();
+        // Review of 10dc0683: in an object literal, `__proto__:` (quoted or not) sets the prototype, it holds no data,
+        // so such a meta has no frontmatter form either; and nothing here ever writes through the prototype setter.
+        for (const proto of ['{ __proto__: { polluted: true } }', "{ '__proto__': { polluted: true } }", '{ title: \'x\', nav: { __proto__: null } }']) {
+            expect(readMdx(`export const meta = ${proto}\n\n# Hi\n`).metaData, proto).toBeNull();
+        }
+        expect(({} as Record<string, unknown>).polluted).toBeUndefined();
     });
 });
 
