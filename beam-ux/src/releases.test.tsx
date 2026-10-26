@@ -142,6 +142,22 @@ describe("Release assembly", () => {
 });
 
 describe("Preview from the Release (ADR-0232 d8, d15; EP-18)", () => {
+  it("opens a tenant Preview through the injected capability exchange", async () => {
+    const command = vi.fn(async () => undefined);
+    const onPreviewOpen = vi.fn(async () => "https://acme.site.example.test/_beam/preview/tenant-open/r1?signature=opaque");
+    const popup = { opener: window, location: { replace: vi.fn() }, close: vi.fn() };
+    const open = vi.spyOn(window, "open").mockReturnValue(popup as unknown as Window);
+    render(
+      <ReleasePanel release={release} entries={entries} onCommand={command} onPreviewOpen={onPreviewOpen} />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Preview" }));
+    await waitFor(() => expect(popup.location.replace).toHaveBeenCalledWith(expect.stringContaining("acme.site.example.test")));
+    expect(onPreviewOpen).toHaveBeenCalledOnce();
+    expect(popup.opener).toBeNull();
+    open.mockRestore();
+  });
+
   it("opens the Release's Preview and turns its Preview Links on", async () => {
     const command = vi.fn(async () => undefined);
     render(

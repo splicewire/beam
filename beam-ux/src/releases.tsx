@@ -88,11 +88,14 @@ export function ReleasePanel({
   initialEntryId = "",
   onCommand,
   onRemoveRedirect,
+  onPreviewOpen,
 }: {
   release: ReleaseRecord;
   entries: ReleaseEntryChoice[];
   initialEntryId?: string;
   onCommand: (command: ReleaseCommand) => Promise<unknown>;
+  /** Tenant SPA handoff: exchanges its bearer session for a short-lived signed Site Host opener. */
+  onPreviewOpen?: () => Promise<string>;
   /** Removes a Redirect the Release left, through the Redirect resource; absent, none is offered. */
   onRemoveRedirect?: (id: string) => Promise<unknown>;
 }) {
@@ -101,6 +104,7 @@ export function ReleasePanel({
   const [redirect, setRedirect] = useState("");
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [previewError, setPreviewError] = useState(false);
   const entry = entries.find((item) => item.id === entryId);
   const immutable = release.status === "published";
   const act = async (command: ReleaseCommand) => {
@@ -132,7 +136,28 @@ export function ReleasePanel({
     >
       <h2 className="font-semibold">{release.title}</h2>
       <p>Status: {release.status.replace("_", " ")}</p>
-      {!immutable && release.previewHref && (
+      {!immutable && onPreviewOpen && (
+        <button
+          type="button"
+          className="underline"
+          onClick={() => {
+            setPreviewError(false);
+            const popup = window.open("about:blank", "_blank");
+            if (popup) popup.opener = null;
+            void onPreviewOpen().then((href) => {
+              if (popup) popup.location.replace(href);
+              else window.location.assign(href);
+            }).catch(() => {
+              popup?.close();
+              setPreviewError(true);
+            });
+          }}
+        >
+          Preview
+        </button>
+      )}
+      {previewError && <p role="alert">Could not open this Release Preview.</p>}
+      {!immutable && !onPreviewOpen && release.previewHref && (
         // ADR-0232 d15: the Release page's Preview, signed in; a new tab, so the panel stays open.
         <a href={release.previewHref} target="_blank" rel="noopener noreferrer" className="underline">
           Preview
