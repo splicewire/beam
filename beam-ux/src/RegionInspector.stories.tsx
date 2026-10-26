@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
 import { RegionInspector } from './RegionInspector';
 import { cardEntryBody, regions } from './story-fixtures';
-import type { Region } from './types';
+import type { EntryBody, Region } from './types';
 
 /**
  * Catalog story for {@link RegionInspector} (rehome-ui; beamux ticket 08). The docked region-editor
@@ -36,7 +36,7 @@ function Controlled({
     schema: Record<string, unknown> | null;
     initialBody: Record<string, unknown>;
 }) {
-    const [body, setBody] = useState<Record<string, unknown>>(initialBody);
+    const [body, setBody] = useState<EntryBody>(initialBody);
     return (
         <RegionInspector
             region={region}

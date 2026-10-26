@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNotify, useUxBuilderServices } from './provider';
-import type { BeamUxEntryBodyData } from './types';
+import type { BeamUxEntryBodyData, EntryBody } from './types';
 
 // The react-query data layer, INSIDE the package (rehome-ui: the surface owns its data logic). The
 // transport is the injected `client`; these hooks add caching, invalidation, and feedback. Keys are
@@ -31,7 +31,7 @@ export function useSaveEntryBody() {
     const notify = useNotify();
     const qc = useQueryClient();
     return useMutation({
-        mutationFn: ({ id, body }: { id: string; body: Record<string, unknown> }) =>
+        mutationFn: ({ id, body }: { id: string; body: EntryBody }) =>
             client.saveBody(id, body),
         onSuccess: (data, { id }) => {
             qc.setQueryData(entryBodyKey(id), data);

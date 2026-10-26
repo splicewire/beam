@@ -221,7 +221,9 @@ export function ThemeEditor({
         body={visibleBody}
         // MERGED over the loaded body — see this component's docblock. `next` is the schema-shaped
         // form output; every top-level namespace the schema does not describe survives it.
-        onChange={changeLayer}
+        onChange={(next) => {
+          if (!Array.isArray(next)) changeLayer(next);
+        }}
         onSave={() => save.mutate(body)}
         // Dropping the buffer IS Discard: the next render falls back to `query.data.body`, the
         // last thing the server actually stored.

@@ -1,8 +1,9 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { RegionEditorBody } from './RegionEditorBody';
 import { treeKindPath } from './StructurePanel';
+import type { JsonDoc } from './blockdoc/json';
 import type { Region, RegionKind, TreeNode } from './types';
 
 /**
@@ -39,6 +40,14 @@ const source = () => screen.getByLabelText('MDX source') as HTMLTextAreaElement;
 const button = (name: string) => screen.getByRole('button', { name }) as HTMLButtonElement;
 
 const MDX_BODY = { frontmatter: { title: 'Docs', segment: 'docs' }, content: '# Hello\n' };
+const BLOCK_BODY: JsonDoc = [{
+    kind: 'block',
+    name: 'h2',
+    isComponent: false,
+    props: [],
+    children: [{ kind: 'text', value: 'Original heading' }],
+    dynamic: false,
+}];
 
 describe('the richtext editor is bound to the body', () => {
     it('renders the body content, not placeholder copy', () => {
@@ -75,6 +84,18 @@ describe('the richtext editor is bound to the body', () => {
         mount('richtext', { heading: 'Docs', content: 'prose' });
         expect(source().value).toBe('prose');
         expect(screen.getByText('heading')).toBeTruthy();
+    });
+
+    it('edits the page text node without changing a JsonDoc body into an object', async () => {
+        const { onChange } = mount('richtext', BLOCK_BODY as unknown as Record<string, unknown>);
+
+        expect(source().value).toBe('Original heading');
+        fireEvent.change(source(), { target: { value: 'Updated heading' } });
+
+        expect(onChange).toHaveBeenLastCalledWith([{
+            ...BLOCK_BODY[0],
+            children: [{ kind: 'text', value: 'Updated heading' }],
+        }]);
     });
 });
 

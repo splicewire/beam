@@ -3,6 +3,8 @@ import { useState } from 'react';
 import { SchemaForm, type SchemaNode } from '@schemastud/seam';
 import { Badge, Button, Input, Textarea, cn } from '@schemastud/ui';
 import type { Region } from './types';
+import type { EntryBody } from './types';
+import type { JsonDoc, JsonNode } from './blockdoc/json';
 import { UX_BUILDER_CSS } from './css';
 
 /**
@@ -36,8 +38,8 @@ export function RegionEditorBody({
 }: {
     region: Region;
     schema: SchemaNode | null;
-    body: Record<string, unknown>;
-    onChange: (body: Record<string, unknown>) => void;
+    body: EntryBody;
+    onChange: (body: EntryBody) => void;
     onSave: () => void;
     /** Drop the in-flight edit buffer. Omitted ⇒ the Discard control renders disabled. */
     onDiscard?: () => void;
@@ -49,7 +51,11 @@ export function RegionEditorBody({
         case 'form':
             return (
                 <>
-                    <FormEditor schema={schema} body={body} onChange={onChange} />
+                    <FormEditor
+                        schema={schema}
+                        body={Array.isArray(body) ? {} : body}
+                        onChange={(next) => onChange(next)}
+                    />
                     <EditorActions
                         onSave={onSave}
                         onDiscard={onDiscard}
@@ -164,12 +170,15 @@ function RichtextEditor({
     body,
     onChange,
 }: {
-    body: Record<string, unknown>;
-    onChange: (body: Record<string, unknown>) => void;
+    body: EntryBody;
+    onChange: (body: EntryBody) => void;
 }) {
-    const content = typeof body[CONTENT_KEY] === 'string' ? (body[CONTENT_KEY] as string) : '';
-    const preserved = Object.keys(body).filter((key) => key !== CONTENT_KEY);
-    const frontmatter = body[FRONTMATTER_KEY];
+    const isDocument = Array.isArray(body);
+    const content = isDocument
+        ? firstTextValue(body)
+        : (typeof body[CONTENT_KEY] === 'string' ? (body[CONTENT_KEY] as string) : '');
+    const preserved = isDocument ? [] : Object.keys(body).filter((key) => key !== CONTENT_KEY);
+    const frontmatter = isDocument ? undefined : body[FRONTMATTER_KEY];
     const fields =
         frontmatter && typeof frontmatter === 'object' && !Array.isArray(frontmatter)
             ? Object.keys(frontmatter as Record<string, unknown>)
@@ -179,7 +188,9 @@ function RichtextEditor({
         <div className="space-y-2">
             <Textarea
                 value={content}
-                onChange={(e) => onChange({ ...body, [CONTENT_KEY]: e.target.value })}
+                onChange={(e) => onChange(isDocument
+                    ? replaceFirstTextValue(body, e.target.value)
+                    : { ...body, [CONTENT_KEY]: e.target.value })}
                 rows={18}
                 spellCheck={false}
                 aria-label="MDX source"
@@ -206,6 +217,44 @@ function RichtextEditor({
             </div>
         </div>
     );
+}
+
+function firstTextValue(nodes: JsonDoc): string {
+    for (const node of nodes) {
+        if (node.kind === 'text') return node.value;
+        if (node.kind === 'block') {
+            const childText = firstTextValue(node.children);
+            if (childText !== '') return childText;
+            for (const slotNodes of Object.values(node.slots ?? {})) {
+                const slotText = firstTextValue(slotNodes);
+                if (slotText !== '') return slotText;
+            }
+        }
+    }
+
+    return '';
+}
+
+function replaceFirstTextValue(nodes: JsonDoc, value: string): JsonDoc {
+    let replaced = false;
+    const replace = (node: JsonNode): JsonNode => {
+        if (node.kind === 'text') {
+            if (replaced) return node;
+            replaced = true;
+            return { ...node, value };
+        }
+        if (node.kind !== 'block') return node;
+
+        const children = node.children.map(replace);
+        const slots = node.slots
+            ? Object.fromEntries(Object.entries(node.slots).map(([name, slotNodes]) => [name, slotNodes.map(replace)]))
+            : undefined;
+
+        return slots === undefined ? { ...node, children } : { ...node, children, slots };
+    };
+    const next = nodes.map(replace);
+
+    return replaced ? next : [...next, { kind: 'text', value }];
 }
 
 function FrameEditor() {

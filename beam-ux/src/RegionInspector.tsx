@@ -3,13 +3,14 @@ import type { SchemaNode } from '@schemastud/seam';
 import { KIND_ICON } from './kindIcon';
 import { RegionEditorBody } from './RegionEditorBody';
 import type { Region } from './types';
+import type { EntryBody } from './types';
 
 /** Shared props for the region editor surfaces (inspector + overlay). */
 export interface RegionEditorProps {
     region: Region;
     schema: SchemaNode | null;
-    body: Record<string, unknown>;
-    onChange: (body: Record<string, unknown>) => void;
+    body: EntryBody;
+    onChange: (body: EntryBody) => void;
     onSave: () => void;
     /**
      * Drop the in-flight edit buffer, returning the editor to the last persisted body. Optional

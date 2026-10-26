@@ -8,6 +8,7 @@ import { RegionInspector } from './RegionInspector';
 import { RegionOverlay } from './RegionOverlay';
 import { StructurePanel } from './StructurePanel';
 import type { PaletteItem, Region, RegionKind, TreeNode } from './types';
+import type { EntryBody } from './types';
 import { UX_BUILDER_CSS } from './css';
 
 export type BuilderMode = 'overlay' | 'structure';
@@ -31,10 +32,10 @@ export function placementFor(kind: RegionKind, placement: EditorPlacement): Edit
 function useRegionEditor(region: Region) {
     const query = useEntryBody(region.recordId);
     const save = useSaveEntryBody();
-    const [draft, setDraft] = useState<Record<string, unknown> | null>(null);
+    const [draft, setDraft] = useState<EntryBody | null>(null);
 
     const schema = (query.data?.schema ?? null) as SchemaNode | null;
-    const body = draft ?? query.data?.body ?? {};
+    const body: EntryBody = draft ?? query.data?.body ?? {};
 
     return {
         schema,

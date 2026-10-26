@@ -4,8 +4,10 @@ import type { SessionPageSettings } from "./editor/local-session";
 // IS the projection, so the PHP source of truth genuinely travels into this package. tsup keeps the
 // `import type` in the shipped `dist/index.d.ts`.
 import type { BeamUxEntryBodyData, EntryVersionData as EntryVersion } from "@splicewire/beam-resources/types/beam-ux";
+import type { JsonDoc } from './blockdoc/json';
 
 export type { BeamUxEntryBodyData, EntryVersion };
+export type EntryBody = Record<string, unknown> | JsonDoc;
 
 /* ─────────────────────────── the injection seam ─────────────────────────── */
 
@@ -54,7 +56,7 @@ export interface UxBuilderClient<TBody = BeamUxEntryBodyData> {
    * Persist a region's body — returns the fresh projection
    * (`POST .../beam-ux-entries/{id}/op/save-body`). Addressed by id, same as {@link loadBody}.
    */
-  saveBody(id: string, body: Record<string, unknown>): Promise<TBody>;
+  saveBody(id: string, body: EntryBody): Promise<TBody>;
   /**
    * Blocks-only typed write (`save-blocks`). Absent on legacy injected hosts. The canvas editor does not call it: it
    * saves through the publication seam's drafts.

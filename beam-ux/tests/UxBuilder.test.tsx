@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type { ReactNode } from 'react';
+import type { JsonDoc } from '../src/blockdoc/json';
 import {
     UxBuilder,
     UxBuilderProvider,
@@ -154,5 +155,69 @@ describe('§8a — @splicewire/beam-ux UxBuilder mounts off pure DTO fixtures (n
         await waitFor(() =>
             expect(notify).toHaveBeenCalledWith(expect.objectContaining({ type: 'success' })),
         );
+    });
+
+    it('sends a JsonDoc page body to save-body as an array', async () => {
+        const original: JsonDoc = [{
+            kind: 'block',
+            name: 'h2',
+            isComponent: false,
+            props: [],
+            children: [{ kind: 'text', value: 'Original heading' }],
+            dynamic: false,
+        }];
+        const changed: JsonDoc = [{
+            kind: 'block',
+            name: 'h2',
+            isComponent: false,
+            props: [],
+            children: [{ kind: 'text', value: 'Saved heading' }],
+            dynamic: false,
+        }];
+        const pageBody: BeamUxEntryBodyData = {
+            slug: 'page.programs',
+            id: HERO_ID,
+            type: 'page',
+            format: 'mdx',
+            schema: null,
+            body: original as unknown as Record<string, unknown>,
+            source: null,
+            compileError: null,
+            authoredComponents: [],
+        };
+        const saveBody = vi.fn<UxBuilderClient['saveBody']>(async (id, body) => ({
+            ...pageBody,
+            id,
+            body: body as unknown as Record<string, unknown>,
+        }));
+        const loadBody = vi.fn(async () => pageBody);
+        const Wrapper = withProviders({
+            client: {
+                loadBody,
+                saveBody,
+            },
+            notify: vi.fn(),
+        });
+
+        render(
+            <UxBuilder
+                regions={regions}
+                pageTree={pageTree}
+                palette={palette}
+                initialEngaged="hero"
+                editorPlacement="inspector"
+            />,
+            { wrapper: Wrapper },
+        );
+
+        const editor = await screen.findByLabelText('MDX source');
+        expect(Array.isArray(pageBody.body)).toBe(true);
+        expect(loadBody).toHaveBeenCalledWith(HERO_ID);
+        expect(saveBody).not.toHaveBeenCalled();
+        await waitFor(() => expect(editor).toHaveProperty('value', 'Original heading'));
+        fireEvent.change(editor, { target: { value: 'Saved heading' } });
+        fireEvent.click(screen.getByRole('button', { name: /^Save$/ }));
+
+        await waitFor(() => expect(saveBody).toHaveBeenCalledWith(HERO_ID, changed));
     });
 });
