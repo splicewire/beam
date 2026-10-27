@@ -1,8 +1,8 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { Link as InertiaLink } from '@inertiajs/react';
 import { MemoryRouter, NavLink } from 'react-router';
-import { describe, expect, it } from 'vitest';
-import { RealmSwitcher } from './RealmSwitcher';
+import { describe, expect, it, vi } from 'vitest';
+import { RealmSwitcher, type RealmSwitcherProps } from './RealmSwitcher';
 import type { HostRealms, LinkComponent } from './types';
 import { useCurrentRealm } from './useCurrentRealm';
 
@@ -198,4 +198,40 @@ describe('useCurrentRealm', () => {
         const data = { ...realms, back: { label: 'Acme', href: '/w/acme' } };
         expect(read('/operator', data)).toEqual({ realm: 'operator', back: '/w/acme', label: 'Acme' });
     });
+});
+
+it('draws the injected icon before each visible item label with its semantic context', () => {
+    const itemIcon = vi.fn<NonNullable<RealmSwitcherProps['itemIcon']>>((item, ctx) => <svg data-testid={`icon-${item.kind}-${item.realm?.key ?? 'none'}`} className={ctx.className} aria-hidden="true" />);
+    const { container } = render(<RealmSwitcher realms={realms} label="Ada" signOutHref="/logout" defaultOpen itemIcon={itemIcon} />);
+    const items = [...container.querySelectorAll('[data-realm-switcher-item]')];
+    expect(itemIcon.mock.calls.map(([item]) => [item.kind, item.realm?.key])).toEqual([
+        ['realm', 'tenant'], ['realm', 'user'], ['realm', 'operator'], ['site', 'site'], ['sign-out', undefined],
+    ]);
+    for (const item of items) {
+        expect(item.firstElementChild?.tagName.toLowerCase()).toBe('svg');
+        expect(item.firstChild).toBe(item.firstElementChild);
+        expect(item.firstElementChild?.getAttribute('class')).toContain('size-4');
+    }
+    expect(structure(container)).toEqual([
+        { item: 'realm', text: 'App', href: '/dashboard' },
+        { item: 'realm', text: 'Settings', href: '/settings/profile' },
+        { item: 'realm', text: 'Operator', href: '/operator' },
+        { item: 'site', text: 'View site', href: '/' },
+        { item: 'sign-out', text: 'Sign out', href: '/logout' },
+    ]);
+});
+
+it('omits icons without a renderer, and never calls it for closed or locked items', () => {
+    const itemIcon = vi.fn(() => null);
+    const offered = { ...realms, realms: realms.realms.map((realm) => ({ ...realm, locked: realm.key === 'operator' })) };
+    const { rerender, container } = render(<RealmSwitcher realms={offered} label="Ada" signOutHref="/logout" itemIcon={itemIcon} />);
+    expect(itemIcon).not.toHaveBeenCalled();
+    rerender(<RealmSwitcher realms={offered} label="Ada" signOutHref="/logout" itemIcon={itemIcon} defaultOpen />);
+    fireEvent.click(screen.getByRole('button', { name: 'Ada' }));
+    expect(itemIcon).toHaveBeenCalledTimes(4);
+    rerender(<RealmSwitcher realms={offered} label="Ada" signOutHref="/logout" />);
+    for (const item of container.querySelectorAll('[data-realm-switcher-item]')) {
+        expect(item.children).toHaveLength(0);
+        expect(item.className).toBe('block rounded px-2 py-1.5 text-sm hover:bg-accent');
+    }
 });

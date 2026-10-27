@@ -30,4 +30,5 @@ export type {
     LinkComponent,
     HostRealm,
     HostRealms,
+    RealmSwitcherItemIcon,
 } from './types.js';

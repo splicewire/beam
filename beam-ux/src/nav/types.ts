@@ -117,3 +117,9 @@ export type HostRealms = {
     back: { label: string; href: string } | null;
     plays?: string[];
 };
+
+/** Host-supplied leading icon; the menu remains independent of any icon library. */
+export type RealmSwitcherItemIcon = (
+    item: { kind: 'realm' | 'site' | 'sign-out'; realm?: HostRealm },
+    ctx: { className: string },
+) => ReactNode;

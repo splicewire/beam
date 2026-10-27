@@ -1,5 +1,5 @@
 import { useRef, useState, type ReactNode } from 'react';
-import type { HostRealms, LinkComponent } from './types.js';
+import type { HostRealms, LinkComponent, RealmSwitcherItemIcon } from './types.js';
 
 export type RealmSwitcherProps = {
     /** The host IA payload (`HostRealmsData`). */
@@ -12,6 +12,8 @@ export type RealmSwitcherProps = {
     linkComponent?: LinkComponent;
     /** Workspaces the principal belongs to, drawn above the realms (the host's own picker). */
     workspaces?: ReactNode;
+    /** Host-owned leading icons; absent keeps the existing text-only DOM. */
+    itemIcon?: RealmSwitcherItemIcon;
     /** Open on first render (stories, tests). */
     defaultOpen?: boolean;
     /** The realm the shell is in (useCurrentRealm's), which wins over the payload's `current` (app-walkthrough APP-14). */
@@ -47,6 +49,7 @@ export function RealmSwitcher({
     signOutHref,
     linkComponent,
     workspaces,
+    itemIcon,
     defaultOpen = false,
     side = 'bottom',
     current,
@@ -59,7 +62,8 @@ export function RealmSwitcher({
     const Link = linkComponent ?? PlainLink;
     const appRealms = realms.realms.filter((r) => r.surface === 'app' && !r.locked);
     const site = realms.realms.find((r) => r.surface === 'site' && !r.locked);
-    const item = 'block rounded px-2 py-1.5 text-sm hover:bg-accent';
+    const item = `${itemIcon ? 'flex items-center gap-2' : 'block'} rounded px-2 py-1.5 text-sm hover:bg-accent`;
+    const iconContext = { className: 'size-4 shrink-0' };
 
     return (
         <div className={['relative', className].filter(Boolean).join(' ')} data-realm-switcher="">
@@ -87,15 +91,18 @@ export function RealmSwitcher({
                             aria-current={realm.key === here ? 'page' : undefined}
                             {...{ 'data-realm-switcher-item': 'realm', role: 'menuitem' }}
                         >
+                            {itemIcon?.({ kind: 'realm', realm }, iconContext)}
                             {realm.label}
                         </Link>
                     ))}
                     {site && (
                         <Link href={site.href} className={item} {...{ 'data-realm-switcher-item': 'site', role: 'menuitem' }}>
+                            {itemIcon?.({ kind: 'site', realm: site }, iconContext)}
                             View site
                         </Link>
                     )}
                     <a href={signOutHref} className={item} {...{ 'data-realm-switcher-item': 'sign-out', role: 'menuitem' }}>
+                        {itemIcon?.({ kind: 'sign-out' }, iconContext)}
                         Sign out
                     </a>
                 </div>
