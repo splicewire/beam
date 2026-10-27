@@ -174,6 +174,17 @@ A component shipped as code by the host or a package and declared to the Block M
 configures it but never edits its inside.
 _Avoid_: registered component, island, widget
 
+**Effect**:
+Optional motion or WebGL decoration `@splicewire/beam-ux-canvas` lays over or under a Code Component's real DOM, at a tier
+(`off`, `lite` or `full`) the page's boundary resolves. It never replaces that DOM: at `off`, or under reduced motion, the
+component renders exactly as it would with no effect.
+_Avoid_: animation (a CSS animation is the component's own), VFX layer, shader (a shader is how a scene draws)
+
+**Scene**:
+The brand content an Effect draws: a host's `build(three, ctx)` / `frame(t, dt, inputs)` pair mounted through the
+package's one lifecycle seam. Scenes belong to the host, never the package.
+_Avoid_: effect (the decorator), overlay (where a scene is composited), background
+
 **Authored Component**:
 A component built in the editor from blocks and kept as an entry, with the props and slots it offers declared beside its
 blocks. Publishing it changes every page that uses it (splicewire/laravel-beam-ux docs/adr/0231).
