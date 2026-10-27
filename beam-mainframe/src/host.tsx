@@ -660,9 +660,11 @@ export function createMainframeHost(config: MainframeHostConfig) {
                         // root node (e.g. AuthForm) still opens the editor, it's just non-editable there.
                         // It opens too for a body the server declares `blocks`, whatever its shape (beam JS
                         // ADR-0006 d1: the Body Kind chooses the surface). An MDX page that holds blocks
-                        // (ux-0233 d1) loads as a JsonDoc list, not Puck's `{content}`.
+                        // (ux-0233 d1) loads as a JsonDoc list, not Puck's `{content}`. A host whose page mounts its
+                        // own editor answers null (beam-inertia's `site/home`, `site/entry`), and the page stays:
+                        // never a blank editor.
                         if (isPuckBody(p.entryBodyRaw) || p.entryRef?.bodyKind === 'blocks') {
-                            return <>{p.entryRef === null ? p.page : p.config.renderEditor({ ref: p.entryRef })}</>;
+                            return <>{p.entryRef === null ? p.page : (p.config.renderEditor({ ref: p.entryRef }) ?? p.page)}</>;
                         }
 
                         if (p.entryBound) {
