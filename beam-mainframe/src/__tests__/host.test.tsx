@@ -162,6 +162,55 @@ describe('createMainframeHost — kind-aware main fork', () => {
         expect(screen.queryByTestId('editor')).toBeNull();
     });
 
+    // L1 final replay, 2026-10-27: a host whose page mounts its own editor in place answers `renderEditor` with null
+    // (beam-inertia: `site/home` and `site/entry`, SELF_MANAGED_COMPONENTS), and the page carries the editor. Once the
+    // fork sent every `blocks` body to `renderEditor`, `/about` (a tsx entry, a JsonDoc list) rendered nothing at all in
+    // authoring mode. A null editor falls through to the page, never a blank main.
+    const ABOUT_DOC = [{ kind: 'block', name: 'h1', isComponent: false, dynamic: false, props: [], children: [{ kind: 'text', value: 'About' }] }];
+    const EDITOR_BODIES = [
+        { shape: 'a Puck body', body: { content: [] }, kind: null },
+        { shape: 'a JsonDoc body the server declares blocks', body: ABOUT_DOC, kind: 'blocks' },
+    ];
+
+    it.each(EDITOR_BODIES)('$shape keeps the page when the host mounts its editor in the page (renderEditor yields null)', async ({ body, kind }) => {
+        const Host = createMainframeHost(
+            stubConfig({
+                readMode: 'page',
+                usePageContext: () => ({ component: 'site/entry', canAuthor: true, slug: 'about', entryId: '01a001bc-0000-7000-8000-0000000000ee', entryFormat: 'tsx', entryBodyKind: kind }),
+                loadEntryBody: async () => ({ slug: 'about', schema: null, body: body as unknown as HostEntryBody['body'] }),
+                renderEditor: () => null,
+                renderInspector: () => null,
+            }),
+        );
+        render(<Host>{PAGE}</Host>);
+        await waitFor(() => expect(screen.getByText('Edit page')).toBeTruthy());
+
+        act(() => fireEvent.click(screen.getByText('Edit page')));
+
+        await waitFor(() => expect(document.querySelector('[data-beam-ux-mode="window"]')).not.toBeNull());
+        expect(screen.getByTestId('page')).toBeTruthy();
+    });
+
+    // The other side of the same fork (audiostud, WWW): a host whose `renderEditor` mounts the canvas still gets the
+    // canvas in place of the page, not the page as well.
+    it.each(EDITOR_BODIES)('$shape opens the canvas instead of the page when the host renders one', async ({ body, kind }) => {
+        const Host = createMainframeHost(
+            stubConfig({
+                readMode: 'page',
+                usePageContext: () => ({ component: 'site/entry', canAuthor: true, slug: 'about', entryId: '01a001bc-0000-7000-8000-0000000000ee', entryFormat: 'tsx', entryBodyKind: kind }),
+                loadEntryBody: async () => ({ slug: 'about', schema: null, body: body as unknown as HostEntryBody['body'] }),
+            }),
+        );
+        render(<Host>{PAGE}</Host>);
+        await waitFor(() => expect(screen.getByText('Edit page')).toBeTruthy());
+
+        act(() => fireEvent.click(screen.getByText('Edit page')));
+
+        await waitFor(() => expect(screen.getByTestId('editor')).toBeTruthy());
+        expect(screen.queryByTestId('page')).toBeNull();
+        expect(screen.queryByTestId('inspector')).toBeNull();
+    });
+
     it('an unbound entry (load miss) never shows the toggle — nothing to author', async () => {
         const Host = createMainframeHost(
             stubConfig({ usePageContext: () => ({ component: 'listen', canAuthor: true }), loadEntryBody: async () => null }),
