@@ -1,10 +1,11 @@
 import { OnThisPage } from '@schemastud/nav';
-import { useEffect, useState } from 'react';
+import { useEffect, useId, useState } from 'react';
 import { RealmNav, type RealmNavNode } from '@splicewire/beam-ux/nav';
 import { DOCS_LAYOUT_CSS } from './layout-css.js';
 import type { ChromeProps } from '@splicewire/beam-ux/docs';
 import { DocsHeader } from './DocsHeader.js';
 import { ThemeDocsStyle } from './ThemeDocsStyle.js';
+import { HeadingAnchors } from './HeadingAnchors.js';
 import type { DocsChromeData } from './generated/types.js';
 
 /**
@@ -31,8 +32,8 @@ import type { DocsChromeData } from './generated/types.js';
  *
  * `<OnThisPage>` from `@schemastud/nav` scans the rendered DOM and scroll-spies it, so it needs no
  * cooperation from the body — which matters here more than usual, because a body is a compiled
- * artifact this layout has never seen. `routeKey` is the current URL so a client-side navigation
- * re-scans; without it the second guide a reader opens shows the first one's headings.
+ * artifact this layout has never seen. HeadingAnchors observes late body changes and gives this
+ * column the same scan key, alongside the URL, so navigation and async body imports both re-scan.
  *
  * ## Every dimension is a token and none of them name a colour
  *
@@ -65,6 +66,9 @@ export function DocsLayout({ nav, linkComponent, currentHref, slots, classNames,
     // until its server carries the chrome.
     const docsChrome = (page?.docsChrome ?? null) as DocsChromeData | null;
     const [drawerOpen, setDrawerOpen] = useState(false);
+    const [main, setMain] = useState<HTMLElement | null>(null);
+    const [headingKey, setHeadingKey] = useState('');
+    const mainId = `beam-docs-main-${useId().replace(/[^a-zA-Z0-9_-]/g, '')}`;
 
     // The rail drawer (under 60rem) closes on Escape and on navigation.
     useEffect(() => setDrawerOpen(false), [currentHref]);
@@ -103,13 +107,15 @@ export function DocsLayout({ nav, linkComponent, currentHref, slots, classNames,
                     <RealmNav items={items} variant="flat-with-headers" linkComponent={linkComponent} />
                 </aside>
 
-                <main className={[DEFAULTS.main, classNames?.main].filter(Boolean).join(' ')}>
+                <main id={mainId} ref={setMain} className={[DEFAULTS.main, classNames?.main].filter(Boolean).join(' ')}>
                     {slots?.breadcrumb}
                     {children}
                 </main>
 
+                <HeadingAnchors main={main} routeKey={currentHref} onScan={setHeadingKey} />
+
                 <div className={[DEFAULTS.aside, classNames?.aside].filter(Boolean).join(' ')}>
-                    <OnThisPage routeKey={currentHref} />
+                    <OnThisPage container={`#${mainId}`} routeKey={`${currentHref ?? ''}:${headingKey}`} />
                 </div>
             </div>
 
