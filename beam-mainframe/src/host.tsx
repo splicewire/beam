@@ -658,7 +658,10 @@ export function createMainframeHost(config: MainframeHostConfig) {
                         // (`isIsland()`, @splicewire/beam-ux/canvas) now does that sealing INSIDE the
                         // canvas the host's `renderEditor` mounts — a behavior-realm entry with a sealed
                         // root node (e.g. AuthForm) still opens the editor, it's just non-editable there.
-                        if (isPuckBody(p.entryBodyRaw)) {
+                        // It opens too for a body the server declares `blocks`, whatever its shape (beam JS
+                        // ADR-0006 d1: the Body Kind chooses the surface). An MDX page that holds blocks
+                        // (ux-0233 d1) loads as a JsonDoc list, not Puck's `{content}`.
+                        if (isPuckBody(p.entryBodyRaw) || p.entryRef?.bodyKind === 'blocks') {
                             return <>{p.entryRef === null ? p.page : p.config.renderEditor({ ref: p.entryRef })}</>;
                         }
 
