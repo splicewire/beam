@@ -10,12 +10,14 @@
  *     requested when the element comes within `rootMargin` (default 25 %) of the viewport;
  *   • a DPR cap per tier: ≤ 2 at `full`, ≤ 1.5 at `lite`;
  *   • `ctx.requestFrame()` to wake a parked loop (a `frame()` that returns `false` parks it — the
- *     `lite` idle story); a pointer within `pointerMargin` of the element also wakes it;
+ *     `lite` idle story); a pointer within `pointerMargin` of the element, or a change of the
+ *     `playing` prop, also wakes it (still subject to the viewport, visibility and pause guards);
  *   • `performance.measure('fx:tick')` around each tick (frame() + render);
  *   • a ResizeObserver that hands the scene fresh size and exclusion rects (`ctx.width`,
  *     `ctx.height`, `ctx.exclusions`) and wakes one frame;
  *   • on unmount: dispose every geometry, material and texture in `ctx.scene`, dispose the renderer,
- *     `forceContextLoss()`, and remove the canvas;
+ *     `forceContextLoss()`, and remove the canvas — each resource at most once, including after a
+ *     late failure and for anything a build still in flight adds after the teardown;
  *   • late WebGL failure (ticket 06 Q30): a rejected `import()` (three or the scene chunk), a throwing
  *     renderer constructor, or `webglcontextlost` with no `webglcontextrestored` within one frame →
  *     the canvas is unmounted, one `console.warn` (`[beam-ux-canvas] effect disabled: <site>: …`),
@@ -133,19 +135,28 @@ interface Disposable {
     dispose?: () => void;
 }
 
-/** Dispose every geometry, material and material texture reachable from `root`. */
-function disposeGraph(root: THREE.Object3D): void {
+/**
+ * Dispose every geometry, material and material texture reachable from `root`, each at most once:
+ * `done` remembers what this mount already disposed, so a second pass (a late failure followed by
+ * unmount, or a build that resolves after teardown) disposes only what was added since.
+ */
+function disposeGraph(root: THREE.Object3D, done: WeakSet<object>): void {
+    const once = (resource: Disposable | undefined) => {
+        if (!resource || done.has(resource)) return;
+        done.add(resource);
+        resource.dispose?.();
+    };
     root.traverse((object) => {
         const o = object as THREE.Object3D & { geometry?: Disposable; material?: Disposable | Disposable[] };
-        o.geometry?.dispose?.();
+        once(o.geometry);
         const materials = Array.isArray(o.material) ? o.material : o.material ? [o.material] : [];
         for (const material of materials) {
             for (const value of Object.values(material)) {
                 if (value && typeof value === 'object' && (value as { isTexture?: boolean }).isTexture) {
-                    (value as Disposable).dispose?.();
+                    once(value as Disposable);
                 }
             }
-            material.dispose?.();
+            once(material);
         }
     });
 }
@@ -168,11 +179,17 @@ export function FxCanvas({
     const ref = useRef<HTMLDivElement>(null);
     const latest = useRef({ paused, playing, exclusions, pointerMargin });
     latest.current = { paused, playing, exclusions, pointerMargin };
-    const controller = useRef<{ update(): void } | null>(null);
+    const controller = useRef<{ update(): void; wake(): void } | null>(null);
 
     useEffect(() => {
         controller.current?.update();
     }, [paused]);
+
+    // A `playing` transition is new input: wake a parked loop for a frame so the scene sees it. The
+    // viewport, visibility and pause guards still hold (`wake` runs only what `shouldRun` allows).
+    useEffect(() => {
+        controller.current?.wake();
+    }, [playing]);
 
     useEffect(() => {
         const container = ref.current;
@@ -192,6 +209,8 @@ export function FxCanvas({
         let graph: THREE.Scene | null = null;
         let camera: THREE.Camera | null = null;
         let active: FxScene | null = null;
+        /** Every geometry, material, texture this mount has disposed (teardown is idempotent). */
+        const released = new WeakSet<object>();
 
         const dprCap = tier === 'full' ? 2 : 1.5;
         const state = {
@@ -280,7 +299,7 @@ export function FxCanvas({
         }
         function teardownRenderer() {
             stop();
-            if (graph) disposeGraph(graph);
+            if (graph) disposeGraph(graph, released);
             if (renderer) {
                 const canvas = renderer.domElement;
                 canvas.removeEventListener('webglcontextlost', onLost);
@@ -290,6 +309,8 @@ export function FxCanvas({
                 canvas.remove();
             }
             renderer = null;
+            graph = null;
+            camera = null;
             active = null;
             built = false;
         }
@@ -314,6 +335,7 @@ export function FxCanvas({
             } catch (error) {
                 return fail('renderer', error);
             }
+            const mine = renderer;
             renderer.setPixelRatio(state.dpr);
             renderer.setClearColor(0x000000, 0);
             const canvas = renderer.domElement;
@@ -321,29 +343,30 @@ export function FxCanvas({
             canvas.addEventListener('webglcontextlost', onLost);
             canvas.addEventListener('webglcontextrestored', onRestored);
             container!.appendChild(canvas);
-            graph = new three.Scene();
-            state.scene = graph;
+            const own = new three.Scene();
+            graph = own;
+            state.scene = own;
             state.renderer = renderer;
             state.canvas = canvas;
             measure();
+            // Torn down (unmount, or a late failure) while the scene was building: `renderer` is no
+            // longer this build's. Dispose whatever the build added after the teardown pass.
+            const tornDown = () => disposed || renderer !== mine;
+            let cam: THREE.Camera;
             try {
-                camera = await created.build(three, ctx);
+                cam = await created.build(three, ctx);
             } catch (error) {
+                if (tornDown()) return disposeGraph(own, released);
                 // A scene bug, not a WebGL failure: drop this scene, keep the capability.
-                if (!disposed) {
-                    console.warn(`[beam-ux-canvas] scene failed: ${error instanceof Error ? error.message : String(error)}`);
-                    teardownRenderer();
-                }
+                console.warn(`[beam-ux-canvas] scene failed: ${error instanceof Error ? error.message : String(error)}`);
+                teardownRenderer();
                 return;
             }
-            if (disposed) {
-                // Torn down while the scene was building: dispose what it added since.
-                if (graph) disposeGraph(graph);
-                return;
-            }
+            if (tornDown()) return disposeGraph(own, released);
+            camera = cam;
             active = created;
             built = true;
-            renderer.render(graph, camera);
+            mine.render(own, cam);
             update();
         }
 
@@ -399,7 +422,12 @@ export function FxCanvas({
         window.addEventListener('pointermove', onMove, { passive: true });
         window.addEventListener('pointerleave', onLeave);
 
-        controller.current = { update };
+        controller.current = {
+            update,
+            wake() {
+                if (built && parked) requestFrame();
+            },
+        };
 
         return () => {
             disposed = true;

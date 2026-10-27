@@ -356,3 +356,232 @@ describe('FxCanvas — late WebGL failure pins the capability off (WebGL true un
         expect(a.frames.length).toBeGreaterThan(0);
     });
 });
+
+describe('FxCanvas — a playing transition wakes a parked scene (WebGL true, reduced motion false)', () => {
+    it('parks while idle; flipping playing with no pointer or resize activity runs one frame that sees the new input', async () => {
+        const env = mockEnvironment({ webgl: true, reducedMotion: false });
+        const probe = probeScene();
+        probe.park = true;
+        const { rerender } = render(<Stage probe={probe} playing={false} />);
+        await vi.waitFor(() => expect(probe.built).toHaveLength(1));
+        env.flushFrames(3);
+        expect(probe.frames).toHaveLength(1);
+        expect(probe.frames[0].inputs.playing).toBe(false);
+        expect(env.pendingFrames()).toBe(0);
+
+        rerender(<Stage probe={probe} playing />);
+        expect(env.pendingFrames()).toBe(1);
+        env.flushFrames(3);
+        expect(probe.frames).toHaveLength(2);
+        expect(probe.frames[1].inputs.playing).toBe(true);
+
+        rerender(<Stage probe={probe} playing={false} />);
+        env.flushFrames(3);
+        expect(probe.frames).toHaveLength(3);
+        expect(probe.frames[2].inputs.playing).toBe(false);
+    });
+
+    it('keeps the guards: no frame while offscreen, hidden or paused; the offscreen one runs on return', async () => {
+        const env = mockEnvironment({ webgl: true, reducedMotion: false });
+        const probe = probeScene();
+        probe.park = true;
+        const { rerender } = render(<Stage probe={probe} playing={false} />);
+        await vi.waitFor(() => expect(probe.built).toHaveLength(1));
+        env.flushFrames(1);
+        expect(probe.frames).toHaveLength(1);
+
+        // Paused: the flip queues nothing.
+        rerender(<Stage probe={probe} playing paused />);
+        expect(env.pendingFrames()).toBe(0);
+        env.flushFrames(3);
+        expect(probe.frames).toHaveLength(1);
+
+        // Hidden: nothing either.
+        rerender(<Stage probe={probe} playing={false} />);
+        env.flushFrames(1);
+        const afterUnpause = probe.frames.length;
+        const visibility = vi.spyOn(document, 'visibilityState', 'get').mockReturnValue('hidden');
+        act(() => void document.dispatchEvent(new Event('visibilitychange')));
+        rerender(<Stage probe={probe} playing />);
+        expect(env.pendingFrames()).toBe(0);
+        visibility.mockReturnValue('visible');
+        act(() => void document.dispatchEvent(new Event('visibilitychange')));
+        env.flushFrames(1);
+        expect(probe.frames.at(-1)!.inputs.playing).toBe(true);
+
+        // Offscreen: the flip queues nothing until the element returns.
+        act(() => env.intersect(false));
+        const before = probe.frames.length;
+        rerender(<Stage probe={probe} playing={false} />);
+        expect(env.pendingFrames()).toBe(0);
+        env.flushFrames(3);
+        expect(probe.frames).toHaveLength(before);
+        act(() => env.intersect(true));
+        env.flushFrames(3);
+        expect(probe.frames).toHaveLength(before + 1);
+        expect(probe.frames.at(-1)!.inputs.playing).toBe(false);
+        expect(afterUnpause).toBeGreaterThan(1);
+    });
+});
+
+/** A scene whose build waits on the case: it adds `early` at once and `late` only when released. */
+function deferredScene() {
+    const mk = () => ({ geometry: { dispose: vi.fn() }, material: { dispose: vi.fn() } });
+    const early = mk();
+    const late = mk();
+    let release!: (outcome: 'resolve' | 'reject') => void;
+    const gate = new Promise<'resolve' | 'reject'>((r) => (release = r));
+    const frames: number[] = [];
+    const scene: FxScene = {
+        async build(three: ThreeModule, ctx: FxSceneContext) {
+            const add = (r: ReturnType<typeof mk>) => {
+                const o = new three.Object3D() as unknown as Record<string, unknown>;
+                Object.assign(o, r);
+                ctx.scene.add(o as never);
+            };
+            add(early);
+            const outcome = await gate;
+            add(late);
+            if (outcome === 'reject') throw new Error('scene build failed late');
+            return new three.OrthographicCamera() as never;
+        },
+        frame(t) {
+            frames.push(t);
+        },
+    };
+    const calls = (r: ReturnType<typeof mk>) => [r.geometry.dispose.mock.calls.length, r.material.dispose.mock.calls.length];
+    return { scene, early, late, release, frames, calls };
+}
+
+function DeferredStage({ scene }: { scene: FxScene }) {
+    const factory = useCallback(() => scene, [scene]);
+    return <FxCanvas scene={factory} />;
+}
+
+describe('FxCanvas — teardown is idempotent (WebGL true until it fails, reduced motion false)', () => {
+    it('a late failure followed by unmount disposes geometry, material, texture and renderer exactly once', async () => {
+        const env = mockEnvironment({ webgl: true, reducedMotion: false });
+        vi.spyOn(console, 'warn').mockImplementation(() => {});
+        const probe = probeScene();
+        const { unmount } = render(<Stage probe={probe} />);
+        await vi.waitFor(() => expect(probe.built).toHaveLength(1));
+        env.flushFrames(1);
+        const [renderer] = renderers;
+
+        act(() => void renderer.domElement.dispatchEvent(new Event('webglcontextlost', { cancelable: true })));
+        act(() => env.flushFrames(1));
+        await vi.waitFor(() => expect(canvases()).toHaveLength(0));
+        const counts = () => [
+            probe.disposables.geometry.dispose.mock.calls.length,
+            probe.disposables.material.dispose.mock.calls.length,
+            probe.disposables.texture.dispose.mock.calls.length,
+            renderer.dispose.mock.calls.length,
+            renderer.forceContextLoss.mock.calls.length,
+        ];
+        expect(counts()).toEqual([1, 1, 1, 1, 1]);
+
+        unmount();
+        expect(counts()).toEqual([1, 1, 1, 1, 1]);
+    });
+
+    it('a build that resolves after unmount: no render, no frame, and what it added late is disposed once', async () => {
+        const env = mockEnvironment({ webgl: true, reducedMotion: false });
+        const d = deferredScene();
+        const { unmount } = render(<DeferredStage scene={d.scene} />);
+        await vi.waitFor(() => expect(renderers).toHaveLength(1));
+        const [renderer] = renderers;
+        unmount();
+        expect(d.calls(d.early)).toEqual([1, 1]);
+        expect(renderer.dispose).toHaveBeenCalledTimes(1);
+
+        await act(async () => d.release('resolve'));
+        await settle();
+        expect(d.calls(d.early)).toEqual([1, 1]);
+        expect(d.calls(d.late)).toEqual([1, 1]);
+        expect(renderer.render).not.toHaveBeenCalled();
+        env.flushFrames(3);
+        expect(d.frames).toHaveLength(0);
+    });
+
+    it('a build that rejects after unmount: no warning, and what it added late is disposed once', async () => {
+        mockEnvironment({ webgl: true, reducedMotion: false });
+        const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+        const d = deferredScene();
+        const { unmount } = render(<DeferredStage scene={d.scene} />);
+        await vi.waitFor(() => expect(renderers).toHaveLength(1));
+        unmount();
+        await act(async () => d.release('reject'));
+        await settle();
+        expect(d.calls(d.early)).toEqual([1, 1]);
+        expect(d.calls(d.late)).toEqual([1, 1]);
+        expect(warn).not.toHaveBeenCalled();
+    });
+
+    it('a build that resolves after a late failure: one warn, the pin, no render on the lost renderer, late resources disposed once', async () => {
+        const env = mockEnvironment({ webgl: true, reducedMotion: false });
+        const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+        const d = deferredScene();
+        render(<DeferredStage scene={d.scene} />);
+        await vi.waitFor(() => expect(renderers).toHaveLength(1));
+        const [renderer] = renderers;
+        act(() => void renderer.domElement.dispatchEvent(new Event('webglcontextlost', { cancelable: true })));
+        act(() => env.flushFrames(1));
+        await vi.waitFor(() => expect(canvases()).toHaveLength(0));
+        expect(warn).toHaveBeenCalledExactlyOnceWith(
+            '[beam-ux-canvas] effect disabled: context-lost: webglcontextlost with no webglcontextrestored within one frame',
+        );
+
+        await act(async () => d.release('resolve'));
+        await settle();
+        expect(d.calls(d.early)).toEqual([1, 1]);
+        expect(d.calls(d.late)).toEqual([1, 1]);
+        expect(renderer.render).not.toHaveBeenCalled();
+        expect(renderer.dispose).toHaveBeenCalledTimes(1);
+        expect(warn).toHaveBeenCalledTimes(1);
+    });
+});
+
+describe('FxCanvas — a live prefers-reduced-motion change (WebGL true; reduced motion false, then true)', () => {
+    it('tears the mounted canvas down once, runs no further frame, and the boundary goes bare; clearing it remounts', async () => {
+        const env = mockEnvironment({ webgl: true, reducedMotion: false });
+        const probe = probeScene();
+        const scene = () => probe.scene;
+        const { container } = render(
+            <FxBoundary mode="persuade">
+                <FxEffect placement="under" overlay={<FxCanvas scene={scene} />}>
+                    <h1>one</h1>
+                </FxEffect>
+            </FxBoundary>,
+        );
+        await vi.waitFor(() => expect(probe.built).toHaveLength(1));
+        env.flushFrames(1);
+        const [renderer] = renderers;
+        expect(canvases()).toHaveLength(1);
+
+        act(() => env.setReducedMotion(true));
+        expect(canvases()).toHaveLength(0);
+        expect(container.innerHTML).toBe('<h1>one</h1>');
+        expect(renderer.dispose).toHaveBeenCalledTimes(1);
+        expect(renderer.forceContextLoss).toHaveBeenCalledTimes(1);
+        expect(probe.disposables.geometry.dispose).toHaveBeenCalledTimes(1);
+        const frames = probe.frames.length;
+        env.flushFrames(3);
+        expect(probe.frames).toHaveLength(frames);
+
+        act(() => env.setReducedMotion(false));
+        await vi.waitFor(() => expect(probe.built).toHaveLength(2));
+        expect(renderers).toHaveLength(2);
+        expect(canvases()).toHaveLength(1);
+    });
+
+    it('standalone (no boundary): the same teardown', async () => {
+        const env = mockEnvironment({ webgl: true, reducedMotion: false });
+        const probe = probeScene();
+        render(<Stage probe={probe} />);
+        await vi.waitFor(() => expect(probe.built).toHaveLength(1));
+        env.flushFrames(1);
+        act(() => env.setReducedMotion(true));
+        expect(canvases()).toHaveLength(0);
+        expect(renderers[0].dispose).toHaveBeenCalledTimes(1);
+    });
+});

@@ -45,9 +45,10 @@ const { effectiveTier, setUserTier } = useFx();
 - `FxCanvas` is the one lifecycle seam. A scene implements `build(three, ctx)` and `frame(t, dt, inputs)`;
   the seam owns the rAF loop and its pauses (offscreen, hidden tab, `paused`, tier `off`), the lazy mount
   (`scene()` and `three` requested on approach, `rootMargin` 25 %), the DPR cap (2 at `full`, 1.5 at `lite`),
-  `requestFrame()` for a parked loop, `performance.measure('fx:tick')`, resize and exclusion rects,
-  disposal with `forceContextLoss()`, and late WebGL failure (one `console.warn`, the capability pinned
-  `off` for the page).
+  `requestFrame()` (or a change of `playing`) for a parked loop, `performance.measure('fx:tick')`, resize
+  and exclusion rects, disposal with `forceContextLoss()` (each resource once, including after a late
+  failure or a build that settles after teardown), and late WebGL failure (one `console.warn`, the
+  capability pinned `off` for the page).
 - `three` is a peer, loaded only through `loadThree()`'s dynamic `import('three')`, so the host's bundler
   splits it into its own chunk.
 

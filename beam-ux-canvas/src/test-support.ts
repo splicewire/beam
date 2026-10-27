@@ -144,6 +144,8 @@ export interface EnvironmentControls {
     intersect(isIntersecting: boolean): void;
     /** The options each IntersectionObserver was constructed with, in order. */
     observerOptions: IntersectionObserverInit[];
+    /** Flip `prefers-reduced-motion: reduce` live and fire its `change` listeners (an OS change). */
+    setReducedMotion(reduce: boolean): void;
     /** Run queued animation frames (the stubbed rAF never runs on its own). */
     flushFrames(count?: number): void;
     /** Animation frames currently queued. */
@@ -154,24 +156,35 @@ export interface EnvironmentControls {
 
 /**
  * Mock the browser seams the package reads. Installs: a `getContext` spy (the WebGL capability
- * probe), `matchMedia` (reduced motion; `(pointer: coarse)` false), IntersectionObserver and
- * ResizeObserver stubs, and a manual `requestAnimationFrame` queue.
+ * probe), `matchMedia` (reduced motion, live through `setReducedMotion`; `(pointer: coarse)` false),
+ * IntersectionObserver and ResizeObserver stubs, and a manual `requestAnimationFrame` queue.
  */
 export function mockEnvironment({ webgl, reducedMotion, intersecting = true }: EnvironmentOptions): EnvironmentControls {
     vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockImplementation(function (kind: string) {
         return webgl && kind.includes('webgl') ? ({} as RenderingContext) : null;
     } as typeof HTMLCanvasElement.prototype.getContext);
 
-    window.matchMedia = vi.fn((query: string) => ({
-        matches: query.includes('prefers-reduced-motion') ? reducedMotion : false,
-        media: query,
-        onchange: null,
-        addEventListener: () => {},
-        removeEventListener: () => {},
-        addListener: () => {},
-        removeListener: () => {},
-        dispatchEvent: () => false,
-    })) as unknown as typeof window.matchMedia;
+    let reduce = reducedMotion;
+    const motionListeners = new Set<() => void>();
+    window.matchMedia = vi.fn((query: string) => {
+        const motion = query.includes('prefers-reduced-motion');
+        return {
+            get matches() {
+                return motion ? reduce : false;
+            },
+            media: query,
+            onchange: null,
+            addEventListener: (_type: string, listener: () => void) => {
+                if (motion) motionListeners.add(listener);
+            },
+            removeEventListener: (_type: string, listener: () => void) => {
+                motionListeners.delete(listener);
+            },
+            addListener: () => {},
+            removeListener: () => {},
+            dispatchEvent: () => false,
+        };
+    }) as unknown as typeof window.matchMedia;
 
     const observers: { cb: IntersectionObserverCallback; targets: Element[]; self: IntersectionObserver }[] = [];
     const observerOptions: IntersectionObserverInit[] = [];
@@ -233,6 +246,10 @@ export function mockEnvironment({ webgl, reducedMotion, intersecting = true }: E
 
     return {
         observerOptions,
+        setReducedMotion(next: boolean) {
+            reduce = next;
+            for (const listener of [...motionListeners]) listener();
+        },
         intersect(isIntersecting: boolean) {
             for (const o of [...observers]) {
                 o.cb(
