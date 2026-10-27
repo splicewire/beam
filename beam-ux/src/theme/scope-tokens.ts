@@ -14,14 +14,45 @@ export const DOCS_TOKEN_HOOKS = `.beam-docs {
   --beam-accent: var(--beam-green-deep);
   --beam-border: var(--beam-line);
   --beam-surface-2: var(--beam-muted);
+  --beam-font-sans: var(--theme-docs-font-sans, inherit);
+  --beam-font-mono: var(--theme-docs-font-mono, ui-monospace, monospace);
+  font-family: var(--beam-font-sans, inherit);
+}
+.beam-docs :is(code, pre, kbd, samp) {
+  font-family: var(--beam-font-mono, ui-monospace, monospace);
 }
 `;
 
 export function scopeTokensToDocs(css: string): string {
-    const scoped = css
-        .replace(/^:root,\s*\n\.dark\s*\{/m, '.beam-docs,\n.dark .beam-docs,\n.beam-docs.dark {')
-        .replace(/^:root\s*\{/m, '.beam-docs {')
-        .replace(/^\.dark\s*\{/m, '.dark .beam-docs,\n.beam-docs.dark {');
+    const scoped = css.replace(
+        /^(:root,\s*\n\.dark|:root|\.dark)\s*\{([^}]+)\}/gm,
+        (_rule, selector: string, body: string) => {
+            const dark = selector === '.dark';
+            const scope =
+                selector === ':root'
+                    ? '.beam-docs'
+                    : dark
+                    ? '.dark .beam-docs,\n.beam-docs.dark'
+                    : '.beam-docs,\n.dark .beam-docs,\n.beam-docs.dark';
+            const bridged = body.replace(
+                /(--beam-([\w-]+))(\s*:\s*)([^;]+);/g,
+                (
+                    _declaration,
+                    property: string,
+                    key: string,
+                    separator: string,
+                    value: string
+                ) => {
+                    // JSON Schema keys are camelCase (ink03); the existing CSS codec does not add a numeric separator.
+                    const token = key.replace(/-(\d)/g, '$1');
+                    return `${property}${separator}var(--theme-docs-${
+                        dark ? 'dark-' : ''
+                    }${token}, ${value.trim()});`;
+                }
+            );
+            return `${scope} {${bridged}}`;
+        }
+    );
 
     return `/* Generated from tokens.css by scopeTokensToDocs() (DOCS-13). Do not edit. */\n${scoped}\n${DOCS_TOKEN_HOOKS}`;
 }

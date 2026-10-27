@@ -180,3 +180,26 @@ describe('DocsLayout appearance and rail', () => {
         expect(DOCS_LAYOUT_CSS).not.toMatch(/var\(--sidebar-/);
     });
 });
+
+it('consumes the resolved docs theme from the actual page props', () => {
+    const { container } = render(
+        <DocsLayout {...props} page={{ theme: { docs: {
+            paper: '#aabbcc', darkPaper: '#112233', fontSans: 'Example Sans',
+        } } }}>Content</DocsLayout>,
+    );
+    const styles = Array.from(container.querySelectorAll('style')).map((style) => style.textContent).join('\n');
+    expect(styles).toContain('--theme-docs-paper:#aabbcc;');
+    expect(styles).toContain('--theme-docs-dark-paper:#112233;');
+    expect(styles).toContain('--theme-docs-font-sans:Example Sans;');
+});
+
+it('keeps absent and malformed docs themes inert and refuses CSS declaration injection', () => {
+    const { container, rerender } = render(<DocsLayout {...props}>Content</DocsLayout>);
+    expect(container.querySelector('[data-beam-docs-theme]')).toBeNull();
+    rerender(
+        <DocsLayout {...props} page={{ theme: { docs: {
+            paper: 'red;}body{color:red', fontSans: '</style><script>bad</script>', ink: 1,
+        } } }}>Content</DocsLayout>,
+    );
+    expect(container.querySelector('[data-beam-docs-theme]')).toBeNull();
+});

@@ -18,6 +18,11 @@ const keysOf = (css: string, selectorStart: string) => {
 };
 
 describe('scopeTokensToDocs', () => {
+    it('reads the docs theme layer ahead of shipped light and dark defaults', () => {
+        expect(scoped).toContain('--beam-paper: var(--theme-docs-paper, #eef1ee);');
+        expect(scoped).toContain('--beam-paper: var(--theme-docs-dark-paper, oklch(0.2 0.02 165));');
+    });
+
     it('never touches :root', () => {
         expect(scoped).not.toMatch(/^:root/m);
         expect(scoped).not.toMatch(/^\.dark\s*\{/m);

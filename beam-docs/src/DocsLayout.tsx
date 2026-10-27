@@ -4,6 +4,7 @@ import { RealmNav, type RealmNavNode } from '@splicewire/beam-ux/nav';
 import { DOCS_LAYOUT_CSS } from './layout-css.js';
 import type { ChromeProps } from '@splicewire/beam-ux/docs';
 import { DocsHeader } from './DocsHeader.js';
+import { ThemeDocsStyle } from './ThemeDocsStyle.js';
 import type { DocsChromeData } from './generated/types.js';
 
 /**
@@ -82,6 +83,7 @@ export function DocsLayout({ nav, linkComponent, currentHref, slots, classNames,
             {...(drawerOpen ? { 'data-drawer-open': '' } : {})}
         >
             <style>{DOCS_LAYOUT_CSS}</style>
+            <ThemeDocsStyle theme={page?.theme} />
             {docsChrome ? (
                 <DocsHeader
                     chrome={docsChrome}
