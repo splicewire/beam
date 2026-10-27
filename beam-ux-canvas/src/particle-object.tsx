@@ -2,22 +2,23 @@
  * A GPU point cloud sampled from a source image, with cursor scatter + spring-damper return.
  * Promoted out of splicewire-app's app-local beam-ux-canvas prototype
  * (ui/src/_prototype/beam-ux-canvas/_fx/ParticleObject.tsx, ticket 02) — the same physics, now a
- * real package surface.
+ * real package surface, and the lifecycle seam's first consumer (`FxCanvas`).
  *
  * "Effects decorate, they never replace" (the package's load-bearing doctrine): this component is
  * a `pointer-events-none`, `aria-hidden` overlay. It renders NOTHING real — a host mounts it
  * alongside its own real DOM (e.g. a logo `<img>`), never in place of it. It self-gates behind
- * {@link canWebGl} and {@link prefersReducedMotion}: no WebGL context, or the OS asks for reduced
- * motion, and it mounts an empty, inert div.
+ * {@link canWebGl} and reduced motion with or without an `FxBoundary` (splicewire/www renders it
+ * standalone): no WebGL context, or the OS asks for reduced motion, and it mounts an empty, inert div.
  *
- * Perf hygiene: the animation loop pauses when scrolled offscreen (IntersectionObserver) and, on
- * unmount, disposes geometry + material + renderer and force-loses the GL context — no leaks
- * across mounts. `animateIdle: false` additionally PARKS the loop once the cloud settles with no
- * cursor near, waking only on pointer activity — the `lite` tier's whole perf story.
+ * Perf hygiene is the seam's: the loop pauses offscreen and on a hidden tab, and on unmount the
+ * geometry, material and renderer are disposed and the GL context force-lost. `animateIdle: false`
+ * additionally PARKS the loop once the cloud settles with no cursor near, waking only on pointer
+ * activity — the `lite` tier's whole perf story.
  */
-import { useEffect, useRef } from 'react';
-import * as THREE from 'three';
-import { canWebGl, prefersReducedMotion } from './capability';
+import { useCallback } from 'react';
+import type * as THREE from 'three';
+import { FxCanvas, type FxScene, type FxSceneContext } from './fx-canvas';
+import type { ThreeModule } from './load-three';
 
 export interface ParticleObjectProps {
     /** Source image sampled into points. */
@@ -36,6 +37,8 @@ const STIFFNESS = 0.022;
 const DAMPING = 0.86;
 const REPEL = 2600;
 const REPEL_RADIUS = 70;
+// Below this mean kinetic energy the cloud is "at rest" (parkable when !animateIdle).
+const REST_ENERGY = 0.02;
 
 /** Draw `img` centered/contained into a small buffer and collect opaque pixel homes in [0,1]. */
 function sampleHomes(img: HTMLImageElement, target: number): Float32Array {
@@ -66,79 +69,98 @@ function sampleHomes(img: HTMLImageElement, target: number): Float32Array {
     return new Float32Array(homes);
 }
 
-export function ParticleObject({ src, tint, count = 3500, animateIdle = true, className }: ParticleObjectProps) {
-    const containerRef = useRef<HTMLDivElement>(null);
+function loadImage(src: string): Promise<HTMLImageElement> {
+    return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = () => resolve(img);
+        img.onerror = () => reject(new Error(`ParticleObject could not load ${src}`));
+        img.src = src;
+    });
+}
 
-    useEffect(() => {
-        const container = containerRef.current;
-        if (!container || !canWebGl() || prefersReducedMotion()) return;
+interface ParticleSceneOptions {
+    src: string;
+    tint: string;
+    count: number;
+    animateIdle: boolean;
+}
 
-        let disposed = false;
-        let raf = 0;
-        let running = false;
-        let visible = true;
-        // Below this total kinetic energy the cloud is "at rest" (parkable when !animateIdle).
-        const REST_ENERGY = 0.02;
+/** The point cloud as a seam scene: `build` samples the image, `frame` runs the physics. */
+export function createParticleScene({ src, tint, count, animateIdle }: ParticleSceneOptions): FxScene {
+    let ctx: FxSceneContext;
+    let camera: THREE.OrthographicCamera;
+    let geometry: THREE.BufferGeometry;
+    let homesNorm: Float32Array = new Float32Array(0); // [0,1] per point (2 each)
+    let homesPx: Float32Array = new Float32Array(0); // pixel space (2 each)
+    let velocities: Float32Array = new Float32Array(0); // (2 each)
+    let positions: Float32Array = new Float32Array(0); // geometry buffer (3 each)
+    let markW = 1;
+    let markH = 1;
+    let laidOutW = 0;
+    let laidOutH = 0;
 
-        const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
-        renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
-        renderer.setClearColor(0x000000, 0);
-        renderer.domElement.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;pointer-events:none';
-        container.appendChild(renderer.domElement);
+    function layout() {
+        const { width, height } = ctx;
+        laidOutW = width;
+        laidOutH = height;
+        camera.left = 0;
+        camera.right = width;
+        camera.top = 0;
+        camera.bottom = height;
+        camera.updateProjectionMatrix();
+        // Rebuild pixel homes from normalized homes, contained + centered on the shorter axis.
+        const n = homesNorm.length / 2;
+        const markAspect = markW / markH;
+        const boxAspect = width / height;
+        let dw = width;
+        let dh = height;
+        if (markAspect > boxAspect) dh = width / markAspect;
+        else dw = height * markAspect;
+        const ox = (width - dw) / 2;
+        const oy = (height - dh) / 2;
+        for (let i = 0; i < n; i++) {
+            homesPx[i * 2] = ox + homesNorm[i * 2] * dw;
+            homesPx[i * 2 + 1] = oy + homesNorm[i * 2 + 1] * dh;
+        }
+    }
 
-        const scene = new THREE.Scene();
-        const camera = new THREE.OrthographicCamera(0, 1, 0, 1, -1, 1); // set in layout()
-
-        const pointer = { x: -1e9, y: -1e9, active: false };
-        let homesNorm: Float32Array = new Float32Array(0); // [0,1] per point (2 each)
-        let homesPx: Float32Array = new Float32Array(0); // pixel space (2 each)
-        let velocities: Float32Array = new Float32Array(0); // (2 each)
-        let positions: Float32Array = new Float32Array(0); // geometry buffer (3 each)
-        let geometry: THREE.BufferGeometry | null = null;
-        let material: THREE.PointsMaterial | null = null;
-        let points: THREE.Points | null = null;
-        let width = 0;
-        let height = 0;
-        let markW = 1;
-        let markH = 1;
-
-        function layout() {
-            width = container!.clientWidth || 1;
-            height = container!.clientHeight || 1;
-            renderer.setSize(width, height, false);
-            camera.left = 0;
-            camera.right = width;
-            camera.top = 0;
-            camera.bottom = height;
-            camera.updateProjectionMatrix();
-            // Rebuild pixel homes from normalized homes, contained + centered on the shorter axis.
+    return {
+        async build(three: ThreeModule, sceneCtx: FxSceneContext) {
+            ctx = sceneCtx;
+            camera = new three.OrthographicCamera(0, 1, 0, 1, -1, 1); // set in layout()
+            const img = await loadImage(src);
+            markW = img.width;
+            markH = img.height;
+            homesNorm = sampleHomes(img, count);
             const n = homesNorm.length / 2;
-            const markAspect = markW / markH;
-            const boxAspect = width / height;
-            let dw = width;
-            let dh = height;
-            if (markAspect > boxAspect) dh = width / markAspect;
-            else dw = height * markAspect;
-            const ox = (width - dw) / 2;
-            const oy = (height - dh) / 2;
+            homesPx = new Float32Array(n * 2);
+            velocities = new Float32Array(n * 2);
+            positions = new Float32Array(n * 3);
+
+            layout();
+            // Seed positions AT home so the mark reads immediately, then physics keeps it lively.
             for (let i = 0; i < n; i++) {
-                homesPx[i * 2] = ox + homesNorm[i * 2] * dw;
-                homesPx[i * 2 + 1] = oy + homesNorm[i * 2 + 1] * dh;
+                positions[i * 3] = homesPx[i * 2];
+                positions[i * 3 + 1] = homesPx[i * 2 + 1];
+                positions[i * 3 + 2] = 0;
             }
-        }
 
-        function start() {
-            if (running || disposed) return;
-            running = true;
-            raf = requestAnimationFrame(tick);
-        }
-        function stop() {
-            running = false;
-            cancelAnimationFrame(raf);
-        }
+            geometry = new three.BufferGeometry();
+            geometry.setAttribute('position', new three.BufferAttribute(positions as Float32Array<ArrayBuffer>, 3));
+            const material = new three.PointsMaterial({
+                color: new three.Color(tint),
+                size: ctx.dpr * 2,
+                sizeAttenuation: false,
+                transparent: true,
+                opacity: 0.92,
+            });
+            ctx.scene.add(new three.Points(geometry, material));
+            return camera;
+        },
 
-        function tick() {
-            if (!running || disposed || !geometry) return;
+        frame(_t, _dt, { pointer }) {
+            if (ctx.width !== laidOutW || ctx.height !== laidOutH) layout();
             const n = homesPx.length / 2;
             const pos = positions;
             let energy = 0;
@@ -168,96 +190,16 @@ export function ParticleObject({ src, tint, count = 3500, animateIdle = true, cl
                 pos[i * 3 + 1] = py + vy;
             }
             geometry.attributes.position.needsUpdate = true;
-            renderer.render(scene, camera);
             // lite (animateIdle=false): once the cloud settles and the cursor is away, PARK the
-            // loop — no idle GPU churn. A pointermove near the object wakes it via onMove → start().
-            if (!animateIdle && !pointer.active && energy / Math.max(n, 1) < REST_ENERGY) {
-                stop();
-                return;
-            }
-            raf = requestAnimationFrame(tick);
-        }
+            // loop — no idle GPU churn. A pointer near the object wakes it (the seam's pointerMargin).
+            if (!animateIdle && !pointer.active && energy / Math.max(n, 1) < REST_ENERGY) return false;
+        },
+    };
+}
 
-        // --- image load → sample → build scene ---
-        const img = new Image();
-        img.crossOrigin = 'anonymous';
-        img.onload = () => {
-            if (disposed) return;
-            markW = img.width;
-            markH = img.height;
-            homesNorm = sampleHomes(img, count);
-            const n = homesNorm.length / 2;
-            homesPx = new Float32Array(n * 2);
-            velocities = new Float32Array(n * 2);
-            positions = new Float32Array(n * 3);
-
-            layout();
-            // Seed positions AT home so the mark reads immediately, then physics keeps it lively.
-            for (let i = 0; i < n; i++) {
-                positions[i * 3] = homesPx[i * 2];
-                positions[i * 3 + 1] = homesPx[i * 2 + 1];
-                positions[i * 3 + 2] = 0;
-            }
-
-            geometry = new THREE.BufferGeometry();
-            geometry.setAttribute('position', new THREE.BufferAttribute(positions as Float32Array<ArrayBuffer>, 3));
-            material = new THREE.PointsMaterial({
-                color: new THREE.Color(tint),
-                size: Math.min(window.devicePixelRatio || 1, 2) * 2,
-                sizeAttenuation: false,
-                transparent: true,
-                opacity: 0.92,
-            });
-            points = new THREE.Points(geometry, material);
-            scene.add(points);
-            renderer.render(scene, camera);
-            start();
-        };
-        img.src = src;
-
-        // --- observers + pointer ---
-        const io = new IntersectionObserver(
-            ([entry]) => {
-                visible = entry.isIntersecting;
-                visible ? start() : stop();
-            },
-            { threshold: 0.01 },
-        );
-        io.observe(container);
-
-        const ro = new ResizeObserver(() => {
-            if (homesNorm.length) layout();
-        });
-        ro.observe(container);
-
-        const onMove = (e: PointerEvent) => {
-            const r = container.getBoundingClientRect();
-            const x = e.clientX - r.left;
-            const y = e.clientY - r.top;
-            pointer.active = x >= -REPEL_RADIUS && x <= r.width + REPEL_RADIUS && y >= -REPEL_RADIUS && y <= r.height + REPEL_RADIUS;
-            pointer.x = x;
-            pointer.y = y;
-            // Wake a parked (lite) loop when the cursor comes near while on-screen.
-            if (pointer.active && visible) start();
-        };
-        const onLeave = () => (pointer.active = false);
-        window.addEventListener('pointermove', onMove);
-        window.addEventListener('pointerleave', onLeave);
-
-        return () => {
-            disposed = true;
-            stop();
-            io.disconnect();
-            ro.disconnect();
-            window.removeEventListener('pointermove', onMove);
-            window.removeEventListener('pointerleave', onLeave);
-            geometry?.dispose();
-            material?.dispose();
-            renderer.dispose();
-            renderer.forceContextLoss();
-            renderer.domElement.remove();
-        };
-    }, [src, tint, count, animateIdle]);
-
-    return <div ref={containerRef} aria-hidden="true" className={`pointer-events-none absolute inset-0 ${className ?? ''}`} />;
+export function ParticleObject({ src, tint, count = 3500, animateIdle = true, className }: ParticleObjectProps) {
+    const scene = useCallback(() => createParticleScene({ src, tint, count, animateIdle }), [src, tint, count, animateIdle]);
+    return (
+        <FxCanvas scene={scene} pointerMargin={REPEL_RADIUS} className={`pointer-events-none absolute inset-0 ${className ?? ''}`} />
+    );
 }

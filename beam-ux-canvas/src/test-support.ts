@@ -146,6 +146,10 @@ export interface EnvironmentControls {
     observerOptions: IntersectionObserverInit[];
     /** Run queued animation frames (the stubbed rAF never runs on its own). */
     flushFrames(count?: number): void;
+    /** Animation frames currently queued. */
+    pendingFrames(): number;
+    /** Fire every live ResizeObserver; returns the elements they observe. */
+    resize(): Element[];
 }
 
 /**
@@ -199,19 +203,33 @@ export function mockEnvironment({ webgl, reducedMotion, intersecting = true }: E
     }
     vi.stubGlobal('IntersectionObserver', IO);
 
+    const resizers: { cb: ResizeObserverCallback; targets: Element[]; self: ResizeObserver }[] = [];
     class RO {
-        observe() {}
+        private record: (typeof resizers)[number];
+        constructor(cb: ResizeObserverCallback) {
+            this.record = { cb, targets: [], self: this as unknown as ResizeObserver };
+            resizers.push(this.record);
+        }
+        observe(target: Element) {
+            this.record.targets.push(target);
+        }
         unobserve() {}
-        disconnect() {}
+        disconnect() {
+            const i = resizers.indexOf(this.record);
+            if (i >= 0) resizers.splice(i, 1);
+        }
     }
     vi.stubGlobal('ResizeObserver', RO);
 
-    let frames: FrameRequestCallback[] = [];
+    let frames = new Map<number, FrameRequestCallback>();
+    let nextFrame = 0;
     vi.stubGlobal('requestAnimationFrame', (cb: FrameRequestCallback) => {
-        frames.push(cb);
-        return frames.length;
+        frames.set(++nextFrame, cb);
+        return nextFrame;
     });
-    vi.stubGlobal('cancelAnimationFrame', () => {});
+    vi.stubGlobal('cancelAnimationFrame', (id: number) => {
+        frames.delete(id);
+    });
 
     return {
         observerOptions,
@@ -225,10 +243,21 @@ export function mockEnvironment({ webgl, reducedMotion, intersecting = true }: E
                 );
             }
         },
+        pendingFrames() {
+            return frames.size;
+        },
+        resize() {
+            const seen: Element[] = [];
+            for (const r of [...resizers]) {
+                seen.push(...r.targets);
+                r.cb(r.targets.map((target) => ({ target }) as ResizeObserverEntry), r.self);
+            }
+            return seen;
+        },
         flushFrames(count = 1) {
             for (let i = 0; i < count; i++) {
-                const batch = frames;
-                frames = [];
+                const batch = [...frames.values()];
+                frames = new Map();
                 for (const cb of batch) cb(performance.now());
             }
         },
