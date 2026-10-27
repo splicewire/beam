@@ -3,9 +3,22 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { expect, it, vi } from 'vitest';
 import { UxBuilder } from './UxBuilder';
 import { UxBuilderProvider } from './provider';
-import type { UxBuilderClient } from './types';
+import type { BeamUxEntryBodyData, UxBuilderClient } from './types';
 import type { ReleaseRecord } from './releases';
 
+function savedBody(id: string, content: string): BeamUxEntryBodyData {
+    return {
+        id,
+        slug: id,
+        type: 'page',
+        format: 'mdx',
+        body: { content },
+        schema: null,
+        source: null,
+        compileError: null,
+        authoredComponents: [],
+    };
+}
 function release(id: string, status: string, entryId: string): ReleaseRecord {
     return {
         id,
@@ -30,11 +43,7 @@ function release(id: string, status: string, entryId: string): ReleaseRecord {
 }
 function mount(listReleases?: UxBuilderClient['listReleases']) {
     const client: UxBuilderClient = {
-        loadBody: vi.fn(async () => ({
-            id: 'entry-a',
-            body: { content: 'Actual saved excerpt' },
-            schema: null,
-        })),
+        loadBody: vi.fn(async () => savedBody('entry-a', 'Actual saved excerpt')),
         saveBody: vi.fn(),
         listReleases,
     };
@@ -100,17 +109,11 @@ it('does not claim an empty list on hosts without the release port', async () =>
 });
 
 it('loads the engaged saved body and does not carry it across entry selection', async () => {
-    let resolveSecond:
-        | ((body: { id: string; body: { content: string }; schema: null }) => void)
-        | undefined;
+    let resolveSecond: ((body: BeamUxEntryBodyData) => void) | undefined;
     const loadBody = vi.fn((id: string) =>
         id === 'entry-a'
-            ? Promise.resolve({
-                  id,
-                  body: { content: 'First saved body' },
-                  schema: null,
-              })
-            : new Promise<{ id: string; body: { content: string }; schema: null }>((resolve) => {
+            ? Promise.resolve(savedBody(id, 'First saved body'))
+            : new Promise<BeamUxEntryBodyData>((resolve) => {
                   resolveSecond = resolve;
               })
     );
@@ -153,11 +156,7 @@ it('loads the engaged saved body and does not carry it across entry selection', 
     expect(screen.queryByText('First saved body', { selector: 'p' })).toBeNull();
     expect(screen.getByText('Loading saved body…')).toBeTruthy();
     await waitFor(() => expect(resolveSecond).toBeDefined());
-    resolveSecond?.({
-        id: 'entry-b',
-        body: { content: 'Second saved body' },
-        schema: null,
-    });
+    resolveSecond?.(savedBody('entry-b', 'Second saved body'));
     expect(await screen.findByText('Second saved body', { selector: 'p' })).toBeTruthy();
     expect(loadBody).toHaveBeenCalledTimes(2);
 });
