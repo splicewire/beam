@@ -3,7 +3,8 @@
  * stub element with no WebGL. Each describe names its environment mock (`mockEnvironment`: the WebGL
  * probe and `prefers-reduced-motion` mocked at the browser seam), so `lite` and `full` are reachable.
  */
-import { cleanup, render } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { useState } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { resetCapabilityForTests } from './capability';
 import { FxBoundary } from './fx-boundary';
@@ -165,5 +166,66 @@ describe('FxEffect — no capability (WebGL FALSE, reduced motion false)', () =>
         mockEnvironment({ webgl: false, reducedMotion: false });
         const { container } = renderEffect({ userTier: 'full' });
         expect(container.innerHTML).toBe(CHILDREN_HTML);
+    });
+});
+
+/**
+ * A probe, not a rule (landing-motion amend 01, the Codex review's question; issue 04 composes
+ * HeroPlayer on FxEffect). Scope item 3 renders the children bare with no wrapper at `off` and inside
+ * a wrapper when the tier is on, so a LIVE on↔off change moves the children to a different parent:
+ * React remounts them, resetting their state and dropping focus. lite↔full keeps the wrapper, and
+ * with it the state and focus. A host that must keep a child's state across the visitor's toggle
+ * holds that state above the `<FxEffect>`.
+ */
+describe('FxEffect — a live tier change (probe; WebGL true, reduced motion false)', () => {
+    function Counter() {
+        const [n, setN] = useState(0);
+        return (
+            <button type="button" onClick={() => setN(n + 1)}>
+                count {n}
+            </button>
+        );
+    }
+    const at = (userTier: EffectTier) => (
+        <FxBoundary mode="persuade" userTier={userTier}>
+            <FxEffect overlay={<Overlay />}>
+                <Counter />
+            </FxEffect>
+        </FxBoundary>
+    );
+    const press = () => {
+        const button = screen.getByRole('button');
+        fireEvent.click(button);
+        act(() => button.focus());
+        return button;
+    };
+
+    it('full → off → full remounts the children: their state resets and focus is lost', () => {
+        mockEnvironment({ webgl: true, reducedMotion: false });
+        const { rerender } = render(at('full'));
+        const before = press();
+        expect(before.textContent).toBe('count 1');
+        expect(document.activeElement).toBe(before);
+
+        rerender(at('off'));
+        const bare = screen.getByRole('button');
+        expect(bare).not.toBe(before);
+        expect(bare.textContent).toBe('count 0');
+        expect(document.activeElement).not.toBe(bare);
+
+        fireEvent.click(bare);
+        rerender(at('full'));
+        expect(screen.getByRole('button').textContent).toBe('count 0');
+    });
+
+    it('lite ↔ full keeps the wrapper: the same node, its state and its focus', () => {
+        mockEnvironment({ webgl: true, reducedMotion: false });
+        const { rerender, container } = render(at('lite'));
+        const before = press();
+        rerender(at('full'));
+        expect(container.querySelector('[data-fx-tier]')?.getAttribute('data-fx-tier')).toBe('full');
+        expect(screen.getByRole('button')).toBe(before);
+        expect(before.textContent).toBe('count 1');
+        expect(document.activeElement).toBe(before);
     });
 });

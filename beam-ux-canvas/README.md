@@ -41,7 +41,10 @@ const { effectiveTier, setUserTier } = useFx();
 
 - `FxBoundary` renders only a context provider. `FxEffect` renders its children **bare** (no wrapper)
   outside a boundary, at `off`, and under reduced motion; above `off` it wraps them with `data-fx-tier`
-  and one overlay layer, `under` (beneath the DOM) or `over`.
+  and one overlay layer, `under` (beneath the DOM) or `over`. A live change between `off` and a tier above
+  it therefore moves the children into or out of that wrapper, and React remounts them: their state resets
+  and focus is lost. `lite` ↔ `full` keeps them. State that must survive the visitor's toggle lives above
+  the `FxEffect`.
 - `FxCanvas` is the one lifecycle seam. A scene implements `build(three, ctx)` and `frame(t, dt, inputs)`;
   the seam owns the rAF loop and its pauses (offscreen, hidden tab, `paused`, tier `off`), the lazy mount
   (`scene()` and `three` requested on approach, `rootMargin` 25 %), the DPR cap (2 at `full`, 1.5 at `lite`),
