@@ -122,6 +122,46 @@ describe('createMainframeHost — kind-aware main fork', () => {
         expect(screen.queryByTestId('inspector')).toBeNull();
     });
 
+    // EP-42 (audiostud, WWW): a page the server declares `blocks` opens the canvas whatever its body's shape. An MDX page
+    // that holds blocks (ux-0233 d1) loads as a JsonDoc list, not Puck's `{content}`, and the fork sent it to the
+    // inspector, so a converted legal page opened as a form. The Body Kind, not the shape, chooses the editor surface
+    // (beam JS ADR-0006 d1).
+    it('a body the server declares blocks opens the canvas, even when it is not Puck-shaped', async () => {
+        const doc = [{ kind: 'block', name: 'h1', isComponent: false, dynamic: false, props: [], children: [{ kind: 'text', value: 'Privacy Policy' }] }];
+        const body: HostEntryBody = { slug: 'privacy', schema: null, body: doc as unknown as HostEntryBody['body'] };
+        const Host = createMainframeHost(
+            stubConfig({
+                usePageContext: () => ({ component: 'site/entry', canAuthor: true, slug: 'privacy', entryId: '01a001bc-0000-7000-8000-0000000000cc', entryFormat: 'mdx', entryBodyKind: 'blocks' }),
+                loadEntryBody: async () => body,
+            }),
+        );
+        render(<Host>{PAGE}</Host>);
+        await waitFor(() => expect(screen.getByText('Edit page')).toBeTruthy());
+
+        act(() => fireEvent.click(screen.getByText('Edit page')));
+
+        await waitFor(() => expect(screen.getByTestId('editor')).toBeTruthy());
+        expect(screen.getByTestId('editor').textContent).toBe('editor:privacy');
+        expect(screen.queryByTestId('inspector')).toBeNull();
+    });
+
+    it('a body the server declares source still edits through the inspector', async () => {
+        const body: HostEntryBody = { slug: 'notes', schema: null, body: { frontmatter: {}, content: '# Notes' } as unknown as HostEntryBody['body'] };
+        const Host = createMainframeHost(
+            stubConfig({
+                usePageContext: () => ({ component: 'site/entry', canAuthor: true, slug: 'notes', entryId: '01a001bc-0000-7000-8000-0000000000dd', entryFormat: 'mdx', entryBodyKind: 'source' }),
+                loadEntryBody: async () => body,
+            }),
+        );
+        render(<Host>{PAGE}</Host>);
+        await waitFor(() => expect(screen.getByText('Edit page')).toBeTruthy());
+
+        act(() => fireEvent.click(screen.getByText('Edit page')));
+
+        await waitFor(() => expect(screen.getByTestId('inspector')).toBeTruthy());
+        expect(screen.queryByTestId('editor')).toBeNull();
+    });
+
     it('an unbound entry (load miss) never shows the toggle — nothing to author', async () => {
         const Host = createMainframeHost(
             stubConfig({ usePageContext: () => ({ component: 'listen', canAuthor: true }), loadEntryBody: async () => null }),
