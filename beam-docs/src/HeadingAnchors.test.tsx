@@ -69,7 +69,7 @@ it('decorates all 26 late glossary headings and refreshes OnThisPage from the sa
             screen.getAllByRole('button', { name: /^Copy link to / })
         ).toHaveLength(26)
     );
-    const toc = screen.getByRole('navigation', { name: 'On this page' });
+    const toc = await screen.findByRole('navigation', { name: 'On this page' });
     expect(within(toc).getAllByRole('link')).toHaveLength(26);
     expect(
         within(toc).getByRole('link', { name: 'Tenant' }).getAttribute('href')
