@@ -18,11 +18,13 @@ export function HeadingAnchors({
     const [copied, setCopied] = useState('');
     const [status, setStatus] = useState('');
     const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+    const scanRevision = useRef(0);
 
     useEffect(() => () => clearTimeout(timer.current), []);
     useEffect(() => {
         if (!main) return;
         const hosts = new Map<HTMLElement, HTMLElement>();
+        let previous: AnchoredHeading[] | null = null;
         const scan = () => {
             const items = scanHeadings({
                 container: `#${main.id}`,
@@ -49,18 +51,24 @@ export function HeadingAnchors({
                     hosts.delete(heading);
                 }
             }
-            setHeadings((previous) =>
-                previous.length === next.length &&
-                previous.every(
-                    (h, i) =>
-                        h.id === next[i]?.id &&
-                        h.text === next[i]?.text &&
-                        h.host === next[i]?.host
-                )
-                    ? previous
-                    : next
-            );
-            onScan(JSON.stringify(items));
+            const changed =
+                previous === null ||
+                previous.length !== next.length ||
+                previous.some((heading, index) => {
+                    const replacement = next[index];
+                    return (
+                        heading.id !== replacement?.id ||
+                        heading.text !== replacement?.text ||
+                        heading.level !== replacement?.level ||
+                        heading.host !== replacement?.host
+                    );
+                });
+            if (changed) {
+                previous = next;
+                setHeadings(next);
+                // Text alone cannot identify the scroll targets: a fresh artifact can render identical headings.
+                onScan(String(++scanRevision.current));
+            }
         };
         const observer = new MutationObserver((records) => {
             // Ignore our portal mounts and button/status updates: controls never change the body headings.

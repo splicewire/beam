@@ -35,11 +35,16 @@ const glossary = (
     </>
 );
 
+const observedNodes: Element[] = [];
+
 beforeEach(() => {
+    observedNodes.length = 0;
     vi.stubGlobal(
         'IntersectionObserver',
         class {
-            observe() {}
+            observe(node: Element) {
+                observedNodes.push(node);
+            }
             disconnect() {}
         }
     );
@@ -149,4 +154,26 @@ it('does not claim success when clipboard is absent or rejects', async () => {
     await waitFor(() =>
         expect(screen.getByRole('status').textContent).toBe('Copy unavailable')
     );
+});
+
+it('rebinds the scroll observer when replacement headings have identical ids and text', async () => {
+    const { container, rerender } = render(
+        <DocsLayout {...props}>
+            <section key="original">{glossary}</section>
+        </DocsLayout>
+    );
+    const original = container.querySelector('#tenant');
+    await waitFor(() => expect(observedNodes).toContain(original));
+    const originalCount = observedNodes.length;
+    rerender(
+        <DocsLayout {...props}>
+            <section key="replacement">{glossary}</section>
+        </DocsLayout>
+    );
+    const replacement = container.querySelector('#tenant');
+    expect(replacement).not.toBe(original);
+    expect(original?.isConnected).toBe(false);
+    await waitFor(() => expect(observedNodes).toContain(replacement));
+    // Our portals must not trigger repeated self-scans or duplicate scroll observers.
+    expect(observedNodes.length - originalCount).toBe(26);
 });
