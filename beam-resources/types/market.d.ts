@@ -65,6 +65,7 @@ changelog: ExtensionChangelogEntryData[],
 createdAt: string,
 marketName: string | null,
 syncedAt: string | null,
+installMediated: boolean,
 };
 
 export type ExtensionChangelogEntryData = {
