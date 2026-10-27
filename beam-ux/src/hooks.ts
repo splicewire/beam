@@ -33,7 +33,7 @@ export function useSaveEntryBody() {
     const notify = useNotify();
     const qc = useQueryClient();
     const savesDraft = Boolean(client.saveDraft && client.listVersions);
-    return useMutation({
+    const mutation = useMutation({
         mutationFn: async ({ id, body }: { id: string; body: EntryBody }) => {
             if (client.saveDraft && client.listVersions) {
                 const current = await client.listVersions(id);
@@ -63,4 +63,9 @@ export function useSaveEntryBody() {
             notify({ type: 'error', message: 'Save failed.' });
         },
     });
+
+    return {
+        ...mutation,
+        saveLabel: savesDraft ? 'Save draft' : undefined,
+    };
 }

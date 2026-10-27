@@ -46,6 +46,7 @@ function useRegionEditor(region: Region) {
         // falls back to `query.data.body`, the last thing the server actually stored.
         onDiscard: () => setDraft(null),
         saving: save.isPending,
+        saveLabel: save.saveLabel,
     };
 }
 

@@ -199,7 +199,7 @@ describe('§8a — @splicewire/beam-ux UxBuilder mounts off pure DTO fixtures (n
 
         const title = await screen.findByLabelText(/Card title/);
         fireEvent.change(title, { target: { value: 'Tenant draft title' } });
-        fireEvent.click(screen.getByRole('button', { name: /^Save$/ }));
+        fireEvent.click(screen.getByRole('button', { name: /^Save draft$/ }));
 
         await waitFor(() => expect(saveDraft).toHaveBeenCalledWith(
             CARD_ID,
@@ -336,7 +336,7 @@ describe('§8a — @splicewire/beam-ux UxBuilder mounts off pure DTO fixtures (n
         const editor = await screen.findByLabelText('MDX source');
         await waitFor(() => expect(editor).toHaveProperty('value', 'Published heading'));
         fireEvent.change(editor, { target: { value: 'Draft heading' } });
-        fireEvent.click(screen.getByRole('button', { name: /^Save$/ }));
+        fireEvent.click(screen.getByRole('button', { name: /^Save draft$/ }));
 
         await waitFor(() => expect(saveDraft).toHaveBeenCalledWith(HERO_ID, changed, 'draft-v2', expect.any(String)));
         expect(saveBody).not.toHaveBeenCalled();
