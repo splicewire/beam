@@ -21,6 +21,12 @@ export interface BeamInertiaConfig {
    */
   intakeForms?: boolean;
   /**
+   * EP-42: register the components laravel-beam-ux adds to an MDX page's profile where MDX pages hold blocks
+   * (`SiteNav` and `ManifestTable`, which the packages' shipped docs pages place). A host turns it on where it turns on
+   * `beam.ux.mdx.holds_blocks`; the beam-mdx kit itself stays the host's to register, in `components`.
+   */
+  mdxHoldsBlocks?: boolean;
+  /**
    * The host's own components for the canvas registry: its designed sections, and the kit its MDX pages offer where
    * they hold blocks. They join the packaged islands, so the canvas, a compiled body and the doctor's registry
    * snapshot read one map. The host owns its registry: a host component replaces a packaged one of the same name.
@@ -43,6 +49,10 @@ export function getBeamInertiaConfig(): BeamInertiaConfig {
 /** EP-07d: does this host register the packaged IntakeForm (its public intake door is on)? */
 export function intakeFormsEnabled(): boolean {
   return configuration.intakeForms === true;
+}
+/** EP-42: do this host's MDX pages hold blocks, so their profile adds SiteNav and ManifestTable? */
+export function mdxHoldsBlocksEnabled(): boolean {
+  return configuration.mdxHoldsBlocks === true;
 }
 export function featureEnabled(feature: AuthFeature): boolean {
   if (feature === "2fa-or-passkeys")
