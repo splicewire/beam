@@ -35,3 +35,15 @@ it('lists IntakeForm only where the host turned on its public intake door (EP-07
     configureBeamInertia({ intakeForms: true });
     expect(registrySnapshot()).toContain('IntakeForm');
 });
+
+// EP-42: where a host's MDX pages hold blocks, laravel-beam-ux's SiteNodeSource adds SiteNav and ManifestTable to their
+// profile (the packages' shipped docs pages place them), and the canvas refused /docs, /docs/api and /docs/mcp without
+// them (starter room, 10-27). They join only there: the doctor compares the snapshot both ways, and a TSX-only profile
+// declares neither.
+it('lists SiteNav and ManifestTable only where the host says its MDX pages hold blocks (EP-42)', () => {
+    expect(registrySnapshot()).not.toEqual(expect.arrayContaining(['SiteNav']));
+    expect(registrySnapshot()).not.toContain('ManifestTable');
+    configureBeamInertia({ mdxHoldsBlocks: true });
+    expect(registrySnapshot()).toEqual(expect.arrayContaining(['ManifestTable', 'SiteNav']));
+    expect(typeof defaultComponents().SiteNav).toBe('function');
+});
