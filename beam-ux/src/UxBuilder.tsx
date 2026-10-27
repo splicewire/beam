@@ -2,7 +2,7 @@ import { LayoutTemplate, MousePointerSquareDashed } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import type { SchemaNode } from '@schemastud/seam';
 import { cn } from '@schemastud/ui';
-import { useEntryBody, useSaveEntryBody } from './hooks';
+import { useEntryBody, useSaveEntryBody, useRegionPreviews } from './hooks';
 import { RegionCanvas } from './RegionCanvas';
 import { RegionInspector } from './RegionInspector';
 import { RegionOverlay } from './RegionOverlay';
@@ -52,7 +52,8 @@ function useRegionEditor(region: Region) {
 
 function RegionInspectorConnected({ region }: { region: Region }) {
     const editor = useRegionEditor(region);
-    return <RegionInspector region={region} {...editor} />;
+    const preview = useRegionPreviews(region.recordId);
+    return <RegionInspector region={region} {...editor} {...preview} />;
 }
 
 function RegionOverlayConnected({ region, onClose }: { region: Region; onClose: () => void }) {
@@ -62,13 +63,7 @@ function RegionOverlayConnected({ region, onClose }: { region: Region; onClose: 
 
 /* ─────────────────────────── mode toggle ─────────────────────────── */
 
-function ModeToggle({
-    mode,
-    onChange,
-}: {
-    mode: BuilderMode;
-    onChange: (m: BuilderMode) => void;
-}) {
+function ModeToggle({ mode, onChange }: { mode: BuilderMode; onChange: (m: BuilderMode) => void }) {
     return (
         <div className="flex items-center rounded-md border bg-card p-0.5 text-xs">
             {(['overlay', 'structure'] as const).map((m) => (
@@ -80,7 +75,7 @@ function ModeToggle({
                         'flex items-center gap-1.5 rounded px-2.5 py-1 font-medium capitalize transition-colors',
                         mode === m
                             ? 'bg-primary text-primary-foreground'
-                            : 'text-muted-foreground hover:bg-muted',
+                            : 'text-muted-foreground hover:bg-muted'
                     )}
                 >
                     {m === 'overlay' ? (
@@ -121,20 +116,16 @@ export function UxBuilder({
     initialEngaged?: string;
 }) {
     const [mode, setMode] = useState<BuilderMode>(initialMode);
-    const [engaged, setEngaged] = useState<string | null>(
-        initialEngaged ?? regions[0]?.id ?? null,
-    );
+    const [engaged, setEngaged] = useState<string | null>(initialEngaged ?? regions[0]?.id ?? null);
     const [selected, setSelected] = useState<string | null>(regions[0]?.id ?? null);
 
-    const active = useMemo(
-        () => regions.find((r) => r.id === engaged) ?? null,
-        [regions, engaged],
-    );
+    const active = useMemo(() => regions.find((r) => r.id === engaged) ?? null, [regions, engaged]);
     const selectedRegion = useMemo(
         () => regions.find((r) => r.id === selected) ?? null,
-        [regions, selected],
+        [regions, selected]
     );
 
+    const activeBody = useEntryBody(mode === 'overlay' ? active?.recordId ?? null : null);
     const dockPlacement = active ? placementFor(active.kind, editorPlacement) : editorPlacement;
     const dockInInspector = dockPlacement === 'inspector';
 
@@ -162,7 +153,14 @@ export function UxBuilder({
             ) : dockInInspector ? (
                 /* INSPECTOR placement — docked right-hand column, always present. */
                 <div className="beam-ux-inspector-grid grid grid-cols-1 gap-6">
-                    <RegionCanvas regions={regions} engaged={engaged} onEngage={setEngaged} />
+                    <RegionCanvas
+                        regions={regions}
+                        engaged={engaged}
+                        onEngage={setEngaged}
+                        body={activeBody.data?.body}
+                        bodyLoading={activeBody.isPending}
+                        bodyError={activeBody.isError}
+                    />
                     <aside className="lg:sticky lg:top-2 lg:self-start">
                         {active ? (
                             <RegionInspectorConnected key={active.id} region={active} />
@@ -177,7 +175,14 @@ export function UxBuilder({
                 /* OVERLAY placement — full-width canvas + a floating in-context panel. */
                 <div className="relative">
                     <div className="max-w-3xl">
-                        <RegionCanvas regions={regions} engaged={engaged} onEngage={setEngaged} />
+                        <RegionCanvas
+                            regions={regions}
+                            engaged={engaged}
+                            onEngage={setEngaged}
+                            body={activeBody.data?.body}
+                            bodyLoading={activeBody.isPending}
+                            bodyError={activeBody.isError}
+                        />
                     </div>
                     {active && (
                         <div className="beam-ux-overlay-dock">

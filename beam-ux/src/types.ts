@@ -203,6 +203,8 @@ export interface Region {
    * strictly less useful there — a host that has the row should pass its slug.
    */
   recordLabel?: string;
+  /** Served BeamUxEntryData.url; null when the entry has no public page address. */
+  url?: string | null;
   /** one-line note shown in the editor header */
   note: string;
 }

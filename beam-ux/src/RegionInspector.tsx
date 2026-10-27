@@ -5,6 +5,12 @@ import { RegionEditorBody } from './RegionEditorBody';
 import type { Region } from './types';
 import type { EntryBody } from './types';
 
+export interface RegionPreview {
+    id: string;
+    title: string;
+    href: string | null;
+}
+
 /** Shared props for the region editor surfaces (inspector + overlay). */
 export interface RegionEditorProps {
     region: Region;
@@ -19,6 +25,8 @@ export interface RegionEditorProps {
      * rendering an affordance that does nothing.
      */
     onDiscard?: () => void;
+    previews?: RegionPreview[];
+    previewState?: 'loading' | 'ready' | 'unavailable';
     saving?: boolean;
     saveLabel?: string;
     saveDisabled?: boolean;
@@ -39,6 +47,8 @@ export function RegionInspector({
     saving,
     saveLabel,
     saveDisabled,
+    previews = [],
+    previewState = 'unavailable',
 }: RegionEditorProps) {
     const Icon = KIND_ICON[region.kind];
     return (
@@ -55,6 +65,37 @@ export function RegionInspector({
                             {region.kind}
                         </Badge>
                     </div>
+                </div>
+                <div className="flex flex-wrap gap-2 text-xs">
+                    {region.url ? (
+                        <a href={region.url} target="_blank" rel="noopener noreferrer">
+                            View
+                        </a>
+                    ) : (
+                        <span className="text-muted-foreground">View unavailable</span>
+                    )}
+                    {previewState === 'loading' ? (
+                        <span>Loading Preview…</span>
+                    ) : previewState === 'unavailable' ? (
+                        <span>Preview unavailable</span>
+                    ) : previews.length === 0 ? (
+                        <span>No open Release</span>
+                    ) : (
+                        previews.map((preview) =>
+                            preview.href ? (
+                                <a
+                                    key={preview.id}
+                                    href={preview.href}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                >
+                                    Preview {preview.title}
+                                </a>
+                            ) : (
+                                <span key={preview.id}>Preview {preview.title} unavailable</span>
+                            )
+                        )
+                    )}
                 </div>
             </div>
             <div className="p-4">

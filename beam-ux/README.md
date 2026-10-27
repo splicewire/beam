@@ -164,3 +164,15 @@ The small public subpath avoids loading graph/admin code; scheduling remains con
 server's canSchedule projection. A build-only `_resources/types/workflows` peer must be generated
 from the consuming host's installed workflow DTOs. See the starter Release guide's canonical
 transform/projection example. Missing types must fail preparation, not become ambient declarations.
+
+### Entry canvas addresses and excerpts
+
+The engaged richtext region shows a saved-body text excerpt loaded through `client.loadBody`.
+The excerpt is limited to 1,200 characters and 256 JsonDoc nodes; it does not execute HTML,
+resolve bindings or render components. The editor's unsaved buffer stays separate.
+
+Pass the served `BeamUxEntryData.url` as `Region.url` for the inspector's View link. Preview
+uses the existing optional `client.listReleases` port: every open Release containing the
+entry gets its own served `previewHref`. A successful read with no matching open Release says
+“No open Release”; a missing or refused port says “Preview unavailable”. Hosts must bind the
+served URL rather than constructing an address from an entry slug.

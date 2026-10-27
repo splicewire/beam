@@ -37,12 +37,7 @@ export function useSaveEntryBody() {
         mutationFn: async ({ id, body }: { id: string; body: EntryBody }) => {
             if (client.saveDraft && client.listVersions) {
                 const current = await client.listVersions(id);
-                return client.saveDraft(
-                    id,
-                    body,
-                    current.headVersion,
-                    'UX builder draft',
-                );
+                return client.saveDraft(id, body, current.headVersion, 'UX builder draft');
             }
 
             return client.saveBody(id, body);
@@ -68,4 +63,33 @@ export function useSaveEntryBody() {
         ...mutation,
         saveLabel: savesDraft ? 'Save draft' : undefined,
     };
+}
+
+/** Read existing Release projections; an absent or refused port is not an empty list. */
+export function useRegionPreviews(entryId: string) {
+    const { client } = useUxBuilderServices();
+    const query = useQuery({
+        queryKey: ['beam-ux', 'region-releases'],
+        queryFn: () => client.listReleases!(),
+        enabled: Boolean(client.listReleases),
+        retry: false,
+    });
+    const previewState =
+        !client.listReleases || query.isError
+            ? ('unavailable' as const)
+            : query.isPending
+            ? ('loading' as const)
+            : ('ready' as const);
+    const previews = (query.data ?? [])
+        .filter(
+            (release) =>
+                ['draft', 'in_review', 'approved', 'scheduled'].includes(release.status) &&
+                release.members.some((member) => member.entryId === entryId)
+        )
+        .map((release) => ({
+            id: release.id,
+            title: release.title,
+            href: release.previewHref ?? null,
+        }));
+    return { previews, previewState };
 }
