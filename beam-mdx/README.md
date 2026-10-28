@@ -63,3 +63,8 @@ export const { resolveContent, essaysList /* … */ } = createContent(MODULES);
 /* app.css */
 @import '@splicewire/beam-mdx/css';
 ```
+
+The package declares Shiki for laravel-beam-ux's compile-time fenced-code fallback. It is not
+imported into the browser kit. The prose and kit styles read emitted `--shiki-light` / `--shiki-dark`
+token variables under `[data-beam-prose]`; configure themes/languages on the owning host through
+`beam.ux.compile.highlight`.

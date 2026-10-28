@@ -186,3 +186,7 @@
     line-height: 1.5;
     color: var(--muted-foreground);
 }
+
+/* Compile-time Shiki tokens use variables so the host theme can switch without recompiling. */
+[data-beam-prose] pre span { color: var(--shiki-light); }
+.dark [data-beam-prose] pre span { color: var(--shiki-dark); }

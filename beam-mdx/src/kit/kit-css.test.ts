@@ -10,8 +10,8 @@ const css = readFileSync(new URL('./kit.css', import.meta.url), 'utf8');
 
 describe('beam-mdx kit.css', () => {
     it('reads no un-prefixed shadcn token', () => {
-        // `--bkit-*` are the kit's own component-local variables, set inside this file; everything else is `--beam-*`.
+        // `--bkit-*` are the kit's own component-local variables, set inside this file; compile-time highlighting also reads Shiki's two explicit token variables; other reads are `--beam-*`.
         const reads = [...css.matchAll(/var\(\s*(--[a-z][\w-]*)/g)].map((m) => m[1]);
-        expect(reads.filter((token) => !token.startsWith('--beam-') && !token.startsWith('--bkit-'))).toEqual([]);
+        expect(reads.filter((token) => !token.startsWith('--beam-') && !token.startsWith('--bkit-') && !['--shiki-light', '--shiki-dark'].includes(token))).toEqual([]);
     });
 });

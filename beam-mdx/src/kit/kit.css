@@ -1,8 +1,9 @@
 /* =============================================================================
    @splicewire/beam-mdx/kit — Tier-1 guide-doc component styles.
 
-   Every rule is scoped by its own `bkit-` prefix, which is the whole
-   collision-avoidance story. It USED to also require a `.site-prose` ancestor —
+   Kit component rules use their own `bkit-` prefix; the shared Shiki token
+   colours use `[data-beam-prose]`. The component prefix is the
+   collision boundary. It USED to also require a `.site-prose` ancestor —
    one host's wrapper class, welded into a distributable package — so the kit
    rendered unstyled on any site that did not happen to reproduce that class
    name. Found on `splicewire/www`, whose entry shell wraps bodies in
@@ -475,3 +476,7 @@
         transform: none;
     }
 }
+
+/* Compile-time Shiki tokens use variables so the host theme can switch without recompiling. */
+[data-beam-prose] pre span { color: var(--shiki-light); }
+.dark [data-beam-prose] pre span { color: var(--shiki-dark); }
