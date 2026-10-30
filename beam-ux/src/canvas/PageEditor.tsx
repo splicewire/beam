@@ -28,8 +28,8 @@ import {
   useRef,
   useState,
 } from "react";
-import { useEditMode } from "../edit-mode.js";
-export { __resetEditMode, useEditMode } from "../edit-mode.js";
+import { useEditMode } from "../edit-mode-store.js";
+export { __resetEditMode, useEditMode } from "../edit-mode-store.js";
 import {
   EditShellMountProvider,
   useEditShellMountController,

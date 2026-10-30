@@ -46,7 +46,7 @@ export type { ContextMenuProps, ContextMenuAction, ContextMenuState } from './Co
 export { VisualEditor } from './VisualEditor.js';
 export type { VisualEditorProps } from './VisualEditor.js';
 export { PageEditor } from './PageEditor.js';
-export { useEditMode, __resetEditMode } from '../edit-mode.js';
+export { useEditMode, __resetEditMode } from '../edit-mode-store.js';
 export type { PageEditorProps, PageEditorTransport, Notify } from './PageEditor.js';
 
 // The heavyweight widget adapter + its @schemastud/frame registration (window-mode mounting; PageEditor
