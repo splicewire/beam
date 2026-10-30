@@ -1,0 +1,264 @@
+{
+    "profile": "beam-mdx-kit",
+    "version": 1,
+    "nodes": [
+        {
+            "name": "Callout",
+            "group": "block",
+            "category": "block",
+            "admitsChildCategories": null,
+            "admitsText": true,
+            "attrsSchema": {
+                "type": "object",
+                "properties": {
+                    "type": {
+                        "type": "string",
+                        "enum": [
+                            "note",
+                            "tip",
+                            "warning",
+                            "danger",
+                            "info"
+                        ],
+                        "default": "note",
+                        "title": "Kind"
+                    },
+                    "title": {
+                        "type": "string",
+                        "title": "Title"
+                    }
+                }
+            },
+            "description": "An admonition (note / tip / warning / danger / info) with an optional title."
+        },
+        {
+            "name": "Steps",
+            "group": "block",
+            "category": "block",
+            "admitsChildCategories": [
+                "step"
+            ],
+            "admitsText": false,
+            "attrsSchema": {
+                "type": "object"
+            },
+            "description": "A numbered procedure \u2014 a list of Step children.",
+            "x-editable": {
+                "reorderable": true
+            }
+        },
+        {
+            "name": "Step",
+            "group": "block",
+            "category": "step",
+            "admitsChildCategories": null,
+            "admitsText": true,
+            "attrsSchema": {
+                "type": "object",
+                "properties": {
+                    "title": {
+                        "type": "string",
+                        "title": "Title"
+                    }
+                }
+            },
+            "description": "One step in a Steps procedure; the title is the step heading."
+        },
+        {
+            "name": "Figure",
+            "group": "block",
+            "category": "block",
+            "admitsChildCategories": null,
+            "admitsText": true,
+            "attrsSchema": {
+                "type": "object",
+                "properties": {
+                    "src": {
+                        "type": "string",
+                        "title": "Image URL"
+                    },
+                    "alt": {
+                        "type": "string",
+                        "title": "Alt text"
+                    },
+                    "caption": {
+                        "type": "string",
+                        "title": "Caption"
+                    }
+                }
+            },
+            "description": "A captioned image or inline diagram."
+        },
+        {
+            "name": "Terminal",
+            "group": "block",
+            "category": "block",
+            "admitsChildCategories": null,
+            "admitsText": true,
+            "attrsSchema": {
+                "type": "object",
+                "properties": {
+                    "title": {
+                        "type": "string",
+                        "title": "Title"
+                    }
+                }
+            },
+            "description": "A terminal / code window with chrome and an optional title."
+        },
+        {
+            "name": "SectionLanding",
+            "group": "block",
+            "category": "block",
+            "admitsChildCategories": [
+                "card-grid",
+                "block"
+            ],
+            "admitsText": false,
+            "attrsSchema": {
+                "type": "object",
+                "properties": {
+                    "eyebrow": {
+                        "type": "string",
+                        "title": "Eyebrow"
+                    },
+                    "heading": {
+                        "type": "string",
+                        "title": "Heading"
+                    },
+                    "lede": {
+                        "type": "string",
+                        "x-expression": true
+                    }
+                },
+                "required": [
+                    "heading"
+                ]
+            },
+            "description": "A landing hero: eyebrow + heading + lede over a CardGrid."
+        },
+        {
+            "name": "CardGrid",
+            "group": "block",
+            "category": "card-grid",
+            "admitsChildCategories": [
+                "card"
+            ],
+            "admitsText": false,
+            "attrsSchema": {
+                "type": "object"
+            },
+            "description": "A responsive grid of Cards.",
+            "x-editable": {
+                "reorderable": true
+            }
+        },
+        {
+            "name": "Card",
+            "group": "block",
+            "category": "card",
+            "admitsChildCategories": [],
+            "admitsText": false,
+            "attrsSchema": {
+                "type": "object",
+                "properties": {
+                    "href": {
+                        "type": "string",
+                        "title": "Link"
+                    },
+                    "title": {
+                        "type": "string",
+                        "title": "Title"
+                    },
+                    "blurb": {
+                        "type": "string",
+                        "title": "Blurb"
+                    },
+                    "icon": {
+                        "type": "string",
+                        "x-expression": true
+                    }
+                }
+            },
+            "description": "A linked card: href + title + blurb + icon."
+        },
+        {
+            "name": "DoctorOutput",
+            "group": "block",
+            "category": "block",
+            "admitsChildCategories": null,
+            "admitsText": true,
+            "attrsSchema": {
+                "type": "object",
+                "properties": {
+                    "raw": {
+                        "type": "string",
+                        "title": "Raw output"
+                    }
+                }
+            },
+            "description": "A structured doctor / diagnostic report (raw text or children)."
+        },
+        {
+            "name": "FileTree",
+            "group": "block",
+            "category": "block",
+            "admitsChildCategories": null,
+            "admitsText": true,
+            "attrsSchema": {
+                "type": "object",
+                "properties": {
+                    "tree": {
+                        "type": "string",
+                        "x-expression": true
+                    }
+                }
+            },
+            "description": "A file-structure tree (a `tree` node array or children)."
+        },
+        {
+            "name": "Ref",
+            "group": "inline",
+            "category": "inline",
+            "admitsChildCategories": null,
+            "admitsText": true,
+            "attrsSchema": {
+                "type": "object",
+                "properties": {
+                    "to": {
+                        "type": "string",
+                        "title": "Reference key"
+                    }
+                },
+                "required": [
+                    "to"
+                ]
+            },
+            "description": "An inline evidence citation: <Ref to=\"key\">the claim</Ref>."
+        },
+        {
+            "name": "Artifact",
+            "group": "block",
+            "category": "block",
+            "admitsChildCategories": [],
+            "admitsText": false,
+            "attrsSchema": {
+                "type": "object",
+                "properties": {
+                    "file": {
+                        "type": "string",
+                        "title": "Artifact file"
+                    },
+                    "title": {
+                        "type": "string",
+                        "title": "Title"
+                    }
+                },
+                "required": [
+                    "file"
+                ]
+            },
+            "description": "Inline a committed, build-highlighted artifact file (opaque in the editor)."
+        }
+    ]
+}
