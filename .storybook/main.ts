@@ -1,6 +1,11 @@
 import type { StorybookConfig } from '@storybook/react-vite';
 import tailwindcss from '@tailwindcss/vite';
 import { fileURLToPath } from 'node:url';
+import { readFileSync } from 'node:fs';
+import { canonicalCommerceInput, workspaceStoryPatterns } from './canonical-commerce-stories.mjs';
+
+const workspaces: string[] = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8')).workspaces;
+const commerce = canonicalCommerceInput(fileURLToPath(new URL('./commerce-source.local.json', import.meta.url)));
 
 /**
  * The beam per-repo Storybook — the "free-tier" catalog of the composition architecture
@@ -8,19 +13,23 @@ import { fileURLToPath } from 'node:url';
  *
  * This is ONE of several per-repo Storybooks (schemastud/ + splicewire/splice/ get their own);
  * the project-neutral portal at ~/Workspaces/storybook composes them via `refs` — beam is the
- * `:6007` ref (ticket 12). This config catalogues only THIS repo's workspaces.
+ * `:6007` ref (ticket 12). This config catalogues the remaining workspaces plus selected canonical commerce stories.
  *
  * Stories are COLOCATED (`*.stories.tsx` beside each component) and aggregated across every
- * beam workspace by the glob below (`../beam-mainframe/src`, `../beam-calendar/src`, …).
+ * remaining workspace, plus the three canonical commerce inputs selected by the private manifest below.
  */
 const config: StorybookConfig = {
-    stories: ['../*/src/**/*.stories.@(ts|tsx|mdx)'],
+    stories: [...workspaceStoryPatterns(workspaces), ...commerce.stories],
     addons: [],
     framework: {
         name: '@storybook/react-vite',
         options: {},
     },
     viteFinal: async (cfg) => {
+        // The private selected canonical source is outside this workspace; allow only that explicit root too.
+        cfg.server ??= {};
+        cfg.server.fs ??= {};
+        cfg.server.fs.allow = [...(cfg.server.fs.allow ?? []), fileURLToPath(new URL('..', import.meta.url)), commerce.packageRoot];
         cfg.plugins ??= [];
         // Tailwind v4 — the packages are headless (tsup libs, no CSS pipeline); the workbench
         // supplies the Tailwind + token layer so `bg-primary` etc. render skinned. Per-package
@@ -29,7 +38,7 @@ const config: StorybookConfig = {
         // Linked Frame/facets must share both React and the QueryClient context with
         // this workbench's providers, matching beam-inertia's mounted test harness.
         cfg.resolve ??= {};
-        cfg.resolve.dedupe = [...(cfg.resolve.dedupe ?? []), 'react', 'react-dom', '@tanstack/react-query'];
+        cfg.resolve.dedupe = [...(cfg.resolve.dedupe ?? []), 'react', 'react-dom', '@tanstack/react-query', '@schemastud/ui'];
         cfg.resolve.alias = {
             ...(cfg.resolve.alias as Record<string, string> | undefined),
             // Stub `@inertiajs/react` (component-seams ticket 40). beam-mdx is the ONLY Inertia

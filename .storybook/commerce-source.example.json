@@ -1,0 +1,12 @@
+{
+  "packageRoot": "../../owned-canonical-commerce/js/beam-commerce",
+  "sourceCommit": "<selected exact 40-character canonical commerce commit>",
+  "sha256": {
+    "src/auto-reload-config-card.stories.tsx": "<selected sha256>",
+    "src/credits-surface.stories.tsx": "<selected sha256>",
+    "src/reload-activity-card.stories.tsx": "<selected sha256>",
+    "dist/index.js": "<selected sha256>",
+    "dist/index.d.ts": "<selected sha256>",
+    "dist/index.js.map": "<selected sha256>"
+  }
+}

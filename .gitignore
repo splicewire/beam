@@ -17,3 +17,6 @@ storybook-static/
 !.tests/vr/
 .tests/vr/**/__diff_output__/
 CLAUDE.md
+
+# Explicit private canonical commerce Storybook source/artifact selection.
+.storybook/commerce-source.local.json
