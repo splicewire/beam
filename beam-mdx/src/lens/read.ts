@@ -18,7 +18,7 @@ import { parse as parseTsx, toJson, type LensContext } from '@splicewire/beam-ux
  *   `strong`, `em`, `code`, `a`, `img`, `hr`, `br` and the table elements). A soft line break inside a paragraph
  *   becomes a space.
  * - JSX reads as components. A tag's attributes are read by the TSX Lens itself, so a prop, a literal in braces,
- *   a named slot the profile declares, `bdField` and the lens-owned `bdStyle` / `bdRepeat` / `bdWhen` mean exactly
+ *   a named slot the profile declares, `bdField` and the lens-owned `bdStyle` / `bdRepeat` / `bdWhen` / `bdEvent` mean exactly
  *   what they mean in a `.tsx` page. Its children are Markdown, read here.
  * - A comment, and any other expression, becomes an Opaque Island, carried verbatim. So does a tag with a spread
  *   attribute, which only source can hold.

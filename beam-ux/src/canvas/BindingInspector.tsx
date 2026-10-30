@@ -5,7 +5,7 @@ import {getAt,isJsonBlock,VOID_TAGS,type JsonBlock} from '../blockdoc/json.js';
 import {authoredEntry} from './authored-components';
 import {useCanvas} from './context.js';
 import {useCanvasSelection} from './CanvasSelection.js';
-import {bindingFields,collectionOffers,recordOffer,repeatCollection,bindText,scalarValue,condition,type BindingField} from './binding-edit.js';
+import {bindingFields,collectionOffers,eventOffers,recordOffer,repeatCollection,bindText,scalarValue,condition,type BindingField} from './binding-edit.js';
 const OPERATORS:ConditionOperator[]=['is set','is empty','equals','does not equal','greater than','less than','contains'];
 
 /** Every edit uses the canvas's existing Local Session command/undo path. It never saves or reads Records. */
@@ -14,6 +14,7 @@ export function BindingInspector({path}:{path:string}){
  const node=commands?getAt(commands.doc,path):null;
  if(!node||!isJsonBlock(node)||!commands?.editBinding)return null;
  const offers=collectionOffers(config.profile);
+ const events=eventOffers(config.profile);
  const offer=recordOffer(commands.doc,path,offers,config.bindingPreview?.recordCollection);
  const fields=offer?bindingFields(offer.schema):[];
  const rich=(field:BindingField)=>['markdown','mdx','blockdoc','jsondoc'].includes(field.format??'');
@@ -34,11 +35,20 @@ export function BindingInspector({path}:{path:string}){
  const sort=query.sort??'';
  const filter=Object.entries(query.filter??{})[0];
  const queryChange=(next:typeof query)=>edit(block=>{if(!block.repeat)return block;const repeat={...block.repeat,query:next};assertRepeat(repeat);return {...block,repeat};});
+ const clickEventName=(name:string)=>edit(block=>{
+  if(!name){const {clickEvent:_,...rest}=block;return rest;}
+  return {...block,clickEvent:{name,...(block.clickEvent?.label!==undefined?{label:block.clickEvent.label}:{})}};
+ });
+ const clickEventLabel=(label:string)=>edit(block=>{
+  if(!block.clickEvent)return block;
+  const {label:_,...clickEvent}=block.clickEvent;
+  return {...block,clickEvent:label?{...clickEvent,label}:clickEvent};
+ });
  const fieldSelect=(label:string,value:string,change:(field:string)=>void,list=fields)=><label>{label}<select aria-label={label} value={value} disabled={disabled||!list.length} onChange={event=>change(event.target.value)}>
   <option value="">None</option>{list.map(field=><option key={field.path} value={field.path}>{field.label} ({field.path})</option>)}</select></label>;
  const properties=config.profile?.nodes.find(item=>item.name===node.name)?.attrsSchema?.properties??{};
  return <section aria-label="Data binding"><h3>Data binding</h3>{error&&<p role="alert">{error}</p>}
-  <fieldset disabled={disabled}><legend>Repeat Records</legend>
+ <fieldset disabled={disabled}><legend>Repeat Records</legend>
    <label>Collection<select aria-label="Collection" value={node.repeat?.collection??''} onChange={event=>edit(block=>repeatCollection(block,event.target.value))}>
     <option value="">No Repeat</option>{offers.map(item=><option key={item.name} value={item.name}>{item.name}</option>)}</select></label>
    {node.repeat?.relation&&<p>This nested Repeat uses its declared relation. Relation editing is unavailable here.</p>}
@@ -49,6 +59,14 @@ export function BindingInspector({path}:{path:string}){
     {fieldSelect('Filter field',filter?filterFields.find(field=>field.filterName===filter[0])?.path??'':'',field=>queryChange({...query,filter:field?{[filterName(field)]:scalarValue(repeatFields.find(item=>item.path===field)?.type==='boolean'?'false':repeatFields.find(item=>item.path===field)?.type==='number'||repeatFields.find(item=>item.path===field)?.type==='integer'?'0':'',repeatFields.find(item=>item.path===field))}:null}),filterFields)}
     {filter&&<label>Filter value<input aria-label="Filter value" key={filter[0]} defaultValue={String(filter[1]??'')} onBlur={event=>{try{queryChange({...query,filter:{[filter[0]]:scalarValue(event.target.value,filterFields.find(field=>field.filterName===filter[0]))}});}catch(e){setError(e instanceof Error?e.message:String(e));}}}/></label>}
    </>}
+  </fieldset>
+  <fieldset disabled={disabled}><legend>Click Event</legend>
+   <label>Click event<select aria-label="Click event" value={node.clickEvent?.name??''} onChange={event=>clickEventName(event.target.value)}>
+    <option value="">No Click Event</option>
+    {node.clickEvent&&!events.some(event=>event.name===node.clickEvent?.name)&&<option value={node.clickEvent.name}>{node.clickEvent.name} (not in profile)</option>}
+    {events.map(event=><option key={event.name} value={event.name}>{event.name} ({event.source})</option>)}
+   </select></label>
+   <label>Click event label<input aria-label="Click event label" value={node.clickEvent?.label??''} disabled={!node.clickEvent} onChange={event=>clickEventLabel(event.target.value)}/></label>
   </fieldset>
   {!fields.length&&<p>No Record fields are in scope. Choose a Repeat Collection or save a Record Page declaration first.</p>}
   {!node.isComponent&&!VOID_TAGS.has(node.name??'')&&fieldSelect('Text field',node.children.find(child=>child.kind==='text')?.field??'',field=>edit(block=>bindText(block,field)),plainFields)}

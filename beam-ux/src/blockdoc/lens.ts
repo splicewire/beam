@@ -74,6 +74,7 @@ function buildBlock(
     let legacy: BlockStyle | undefined;
     let repeat: RepeatDeclaration | undefined;
     let when: DataCondition | undefined;
+    let clickEvent: { name: string; label?: string } | undefined;
     let component: import('@splicewire/beam-resources/types/beam-ux').ComponentDefinitionData | undefined;
     let dynamic = !isElement ? false : opening!.attributes.some((a) => t.isJSXSpreadAttribute(a));
     if (opening) {
@@ -108,6 +109,14 @@ function buildBlock(
                     const value = styleLiteral(attr.value.expression);
                     if (attr.name.name === 'bdRepeat') { assertRepeat(value); repeat = value; }
                     else { assertCondition(value); when = value; }
+                } else if (t.isJSXIdentifier(attr.name) && attr.name.name === 'bdEvent') {
+                    const value = t.isJSXExpressionContainer(attr.value) ? clickEventLiteral(attr.value.expression) : undefined;
+                    if (value) clickEvent = value;
+                    else {
+                        const prop = buildProp(attr, context);
+                        if (prop.kind === 'expression') sealSubtree(attr, seen);
+                        props.push(prop);
+                    }
                 } else {
                     const prop = buildProp(attr, context);
                     // JSX carried as opaque attribute code belongs to that attribute, not another root.
@@ -179,6 +188,7 @@ function buildBlock(
         ...(style || legacy ? { style: { layers: [...(legacy?.layers ?? []), ...(style?.layers ?? [])] } } : {}),
         ...(repeat ? { repeat } : {}),
         ...(when ? { when } : {}),
+        ...(clickEvent ? { clickEvent } : {}),
         ...(component ? {component} : {}),
         node: el,
     };
@@ -516,4 +526,18 @@ function styleLiteral(node: t.Node): unknown {
         return result;
     }
     throw new Error('bdStyle requires literal values (no executable expressions)');
+}
+
+/** `bdEvent` is data only when it exactly matches the published Click Event object shape. */
+function clickEventLiteral(node: t.Node): { name: string; label?: string } | undefined {
+    try {
+        const value = styleLiteral(node);
+        if (value === null || typeof value !== 'object' || Array.isArray(value)) return undefined;
+        const record = value as Record<string, unknown>;
+        if (Object.keys(record).some(key => key !== 'name' && key !== 'label') || typeof record.name !== 'string') return undefined;
+        if (record.label !== undefined && typeof record.label !== 'string') return undefined;
+        return { name: record.name, ...(record.label !== undefined ? { label: record.label } : {}) };
+    } catch {
+        return undefined;
+    }
 }

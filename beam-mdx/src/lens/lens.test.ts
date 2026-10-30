@@ -7,6 +7,16 @@ const block = (name: string, children: JsonDoc = [], props: JsonBlock['props'] =
 const text = (value: string) => ({ kind: 'text' as const, value });
 const read = (mdx: string) => readMdx(mdx).doc;
 
+describe('ADR-0234 Click Event declarations', () => {
+    it('round trips bdEvent through the shared MDX/TSX lens', () => {
+        const doc = read('<a bdEvent={{name:"purchase",label:"Order button"}}>Buy now</a>');
+        expect(doc).toMatchObject([{ kind: 'block', clickEvent: { name: 'purchase', label: 'Order button' } }]);
+        const printed = printMdx(doc);
+        expect(printed).toContain('bdEvent={{"name":"purchase","label":"Order button"}}');
+        expect(read(printed)).toEqual(doc);
+    });
+});
+
 /** Bodies shaped like the measured corpus (ux-0233 Context): prose, kit components, tables, code and islands. */
 const CORPUS: Record<string, string> = {
     essay: `# Why the engine sells nothing

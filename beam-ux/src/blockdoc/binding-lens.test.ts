@@ -32,3 +32,23 @@ describe('ADR-0229 binding declarations', () => {
         });
     });
 });
+
+describe('ADR-0234 Click Event declarations', () => {
+    it('reads and prints the literal bdEvent contract as a JsonNode clickEvent', () => {
+        const source = '<a bdRepeat={{collection:"articles"}} bdWhen={{all:[{field:"title",operator:"is set"}]}} bdEvent={{name:"generate_lead",label:"Hero CTA"}} href="/contact">Contact</a>;';
+        const doc = toJson(parse(source));
+        expect(doc[0]).toMatchObject({
+            clickEvent: { name: 'generate_lead', label: 'Hero CTA' },
+            props: [{ name: 'href', kind: 'string', value: '/contact' }],
+        });
+        expect(jsonToTsx(doc)).toContain('bdRepeat={{"collection":"articles"}} bdWhen={{"all":[{"field":"title","operator":"is set"}]}} bdEvent={{"name":"generate_lead","label":"Hero CTA"}}');
+        expect(toJson(parse(jsonToTsx(doc)))).toEqual(doc);
+    });
+
+    it('leaves a nonliteral bdEvent expression opaque instead of treating it as a Click Event', () => {
+        const doc = toJson(parse('<a bdEvent={eventFor(user)} />'));
+        expect(doc[0]).not.toHaveProperty('clickEvent');
+        expect(doc[0]).toMatchObject({ props: [{ name: 'bdEvent', kind: 'expression', value: 'eventFor(user)' }] });
+        expect(toJson(parse(jsonToTsx(doc)))).toEqual(doc);
+    });
+});

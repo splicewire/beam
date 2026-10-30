@@ -52,6 +52,7 @@ kind: 'block',
 style?: BlockStyleData | null,
 repeat?: RepeatData | null,
 when?: ConditionData | null,
+clickEvent?: { name: string, label?: string },
 slots?: Record<string, JsonNode[]>,
 component?: ComponentDefinitionData | null,
 };

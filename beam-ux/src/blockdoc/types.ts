@@ -82,6 +82,7 @@ export interface BlockNode {
     slots?: Record<string, BlockChild[]>;
     repeat?: RepeatDeclaration;
     when?: DataCondition;
+    clickEvent?: { name: string; label?: string };
     style?: BlockStyle;
     type: 'block';
     /** JSX element/component name, e.g. `div`, `Card`, `Foo.Bar`. `null` for fragments. */

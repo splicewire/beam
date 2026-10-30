@@ -55,6 +55,7 @@ export {
     type UseEntryArtifactResult,
     type EntryArtifactStatus,
 } from './EntryBody.js';
+export { reportEvent, installClickEventListener, SiteClickEventListener, type EventParameter, type EventParameters, type ClickEventData } from './events.js';
 export type {
     SiteNavItem,
     SiteNavData,

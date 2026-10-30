@@ -9,7 +9,8 @@ import {BlockInspector} from './BlockInspector';
 import type {JsonDoc} from '../blockdoc/json';
 const initial:JsonDoc=[{kind:'block',name:'p',id:'paragraph',dynamic:false,isComponent:false,props:[],children:[{kind:'text',value:'Fallback'}]}];
 const profile={profile:'content',version:1,doc:{admitsChildCategories:['html']},nodes:[{name:'p',category:'html',admitsChildCategories:[],attrsSchema:{type:'object',properties:{title:{type:'string'}}}}],
- 'x-collections':[{name:'posts',schema:{type:'object',properties:{fields:{type:'object',properties:{title:{type:'string','x-sort':{name:'title'},'x-filter':{name:'title'}},rich:{type:'string',format:'markdown'},published:{type:'boolean'},count:{type:'integer'}}}}},publicRead:false,hasRecordPage:true}]};
+ 'x-collections':[{name:'posts',schema:{type:'object',properties:{fields:{type:'object',properties:{title:{type:'string','x-sort':{name:'title'},'x-filter':{name:'title'}},rich:{type:'string',format:'markdown'},published:{type:'boolean'},count:{type:'integer'}}}}},publicRead:false,hasRecordPage:true}],
+ 'x-events':[{name:'sign_up',source:'package',parameters:['method']},{name:'generate_lead',source:'package',parameters:['currency','value']},{name:'host_custom',source:'host',parameters:[]}]};
 afterEach(cleanup);
 function Harness({readOnly=false,change=()=>{}}:{readOnly?:boolean;change?:(doc:JsonDoc)=>void}){
  const [doc,setDoc]=useState(initial);const state=useRef({doc,readOnly});state.current={doc,readOnly};
@@ -44,4 +45,14 @@ it('cannot mutate binding declarations in a read-only canvas',()=>{
  expect((screen.getByLabelText('Collection') as HTMLSelectElement).closest('fieldset')?.disabled).toBe(true);
  fireEvent.change(screen.getByLabelText('Collection'),{target:{value:'posts'}});
  expect(change).not.toHaveBeenCalled();expect(screen.getByTestId('doc').textContent).not.toContain('repeat');
+});
+it('offers the profile Event Vocabulary and writes an optional Click Event label',()=>{
+ const change=vi.fn();render(<Harness change={change}/>);fireEvent.click(screen.getByText('p 0'));
+ fireEvent.change(screen.getByLabelText('Click event'),{target:{value:'generate_lead'}});
+ fireEvent.change(screen.getByLabelText('Click event label'),{target:{value:'Hero CTA'}});
+ expect(JSON.parse(screen.getByTestId('doc').textContent!)[0].clickEvent).toEqual({name:'generate_lead',label:'Hero CTA'});
+ expect(within(screen.getByLabelText('Click event')).getByRole('option',{name:'host_custom (host)'})).toBeTruthy();
+ fireEvent.change(screen.getByLabelText('Click event'),{target:{value:''}});
+ expect(JSON.parse(screen.getByTestId('doc').textContent!)[0]).not.toHaveProperty('clickEvent');
+ expect(change).toHaveBeenCalled();
 });

@@ -2,8 +2,14 @@ import {assertCondition,assertRepeat,type DataCondition} from '../blockdoc/bindi
 import {getAt,isJsonBlock,type JsonBlock,type JsonDoc} from '../blockdoc/json.js';
 
 export interface CollectionOffer {name:string;schema:Record<string,unknown>;publicRead:boolean|null;hasRecordPage:boolean}
+export interface EventOffer {name:string;source:'package'|'host';parameters:string[]}
 export interface BindingField {path:string;type:string;format?:string;label:string;filterName?:string;sortName?:string}
 const object=(value:unknown):value is Record<string,unknown>=>!!value&&typeof value==='object'&&!Array.isArray(value);
+export function eventOffers(profile:unknown):EventOffer[]{
+ if(!object(profile)||!Array.isArray(profile['x-events']))return [];
+ return profile['x-events'].flatMap((event:unknown)=>object(event)&&typeof event.name==='string'&&['package','host'].includes(String(event.source))&&Array.isArray(event.parameters)
+  ?[{name:event.name,source:event.source as EventOffer['source'],parameters:event.parameters.filter((parameter:unknown):parameter is string=>typeof parameter==='string')}]:[]);
+}
 export function collectionOffers(profile:unknown):CollectionOffer[]{
  if(!object(profile)||!Array.isArray(profile['x-collections']))return [];
  return profile['x-collections'].flatMap((offer:unknown)=>object(offer)&&typeof offer.name==='string'&&object(offer.schema)

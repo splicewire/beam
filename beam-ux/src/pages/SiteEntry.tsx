@@ -16,6 +16,7 @@ import type {
     EntryPayload,
 } from '../docs/types.js';
 import type { SiteNavData } from '../site/types.js';
+import { SiteClickEventListener } from '../site/events.js';
 
 /**
  * **The packaged public entry page** — the host half of ADR-0209's renderer, shipped (ADR-0213 §3).
@@ -191,5 +192,8 @@ export default function SiteEntry(props: SiteEntryProps) {
 
     const rendered = config.wrap ? config.wrap(page) : page;
 
-    return props.preview ? <PreviewBoundary preview={props.preview}>{rendered}</PreviewBoundary> : rendered;
+    return <>
+        <SiteClickEventListener enabled={!props.preview} />
+        {props.preview ? <PreviewBoundary preview={props.preview}>{rendered}</PreviewBoundary> : rendered}
+    </>;
 }

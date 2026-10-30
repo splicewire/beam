@@ -82,6 +82,7 @@ function childToJson(child: BlockChild): JsonNode {
         ...(child.style ? { style: child.style } : {}),
         ...(child.repeat ? { repeat: child.repeat } : {}),
         ...(child.when ? { when: child.when } : {}),
+        ...(child.clickEvent ? { clickEvent: child.clickEvent } : {}),
         ...(child.component ? {component: child.component} : {}),
     };
 }
@@ -178,7 +179,7 @@ function textRun(value: string): [lead: boolean, run: string, trail: boolean] {
 
 /**
  * A block's JSX attributes, each with its leading space: its props, then the lens-owned fields (`bdStyle`,
- * `bdRepeat`, `bdWhen`), then its named slots. Exported so the MDX printer (`@splicewire/beam-mdx/lens`)
+ * `bdRepeat`, `bdWhen`, `bdEvent`), then its named slots. Exported so the MDX printer (`@splicewire/beam-mdx/lens`)
  * prints a component's attributes exactly as here (ux-0233 d2).
  */
 export function jsxAttributes(node: JsonBlock, depth = 0, componentBody = false): string {
@@ -188,6 +189,7 @@ export function jsxAttributes(node: JsonBlock, depth = 0, componentBody = false)
     const attrs = node.props.map(printProp).join('') + (node.style ? ` bdStyle={${JSON.stringify(node.style)}}` : '')
         + (node.repeat ? ` bdRepeat={${JSON.stringify(node.repeat)}}` : '')
         + (node.when ? ` bdWhen={${JSON.stringify(node.when)}}` : '')
+        + (node.clickEvent ? ` bdEvent={${JSON.stringify(node.clickEvent)}}` : '')
         + (node.component ? ` bdComponent={${JSON.stringify(node.component)}}` : '');
     const slotAttrs = Object.entries(node.slots ?? {}).map(([name, children]) => {
         assertReferenceName(name);
