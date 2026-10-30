@@ -13,6 +13,16 @@ describe('declared component props and slots (ux-0231 d8–10)', () => {
         expect(h3.children[1].kind).toBe('opaque');
         expect((toJson(parse('<h3>{title}</h3>'))[0] as JsonBlock).children[0].kind).toBe('opaque');
     });
+    it('round-trips a declared prop reference through print and parse (EP-19 item 35)', () => {
+        const doc = toJson(parse('<h3 title={title} data-x="y">{title}</h3>', context));
+        const h3 = doc[0] as JsonBlock;
+        expect(h3.props.find(p => p.name === 'title')).toMatchObject({kind: 'prop', value: 'title'});
+        expect(h3.children[0]).toEqual({kind: 'text', value: '', prop: 'title'});
+        const printed = jsonToTsx(doc);
+        expect(printed).toContain('title={title}');
+        expect(printed).toContain('{title}');
+        expect(toJson(parse(printed, context))).toEqual(doc);
+    });
     it('round-trips declared named/default Slot blocks and fallback', () => {
         const doc = toJson(parse('<section>{children}{media ?? <img alt="fallback" />}</section>', context));
         const section = doc[0] as JsonBlock;
