@@ -10,6 +10,7 @@ export default defineConfig({
         jsondoc: 'src/blockdoc/json.ts',
         editor: 'src/editor/index.ts',
         canvas: 'src/canvas/index.ts',
+        'edit-mode': 'src/edit-mode.ts',
         site: 'src/site/index.ts',
         docs: 'src/docs/index.ts',
         pages: 'src/pages/index.ts',

@@ -15,6 +15,10 @@
             "types": "./dist/canvas.d.ts",
             "import": "./dist/canvas.js"
         },
+        "./edit-mode": {
+            "types": "./dist/edit-mode.d.ts",
+            "import": "./dist/edit-mode.js"
+        },
         "./site": {
             "types": "./dist/site.d.ts",
             "import": "./dist/site.js"
