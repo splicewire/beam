@@ -14,6 +14,7 @@ import { Spinner } from '../../components/ui/spinner';
 import PasskeyVerify from '../../components/passkey-verify';
 
 import type { AuthEntryPageData } from '@splicewire/beam-resources/types/accounts-pages';
+import { deferPasswordLoginForTwoFactor, isTwoFactorChallengeUrl, reportAuthenticatedLogin, startPasswordLogin } from './analytics';
 
 // theme-entries-and-authoring STR-03: a sealed island (editor/registry.tsx), no longer the top-level
 // Inertia page — these are FortifyServiceProvider's per-request props, still flowing exactly as
@@ -29,12 +30,20 @@ export default function Login() {
     return (
         <>
             {featureEnabled('passkeys') && (<>
-            <PasskeyVerify />
+            <PasskeyVerify onAuthenticated={() => reportAuthenticatedLogin('passkey')} />
             </>)}
 
             <Form
                 action="/login"
                 method="post"
+                onStart={startPasswordLogin}
+                onSuccess={({ url }) => {
+                    if (isTwoFactorChallengeUrl(url)) {
+                        deferPasswordLoginForTwoFactor();
+                    } else {
+                        reportAuthenticatedLogin('password');
+                    }
+                }}
                 resetOnSuccess={['password']}
                 className="flex flex-col gap-6"
             >

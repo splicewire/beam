@@ -19,6 +19,8 @@ export interface PublicIntakeServices {
     schemas: Record<string, PublicIntakeSchema>;
     honeypotField?: string;
     submit?: (captureKey: string, payload: Record<string, unknown>) => Promise<PublicIntakeResult>;
+    /** Called after a successful human submission, with the public capture key. */
+    onSent?: (captureKey: string) => void;
 }
 
 const PublicIntakeContext = createContext<PublicIntakeServices>({ schemas: {} });
@@ -108,7 +110,7 @@ export interface IntakeFormProps {
  * renderer draws the fields.
  */
 export function IntakeForm({ captureKey, submitLabel = 'Send', successMessage = 'Thank you. Your submission was received.', preview = false }: IntakeFormProps) {
-    const { schemas, honeypotField = 'website', submit = submitToIntakeDoor } = useContext(PublicIntakeContext);
+    const { schemas, honeypotField = 'website', submit = submitToIntakeDoor, onSent } = useContext(PublicIntakeContext);
     const services = useOptionalIntakeServices();
     const honeypot = useRef<HTMLInputElement>(null);
     const [formData, setFormData] = useState<IntakeFields>({});
@@ -126,10 +128,20 @@ export function IntakeForm({ captureKey, submitLabel = 'Send', successMessage = 
         setState({ status: 'sending', errors: {} });
         const payload = Object.fromEntries(Object.entries(fields).filter(([, value]) => value !== undefined && value !== ''));
         try {
-            const result = await submit(captureKey, { ...payload, [honeypotField]: honeypot.current?.value ?? '' });
-            setState(result.ok
-                ? { status: 'sent', errors: {} }
-                : { status: 'idle', errors: result.errors, message: result.status === 429 ? 'Too many submissions. Please wait a minute and try again.' : result.message });
+            const honeypotValue = honeypot.current?.value ?? '';
+            const result = await submit(captureKey, { ...payload, [honeypotField]: honeypotValue });
+            if (result.ok) {
+                setState({ status: 'sent', errors: {} });
+                if (!honeypotValue) {
+                    try {
+                        onSent?.(captureKey);
+                    } catch {
+                        // An analytics callback must not turn a successful submission into a retryable error.
+                    }
+                }
+            } else {
+                setState({ status: 'idle', errors: result.errors, message: result.status === 429 ? 'Too many submissions. Please wait a minute and try again.' : result.message });
+            }
         } catch {
             // A network failure never strands the form: it is usable again, the author's entries kept, to retry.
             setState({ status: 'idle', errors: {}, message: 'Your submission could not be sent. Check your connection and try again.' });

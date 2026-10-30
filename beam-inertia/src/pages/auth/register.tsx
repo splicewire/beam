@@ -7,6 +7,7 @@ import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
 import { Spinner } from '../../components/ui/spinner';
 import type { AuthEntryPageData } from '@splicewire/beam-resources/types/accounts-pages';
+import { reportEvent } from '@splicewire/beam-ux/site';
 
 // theme-entries-and-authoring STR-03: a sealed island (editor/registry.tsx), no longer the top-level
 // Inertia page — read via usePage() instead of received as a direct component prop.
@@ -18,6 +19,7 @@ export default function Register() {
             <Form
                 action="/register"
                 method="post"
+                onSuccess={() => reportEvent('sign_up', { method: 'password' })}
                 resetOnSuccess={['password', 'passwordConfirmation']}
                 disableWhileProcessing
                 className="flex flex-col gap-6"

@@ -40,6 +40,42 @@ it('sends the submission with the honeypot field the page names, leaving empty f
     expect(await screen.findByRole('status')).toHaveProperty('textContent', 'You are on the list.');
 });
 
+it('reports a successful public submission once, but not a filled honeypot or rejected submission', async () => {
+    const submit = vi.fn()
+        .mockResolvedValueOnce({ ok: true })
+        .mockResolvedValueOnce({ ok: true })
+        .mockResolvedValueOnce({ ok: false, status: 422, errors: {} });
+    const onSent = vi.fn();
+    const mounted = mount({ submit, onSent });
+
+    act(() => mounted.current!.onSubmit({ email: 'ada@example.test' }));
+    await waitFor(() => expect(onSent).toHaveBeenCalledExactlyOnceWith('contact'));
+
+    cleanup();
+    const captured: { current?: IntakeFormRenderProps } = {};
+    const view = render(
+        <IntakeProvider services={{ client: { submit: vi.fn() }, renderForm: form => {
+            captured.current = form;
+            return <p>host form</p>;
+        } }}>
+            <PublicIntakeProvider value={{ schemas: { contact: CONTACT }, submit, onSent }}>
+                <IntakeForm captureKey="contact" />
+            </PublicIntakeProvider>
+        </IntakeProvider>,
+    );
+    const honeypot = view.container.querySelector('input[name="website"]') as HTMLInputElement;
+    fireEvent.change(honeypot, { target: { value: 'bot-filled' } });
+    act(() => captured.current!.onSubmit({ email: 'bot@example.test' }));
+    await waitFor(() => expect(submit).toHaveBeenCalledTimes(2));
+    expect(onSent).toHaveBeenCalledTimes(1);
+
+    cleanup();
+    const retryable = mount({ submit, onSent });
+    act(() => retryable.current!.onSubmit({ email: 'invalid@example.test' }));
+    await waitFor(() => expect(submit).toHaveBeenCalledTimes(3));
+    expect(onSent).toHaveBeenCalledTimes(1);
+});
+
 it("hands the door's 422 errors to the renderer and turns a 429 into the throttle message", async () => {
     const submit = vi.fn()
         .mockResolvedValueOnce({ ok: false, status: 422, message: 'The submission for [contact] is invalid.', errors: { '/email': ['Must be an email.'] } })
