@@ -1,3 +1,4 @@
+import { creditsCheckout, reportCommerceEvent } from './analytics';
 import {
     Badge,
     Button,
@@ -402,10 +403,20 @@ export function CreditsSurface({ embedded = false }: { embedded?: boolean } = {}
     const [outcome, setOutcome] = useState<CreditReloadResult | null>(null);
 
     const onPay = () => {
+        // EP-29: the reader begins a checkout here, on either rail. A hosted redirect waits for this report before it
+        // leaves the page; a direct reload reports `purchase` only when the rail CAPTURED it, with its provider reference.
+        const started = reportCommerceEvent('begin_checkout', creditsCheckout(amountUsd));
         if (directRail) {
             // A DECLINE resolves here, with `captured: false` — the rail answered. Only a transport
             // failure lands in `reload.isError`, and only that one has no retry to offer.
-            reload.mutate(amountUsd, { onSuccess: setOutcome });
+            reload.mutate(amountUsd, {
+                onSuccess: (result) => {
+                    setOutcome(result);
+                    if (result.captured && result.providerRef) {
+                        void reportCommerceEvent('purchase', { transaction_id: result.providerRef, ...creditsCheckout(result.amountUsd) });
+                    }
+                },
+            });
 
             return;
         }
@@ -415,7 +426,8 @@ export function CreditsSurface({ embedded = false }: { embedded?: boolean } = {}
                 // A redirect leg settles only when the browser walks it (the fake rail's confirm page, a redirect-mode
                 // provider checkout); the return URL brings it back here, where the wallet poll shows the credit.
                 if (checkout?.action?.kind === 'redirect' && checkout.action.url) {
-                    window.location.assign(checkout.action.url);
+                    const url = checkout.action.url;
+                    void started.finally(() => window.location.assign(url));
 
                     return;
                 }

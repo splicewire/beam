@@ -1,3 +1,4 @@
+import { reportCommerceEvent } from './analytics';
 import {
     Button,
     Card,
@@ -355,7 +356,14 @@ export function SubscriptionSurface({
     const onCheckout = () => {
         // The plans/{id}/op/checkout particle op takes the Plan ID in the path (not a body slug).
         const planId = data?.subscription?.planId;
-        if (planId) checkout.mutate(planId, { onSuccess: ({ url }) => navigate(url) });
+        if (!planId) return;
+        // EP-29: the reader begins a plan checkout; the hosted redirect waits for the report before it leaves the page.
+        // The view carries no plan price, so no `value` is claimed.
+        const planName = data?.subscription?.plan?.name;
+        const started = reportCommerceEvent('begin_checkout', {
+            items: [{ item_id: planId, ...(planName ? { item_name: planName } : {}), quantity: 1 }],
+        });
+        checkout.mutate(planId, { onSuccess: ({ url }) => void started.finally(() => navigate(url)) });
     };
 
     // BUY-04 (BQ-2): the pay action is a card setup for a plan that awaits payment (no Stripe price id is involved); it
