@@ -2,7 +2,7 @@ import { Form } from '@rjsf/shadcn';
 import validator from '@rjsf/validator-ajv8';
 import type { RJSFSchema, UiSchema } from '@rjsf/utils';
 import { useMemo } from 'react';
-import { KIT_MANIFEST } from './manifest';
+import { kitManifest } from './manifest';
 
 /**
  * The schema-driven per-block inspector — the "frame form" for a JSX block. Plugged into mdxeditor's
@@ -41,7 +41,7 @@ function prepare(attrsSchema: RJSFSchema | undefined): { schema: RJSFSchema; uiS
 }
 
 export function SchemaFormPropertyEditor({ properties, title, onChange }: PropertyEditorProps) {
-    const node = KIT_MANIFEST.nodes.find((n) => n.name === title);
+    const node = kitManifest.nodes.find((n) => n.name === title);
     const { schema, uiSchema } = useMemo(() => prepare(node?.attrsSchema as RJSFSchema | undefined), [node]);
 
     return (

@@ -1,5 +1,5 @@
 import { GenericJsxEditor, type JsxComponentDescriptor, type JsxPropertyDescriptor } from '@mdxeditor/editor';
-import { KIT_MANIFEST, type KitNodeManifest } from './manifest';
+import { kitManifest, type KitNodeManifest } from './manifest';
 import { SchemaFormPropertyEditor } from './schema-form';
 
 // mdxeditor's GenericJsxEditor handles attribute read/write + the nested children editor; we only
@@ -26,8 +26,8 @@ export function nodeToJsxDescriptor(node: KitNodeManifest): JsxComponentDescript
         type: schema?.['x-expression'] ? 'expression' : 'string',
     }));
 
-    // Leaf when the node admits no children ([]); otherwise it takes children (null = unconstrained).
-    const hasChildren = node.admitsChildCategories === null || node.admitsChildCategories.length > 0;
+    // Direct text is admitted independently of structured child categories.
+    const hasChildren = node.admitsText || node.admitsChildCategories === null || node.admitsChildCategories.length > 0;
 
     return {
         name: node.name,
@@ -41,4 +41,4 @@ export function nodeToJsxDescriptor(node: KitNodeManifest): JsxComponentDescript
 }
 
 /** Every kit node as an mdxeditor descriptor — passed to `jsxPlugin` so rich mode parses the guides. */
-export const KIT_JSX_DESCRIPTORS: JsxComponentDescriptor[] = KIT_MANIFEST.nodes.map(nodeToJsxDescriptor);
+export const KIT_JSX_DESCRIPTORS: JsxComponentDescriptor[] = kitManifest.nodes.map(nodeToJsxDescriptor);

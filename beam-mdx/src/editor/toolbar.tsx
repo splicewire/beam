@@ -1,5 +1,5 @@
 import { Select, insertJsx$, usePublisher } from '@mdxeditor/editor';
-import { KIT_MANIFEST } from './manifest';
+import { kitManifest } from './manifest';
 
 // Sensible starter props for components with required attrs, so an inserted block is valid MDX.
 const STARTER_PROPS: Record<string, Record<string, string>> = {
@@ -27,7 +27,7 @@ export function InsertKitBlock() {
             placeholder="Insert…"
             onChange={(name) => {
                 if (!name) return;
-                const node = KIT_MANIFEST.nodes.find((n) => n.name === name);
+                const node = kitManifest.nodes.find((n) => n.name === name);
                 const props = STARTER_PROPS[name] ?? {};
                 if (node?.group === 'inline') {
                     insertJsx({ name, kind: 'text', props, children: [{ type: 'text', value: '' }] });
@@ -35,7 +35,7 @@ export function InsertKitBlock() {
                     insertJsx({ name, kind: 'flow', props, children: [] });
                 }
             }}
-            items={KIT_MANIFEST.nodes.map((n) => ({ label: n.name, value: n.name }))}
+            items={kitManifest.nodes.map((n) => ({ label: n.name, value: n.name }))}
         />
     );
 }
