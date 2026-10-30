@@ -9,6 +9,8 @@ export default defineConfig({
         'tsx-lens': 'src/blockdoc/index.ts',
         jsondoc: 'src/blockdoc/json.ts',
         editor: 'src/editor/index.ts',
+        // EP-38: the packaged Entries seat (js ADR-0005 d4).
+        entries: 'src/entries/index.ts',
         canvas: 'src/canvas/index.ts',
         'edit-mode': 'src/edit-mode.ts',
         site: 'src/site/index.ts',

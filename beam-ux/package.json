@@ -81,6 +81,10 @@
         "./editor": {
             "types": "./dist/editor.d.ts",
             "import": "./dist/editor.js"
+        },
+    "./entries": {
+            "types": "./dist/entries.d.ts",
+            "import": "./dist/entries.js"
         }
     },
     "sideEffects": false,
