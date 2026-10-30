@@ -17,6 +17,16 @@ amountUsd: number,
 runningUsd: number,
 reason: string,
 purchaseRef: string | null,
+costBasis: CostBasis | null,
+};
+
+export type CostBasis = 'priced' | 'unpriced' | 'replayed';
+
+export type MoneyFormatData = {
+currency: string,
+locale: string,
+minorDigits: number,
+costMaxDigits: number,
 };
 
 export type SubscriptionData = {
@@ -39,6 +49,18 @@ pausedUntil: string | null,
 plan: PlanData | null,
 earliestBillablePeriod: string | null,
 latestBillablePeriod: string | null,
+funding: string | null,
+comp: {
+actor: string,
+reason: string,
+expiresAt: string | null,
+} | null,
+awaitingPayment: boolean,
+fundingBy: {
+actor: string,
+reason: string,
+at: string,
+} | null,
 };
 
 export type PlanData = {
@@ -62,6 +84,7 @@ export type EntitlementData = {
 capability: string,
 enabled: boolean,
 source: string,
+label: string | null,
 };
 
 export type UpsellOfferData = {
@@ -108,6 +131,7 @@ promptTokens: number,
 completionTokens: number,
 totalTokens: number,
 costUsd: number,
+priced: boolean | null,
 };
 
 export type BillData = {
@@ -118,6 +142,7 @@ status: string,
 lineItems: BillLineItemData[],
 totalUsd: number,
 finalizedAt: string | null,
+invoiceReference: string | null,
 stripeInvoiceId: string | null,
 };
 
