@@ -117,7 +117,7 @@ export function BlockInspector(){
     <option value="">Base</option>{Object.entries(registry.breakpoints).map(([name,width])=><option key={name} value={name}>{name} ({width})</option>)}</select></label>
    <label>State<select aria-label="State" value={selection.state??''} onChange={event=>select({...selection,state:event.target.value||null})}>
     <option value="">Default</option>{Object.keys(registry.states).map(name=><option key={name}>{name}</option>)}</select></label>
-   <p>Layout-width preview only, capped by available space. Media-query styles follow the browser viewport; states are edited here, not simulated.</p>
+   <p>The canvas previews this breakpoint at its width (capped by available space) and shows the selected state as if active. Published pages answer to the visitor's viewport and real interaction.</p>
    <datalist id={tokenId}>{tokens.map(token=><option key={token} value={token}>{resolve(token)}</option>)}</datalist>
    {Object.entries(PANELS).map(([name,fields])=><details key={name}><summary>{name}</summary>{fields.map(field)}</details>)}
    <details><summary>Gradient stops</summary>

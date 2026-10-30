@@ -63,6 +63,29 @@ it('constrains layout width from the same registry selection without emitting a 
     expect(onChange).not.toHaveBeenCalled();
 });
 
+it('previews breakpoint and state Block Styles in the canvas without emitting a document change (EP-12 item 18)', () => {
+    function Selector() {
+        const { select } = useStyleSelection();
+        return <button onClick={() => select({ breakpoint: 'md', state: 'hover' })}>Preview md hover</button>;
+    }
+    const styled = block({ name: 'p', children: [{ kind: 'text', value: 'Hi' }] });
+    styled.style = { layers: [
+        { declarations: { color: 'red' } },
+        { breakpoint: 'md', declarations: { padding: '2rem' } },
+        { state: 'hover', declarations: { color: 'blue' } },
+    ] };
+    const onChange = vi.fn();
+    const { container } = render(wrap(<><Selector /><CanvasWidget value={[styled]} onChange={onChange} /></>));
+    const sheet = () => container.querySelector('style[data-beam-canvas-preview]')?.textContent ?? '';
+    expect(sheet()).toContain('@container beam-canvas (min-width: 48rem)');
+    expect(sheet()).not.toContain('@media');
+    expect(sheet()).toContain(':hover{color:blue}');
+    fireEvent.click(screen.getByText('Preview md hover'));
+    expect(sheet()).not.toContain(':hover');
+    expect(sheet()).toMatch(/\.bs-[0-9a-f]+\{color:blue\}/);
+    expect(onChange).not.toHaveBeenCalled();
+});
+
 it('offers no new Mdx node where the host supplies no MDX island (ux-0233: it retires per host)', () => {
     const mount = () => ({
         selectedNodeId: null, selectNode: vi.fn(), markDirty: vi.fn(),

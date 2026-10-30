@@ -29,7 +29,7 @@ it('offers six panels and writes a selected layer while preserving className',as
  const result=JSON.parse(screen.getByTestId('attrs').textContent!);
  expect(result.className).toBe('developer-class');
  expect(result.bdStyle.layers).toContainEqual({breakpoint:'md',state:'hover',declarations:{color:'var(--brand)'}});
- expect(screen.getByText(/Layout-width preview only/)).toBeTruthy();
+ expect(screen.getByText(/shows the selected state as if active/)).toBeTruthy();
  expect(screen.getByText('Base: red')).toBeTruthy();
 });
 it('offers theme tokens before custom values for gradient stops and Advanced values',()=>{

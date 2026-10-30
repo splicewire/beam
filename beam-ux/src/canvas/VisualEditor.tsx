@@ -1,5 +1,3 @@
-import { compileEntryStyles, stylesIn } from '../blockdoc/style-runtime.js';
-import { useCanvas } from './context.js';
 // The composed window-mode editor (controlled): FiveRegionEditShell (@schemastud/frame) owns the
 // chrome — top bar / palette / canvas / inspector / status — with the canvas block-tree editing
 // mounted as a registered heavyweight widget (CanvasWidget). `value`/`onChange` still carry the body
@@ -63,7 +61,6 @@ export function VisualEditor({
     canUndo = false,
     canRedo = false,
 }: VisualEditorProps) {
-    const styleConfig = useCanvas();
     const onChangeRef = useRef(onChange);
     onChangeRef.current = onChange;
     // Same ref-bridge reason as onChangeRef — CanvasWidget reads this for its selection/drop-indicator
@@ -88,7 +85,6 @@ export function VisualEditor({
     return (
         <>
             <style dangerouslySetInnerHTML={{ __html: veCss(theme) }} />
-            <style data-beam-block-style="">{compileEntryStyles(stylesIn(value), styleConfig.styleRegistry).css}</style>
             <FiveRegionEditShell
                 schema={INERT_SCHEMA}
                 record={value as unknown as Record<string, unknown>}

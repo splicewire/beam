@@ -36,9 +36,18 @@ function hash(text: string): string {
   return h.toString(16).padStart(16, "0");
 }
 
+/**
+ * How the editor canvas previews a Block Style. The published artifact answers breakpoints with `@media`
+ * (the visitor's viewport) and states with their pseudo-selector; the canvas has its own width and no real
+ * pointer, so it asks for breakpoints against a named container and for one state applied as if active.
+ * The class name is unchanged, so the canvas styles the same nodes the artifact does.
+ */
+export type StylePreview = { container: string; state: string | null };
+
 export function compileBlockStyle(
   style: BlockStyle,
-  registry = DEFAULT_STYLE_REGISTRY
+  registry = DEFAULT_STYLE_REGISTRY,
+  preview?: StylePreview
 ) {
   assertBlockStyle(style);
   const rules = style.layers.map((layer) => {
@@ -64,14 +73,17 @@ export function compileBlockStyle(
         return `${property}:${value}`;
       })
       .join(";");
-    return { width, selector, css };
+    return { width, selector, css, state: layer.state ?? null };
   });
-  const className = `bs-${hash(JSON.stringify(rules))}`;
+  // The class hashes only what the published artifact emits, so a preview never renames a node's class.
+  const className = `bs-${hash(JSON.stringify(rules.map(({ width, selector, css }) => ({ width, selector, css }))))}`;
   const css = rules
     .map((r) => {
-      const text = `.${className}${r.selector}{${r.css}}`;
-      return r.width === null
-        ? text
+      const selector = preview && r.state !== null && r.state === preview.state ? "" : r.selector;
+      const text = `.${className}${selector}{${r.css}}`;
+      if (r.width === null) return text;
+      return preview
+        ? `@container ${preview.container} (min-width: ${r.width}){${text}}`
         : `@media (min-width: ${r.width}){${text}}`;
     })
     .join("");
@@ -81,9 +93,10 @@ export function compileBlockStyle(
 /** Called at render time by the compiled artifact, and by the canvas preview. */
 export function compileEntryStyles(
   styles: BlockStyle[],
-  registry = DEFAULT_STYLE_REGISTRY
+  registry = DEFAULT_STYLE_REGISTRY,
+  preview?: StylePreview
 ) {
-  const compiled = styles.map((style) => compileBlockStyle(style, registry));
+  const compiled = styles.map((style) => compileBlockStyle(style, registry, preview));
   return {
     classes: compiled.map((style) => style.className),
     css: compiled.length

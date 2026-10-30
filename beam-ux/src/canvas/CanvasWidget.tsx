@@ -1,6 +1,6 @@
 import { blockStyleFields, applyBlockStyle } from './block-style.js';
 import { useStyleSelection } from './StyleSelection';
-import { DEFAULT_STYLE_REGISTRY } from '../blockdoc/style-runtime';
+import { DEFAULT_STYLE_REGISTRY, compileEntryStyles, stylesIn } from '../blockdoc/style-runtime';
 import {useCanvasSelection} from './CanvasSelection';
 import {CanvasOutline} from './CanvasOutline';
 import {clipboardText,parseClipboard,pasteBlocks,wrapBlocks,unwrapBlock,removeBlocks,editStyles,assertPasteProfile} from './commands';
@@ -435,6 +435,10 @@ export function CanvasWidget({
             const key=event.key.toLowerCase();
             if(['c','x','v'].includes(key)){event.preventDefault();if(key==='v')void paste();else void copy(key==='x');}
         }} style={{containerType:'inline-size',containerName:'beam-canvas',width: styleSelection.breakpoint ? (config.styleRegistry ?? DEFAULT_STYLE_REGISTRY).breakpoints[styleSelection.breakpoint] : undefined, maxWidth: '100%'}}>
+            {/* The canvas previews Block Styles against its own width and the inspector's state, not the
+                author's viewport: breakpoints answer to this `beam-canvas` container, the selected state applies
+                as if active. Same class names as the published artifact, which keeps @media and real states. */}
+            <style data-beam-block-style="" data-beam-canvas-preview="">{compileEntryStyles(stylesIn(doc), config.styleRegistry, {container: 'beam-canvas', state: styleSelection.state}).css}</style>
             <div className="ve-command-bar" role="toolbar" aria-label="Block commands">
                 <button className="ve-command-button" type="button" disabled={!selection.paths.length} onClick={()=>void copy()}>Copy blocks</button>
                 <button className="ve-command-button" type="button" disabled={readOnly||!selection.paths.length} onClick={()=>void copy(true)}>Cut blocks</button>
