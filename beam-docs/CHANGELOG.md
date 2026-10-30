@@ -1,5 +1,11 @@
 # @splicewire/beam-docs
 
+## 0.3.0
+
+### Minor Changes
+
+- 1f6dbbf: The docs search box reports the GA4 `search` event (EP-29) when the reader commits to a term: Enter, following a result, or arriving with `?q=`, once per distinct term, never per keystroke.
+
 ## 0.2.2
 
 ### Patch Changes

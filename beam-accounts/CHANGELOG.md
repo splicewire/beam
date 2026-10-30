@@ -1,5 +1,33 @@
 # @splicewire/beam-accounts
 
+## 1.0.0
+
+### Patch Changes
+
+- Updated dependencies [15c58c3]
+- Updated dependencies [4c12998]
+- Updated dependencies [ad864c9]
+- Updated dependencies [3cd0a8c]
+- Updated dependencies [3f000f0]
+- Updated dependencies [5f6b1de]
+- Updated dependencies [9af7d51]
+- Updated dependencies [08f69bb]
+- Updated dependencies [ecb80f0]
+- Updated dependencies [e024aa9]
+- Updated dependencies [22a1dbd]
+- Updated dependencies [cbc1dd7]
+- Updated dependencies [0a3c23b]
+- Updated dependencies [aff425e]
+- Updated dependencies [a8a03a0]
+- Updated dependencies [144ad9a]
+- Updated dependencies [8e03ab7]
+- Updated dependencies [7d1826a]
+- Updated dependencies [12fb9ac]
+- Updated dependencies [f312863]
+- Updated dependencies [1e54793]
+- Updated dependencies [aef0699]
+  - @splicewire/beam-ux@0.8.0
+
 ## 0.3.1
 
 ### Patch Changes

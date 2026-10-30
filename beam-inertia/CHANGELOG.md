@@ -1,5 +1,64 @@
 # @splicewire/beam-inertia
 
+## 1.0.0
+
+### Minor Changes
+
+- 3f000f0: Existing entries with no history can open the editor without a read-side write. The first Save draft or Publish sends a null base; the server initializes the trusted baseline atomically before recording the draft. Existing histories still require a publication pin. Save-draft transport implementations now accept a nullable base version.
+- c339a17: The canvas registry draws what an MDX page holding blocks places, and the auth islands fail closed off their own route (EP-42).
+  - A host whose MDX pages hold blocks (`beam.ux.mdx.holds_blocks`) also sets `configureBeamInertia({ mdxHoldsBlocks: true })`. beam-inertia then registers `SiteNav`, bound to the page's `nav` prop, and `ManifestTable`. laravel-beam-ux adds both to an MDX page's profile, because the packages' shipped docs pages place them. They join only there, so the doctor's registry audit still agrees with the switch off.
+  - Each packaged auth island renders its page only on the route that serves it (Fortify's default paths), and hands the page that route's Inertia props. Anywhere else it renders a stated refusal (`data-auth-island-refused`), never a form that cannot work, such as a reset form with no token.
+- d185fd4: The packaged `IntakeForm` reaches rendered pages (EP-07d).
+  - **beam-inertia:** a host that turns on laravel-beam's public intake door also sets `configureBeamInertia({ intakeForms: true })`. beam-inertia then registers `IntakeForm` in the canvas registry, as a non-submitting preview while an author edits. The packaged entry page provides each form's server-resolved schema (`props.intakeForms`) and the door's honeypot field (`props.intakeHoneypotField`).
+  - **beam-intake:** `IntakeForm` draws its fields through the host's `renderForm`, the same seam as `IntakeSectionForm`, falling back to `SchemaForm`, which shows the door's 422 errors on their fields. It sends the CSRF header beam's other transports send. `IntakeFormRenderProps` gains optional `errors` and `submitLabel`.
+- 1aef900: `registrySnapshot(registry?)` returns the sorted names of the components the canvas registers (EP-07, ux-0228 d6). By default that is beam-inertia's registry, gated by the configured auth features. A host writes the list to the path in `beam.ux.manifest.js_registry`, and `beam:doctor` compares it, both ways, with each realm's Manifest Profile. Without that file the doctor reports the check as inconclusive, never as a pass.
+- 8e03ab7: A Release's Redirects (ux-0236 d2, d12). The Preview bar lists "Redirects this Release leaves": each URL the Release
+  moves or takes down and where it goes once it publishes, or "not found" for a Take-down that names no page. The
+  Release panel lists them too: the ones it would leave while open, and the ones it left once published, each with
+  Remove. The editor transport gains `removeRedirect(id)`, which beam-inertia sends as `DELETE /beam-ux-redirects/{id}`.
+- 039f20b: Report successful sign-up and first-factor login events from the packaged auth surfaces.
+
+### Patch Changes
+
+- ad864c9: The Body Kind chooses the editor surface (beam JS ADR-0006 d1, editor-parity EP-26 D).
+
+  - The canvas opens every entry the server declares `blocks`, MDX pages included on a host that holds MDX as blocks (ux-0233 d1). An entry that holds source (a host's unconverted MDX page, a Component entry) gets the stated refusal.
+  - `canvasAccepts(entry)` replaces the format-only check. An entry without a `bodyKind` falls back to the format gate, so an older server is unchanged.
+  - beam-mainframe's `EntryRef` and page context carry an optional `bodyKind`, also broadcast on `beam-ux:mode`. beam-inertia reads it from `props.entry.bodyKind`.
+  - Source Mode labels its text with the entry's File Language: `MDX source` for an MDX page.
+
+- 1e54793: The first, non-breaking step of retiring the MDX island and editor (ux-0233, editor-parity EP-26 G1). The rest goes as each host converts (EP-42).
+
+  - `CanvasConfig.MdxView` / `MdxEdit` are optional and `@deprecated`. Without them, an `Mdx` node shows its MDX text read-only on the page and in the canvas, and the insert palette offers no new `Mdx` node.
+  - The packaged canvas config no longer passes the starter stubs, and the stub `MdxView`/`MdxEdit` exports are removed from `@splicewire/beam-ux/editor` and beam-inertia. No consumer in the estate imports them; audiostud ships its own island.
+  - `MdxDocumentEditor` and `KIT_MANIFEST` are `@deprecated`. The kit is declared on the server (`MdxKitNodeSource`), and MDX pages are edited as blocks.
+
+- Updated dependencies [15c58c3]
+- Updated dependencies [4c12998]
+- Updated dependencies [ad864c9]
+- Updated dependencies [3cd0a8c]
+- Updated dependencies [3f000f0]
+- Updated dependencies [5f6b1de]
+- Updated dependencies [9af7d51]
+- Updated dependencies [08f69bb]
+- Updated dependencies [ecb80f0]
+- Updated dependencies [e024aa9]
+- Updated dependencies [22a1dbd]
+- Updated dependencies [cbc1dd7]
+- Updated dependencies [0a3c23b]
+- Updated dependencies [aff425e]
+- Updated dependencies [a8a03a0]
+- Updated dependencies [144ad9a]
+- Updated dependencies [8e03ab7]
+- Updated dependencies [7d1826a]
+- Updated dependencies [12fb9ac]
+- Updated dependencies [f312863]
+- Updated dependencies [1e54793]
+- Updated dependencies [aef0699]
+  - @splicewire/beam-ux@0.8.0
+  - @splicewire/beam-mainframe@0.2.0
+  - @splicewire/beam-accounts@1.0.0
+
 ## 0.5.0
 
 ### Minor Changes

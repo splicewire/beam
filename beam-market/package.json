@@ -1,6 +1,6 @@
 {
   "name": "@splicewire/beam-market",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "The marketplace-domain beam surfaces, authored pre-packaged and DTO-first (rehome-ui, ADR-0116). Mirrors the PHP splicewire/laravel-beam-market package by domain (born as its lazy JS twin, ticket 08 — the first surface off this domain). Ships the beam-core Extensions area: a unified /extensions catalog covering both listing kinds (Scaffold Pack export, Beam Extension) plus Platform Tier listings (Satellite/Tower), a package-manager-style Installed tab with real Update/Remove actions, and requires_splicewire gating with an area-wide disconnected promo banner. Owns its react-query data logic, takes its transport + feedback + the Connect-Splicewire host-chrome slot as injected services (never app-local imports), and types off the generated Extension*Data / InstalledExtensionData projection delivered via @splicewire/beam-resources. Generic UI comes from the @schemastud/ui foundation.",
   "license": "MIT",
   "type": "module",

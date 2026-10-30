@@ -1,6 +1,6 @@
 {
     "name": "@splicewire/beam-mdx",
-    "version": "0.1.0",
+    "version": "1.0.0",
     "description": "The file-driven MDX content rung: a build-time draft-exclusion Vite plugin + MDX preset, a module-map content resolver (resolveContent / essaysList), a cross-property citation kit (Ref / Receipts), a frontmatter-driven JSON-LD builder, an embed-by-reference <Content>, a parameterized <ContentShow> renderer, and a token-driven .site-prose base stylesheet. Satellites keep their own references manifest and brand tokens; everything else rides the package.",
     "license": "MIT",
     "type": "module",
@@ -73,7 +73,7 @@
         "@rjsf/shadcn": "^6",
         "@rjsf/utils": "^6",
         "@rjsf/validator-ajv8": "^6",
-        "@splicewire/beam-ux": "^0.7.0",
+        "@splicewire/beam-ux": "^0.8.0",
         "react": ">=18",
         "remark-frontmatter": "^5",
         "remark-mdx-frontmatter": "^5",
