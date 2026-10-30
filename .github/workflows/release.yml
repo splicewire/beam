@@ -28,15 +28,20 @@ jobs:
         with:
           node-version: 22
 
-      # Versioning needs only the changesets CLI: no dist, no workspace build. `--ignore-scripts` skips workspace
-      # lifecycle scripts (beam-ux-prototype's `prepare` runs its build, which needs the `file:` schemastud siblings
-      # that are not on the runner, and failed this job at install). Building and checking packages is a separate
-      # CI concern; a release ref is built by tools/js-release/release-package in its own clean rooms.
-      - run: npm ci --ignore-scripts
+      # Versioning needs only the changesets CLI: no dist, no workspace install. npm (10.9.x on the runner) runs a
+      # linked workspace's `prepare` during ANY install of this tree, even with --ignore-scripts or
+      # npm_config_ignore_scripts (reproduced: beam-ux-prototype's `prepare` builds against the `file:` schemastud
+      # siblings that are not on the runner, failing `npm ci`). So install only the locked @changesets/cli, outside the
+      # workspace, and call its bin by path; `changeset version` needs no node_modules in the repo (its changelog
+      # generator, `@changesets/cli/changelog`, resolves from the CLI's own install). Building and checking packages is a
+      # separate CI concern; a release ref is built by tools/js-release/release-package in its own clean rooms.
+      - name: Install the changesets CLI (outside the workspace)
+        run: npm install --prefix "$RUNNER_TEMP/changesets" --no-save --no-package-lock --ignore-scripts @changesets/cli@2.31.1
 
       - name: Create or update the Version Packages PR
         uses: changesets/action@v1
         with:
-          version: npm run version-packages
+          # = the root `version-packages` script (`changeset version`), run from the CLI installed above.
+          version: ${{ runner.temp }}/changesets/node_modules/.bin/changeset version
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
