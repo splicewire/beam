@@ -11,15 +11,12 @@ export function CanvasSiblings({
     parent,
     editing,
     onEditProse,
-    onEditText: _onEditText,
     ...props
 }: {
     nodes: JsonDoc;
     parent: string;
     onEditProse?: ProseChange;
-    /** @deprecated Text leaves use the prose seam. */
-    onEditText?: CanvasNodeProps['onEditText'];
-} & Omit<CanvasNodeProps, 'node' | 'path' | 'onEditProse' | 'onEditText'>) {
+} & Omit<CanvasNodeProps, 'node' | 'path' | 'onEditProse'>) {
  const config=useCanvas();
  const path=(index:number)=>parent?`${parent}.${index}`:String(index);
  const profile=config.profile;

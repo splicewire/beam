@@ -47,8 +47,6 @@ export interface CanvasNodeProps {
     path: string;
     /** The path currently being inline-text-edited, or null. */
     editing: string | null;
-    /** @deprecated Text leaves are edited by the prose seam; this callback is no longer called. */
-    onEditText?: (path: string, text: string) => void;
     onEditProse?: ProseChange;
     onEditMd?: (path: string, md: string) => void;
     dnd: Dnd;

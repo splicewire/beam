@@ -132,7 +132,7 @@ describe('CanvasNode — opaque islands', () => {
     it('renders a registered component SEALED (pointer-events none) but selectable via data-bd-path', () => {
         const node = block({ name: 'Hero', isComponent: true, props: [{ name: 'title', kind: 'string', value: 'Hi' }] });
         const { container } = render(
-            wrap(<CanvasNode node={node} path="0" editing={null} onEditText={vi.fn()} dnd={noopDnd} />),
+            wrap(<CanvasNode node={node} path="0" editing={null} dnd={noopDnd} />),
         );
         expect(screen.getByTestId('hero').textContent).toContain('Hi');
         const island = container.querySelector('.ve-island') as HTMLElement;
@@ -145,7 +145,7 @@ describe('CanvasNode — opaque islands', () => {
     it('renders a JsonOpaque node sealed as read-only source, selectable', () => {
         const node: JsonBlock['children'][number] = { kind: 'opaque', reason: 'map', source: '{items.map(x => <li/>)}' };
         const { container } = render(
-            wrap(<CanvasNode node={node} path="0" editing={null} onEditText={vi.fn()} dnd={noopDnd} />),
+            wrap(<CanvasNode node={node} path="0" editing={null} dnd={noopDnd} />),
         );
         const opaque = container.querySelector('.ve-opaque') as HTMLElement;
         expect(opaque.getAttribute('data-bd-path')).toBe('0');
@@ -187,7 +187,7 @@ describe('CanvasNode — entitlement-gated blocks render sealed', () => {
         });
         const { container } = render(
             <CanvasProvider config={gatedConfig}>
-                <CanvasNode node={node} path="0" editing={null} onEditText={vi.fn()} dnd={noopDnd} />
+                <CanvasNode node={node} path="0" editing={null} dnd={noopDnd} />
             </CanvasProvider>,
         );
         const sealed = container.querySelector('.ve-gated') as HTMLElement;
@@ -210,7 +210,7 @@ describe('CanvasNode — entitlement-gated blocks render sealed', () => {
         });
         const { container } = render(
             <CanvasProvider config={clearedConfig}>
-                <CanvasNode node={node} path="0" editing={null} onEditText={vi.fn()} dnd={noopDnd} />
+                <CanvasNode node={node} path="0" editing={null} dnd={noopDnd} />
             </CanvasProvider>,
         );
         expect(container.querySelector('.ve-gated')).toBeNull();
@@ -223,7 +223,7 @@ describe('CanvasNode — inline text edit', () => {
     it('loads a rich editor and commits text through the document channel', async () => {
         const onEditProse=vi.fn();
         const node=block({name:'h2',children:[{kind:'text',value:'Title'}]});
-        render(wrapProse(<CanvasSiblings nodes={[node]} parent="" editing="0" onEditText={vi.fn()} onEditProse={onEditProse} dnd={noopDnd}/>));
+        render(wrapProse(<CanvasSiblings nodes={[node]} parent="" editing="0" onEditProse={onEditProse} dnd={noopDnd}/>));
         await editRichText('h2','Changed');
         await waitFor(()=>expect(onEditProse).toHaveBeenCalled());
         expect(JSON.stringify(onEditProse.mock.calls.at(-1))).toContain('Changed');
@@ -231,22 +231,20 @@ describe('CanvasNode — inline text edit', () => {
     });
 
     it('does not install a plain editable surface on an undeclared node', () => {
-        const onEditText=vi.fn();
-        render(wrap(<CanvasNode node={block({name:'h2',children:[{kind:'text',value:'Title'}]})} path="0" editing="0" onEditText={onEditText} dnd={noopDnd}/>));
+        render(wrap(<CanvasNode node={block({name:'h2',children:[{kind:'text',value:'Title'}]})} path="0" editing="0" dnd={noopDnd}/>));
         expect(document.querySelector('[contenteditable]')).toBeNull();
-        expect(onEditText).not.toHaveBeenCalled();
     });
 
     it('is not draggable while being text-edited (draggable would hijack text-selection drag)', () => {
         const node = block({ name: 'h2', children: [{ kind: 'text', value: 'Title' }] });
-        render(wrap(<CanvasNode node={node} path="0" editing="0" onEditText={vi.fn()} dnd={noopDnd} />));
+        render(wrap(<CanvasNode node={node} path="0" editing="0" dnd={noopDnd} />));
         const h2 = document.querySelector('h2') as HTMLElement;
         expect(h2.getAttribute('draggable')).toBe('false');
     });
 
     it('is draggable again once editing ends', () => {
         const node = block({ name: 'h2', children: [{ kind: 'text', value: 'Title' }] });
-        render(wrap(<CanvasNode node={node} path="0" editing={null} onEditText={vi.fn()} dnd={noopDnd} />));
+        render(wrap(<CanvasNode node={node} path="0" editing={null} dnd={noopDnd} />));
         const h2 = document.querySelector('h2') as HTMLElement;
         expect(h2.getAttribute('draggable')).toBe('true');
     });
@@ -275,7 +273,7 @@ describe('CanvasNode — drag/drop', () => {
     it('raises onDragStart / onDragOverNode / onDrop / onDragEnd with the node path', () => {
         const dnd = { onDragStart: vi.fn(), onDragOverNode: vi.fn(), onDrop: vi.fn(), onDragEnd: vi.fn() };
         const node = block({ name: 'p', children: [{ kind: 'text', value: 'x' }] });
-        render(wrap(<CanvasNode node={node} path="0.3" editing={null} onEditText={vi.fn()} dnd={dnd} />));
+        render(wrap(<CanvasNode node={node} path="0.3" editing={null} dnd={dnd} />));
         const p = document.querySelector('p') as HTMLElement;
 
         fireEvent.dragStart(p);
@@ -301,7 +299,7 @@ describe('CanvasNode — MDX island', () => {
         const onEditMd = vi.fn();
         const node = block({ name: 'Mdx', isComponent: true, props: [{ name: 'md', kind: 'string', value: 'hello' }] });
         const { container } = render(
-            wrap(<CanvasNode node={node} path="0" editing={null} onEditText={vi.fn()} onEditMd={onEditMd} dnd={noopDnd} />),
+            wrap(<CanvasNode node={node} path="0" editing={null} onEditMd={onEditMd} dnd={noopDnd} />),
         );
         expect(container.querySelector('.ve-mdx-block')?.getAttribute('data-bd-path')).toBe('0');
         const handle = container.querySelector('.ve-mdx-handle') as HTMLElement;
@@ -320,7 +318,7 @@ describe('an Mdx node without an island (ux-0233: the island retires per host)',
 
     it('shows its MDX text read-only in the canvas, and its clicks select it', () => {
         const { container } = render(
-            <CanvasProvider config={{ registry: {} }}><CanvasNode node={node} path="0" editing={null} onEditText={vi.fn()} onEditMd={vi.fn()} dnd={noopDnd} /></CanvasProvider>,
+            <CanvasProvider config={{ registry: {} }}><CanvasNode node={node} path="0" editing={null} onEditMd={vi.fn()} dnd={noopDnd} /></CanvasProvider>,
         );
         expect(container.querySelector('[data-beam-mdx-island="retired"]')?.textContent).toBe('kept text');
         expect(container.querySelector('[data-mdx-edit]')).toBeNull();

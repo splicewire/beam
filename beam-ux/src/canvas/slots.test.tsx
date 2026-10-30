@@ -16,7 +16,7 @@ describe('component instance subtrees',()=>{
   expect(html).toContain('<p>Default content</p>');
  });
  it('renders editable subtrees at their stable paths in the canvas',()=>{
-  const html=renderToStaticMarkup(<CanvasProvider config={config}><CanvasNode node={card} path="0" editing={null} onEditText={()=>{}} dnd={{onDragStart(){},onDragOverNode(){},onDrop(){},onDragEnd(){}}}/></CanvasProvider>);
+  const html=renderToStaticMarkup(<CanvasProvider config={config}><CanvasNode node={card} path="0" editing={null} dnd={{onDragStart(){},onDragOverNode(){},onDrop(){},onDragEnd(){}}}/></CanvasProvider>);
   expect(html).toContain('data-bd-path="0.slots.media.0"');
   expect(html).toContain('data-bd-path="0.0"');
   expect(html).toContain('Named content');
