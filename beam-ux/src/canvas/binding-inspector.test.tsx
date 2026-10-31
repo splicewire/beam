@@ -1,22 +1,39 @@
 import {useState,useMemo,useRef} from 'react';
-import {render,screen,fireEvent,cleanup,within} from '@testing-library/react';
-import {afterEach,it,expect,vi} from 'vitest';
+import {render,screen,fireEvent,cleanup,within,waitFor} from '@testing-library/react';
+import {beforeEach,afterEach,it,expect,vi} from 'vitest';
 import {FiveRegionEditShell} from '@schemastud/frame';
 import {createWidgetRegistry} from '@schemastud/seam';
-import {CanvasProvider} from './context';
+import {CanvasProvider,type CanvasConfig} from './context';
 import {CanvasWidget} from './CanvasWidget';
 import {BlockInspector} from './BlockInspector';
-import type {JsonDoc} from '../blockdoc/json';
+import {isJsonBlock,type JsonDoc} from '../blockdoc/json';
 const initial:JsonDoc=[{kind:'block',name:'p',id:'paragraph',dynamic:false,isComponent:false,props:[],children:[{kind:'text',value:'Fallback'}]}];
 const profile={profile:'content',version:1,doc:{admitsChildCategories:['html']},nodes:[{name:'p',category:'html',admitsChildCategories:[],attrsSchema:{type:'object',properties:{title:{type:'string'}}}}],
  'x-collections':[{name:'posts',schema:{type:'object',properties:{fields:{type:'object',properties:{title:{type:'string','x-sort':{name:'title'},'x-filter':{name:'title'}},rich:{type:'string',format:'markdown'},published:{type:'boolean'},count:{type:'integer'}}}}},publicRead:false,hasRecordPage:true}],
  'x-events':[{name:'sign_up',source:'package',parameters:['method']},{name:'generate_lead',source:'package',parameters:['currency','value']},{name:'host_custom',source:'host',parameters:[]}]};
-afterEach(cleanup);
-function Harness({readOnly=false,change=()=>{}}:{readOnly?:boolean;change?:(doc:JsonDoc)=>void}){
+beforeEach(()=>vi.stubGlobal('ResizeObserver',class{observe(){}unobserve(){}disconnect(){}}));
+afterEach(()=>{cleanup();vi.unstubAllGlobals();});
+function Harness({readOnly=false,change=()=>{},port}:{readOnly?:boolean;change?:(doc:JsonDoc)=>void;port?:CanvasConfig['bindingPreview']}){
  const [doc,setDoc]=useState(initial);const state=useRef({doc,readOnly});state.current={doc,readOnly};
  const registry=useMemo(()=>{const r=createWidgetRegistry();r.registerWidget('canvas',props=><CanvasWidget {...props} value={state.current.doc} readOnly={state.current.readOnly} onChange={next=>{setDoc(next);change(next);}}/>);return r;},[]);
- return <CanvasProvider config={{registry:{},profile,bindingPreview:{entryId:'page',pagePublic:true}}}><FiveRegionEditShell widget="canvas" schema={{type:'object'}} registry={registry} record={doc as unknown as Record<string,unknown>} inspector={<BlockInspector/>}/><output data-testid="doc">{JSON.stringify(doc)}</output></CanvasProvider>;
+ return <CanvasProvider config={{registry:{},profile,bindingPreview:port??{entryId:'page',pagePublic:true}}}><FiveRegionEditShell widget="canvas" schema={{type:'object'}} registry={registry} record={doc as unknown as Record<string,unknown>} inspector={<BlockInspector/>}/><output data-testid="doc">{JSON.stringify(doc)}</output></CanvasProvider>;
 }
+it('handpicks named author-readable Records through the real schema form and existing canvas command',async()=>{
+ const id='019a3456-7890-7000-8000-000000000001';
+ const read=vi.fn<NonNullable<NonNullable<CanvasConfig['bindingPreview']>['resolve']>>(async()=>({bindings:{paragraph:{records:[{id,fields:{title:'Article One'}}],hasMore:true,page:1}},record:null,choices:[],hasMore:false,recordPage:false,selectedValue:null,pagePublic:true}));
+ const port={entryId:'page',resolve:read};const change=vi.fn();render(<Harness port={port} change={change}/>);
+ fireEvent.click(screen.getByText('p 0'));fireEvent.change(screen.getByLabelText('Collection'),{target:{value:'posts'}});
+ fireEvent.change(screen.getByLabelText('Record selection'),{target:{value:'handpicked'}});
+ const option=await screen.findByRole('checkbox',{name:'Article One'});fireEvent.click(option);
+ await waitFor(()=>expect(JSON.parse(screen.getByTestId('doc').textContent!)[0].repeat.query.ids).toEqual([id]));
+ const [node]=JSON.parse(screen.getByTestId('doc').textContent!);
+ expect(node.repeat.query.limit).toBe(25);expect(node).not.toHaveProperty('when');expect(node.children).toEqual([{kind:'text',value:'Fallback'}]);
+ const projected=read.mock.calls.flatMap(call=>call[1].filter(isJsonBlock)).find(node=>node.repeat?.query?.limit===100);
+ expect(projected?.repeat?.query).not.toHaveProperty('ids');expect(projected?.when).toEqual({any:[{field:'id',operator:'is set'},{field:'fields.title',operator:'is set'}]});
+ expect(screen.getByText(/First 100 matching Records/)).toBeTruthy();expect(change).toHaveBeenCalled();
+ fireEvent.change(screen.getByLabelText('Record selection'),{target:{value:'matching'}});
+ expect(JSON.parse(screen.getByTestId('doc').textContent!)[0].repeat.query).not.toHaveProperty('ids');
+});
 it('writes profile Collection, first-page query, field binding and typed when rules through canvas commands',()=>{
  const change=vi.fn();render(<Harness change={change}/>);fireEvent.click(screen.getByText('p 0'));
  fireEvent.change(screen.getByLabelText('Collection'),{target:{value:'posts'}});

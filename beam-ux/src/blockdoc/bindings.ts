@@ -21,7 +21,9 @@ export function assertRepeat(value: unknown): asserts value is RepeatDeclaration
     if (value.query != null) {
         object(value.query);
         const query = value.query;
-        if (Object.keys(query).some((key) => !['filter', 'sort', 'limit', 'filterVariant'].includes(key))) throw new Error('Unknown Repeat query field');
+        if (Object.keys(query).some((key) => !['filter', 'sort', 'limit', 'filterVariant', 'ids'].includes(key))) throw new Error('Unknown Repeat query field');
+        if (query.ids != null && (!Array.isArray(query.ids) || query.ids.length > 100 || query.ids.some((id: unknown) => typeof id !== 'string' || !/^[\da-f]{8}-[\da-f]{4}-[\da-f]{4}-[\da-f]{4}-[\da-f]{12}$/i.test(id)))) throw new Error('Repeat ids must be at most 100 Record UUIDs');
+        if (Object.hasOwn(query, 'ids') && value.relation != null) throw new Error('Handpicked Records require a root Collection Repeat');
         if (query.limit != null && (!Number.isInteger(query.limit) || Number(query.limit) < 1 || Number(query.limit) > 100)) throw new Error('Repeat limit must be 1–100');
         if (query.sort != null && typeof query.sort !== 'string') throw new Error('Repeat sort must be a string');
         if (query.filterVariant != null && typeof query.filterVariant !== 'string') throw new Error('Repeat filterVariant must be a string');
