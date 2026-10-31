@@ -1,14 +1,13 @@
 import { LayoutTemplate, MousePointerSquareDashed } from 'lucide-react';
 import { useMemo, useState } from 'react';
-import type { SchemaNode } from '@schemastud/seam';
 import { cn } from '@schemastud/ui';
-import { useEntryBody, useSaveEntryBody, useRegionPreviews } from './hooks';
+import { useEntryBody, useRegionPreviews } from './hooks';
 import { RegionCanvas } from './RegionCanvas';
 import { RegionInspector } from './RegionInspector';
 import { RegionOverlay } from './RegionOverlay';
 import { StructurePanel } from './StructurePanel';
 import type { PaletteItem, Region, RegionKind, TreeNode } from './types';
-import type { EntryBody } from './types';
+import { useRegionPublication } from './use-region-publication';
 import { UX_BUILDER_CSS } from './css';
 
 export type BuilderMode = 'overlay' | 'structure';
@@ -29,36 +28,15 @@ export function placementFor(kind: RegionKind, placement: EditorPlacement): Edit
 // Loads the engaged region's body via the package's react-query layer, holds the in-flight edit
 // buffer, and saves through the injected client. Renders the inspector or the floating overlay.
 
-function useRegionEditor(region: Region) {
-    const query = useEntryBody(region.recordId);
-    const save = useSaveEntryBody();
-    const [draft, setDraft] = useState<EntryBody | null>(null);
-
-    const schema = (query.data?.schema ?? null) as SchemaNode | null;
-    const body: EntryBody = draft ?? query.data?.body ?? {};
-
-    return {
-        schema,
-        body,
-        onChange: setDraft,
-        onSave: () => save.mutate({ id: region.recordId, body }),
-        // The draft IS the unsaved edit, so dropping it is the whole of Discard — the next render
-        // falls back to `query.data.body`, the last thing the server actually stored.
-        onDiscard: () => setDraft(null),
-        saving: save.isPending,
-        saveLabel: save.saveLabel,
-    };
-}
-
-function RegionInspectorConnected({ region }: { region: Region }) {
-    const editor = useRegionEditor(region);
+function RegionInspectorConnected({ region, readOnly }: { region: Region; readOnly: boolean }) {
+    const editor = useRegionPublication(region.recordId, region.kind === 'form' || region.kind === 'richtext', readOnly);
     const preview = useRegionPreviews(region.recordId);
-    return <RegionInspector region={region} {...editor} {...preview} />;
+    return <RegionInspector region={region} {...editor} {...preview} editorDisabled={editor.disabled} publicationControls={editor.controls} />;
 }
 
-function RegionOverlayConnected({ region, onClose }: { region: Region; onClose: () => void }) {
-    const editor = useRegionEditor(region);
-    return <RegionOverlay region={region} onClose={onClose} {...editor} />;
+function RegionOverlayConnected({ region, onClose, readOnly }: { region: Region; onClose: () => void; readOnly: boolean }) {
+    const editor = useRegionPublication(region.recordId, region.kind === 'form' || region.kind === 'richtext', readOnly);
+    return <RegionOverlay region={region} onClose={onClose} {...editor} editorDisabled={editor.disabled} publicationControls={editor.controls} />;
 }
 
 /* ─────────────────────────── mode toggle ─────────────────────────── */
@@ -105,7 +83,9 @@ export function UxBuilder({
     editorPlacement = 'inspector',
     initialMode = 'overlay',
     initialEngaged,
+    readOnly = false,
 }: {
+    readOnly?: boolean;
     regions: Region[];
     pageTree: TreeNode;
     palette: PaletteItem[];
@@ -147,7 +127,7 @@ export function UxBuilder({
                     selectedRegion={selectedRegion}
                     onSelect={setSelected}
                     renderEditor={(region) => (
-                        <RegionInspectorConnected key={region.id} region={region} />
+                        <RegionInspectorConnected key={region.id} region={region} readOnly={readOnly} />
                     )}
                 />
             ) : dockInInspector ? (
@@ -163,7 +143,7 @@ export function UxBuilder({
                     />
                     <aside className="lg:sticky lg:top-2 lg:self-start">
                         {active ? (
-                            <RegionInspectorConnected key={active.id} region={active} />
+                            <RegionInspectorConnected key={active.id} region={active} readOnly={readOnly} />
                         ) : (
                             <div className="rounded-lg border border-dashed bg-card/50 p-8 text-center text-sm text-muted-foreground">
                                 Engage a region on the left to edit it here.
@@ -187,6 +167,7 @@ export function UxBuilder({
                     {active && (
                         <div className="beam-ux-overlay-dock">
                             <RegionOverlayConnected
+                                readOnly={readOnly}
                                 key={active.id}
                                 region={active}
                                 onClose={() => setEngaged(null)}

@@ -18,6 +18,10 @@ export function RegionOverlay({
     onSave,
     onDiscard,
     saving,
+    saveLabel,
+    saveDisabled,
+    editorDisabled,
+    publicationControls,
     onClose,
 }: RegionEditorProps & { onClose: () => void }) {
     const Icon = KIND_ICON[region.kind];
@@ -50,15 +54,20 @@ export function RegionOverlay({
                 </div>
             </div>
             <div className="p-4">
-                <RegionEditorBody
-                    region={region}
-                    schema={schema}
-                    body={body}
-                    onChange={onChange}
-                    onSave={onSave}
-                    onDiscard={onDiscard}
-                    saving={saving}
-                />
+                <fieldset disabled={editorDisabled}>
+                    <RegionEditorBody
+                        region={region}
+                        schema={schema}
+                        body={body}
+                        onChange={onChange}
+                        onSave={onSave}
+                        onDiscard={onDiscard}
+                        saving={saving}
+                        saveLabel={saveLabel}
+                        saveDisabled={saveDisabled}
+                    />
+                </fieldset>
+                {publicationControls}
                 <p className="mt-3 border-t pt-3 text-[11px] leading-relaxed text-muted-foreground">
                     {region.note}
                 </p>
