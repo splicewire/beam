@@ -44,4 +44,5 @@ export interface SchemaVersionPageImpactData {
   title: string;
   publishedVersion: string;
   fields: string[];
+  dependencies?: Record<string, string>;
 }

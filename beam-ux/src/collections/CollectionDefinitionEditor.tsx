@@ -38,6 +38,23 @@ function impactOf(failure: unknown): SchemaVersionImpactData | null {
     : null;
 }
 
+/** Match the guard's page pins plus published parent-declaration dependencies. */
+function confirmationOf(
+  impact: SchemaVersionImpactData,
+): SchemaRegistrationConfirmationData {
+  const pins = new Map<string, string>();
+  for (const page of impact.pages) {
+    pins.set(page.id, page.publishedVersion);
+    for (const [id, pin] of Object.entries(page.dependencies ?? {})) {
+      if (!pins.has(id)) pins.set(id, pin);
+    }
+  }
+  return {
+    schemaFingerprint: impact.schemaFingerprint,
+    publishedVersions: Object.fromEntries(pins),
+  };
+}
+
 /** Field definitions use the server's declared Data schema and the shared form renderer. */
 export function CollectionDefinitionEditor({
   schema,
@@ -125,15 +142,7 @@ export function CollectionDefinitionEditor({
             type="button"
             disabled={saving}
             onClick={() =>
-              void submit(pending.value, {
-                schemaFingerprint: pending.impact.schemaFingerprint,
-                publishedVersions: Object.fromEntries(
-                  pending.impact.pages.map((page) => [
-                    page.id,
-                    page.publishedVersion,
-                  ]),
-                ),
-              })
+              void submit(pending.value, confirmationOf(pending.impact))
             }
           >
             Confirm and save version

@@ -200,3 +200,133 @@ it("accepts the frozen host adapter unchanged and reviews its raw HTTP 409 befor
     publishedVersions: { "page-1": "pin-7" },
   });
 });
+
+it("confirms the same input with every impacted page and parent dependency publication pin", async () => {
+  const withParents = {
+    schemaFingerprint: "b".repeat(64),
+    pages: [
+      {
+        id: "child-1",
+        title: "Child article",
+        publishedVersion: "child-pin-1",
+        fields: ["subtitle"],
+        dependencies: { "parent-1": "parent-pin-3" },
+      },
+      {
+        id: "child-2",
+        title: "Second article",
+        publishedVersion: "child-pin-2",
+        fields: ["subtitle"],
+        dependencies: {
+          "parent-1": "parent-pin-3",
+          "parent-2": "parent-pin-4",
+        },
+      },
+    ],
+  };
+  const onSave = vi
+    .fn()
+    .mockRejectedValueOnce(new CollectionRegistrationImpact(withParents))
+    .mockResolvedValueOnce(undefined);
+  render(
+    <CollectionDefinitionEditor
+      schema={schema}
+      initial={initial}
+      onSave={onSave}
+      onCancel={() => {}}
+    />,
+  );
+  fireEvent.click(screen.getByRole("button", { name: "Save version" }));
+  await screen.findByText("Child article");
+  expect(screen.getByText("Second article")).toBeTruthy();
+  fireEvent.click(
+    screen.getByRole("button", { name: "Confirm and save version" }),
+  );
+  await waitFor(() => expect(onSave).toHaveBeenCalledTimes(2));
+  expect(onSave.mock.calls[1][0]).toEqual({
+    ...onSave.mock.calls[0][0],
+    registrationConfirmation: {
+      schemaFingerprint: withParents.schemaFingerprint,
+      publishedVersions: {
+        "child-1": "child-pin-1",
+        "child-2": "child-pin-2",
+        "parent-1": "parent-pin-3",
+        "parent-2": "parent-pin-4",
+      },
+    },
+  });
+});
+
+it("requires a fresh author confirmation when the backend re-reports stale pins or schema", async () => {
+  const freshImpact = {
+    ...impact,
+    schemaFingerprint: "c".repeat(64),
+    pages: [
+      {
+        ...impact.pages[0],
+        publishedVersion: "pin-8",
+        dependencies: { "parent-1": "parent-pin-9" },
+      },
+    ],
+  };
+  const onSave = vi
+    .fn()
+    .mockRejectedValueOnce(new CollectionRegistrationImpact(impact))
+    .mockRejectedValueOnce(new CollectionRegistrationImpact(freshImpact))
+    .mockResolvedValueOnce(undefined);
+  render(
+    <CollectionDefinitionEditor
+      schema={schema}
+      initial={initial}
+      onSave={onSave}
+      onCancel={() => {}}
+    />,
+  );
+  fireEvent.click(screen.getByRole("button", { name: "Save version" }));
+  fireEvent.click(
+    await screen.findByRole("button", { name: "Confirm and save version" }),
+  );
+  await waitFor(() => expect(onSave).toHaveBeenCalledTimes(2));
+  fireEvent.click(
+    await screen.findByRole("button", { name: "Confirm and save version" }),
+  );
+  await waitFor(() => expect(onSave).toHaveBeenCalledTimes(3));
+  expect(onSave.mock.calls[2][0]).toEqual({
+    ...onSave.mock.calls[0][0],
+    registrationConfirmation: {
+      schemaFingerprint: freshImpact.schemaFingerprint,
+      publishedVersions: { "page-1": "pin-8", "parent-1": "parent-pin-9" },
+    },
+  });
+});
+
+it("shows a hard URL break refusal without offering an impact-confirmation bypass", async () => {
+  const refusal = Object.assign(new Error("HTTP unprocessable"), {
+    response: {
+      status: 422,
+      data: {
+        message: "A published Record Page still binds this URL field.",
+        data: impact,
+      },
+    },
+  });
+  const onSave = vi.fn().mockRejectedValueOnce(refusal);
+  render(
+    <CollectionDefinitionEditor
+      schema={schema}
+      initial={initial}
+      onSave={onSave}
+      onCancel={() => {}}
+    />,
+  );
+  fireEvent.click(screen.getByRole("button", { name: "Save version" }));
+  await waitFor(() =>
+    expect(screen.getByRole("alert").textContent).toContain(
+      "published Record Page",
+    ),
+  );
+  expect(
+    screen.queryByRole("button", { name: "Confirm and save version" }),
+  ).toBeNull();
+  expect(onSave).toHaveBeenCalledOnce();
+});
