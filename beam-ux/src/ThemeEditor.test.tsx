@@ -48,7 +48,7 @@ function mount(client: Partial<UxBuilderClient>) {
       <UxBuilderProvider services={{ client: full, notify: () => {} }}>
         <ThemeEditor entryId={entryIds.theme} />
       </UxBuilderProvider>
-    </QueryClientProvider>,
+    </QueryClientProvider>
   );
 
   return full;
@@ -70,8 +70,8 @@ const loadsTheTheme = () => ({
     async (
       _id: string,
       _body: Record<string, unknown>,
-      _base: string | null,
-    ) => ({ ...themeState, headVersion: "v2", draftPending: true }),
+      _base: string | null
+    ) => ({ ...themeState, headVersion: "v2", draftPending: true })
   ),
   loadBody: vi.fn(async () => themeEntryBody as BeamUxEntryBodyData),
   saveBody: vi.fn(async (_id: string, body: Record<string, unknown>) => ({
@@ -88,7 +88,7 @@ describe("the theme entry gets Frame’s form, addressed by entry id", () => {
       () =>
         new Promise<typeof themeState>((resolve) => {
           ready = resolve;
-        }),
+        })
     );
     mount(client);
     await screen.findByText("Site theme");
@@ -119,22 +119,36 @@ describe("the theme entry gets Frame’s form, addressed by entry id", () => {
       target: { value: "#b91c1c" },
     });
     await userEvent.click(save);
-    await waitFor(() => expect(client.saveDraft).toHaveBeenCalledWith(
-      entryIds.theme,
-      expect.objectContaining({ site: expect.objectContaining({ accentHover: "#b91c1c" }) }),
-      null,
-    ));
-    expect(await screen.findByText("Theme draft saved. Readers still receive the published theme.")).toBeTruthy();
+    await waitFor(() =>
+      expect(client.saveDraft).toHaveBeenCalledWith(
+        entryIds.theme,
+        expect.objectContaining({
+          site: expect.objectContaining({ accentHover: "#b91c1c" }),
+        }),
+        null
+      )
+    );
+    expect(
+      await screen.findByText(
+        "Theme draft saved. Readers still receive the published theme."
+      )
+    ).toBeTruthy();
   });
 
   it("keeps Save disabled when the version history failed to load", async () => {
     const client = {
       ...loadsTheTheme(),
-      listVersions: vi.fn(async () => { throw new Error("History unavailable"); }),
+      listVersions: vi.fn(async () => {
+        throw new Error("History unavailable");
+      }),
     };
     mount(client);
     await screen.findByText(/History could not be loaded/);
-    expect(screen.getByRole("button", { name: "Save draft" }).hasAttribute("disabled")).toBe(true);
+    expect(
+      screen
+        .getByRole("button", { name: "Save draft" })
+        .hasAttribute("disabled")
+    ).toBe(true);
     expect(client.saveDraft).not.toHaveBeenCalled();
   });
 
@@ -190,7 +204,7 @@ describe("the theme entry gets Frame’s form, addressed by entry id", () => {
     });
 
     expect(screen.getByRole("status").textContent).toContain(
-      "Loading the theme",
+      "Loading the theme"
     );
     expect(screen.queryByRole("button", { name: "Save draft" })).toBeNull();
   });
@@ -247,9 +261,9 @@ describe("direct Release publication", () => {
       await screen.findByText(
         reviewRequired
           ? "Theme Release submitted for review."
-          : "Theme published.",
+          : "Theme published."
       );
-    },
+    }
   );
   it("shows a publish refusal without save-body fallback", async () => {
     const client = {
@@ -279,7 +293,7 @@ describe("responsive tokens and Release assembly survive integration", () => {
       compileError: null,
     };
     const saveDraft = vi.fn(async () => state);
-    const releaseCommand = vi.fn(async () => ({}) as never);
+    const releaseCommand = vi.fn(async () => ({} as never));
     const client = {
       ...loadsTheTheme(),
       listVersions: vi.fn(async () => ({
@@ -310,22 +324,22 @@ describe("responsive tokens and Release assembly survive integration", () => {
       expect(saveDraft).toHaveBeenCalledWith(
         entryIds.theme,
         expect.any(Object),
-        "v1",
-      ),
+        "v1"
+      )
     );
     expect(client.saveBody).not.toHaveBeenCalled();
     fireEvent.change(await screen.findByLabelText("Release"), {
       target: { value: "launch" },
     });
     await userEvent.click(
-      screen.getByRole("button", { name: "Add saved theme to Release" }),
+      screen.getByRole("button", { name: "Add saved theme to Release" })
     );
     await waitFor(() =>
       expect(releaseCommand).toHaveBeenCalledWith("launch", {
         action: "member",
         entryId: entryIds.theme,
         ref: "v2",
-      }),
+      })
     );
   });
   it("edits a responsive token without changing base tokens or another breakpoint", async () => {
@@ -338,8 +352,7 @@ describe("responsive tokens and Release assembly survive integration", () => {
     };
     const client = loadsTheTheme();
     client.loadBody = vi.fn(
-      async () =>
-        ({ ...themeEntryBody, body: original }) as BeamUxEntryBodyData,
+      async () => ({ ...themeEntryBody, body: original } as BeamUxEntryBodyData)
     );
     mount(client);
     await screen.findByText("Site theme");
