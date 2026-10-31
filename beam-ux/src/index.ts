@@ -53,3 +53,5 @@ export type { EntryImageData, EntryImageLibraryData } from "./generated/entry-im
 
 export { CollectionDefinitionEditor } from './collections/CollectionDefinitionEditor';
 export type { CollectionDefinitionInputData, CollectionDefinitionPageData } from './collections/generated';
+export { CollectionRegistrationImpact } from './collections/CollectionDefinitionEditor';
+export type { SchemaRegistryImpactResponseData } from './collections/generated';
