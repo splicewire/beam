@@ -13,6 +13,9 @@ export function useRegionPublication(id: string, bodyBound: boolean, readOnly = 
     const cache = useQueryClient();
     const query = useEntryBody(id);
     const complete = Boolean(client.saveDraft && client.publish && client.listVersions && client.restoreVersion);
+    // A host opts into the whole publication lifecycle or none; a partial client must never
+    // fall through to immediate publication when its author meant to save a draft.
+    const incomplete = bodyBound && !complete && Boolean(client.saveDraft || client.publish || client.listVersions || client.restoreVersion);
     const publicationEnabled = bodyBound && complete;
     const [loaded, setLoaded] = useState<{ envelope: BeamUxEntryBodyData; state: EntryPublicationState } | null>(null);
     const [draft, setDraft] = useState<EntryBody | null>(null);
@@ -48,7 +51,7 @@ export function useRegionPublication(id: string, bodyBound: boolean, readOnly = 
         void cache.invalidateQueries({ queryKey: ['beam-ux', 'entry-body', id] });
     };
     const run = async (action: () => Promise<void>) => {
-        if (locked.current || readOnly || !bodyBound) return;
+        if (locked.current || readOnly || incomplete || !bodyBound) return;
         locked.current = true; setBusy(true); setError(null); setNotice(null);
         try { await action(); }
         catch (failure) {
@@ -154,8 +157,8 @@ export function useRegionPublication(id: string, bodyBound: boolean, readOnly = 
         onDiscard: () => { if (!locked.current && !choice) setDraft(null); },
         saving: busy,
         saveLabel: publicationEnabled ? 'Save draft' : undefined,
-        saveDisabled: readOnly || !!choice || (publicationEnabled && !loaded),
-        disabled: readOnly || busy || !!choice || (publicationEnabled && !loaded),
-        controls: <>{error && <p role="alert">{error}</p>}{notice && <p role="status">{notice}</p>}{controls}</>,
+        saveDisabled: readOnly || incomplete || !!choice || (publicationEnabled && !loaded),
+        disabled: readOnly || incomplete || busy || !!choice || (publicationEnabled && !loaded),
+        controls: <>{incomplete && <p role="alert">Incomplete publication transport: this editor requires draft, publish, history and restore together. No writes are available.</p>}{error && <p role="alert">{error}</p>}{notice && <p role="status">{notice}</p>}{controls}</>,
     };
 }

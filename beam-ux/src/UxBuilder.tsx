@@ -127,7 +127,7 @@ export function UxBuilder({
                     selectedRegion={selectedRegion}
                     onSelect={setSelected}
                     renderEditor={(region) => (
-                        <RegionInspectorConnected key={region.id} region={region} readOnly={readOnly} />
+                        <RegionInspectorConnected key={region.recordId} region={region} readOnly={readOnly} />
                     )}
                 />
             ) : dockInInspector ? (
@@ -143,7 +143,7 @@ export function UxBuilder({
                     />
                     <aside className="lg:sticky lg:top-2 lg:self-start">
                         {active ? (
-                            <RegionInspectorConnected key={active.id} region={active} readOnly={readOnly} />
+                            <RegionInspectorConnected key={active.recordId} region={active} readOnly={readOnly} />
                         ) : (
                             <div className="rounded-lg border border-dashed bg-card/50 p-8 text-center text-sm text-muted-foreground">
                                 Engage a region on the left to edit it here.
@@ -168,7 +168,7 @@ export function UxBuilder({
                         <div className="beam-ux-overlay-dock">
                             <RegionOverlayConnected
                                 readOnly={readOnly}
-                                key={active.id}
+                                key={active.recordId}
                                 region={active}
                                 onClose={() => setEngaged(null)}
                             />

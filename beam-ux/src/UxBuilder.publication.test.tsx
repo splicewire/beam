@@ -22,7 +22,7 @@ function mount(client: UxBuilderClient, notify = vi.fn(), options: Partial<Compo
     const queryClient = new QueryClient({
         defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
     });
-    render(
+    const tree = (next: Partial<ComponentProps<typeof UxBuilder>>) => (
         <QueryClientProvider client={queryClient}>
             <UxBuilderProvider services={{ client, notify }}>
                 <UxBuilder
@@ -35,12 +35,13 @@ function mount(client: UxBuilderClient, notify = vi.fn(), options: Partial<Compo
                     }]}
                     pageTree={{ id: 'page', label: 'Page', kind: 'page', children: [] }}
                     palette={[]}
-                    {...options}
+                    {...next}
                 />
             </UxBuilderProvider>
-        </QueryClientProvider>,
+        </QueryClientProvider>
     );
-    return { notify };
+    const view = render(tree(options));
+    return { notify, rerender: (next: Partial<ComponentProps<typeof UxBuilder>>) => view.rerender(tree(next)) };
 }
 
 function client(overrides: Partial<UxBuilderClient> = {}): UxBuilderClient {
@@ -84,9 +85,8 @@ describe('UX builder publication-aware save', () => {
 
     it('keeps the central Save action on the immediate save-body path', async () => {
         const saveBody = vi.fn(async (_id, body) => ({ id: 'entry-1', body } as unknown as BeamUxEntryBodyData));
-        const saveDraft = vi.fn();
         const notify = vi.fn();
-        mount(client({ saveBody, saveDraft, listVersions: undefined }), notify);
+        mount(client({ saveBody }), notify);
 
         const source = await screen.findByLabelText('MDX source');
         fireEvent.change(source, { target: { value: '# Central save' } });
@@ -94,7 +94,6 @@ describe('UX builder publication-aware save', () => {
         expect(screen.queryByRole('button', { name: 'Save draft' })).toBeNull();
         await userEvent.click(screen.getByRole('button', { name: 'Save' }));
         await waitFor(() => expect(saveBody).toHaveBeenCalledWith('entry-1', { content: '# Central save' }));
-        expect(saveDraft).not.toHaveBeenCalled();
         expect(notify).toHaveBeenCalledWith({ type: 'success', message: 'Saved.' });
     });
 });
@@ -285,12 +284,53 @@ describe('the complete region publication journey', () => {
         } finally { open.mockRestore(); }
     });
 
-    it('does not expose a stranded draft-only affordance when publication is incomplete', async () => {
+    it('remounts a stable region when its record changes, isolating pending body, history and edit base', async () => {
+        const api = publicationClient({
+            loadBody: vi.fn(async (id) => ({ id, body: { content: `# Server ${id}` }, schema: null } as unknown as BeamUxEntryBodyData)),
+            listVersions: vi.fn(async (id) => ({ ...publication, id, headVersion: `${id}-v1`, versions: [{ id: `${id}-old`, readable: `${id}-old` }] } as EntryPublicationState)),
+        });
+        const view = mount(api);
+        fireEvent.change(await screen.findByLabelText('MDX source'), { target: { value: '# Unsaved entry-1 only' } });
+        await userEvent.click(screen.getByRole('button', { name: 'History' }));
+        expect(await screen.findByRole('button', { name: 'Restore entry-1-old into draft' })).toBeTruthy();
+        view.rerender({ regions: [{ id: 'body', label: 'Body', kind: 'richtext', recordId: 'entry-2', note: '' }] });
+        await waitFor(() => expect((screen.getByLabelText('MDX source') as HTMLTextAreaElement).value).toBe('# Server entry-2'));
+        expect(screen.queryByRole('button', { name: 'Restore entry-1-old into draft' })).toBeNull();
+        fireEvent.change(screen.getByLabelText('MDX source'), { target: { value: '# Edit entry-2 only' } });
+        await userEvent.click(screen.getByRole('button', { name: 'Save draft' }));
+        await waitFor(() => expect(api.saveDraft).toHaveBeenCalledWith('entry-2', { content: '# Edit entry-2 only' }, 'entry-2-v1', 'UX builder draft'));
+        expect(api.saveBody).not.toHaveBeenCalled();
+    });
+
+    it('drops a fixed-version publishing choice when the same region points to another record', async () => {
+        const api = publicationClient({
+            loadBody: vi.fn(async (id) => ({ id, body: { content: `# Server ${id}` }, schema: null } as unknown as BeamUxEntryBodyData)),
+            listVersions: vi.fn(async (id) => ({ ...publication, id, headVersion: `${id}-v1` })),
+            previewVersion: vi.fn(async () => ({ url: '/signed/preview' })),
+        });
+        const view = mount(api);
+        await screen.findByLabelText('MDX source');
+        await userEvent.click(screen.getByRole('button', { name: 'Publish' }));
+        expect(await screen.findByRole('dialog', { name: 'Publish saved version' })).toBeTruthy();
+        view.rerender({ regions: [{ id: 'body', label: 'Body', kind: 'richtext', recordId: 'entry-2', note: '' }] });
+        await waitFor(() => expect((screen.getByLabelText('MDX source') as HTMLTextAreaElement).value).toBe('# Server entry-2'));
+        expect(screen.queryByRole('dialog', { name: 'Publish saved version' })).toBeNull();
+        await userEvent.click(screen.getByRole('button', { name: 'Publish' }));
+        await userEvent.click(await screen.findByRole('button', { name: 'Publish now' }));
+        await waitFor(() => expect(api.publish).toHaveBeenCalledWith('entry-2', 'entry-2-v1'));
+        expect(api.publish).not.toHaveBeenCalledWith('entry-2', 'entry-1-v1');
+    });
+
+    it('refuses writes and reports a partially configured publication client', async () => {
         const api = publicationClient({ publish: undefined });
         mount(api);
-        await screen.findByLabelText('MDX source');
+        const source = await screen.findByLabelText('MDX source');
+        expect(source.closest('fieldset')?.disabled).toBe(true);
+        expect((await screen.findByRole('alert')).textContent).toMatch(/incomplete.*publication/i);
         expect(screen.queryByRole('button', { name: 'Save draft' })).toBeNull();
         expect(screen.queryByRole('button', { name: 'Publish' })).toBeNull();
-        expect(screen.getByRole('button', { name: 'Save' })).toBeTruthy();
+        await userEvent.click(screen.getByRole('button', { name: 'Save' }));
+        expect(api.saveBody).not.toHaveBeenCalled();
+        expect(api.saveDraft).not.toHaveBeenCalled();
     });
 });
