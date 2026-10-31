@@ -94,7 +94,7 @@ export function ThemeEditor({
       ?.slice()
       .sort((a, b) => b.id.localeCompare(a.id))
       .find((release) =>
-        release.members.some((member) => member.entryId === entryId)
+        release.members.some((member) => member.entryId === entryId),
       ) ??
     null;
   const save = useMutation({
@@ -102,7 +102,7 @@ export function ThemeEditor({
       const state = versions.data;
       if (!client.saveDraft || !versions.isSuccess || !state)
         throw new Error(
-          "Loaded version history and draft transport are required to edit this theme."
+          "Loaded version history and draft transport are required to edit this theme.",
         );
       return client.saveDraft(entryId, body, state.headVersion);
     },
@@ -175,7 +175,7 @@ export function ThemeEditor({
     tokens?: Record<string, Record<string, unknown>>;
   };
   const layers = responsive.tokens ?? {};
-  const visibleBody = breakpoint ? layers[breakpoint] ?? {} : body;
+  const visibleBody = breakpoint ? (layers[breakpoint] ?? {}) : body;
   const changeLayer = (next: Record<string, unknown>) =>
     setDraft(
       breakpoint
@@ -186,7 +186,7 @@ export function ThemeEditor({
               tokens: { ...layers, [breakpoint]: next },
             },
           }
-        : { ...body, ...next }
+        : { ...body, ...next },
     );
   const region: Region = {
     id: "theme",
@@ -211,7 +211,7 @@ export function ThemeEditor({
               <option key={name} value={name}>
                 {name}
               </option>
-            )
+            ),
           )}
         </select>
       </label>
@@ -304,7 +304,7 @@ export function ThemeEditor({
           onCommand={async (command) => {
             const next = await client.releaseCommand!(
               activeRelease.id,
-              command
+              command,
             );
             setPublication(next);
             await Promise.all([versions.refetch(), query.refetch()]);
