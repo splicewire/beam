@@ -99,6 +99,45 @@ describe("the theme entry gets Frame’s form, addressed by entry id", () => {
     await waitFor(() => expect(save.hasAttribute("disabled")).toBe(false));
   });
 
+  it("saves a first theme draft against a loaded null version base", async () => {
+    const client = {
+      ...loadsTheTheme(),
+      listVersions: vi.fn(async () => ({
+        ...themeState,
+        headVersion: null,
+        headReadable: null,
+        publishedVersion: null,
+        publishedReadable: null,
+        versions: [],
+      })),
+    };
+    mount(client);
+    await screen.findByText("Site theme");
+    const save = screen.getByRole("button", { name: "Save draft" });
+    await waitFor(() => expect(save.hasAttribute("disabled")).toBe(false));
+    fireEvent.change(screen.getByLabelText("Accent hover"), {
+      target: { value: "#b91c1c" },
+    });
+    await userEvent.click(save);
+    await waitFor(() => expect(client.saveDraft).toHaveBeenCalledWith(
+      entryIds.theme,
+      expect.objectContaining({ site: expect.objectContaining({ accentHover: "#b91c1c" }) }),
+      null,
+    ));
+    expect(await screen.findByText("Theme draft saved. Readers still receive the published theme.")).toBeTruthy();
+  });
+
+  it("keeps Save disabled when the version history failed to load", async () => {
+    const client = {
+      ...loadsTheTheme(),
+      listVersions: vi.fn(async () => { throw new Error("History unavailable"); }),
+    };
+    mount(client);
+    await screen.findByText(/History could not be loaded/);
+    expect(screen.getByRole("button", { name: "Save draft" }).hasAttribute("disabled")).toBe(true);
+    expect(client.saveDraft).not.toHaveBeenCalled();
+  });
+
   it("loads the body through the injected client, by the id it was given", async () => {
     const client = loadsTheTheme();
     mount(client);
