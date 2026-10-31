@@ -50,3 +50,6 @@ export { FilesComparisonPanel } from './FilesComparisonPanel';
 export type { FileInspection, FileReconcileInput, FileReconcileResult, FileDraftDiagnostic } from './files';
 
 export type { EntryImageData, EntryImageLibraryData } from "./generated/entry-images";
+
+export { CollectionDefinitionEditor } from './collections/CollectionDefinitionEditor';
+export type { CollectionDefinitionInputData, CollectionDefinitionPageData } from './collections/generated';
