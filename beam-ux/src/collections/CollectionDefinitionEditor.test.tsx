@@ -10,7 +10,7 @@ import {
   CollectionDefinitionEditor,
   CollectionRegistrationImpact,
 } from "./CollectionDefinitionEditor";
-import type { CollectionDefinitionInputData } from "./generated";
+import type { CollectionDefinitionInputData, SchemaVersionImpactData } from "./generated";
 
 afterEach(cleanup);
 const initial: CollectionDefinitionInputData = {
@@ -202,7 +202,7 @@ it("accepts the frozen host adapter unchanged and reviews its raw HTTP 409 befor
 });
 
 it("confirms the same input with every impacted page and parent dependency publication pin", async () => {
-  const withParents = {
+  const withParents: SchemaVersionImpactData = {
     schemaFingerprint: "b".repeat(64),
     pages: [
       {
