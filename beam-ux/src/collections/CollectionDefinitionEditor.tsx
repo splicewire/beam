@@ -1,9 +1,11 @@
 import { useMemo, useState } from "react";
+import { statusOf, messageOf } from "../state/page-state";
 import { SchemaForm, type SchemaNode } from "@schemastud/seam";
 import type {
   CollectionDefinitionInputData,
   SchemaRegistrationConfirmationData,
   SchemaVersionImpactData,
+  SchemaRegistryImpactResponseData,
 } from "./generated";
 
 /** An existing registry 409 supplies the exact proposal and publication pins requiring review. */
@@ -14,6 +16,26 @@ export class CollectionRegistrationImpact extends Error {
   ) {
     super(message);
   }
+}
+
+/** Reuse Beam's transport status/message helpers; hosts can pass their HTTP error unchanged. */
+function impactOf(failure: unknown): SchemaVersionImpactData | null {
+  if (failure instanceof CollectionRegistrationImpact) return failure.impact;
+  if (
+    statusOf(failure) !== 409 ||
+    failure === null ||
+    typeof failure !== "object"
+  )
+    return null;
+  const body = (
+    failure as { response?: { data?: SchemaRegistryImpactResponseData } }
+  ).response?.data;
+  const impact = body?.data;
+  return impact &&
+    typeof impact.schemaFingerprint === "string" &&
+    Array.isArray(impact.pages)
+    ? impact
+    : null;
 }
 
 /** Field definitions use the server's declared Data schema and the shared form renderer. */
@@ -68,13 +90,15 @@ export function CollectionDefinitionEditor({
     try {
       await onSave(proposal);
     } catch (failure) {
-      if (failure instanceof CollectionRegistrationImpact) {
-        setPending({ impact: failure.impact, value: proposal });
+      const impact = impactOf(failure);
+      if (impact) {
+        setPending({ impact, value: proposal });
       }
       setError(
-        failure instanceof Error
-          ? failure.message
-          : "The Collection could not be saved.",
+        messageOf(failure) ??
+          (failure instanceof Error
+            ? failure.message
+            : "The Collection could not be saved."),
       );
     } finally {
       setSaving(false);

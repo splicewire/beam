@@ -162,3 +162,41 @@ it("invalidates the pending confirmation when a field changes", async () => {
   await waitFor(() => expect(onSave).toHaveBeenCalledTimes(2));
   expect(onSave.mock.calls[1][0].registrationConfirmation).toBeNull();
 });
+
+it("accepts the frozen host adapter unchanged and reviews its raw HTTP 409 before confirmation", async () => {
+  const failure = Object.assign(new Error("HTTP conflict"), {
+    response: {
+      status: 409,
+      data: {
+        data: impact,
+        success: false,
+        message: "Review actual published pages.",
+      },
+    },
+  });
+  const onSave = vi
+    .fn()
+    .mockRejectedValueOnce(failure)
+    .mockResolvedValueOnce(undefined);
+  render(
+    <CollectionDefinitionEditor
+      schema={schema}
+      initial={initial}
+      onSave={onSave}
+      onCancel={() => {}}
+    />,
+  );
+  fireEvent.click(screen.getByRole("button", { name: "Save version" }));
+  await screen.findByRole("region", { name: "Published pages affected" });
+  expect(screen.getByRole("alert").textContent).toBe(
+    "Review actual published pages.",
+  );
+  fireEvent.click(
+    screen.getByRole("button", { name: "Confirm and save version" }),
+  );
+  await waitFor(() => expect(onSave).toHaveBeenCalledTimes(2));
+  expect(onSave.mock.calls[1][0].registrationConfirmation).toEqual({
+    schemaFingerprint: impact.schemaFingerprint,
+    publishedVersions: { "page-1": "pin-7" },
+  });
+});
