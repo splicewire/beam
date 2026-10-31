@@ -6,11 +6,12 @@ import {effectiveDeclaration} from './inspector-style';
 import {DEFAULT_STYLE_REGISTRY} from '../blockdoc/style-runtime';
 import {blockStyleFields} from './block-style';
 import {useCanvasSelection} from './CanvasSelection';
+import {unavailableBindings} from './unavailable-bindings';
 
 export function CanvasOutline({doc,onSelect,onHide}:{doc:JsonDoc;onSelect:(path:string,add:boolean)=>void;onHide:(path:string,hidden:boolean)=>void}){
  const [collapsed,setCollapsed]=useState<Set<string>>(new Set());
  const selection=useCanvasSelection();const {selection:layer}=useStyleSelection();
- const config=useCanvas();const registry=config.styleRegistry??DEFAULT_STYLE_REGISTRY;
+ const config=useCanvas();const unavailable=unavailableBindings(doc,config.profile,config.bindingPreview?.recordCollection);const registry=config.styleRegistry??DEFAULT_STYLE_REGISTRY;
  const toggle=(path:string)=>setCollapsed(previous=>{const next=new Set(previous);next.has(path)?next.delete(path):next.add(path);return next;});
  const rows:{path:string;depth:number;name:string;hasChildren:boolean;hidden:boolean;own:boolean}[]=[];
  const walk=(nodes:JsonDoc,parent:string,depth:number)=>nodes.forEach((node,i)=>{
@@ -36,6 +37,7 @@ export function CanvasOutline({doc,onSelect,onHide}:{doc:JsonDoc;onSelect:(path:
  {row.hasChildren&&<button type="button" aria-label={`${collapsed.has(row.path)?'Expand':'Collapse'} ${row.name} ${row.path}`} onClick={()=>toggle(row.path)}>{collapsed.has(row.path)?'▸':'▾'}</button>}
  <button type="button" data-outline-select="" onClick={event=>onSelect(row.path,event.ctrlKey||event.metaKey||event.shiftKey)}>{row.name} {row.path}</button>
  <button type="button" disabled={selection.commands?.readOnly} onClick={()=>onHide(row.path,!row.own)}>{row.own?'Show':'Hide'} {row.name} {row.path}</button>
+ {Object.entries(unavailable).filter(([path])=>path===row.path||path.slice(0,path.lastIndexOf('.'))===row.path).map(([path,messages])=><small role="status" data-binding-unavailable={path} key={path}>{messages.join('; ')}. Rebind or remove this node.</small>)}
  {row.hidden&&<small>Hidden for visitors at {layer.breakpoint?`${layer.breakpoint}+`:'all widths'} after publish{!row.own?' (inherited; edit the earlier layer)':''}</small>}
  </div>)}</div></section>;
 }

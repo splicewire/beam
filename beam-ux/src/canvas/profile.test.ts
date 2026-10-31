@@ -18,6 +18,30 @@ describe('server Manifest Profile canvas bridge', () => {
         expect(() => assertProfileRegistry(componentProfile, {})).toThrow('Card');
         expect(() => assertProfileRegistry(componentProfile, { Card: () => null })).not.toThrow();
     });
+    it('requires only components reachable through declared child and slot categories', () => {
+        const declared = { ...profile, nodes: [
+            { name: 'section', category: 'html', admitsChildCategories: ['nested'], slots: [{ name: 'aside', admitsChildCategories: ['sidebar'] }] },
+            { name: 'Card', category: 'nested', admitsChildCategories: [] },
+            { name: 'Aside', category: 'sidebar', admitsChildCategories: [] },
+            { name: 'ContentOutline', category: 'content_outline', admitsChildCategories: null },
+            { name: 'ContentSection', category: 'content_section', admitsChildCategories: null },
+        ] };
+        expect(() => assertProfileRegistry(declared, { Card: true })).toThrow('Aside');
+        expect(() => assertProfileRegistry(declared, { Card: true, Aside: true })).not.toThrow();
+        expect(() => assertProfileRegistry({ ...declared, nodes: [...declared.nodes,
+            { name: 'Unknown', category: 'html', admitsChildCategories: [] }] }, { Card: true, Aside: true })).toThrow('Unknown');
+    });
+    it('retains conservative registry checks for wildcard and explicit expression admission', () => {
+        const nodes = [
+            { name: 'section', category: 'html', admitsChildCategories: null },
+            { name: 'Unknown', category: 'other', admitsChildCategories: [] },
+        ];
+        expect(() => assertProfileRegistry({ ...profile, nodes }, {})).toThrow('Unknown');
+        expect(() => assertProfileRegistry({ ...profile, doc: null, nodes }, {})).toThrow('Unknown');
+        expect(() => assertProfileRegistry({ ...profile, doc: { admitsChildCategories: null }, nodes }, {})).toThrow('Unknown');
+        expect(() => assertProfileRegistry({ ...profile, nodes: [{ ...nodes[0], admitsChildCategories: [], contentExpression: 'Unknown*' }, nodes[1]] }, {})).toThrow('Unknown');
+        expect(() => assertProfileRegistry({ ...profile, nodes: [{ ...nodes[0], admitsChildCategories: [], slots: [{ name: 'aside', admitsChildCategories: null }] }, nodes[1]] }, {})).toThrow('Unknown');
+    });
     it('offers only declared nodes at a legal insertion position', () => {
         const templates = ['p', 'Unknown'].map(name => ({ label: name, make: () => block(name) }));
         expect(profileTemplates(templates, profile, [], null).map(t => t.label)).toEqual(['p']);
