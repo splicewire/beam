@@ -2,7 +2,7 @@ import { Head } from '@inertiajs/react';
 import type { ComponentType } from 'react';
 import { useEditMode } from '@splicewire/beam-ux/canvas';
 import { entryPageConfig } from '@splicewire/beam-ux/docs';
-import { EntryBody, PreviewBoundary, type PreviewBarData } from '@splicewire/beam-ux/site';
+import { EntryBody, PreviewBoundary, SiteClickEventListener, type PreviewBarData } from '@splicewire/beam-ux/site';
 import { canvasConfig } from '../../editor/canvas-config';
 import { IntakeFormsFromPage } from '../../editor/intake';
 import PageEditor from '../../editor/page-editor';
@@ -106,5 +106,8 @@ export default function SiteHome({
     );
 
     // As on the packaged entry page: inside a Preview, the page renders under its bar, and its forms hold.
-    return preview ? <PreviewBoundary preview={preview}>{page}</PreviewBoundary> : page;
+    return <>
+        <SiteClickEventListener enabled={!preview} />
+        {preview ? <PreviewBoundary preview={preview}>{page}</PreviewBoundary> : page}
+    </>;
 }

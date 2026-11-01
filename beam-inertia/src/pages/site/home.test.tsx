@@ -20,6 +20,7 @@ vi.mock('../../editor/page-editor', () => ({
 }));
 vi.mock('../../editor/canvas-config', () => ({ canvasConfig: { registry: { DemoHero: () => null } } }));
 vi.mock('@splicewire/beam-ux/site', () => ({
+    SiteClickEventListener: () => null,
     EntryBody: ({ artifact, components }: { artifact: { url: string }; components?: object }) => (
         <div data-testid="artifact" data-components={Object.keys(components ?? {}).join(',')}>
             {artifact.url}
