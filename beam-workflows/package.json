@@ -1,6 +1,6 @@
 {
     "name": "@splicewire/beam-workflows",
-    "version": "0.1.0",
+    "version": "0.2.2",
     "description": "The workflows-domain beam surfaces, authored pre-packaged and DTO-first (rehome-components, ADR-0092). Mirrors the PHP splicewire/laravel-beam-workflows package by domain. Ships the workflows administration surface — lineage admin, the schema-driven blueprint editor, the read-only diff/graph previews, the recipient picker, the marking-migration wizard, and the runtime lifecycle Stepper — as portable, tenancy-agnostic components: they own their react-query data logic, take their transport + real-time subscription + feedback + host chrome as injected services (never app-local imports), and type off the generated Workflow* projections delivered via @splicewire/_resources. Generic UI comes from the @schemastud/ui foundation; @xyflow/react is a host-provided peer.",
     "license": "MIT",
     "type": "module",
