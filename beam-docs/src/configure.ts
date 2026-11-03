@@ -7,6 +7,7 @@ import {
 } from '@splicewire/beam-mdx/kit';
 import { ApiReference, type ApiReferenceFactory, type ApiReferenceLoader } from './ApiReference.js';
 import { DocsLayout } from './DocsLayout.js';
+import { RegistryRegistrants } from './RegistryRegistrants.js';
 import { setDocsConfiguration } from './config.js';
 import type { DocsTransport } from './publications.js';
 
@@ -20,6 +21,8 @@ export type DocsConfig = {
     /** The host's ONE Scalar lever (DM5): a factory, or a lazy loader (e.g. the flagship's code-split patched build). */
     createApiReference?: ApiReferenceFactory;
     loadApiReference?: ApiReferenceLoader;
+    /** Base of the registry routes the registrant panel reads (`{base}/{root}/registrants`). Null turns the panel off. */
+    registriesEndpoint?: string | null;
 };
 
 /** Call after host entry-page configuration. Explicit invocation survives tree shaking. */
@@ -31,6 +34,7 @@ export function configureDocs(options: DocsConfig = {}): void {
         registryLinkEndpoint: options.registryLinkEndpoint === undefined
             ? '/beam/docs/registry-link' : options.registryLinkEndpoint,
         searchEndpoint: options.searchEndpoint === undefined ? '/beam/docs/search' : options.searchEndpoint,
+        registriesEndpoint: options.registriesEndpoint === undefined ? '/beam/docs/registries' : options.registriesEndpoint,
         createApiReference: options.createApiReference,
         loadApiReference: options.loadApiReference,
         transport: options.transport,
@@ -41,5 +45,6 @@ export function configureDocs(options: DocsConfig = {}): void {
     // The guide kit a docs body is authored against, contributed like ApiReference so no host re-types it (D-A4 §1,
     // DOCS-12). Host entries come last and win. The kit's stylesheet stays the host's import (`@splicewire/beam-mdx/kit/css`).
     const kit = { Figure, FileTree, Terminal, Callout, Steps, Step, DoctorOutput, SectionLanding, CardGrid, Card };
-    configureEntryPage({ components: { ApiReference, ...kit, ...entryPageConfig().components } });
+    // The registry pages' registrant panel (`<RegistryRegistrants root="…" />`, registry-docs), contributed the same way.
+    configureEntryPage({ components: { ApiReference, RegistryRegistrants, ...kit, ...entryPageConfig().components } });
 }

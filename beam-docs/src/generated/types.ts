@@ -71,3 +71,17 @@ export type PublicationStatus = 'queued' | 'running' | 'succeeded' | 'failed';
 export type PublishInputData = {
 version: string,
 };
+export type RegistryRegistrantData = {
+key: string,
+registrant: string,
+};
+export type RegistryRegistrantsData = {
+root: string,
+describedHere: boolean | null,
+owner: string | null,
+describedBy: string | null,
+recordsRegistrants: boolean,
+entries: RegistryRegistrantData[] | null,
+unattributed: number | null,
+note: string | null,
+};

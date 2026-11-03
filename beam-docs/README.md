@@ -34,6 +34,13 @@ The publishing panel reads `/beam/docs/publications`, submits `{ version }`, pol
 and retries a failed attempt through `/{id}/retry`. It retains previous successes. Destination,
 visibility and immutable artifact selection belong to the server.
 
+`configureDocs()` also registers `RegistryRegistrants` for MDX pages. A registry page places
+`<RegistryRegistrants root="beam.particle.resources" />` (the `registries:scaffold` stub writes it), and the panel
+reads `/beam/docs/registries/{root}/registrants` from the serving site. It shows the registry's owner and who
+described it; it lists each entry and its registrant only where the response says the registry records them, and
+shows the response's one-line note otherwise. The server filters every read. A failed or unreadable response renders
+nothing. Set `registriesEndpoint` to move the base, or `null` to turn the panel off.
+
 All requests accept an injected `DocsTransport`, either through component props or
 `configureDocs({ transport })`. It receives `(url, RequestInit)` and returns decoded JSON with the
 server's `{ data: ... }` envelope. The default transport sends same-origin credentials and Laravel's
