@@ -176,12 +176,18 @@ describe('§8a — @splicewire/beam-ux UxBuilder mounts off pure DTO fixtures (n
             _baseVersion: string | null,
             _label?: string,
         ) => publication);
+        // Publication is an all-or-nothing host seam: UxBuilder enables draft UI only when
+        // listVersions, saveDraft, publish, and restoreVersion are all available.
+        const publish = vi.fn(async (_id: string, _ref: string) => publication);
+        const restoreVersion = vi.fn(async (_id: string, _ref: string) => publication);
         const notify = vi.fn();
         const Wrapper = withProviders({
             client: {
                 ...makeClient(saveBody),
                 listVersions,
                 saveDraft,
+                publish,
+                restoreVersion,
             },
             notify,
         });
@@ -317,8 +323,10 @@ describe('§8a — @splicewire/beam-ux UxBuilder mounts off pure DTO fixtures (n
         const saveBody = vi.fn<UxBuilderClient['saveBody']>();
         const listVersions = vi.fn(async () => publication);
         const saveDraft = vi.fn(async () => publication);
+        const publish = vi.fn(async () => publication);
+        const restoreVersion = vi.fn(async () => publication);
         const Wrapper = withProviders({
-            client: { loadBody: async () => pageBody, saveBody, listVersions, saveDraft },
+            client: { loadBody: async () => pageBody, saveBody, listVersions, saveDraft, publish, restoreVersion },
             notify: vi.fn(),
         });
 
