@@ -6,9 +6,10 @@ import {authoredEntry} from './authored-components';
 import {useCanvas} from './context.js';
 import {useCanvasSelection} from './CanvasSelection.js';
 import {bindingFields,collectionOffers,eventOffers,recordOffer,repeatCollection,bindText,scalarValue,condition,type BindingField} from './binding-edit.js';
+import {RepeatRecordSelection} from './RepeatRecordSelection';
 const OPERATORS:ConditionOperator[]=['is set','is empty','equals','does not equal','greater than','less than','contains'];
 
-/** Every edit uses the canvas's existing Local Session command/undo path. It never saves or reads Records. */
+/** Every edit uses the canvas's existing Local Session command/undo path. Choice reads use the addressed author port. */
 export function BindingInspector({path}:{path:string}){
  const config=useCanvas();const {commands}=useCanvasSelection();const [error,setError]=useState<string|null>(null);const [mode,setMode]=useState<'all'|'any'>('all');
  const node=commands?getAt(commands.doc,path):null;
@@ -53,6 +54,7 @@ export function BindingInspector({path}:{path:string}){
     <option value="">No Repeat</option>{offers.map(item=><option key={item.name} value={item.name}>{item.name}</option>)}</select></label>
    {node.repeat?.relation&&<p>This nested Repeat uses its declared relation. Relation editing is unavailable here.</p>}
    {node.repeat?.collection&&<>
+    {repeatOffer&&<RepeatRecordSelection doc={commands.doc} path={path} offer={repeatOffer} query={query} disabled={disabled} onChange={queryChange}/>}
     <label>Record limit<input aria-label="Record limit" type="number" min={1} max={100} value={query.limit??25} onChange={event=>queryChange({...query,limit:Number(event.target.value)})}/></label>
     {fieldSelect('Sort field',sort.replace(/^-/,'')?sortFields.find(field=>field.sortName===sort.replace(/^-/,''))?.path??'':'',field=>queryChange({...query,sort:field?`${sort.startsWith('-')?'-':''}${sortName(field)}`:null}),sortFields)}
     <label>Sort order<select aria-label="Sort order" value={sort.startsWith('-')?'descending':'ascending'} onChange={event=>queryChange({...query,sort:sort?`${event.target.value==='descending'?'-':''}${sort.replace(/^-/,'')}`:null})}><option value="ascending">Ascending</option><option value="descending">Descending</option></select></label>

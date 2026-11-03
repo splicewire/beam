@@ -19,6 +19,7 @@ fileLanguages?: string[] | null,
 intakeForms?: Record<string, Record<string, any>>,
 mediaLibrary?: boolean,
 authoredComponents: ComponentCanvasData[],
+redirects?: Array<{ path: string; match: string; permanent: boolean; origin: string }> | null,
 };
 
 export type EntryVersionData = {
@@ -52,9 +53,14 @@ kind: 'block',
 style?: BlockStyleData | null,
 repeat?: RepeatData | null,
 when?: ConditionData | null,
-clickEvent?: { name: string, label?: string },
+clickEvent?: ClickEventData | null,
 slots?: Record<string, JsonNode[]>,
 component?: ComponentDefinitionData | null,
+};
+
+export type ClickEventData = {
+name: string,
+label?: undefined | string,
 };
 
 export type ComponentDefinitionData = {
@@ -224,6 +230,7 @@ filter?: Record<string, any> | null,
 sort?: string | null,
 limit?: number,
 filterVariant?: string | null,
+ids?: string[] | null,
 };
 
 export type ConditionData = {

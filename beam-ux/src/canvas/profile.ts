@@ -4,8 +4,31 @@ import { getAt, isJsonBlock, isLeafText, parentOf, setProp, removeProp } from '.
 import type { BlockTemplate } from './context';
 
 export function assertProfileRegistry(profile: BlockdocManifest, registry: Record<string, unknown>): void {
-    const missing = profile.nodes.filter(node => /^[A-Z]/.test(node.name) && !Object.hasOwn(registry, node.name)).map(node => node.name);
+    const missing = reachableProfileNodes(profile).filter(node => /^[A-Z]/.test(node.name) && !Object.hasOwn(registry, node.name)).map(node => node.name);
     if (missing.length) throw new Error(`Manifest Profile components missing from the JS registry: ${missing.join(', ')}`);
+}
+
+/** Registry requirements follow the same category admission used by the palette.
+ * Explicit expressions and unconstrained containers retain the full vocabulary check.
+ */
+function reachableProfileNodes(profile: BlockdocManifest): BlockdocManifest['nodes'] {
+    if (!profile.doc || profile.doc.admitsChildCategories === null || profile.nodes.some(node => node.contentExpression)) return profile.nodes;
+    const categories = new Set(profile.doc.admitsChildCategories);
+    const reachable = new Set<string>();
+    let changed = true;
+    while (changed) {
+        changed = false;
+        for (const node of profile.nodes) {
+            if (reachable.has(node.name) || node.category === null || !categories.has(node.category)) continue;
+            reachable.add(node.name);
+            changed = true;
+            for (const admitted of [node.admitsChildCategories, ...(node.slots ?? []).map(slot => slot.admitsChildCategories)]) {
+                if (admitted === null) return profile.nodes;
+                for (const category of admitted) categories.add(category);
+            }
+        }
+    }
+    return profile.nodes.filter(node => reachable.has(node.name));
 }
 
 /** The server owns the vocabulary. Templates supply presentation, never admission. */

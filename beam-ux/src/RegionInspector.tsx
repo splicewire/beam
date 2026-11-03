@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { Badge, cn } from '@schemastud/ui';
 import type { SchemaNode } from '@schemastud/seam';
 import { KIND_ICON } from './kindIcon';
@@ -30,6 +31,8 @@ export interface RegionEditorProps {
     saving?: boolean;
     saveLabel?: string;
     saveDisabled?: boolean;
+    editorDisabled?: boolean;
+    publicationControls?: ReactNode;
 }
 
 /**
@@ -47,6 +50,8 @@ export function RegionInspector({
     saving,
     saveLabel,
     saveDisabled,
+    editorDisabled,
+    publicationControls,
     previews = [],
     previewState = 'unavailable',
 }: RegionEditorProps) {
@@ -99,17 +104,20 @@ export function RegionInspector({
                 </div>
             </div>
             <div className="p-4">
-                <RegionEditorBody
-                    region={region}
-                    schema={schema}
-                    body={body}
-                    onChange={onChange}
-                    onSave={onSave}
-                    onDiscard={onDiscard}
-                    saving={saving}
-                    saveLabel={saveLabel}
-                    saveDisabled={saveDisabled}
-                />
+                <fieldset disabled={editorDisabled}>
+                    <RegionEditorBody
+                        region={region}
+                        schema={schema}
+                        body={body}
+                        onChange={onChange}
+                        onSave={onSave}
+                        onDiscard={onDiscard}
+                        saving={saving}
+                        saveLabel={saveLabel}
+                        saveDisabled={saveDisabled}
+                    />
+                </fieldset>
+                {publicationControls}
                 <p className="mt-3 border-t pt-3 text-[11px] leading-relaxed text-muted-foreground">
                     {region.note}
                 </p>

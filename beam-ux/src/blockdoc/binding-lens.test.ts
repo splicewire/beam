@@ -3,6 +3,15 @@ import { parse } from './lens.js';
 import { jsonToTsx, toJson } from './json.js';
 
 describe('ADR-0229 binding declarations', () => {
+    it('round trips saved handpicked Record UUIDs and preserves explicit empty versus omitted selections', () => {
+        for (const query of [{ids:['019a3456-7890-7000-8000-000000000001']}, {ids:[]}, {}]) {
+            const doc=toJson(parse(`<p bdRepeat={{collection:"articles",query:${JSON.stringify(query)}}}>Records</p>;`));
+            expect(toJson(parse(jsonToTsx(doc)))).toEqual(doc);
+            expect(doc[0]).toMatchObject({repeat:{collection:'articles',query}});
+        }
+        expect(()=>parse('<p bdRepeat={{collection:"articles",query:{ids:["not-an-id"]}}}/>;')).toThrow(/UUIDs/);
+        expect(()=>parse(`<p bdRepeat={{relation:"authors",query:{ids:[]}}}/>;`)).toThrow(/root Collection/);
+    });
     it('round trips literal bindings as data, including the empty subtree', () => {
         const source = '<p bdRepeat={{collection:"articles",empty:[]}} bdWhen={{all:[{field:"title",operator:"is set"}]}} title={bdField("title")}>{bdText("title", "Untitled")}</p>;';
         const doc = toJson(parse(source));
