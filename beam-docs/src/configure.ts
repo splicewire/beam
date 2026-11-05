@@ -6,6 +6,7 @@ import {
     Callout, Card, CardGrid, DoctorOutput, Figure, FileTree, SectionLanding, Step, Steps, Terminal,
 } from '@splicewire/beam-mdx/kit';
 import { ApiReference, type ApiReferenceFactory, type ApiReferenceLoader } from './ApiReference.js';
+import { DataExample } from './DataExample.js';
 import { DocsLayout } from './DocsLayout.js';
 import { RegistryRegistrants } from './RegistryRegistrants.js';
 import { setDocsConfiguration } from './config.js';
@@ -55,6 +56,7 @@ export function configureDocs(options: DocsConfig = {}): void {
     // The guide kit a docs body is authored against, contributed like ApiReference so no host re-types it (D-A4 §1,
     // DOCS-12). Host entries come last and win. The kit's stylesheet stays the host's import (`@splicewire/beam-mdx/kit/css`).
     const kit = { Figure, FileTree, Terminal, Callout, Steps, Step, DoctorOutput, SectionLanding, CardGrid, Card };
-    // The registry pages' registrant panel (`<RegistryRegistrants root="…" />`, registry-docs), contributed the same way.
-    configureEntryPage({ components: { ApiReference, RegistryRegistrants, ...kit, ...entryPageConfig().components } });
+    // The registry pages' registrant panel (`<RegistryRegistrants root="…" />`, registry-docs) and their captured data
+    // examples (`<DataExample source="…">`, docs-feedback ticket 09), contributed the same way.
+    configureEntryPage({ components: { ApiReference, RegistryRegistrants, DataExample, ...kit, ...entryPageConfig().components } });
 }

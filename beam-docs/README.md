@@ -41,6 +41,12 @@ described it; it lists each entry and its registrant only where the response say
 shows the response's one-line note otherwise. The server filters every read. A failed or unreadable response renders
 nothing. Set `registriesEndpoint` to move the base, or `null` to turn the panel off.
 
+It registers `DataExample` the same way: a registry page's captured example, the PHP that ran beside the JSON it
+returned, side by side on a wide screen and stacked on a narrow one. A page never writes it by hand. The package's
+`docs:examples` script captures the output and writes `<DataExample source="…">` with the two fenced code blocks
+between the page's `data-example` markers, and the package's suite re-runs the example (`rushing/php-popcorn`'s
+`DataExamples`). It makes no request.
+
 All requests accept an injected `DocsTransport`, either through component props or
 `configureDocs({ transport })`. It receives `(url, RequestInit)` and returns decoded JSON with the
 server's `{ data: ... }` envelope. The default transport sends same-origin credentials and Laravel's

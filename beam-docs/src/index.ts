@@ -11,6 +11,7 @@ export { ProductSwitcher } from './ProductSwitcher.js';
 export { DOCS_LAYOUT_CSS } from './layout-css.js';
 export { configureDocs, type DocsConfig } from './configure.js';
 export { DocsPublishingPanel, type DocsPublishingPanelProps } from './DocsPublishingPanel.js';
+export { DataExample, DATA_EXAMPLE_CSS, type DataExampleProps } from './DataExample.js';
 export {
     RegistryRegistrants, type RegistryRegistrantsProps, type RegistryRegistrantData, type RegistryRegistrantsData,
 } from './RegistryRegistrants.js';
