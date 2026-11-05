@@ -70,6 +70,8 @@ name: string,
 description: string | null,
 components: PlanComponentData[],
 entitlements: Record<string, boolean>,
+hasFee: boolean,
+purchasable: boolean,
 };
 
 export type PlanComponentData = {
