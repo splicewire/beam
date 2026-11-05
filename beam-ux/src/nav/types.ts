@@ -56,6 +56,22 @@ export type LinkComponent = ComponentType<{
     'aria-current'?: 'page' | undefined;
 }>;
 
+/** What a {@link RealmNavKinds} component receives: its node (children and any kind-specific fields included). */
+export type RealmNavKindProps = {
+    node: RealmNavNode;
+    /** The rail's router link, so a kind's links navigate the way the rail's own rows do. */
+    linkComponent?: LinkComponent;
+    /** The current URL, for a kind that marks or opens the reader's place itself. */
+    currentHref?: string;
+};
+
+/**
+ * The client half of laravel-data-nav's `data-nav.kinds`: a node `kind` discriminator (`beam-docs/registry-index`)
+ * mapped to the component that draws it. `<RealmNav kinds={…}>` renders a matching node with that component instead
+ * of a built-in row; an unmatched kind keeps the built-in rendering.
+ */
+export type RealmNavKinds = Record<string, ComponentType<RealmNavKindProps>>;
+
 /**
  * How the flat, server-resolved tree folds into groups. Both variants render grouping from the
  * **hrefless-parent-is-a-group-header** convention (no `group` field) and preserve the authored

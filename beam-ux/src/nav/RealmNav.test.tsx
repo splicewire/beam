@@ -2,7 +2,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { RealmNav, SIDEBAR_ACTIVE_FG } from './RealmNav.js';
 import { REALM_NAV_CSS } from './css.js';
-import type { LinkComponent, RealmNavNode } from './types.js';
+import type { LinkComponent, RealmNavKindProps, RealmNavNode } from './types.js';
 
 const node = (over: Partial<RealmNavNode> & { title: string }): RealmNavNode => ({
     kind: 'nav/link',
@@ -535,5 +535,86 @@ describe('RealmNav — the Developer zone (zone: meta)', () => {
         const { container } = render(<RealmNav items={[node({ title: 'Home', href: '/' })]} />);
 
         expect(container.querySelector('[data-zone="meta"]')).toBeNull();
+    });
+});
+
+describe('RealmNav — the kind → component seam (docs-feedback ticket 07)', () => {
+    const widget = (props: RealmNavKindProps) => (
+        <div data-testid="widget" data-current={props.currentHref}>
+            widget:{props.node.title}:{props.node.children?.length ?? 0}
+            {props.linkComponent ? <props.linkComponent href="/via-link">via link</props.linkComponent> : null}
+        </div>
+    );
+    const index: RealmNavNode = {
+        kind: 'beam-docs/registry-index',
+        title: 'Registry index',
+        href: null,
+        children: [node({ title: 'Popcorn', href: null, children: [node({ title: 'popcorn.invocables' })] })],
+    };
+
+    it('draws a mapped kind with its component, children and all, in the row it occupies', () => {
+        render(
+            <RealmNav
+                items={[node({ title: 'Foundations' }), index]}
+                kinds={{ 'beam-docs/registry-index': widget }}
+                currentHref="/docs/registries/x"
+            />,
+        );
+
+        const drawn = screen.getByTestId('widget');
+        expect(drawn.textContent).toContain('widget:Registry index:1');
+        expect(drawn.getAttribute('data-current')).toBe('/docs/registries/x');
+        expect(drawn.closest('[data-kind]')?.getAttribute('data-kind')).toBe('beam-docs/registry-index');
+        // The kind owns its node: it never opens a heading, and its children are not drawn as rail rows.
+        expect(screen.queryByText('Registry index', { selector: '.beam-nav-label' })).toBeNull();
+        expect(screen.queryByRole('link', { name: 'popcorn.invocables' })).toBeNull();
+        expect(screen.getByRole('link', { name: 'Foundations' })).toBeTruthy();
+    });
+
+    it('hands the component the rail’s injected link', () => {
+        const Link: LinkComponent = ({ href, children, ...rest }) => (
+            <a href={href} data-router="yes" {...rest}>
+                {children}
+            </a>
+        );
+        render(<RealmNav items={[index]} kinds={{ 'beam-docs/registry-index': widget }} linkComponent={Link} />);
+
+        expect(screen.getByRole('link', { name: 'via link' }).getAttribute('data-router')).toBe('yes');
+    });
+
+    it('draws a mapped kind that sits inside a section heading as one of its rows', () => {
+        const section: RealmNavNode = { kind: 'nav/link', title: 'Registries', href: '/docs/registries', children: [index] };
+        render(<RealmNav items={[section]} kinds={{ 'beam-docs/registry-index': widget }} />);
+
+        expect(screen.getByText('Registries', { selector: '.beam-nav-label' })).toBeTruthy();
+        expect(screen.getByTestId('widget')).toBeTruthy();
+    });
+
+    it('draws a mapped kind in a section-groups rail as a lone row, not a group of its children', () => {
+        render(<RealmNav items={[index]} variant="section-groups" kinds={{ 'beam-docs/registry-index': widget }} />);
+
+        expect(screen.getByTestId('widget')).toBeTruthy();
+        expect(screen.queryByText('Registry index', { selector: '.beam-nav-label' })).toBeNull();
+    });
+
+    it('falls back to the built-in rows for an unmapped kind: a heading over the linked children', () => {
+        // The degrade an older bundle gives: an href-less child (a cluster with no page) is not a row, so only the
+        // linked children survive. That loss is why laravel-beam-docs keeps the `links` widget as its default.
+        const served: RealmNavNode = {
+            ...index,
+            children: [node({ title: 'Workflow registries', href: '/docs/registries/beam.workflows' }), ...index.children!],
+        };
+        render(<RealmNav items={[served]} kinds={{ 'some/other-kind': widget }} />);
+
+        expect(screen.queryByTestId('widget')).toBeNull();
+        expect(screen.getByText('Registry index', { selector: '.beam-nav-label' })).toBeTruthy();
+        expect(screen.getByRole('link', { name: 'Workflow registries' })).toBeTruthy();
+        expect(screen.queryByText('Popcorn')).toBeNull();
+    });
+
+    it('ignores inherited object keys as kinds', () => {
+        render(<RealmNav items={[{ ...node({ title: 'Odd' }), kind: 'toString' }]} kinds={{}} />);
+
+        expect(screen.getByRole('link', { name: 'Odd' })).toBeTruthy();
     });
 });

@@ -43,9 +43,10 @@
     },
     "peerDependencies": {
         "@inertiajs/react": ">=2",
+        "@rjsf/utils": ">=6",
+        "@schemastud/combobox": "*",
         "@schemastud/nav": "*",
         "@schemastud/seam": "*",
-        "@rjsf/utils": ">=6",
         "@splicewire/beam-mdx": "*",
         "@splicewire/beam-ux": ">=0.3.0",
         "react": ">=18"
@@ -57,9 +58,10 @@
     },
     "devDependencies": {
         "@inertiajs/react": "^3.0.0",
+        "@rjsf/utils": "^6.0.0",
+        "@schemastud/combobox": "file:../../schemastud/combobox",
         "@schemastud/nav": "file:../../schemastud/nav",
         "@schemastud/seam": "file:../../schemastud/seam",
-        "@rjsf/utils": "^6.0.0",
         "@splicewire/beam-ux": "^0.7.0",
         "@testing-library/react": "^16.1.0",
         "@testing-library/user-event": "^14.5.2",

@@ -8,7 +8,7 @@ export default defineConfig({
     clean: true,
     external: [
         'react', 'react/jsx-runtime', 'react-dom', '@inertiajs/react',
-        '@schemastud/nav', '@schemastud/seam', '@rjsf/utils',
+        '@schemastud/combobox', '@schemastud/nav', '@schemastud/seam', '@rjsf/utils',
         '@splicewire/beam-ux/docs', '@splicewire/beam-ux/nav',
     ],
 });

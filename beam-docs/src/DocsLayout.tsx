@@ -1,6 +1,8 @@
 import { OnThisPage } from '@schemastud/nav';
 import { useEffect, useId, useState } from 'react';
-import { RealmNav, type RealmNavNode } from '@splicewire/beam-ux/nav';
+import { RealmNav, type RealmNavKinds, type RealmNavNode } from '@splicewire/beam-ux/nav';
+import { docsConfiguration } from './config.js';
+import { REGISTRY_INDEX_KIND, RegistryIndexNav } from './RegistryIndexNav.js';
 import { DOCS_LAYOUT_CSS } from './layout-css.js';
 import type { ChromeProps } from '@splicewire/beam-ux/docs';
 import { DocsHeader } from './DocsHeader.js';
@@ -27,6 +29,10 @@ import type { DocsChromeData } from './generated/types.js';
  * `nav_group` column shows up in the rail with no second grouping implementation to keep in step, and
  * it is why this layout takes the projection straight from the page props rather than fetching a
  * manifest of its own.
+ *
+ * A node whose `kind` has a component in {@link docsNavKinds} is drawn by it in its row (`RealmNav`'s `kinds` seam):
+ * the packaged one is the registry index, a search over a cluster tree, which laravel-beam-docs emits when a host sets
+ * `beam.docs.registries.nav.widget` to `index`.
  *
  * ## The on-this-page column is a real component, not a placeholder
  *
@@ -104,7 +110,13 @@ export function DocsLayout({ nav, linkComponent, currentHref, slots, classNames,
             <div className={[DEFAULTS.body, classNames?.body].filter(Boolean).join(' ')}>
                 <aside className={[DEFAULTS.rail, classNames?.rail].filter(Boolean).join(' ')} aria-label="Docs sections">
                     {slots?.railTop}
-                    <RealmNav items={items} variant="flat-with-headers" linkComponent={linkComponent} />
+                    <RealmNav
+                        items={items}
+                        variant="flat-with-headers"
+                        linkComponent={linkComponent}
+                        kinds={docsNavKinds()}
+                        currentHref={currentHref}
+                    />
                 </aside>
 
                 <main id={mainId} ref={setMain} className={[DEFAULTS.main, classNames?.main].filter(Boolean).join(' ')}>
@@ -122,6 +134,16 @@ export function DocsLayout({ nav, linkComponent, currentHref, slots, classNames,
             {slots?.footer}
         </div>
     );
+}
+
+/**
+ * The kinds the docs rail draws itself (docs-feedback ticket 07): the packaged registry index, then a host's
+ * `configureDocs({ navKinds })`, which wins. Read per render, so a layout used without `configureDocs` still draws it.
+ */
+const PACKAGED_NAV_KINDS: RealmNavKinds = { [REGISTRY_INDEX_KIND]: RegistryIndexNav };
+
+export function docsNavKinds(): RealmNavKinds {
+    return { ...PACKAGED_NAV_KINDS, ...docsConfiguration().navKinds };
 }
 
 /**

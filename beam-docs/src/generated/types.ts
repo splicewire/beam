@@ -71,6 +71,24 @@ export type PublicationStatus = 'queued' | 'running' | 'succeeded' | 'failed';
 export type PublishInputData = {
 version: string,
 };
+export type RegistryIndexAvailability = 'served' | 'external' | 'not-available' | 'not-published' | 'not-documented' | 'exempt';
+export type RegistryIndexData = {
+groups: RegistryIndexGroupData[],
+total: number,
+};
+export type RegistryIndexGroupData = {
+key: string,
+title: string,
+href: string | null,
+roots: RegistryIndexRootData[],
+groups: RegistryIndexGroupData[],
+};
+export type RegistryIndexRootData = {
+root: string,
+href: string | null,
+availability: RegistryIndexAvailability,
+note: string | null,
+};
 export type RegistryRegistrantData = {
 key: string,
 registrant: string,

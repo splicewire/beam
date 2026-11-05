@@ -10,6 +10,7 @@ import { DocsLayout } from './DocsLayout.js';
 import { RegistryRegistrants } from './RegistryRegistrants.js';
 import { setDocsConfiguration } from './config.js';
 import type { DocsTransport } from './publications.js';
+import type { RealmNavKinds } from '@splicewire/beam-ux/nav';
 
 export type DocsConfig = {
     /** Set null to disable Registry-link requests. Server policy still decides whether to return a link. */
@@ -23,6 +24,13 @@ export type DocsConfig = {
     loadApiReference?: ApiReferenceLoader;
     /** Base of the registry routes the registrant panel reads (`{base}/{root}/registrants`). Null turns the panel off. */
     registriesEndpoint?: string | null;
+    /**
+     * The docs rail's `kind → component` map (docs-feedback ticket 07), merged over the packaged one
+     * (`beam-docs/registry-index` → `RegistryIndexNav`). A host entry wins, so a host can redraw a packaged kind.
+     */
+    navKinds?: RealmNavKinds;
+    /** How a rail widget navigates (the registry index's search): e.g. Inertia's `router.visit`. Default: a full load. */
+    navigate?: (href: string) => void;
 };
 
 /** Call after host entry-page configuration. Explicit invocation survives tree shaking. */
@@ -38,6 +46,8 @@ export function configureDocs(options: DocsConfig = {}): void {
         createApiReference: options.createApiReference,
         loadApiReference: options.loadApiReference,
         transport: options.transport,
+        navKinds: options.navKinds,
+        navigate: options.navigate,
     });
     if (options.layout || !resolveLayout('DocsLayout')) {
         registerLayout('DocsLayout', options.layout ?? DocsLayout);

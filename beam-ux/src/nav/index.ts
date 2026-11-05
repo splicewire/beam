@@ -27,6 +27,8 @@ export type {
     RealmNavNode,
     RealmNavVariant,
     RealmNavClassNames,
+    RealmNavKindProps,
+    RealmNavKinds,
     LinkComponent,
     HostRealm,
     HostRealms,

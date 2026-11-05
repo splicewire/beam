@@ -19,6 +19,7 @@ import { REALM_NAV_CSS } from './css.js';
 import type {
     LinkComponent,
     RealmNavClassNames,
+    RealmNavKinds,
     RealmNavNode,
     RealmNavVariant,
 } from './types.js';
@@ -55,6 +56,16 @@ export type RealmNavProps = {
      * ⇒ RealmNav draws them after the rail, each developer seat a labeled group of its rows.
      */
     meta?: (nodes: RealmNavNode[]) => ReactNode;
+    /**
+     * The `kind → component` seam (docs-feedback ticket 07): the client half of laravel-data-nav's `data-nav.kinds`.
+     * A node whose `kind` is a key here is drawn by that component in the row it occupies, with or without an href,
+     * and never opens a group; every other node renders as before. This is how a package draws a server-declared
+     * kind as its own widget (beam-docs maps `beam-docs/registry-index` to a search box over a cluster tree) without
+     * replacing the rail. Absent or unmatched ⇒ the node falls through to the built-in rows (§7 "tolerate unknown").
+     */
+    kinds?: RealmNavKinds;
+    /** The current URL, handed to {@link kinds} components; the built-in rows read the server-stamped flags instead. */
+    currentHref?: string;
 };
 
 type RailGroup = {
@@ -128,17 +139,22 @@ function resolveClass(
  * Fold the flat, server-resolved tree into the grouped shape — grouping from the manifest, never
  * fabricated. Child order is PRESERVED as authored (`nav_order`); nothing is re-sorted here.
  */
-function toGroups(items: RealmNavNode[], variant: RealmNavVariant): RailGroup[] {
+function toGroups(
+    items: RealmNavNode[],
+    variant: RealmNavVariant,
+    kinds?: RealmNavKinds,
+): RailGroup[] {
+    const railable = (node: RealmNavNode) => isRailable(node) || isKind(node, kinds);
     if (variant === 'section-groups') {
         // Each top-level node owns a labeled group of its children (a multi-launch realm renders its
         // `children`); a childless node falls back to itself as a lone item.
         return items
             .map((section) => ({
-                label: section.title,
-                items: (section.children && section.children.length > 0
+                label: isKind(section, kinds) ? undefined : section.title,
+                items: (section.children && section.children.length > 0 && !isKind(section, kinds)
                     ? section.children
                     : [section]
-                ).filter(isRailable),
+                ).filter(railable),
             }))
             .filter((group) => group.items.length > 0);
     }
@@ -155,9 +171,12 @@ function toGroups(items: RealmNavNode[], variant: RealmNavVariant): RailGroup[] 
     const groups: RailGroup[] = [];
     let current: RailGroup = { items: [] };
     for (const node of items) {
-        if ((!node.href || (node.children?.length ?? 0) > 0) && !node.locked) {
+        if (isKind(node, kinds)) {
+            // A kind's component owns its node, children and all: it is a row, never a heading.
+            current.items.push(node);
+        } else if ((!node.href || (node.children?.length ?? 0) > 0) && !node.locked) {
             if (current.items.length > 0) groups.push(current);
-            const children = (node.children ?? []).filter(isRailable);
+            const children = (node.children ?? []).filter(railable);
             const landingIsAlreadyAChild = children.some((child) => child.href === node.href);
             current = {
                 label: node.title,
@@ -184,6 +203,11 @@ function toGroups(items: RealmNavNode[], variant: RealmNavVariant): RailGroup[] 
  */
 function isRailable(node: RealmNavNode): boolean {
     return Boolean(node.href || node.locked);
+}
+
+/** Whether a host or package drew this node's kind itself (the {@link RealmNavProps.kinds} seam). */
+function isKind(node: RealmNavNode, kinds: RealmNavKinds | undefined): boolean {
+    return Boolean(kinds && node.kind && Object.prototype.hasOwnProperty.call(kinds, node.kind) && kinds[node.kind]);
 }
 
 /**
@@ -232,13 +256,26 @@ function RailItem({
     icon,
     classNames,
     onUpsell,
+    kinds,
+    currentHref,
 }: {
     node: RealmNavNode;
     linkComponent?: LinkComponent;
     icon?: (node: RealmNavNode, ctx: { className: string; active: boolean }) => ReactNode;
     classNames?: RealmNavClassNames;
     onUpsell: (node: RealmNavNode) => void;
+    kinds?: RealmNavKinds;
+    currentHref?: string;
 }) {
+    const Kind = isKind(node, kinds) ? kinds![node.kind!] : undefined;
+    if (Kind) {
+        return (
+            <div className="beam-nav-kind" data-kind={node.kind}>
+                <Kind node={node} linkComponent={linkComponent} currentHref={currentHref} />
+            </div>
+        );
+    }
+
     // Server-stamped active/activeTrail is authoritative — read from the node, never recomputed.
     const serverActive = Boolean(node.active || node.activeTrail);
     const iconClass = resolveClass(classNames?.itemIcon, DEFAULTS.itemIcon, serverActive);
@@ -292,10 +329,12 @@ export function RealmNav({
     classNames,
     upsellCta,
     meta,
+    kinds,
+    currentHref,
 }: RealmNavProps) {
     const rail = (items ?? []).filter((node) => node.zone !== 'meta');
     const zones = (items ?? []).filter((node) => node.zone === 'meta' && (node.children?.length ?? 0) > 0);
-    const groups = toGroups(rail, variant);
+    const groups = toGroups(rail, variant, kinds);
     // One popover for the whole rail, held here rather than per-row, so two locked rows can never be
     // open at once — the same placement the desktop chrome's `Dock` uses for its upsell state.
     const [upsell, setUpsell] = useState<RealmNavNode | null>(null);
@@ -312,12 +351,14 @@ export function RealmNav({
                     ) : null}
                     {group.items.map((node) => (
                         <RailItem
-                            key={node.routeName ?? node.href ?? node.title}
+                            key={node.routeName ?? node.href ?? `${node.kind ?? ''}:${node.title}`}
                             node={node}
                             linkComponent={linkComponent}
                             icon={icon}
                             classNames={classNames}
                             onUpsell={setUpsell}
+                            kinds={kinds}
+                            currentHref={currentHref}
                         />
                     ))}
                 </div>
@@ -332,7 +373,7 @@ export function RealmNav({
                               </div>
                               {/* One seat: the zone title stands for it, so no seat label under it (integrator 07:45Z).
                                   Two or more: each keeps its label, or their rows would run together (review-r1). */}
-                              {toGroups(zone.children ?? [], 'section-groups').map((group, i, seats) => (
+                              {toGroups(zone.children ?? [], 'section-groups', kinds).map((group, i, seats) => (
                                   <div key={group.label ?? `seat-${i}`} className={classNames?.group ?? DEFAULTS.group}>
                                       {seats.length > 1 && group.label ? (
                                           <div className={classNames?.groupLabel ?? DEFAULTS.groupLabel}>
@@ -347,6 +388,8 @@ export function RealmNav({
                                               icon={icon}
                                               classNames={classNames}
                                               onUpsell={setUpsell}
+                                              kinds={kinds}
+                                              currentHref={currentHref}
                                           />
                                       ))}
                                   </div>
