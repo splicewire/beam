@@ -41,6 +41,7 @@ const FIXTURE: ApiTokenData[] = [
     expiresAt: null,
     archivedAt: null,
     isCurrent: false,
+    lastFour: "7c2a",
   },
   {
     id: "e3b0c442-98fc-4c14-9afb-f4c8996fb002",
@@ -52,6 +53,7 @@ const FIXTURE: ApiTokenData[] = [
     expiresAt: null,
     archivedAt: null,
     isCurrent: false,
+    lastFour: null,
   },
 ];
 

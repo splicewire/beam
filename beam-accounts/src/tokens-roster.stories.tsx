@@ -51,3 +51,22 @@ export const WithActivity: Story = {
     </MockTokensProvider>
   ),
 };
+
+// owner-review-20261102 K-28: one owner held 24 tokens named `dev-login-as`. A token minted after the
+// change shows its secret's last four; one minted before shows the tail of its id, labelled "id".
+const sameName = tokens[0];
+export const SameNamedTokens: Story = {
+  render: () => (
+    <MockTokensProvider
+      config={{
+        tokens: [
+          { ...sameName, id: "0f1e2d3c-4b5a-4697-8899-aabbccdd3f9a", name: "dev-login-as", lastFour: "c41e" },
+          { ...sameName, id: "0f1e2d3c-4b5a-4697-8899-aabbccdd7d02", name: "dev-login-as", lastFour: "08b5" },
+          { ...sameName, id: "0f1e2d3c-4b5a-4697-8899-aabbccdd6fa8", name: "dev-login-as", lastFour: null },
+        ],
+      }}
+    >
+      <TokensRoster />
+    </MockTokensProvider>
+  ),
+};

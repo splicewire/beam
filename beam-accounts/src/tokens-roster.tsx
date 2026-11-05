@@ -34,6 +34,7 @@ import {
   useRevokeOtherSessions,
 } from "./hooks";
 import { useNotify, useTokensServices } from "./provider";
+import { TokenFragmentText } from "./token-fragment";
 import type {
   ApiTokenData,
   CreatedTokenData,
@@ -630,8 +631,12 @@ function buildColumns(
                 </Badge>
               )}
             </div>
-            <span className="block text-[11px] text-muted-foreground">
-              {expiryLabel(t)}
+            {/* The fragment comes first on the second line: two rows can share a name (one owner
+                held 24 `dev-login-as` tokens), and this is what tells them apart (K-28). */}
+            <span className="flex min-w-0 items-center gap-1.5 text-[11px] text-muted-foreground">
+              <TokenFragmentText token={t} />
+              <span aria-hidden="true">·</span>
+              <span className="truncate">{expiryLabel(t)}</span>
             </span>
           </div>
         );
