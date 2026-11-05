@@ -30,7 +30,7 @@ import {
     TooltipProvider,
 } from '@schemastud/ui';
 import { AccountNav, type AccountNavProps } from './AccountNav.js';
-import type { AccountNavItem, AccountShellData, LinkComponent } from './types.js';
+import type { AccountNavItem, AccountShellData, AccountShellPlan, LinkComponent } from './types.js';
 import { ACCOUNT_SHELL_CSS } from './css.js';
 
 /** Which OPT-IN sidebar sections to render below the nav (all default off — nav-only sidebar). */
@@ -175,7 +175,7 @@ export function AccountShell({
                     {sections?.plan && shell?.plan && (
                         <SidebarGroup className={sectionClassName} style={sectionStyle}>
                             <SidebarGroupLabel>{sectionLabels?.plan ?? 'Plan'}</SidebarGroupLabel>
-                            <PlanMeter shell={shell} />
+                            <PlanMeter plan={shell.plan} />
                         </SidebarGroup>
                     )}
 
@@ -228,8 +228,8 @@ export function AccountShell({
     );
 }
 
-function PlanMeter({ shell }: { shell: AccountShellData }) {
-    const { label, credits, max } = shell.plan;
+function PlanMeter({ plan }: { plan: AccountShellPlan }) {
+    const { label, credits, max } = plan;
     const hasGauge = typeof credits === 'number' && typeof max === 'number';
 
     return (

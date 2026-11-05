@@ -110,6 +110,23 @@ describe('AccountShell', () => {
         expect(screen.getByText('None on file')).toBeTruthy();
     });
 
+    it('hides the plan section when the projection carries no plan, and still renders the profile', () => {
+        // beam-accounts' identity-only default provider projects `plan: null` (make-surface 01, owner ruling 2026-11-05)
+        const { container } = render(
+            <AccountShell
+                nav={nav}
+                shell={{ ...shell, plan: null, upsells: [] }}
+                sections={{ plan: true, profile: true }}
+            >
+                <p>body</p>
+            </AccountShell>,
+        );
+        expect(container.querySelector('[data-account-section="plan"]')).toBeNull();
+        expect(screen.queryByText('Plan')).toBeNull();
+        expect(container.querySelector('[data-account-section="profile"]')).not.toBeNull();
+        expect(screen.getByText('@drew')).toBeTruthy();
+    });
+
     it('renders the action slot and omits the header when no brand is given', () => {
         const { container } = render(
             <AccountShell nav={nav} action={<button>New song</button>}>

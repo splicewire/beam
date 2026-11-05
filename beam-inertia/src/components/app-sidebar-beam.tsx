@@ -19,12 +19,13 @@ import { NavUser } from './nav-user';
  */
 type AccountNavTree = { items: { title: string; href: string | null }[] };
 type ShellData = {
+    /** null when the host has no plans (beam-accounts' identity-only default); the plan section hides. */
     plan: {
         tier: string;
         label: string;
         credits?: number | null;
         max?: number | null;
-    };
+    } | null;
     profile: {
         handle: string;
         avatar?: string | null;
