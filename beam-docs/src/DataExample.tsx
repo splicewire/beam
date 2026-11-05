@@ -9,9 +9,9 @@ export type DataExampleProps = {
 };
 
 export const DATA_EXAMPLE_CSS = `
-.beam-docs-data-example { margin-block: 1.5rem; border: 1px solid var(--border, currentColor); border-radius: var(--radius, 0.5rem); overflow: hidden; }
+.beam-docs-data-example { margin-block: 1.5rem; border: 1px solid var(--border, currentColor); border-radius: var(--radius, 0.5rem); overflow: hidden; container-type: inline-size; }
 .beam-docs-data-example-panes { display: grid; grid-template-columns: minmax(0, 1fr); }
-@media (min-width: 64rem) { .beam-docs-data-example-panes { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } .beam-docs-data-example-pane + .beam-docs-data-example-pane { border-left: 1px solid var(--border, currentColor); border-top: 0; } }
+@container (min-width: 60rem) { .beam-docs-data-example-panes { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } .beam-docs-data-example-pane + .beam-docs-data-example-pane { border-left: 1px solid var(--border, currentColor); border-top: 0; } }
 .beam-docs-data-example-pane { min-width: 0; display: flex; flex-direction: column; }
 .beam-docs-data-example-pane + .beam-docs-data-example-pane { border-top: 1px solid var(--border, currentColor); }
 .beam-docs-data-example-label { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 0.25rem 0.75rem; padding: 0.5rem 0.875rem; border-bottom: 1px solid var(--border, currentColor); background: var(--muted, transparent); font-size: 0.8125rem; font-weight: 600; letter-spacing: 0.01em; }
@@ -31,8 +31,9 @@ function panes(children: ReactNode): ReactNode[] {
  * `docs:examples` script captures the output and writes them between the page's `data-example` markers, and the
  * package's test suite re-runs the example, so the page can't drift from the code.
  *
- * The two panes sit side by side on a wide screen and stack on a narrow one. Anything other than exactly two children
- * renders as given, inside the frame, so a hand-placed tag still shows its content.
+ * The two panes sit side by side where the frame itself is wide (a container query, so a docs column stacks them even
+ * on a wide screen) and stack otherwise, PHP first. Anything other than exactly two children renders as given, inside
+ * the frame, so a hand-placed tag still shows its content.
  */
 export function DataExample({ source, children, className }: DataExampleProps) {
     const [code, result, ...rest] = panes(children);
