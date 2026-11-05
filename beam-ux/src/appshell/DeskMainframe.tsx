@@ -36,7 +36,7 @@ export function DeskMainframe({
             open={mobile && navigation?.open}
             onOpenChange={navigation?.onOpenChange}
         >
-            <div className="flex h-dvh overflow-hidden">
+            <div data-beam-shell="desk" className="flex h-dvh overflow-hidden">
 
                 {!mobile && (
                     <aside className="flex w-[216px] flex-none flex-col bg-sidebar-deep py-[18px] text-sidebar-foreground">
@@ -68,6 +68,7 @@ export function DeskMainframe({
                     </div>
 
                     <main
+                        data-beam-scroller="page"
                         className={cn(
                             'min-h-0 min-w-0 flex-1 overflow-y-auto px-3 py-4 md:px-6 md:py-6',
                             canvas,

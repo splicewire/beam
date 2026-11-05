@@ -188,15 +188,16 @@ describe('beam-ux tokens.css scrollbars', () => {
     it('colours every inner scroll container from the tokens, in the base layer', () => {
         const coloured = base.filter(([, decls]) => decls.has('scrollbar-color'));
 
-        expect(coloured.map(([sel]) => sel)).toEqual([':where(body *)']);
+        // Only in a document that mounts a beam shell (portalled sheets included); a marketing page keeps its own bars.
+        expect(coloured.map(([sel]) => sel)).toEqual([':where(body:has([data-beam-shell]) *)']);
         expect(coloured[0][1].get('scrollbar-color')).toBe('var(--beam-scrollbar-thumb) var(--beam-scrollbar-track)');
     });
 
-    it('thins inner containers but not the main landmark, which scrolls the page in an app shell', () => {
+    it('thins inner containers but not a page scroller (the desk <main>, the window and focus scrollers)', () => {
         const thinned = base.filter(([, decls]) => decls.has('scrollbar-width'));
 
         expect(thinned.map(([sel, decls]) => [sel, decls.get('scrollbar-width')])).toEqual([
-            [':where(body *:not(main))', 'thin'],
+            [":where(body:has([data-beam-shell]) *:not(main, [data-beam-scroller='page']))", 'thin'],
         ]);
     });
 

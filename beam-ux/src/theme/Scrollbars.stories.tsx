@@ -8,8 +8,10 @@ import { expect, within } from 'storybook/test';
  * "Show scroll bars: Always" or a mouse attached, Windows and Linux always.
  *
  * What to look for: no grey gutter on any tinted surface; a thumb that reads on the paper and on the rail
- * alike (it is a share of each container's own ink); thin bars everywhere except `<main>`, which keeps the
- * full-width target; and the chip row, whose `[scrollbar-width:none]` still hides its bar.
+ * alike (it is a share of each container's own ink); thin bars everywhere except the page scroller
+ * (`<main>`), which keeps the full-width target; and the chip row, whose `[scrollbar-width:none]` still
+ * hides its bar. The rule applies only in a document with a `[data-beam-shell]`: `OutsideAShell` is a site
+ * page, and keeps the platform's bars.
  */
 const meta = {
     title: 'BeamUx/Theme/Scrollbars',
@@ -47,7 +49,7 @@ const settings = [
 
 function Shell() {
     return (
-        <div className="flex h-[600px] overflow-hidden bg-background text-foreground" data-testid="shell">
+        <div data-beam-shell="desk" className="flex h-[600px] overflow-hidden bg-background text-foreground" data-testid="shell">
             <aside className="flex w-[216px] flex-none flex-col bg-sidebar-deep py-[18px] text-sidebar-foreground">
                 <div className="px-5 pb-4 text-sm font-semibold text-sidebar-active-foreground">Northwind</div>
                 <nav aria-label="Navigation" data-testid="rail" className="min-h-0 flex-1 space-y-4 overflow-y-auto px-2.5 text-[13px] font-medium">
@@ -97,7 +99,7 @@ function Shell() {
                 </div>
 
                 <div className="flex min-h-0 flex-1">
-                    <main data-testid="main" className="min-h-0 min-w-0 flex-1 space-y-5 overflow-y-auto bg-background px-6 py-6">
+                    <main data-testid="main" data-beam-scroller="page" className="min-h-0 min-w-0 flex-1 space-y-5 overflow-y-auto bg-background px-6 py-6">
                         <h1 className="text-lg font-semibold">Entries</h1>
 
                         <div aria-label="Filters" data-testid="chips" className="flex gap-2 overflow-x-auto [scrollbar-width:none]">
@@ -177,5 +179,23 @@ export const OverflowContainers: Story = {
         await expect(style('chips').scrollbarWidth).toBe('none');
         await expect(getComputedStyle(document.documentElement).scrollbarColor).toBe('auto');
         await expect(getComputedStyle(document.documentElement).scrollbarWidth).toBe('auto');
+    },
+};
+
+/** A site page (no `[data-beam-shell]` in the document): a prose code block keeps the platform's own bar. */
+export const OutsideAShell: Story = {
+    render: () => (
+        <article className="max-w-xl space-y-3 bg-background p-6 text-foreground">
+            <h1 className="text-lg font-semibold">Release notes</h1>
+            <pre data-testid="code" className="overflow-x-auto rounded-md border border-border bg-card p-4 text-xs">
+                {'composer require splicewire/laravel-beam-ux && php artisan splicewire:beam:install --with-ux --with-docs --with-sitemap'}
+            </pre>
+        </article>
+    ),
+    play: async ({ canvasElement }) => {
+        const code = within(canvasElement).getByTestId('code');
+        await expect(code.scrollWidth > code.clientWidth).toBe(true);
+        await expect(getComputedStyle(code).scrollbarColor).toBe('auto');
+        await expect(getComputedStyle(code).scrollbarWidth).toBe('auto');
     },
 };

@@ -193,20 +193,23 @@
  * anyway. Without this, Chrome draws its classic grey bar on every tinted surface (the rail, sheets, tab
  * strips, tables) whenever macOS shows scroll bars always or a mouse is attached.
  *
- *   - The page's own bar is left alone: nothing here matches `html` or `body`, so the document keeps
- *     the platform bar at full width (a larger target for a mouse), coloured by `color-scheme`, which
- *     the appearance contract sets on <html>.
- *   - Every inner scroll container takes the tokenised colours, and is thin, except `<main>`: in an app
- *     shell the main landmark is what scrolls the page, so it keeps the full-width target too.
+ *   - App chrome only: the rule matches inside a document that mounts a beam shell (`[data-beam-shell]`,
+ *     set by the desk, window and focus mainframes), sheets and popovers portalled to <body> included.
+ *     A site or marketing page with no shell keeps the platform's bars everywhere.
+ *   - The page's own bar is left alone: nothing matches `html` or `body`, and a page scroller (`<main>`,
+ *     or `[data-beam-scroller='page']` on the window and focus scrollers) keeps the full-width target
+ *     for a mouse. Every other scroll container in the shell is thin and takes the tokenised colours.
  *   - `:where()` has no specificity and `@layer base` sits below Tailwind's utilities, so a component's
  *     own `[scrollbar-width:none]` or `[scrollbar-color:…]` always wins.
+ *   - `tokens-docs.css` (scope-tokens.ts) drops this block: the docs-scoped sheet themes nothing outside
+ *     `.beam-docs`.
  */
 @layer base {
-    :where(body *) {
+    :where(body:has([data-beam-shell]) *) {
         scrollbar-color: var(--beam-scrollbar-thumb) var(--beam-scrollbar-track);
     }
 
-    :where(body *:not(main)) {
+    :where(body:has([data-beam-shell]) *:not(main, [data-beam-scroller='page'])) {
         scrollbar-width: thin;
     }
 }
