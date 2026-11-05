@@ -64,7 +64,8 @@ export type AccountShellUpsell = {
  * `AccountShellData` structurally satisfies it without the package importing the host's types.
  */
 export type AccountShellData = {
-    plan: AccountShellPlan;
+    /** `null` when nothing on the host owns plans (beam-accounts' identity-only default); the plan section hides. */
+    plan: AccountShellPlan | null;
     profile: AccountShellProfile;
     account: AccountShellAccount;
     upsells: AccountShellUpsell[];
