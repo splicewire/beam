@@ -9,12 +9,20 @@ canResetPassword: undefined | boolean,
 canRegister: undefined | boolean,
 status: undefined | string | null,
 demoAccounts: DemoAccountLinkData[] | undefined,
+demoUserSearchUrl: undefined | string,
 passwordRules: undefined | string,
 };
 
 export type DemoAccountLinkData = {
 key: string,
 label: string,
+url: string,
+};
+
+export type DemoUserLinkData = {
+id: string,
+name: string,
+email: string,
 url: string,
 };
 

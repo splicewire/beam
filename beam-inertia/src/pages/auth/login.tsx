@@ -1,4 +1,5 @@
 import { featureEnabled } from '../../config';
+import { DemoLogin } from '@splicewire/beam-accounts';
 import { Form, usePage } from '@inertiajs/react';
 import InputError from '../../components/input-error';
 import PasswordInput from '../../components/password-input';
@@ -25,6 +26,7 @@ export default function Login() {
         canResetPassword,
         canRegister,
         demoAccounts = [],
+        demoUserSearchUrl,
     } = usePage<AuthEntryPageData>().props;
 
     return (
@@ -134,41 +136,10 @@ export default function Login() {
                 </div>
             )}
 
-            {demoAccounts.length > 0 && (
-                <div className="mt-8 flex flex-col gap-3">
-                    <div className="relative text-center text-xs text-muted-foreground uppercase">
-                        <span className="relative z-10 bg-background px-2">
-                            Or try a demo account
-                        </span>
-                        <span
-                            className="absolute inset-x-0 top-1/2 border-t border-border"
-                            aria-hidden
-                        />
-                    </div>
-                    <div className="grid gap-2">
-                        {demoAccounts.map((account) => (
-                            // A signed OOTB login-as link (beam-accounts `account/login-as/{subject}`); a full
-                            // GET so the server signs you in and redirects. Guarded server-side by Demo::enabled().
-                            <a
-                                key={account.key}
-                                href={account.url}
-                                className="w-full"
-                            >
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    className="w-full"
-                                >
-                                    Sign in as {account.label}
-                                </Button>
-                            </a>
-                        ))}
-                    </div>
-                    <p className="text-center text-xs text-muted-foreground">
-                        Dev only — hidden in production.
-                    </p>
-                </div>
-            )}
+            {/* S1: the demo sign-in is beam-accounts' one DemoLogin (research 22 addendum), so the session and token
+                login pages share it. Both props are server-gated: the roster only in demo mode, the search URL only
+                on a local host with ACCOUNT_DEMO_USER_PICKER on. A choice is a full GET of its signed login-as link. */}
+            <DemoLogin className="mt-8" accounts={demoAccounts} searchUrl={demoUserSearchUrl} />
         </>
     );
 }
