@@ -13,7 +13,7 @@
  * bundler could drop. A host imports it from its stylesheet:
  *
  *     @import '@splicewire/beam-ux/theme.css';   // Tailwind v4 host: tokens + the status utilities
- *     @import '@splicewire/beam-ux/tokens.css';  // any host: the custom properties alone
+ *     @import '@splicewire/beam-ux/tokens.css';  // any host: the custom properties + the scrollbar rule
  *
  * OVERRIDING (Model B, own-key indirection): re-declare the `--beam-*` key you want to change AFTER the
  * import, on `:root` for light and `.dark` for dark — never on a component instance. A host with its own
@@ -98,6 +98,13 @@
     --beam-ink-70: rgba(17, 32, 26, 0.7);
     --beam-ink-80: rgba(17, 32, 26, 0.8);
 
+    /* Scrollbars (the rule at the end of this file). The thumb is a share of the scroll container's own
+       ink (`currentColor`), so it reads on whatever surface the container sits on: dark ink on paper, the
+       light rail ink on the deep rail. The track is transparent: no grey gutter on a tinted surface. A
+       brand re-declares either key with a plain colour. */
+    --beam-scrollbar-thumb: color-mix(in oklab, currentColor 30%, transparent);
+    --beam-scrollbar-track: transparent;
+
     /* Status semantics — `--warning-foreground` is WARNING TEXT (amber ink on a `bg-warning/10` tint or
        the page); nothing pairs it with a solid `bg-warning`. */
     --signal: var(--beam-signal);
@@ -160,6 +167,10 @@
     --beam-ink-70: oklch(0.93 0.015 160 / 0.7);
     --beam-ink-80: oklch(0.93 0.015 160 / 0.8);
 
+    /* A light ink on a dark surface needs a larger share to read as clearly. */
+    --beam-scrollbar-thumb: color-mix(in oklab, currentColor 34%, transparent);
+    --beam-scrollbar-track: transparent;
+
     /* Status semantics, brightened for the dark canvas (the flagship's values). A dark
        `--warning-foreground` left every tinted warning (privacy callout, Pending badge, Needs-a-card)
        dark-on-dark. */
@@ -173,4 +184,29 @@
 :root,
 .dark {
     --beam-surface: var(--beam-paper-raised);
+}
+
+/*
+ * Scrollbars follow the theme (owner-review-20261102 research 05). Chrome 121+ reads these two standard
+ * properties, and Firefox has for years; once either is set Chrome ignores `::-webkit-scrollbar` for
+ * that element, so a component that hides its bar must say `scrollbar-width: none`, which it should
+ * anyway. Without this, Chrome draws its classic grey bar on every tinted surface (the rail, sheets, tab
+ * strips, tables) whenever macOS shows scroll bars always or a mouse is attached.
+ *
+ *   - The page's own bar is left alone: nothing here matches `html` or `body`, so the document keeps
+ *     the platform bar at full width (a larger target for a mouse), coloured by `color-scheme`, which
+ *     the appearance contract sets on <html>.
+ *   - Every inner scroll container takes the tokenised colours, and is thin, except `<main>`: in an app
+ *     shell the main landmark is what scrolls the page, so it keeps the full-width target too.
+ *   - `:where()` has no specificity and `@layer base` sits below Tailwind's utilities, so a component's
+ *     own `[scrollbar-width:none]` or `[scrollbar-color:…]` always wins.
+ */
+@layer base {
+    :where(body *) {
+        scrollbar-color: var(--beam-scrollbar-thumb) var(--beam-scrollbar-track);
+    }
+
+    :where(body *:not(main)) {
+        scrollbar-width: thin;
+    }
 }

@@ -137,6 +137,82 @@ describe('beam-ux tokens.css', () => {
     });
 });
 
+/** The source text of the `@layer <name> { … }` blocks, comments stripped (one nesting level). */
+function layerBody(css: string, name: string): string {
+    const stripped = css.replace(/\/\*[\s\S]*?\*\//g, '');
+    return [...stripped.matchAll(new RegExp(`@layer\\s+${name}\\s*\\{((?:[^{}]*\\{[^{}]*\\})*[^{}]*)\\}`, 'g'))]
+        .map(([, body]) => body)
+        .join('\n');
+}
+
+/** Every rule as [selector, declarations], comments and at-rule wrappers ignored. */
+function rules(css: string): Array<[string, Map<string, string>]> {
+    const stripped = css.replace(/\/\*[\s\S]*?\*\//g, '');
+
+    return [...stripped.matchAll(/([^{}]+)\{([^{}]*)\}/g)].map(([, sel, body]) => {
+        const decls = new Map<string, string>();
+        for (const [, name, value] of body.matchAll(/([\w-]+)\s*:\s*([^;]+);/g)) {
+            decls.set(name, value.trim());
+        }
+
+        return [sel.replace(/@layer\s+\w+\s*/g, '').trim().replace(/\s+/g, ' '), decls];
+    });
+}
+
+/*
+ * Research 05 (owner-review-20261102): Chrome drew its classic grey bar on every tinted surface (the deep
+ * rail, sheets, tab strips, tables) whenever scroll bars show always or a mouse is attached. D-05-a puts the
+ * fix here, tokenised; D-05-b keeps it to the inner containers, so the page's own bar stays the platform's.
+ */
+describe('beam-ux tokens.css scrollbars', () => {
+    const light = block(tokensCss, ':root');
+    const dark = block(tokensCss, '.dark');
+    const base = rules(layerBody(tokensCss, 'base'));
+    const declaring = (property: string) => rules(tokensCss).filter(([, decls]) => decls.has(property));
+
+    it('ships a thumb and track token pair in both schemes', () => {
+        for (const token of ['--beam-scrollbar-thumb', '--beam-scrollbar-track']) {
+            expect(light.has(token), token).toBe(true);
+            expect(dark.has(token), token).toBe(true);
+        }
+    });
+
+    it('draws the thumb from the container ink and leaves the track to its surface', () => {
+        // A share of `currentColor` reads on paper (dark ink) and on the rail (light rail ink) alike, in both schemes.
+        for (const scheme of [light, dark]) {
+            expect(scheme.get('--beam-scrollbar-thumb')).toMatch(/^color-mix\(in oklab, currentColor \d+%, transparent\)$/);
+            expect(scheme.get('--beam-scrollbar-track')).toBe('transparent');
+        }
+    });
+
+    it('colours every inner scroll container from the tokens, in the base layer', () => {
+        const coloured = base.filter(([, decls]) => decls.has('scrollbar-color'));
+
+        expect(coloured.map(([sel]) => sel)).toEqual([':where(body *)']);
+        expect(coloured[0][1].get('scrollbar-color')).toBe('var(--beam-scrollbar-thumb) var(--beam-scrollbar-track)');
+    });
+
+    it('thins inner containers but not the main landmark, which scrolls the page in an app shell', () => {
+        const thinned = base.filter(([, decls]) => decls.has('scrollbar-width'));
+
+        expect(thinned.map(([sel, decls]) => [sel, decls.get('scrollbar-width')])).toEqual([
+            [':where(body *:not(main))', 'thin'],
+        ]);
+    });
+
+    it('never styles the root or body bar, and declares scrollbars nowhere outside the base layer', () => {
+        // Outside a layer the rule would beat a component's own `[scrollbar-width:none]` utility.
+        expect(declaring('scrollbar-color')).toHaveLength(1);
+        expect(declaring('scrollbar-width')).toHaveLength(1);
+
+        for (const [sel] of [...declaring('scrollbar-color'), ...declaring('scrollbar-width')]) {
+            expect(sel).not.toMatch(/^(:root|html|body)\b/);
+        }
+        // The standard pair only: Chrome ignores the legacy pseudo-elements once either property is set.
+        expect(tokensCss.replace(/\/\*[\s\S]*?\*\//g, '')).not.toContain('::-webkit-scrollbar');
+    });
+});
+
 describe('beam-ux theme.css', () => {
     it('imports the tokens and bridges each status semantic to a Tailwind colour', () => {
         expect(themeCss).toContain("@import './tokens.css';");
