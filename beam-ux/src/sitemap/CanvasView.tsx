@@ -175,7 +175,7 @@ export function CanvasView({ roots, pages, traces, filtering, keep, selected, on
                                 const x1 = laneX; const y1 = y + GHOST_H / 2;
                                 const x2 = target.x + CARD_W; const y2 = target.y + CARD_H / 2;
                                 return <path key={r.id} d={`M${x1},${y1} C${x1 - 60},${y1} ${x2 + 60},${y2} ${x2 + 2},${y2}`} fill="none" strokeWidth={hot ? 1.75 : 1.25}
-                                    strokeDasharray="4 3" className={cn(r.attention ? 'stroke-destructive' : 'stroke-foreground/50', hot ? 'opacity-100' : 'opacity-35')} />;
+                                    strokeDasharray="4 3" opacity={hot ? 1 : 0.35} className={r.attention ? 'stroke-destructive' : 'stroke-foreground/50'} />;
                             })}
                         </svg>
                         {lane.length > 0 && <p className="absolute text-xs font-medium text-foreground/70" style={{ left: laneX, top: -22 }}>Old addresses</p>}

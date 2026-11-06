@@ -156,7 +156,7 @@ export function TraceLine({ trace }: { trace: RedirectTrace }) {
     const steps = trace.end === 'answered' && trace.to ? [...trace.steps, trace.to] : trace.steps;
     return (
         <div className="min-w-0">
-            <p className="flex flex-wrap items-center gap-x-1 gap-y-0.5 font-mono text-xs">
+            <p className="flex flex-wrap items-center gap-x-1 font-mono text-xs" style={{ rowGap: "0.125rem" }}>
                 {steps.map((step, i) => (
                     <span key={`${step}-${i}`} className="inline-flex items-center gap-1">
                         {i > 0 && <span aria-hidden className="text-foreground/60">→</span>}
