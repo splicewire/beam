@@ -73,7 +73,7 @@
         "@rjsf/shadcn": "^6",
         "@rjsf/utils": "^6",
         "@rjsf/validator-ajv8": "^6",
-        "@splicewire/beam-ux": "^0.7.0",
+        "@splicewire/beam-ux": ">=0.9.0 <0.12.0",
         "react": ">=18",
         "remark-frontmatter": "^5",
         "remark-mdx-frontmatter": "^5",
