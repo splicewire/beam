@@ -11,6 +11,8 @@ export default defineConfig({
         editor: 'src/editor/index.ts',
         // EP-38: the packaged Entries seat (js ADR-0005 d4).
         entries: 'src/entries/index.ts',
+        // owner-review-20261102 research 37: the Site map, the Site section's index.
+        sitemap: 'src/sitemap/index.ts',
         canvas: 'src/canvas/index.ts',
         'edit-mode': 'src/edit-mode.ts',
         site: 'src/site/index.ts',
