@@ -61,6 +61,10 @@ actor: string,
 reason: string,
 at: string,
 } | null,
+cardOnFile: boolean,
+firstBillOn: string | null,
+cardAction: string | null,
+lastChargeError: string | null,
 };
 
 export type PlanData = {
@@ -72,6 +76,7 @@ components: PlanComponentData[],
 entitlements: Record<string, boolean>,
 hasFee: boolean,
 purchasable: boolean,
+catalog: PlanCatalogData | null,
 };
 
 export type PlanComponentData = {
@@ -80,6 +85,30 @@ label: string,
 schema: Record<string, any>,
 config: Record<string, any>,
 schemaRef: Record<string, string>,
+};
+
+export type PlanCatalogData = {
+driver: string,
+entries: PlanCatalogEntryData[],
+};
+
+export type PlanCatalogEntryData = {
+merchantId: string,
+productId: string | null,
+monthlyPriceId: string | null,
+annualPriceId: string | null,
+inSync: boolean,
+syncedAt: string | null,
+};
+
+export type PlanChoiceData = {
+id: string,
+slug: string,
+name: string,
+description: string | null,
+monthlyPriceUsd: number,
+annualMonthlyPriceUsd: number | null,
+change: string,
 };
 
 export type EntitlementData = {
