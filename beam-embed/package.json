@@ -24,7 +24,7 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@splicewire/beam-resources": "^0.1.3"
+    "@splicewire/beam-resources": "github:splicewire/beam#94615639aac2565521cd6cece20c54fc6ff403df&path:/beam-resources"
   },
   "peerDependencies": {
     "@schemastud/ui": "*",
@@ -39,8 +39,8 @@
     "react-style-singleton": "2.2.3",
     "use-callback-ref": "1.3.3",
     "use-sidecar": "1.1.3",
-    "@schemastud/ui": "file:../../schemastud/ui",
-    "@splicewire/beam-resources": "file:../beam-resources",
+    "@schemastud/ui": "github:schemastud/js#abef468b39df9b1e81fd9a2081e69f8094c60e4e&path:/ui",
+    "@splicewire/beam-resources": "github:splicewire/beam#94615639aac2565521cd6cece20c54fc6ff403df&path:/beam-resources",
     "@testing-library/react": "^16.1.0",
     "@testing-library/dom": "^10.4.1",
     "@types/react": "^19.0.0",
