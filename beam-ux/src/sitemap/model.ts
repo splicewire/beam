@@ -80,15 +80,18 @@ export function issuesFor(page: SiteMapPage): Issue[] {
     return out;
 }
 
-/** Redirects whose walk reaches no page: loops, exits off the site, paths nothing answers. */
-export function looseTraces(traces: RedirectTrace[]): RedirectTrace[] {
-    return traces.filter((t) => t.pageId === null && t.end !== 'shadowed');
+/**
+ * Redirects whose walk reaches no page on the map: loops, exits off the site, paths nothing answers, and a walk whose
+ * page has no row here (gone, or not the reader's), so no failing walk is ever dropped between a page and this list.
+ */
+export function looseTraces(traces: RedirectTrace[], pageIds?: Set<string>): RedirectTrace[] {
+    return traces.filter((t) => t.end !== 'shadowed' && (t.pageId === null || (pageIds !== undefined && !pageIds.has(t.pageId))));
 }
 
 /** The loose walks with each loop's ends folded into one row (`/a ↔ /b` is one loop), the unit every count uses. */
-export function looseRows(traces: RedirectTrace[]): RedirectTrace[] {
+export function looseRows(traces: RedirectTrace[], pageIds?: Set<string>): RedirectTrace[] {
     const seen = new Set<string>();
-    return looseTraces(traces).filter((t) => {
+    return looseTraces(traces, pageIds).filter((t) => {
         const key = t.end === 'loop' ? [...t.steps].sort().join(' ') : t.id;
         if (seen.has(key)) return false;
         seen.add(key);
@@ -97,9 +100,9 @@ export function looseRows(traces: RedirectTrace[]): RedirectTrace[] {
 }
 
 /** One issue per loop (the two ends of `/a ↔ /b` are one loop), one per other walk that fails a guest. */
-export function looseIssues(traces: RedirectTrace[]): Issue[] {
+export function looseIssues(traces: RedirectTrace[], pageIds?: Set<string>): Issue[] {
     const seen = new Set<string>();
-    return looseTraces(traces).filter((t) => t.attention).flatMap((t) => {
+    return looseTraces(traces, pageIds).filter((t) => t.attention).flatMap((t) => {
         const key = t.end === 'loop' ? [...t.steps].sort().join(' ') : t.id;
         if (seen.has(key)) return [];
         seen.add(key);
@@ -108,7 +111,7 @@ export function looseIssues(traces: RedirectTrace[]): Issue[] {
 }
 
 export function allIssues(pages: SiteMapPage[], traces: RedirectTrace[]): Issue[] {
-    return [...pages.flatMap(issuesFor), ...looseIssues(traces)];
+    return [...pages.flatMap(issuesFor), ...looseIssues(traces, new Set(pages.map((p) => p.id)))];
 }
 
 /* ── Filters and summary ────────────────────────────────────────────────────────────────────── */

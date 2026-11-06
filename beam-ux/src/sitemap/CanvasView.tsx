@@ -77,7 +77,7 @@ function Card({ p, selected, open, focusable, onSelect, onOpen, onToggle }: {
     );
 }
 
-export function CanvasView({ roots, traces, filtering, keep, selected, onSelect, onOpenPage, footer }: SiteMapViewProps) {
+export function CanvasView({ roots, pages, traces, filtering, keep, selected, onSelect, onOpenPage, footer }: SiteMapViewProps) {
     const [closed, setClosed] = useState<Set<string>>(new Set());
     const [scale, setScale] = useState(0.85);
     const isOpen = (id: string) => filtering || !closed.has(id);
@@ -106,7 +106,7 @@ export function CanvasView({ roots, traces, filtering, keep, selected, onSelect,
         cursor = y;
         return { ...g, y };
     });
-    const loose = looseRows(traces);
+    const loose = looseRows(traces, new Set(pages.map((p) => p.id)));
     const loopTop = Math.max(height, cursor + GHOST_H + 40);
     const width = laneX + GHOST_W + 40;
     const totalH = loopTop + (loose.length ? loose.length * (GHOST_H + 10) + 40 : 0);

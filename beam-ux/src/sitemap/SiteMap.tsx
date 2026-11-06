@@ -46,6 +46,8 @@ export function SiteMap({
 }: SiteMapProps) {
     const store = useMemo(() => (viewStore === undefined ? browserViewStore() : viewStore), [viewStore]);
     const [ownView, setOwnView] = useState<SiteMapView>(() => store?.get() ?? defaultView);
+    // A different viewer (a different store) brings that viewer's remembered view.
+    useEffect(() => { setOwnView(store?.get() ?? defaultView); }, [store]); // eslint-disable-line react-hooks/exhaustive-deps
     const view = controlledView ?? ownView;
     const setView = (next: SiteMapView) => {
         if (controlledView === undefined) setOwnView(next);
@@ -71,7 +73,7 @@ export function SiteMap({
     const summary = useMemo(() => summarize(pages, traces), [pages, traces]);
     const { keep, matched } = useMemo(() => visibleIds(pages, filter, query), [pages, filter, query]);
     const filtering = filter !== 'all' || query.trim() !== '';
-    const loose = useMemo(() => looseRows(traces), [traces]);
+    const loose = useMemo(() => looseRows(traces, new Set(pages.map((p) => p.id))), [traces, pages]);
     const page = selected ? byId.get(selected) : undefined;
     const showInspector = !!page && (!sheet || inspecting);
 

@@ -233,3 +233,29 @@ describe('impeccable P1 fixes', () => {
     });
 });
 
+describe('codex 37-build amend', () => {
+    it('lists a failing walk whose page has no row as a loose redirect, never dropping it', () => {
+        const gone = { ...FIXTURE_TRACES[0], id: 'gone', path: '/old-team', end: 'gone', to: null, steps: ['/old-team'], hops: 1, attention: true, pageId: 'deleted-page' };
+        renderMap({ traces: [...FIXTURE_TRACES, gone] });
+        expect(screen.getByRole('radio', { name: /Needs attention/ }).textContent).toContain('8');
+        const loose = screen.getByRole('region', { name: 'Redirects that reach no page' });
+        expect(within(loose).getByText('/old-team')).toBeTruthy();
+    });
+
+    it('remembers the view per viewer: a second viewer on the same browser keeps their own', () => {
+        const storage = new Map<string, string>();
+        const storeFor = (viewer: string): SiteMapViewStore => ({
+            get: () => (storage.get(viewer) as SiteMapView | undefined) ?? null,
+            set: (v) => { storage.set(viewer, v); },
+        });
+        const { container, rerender } = render(<SiteMap pages={FIXTURE_PAGES} onOpen={vi.fn()} viewStore={storeFor('ana')} />);
+        pick('Canvas');
+        const bo = storeFor('bo');
+        rerender(<SiteMap pages={FIXTURE_PAGES} onOpen={vi.fn()} viewStore={bo} />);
+        expect(container.querySelector('[data-site-map-view]')!.getAttribute('data-site-map-view')).toBe('outline');
+        pick('Columns');
+        rerender(<SiteMap pages={FIXTURE_PAGES} onOpen={vi.fn()} viewStore={storeFor('ana')} />);
+        expect(container.querySelector('[data-site-map-view]')!.getAttribute('data-site-map-view')).toBe('canvas');
+    });
+});
+
