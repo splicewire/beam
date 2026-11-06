@@ -8,12 +8,12 @@ import { useRef, useState, type KeyboardEvent } from 'react';
 import { ChevronRight } from 'lucide-react';
 import { cn } from '@schemastud/ui';
 import { countDescendants, flatten, issuesFor, pageTitle, type TreeNode } from './model';
-import { FILE_COPY, FileStatus, IssueIcon, PublicationStatus, RedirectCount, SearchStatus } from './parts';
+import { FileStatus, IssueIcon, PublicationStatus, RedirectCount, SearchStatus } from './parts';
 import type { SiteMapViewProps } from './views';
 
 const cols = (files: boolean) => files
-    ? 'md:grid-cols-[minmax(0,1fr)_9.5rem_8.5rem_9rem_3.5rem]'
-    : 'md:grid-cols-[minmax(0,1fr)_9.5rem_9.5rem_3.5rem]';
+    ? 'md:grid-cols-[minmax(0,1fr)_9.5rem_11.5rem_9rem_5.5rem]'
+    : 'md:grid-cols-[minmax(0,1fr)_9.5rem_11.5rem_5.5rem]';
 
 function Row({ node, open, toggle, selected, onSelect, onOpen, context, focusable, files }: {
     node: TreeNode; open: boolean; toggle: () => void; selected: boolean; onSelect: () => void; onOpen: () => void;
@@ -24,17 +24,18 @@ function Row({ node, open, toggle, selected, onSelect, onOpen, context, focusabl
     const hasKids = node.children.length > 0;
     const title = pageTitle(page);
     return (
-        <div role="treeitem" aria-level={depth + 1} aria-selected={selected} aria-expanded={hasKids ? open : undefined}
+        <div role="none"
             className={cn('group grid grid-cols-[minmax(0,1fr)] items-center border-b border-border/60', cols(files), context ? 'md:h-8' : 'md:h-10',
                 selected ? 'bg-accent text-accent-foreground' : 'hover:bg-muted/50')}>
             <div className="flex min-w-0 items-center py-2 pr-2 md:py-0" style={{ paddingLeft: 8 + depth * 18 }}>
                 {hasKids ? (
                     <button type="button" tabIndex={-1} onClick={toggle} aria-label={open ? `Collapse ${title}` : `Expand ${title}`}
-                        className="grid size-8 shrink-0 place-items-center rounded text-foreground/70 hover:bg-muted hover:text-foreground md:size-6">
+                        className="grid size-11 shrink-0 place-items-center rounded text-foreground/70 hover:bg-muted hover:text-foreground md:size-6">
                         <ChevronRight aria-hidden className={cn('size-3.5 transition-transform duration-150 motion-reduce:transition-none', open && 'rotate-90')} />
                     </button>
-                ) : <span className="size-8 shrink-0 md:size-6" />}
-                <button type="button" data-row={page.id} tabIndex={focusable ? 0 : -1}
+                ) : <span className="size-11 shrink-0 md:size-6" />}
+                <button type="button" role="treeitem" aria-level={depth + 1} aria-selected={selected} aria-expanded={hasKids ? open : undefined}
+                    data-row={page.id} tabIndex={focusable ? 0 : -1}
                     onClick={onSelect} onDoubleClick={onOpen}
                     className="flex min-w-0 flex-1 flex-col items-start rounded px-1.5 py-0.5 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring md:flex-row md:items-center md:gap-2">
                     <span className="flex min-w-0 max-w-full items-center gap-1.5">
@@ -56,8 +57,8 @@ function Row({ node, open, toggle, selected, onSelect, onOpen, context, focusabl
             {context ? <div className={cn('hidden md:block', files ? 'md:col-span-4' : 'md:col-span-3')} /> : <>
                 <div className="hidden md:block"><PublicationStatus page={page} compact /></div>
                 {/* Healthy states draw as a quiet icon; only exceptions spell themselves out. */}
-                <div className="hidden md:block"><SearchStatus page={page} iconOnly={page.search.listed} /></div>
-                {files && <div className="hidden md:block">{page.file && <FileStatus page={page} iconOnly={FILE_COPY[page.file.state]?.label === 'In sync'} />}</div>}
+                <div className="hidden md:block">{page.search.listed ? <span className="sr-only">Listed in the sitemap</span> : <SearchStatus page={page} />}</div>
+                {files && <div className="hidden md:block">{page.file && (page.file.state === 'clean' ? <span className="sr-only">File in sync</span> : <FileStatus page={page} />)}</div>}
                 <div className="hidden pr-3 text-right md:block"><RedirectCount page={page} /></div>
             </>}
         </div>
@@ -102,9 +103,9 @@ export function OutlineView({ roots, summary, filtering, keep, matched, selected
     };
 
     return (
-        <div className="min-h-0 overflow-y-auto" data-view="outline">
+        <div className="min-h-0 min-w-0 overflow-y-auto" data-view="outline">
             <div className={cn('sticky top-0 z-10 hidden h-8 items-center border-b border-border bg-background text-xs text-foreground/70 md:grid', cols(files))}>
-                <span className="pl-10">Page</span><span>Publication</span><span>Search</span>{files && <span>File</span>}
+                <span className="pl-10">Page</span><span>Publication</span><span>Sitemap</span>{files && <span>File</span>}
                 <span className="pr-3 text-right" title="Old addresses that lead here">Redirects</span>
             </div>
             <div role="tree" aria-label="Pages" ref={treeRef} onKeyDown={onKey}>

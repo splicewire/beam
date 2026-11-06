@@ -30,7 +30,7 @@ export function ViewToggle({ view, onView }: { view: SiteMapView; onView: (v: Si
             {VIEWS.map(({ key, label, Icon }) => (
                 <button key={key} type="button" role="radio" data-key={key} aria-checked={view === key} tabIndex={view === key ? 0 : -1}
                     onClick={() => onView(key)}
-                    className={cn('inline-flex h-8 items-center gap-1.5 rounded px-2.5 text-[13px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                    className={cn('inline-flex h-11 items-center gap-1.5 rounded px-2.5 md:h-8 text-[13px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
                         view === key ? 'bg-foreground text-background' : 'text-foreground/75 hover:bg-muted hover:text-foreground')}>
                     <Icon aria-hidden className="size-3.5" />{label}
                 </button>
@@ -54,7 +54,7 @@ export function SiteMapHeader({ siteName, summary, filter, onFilter, query, onQu
         { key: 'all', label: 'All pages', count: summary.pages },
         { key: 'attention', label: 'Needs attention', count: summary.attentionPages },
         { key: 'drafts', label: 'Drafts', count: summary.drafts },
-        { key: 'hidden', label: 'Not in search', count: summary.pages - summary.inSearch },
+        { key: 'hidden', label: 'Not in sitemap', count: summary.pages - summary.inSearch },
     ];
     const onFilterKey = useRadioKeys(filters.map((f) => f.key), filter, onFilter);
     return (
@@ -63,7 +63,7 @@ export function SiteMapHeader({ siteName, summary, filter, onFilter, query, onQu
                 <div className="min-w-0">
                     <h1 className="text-xl font-semibold tracking-[-0.02em]">Site map</h1>
                     <p className="text-[13px] text-foreground/70">
-                        {siteName && <>{siteName} · </>}{summary.pages} pages · {summary.inSearch} in search · {summary.redirects} redirects
+                        {siteName && <>{siteName} · </>}{summary.pages} pages · {summary.inSearch} in the sitemap · {summary.redirects} redirects
                     </p>
                 </div>
                 <div className="flex items-center gap-2">{actions}<ViewToggle view={view} onView={onView} /></div>
@@ -73,7 +73,7 @@ export function SiteMapHeader({ siteName, summary, filter, onFilter, query, onQu
                     {filters.map((f) => (
                         <button key={f.key} type="button" role="radio" data-key={f.key} aria-checked={filter === f.key} tabIndex={filter === f.key ? 0 : -1}
                             onClick={() => onFilter(f.key)}
-                            className={cn('inline-flex h-9 shrink-0 items-center gap-1.5 rounded-md px-2.5 text-[13px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring md:h-8',
+                            className={cn('inline-flex h-11 shrink-0 items-center gap-1.5 rounded-md px-2.5 text-[13px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring md:h-8',
                                 filter === f.key ? 'bg-foreground text-background' : 'text-foreground/75 hover:bg-muted hover:text-foreground')}>
                             {f.label}
                             <span className={cn('text-xs tabular-nums', filter === f.key ? 'text-background/80' : f.key === 'attention' && f.count > 0 ? 'text-destructive' : 'text-foreground/70')}>{f.count}</span>
@@ -84,7 +84,7 @@ export function SiteMapHeader({ siteName, summary, filter, onFilter, query, onQu
                     <span className="sr-only">Find a page or address</span>
                     <Search aria-hidden className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-foreground/60" />
                     <input type="search" value={query} onChange={(e) => onQuery(e.target.value)} placeholder="Find a page or address"
-                        className="h-9 w-full rounded-md border border-input bg-transparent pl-8 pr-2 text-[13px] placeholder:text-foreground/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring md:h-8" />
+                        className="h-11 w-full rounded-md border border-input bg-transparent pl-8 pr-2 text-[13px] placeholder:text-foreground/75 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring md:h-8" />
                 </label>
             </div>
         </header>

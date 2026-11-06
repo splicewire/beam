@@ -66,7 +66,7 @@ describe('the view toggle', () => {
 
     it('selecting in one view carries to the next', () => {
         renderMap();
-        fireEvent.click(screen.getByRole('button', { name: /^Security/ }));
+        fireEvent.click(screen.getByRole('treeitem', { name: /^Security/ }));
         expect(within(inspector()).getByRole('heading', { name: 'Security' })).toBeTruthy();
         pick('Columns');
         expect(within(inspector()).getByRole('heading', { name: 'Security' })).toBeTruthy();
@@ -197,3 +197,39 @@ describe('filters', () => {
         expect(ids).toContain('product');
     });
 });
+
+describe('impeccable P1 fixes', () => {
+    it('counts one loop once, in the filter, the strip and the loose list', () => {
+        renderMap();
+        expect(screen.getByRole('radio', { name: /Needs attention/ }).textContent).toContain('7');
+        const loose = screen.getByRole('region', { name: 'Redirects that reach no page' });
+        // The /promo ↔ /launch loop is one row; the other row is /status leaving the site.
+        expect(within(loose).getAllByRole('listitem')).toHaveLength(2);
+        pick('Columns');
+        expect(screen.getByRole('region', { name: 'Needs attention' }).textContent).toContain('1 redirect reaching no page');
+    });
+
+    it('gives Canvas one tab stop, with arrows walking the tree and Enter twice opening the editor', async () => {
+        const user = userEvent.setup();
+        const { container, onOpen } = renderMap();
+        pick('Canvas');
+        const cards = () => [...container.querySelectorAll<HTMLElement>('[data-card]')];
+        expect(cards().filter((c) => c.tabIndex === 0)).toHaveLength(1);
+        cards()[0].focus();
+        await user.keyboard('{ArrowDown}');
+        expect(document.activeElement?.getAttribute('data-card')).toBe('product');
+        await user.keyboard('{ArrowLeft}');
+        expect(document.activeElement?.getAttribute('data-card')).toBe('home');
+        await user.keyboard('{Enter}{Enter}');
+        expect(onOpen).toHaveBeenCalledWith({ kind: 'page', page: expect.objectContaining({ id: 'home' }) });
+    });
+
+    it('exposes the tree item itself as the focus target, with its level and state', () => {
+        renderMap({ defaultSelectedId: 'pricing' });
+        const item = screen.getByRole('treeitem', { name: /^Pricing/ });
+        expect(item.getAttribute('aria-level')).toBe('2');
+        expect(item.getAttribute('aria-selected')).toBe('true');
+        expect(item.hasAttribute('data-row')).toBe(true);
+    });
+});
+

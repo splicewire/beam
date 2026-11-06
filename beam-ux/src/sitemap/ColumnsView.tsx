@@ -112,7 +112,7 @@ export function ColumnsView({ roots, pages, byId, summary, traces, filtering, ma
     const parentTitle = path.length > 1 ? pageTitle(byId.get(path[path.length - 2])!) : null;
 
     return (
-        <div className="flex min-h-0 flex-col" data-view="columns">
+        <div className="flex min-h-0 min-w-0 flex-col" data-view="columns">
             <AttentionStrip issues={summary.issues} byId={byId} traceTitle={traceTitle}
                 onPick={(issue) => { if (issue.pageId) { setShowLoose(false); setPath(ancestry(byId, issue.pageId)); onSelect(issue.pageId); } else setShowLoose(true); }} />
             {parentTitle && !filtering && (

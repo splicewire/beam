@@ -6,7 +6,8 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { SiteMap } from './SiteMap';
 import { FIXTURE_PAGES, FIXTURE_PARTS, FIXTURE_SITE, FIXTURE_TENANT_PAGES, FIXTURE_TRACES } from './fixture';
-import type { SiteMapView, SiteMapViewStore } from './types';
+import type { SiteMapViewStore } from './chrome';
+import type { SiteMapView } from './types';
 
 const memory = (view: SiteMapView): SiteMapViewStore => { let v = view; return { get: () => v, set: (next) => { v = next; } }; };
 const noop = () => undefined;

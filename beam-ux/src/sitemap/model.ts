@@ -85,6 +85,17 @@ export function looseTraces(traces: RedirectTrace[]): RedirectTrace[] {
     return traces.filter((t) => t.pageId === null && t.end !== 'shadowed');
 }
 
+/** The loose walks with each loop's ends folded into one row (`/a ↔ /b` is one loop), the unit every count uses. */
+export function looseRows(traces: RedirectTrace[]): RedirectTrace[] {
+    const seen = new Set<string>();
+    return looseTraces(traces).filter((t) => {
+        const key = t.end === 'loop' ? [...t.steps].sort().join(' ') : t.id;
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+    });
+}
+
 /** One issue per loop (the two ends of `/a ↔ /b` are one loop), one per other walk that fails a guest. */
 export function looseIssues(traces: RedirectTrace[]): Issue[] {
     const seen = new Set<string>();
@@ -147,7 +158,8 @@ export function summarize(pages: SiteMapPage[], traces: RedirectTrace[]): SiteMa
         drafts: pages.filter((p) => p.draftPending).length,
         redirects: traces.length,
         issues,
-        attentionPages: new Set(issues.map((i) => i.pageId).filter(Boolean)).size,
+        // What "Needs attention" shows: the pages with an issue and the redirects that reach no page and fail a guest.
+        attentionPages: new Set(issues.map((i) => i.pageId).filter(Boolean)).size + issues.filter((i) => !i.pageId).length,
         loops: issues.filter((i) => !i.pageId).length,
         // D-37-d: the server sends `file` only on a central site to a diagnostics reader; draw the column only then.
         hasFiles: pages.some((p) => p.file !== null),

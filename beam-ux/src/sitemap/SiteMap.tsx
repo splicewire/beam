@@ -11,7 +11,7 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { cn } from '@schemastud/ui';
 import { browserViewStore, SiteMapHeader, useSheetLayout, type SiteMapViewStore } from './chrome';
-import { buildTree, looseTraces, summarize, visibleIds, type MapFilter } from './model';
+import { buildTree, looseRows, summarize, visibleIds, type MapFilter } from './model';
 import { LooseRedirects, PageInspector, SiteParts } from './parts';
 import { OutlineView } from './OutlineView';
 import { CanvasView } from './CanvasView';
@@ -57,7 +57,7 @@ export function SiteMap({
     const [ownSelected, setOwnSelected] = useState<string | null>(defaultSelectedId);
     const selected = selectedId !== undefined ? selectedId : ownSelected;
     // At phone width the map paints first; the inspector rises as a sheet only once a page is chosen.
-    const [inspecting, setInspecting] = useState<boolean>(!!defaultSelectedId);
+    const [inspecting, setInspecting] = useState<boolean>(() => !!defaultSelectedId && !sheet);
     const select = (id: string | null) => {
         if (selectedId === undefined) setOwnSelected(id);
         onSelectedChange?.(id);
@@ -71,7 +71,7 @@ export function SiteMap({
     const summary = useMemo(() => summarize(pages, traces), [pages, traces]);
     const { keep, matched } = useMemo(() => visibleIds(pages, filter, query), [pages, filter, query]);
     const filtering = filter !== 'all' || query.trim() !== '';
-    const loose = useMemo(() => looseTraces(traces), [traces]);
+    const loose = useMemo(() => looseRows(traces), [traces]);
     const page = selected ? byId.get(selected) : undefined;
     const showInspector = !!page && (!sheet || inspecting);
 
@@ -106,7 +106,7 @@ export function SiteMap({
         <div className={cn('flex h-full min-h-0 flex-col bg-background text-foreground', className)} data-site-map-view={view}>
             <SiteMapHeader siteName={siteName} summary={summary} filter={filter} onFilter={setFilter} query={query} onQuery={setQuery}
                 view={view} onView={setView} actions={actions} />
-            <div className={cn('grid min-h-0 flex-1', showInspector && !sheet && 'lg:grid-cols-[minmax(0,1fr)_23rem]')}>
+            <div className={cn('grid min-h-0 min-w-0 flex-1 grid-cols-[minmax(0,1fr)]', showInspector && !sheet && 'lg:grid-cols-[minmax(0,1fr)_23rem]')}>
                 {view === 'outline' && <OutlineView {...viewProps} />}
                 {view === 'canvas' && <CanvasView {...viewProps} />}
                 {view === 'columns' && <ColumnsView {...viewProps} />}

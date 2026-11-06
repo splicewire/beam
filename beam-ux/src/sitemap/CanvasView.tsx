@@ -7,7 +7,7 @@
 import { useEffect, useRef, useState, type KeyboardEvent } from 'react';
 import { ChevronRight, Home, Maximize2, ZoomIn, ZoomOut } from 'lucide-react';
 import { Button, cn } from '@schemastud/ui';
-import { issuesFor, isSevere, looseTraces, pageTitle, publicationState, type TreeNode } from './model';
+import { issuesFor, isSevere, looseRows, pageTitle, publicationState, type TreeNode } from './model';
 import { FileStatus, IssueIcon, PublicationStatus, SearchStatus } from './parts';
 import type { SiteMapInbound } from './types';
 import type { SiteMapViewProps } from './views';
@@ -43,19 +43,16 @@ function layout(roots: TreeNode[], open: (id: string) => boolean, keep: Set<stri
     return { placed, height: Math.max(row * PITCH, CARD_H), laneX: (maxDepth + 1) * COL + 40 };
 }
 
-function Card({ p, selected, open, onSelect, onOpen, onToggle }: {
-    p: Placed; selected: boolean; open: boolean; onSelect: () => void; onOpen: () => void; onToggle: () => void;
+function Card({ p, selected, open, focusable, onSelect, onOpen, onToggle }: {
+    p: Placed; selected: boolean; open: boolean; focusable: boolean; onSelect: () => void; onOpen: () => void; onToggle: () => void;
 }) {
     const { page } = p.node;
     const issues = issuesFor(page);
     const hasKids = p.node.children.length > 0;
     const title = pageTitle(page);
-    const onKey = (e: KeyboardEvent<HTMLButtonElement>) => {
-        if (e.key === 'Enter' && selected) { e.preventDefault(); onOpen(); }
-    };
     return (
         <div className="absolute" style={{ left: p.x, top: p.y, width: CARD_W, height: CARD_H }}>
-            <button type="button" data-card={page.id} onClick={onSelect} onDoubleClick={onOpen} onKeyDown={onKey} aria-pressed={selected}
+            <button type="button" data-card={page.id} tabIndex={focusable ? 0 : -1} onClick={onSelect} onDoubleClick={onOpen} aria-pressed={selected}
                 className={cn('flex h-full w-full flex-col justify-between gap-1 rounded-lg border bg-card px-3 py-2 text-left shadow-[0_1px_2px_rgb(0_0_0/0.06)] transition-[border-color,box-shadow] duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring motion-reduce:transition-none',
                     selected ? 'border-primary ring-2 ring-primary/25' : issues.some((i) => isSevere(i.kind)) ? 'border-destructive/60' : 'border-border hover:border-foreground/30',
                     publicationState(page) === 'unpublished' && 'border-dashed')}>
@@ -109,7 +106,7 @@ export function CanvasView({ roots, traces, filtering, keep, selected, onSelect,
         cursor = y;
         return { ...g, y };
     });
-    const loose = looseTraces(traces);
+    const loose = looseRows(traces);
     const loopTop = Math.max(height, cursor + GHOST_H + 40);
     const width = laneX + GHOST_W + 40;
     const totalH = loopTop + (loose.length ? loose.length * (GHOST_H + 10) + 40 : 0);
@@ -122,20 +119,53 @@ export function CanvasView({ roots, traces, filtering, keep, selected, onSelect,
         const dir = Math.sign(y2 - y1);
         return { id: p.node.page.id, d: dir === 0 ? `M${x1},${y1} H${x2}` : `M${x1},${y1} H${mx - 8} Q${mx},${y1} ${mx},${y1 + dir * 8} V${y2 - dir * 8} Q${mx},${y2} ${mx + 8},${y2} H${x2}` };
     });
+    // One tab stop for the map, as Outline: arrows walk the tree in pre-order, Left climbs, Right descends,
+    // Enter selects and a second Enter opens the editor.
+    const focusId = placed.some((p) => p.node.page.id === selected) ? selected : placed[0]?.node.page.id;
+    const onKeys = (e: KeyboardEvent<HTMLDivElement>) => {
+        const id = (e.target as HTMLElement).dataset.card;
+        if (!id) return;
+        const i = placed.findIndex((p) => p.node.page.id === id);
+        const focus = (j: number) => scroller.current?.querySelector<HTMLElement>(`[data-card="${placed[j]?.node.page.id}"]`)?.focus();
+        const node = placed[i].node;
+        switch (e.key) {
+            case 'ArrowDown': e.preventDefault(); focus(Math.min(placed.length - 1, i + 1)); break;
+            case 'ArrowUp': e.preventDefault(); focus(Math.max(0, i - 1)); break;
+            case 'Home': e.preventDefault(); focus(0); break;
+            case 'End': e.preventDefault(); focus(placed.length - 1); break;
+            case 'ArrowLeft': { e.preventDefault(); const parent = placed.findIndex((p) => p.node.page.id === node.page.parentId); if (parent >= 0) focus(parent); break; }
+            case 'ArrowRight': {
+                e.preventDefault();
+                if (node.children.length && !isOpen(id)) { toggle(id); break; }
+                const child = placed.findIndex((p) => p.node.page.parentId === id);
+                if (child >= 0) focus(child);
+                break;
+            }
+            case 'Enter': if (selected === id) { e.preventDefault(); onOpenPage(id); } break;
+        }
+    };
+    // A narrow screen starts fitted, so the first view is the whole map rather than its top-left corner.
+    useEffect(() => {
+        const el = scroller.current;
+        if (el && el.clientWidth > 0 && el.clientWidth < 768) {
+            setScale(Math.max(0.4, Math.min(1, +((el.clientWidth - PAD * 2) / width).toFixed(2))));
+            el.scrollTo?.({ left: 0, top: 0 });
+        }
+    }, []); // eslint-disable-line react-hooks/exhaustive-deps
     const fit = () => { const el = scroller.current; if (el) setScale(Math.max(0.4, Math.min(1, +((el.clientWidth - PAD * 2) / width).toFixed(2)))); };
     const home = () => scroller.current?.scrollTo?.({ left: 0, top: 0 });
     const ghostTone = (r: SiteMapInbound) => r.attention ? 'border-destructive/60 text-destructive' : 'border-border text-foreground/75';
 
     return (
-        <div className="relative flex min-h-0 flex-col" data-view="canvas">
-            <div role="group" aria-label="Zoom" className="absolute right-3 top-3 z-10 flex items-center gap-0.5 rounded-md border border-border bg-background/95 p-0.5 shadow-sm">
-                <Button variant="ghost" size="icon" className="size-8" aria-label="Back to the top" onClick={home}><Home /></Button>
-                <Button variant="ghost" size="icon" className="size-8" aria-label="Zoom out" onClick={() => setScale((s) => Math.max(0.4, +(s - 0.15).toFixed(2)))}><ZoomOut /></Button>
+        <div className="relative flex min-h-0 min-w-0 flex-col" data-view="canvas">
+            <div role="group" aria-label="Zoom" className="flex items-center justify-end gap-0.5 border-b border-border bg-background px-3 py-1">
+                <Button variant="ghost" size="icon" className="size-11 md:size-8" aria-label="Back to the top" onClick={home}><Home /></Button>
+                <Button variant="ghost" size="icon" className="size-11 md:size-8" aria-label="Zoom out" onClick={() => setScale((s) => Math.max(0.4, +(s - 0.15).toFixed(2)))}><ZoomOut /></Button>
                 <span className="w-10 text-center text-xs tabular-nums text-foreground/70" aria-live="polite">{Math.round(scale * 100)}%</span>
-                <Button variant="ghost" size="icon" className="size-8" aria-label="Zoom in" onClick={() => setScale((s) => Math.min(1.4, +(s + 0.15).toFixed(2)))}><ZoomIn /></Button>
-                <Button variant="ghost" size="icon" className="size-8" aria-label="Fit to screen" onClick={fit}><Maximize2 /></Button>
+                <Button variant="ghost" size="icon" className="size-11 md:size-8" aria-label="Zoom in" onClick={() => setScale((s) => Math.min(1.4, +(s + 0.15).toFixed(2)))}><ZoomIn /></Button>
+                <Button variant="ghost" size="icon" className="size-11 md:size-8" aria-label="Fit to screen" onClick={fit}><Maximize2 /></Button>
             </div>
-            <div ref={scroller} className="min-h-0 flex-1 overflow-auto bg-muted/30">
+            <div ref={scroller} onKeyDown={onKeys} className="min-h-0 flex-1 overflow-auto bg-muted/30">
                 <div style={{ width: width * scale + PAD * 2, height: totalH * scale + PAD * 2 }} className="relative">
                     <div className="absolute origin-top-left" style={{ left: PAD, top: PAD + 8, width, height: totalH, transform: `scale(${scale})` }}>
                         <svg className="pointer-events-none absolute inset-0 overflow-visible" width={width} height={totalH} aria-hidden>
@@ -159,7 +189,7 @@ export function CanvasView({ roots, traces, filtering, keep, selected, onSelect,
                                 {r.attention && <span className="sr-only">fails a guest</span>}
                             </button>
                         ))}
-                        {loose.length > 0 && <p className="absolute text-xs font-medium text-foreground/70" style={{ left: laneX, top: loopTop - 22 }}>Reach no page</p>}
+                        {loose.length > 0 && <p className="absolute text-xs font-medium text-foreground/70" style={{ left: laneX, top: loopTop - 22 }}>Redirects that reach no page</p>}
                         {loose.map((t, i) => (
                             <div key={t.id} className={cn('absolute flex items-center gap-1.5 rounded-md border border-dashed bg-background px-2 font-mono text-[11px]', t.attention ? 'border-destructive/60 text-destructive' : 'border-border text-foreground/75')}
                                 style={{ left: laneX, top: loopTop + i * (GHOST_H + 10), width: GHOST_W, height: GHOST_H }}>
@@ -168,7 +198,7 @@ export function CanvasView({ roots, traces, filtering, keep, selected, onSelect,
                             </div>
                         ))}
                         {placed.map((p) => (
-                            <Card key={p.node.page.id} p={p} selected={selected === p.node.page.id} open={isOpen(p.node.page.id)}
+                            <Card key={p.node.page.id} p={p} selected={selected === p.node.page.id} open={isOpen(p.node.page.id)} focusable={focusId === p.node.page.id}
                                 onSelect={() => onSelect(p.node.page.id)} onOpen={() => onOpenPage(p.node.page.id)} onToggle={() => toggle(p.node.page.id)} />
                         ))}
                     </div>

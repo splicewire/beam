@@ -22,7 +22,7 @@ export function PublicationStatus({ page, compact = false }: { page: SiteMapPage
             <span aria-hidden className={cn('size-2 shrink-0 rounded-full', state === 'unpublished' ? 'border border-foreground/50' : 'bg-primary')} />
             {state === 'unpublished' ? <span className="text-foreground">Not published</span> : <span>Live {page.publishedReadable}</span>}
             {state === 'draft' && (
-                <span className="inline-flex items-center gap-1 rounded bg-warning/15 px-1 text-[11px] font-medium text-foreground">
+                <span className="inline-flex items-center gap-1 rounded bg-muted px-1 text-[11px] font-medium text-foreground">
                     draft {page.headReadable}{!compact && <span className="font-normal text-foreground/75"> pending</span>}
                 </span>
             )}
@@ -32,10 +32,10 @@ export function PublicationStatus({ page, compact = false }: { page: SiteMapPage
 
 /** Why the sitemap leaves a page out, in an author's words (`SitemapEligibility`'s reasons). */
 export const SEARCH_COPY: Record<string, { short: string; long: string }> = {
-    listed: { short: 'In search', long: 'Listed in the sitemap. Search engines can find this page.' },
-    'record-page': { short: 'In search', long: 'Listed in the sitemap once per record a guest can read.' },
+    listed: { short: 'Listed', long: 'Search engines can find this page.' },
+    'record-page': { short: 'Listed', long: 'Listed once per record a guest can read.' },
     unpublished: { short: 'Waits for publish', long: 'It will be listed once it is published.' },
-    'hidden-ancestor': { short: 'Under a hidden page', long: 'A page above it is not published, and a hidden page hides the pages under it.' },
+    'hidden-ancestor': { short: 'Under an unpublished page', long: 'A page above it is not published, and a hidden page hides the pages under it.' },
     'not-listable': { short: 'Restricted or unlisted', long: 'Guests may not list it: it is for members only, or unlisted (readable by its link, never listed).' },
     'not-public': { short: 'Members only', long: 'Gated content is never listed.' },
     unplaced: { short: 'Not placed', long: 'It has no place in the page tree, so it has no address.' },
@@ -43,12 +43,12 @@ export const SEARCH_COPY: Record<string, { short: string; long: string }> = {
     'no-records': { short: 'No public records', long: 'A record page is listed once per record a guest can read; none is readable.' },
 };
 
-const searchCopy = (reason: string) => SEARCH_COPY[reason] ?? { short: 'Not in search', long: 'Left out of the sitemap.' };
+const searchCopy = (reason: string) => SEARCH_COPY[reason] ?? { short: 'Not listed', long: 'Left out of the sitemap.' };
 
 export function SearchStatus({ page, iconOnly = false }: { page: SiteMapPage; iconOnly?: boolean }) {
     const { listed, reason, urlCount } = page.search;
     const short = searchCopy(reason).short + (reason === 'record-page' ? ` · ${urlCount}` : '');
-    const label = listed ? short : `Not in search: ${short}`;
+    const label = listed ? `In the sitemap: ${short}` : `Not in the sitemap: ${short}`;
     const Icon = listed ? Globe : reason === 'not-public' || reason === 'not-listable' ? Lock : EyeOff;
     return (
         <span title={label} className="inline-flex items-center gap-1.5 whitespace-nowrap text-xs text-foreground/75">
@@ -120,7 +120,7 @@ export function IssueIcon({ kind, className, announce = true }: { kind: Issue['k
 const END_COPY: Record<string, string> = {
     loop: 'Loops: guests get a 404',
     'too-long': 'Too many steps: guests get a 404',
-    'dead-end': 'Ends on a hidden page: guests get a 404',
+    'dead-end': 'Ends on an unpublished page: guests get a 404',
     gone: 'Its target is gone: guests get a 404',
     denied: 'Only readers who may see the page get there',
 };
@@ -264,7 +264,6 @@ export function PageInspector({ page, parent, onOpen, onSelect, onClose, sheet =
     const issues = issuesFor(page);
     const state = publicationState(page);
     const title = pageTitle(page);
-    const fileIssue = (kind: Issue['kind']) => kind === 'file-missing' ? 'restore' as const : 'take-draft' as const;
     const canRepair = !!onFileAction && !!page.file?.repairMemberId;
     return (
         <aside aria-label={`${title} details`} data-testid="site-map-inspector"
@@ -274,7 +273,7 @@ export function PageInspector({ page, parent, onOpen, onSelect, onClose, sheet =
                 <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
                         {parent && (
-                            <button type="button" onClick={() => onSelect?.(parent.id)} className="mb-1 text-xs text-foreground/70 hover:text-foreground hover:underline">
+                            <button type="button" onClick={() => onSelect?.(parent.id)} className="mb-1 rounded text-xs text-foreground/70 hover:text-foreground hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
                                 {pageTitle(parent)}
                             </button>
                         )}
@@ -303,11 +302,6 @@ export function PageInspector({ page, parent, onOpen, onSelect, onClose, sheet =
                                         <p className="text-[13px] font-medium">{issueLabel(issue)}</p>
                                         <p className="text-xs text-foreground/75">{ISSUE_COPY[issue.kind].fix}.</p>
                                     </div>
-                                    {issue.kind.startsWith('file') && canRepair && (
-                                        <Button size="sm" variant="outline" className="h-8 shrink-0 bg-background px-2 text-xs" onClick={() => onFileAction!(fileIssue(issue.kind), page)}>
-                                            {ISSUE_COPY[issue.kind].action}
-                                        </Button>
-                                    )}
                                 </li>
                             ))}
                         </ul>
