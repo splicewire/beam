@@ -83,7 +83,7 @@
     "@types/react-dom": "^19.0.0"
   },
   "dependencies": {
-    "@splicewire/beam-intake": "file:../beam-intake",
-    "@splicewire/beam-resources": "^0.1.3"
+    "@splicewire/beam-intake": "github:splicewire/beam#7359afcab9905e9d0501552e9ad98ca17655e099&path:/beam-intake",
+    "@splicewire/beam-resources": "github:splicewire/beam#8f6ceff42b60c1512b92f6f464d4b79f0d4d3e99&path:/beam-resources"
   }
 }
