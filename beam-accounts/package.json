@@ -40,7 +40,7 @@
     "prepublishOnly": "npm run build"
   },
   "dependencies": {
-    "@splicewire/beam-resources": "^0.1.3"
+    "@splicewire/beam-resources": "github:splicewire/beam#8f6ceff42b60c1512b92f6f464d4b79f0d4d3e99&path:/beam-resources"
   },
   "peerDependencies": {
     "@schemastud/ui": "^0.1.2 || ^0.2.0",
@@ -58,7 +58,7 @@
     "react-style-singleton": "2.2.3",
     "use-callback-ref": "1.3.3",
     "use-sidecar": "1.1.3",
-    "@schemastud/ui": "file:../../schemastud/ui",
+    "@schemastud/ui": "github:schemastud/js#abef468b39df9b1e81fd9a2081e69f8094c60e4e&path:/ui",
     "@tanstack/react-query": "^5.62.0",
     "@tanstack/react-table": "^8.20.0",
     "@testing-library/react": "^16.1.0",
@@ -72,9 +72,9 @@
     "tsup": "^8.5.1",
     "typescript": "^5.7.2",
     "vitest": "^4.1.10",
-    "@schemastud/seam": "file:../../schemastud/seam",
-    "@splicewire/beam-resources": "file:../beam-resources",
-    "@splicewire/beam-ux": "file:../beam-ux",
-    "@schemastud/combobox": "file:../../schemastud/combobox"
+    "@schemastud/seam": "github:schemastud/js#72b9e79d72e3dbd9a14113988c67b72f065a5b87&path:/seam",
+    "@splicewire/beam-resources": "github:splicewire/beam#8f6ceff42b60c1512b92f6f464d4b79f0d4d3e99&path:/beam-resources",
+    "@splicewire/beam-ux": "github:splicewire/beam#3fb4caa3ac83da7d2d34562a5e72a58df0d2c05a&path:/beam-ux",
+    "@schemastud/combobox": "github:schemastud/js#921e870797f2506ddf3c06721dea84c2901c18d7&path:/combobox"
   }
 }
