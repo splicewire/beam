@@ -50,6 +50,11 @@ export interface EntriesSeatProps {
    * seat's door, so "Open in editor" on the host's index opens the same panel a row would.
    */
   index?: (door: { open: (entry: EntriesSeatTarget) => void }) => ReactNode;
+  /**
+   * Called whenever the editor panel closes: after a save or a create, or when it is dismissed. A host's own index reads
+   * its facts again here; the flat list refreshes through Frame's own cache.
+   */
+  onEditorClose?: () => void;
 }
 
 type Editing = { mode: "new" } | { mode: "edit"; id: string } | { mode: "theme"; id: string; slug: string } | null;
@@ -74,12 +79,16 @@ export function EntriesSeat({
   editSlots,
   chrome,
   index,
+  onEditorClose,
 }: EntriesSeatProps) {
   const can = manifest?.can;
   const [editing, setEditing] = useState<Editing>(null);
   const Panel = chrome?.Panel ?? InlinePanel;
   const Tabs = chrome?.Tabs ?? InlineTabs;
-  const close = () => setEditing(null);
+  const close = () => {
+    setEditing(null);
+    onEditorClose?.();
+  };
   const open = (entry: EntriesSeatTarget) =>
     setEditing(
       entry.type === "theme" ? { mode: "theme", id: entry.id, slug: entry.slug ?? entry.id } : { mode: "edit", id: entry.id },

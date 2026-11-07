@@ -206,4 +206,33 @@ describe("EntriesSeat", () => {
     expect(screen.getByText("theme editor t1")).toBeTruthy();
     expect(screen.getByRole("region", { name: "Theme — default" })).toBeTruthy();
   });
+  // codex 37-follow: a replacement index must learn when the editor closes (a save, a create, a cancel), so it can
+  // read its facts again; the flat list refreshes through Frame, a host's Site map does not.
+  it("tells the host when the editor panel closes, after a save, a create or a dismissal", () => {
+    const closed = vi.fn();
+    render(
+      <EntriesSeat
+        manifest={{ can: { create: true, update: true } } as never}
+        client={client}
+        onEditorClose={closed}
+        index={({ open }) => (
+          <button type="button" onClick={() => open({ id: "e2", type: "page", slug: "pricing" })}>
+            open pricing in editor
+          </button>
+        )}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "open pricing in editor" }));
+    (h.editProps.at(-1)!.onSaved as () => void)();
+    expect(closed).toHaveBeenCalledTimes(1);
+
+    fireEvent.click(screen.getByRole("button", { name: "New entry" }));
+    (h.editProps.at(-1)!.onSaved as () => void)();
+    expect(closed).toHaveBeenCalledTimes(2);
+
+    fireEvent.click(screen.getByRole("button", { name: "open pricing in editor" }));
+    fireEvent.click(screen.getByRole("button", { name: "Close" }));
+    expect(closed).toHaveBeenCalledTimes(3);
+  });
 });
