@@ -173,4 +173,37 @@ describe("EntriesSeat", () => {
     fireEvent.click(screen.getByRole("button", { name: "open about" }));
     await waitFor(() => expect(screen.getByRole("region", { name: "host panel: Edit entry" })).toBeTruthy());
   });
+  // Research 37 (37-FOLLOW): a host whose index is the Site map replaces the flat list and opens an entry through the
+  // seat's door, so "Open in editor" lands in the same panel a row would.
+  it("lets a host's index replace the flat list and open an entry, or the theme, through the seat's door", () => {
+    h.rows = [{ id: "e1", slug: "about", type: "page" }];
+    render(
+      <EntriesSeat
+        manifest={{ can: { update: true } } as never}
+        client={client}
+        index={({ open }) => (
+          <nav aria-label="host index">
+            <button type="button" onClick={() => open({ id: "e2", type: "page", slug: "pricing" })}>
+              open pricing in editor
+            </button>
+            <button type="button" onClick={() => open({ id: "t1", type: "theme", slug: "default" })}>
+              open the theme
+            </button>
+          </nav>
+        )}
+      />,
+    );
+
+    expect(screen.getByRole("navigation", { name: "host index" })).toBeTruthy();
+    expect(h.listProps).toBeNull();
+    expect(screen.queryByRole("button", { name: "open about" })).toBeNull();
+
+    fireEvent.click(screen.getByRole("button", { name: "open pricing in editor" }));
+    expect(screen.getByText("edit shell e2 writable")).toBeTruthy();
+
+    fireEvent.click(screen.getByRole("button", { name: "Close" }));
+    fireEvent.click(screen.getByRole("button", { name: "open the theme" }));
+    expect(screen.getByText("theme editor t1")).toBeTruthy();
+    expect(screen.getByRole("region", { name: "Theme — default" })).toBeTruthy();
+  });
 });
