@@ -3,6 +3,7 @@ export {
   EntriesSeat,
   type EntriesPanelProps,
   type EntriesSeatProps,
+  type EntriesSeatTarget,
   type EntriesTabsProps,
 } from "./EntriesSeat";
 export { EntryWorkflow, type EntryWorkflowBinding } from "./EntryWorkflow";

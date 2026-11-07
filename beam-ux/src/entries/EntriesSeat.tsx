@@ -20,6 +20,13 @@ export interface EntriesTabsProps {
   tabs: Array<{ value: string; label: string; content: ReactNode }>;
 }
 
+/** An entry a host's index asks the seat to open: a theme row opens `ThemeEditor`, any other its content. */
+export interface EntriesSeatTarget {
+  id: string;
+  type?: string | null;
+  slug?: string | null;
+}
+
 export interface EntriesSeatProps {
   /** The `beam-ux-entry` resource's Frame context (its `can` and list manifest), from the host's manifest. */
   manifest?: ContextManifest;
@@ -38,6 +45,16 @@ export interface EntriesSeatProps {
   editSlots?: Partial<EditSlots>;
   /** Host chrome for the editing panel and an entry's tabs. Absent, the seat renders plain inline ones. */
   chrome?: { Panel?: ComponentType<EntriesPanelProps>; Tabs?: ComponentType<EntriesTabsProps> };
+  /**
+   * The host's own index in place of the flat list (the Site map, owner-review-20261102 research 37). It receives the
+   * seat's door, so "Open in editor" on the host's index opens the same panel a row would.
+   */
+  index?: (door: { open: (entry: EntriesSeatTarget) => void }) => ReactNode;
+  /**
+   * Called whenever the editor panel closes: after a save or a create, or when it is dismissed. A host's own index reads
+   * its facts again here; the flat list refreshes through Frame's own cache.
+   */
+  onEditorClose?: () => void;
 }
 
 type Editing = { mode: "new" } | { mode: "edit"; id: string } | { mode: "theme"; id: string; slug: string } | null;
@@ -61,12 +78,21 @@ export function EntriesSeat({
   listSlots,
   editSlots,
   chrome,
+  index,
+  onEditorClose,
 }: EntriesSeatProps) {
   const can = manifest?.can;
   const [editing, setEditing] = useState<Editing>(null);
   const Panel = chrome?.Panel ?? InlinePanel;
   const Tabs = chrome?.Tabs ?? InlineTabs;
-  const close = () => setEditing(null);
+  const close = () => {
+    setEditing(null);
+    onEditorClose?.();
+  };
+  const open = (entry: EntriesSeatTarget) =>
+    setEditing(
+      entry.type === "theme" ? { mode: "theme", id: entry.id, slug: entry.slug ?? entry.id } : { mode: "edit", id: entry.id },
+    );
   const shellSlots = { ...editSlots, Container: PassthroughContainer };
 
   const title = editing?.mode === "new" ? "New entry" : editing?.mode === "theme" ? `Theme — ${editing.slug}` : "Edit entry";
@@ -104,24 +130,22 @@ export function EntriesSeat({
         </p>
       )}
 
-      <ListShell
-        resource={ENTRY_RESOURCE}
-        columns={[]}
-        manifest={manifest}
-        onOpen={(record) =>
-          setEditing(
-            record.type === "theme"
-              ? { mode: "theme", id: String(record.id), slug: String(record.slug) }
-              : { mode: "edit", id: String(record.id) },
-          )
-        }
-        slots={{
-          ...listSlots,
-          // The heading's "New entry" opens the create panel; the toolbar's own create button would be a second one.
-          Toolbar: () => null,
-          ...(rowActions ? { RowActions: rowActions } : {}),
-        }}
-      />
+      {index ? (
+        index({ open })
+      ) : (
+        <ListShell
+          resource={ENTRY_RESOURCE}
+          columns={[]}
+          manifest={manifest}
+          onOpen={(record) => open({ id: String(record.id), type: String(record.type), slug: String(record.slug) })}
+          slots={{
+            ...listSlots,
+            // The heading's "New entry" opens the create panel; the toolbar's own create button would be a second one.
+            Toolbar: () => null,
+            ...(rowActions ? { RowActions: rowActions } : {}),
+          }}
+        />
+      )}
 
       <Panel open={editing !== null} onOpenChange={(open) => (!open ? close() : undefined)} title={title}>
         {editing?.mode === "theme" && (

@@ -173,4 +173,66 @@ describe("EntriesSeat", () => {
     fireEvent.click(screen.getByRole("button", { name: "open about" }));
     await waitFor(() => expect(screen.getByRole("region", { name: "host panel: Edit entry" })).toBeTruthy());
   });
+  // Research 37 (37-FOLLOW): a host whose index is the Site map replaces the flat list and opens an entry through the
+  // seat's door, so "Open in editor" lands in the same panel a row would.
+  it("lets a host's index replace the flat list and open an entry, or the theme, through the seat's door", () => {
+    h.rows = [{ id: "e1", slug: "about", type: "page" }];
+    render(
+      <EntriesSeat
+        manifest={{ can: { update: true } } as never}
+        client={client}
+        index={({ open }) => (
+          <nav aria-label="host index">
+            <button type="button" onClick={() => open({ id: "e2", type: "page", slug: "pricing" })}>
+              open pricing in editor
+            </button>
+            <button type="button" onClick={() => open({ id: "t1", type: "theme", slug: "default" })}>
+              open the theme
+            </button>
+          </nav>
+        )}
+      />,
+    );
+
+    expect(screen.getByRole("navigation", { name: "host index" })).toBeTruthy();
+    expect(h.listProps).toBeNull();
+    expect(screen.queryByRole("button", { name: "open about" })).toBeNull();
+
+    fireEvent.click(screen.getByRole("button", { name: "open pricing in editor" }));
+    expect(screen.getByText("edit shell e2 writable")).toBeTruthy();
+
+    fireEvent.click(screen.getByRole("button", { name: "Close" }));
+    fireEvent.click(screen.getByRole("button", { name: "open the theme" }));
+    expect(screen.getByText("theme editor t1")).toBeTruthy();
+    expect(screen.getByRole("region", { name: "Theme — default" })).toBeTruthy();
+  });
+  // codex 37-follow: a replacement index must learn when the editor closes (a save, a create, a cancel), so it can
+  // read its facts again; the flat list refreshes through Frame, a host's Site map does not.
+  it("tells the host when the editor panel closes, after a save, a create or a dismissal", () => {
+    const closed = vi.fn();
+    render(
+      <EntriesSeat
+        manifest={{ can: { create: true, update: true } } as never}
+        client={client}
+        onEditorClose={closed}
+        index={({ open }) => (
+          <button type="button" onClick={() => open({ id: "e2", type: "page", slug: "pricing" })}>
+            open pricing in editor
+          </button>
+        )}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "open pricing in editor" }));
+    (h.editProps.at(-1)!.onSaved as () => void)();
+    expect(closed).toHaveBeenCalledTimes(1);
+
+    fireEvent.click(screen.getByRole("button", { name: "New entry" }));
+    (h.editProps.at(-1)!.onSaved as () => void)();
+    expect(closed).toHaveBeenCalledTimes(2);
+
+    fireEvent.click(screen.getByRole("button", { name: "open pricing in editor" }));
+    fireEvent.click(screen.getByRole("button", { name: "Close" }));
+    expect(closed).toHaveBeenCalledTimes(3);
+  });
 });
