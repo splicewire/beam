@@ -100,7 +100,7 @@ export function veCss(t?: Partial<CanvasTheme>): string {
 .ve-command-button:hover:not(:disabled){border-color:${c.accent}}
 .ve-command-button:focus-visible{outline:2px solid ${c.accent};outline-offset:2px}
 .ve-command-button:disabled{opacity:.45;cursor:not-allowed}
-.ve-canvas-widget{min-width:0}
+.ve-canvas-widget{width:100%;min-width:0}
 .ve-outline{font-family:${c.fontBody};font-size:12px;color:${c.ink}}
 .ve-outline h3{font-weight:600;margin:0 0 8px}
 .ve-outline p{margin:0 0 12px}

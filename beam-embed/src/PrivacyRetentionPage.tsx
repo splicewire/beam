@@ -405,7 +405,9 @@ export function EraseCard({ disabled }: { disabled: boolean }) {
 }
 
 // ── Card 4: Corpus/training consent read-out (real per-chat opt-in via embed.posture) ──────────
-function CorpusConsentCard() {
+// Nothing writes `corpus_optin` yet (owner review 2026-11-02, 23-d; the write path is slice 23-3), so the
+// copy says so instead of naming a surface that does not exist.
+export function CorpusConsentCard() {
     const posture = useRetentionPosture();
     const chats: RetentionPostureChat[] = posture.data?.chats ?? [];
     const optedIn = chats.filter((c) => c.corpus_optin).length;
@@ -420,9 +422,9 @@ function CorpusConsentCard() {
                     <h2 className="font-semibold leading-none tracking-tight">Corpus / training consent</h2>
                 </div>
                 <CardDescription>
-                    Whether each Published Chat opted transcripts into corpus/training.{' '}
-                    <b>Default: no.</b> Set on the Embed product surface — this is a read-out, not a
-                    write path.
+                    Whether each Published Chat lets its transcripts be used for corpus or training.{' '}
+                    <b>Default: no.</b> There’s no setting for this yet, so new chats are opted out and
+                    can’t be opted in.
                 </CardDescription>
             </CardHeader>
             <CardContent>

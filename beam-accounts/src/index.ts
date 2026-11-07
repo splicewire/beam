@@ -45,6 +45,14 @@ export {
 } from "./auth-hooks";
 export { LoginPanel, type LoginPanelProps } from "./login-panel";
 export {
+  DemoLogin,
+  fetchDemoUsers,
+  type DemoLoginProps,
+  type DemoLoginAccount,
+  type DemoLoginUser,
+  type DemoLoginChoice,
+} from "./demo-login";
+export {
   ForgotPasswordForm,
   type ForgotPasswordFormProps,
 } from "./forgot-password-form";

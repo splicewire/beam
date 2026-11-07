@@ -35,6 +35,12 @@ describe('scopeTokensToDocs', () => {
         expect(keysOf(scoped, '.dark .beam-docs,')).toEqual(dark);
     });
 
+    it('ships no scrollbar rule: the docs sheet themes nothing outside .beam-docs (research 05, K-05 review)', () => {
+        expect(tokens).toContain('scrollbar-width');
+        expect(scoped).not.toMatch(/scrollbar-(color|width)/);
+        expect(scoped).not.toContain('@layer');
+    });
+
     it('resets the host hooks onto the family inside docs', () => {
         expect(scoped).toContain('--beam-fg: var(--beam-ink);');
         expect(scoped).toContain('--beam-border: var(--beam-line);');

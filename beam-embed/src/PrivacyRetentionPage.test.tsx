@@ -3,13 +3,18 @@ import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, expect, it, vi } from 'vitest';
 
 vi.mock('./api', () => ({
+    useRetentionPosture: () => ({
+        data: { default_days: 90, chats: [{ id: '1', title: 'Support bot', retention_days: 90, corpus_optin: false }] },
+        isPending: false,
+        isError: false,
+    }),
     useEraseSubject: () => ({ mutate: vi.fn(), isPending: false }),
     usePrunePreview: () => ({ data: undefined, isPending: false }),
     usePruneSessions: () => ({ mutate: vi.fn(), isPending: false }),
     apiErrorMessage: (_error: unknown, fallback: string) => fallback,
 }));
 
-import { EraseCard } from './PrivacyRetentionPage';
+import { CorpusConsentCard, EraseCard } from './PrivacyRetentionPage';
 
 afterEach(cleanup);
 
@@ -30,4 +35,15 @@ it('selecting the human-labelled Session ID still drives the exact sessionId DTO
     // kind === 'sessionId' → the id input's placeholder switches to the session hint, proving the
     // human label still selects the exact DTO key that the request and receipt carry.
     expect(screen.getByPlaceholderText('sess_…')).toBeTruthy();
+});
+
+// Owner review 2026-11-02, 23-d. The card said consent is "Set on the Embed product surface", but nothing
+// writes `corpus_optin`: no screen, no API (EmbedPublisher::publish builds embed_policy from four other keys).
+it('says training consent cannot be set yet, and points to no surface that does not exist', () => {
+    render(<CorpusConsentCard />);
+
+    expect(screen.queryByText(/Embed product surface/i)).toBeNull();
+    expect(
+        screen.getByText(/There’s no setting for this yet, so new chats are opted out and can’t be opted in\./),
+    ).toBeTruthy();
 });

@@ -184,6 +184,10 @@ export interface TokensMockConfig {
  * claimed the same id and Archive issued `DELETE .../tokens/1` → 500. A fixture keyed on small
  * integers cannot see a key-shape bug, so these now carry the shape the operated hosts (tower,
  * satellite, the flagship) actually run.
+ *
+ * `lastFour` (K-28) is set only on the two API tokens. Sign-in sessions are minted without one, and
+ * "Old staging key" stands for a token minted before the column existed, so the roster shows both
+ * the secret's last four and the id-tail fallback.
  */
 export const SAMPLE_TOKENS: ApiTokenData[] = [
   {
@@ -196,6 +200,7 @@ export const SAMPLE_TOKENS: ApiTokenData[] = [
     expiresAt: "2026-12-31T00:00:00Z",
     archivedAt: null,
     isCurrent: false,
+    lastFour: "c41e",
   },
   {
     id: "0f1e2d3c-4b5a-4697-8899-aabbccddee02",
@@ -207,6 +212,7 @@ export const SAMPLE_TOKENS: ApiTokenData[] = [
     expiresAt: null,
     archivedAt: null,
     isCurrent: false,
+    lastFour: "9b07",
   },
   {
     id: "0f1e2d3c-4b5a-4697-8899-aabbccddee03",
@@ -218,6 +224,7 @@ export const SAMPLE_TOKENS: ApiTokenData[] = [
     expiresAt: null,
     archivedAt: null,
     isCurrent: true,
+    lastFour: null,
   },
   {
     id: "0f1e2d3c-4b5a-4697-8899-aabbccddee04",
@@ -229,6 +236,7 @@ export const SAMPLE_TOKENS: ApiTokenData[] = [
     expiresAt: null,
     archivedAt: null,
     isCurrent: false,
+    lastFour: null,
   },
   {
     id: "0f1e2d3c-4b5a-4697-8899-aabbccddee05",
@@ -240,6 +248,7 @@ export const SAMPLE_TOKENS: ApiTokenData[] = [
     expiresAt: "2026-01-01T00:00:00Z",
     archivedAt: "2026-01-02T00:00:00Z",
     isCurrent: false,
+    lastFour: null,
   },
 ];
 

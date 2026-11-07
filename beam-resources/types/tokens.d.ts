@@ -11,6 +11,7 @@ lastUsedAt: string | null,
 expiresAt: string | null,
 archivedAt: string | null,
 isCurrent: boolean,
+lastFour: string | null,
 };
 
 export type CreatedTokenData = {

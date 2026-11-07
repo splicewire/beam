@@ -16,17 +16,20 @@ function LoginStage({
     errors,
     forceProcessing,
     withDemoAccounts = false,
+    withUserPicker = false,
     status,
 }: {
     errors?: Record<string, string>;
     forceProcessing?: boolean;
     withDemoAccounts?: boolean;
+    withUserPicker?: boolean;
     status?: string;
 }) {
     const [Page, setPage] = useState<ComponentType | null>(null);
     setStubPage({
         canResetPassword: true,
         demoAccounts: withDemoAccounts ? DEMO_ACCOUNTS : [],
+        ...(withUserPicker ? { demoUserSearchUrl: DEMO_SEARCH_URL } : {}),
         status,
     });
     setStubForm({ errors, forceProcessing, outcome: 'success' });
@@ -45,6 +48,22 @@ function LoginStage({
         </AuthStoryFrame>
     );
 }
+
+// S1: the any-user picker's search, stubbed. The story never reaches a server: `fetch` answers this one URL from fixtures.
+const DEMO_SEARCH_URL = '/__story/users/demo-search';
+const DEMO_USERS = [
+    { id: 'u1', name: 'Ada Lovelace', email: 'ada@example.test', url: '#u1' },
+    { id: 'u2', name: 'Grace Hopper', email: 'grace@example.test', url: '#u2' },
+    { id: 'u3', name: 'Katherine Johnson', email: 'katherine@example.test', url: '#u3' },
+];
+const realFetch = globalThis.fetch;
+globalThis.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
+    const url = new URL(input instanceof Request ? input.url : String(input), window.location.href);
+    if (url.pathname !== DEMO_SEARCH_URL) return realFetch(input, init);
+    const q = (url.searchParams.get('q') ?? '').toLowerCase();
+    const users = DEMO_USERS.filter((u) => !q || `${u.name} ${u.email}`.toLowerCase().includes(q));
+    return new Response(JSON.stringify({ data: { users } }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+}) as typeof fetch;
 
 const meta = {
     title: 'Inertia/Auth/Login',
@@ -67,7 +86,18 @@ export const WithDemoAccounts: Story = {
     render: () => <LoginStage withDemoAccounts />,
     play: async ({ canvasElement }) => {
         const canvas = within(canvasElement);
-        await expect(await canvas.findByText(/try a demo account/i)).toBeInTheDocument();
+        await expect(await canvas.findByRole('heading', { name: 'Demo sign-in' })).toBeInTheDocument();
+        await expect(canvas.queryByRole('button', { name: /sign in as any user/i })).toBeNull();
+    },
+};
+
+/** S1: a local host with every demo gate open — the roster and the "sign in as any user" typeahead, opened. */
+export const WithUserPicker: Story = {
+    render: () => <LoginStage withDemoAccounts withUserPicker />,
+    play: async ({ canvasElement }) => {
+        const canvas = within(canvasElement);
+        await userEvent.click(await canvas.findByRole('button', { name: /sign in as any user/i }));
+        await expect(await canvas.findByText('Grace Hopper')).toBeInTheDocument();
     },
 };
 

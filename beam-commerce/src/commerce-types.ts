@@ -172,9 +172,11 @@ export interface BillPreview {
 
 /**
  * The plan/subscription read envelope. `subscription` is null when the tenant has never subscribed
- * (honest empty state — NOT a fabricated free row). `hasStripeId` gates the Customer Portal button;
- * `stripePriceId` gates the inline checkout CTA (free/internal plans carry none). `capabilityLabels`
- * supplies human column names for the entitlement grid, whose resolved rows arrive separately.
+ * (honest empty state — NOT a fabricated free row). `hasStripeId` gates the Customer Portal button.
+ * `stripePriceId` is the plan's recorded Stripe price, or null; it gates nothing and does not mean "not
+ * purchasable": plan checkout saves a card and needs no price (BUY-04), so the Subscribe action is gated on
+ * `subscription.awaitingPayment`, and whether a plan can be bought is `PlanData.purchasable` (K-17a).
+ * `capabilityLabels` supplies human column names for the entitlement grid, whose resolved rows arrive separately.
  */
 export interface SubscriptionView {
     subscription: Subscription | null;

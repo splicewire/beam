@@ -40,6 +40,7 @@ import {
   useTokens,
 } from "./hooks";
 import { useNotify, useTokensServices } from "./provider";
+import { TokenFragmentText } from "./token-fragment";
 import type { ApiTokenData, CreatedTokenData, TokenProvenance } from "./types";
 import {
   asProvenance,
@@ -141,6 +142,8 @@ export function TokensPage() {
             >
               {row.original.name}
             </span>
+            {/* Tells same-named tokens apart: the secret's last four, else the id tail (K-28). */}
+            <TokenFragmentText token={row.original} />
             {row.original.isCurrent && (
               <Badge variant="outline" className="shrink-0 text-[10px]">
                 This session

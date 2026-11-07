@@ -27,6 +27,18 @@ describe('router-neutral app shell', () => {
         expect(screen.queryByText('Edit window')).toBeNull();
     });
 
+    it('marks each mode as a beam shell and its page scroller, which keep the full-width bar (research 05)', () => {
+        const props = { can, contribute, context: {}, outlet: <h1>Host page</h1> };
+        const { container, rerender } = render(<AppShell {...props} mode="desk" />);
+        for (const mode of ['desk', 'window', 'focus'] as const) {
+            rerender(<AppShell {...props} mode={mode} />);
+            expect(container.querySelector(`[data-beam-shell="${mode}"]`), mode).not.toBeNull();
+            const pages = container.querySelectorAll('[data-beam-scroller="page"]');
+            expect(pages, mode).toHaveLength(1);
+            expect(pages[0].contains(screen.getByRole('heading', { name: 'Host page' })), mode).toBe(true);
+        }
+    });
+
     it('gates contributions through the injected capability resolver', () => {
         render(<AppShell mode="window" can={() => false} context={{}} contribute={contribute} outlet="Page" />);
         expect(screen.getByText('Page')).toBeTruthy();

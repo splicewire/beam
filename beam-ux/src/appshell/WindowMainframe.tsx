@@ -3,9 +3,9 @@ import type { MainframeProps } from '@schemastud/mainframe';
 
 export function WindowMainframe({ slots, ctx }: MainframeProps) {
     return (
-        <div className="relative h-screen w-screen overflow-hidden bg-background">
+        <div data-beam-shell="window" className="relative h-screen w-screen overflow-hidden bg-background">
 
-            <div className="h-full w-full overflow-y-auto">
+            <div data-beam-scroller="page" className="h-full w-full overflow-y-auto">
                 {slots.main(ctx.payload)}
             </div>
 

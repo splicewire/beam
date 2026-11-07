@@ -23,8 +23,14 @@ export const DOCS_TOKEN_HOOKS = `.beam-docs {
 }
 `;
 
+/**
+ * The scrollbar rule (research 05) themes a whole shell document from `body`, so it cannot be scoped to docs by
+ * renaming a selector; the docs sheet drops it, with its docblock, rather than leak thin bars onto marketing pages.
+ */
+const SCROLLBAR_LAYER = /\/\*\s*\n \* Scrollbars follow the theme[\s\S]*?\*\/\s*@layer base\s*\{(?:[^{}]*\{[^{}]*\})*[^{}]*\}\s*/;
+
 export function scopeTokensToDocs(css: string): string {
-    const scoped = css.replace(
+    const scoped = css.replace(SCROLLBAR_LAYER, '').replace(
         /^(:root,\s*\n\.dark|:root|\.dark)\s*\{([^}]+)\}/gm,
         (_rule, selector: string, body: string) => {
             const dark = selector === '.dark';
