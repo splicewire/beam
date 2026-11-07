@@ -20,16 +20,17 @@
  */
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
-import { KNOWN_CONTEXTS } from "@schemastud/frame";
+import { buildRealmRoutes, createGuardRegistry, createRouteRegistry, KNOWN_CONTEXTS } from "@schemastud/frame";
 import type {
   ContextManifest,
   DashboardRow,
   FrameTransport,
   Paginated,
+  RouteContextEntry,
   Row,
 } from "@schemastud/frame";
 import type { ReactNode } from "react";
-import { MemoryRouter } from "react-router";
+import { MemoryRouter, type RouteObject, useRoutes } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { FrameManifest } from "./manifest";
 import { FrameRealmProvider } from "./realm";
@@ -444,5 +445,101 @@ describe("the {realm}-dashboard leaf through the manifest router", () => {
     const settings = screen.getByRole("link", { name: "Account settings" });
     expect(settings.getAttribute("href")).toBe("/settings/profile");
     expect(settings.hasAttribute("data-inertia-link")).toBe(true);
+  });
+});
+
+// ADR-0222 decision 9 (laravel-beam). A section with an overview seats its nav node on the overview's own list route, at the
+// overview leaf's path, and keeps its children. The shape below is what beam-ux's NavSectionProjector and
+// RouteContextProjector emit for a flagged seat (laravel-beam-ux tests/SectionOverviewTest.php pins that half).
+const overviewLeaf = {
+  routeName: "operator-reports-overview.index",
+  path: "reports",
+  shell: null,
+  lazy: false,
+  guard: null,
+  mounts: "list",
+  resource: "operator-reports-overview",
+} as const;
+
+const seatWith = (routeName: string) => ({
+  kind: "section",
+  title: "Reports",
+  href: "/operator/reports",
+  icon: "chart-bar",
+  routeName,
+  locked: null,
+  children: [
+    {
+      kind: "link",
+      title: "Users",
+      href: "/operator/users",
+      icon: "users",
+      routeName: "users.index",
+      locked: null,
+      children: [],
+    },
+  ],
+});
+
+function withSeat(routeName: string, leaves: FrameManifest["routeContext"]): FrameManifest {
+  return {
+    ...MANIFEST,
+    resources: [...MANIFEST.resources, seat("operator-reports-overview", "Reports", "chart-bar")],
+    contexts: { ...MANIFEST.contexts, "operator-reports-overview": DASHBOARD },
+    nav: { items: [...MANIFEST.nav.items, seatWith(routeName)] },
+    routeContext: [...MANIFEST.routeContext, ...leaves],
+  } as FrameManifest;
+}
+
+function mountSeat(manifest: FrameManifest, rows: DashboardRow[]) {
+  manifestState.current = manifest;
+  transport.rows = rows as unknown as Row[];
+
+  return render(
+    <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
+      <FrameRealmProvider realm="operator" basename="/operator" manifestUrl="/operator/frame/manifest">
+        <TenantFrameProvider>
+          <MemoryRouter basename="/operator" initialEntries={["/operator/reports"]}>
+            <FrameRoutes manifest={manifest} />
+          </MemoryRouter>
+        </TenantFrameProvider>
+      </FrameRealmProvider>
+    </QueryClientProvider>
+  );
+}
+
+describe("a section seat with an overview", () => {
+  it("the Inertia console lands on the overview, not the section index", async () => {
+    const { container } = mountSeat(withSeat(overviewLeaf.routeName, [overviewLeaf]), ROWS);
+
+    await waitFor(() => expect(cells(container)).toHaveLength(ROWS.length));
+    expect(transport.list).toHaveBeenCalledWith("operator-reports-overview", expect.anything());
+    expect(screen.getByRole("heading", { name: "Reports" })).toBeTruthy();
+    expect(screen.queryByText(/surfaces? in this section/)).toBeNull();
+  });
+
+  it("control: the same seat on {key}.section draws the section index, which is what binding the route avoids", async () => {
+    mountSeat(withSeat("reports.section", []), ROWS);
+
+    await screen.findByText(/1 surface in this section/);
+    expect(transport.list).not.toHaveBeenCalled();
+  });
+
+  it("the SPA route builder mounts the overview's leaf at the seat's path through its list verb", () => {
+    const mounted = vi.fn((entry: RouteContextEntry) => (entry.mounts === "list" ? () => <h1>{entry.resource}</h1> : undefined));
+    const routes = buildRealmRoutes([...MANIFEST.routeContext, overviewLeaf], {
+      routes: createRouteRegistry(),
+      guards: createGuardRegistry(),
+      fallback: mounted,
+    });
+    const Tree = () => useRoutes(routes as RouteObject[]);
+
+    render(
+      <MemoryRouter basename="/operator" initialEntries={["/operator/reports"]}>
+        <Tree />
+      </MemoryRouter>
+    );
+
+    expect(screen.getByRole("heading", { name: "operator-reports-overview" })).toBeTruthy();
   });
 });
