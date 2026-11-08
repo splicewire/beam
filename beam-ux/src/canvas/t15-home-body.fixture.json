@@ -1,0 +1,57 @@
+[
+  {
+    "kind": "block",
+    "name": "div",
+    "isComponent": false,
+    "dynamic": false,
+    "props": [
+      {
+        "name": "className",
+        "kind": "string",
+        "value": "st-editable-home"
+      },
+      {
+        "name": "style",
+        "kind": "string",
+        "value": "max-width:900px;margin:0 auto;padding:24px"
+      }
+    ],
+    "children": [
+      {
+        "kind": "block",
+        "name": "DemoHero",
+        "isComponent": true,
+        "props": [],
+        "children": [],
+        "dynamic": false
+      },
+      {
+        "kind": "block",
+        "name": "p",
+        "isComponent": false,
+        "dynamic": false,
+        "props": [
+          {
+            "name": "style",
+            "kind": "string",
+            "value": "font-size:16px;line-height:1.6;color:var(--st-muted,#475569);margin:28px 0"
+          }
+        ],
+        "children": [
+          {
+            "kind": "text",
+            "value": "Edit this page right here: change the text and move blocks around. Save a draft as you go, and publish when it’s ready."
+          }
+        ]
+      },
+      {
+        "kind": "block",
+        "name": "DemoFeatureRow",
+        "isComponent": true,
+        "props": [],
+        "children": [],
+        "dynamic": false
+      }
+    ]
+  }
+]

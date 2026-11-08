@@ -46,7 +46,7 @@ import { setAttrs } from './props.js';
 import { insertRelativeTo } from './insert.js';
 import { freshBlockIds } from '../blockdoc/identity.js';
 import { DEFAULT_BLOCK_TEMPLATES } from './templates.js';
-import { profileAttrs, profileTemplates, profileTemplatesAtParent, setProfileAttrs } from './profile';
+import { assertDocRegistry, profileAttrs, profileTemplates, profileTemplatesAtParent, setProfileAttrs } from './profile';
 
 /** The `DataTransfer` key a palette drag stashes its template's `nodeType` under — the bridge for a
  * drag that starts in the shell's palette region (a REACT SIBLING of this widget, not an ancestor/
@@ -136,7 +136,9 @@ export function CanvasWidget({
     const [menu, setMenu] = useState<ContextMenuState | null>(null);
 
     const sel = mount?.selectedNodeId ?? null;
-    const templates = useMemo(() => config.profile ? profileTemplates(allTemplates, config.profile, doc, sel) : allTemplates, [allTemplates, config.profile, doc, sel]);
+    // Ticket 15 shape C: the document must use only components this client renders; one it lacks fails here, by name.
+    if (config.profile) assertDocRegistry(doc, config.registry);
+    const templates = useMemo(() => config.profile ? profileTemplates(allTemplates, config.profile, doc, sel, config.registry) : allTemplates, [allTemplates, config.profile, config.registry, doc, sel]);
     const setSel = (path: string | null, add = false) => {
         selection.setPaths(path ? (add ? selection.paths.includes(path) ? selection.paths.filter(p=>p!==path) : [...selection.paths,path] : [path]) : []);
         mount?.selectNode(path);
@@ -364,7 +366,7 @@ export function CanvasWidget({
         onDrop: (dataTransfer: DataTransfer | null) => {
             const templateNodeType = dataTransfer?.getData(TEMPLATE_DATA_KEY);
             if (dropTarget && templateNodeType) {
-                const offered = config.profile ? profileTemplatesAtParent(allTemplates, config.profile, doc, parentOf(dropTarget.path)) : allTemplates;
+                const offered = config.profile ? profileTemplatesAtParent(allTemplates, config.profile, doc, parentOf(dropTarget.path), config.registry) : allTemplates;
                 const template = offered.find((t) => t.label === templateNodeType);
                 if (template) {
                     const index = indexOf(dropTarget.path) + (dropTarget.edge === 'after' ? 1 : 0);
@@ -409,7 +411,7 @@ export function CanvasWidget({
             },
             {
                 label: 'Insert',
-                children: (config.profile ? profileTemplates(allTemplates, config.profile, doc, path) : allTemplates).map((t) => ({
+                children: (config.profile ? profileTemplates(allTemplates, config.profile, doc, path, config.registry) : allTemplates).map((t) => ({
                     label: t.label,
                     onSelect: () => emit(insertRelativeTo(doc, path, t.make)),
                 })),
