@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { BlockdocManifest } from '@schemastud/blockdoc';
-import { profileTemplates, profileAttrs, assertProfileRegistry, setProfileAttrs } from './profile';
+import { profileTemplates, profileAttrs, assertDocRegistry, setProfileAttrs } from './profile';
 import type { JsonBlock } from '../blockdoc/json';
 
 const block = (name: string): JsonBlock => ({ kind: 'block', name, isComponent: false, dynamic: false, props: [], children: [] });
@@ -12,35 +12,44 @@ const profile = {
     } }],
 } satisfies BlockdocManifest & { 'x-admits-code': boolean };
 
+const component = (name: string, children: JsonBlock['children'] = [], slots?: JsonBlock['slots']): JsonBlock =>
+    ({ kind: 'block', name, isComponent: true, dynamic: false, props: [], children, ...(slots ? { slots } : {}) });
+
 describe('server Manifest Profile canvas bridge', () => {
-    it('refuses a declared component missing from the host JS registry', () => {
-        const componentProfile = { ...profile, nodes: [{ ...profile.nodes[0], name: 'Card' }] };
-        expect(() => assertProfileRegistry(componentProfile, {})).toThrow('Card');
-        expect(() => assertProfileRegistry(componentProfile, { Card: () => null })).not.toThrow();
+    // Ticket 15 shape C (the root's three conditions, 2026-11-08): the registry is checked against the components a
+    // document USES, not against every component its profile declares. A host profile may declare components a client
+    // cannot render (the six host Auth* nodes, which only beam-inertia registers); declared and unused, they are no error.
+    it('refuses a component the document USES that the JS registry lacks, naming it (condition 1)', () => {
+        expect(() => assertDocRegistry([component('Card')], {})).toThrow('Card');
+        expect(() => assertDocRegistry([component('Card')], { Card: () => null })).not.toThrow();
+        // Found wherever it sits: a child, a named slot.
+        expect(() => assertDocRegistry([block('section'), { ...block('div'), children: [component('Aside')] }], {})).toThrow('Aside');
+        expect(() => assertDocRegistry([component('Card', [], { aside: [component('Panel')] })], { Card: true })).toThrow('Panel');
+        expect(() => assertDocRegistry([component('Card'), component('Panel'), component('Card')], {}))
+            .toThrow('Components used in this document are missing from the JS registry: Card, Panel');
     });
-    it('requires only components reachable through declared child and slot categories', () => {
-        const declared = { ...profile, nodes: [
-            { name: 'section', category: 'html', admitsChildCategories: ['nested'], slots: [{ name: 'aside', admitsChildCategories: ['sidebar'] }] },
-            { name: 'Card', category: 'nested', admitsChildCategories: [] },
-            { name: 'Aside', category: 'sidebar', admitsChildCategories: [] },
-            { name: 'ContentOutline', category: 'content_outline', admitsChildCategories: null },
-            { name: 'ContentSection', category: 'content_section', admitsChildCategories: null },
-        ] };
-        expect(() => assertProfileRegistry(declared, { Card: true })).toThrow('Aside');
-        expect(() => assertProfileRegistry(declared, { Card: true, Aside: true })).not.toThrow();
-        expect(() => assertProfileRegistry({ ...declared, nodes: [...declared.nodes,
-            { name: 'Unknown', category: 'html', admitsChildCategories: [] }] }, { Card: true, Aside: true })).toThrow('Unknown');
+    it('does not refuse a declared component the document does not use (condition 2)', () => {
+        expect(() => assertDocRegistry([block('p'), component('DemoHero')], { DemoHero: true })).not.toThrow();
+        expect(() => assertDocRegistry([], {})).not.toThrow();
+        // Lower-case HTML is never a registry entry.
+        expect(() => assertDocRegistry([block('p'), block('div')], {})).not.toThrow();
     });
-    it('retains conservative registry checks for wildcard and explicit expression admission', () => {
-        const nodes = [
-            { name: 'section', category: 'html', admitsChildCategories: null },
-            { name: 'Unknown', category: 'other', admitsChildCategories: [] },
-        ];
-        expect(() => assertProfileRegistry({ ...profile, nodes }, {})).toThrow('Unknown');
-        expect(() => assertProfileRegistry({ ...profile, doc: null, nodes }, {})).toThrow('Unknown');
-        expect(() => assertProfileRegistry({ ...profile, doc: { admitsChildCategories: null }, nodes }, {})).toThrow('Unknown');
-        expect(() => assertProfileRegistry({ ...profile, nodes: [{ ...nodes[0], admitsChildCategories: [], contentExpression: 'Unknown*' }, nodes[1]] }, {})).toThrow('Unknown');
-        expect(() => assertProfileRegistry({ ...profile, nodes: [{ ...nodes[0], admitsChildCategories: [], slots: [{ name: 'aside', admitsChildCategories: null }] }, nodes[1]] }, {})).toThrow('Unknown');
+    it('omits a declared component the JS registry lacks from the insert palette (condition 2)', () => {
+        const declared = { ...profile, nodes: [...profile.nodes,
+            { name: 'DemoHero', category: 'html', admitsChildCategories: [] },
+            { name: 'AuthLogin', category: 'html', admitsChildCategories: [] }] };
+        const templates = [{ label: 'p', make: () => block('p') }];
+        expect(profileTemplates(templates, declared, [], null, { DemoHero: true }).map(t => t.label)).toEqual(['p', 'Demo Hero']);
+    });
+    it('offers the same palette as before when the registry holds every component (condition 3)', () => {
+        const declared = { ...profile, nodes: [...profile.nodes,
+            { name: 'DemoHero', category: 'html', admitsChildCategories: [] },
+            { name: 'AuthLogin', category: 'html', admitsChildCategories: [] }] };
+        const templates = [{ label: 'p', make: () => block('p') }];
+        const full = { DemoHero: true, AuthLogin: true };
+        expect(profileTemplates(templates, declared, [], null, full).map(t => t.label))
+            .toEqual(profileTemplates(templates, declared, [], null).map(t => t.label));
+        expect(profileTemplates(templates, declared, [], null, full).map(t => t.label)).toEqual(['p', 'Demo Hero', 'Auth Login']);
     });
     it('offers only declared nodes at a legal insertion position', () => {
         const templates = ['p', 'Unknown'].map(name => ({ label: name, make: () => block(name) }));

@@ -3,40 +3,40 @@ import type { JsonBlock, JsonDoc } from '../blockdoc/json';
 import { getAt, isJsonBlock, isLeafText, parentOf, setProp, removeProp } from '../blockdoc/json';
 import type { BlockTemplate } from './context';
 
-export function assertProfileRegistry(profile: BlockdocManifest, registry: Record<string, unknown>): void {
-    const missing = reachableProfileNodes(profile).filter(node => /^[A-Z]/.test(node.name) && !Object.hasOwn(registry, node.name)).map(node => node.name);
-    if (missing.length) throw new Error(`Manifest Profile components missing from the JS registry: ${missing.join(', ')}`);
-}
-
-/** Registry requirements follow the same category admission used by the palette.
- * Explicit expressions and unconstrained containers retain the full vocabulary check.
+/**
+ * Ticket 15 shape C: a document may only USE components this client can render. Every PascalCase block the document
+ * holds, in children and named slots, must be in the JS registry; one that is not fails loudly, by name.
+ *
+ * A component the profile merely DECLARES is not checked here. One profile drives palette, inspector and save for every
+ * client, so it may declare nodes a given client cannot render (a host's Auth* pages, which only beam-inertia
+ * registers). Those are left out of this client's insert palette instead ({@link profileTemplatesAtParent}).
  */
-function reachableProfileNodes(profile: BlockdocManifest): BlockdocManifest['nodes'] {
-    if (!profile.doc || profile.doc.admitsChildCategories === null || profile.nodes.some(node => node.contentExpression)) return profile.nodes;
-    const categories = new Set(profile.doc.admitsChildCategories);
-    const reachable = new Set<string>();
-    let changed = true;
-    while (changed) {
-        changed = false;
-        for (const node of profile.nodes) {
-            if (reachable.has(node.name) || node.category === null || !categories.has(node.category)) continue;
-            reachable.add(node.name);
-            changed = true;
-            for (const admitted of [node.admitsChildCategories, ...(node.slots ?? []).map(slot => slot.admitsChildCategories)]) {
-                if (admitted === null) return profile.nodes;
-                for (const category of admitted) categories.add(category);
-            }
-        }
-    }
-    return profile.nodes.filter(node => reachable.has(node.name));
+export function assertDocRegistry(doc: JsonDoc, registry: Record<string, unknown>): void {
+    const missing = [...new Set(usedComponentNames(doc))].filter(name => !Object.hasOwn(registry, name));
+    if (missing.length) throw new Error(`Components used in this document are missing from the JS registry: ${missing.join(', ')}`);
 }
 
-/** The server owns the vocabulary. Templates supply presentation, never admission. */
-export function profileTemplates(templates: BlockTemplate[], profile: BlockdocManifest, doc: JsonDoc, selected: string | null): BlockTemplate[] {
+/** The PascalCase (component) block names a document uses, in children and named slots, in document order. */
+function usedComponentNames(nodes: JsonDoc): string[] {
+    const names: string[] = [];
+    for (const node of nodes) {
+        if (!isJsonBlock(node)) continue;
+        if (node.name !== null && /^[A-Z]/.test(node.name)) names.push(node.name);
+        names.push(...usedComponentNames(node.children));
+        for (const slot of Object.values(node.slots ?? {})) names.push(...usedComponentNames(slot));
+    }
+    return names;
+}
+
+/**
+ * The server owns the vocabulary. Templates supply presentation, never admission. Given the client's registry, a component
+ * it cannot render is not offered (ticket 15 shape C); without one, the palette is the profile's, as before.
+ */
+export function profileTemplates(templates: BlockTemplate[], profile: BlockdocManifest, doc: JsonDoc, selected: string | null, registry?: Record<string, unknown>): BlockTemplate[] {
     const target = selected && getAt(doc, selected) ? selected : '0';
     const node = getAt(doc, target);
     const parentPath = node && isJsonBlock(node) && !isLeafText(node) && target === '0' ? target : parentOf(target);
-    return profileTemplatesAtParent(templates, profile, doc, parentPath);
+    return profileTemplatesAtParent(templates, profile, doc, parentPath, registry);
 }
 
 /** Resolve a default-child or named-slot container from the one manifest. */
@@ -49,7 +49,7 @@ export function profileParentDeclaration(profile: BlockdocManifest, doc: JsonDoc
         : parent && isJsonBlock(parent) ? profile.nodes.find(n => n.name === parent.name) : profile.doc;
 }
 
-export function profileTemplatesAtParent(templates: BlockTemplate[], profile: BlockdocManifest, doc: JsonDoc, parentPath: string): BlockTemplate[] {
+export function profileTemplatesAtParent(templates: BlockTemplate[], profile: BlockdocManifest, doc: JsonDoc, parentPath: string, registry?: Record<string, unknown>): BlockTemplate[] {
     const declaration = profileParentDeclaration(profile, doc, parentPath);
     const categories = declaration?.admitsChildCategories;
     // EP-07: a profile's components are placeable whether or not a template presents them; one without is offered empty.
@@ -62,6 +62,7 @@ export function profileTemplatesAtParent(templates: BlockTemplate[], profile: Bl
         const block = template.make();
         const candidate = profile.nodes.find(n => n.name === block.name);
         if ('x-admits-code' in profile && profile['x-admits-code'] === false && block.props.some(prop => prop.kind === 'expression')) return false;
+        if (registry && block.name !== null && /^[A-Z]/.test(block.name) && !Object.hasOwn(registry, block.name)) return false;
         return candidate !== undefined && declaration !== undefined &&
             (categories === null || (candidate.category !== null && categories?.includes(candidate.category) === true));
     });
