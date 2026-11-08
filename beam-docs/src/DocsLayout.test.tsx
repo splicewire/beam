@@ -59,6 +59,34 @@ describe('DocsLayout', () => {
         expect(screen.getByRole('link', { name: 'API keys' }).getAttribute('href')).toBe('/learn/beam/api-keys');
         expect(screen.queryByText('Pricing')).toBeNull();
     });
+
+    // tutorial-dx 09b: a docs page's nav arrives unstamped, so the rail marked no current page.
+    it('marks the current page in the rail when the server stamped none', () => {
+        render(<DocsLayout {...props} currentHref="/learn/beam/api-keys" nav={{ items: [
+            { title: 'Docs', href: '/learn/beam', children: [
+                { title: 'API keys', href: '/learn/beam/api-keys' },
+                { title: 'Webhooks', href: '/learn/beam/webhooks' },
+            ] },
+        ] }}><p>Guide</p></DocsLayout>);
+        expect(screen.getByRole('link', { name: 'API keys' }).getAttribute('aria-current')).toBe('page');
+        expect(screen.getByRole('link', { name: 'Webhooks' }).getAttribute('aria-current')).toBeNull();
+    });
+
+    it('leaves a server-stamped active row as the only current one', () => {
+        render(<DocsLayout {...props} currentHref="/learn/beam/api-keys" nav={{ items: [
+            { title: 'Docs', href: '/learn/beam', children: [
+                { title: 'API keys', href: '/learn/beam/api-keys' },
+                { title: 'Webhooks', href: '/learn/beam/webhooks', active: true },
+            ] },
+        ] } as never}><p>Guide</p></DocsLayout>);
+        expect(screen.getByRole('link', { name: 'Webhooks' }).getAttribute('aria-current')).toBe('page');
+        expect(screen.getByRole('link', { name: 'API keys' }).getAttribute('aria-current')).toBeNull();
+    });
+
+    it('draws a host railTop slot above the rail', () => {
+        render(<DocsLayout {...props} slots={{ railTop: <a href="/learn/foundations">Foundations</a> }} nav={null}><p>Guide</p></DocsLayout>);
+        expect(screen.getByRole('complementary', { name: 'Docs sections' }).textContent).toContain('Foundations');
+    });
 });
 
 /*
@@ -178,6 +206,13 @@ describe('DocsLayout appearance and rail', () => {
         const rail = DOCS_LAYOUT_CSS.slice(DOCS_LAYOUT_CSS.indexOf('.beam-docs-rail a'));
         expect(rail).toMatch(/color:\s*var\(--beam-/);
         expect(DOCS_LAYOUT_CSS).not.toMatch(/var\(--sidebar-/);
+    });
+
+    // tutorial-dx 09b: the group labels are not links, so DOCS-13's `a` rule left them in the host's --sidebar-* ink.
+    it('colours the rail group and zone labels from the --beam-* family too', async () => {
+        const { DOCS_LAYOUT_CSS } = await import('./layout-css.js');
+        expect(DOCS_LAYOUT_CSS).toMatch(/\.beam-docs-rail \.beam-nav-label[^{]*\{[^}]*color:\s*var\(--beam-/);
+        expect(DOCS_LAYOUT_CSS).toMatch(/\.beam-docs-rail \.beam-nav-zone-label[^{]*\{[^}]*color:\s*var\(--beam-/);
     });
 });
 

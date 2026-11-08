@@ -65,7 +65,7 @@ export function DocsLayout({ nav, linkComponent, currentHref, slots, classNames,
     // the raw root would list the marketing pages beside the guides. The docs root is the node whose
     // href is the longest prefix of the current URL — derived rather than configured, because the
     // whole point of ADR-0209 §9 is that re-rooting `/docs` is one row's edit and nothing else's.
-    const items = railItemsFor(nav?.items ?? [], currentHref);
+    const items = markCurrent(railItemsFor(nav?.items ?? [], currentHref), currentHref);
 
     // DOCS-12 (DM4): a page the server sends `docsChrome` for draws the PACKAGED header, and a host's `slots.header`
     // leaves the docs path. An older server sends none, and the host header still renders, so a host is unchanged
@@ -182,4 +182,28 @@ function railItemsFor(items: RealmNavNode[], currentHref: string | undefined): R
     visit(items);
 
     return best === null ? items : ((best as RealmNavNode).children ?? []);
+}
+
+/**
+ * tutorial-dx 09b: mark the rail row for the current page. `RealmNav` reads only the server's `active` stamp, and a
+ * docs page's nav arrives unstamped, so the reader's own page was never marked. When the server stamped nothing in
+ * the rail, the row whose `href` IS the current URL is marked `active`; a server stamp, where present, stays the only
+ * one.
+ */
+function markCurrent(items: RealmNavNode[], currentHref: string | undefined): RealmNavNode[] {
+    const stamped = (nodes: RealmNavNode[]): boolean =>
+        nodes.some((node) => node.active || node.activeTrail || stamped(node.children ?? []));
+
+    if (!currentHref || stamped(items)) {
+        return items;
+    }
+
+    const mark = (nodes: RealmNavNode[]): RealmNavNode[] =>
+        nodes.map((node) => ({
+            ...node,
+            ...(node.href === currentHref ? { active: true } : {}),
+            ...(node.children ? { children: mark(node.children) } : {}),
+        }));
+
+    return mark(items);
 }
