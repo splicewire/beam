@@ -52,6 +52,113 @@ export type DocsSurfaceData = {
 label: string,
 href: string,
 };
+export type PhpApiAttributeData = {
+name: string,
+arguments: string[],
+};
+export type PhpApiIndexData = {
+audience: string,
+packages: PhpApiPackageData[],
+};
+export type PhpApiIndexInputData = object;
+export type PhpApiInheritedData = {
+kind: string,
+name: string,
+from: string,
+visibility: string | null,
+abstract: undefined | boolean,
+original: undefined | string,
+declaration: undefined | PhpApiMemberData,
+};
+export type PhpApiLinkData = {
+fqn: string,
+published: boolean,
+};
+export type PhpApiMemberData = {
+name: string,
+visibility: string,
+attributes: PhpApiAttributeData[],
+line: number,
+doc: string[],
+tags: PhpApiTagData[],
+static: undefined | boolean,
+readonly: undefined | boolean,
+abstract: undefined | boolean,
+final: undefined | boolean,
+byRef: undefined | boolean,
+promoted: undefined | boolean,
+type: undefined | string | null,
+value: undefined | string | null,
+default: undefined | string | null,
+params: undefined | PhpApiParamData[],
+returnType: undefined | string | null,
+templates: undefined | PhpApiTemplateData[],
+signature: undefined | string,
+comment: undefined | string,
+};
+export type PhpApiPackageData = {
+name: string,
+version: string | null,
+published: number,
+symbols: PhpApiSymbolRowData[],
+};
+export type PhpApiParamData = {
+name: string,
+type: string | null,
+default: string | null,
+byRef: boolean,
+variadic: boolean,
+promoted: boolean,
+attributes: PhpApiAttributeData[],
+};
+export type PhpApiSeeData = {
+target: string,
+published: boolean,
+};
+export type PhpApiSymbolData = {
+fqn: string,
+package: string,
+kind: string,
+modifiers: string[],
+templates: PhpApiTemplateData[],
+extends: PhpApiLinkData[],
+implements: PhpApiLinkData[],
+traits: PhpApiLinkData[],
+backingType: string | null,
+attributes: PhpApiAttributeData[],
+doc: string[],
+tags: PhpApiTagData[],
+file: string,
+line: number,
+constants: PhpApiMemberData[],
+cases: PhpApiMemberData[],
+properties: PhpApiMemberData[],
+methods: PhpApiMemberData[],
+see: PhpApiSeeData[],
+inherited: PhpApiInheritedData[],
+implementers: string[],
+comment: undefined | string,
+};
+export type PhpApiSymbolInputData = {
+fqn: string | null,
+};
+export type PhpApiSymbolRowData = {
+fqn: string,
+kind: string,
+summary: string | null,
+};
+export type PhpApiTagData = {
+tag: string,
+type: undefined | string,
+name: undefined | string,
+description: undefined | string,
+};
+export type PhpApiTemplateData = {
+name: string,
+bound: string | null,
+default: string | null,
+variance: string,
+};
 export type PublicationData = {
 id: string,
 version: string,
