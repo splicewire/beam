@@ -100,6 +100,10 @@ it("says the owner rule in plain words", async () => {
   );
   await waitFor(() => expect(container.textContent).toMatch(/a team always keeps at least one owner/));
   expect(container.textContent).not.toMatch(/min-1-owner/);
+  // The last owner's tooltips are read too (a hover shows them): plain words there as well.
+  const titles = [...container.querySelectorAll("[title]")].map((el) => el.getAttribute("title") ?? "");
+  expect(titles.some((title) => /last owner/i.test(title))).toBe(true);
+  for (const title of titles) expect(title).not.toMatch(/min-1-owner/);
 });
 
 it("calls the account concept a team everywhere on the page", async () => {
