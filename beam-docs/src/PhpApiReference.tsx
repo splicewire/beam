@@ -4,7 +4,7 @@ import { docsConfiguration } from './config.js';
 import { fetchDocs, type DocsTransport } from './publications.js';
 import { Paragraph, inline, type SymbolLinker } from './PhpApiProse.js';
 import type {
-    PhpApiAttributeData, PhpApiIndexData, PhpApiInheritedData, PhpApiMemberData, PhpApiSymbolData,
+    PhpApiAttributeData, PhpApiIndexData, PhpApiInheritedData, PhpApiMemberData, PhpApiParamData, PhpApiSymbolData,
     PhpApiTagData, PhpApiTemplateData,
 } from './generated/types.js';
 
@@ -271,17 +271,30 @@ function SymbolView({ base, fqn, fetcher, link: linkIndex }: { base: string; fqn
         return () => controller.abort();
     }, [base, fqn, fetcher]);
 
-    // Prose keeps a docblock's names as written (`{@see Kind}`); the generator resolved them for `see`. A name links when
-    // it is published as written, as one of this symbol's resolved `@see` targets (by short name), or in its namespace.
+    // Prose keeps a docblock's names as written (`{@see Kind}`, `{@see Base::keep()}`); the generator resolved them for
+    // `see`, with a `published` verdict each. The class part resolves as written, through this symbol's resolved `see`
+    // targets (by short name), or in its namespace, and must be in the index. Then the PRODUCER decides (slice 3 amend,
+    // review e5a010df): a class target whose verdict is false is not linked, and a MEMBER target links (to its class's
+    // page; there are no member URLs) only when its resolved target's verdict is true. A member target the producer did
+    // not resolve for this symbol is never linked by its class alone, so prose and See also always agree.
     const link = useMemo<SymbolLinker>(() => {
-        const see = loaded?.data?.see.map((x) => x.target.split('::')[0]) ?? [];
+        const verdicts = new Map((loaded?.data?.see ?? []).map((x) => [x.target, x.published] as const));
+        const seeClasses = [...verdicts.keys()].map((t) => t.split('::')[0]);
         const namespace = fqn.includes('\\') ? fqn.slice(0, fqn.lastIndexOf('\\')) : '';
+        const resolveClass = (name: string): string | null => {
+            if (linkIndex(name)) return name;
+            if (name.includes('\\')) return null;
+            const fromSee = seeClasses.find((t) => shortName(t) === name);
+            if (fromSee && linkIndex(fromSee)) return fromSee;
+            return namespace && linkIndex(`${namespace}\\${name}`) ? `${namespace}\\${name}` : null;
+        };
         return (target: string) => {
-            const name = target.replace(/^\\/, '').split('::')[0];
-            const exact = linkIndex(name);
-            if (exact || name.includes('\\')) return exact;
-            const fromSee = see.find((t) => shortName(t) === name);
-            return (fromSee ? linkIndex(fromSee) : null) ?? (namespace ? linkIndex(`${namespace}\\${name}`) : null);
+            const raw = target.replace(/^\\/, '');
+            const at = raw.indexOf('::');
+            const cls = resolveClass(at === -1 ? raw : raw.slice(0, at));
+            if (!cls) return null;
+            if (at === -1) return verdicts.get(cls) === false ? null : linkIndex(cls);
+            return verdicts.get(`${cls}${raw.slice(at)}`) === true ? linkIndex(cls) : null;
         };
     }, [loaded, fqn, linkIndex]);
 
@@ -401,12 +414,44 @@ function Templates({ templates }: { templates: PhpApiTemplateData[] }) {
     );
 }
 
+const attributeText = (a: PhpApiAttributeData) => `#[${a.name}${a.arguments.length ? `(${a.arguments.join(', ')})` : ''}]`;
+
 function Attributes({ attributes }: { attributes: PhpApiAttributeData[] }) {
     if (!attributes.length) return null;
     return (
         <p className="beam-php-api-note" aria-label="Attributes">
-            {attributes.map((a, i) => <code key={i}>{`#[${a.name}${a.arguments.length ? `(${a.arguments.join(', ')})` : ''}]`} </code>)}
+            {attributes.map((a, i) => <code key={i}>{attributeText(a)} </code>)}
         </p>
+    );
+}
+
+/** Each parameter's own attributes (`$x #[Tagged('x')]`), which a method's signature string does not carry. */
+function ParameterAttributes({ params }: { params: PhpApiParamData[] }) {
+    const attributed = params.filter((p) => p.attributes.length > 0);
+    if (!attributed.length) return null;
+    return (
+        <ul className="beam-php-api-tags" aria-label="Parameter attributes">
+            {attributed.map((p) => (
+                <li key={p.name}><code>{`$${p.name}`}</code> <code>{p.attributes.map(attributeText).join(' ')}</code></li>
+            ))}
+        </ul>
+    );
+}
+
+/**
+ * One member's complete effective declaration (slice 3 amend, review e5a010df): its signature, a method's templates,
+ * the member's attributes, each parameter's attributes, and its docs. The ONE path for a member and for an adapted
+ * inherited declaration, so neither can drop a part the generator wrote.
+ */
+function Declaration({ kind, member, link }: { kind: string; member: PhpApiMemberData; link: SymbolLinker }) {
+    return (
+        <>
+            <pre className="beam-php-api-signature">{memberSignature(kind, member)}</pre>
+            <Templates templates={member.templates ?? []} />
+            <Attributes attributes={member.attributes} />
+            <ParameterAttributes params={member.params ?? []} />
+            <Docs doc={member.doc} tags={member.tags} comment={member.comment} link={link} />
+        </>
     );
 }
 
@@ -417,9 +462,7 @@ function Members({ title, kind, members, link }: { title: string; kind: string; 
             <h3>{title}</h3>
             {members.map((m) => (
                 <div key={m.name} className="beam-php-api-member" data-php-api-member={m.name}>
-                    <pre className="beam-php-api-signature">{memberSignature(kind, m)}</pre>
-                    <Attributes attributes={m.attributes} />
-                    <Docs doc={m.doc} tags={m.tags} comment={m.comment} link={link} />
+                    <Declaration kind={kind} member={m} link={link} />
                 </div>
             ))}
         </section>
@@ -442,12 +485,7 @@ function Inherited({ rows, named, link }: {
                         {r.original !== undefined ? <span className="beam-php-api-flag">alias of <code>{r.original}()</code></span> : null}
                         <span className="beam-php-api-flag">from {named(r.from, link(r.from) !== null)}</span>
                     </div>
-                    {r.declaration && (
-                        <>
-                            <pre className="beam-php-api-signature">{memberSignature('method', r.declaration)}</pre>
-                            <Docs doc={r.declaration.doc} tags={r.declaration.tags} comment={r.declaration.comment} link={link} />
-                        </>
-                    )}
+                    {r.declaration && <Declaration kind="method" member={r.declaration} link={link} />}
                 </div>
             ))}
         </section>
