@@ -241,6 +241,18 @@ _Avoid_: taxonomy, event schema, tracking plan
 The Analytics Event a block reports when a visitor clicks it, chosen in the inspector from the Event Vocabulary.
 _Avoid_: tracking attribute, `data-track`, interaction (Webflow's interactions animate)
 
+**Analytics Area**:
+One part of the Analytics section, which anyone holding `analytics.view` opens: the few figures it measures, drawn as its
+own page and as one card on the section's overview, both read through one path. Measurement, which shows how a site's
+Analytics Tag is set up, ships with splicewire/laravel-beam-analytics, and packages add others.
+_Avoid_: report, widget, panel, dashboard (a realm's dashboard is one page, and the section is one destination on it)
+
+**Traffic Source**:
+Where an Analytics Area reads a site's traffic back from: a read port behind which a provider such as Google Analytics
+answers with visitors, sessions and views for a period. It is separate from the Analytics Tag, which only sends. With no
+source connected, traffic reads "Not connected", never zero.
+_Avoid_: provider (a tag provider writes the Analytics Tag), integration, data source, connector
+
 **Site Settings**:
 What belongs to a whole site rather than one page: its brand and its analytics id. A Hosted site holds its own, edited
 in its Site section and never copied by a Scaffold Pack; the central site's and a Connected site's are configuration.
