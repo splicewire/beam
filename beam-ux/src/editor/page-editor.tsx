@@ -62,7 +62,7 @@ const asBody = (doc: JsonDoc): Record<string, unknown> => doc as unknown as Reco
 export function PageEditor({ slug, body = null, entryId: suppliedId = null }: PageEditorProps) {
     // theme-entries-and-authoring ticket `str-01`: server-resolved theme, NEUTRAL_THEME as the
     // degrade-safe fallback (mirrors mount.tsx's VisualEditorMount).
-    const { transport: bodyClient, theme, canAuthor, userId, canvasConfig, defaultTreeFor, notify: toast } = useEditorKit();
+    const { transport: bodyClient, theme, canAuthor, userId, canvasConfig, defaultTreeFor, notify: toast, brand } = useEditorKit();
 
     const [created, setCreated] = useState<{slug: string; id: string} | null>(null);
     const [creating, setCreating] = useState(false);
@@ -238,7 +238,7 @@ export function PageEditor({ slug, body = null, entryId: suppliedId = null }: Pa
                 }}
                 fallbackDoc={defaultTreeFor}
                 theme={theme}
-                brand="beam-starter · editor"
+                brand={brand ? `${brand} · editor` : undefined}
             />
         </CanvasProvider>
     );

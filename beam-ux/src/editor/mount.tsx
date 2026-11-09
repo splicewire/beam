@@ -50,7 +50,7 @@ function readEnvelope(envelope: unknown, missing: string): LoadedEnvelope {
 }
 
 function AddressedVisualEditor({ entryRef }: { entryRef: EntryRef }) {
-    const { transport, theme, canvasConfig, userId, canAuthor, notify } = useEditorKit();
+    const { transport, theme, canvasConfig, userId, canAuthor, notify, brand } = useEditorKit();
     const [loaded, setLoaded] = useState<(LoadedEnvelope & { state: EntryPublicationState }) | null>(null);
     const [error, setError] = useState<string | null>(null);
     const [conflict, setConflict] = useState(false);
@@ -236,7 +236,7 @@ function AddressedVisualEditor({ entryRef }: { entryRef: EntryRef }) {
         <VisualEditor value={local.session.body as JsonDoc} onChange={local.change}
             onSave={save} onUndo={local.undo} onRedo={local.redo}
             canUndo={local.session.canUndo} canRedo={local.session.canRedo}
-            theme={theme} brand="Entry editor" />
+            theme={theme} brand={brand ? `${brand} · editor` : "Entry editor"} />
         </SourceMode>
     </CanvasProvider>;
 }

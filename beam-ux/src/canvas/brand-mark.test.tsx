@@ -28,10 +28,13 @@ it('draws the first letter or digit of a name, upper-cased, and nothing for no n
 const config = { registry: {}, MdxView: () => null, MdxEdit: () => null };
 const body = [{ kind: 'block' as const, name: 'p', isComponent: false, dynamic: false, props: [], children: [{ kind: 'text' as const, value: 'Body' }] }];
 
+const state = { id: 'home', headVersion: 'v1', headReadable: 'v1', publishedVersion: 'v1', publishedReadable: 'v1', draftPending: false, versions: [], compileError: null };
+
 async function pageEditor(brand?: string) {
     const view = render(<CanvasProvider config={config}>
         <PageEditor slug="home" entryId="home" userId="author" body={body} brand={brand}
-            transport={{ saveBody: vi.fn(), loadBody: async () => ({ body }) }} />
+            transport={{ saveBody: vi.fn(), saveDraft: vi.fn(), listVersions: async () => state, publish: vi.fn(),
+                restoreVersion: vi.fn(), loadBody: async () => ({ body }) }} />
     </CanvasProvider>);
     await act(async () => { window.dispatchEvent(new CustomEvent('beam-ux:mode', { detail: { mode: 'window' } })); });
 

@@ -138,7 +138,7 @@ function InEditMode({ transport, entryId = 'publication-story' }: { transport: P
                     body={body}
                     transport={transport}
                     notify={notify}
-                    brand="beam-starter · editor"
+                    brand="Acme · editor"
                 />
             </div>
             <div

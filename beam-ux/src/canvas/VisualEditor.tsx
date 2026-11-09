@@ -17,6 +17,7 @@ import { BlockInspector } from './BlockInspector';
 import { CanvasWidget } from './CanvasWidget.js';
 import { veCss } from './css.js';
 import type { CanvasTheme } from './css.js';
+import { monogram } from './monogram.js';
 import { CANVAS_WIDGET_NAME, createCanvasWidgetRegistry } from './widgetRegistry.js';
 import type { JsonDoc } from '../blockdoc/json.js';
 
@@ -143,7 +144,7 @@ function TopBarExtras({
     return (
         <>
             <span className="ve-brand">
-                <span className="ve-mark" />
+                {monogram(brand) && <span className="ve-mark" aria-hidden="true">{monogram(brand)}</span>}
                 {brand}
             </span>
             <span className="ve-hint">

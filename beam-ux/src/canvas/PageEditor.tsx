@@ -56,6 +56,7 @@ import { CanvasPalette } from "./CanvasPalette.js";
 import { CanvasWidget } from "./CanvasWidget.js";
 import { peCss, veCss } from "./css.js";
 import type { CanvasTheme } from "./css.js";
+import { monogram } from "./monogram.js";
 import { TreeRender } from "./TreeRender.js";
 import { createCanvasWidgetRegistry } from "./widgetRegistry.js";
 
@@ -789,8 +790,8 @@ export function PageEditor({
         {/* Floating editor chrome — fixed over the page. */}
         <div className="pe-bar">
           <span className="pe-brand">
-            <span className="pe-mark" />
-            {brand ?? `editing · ${slug}`}
+            {brand && monogram(brand) && <span className="pe-mark" aria-hidden="true">{monogram(brand)}</span>}
+            {brand || `editing · ${slug}`}
           </span>
           {!local.session.source && local.session.pageSettings && (
             <PageSettings

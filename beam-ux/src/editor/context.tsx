@@ -15,6 +15,8 @@ export interface EditorKitInputs {
   canvasConfig?: CanvasConfig;
   defaultTreeFor?: (slug: string) => JsonDoc | null;
   notify?: { success(message: string): void; error(message: string): void };
+  /** The host app's name (its APP_NAME brand); the editor bar names it beside its monogram. Empty: no name, no mark. */
+  brand?: string;
 }
 const noop = () => {};
 const KitContext = createContext<Required<EditorKitInputs> | null>(null);
@@ -24,6 +26,7 @@ export function EditorKitProvider({
 }: EditorKitInputs & { children: ReactNode }) {
   const {
     userId = "",
+    brand = "",
     theme = {},
     canvasConfig = defaults,
     defaultTreeFor = defaultTree,
@@ -34,13 +37,14 @@ export function EditorKitProvider({
       value={{
         ...inputs,
         userId,
+        brand,
         theme,
         canvasConfig,
         defaultTreeFor,
         notify,
       }}
     >
-      <ComponentSessionHost kit={{...inputs,userId,theme,canvasConfig,defaultTreeFor,notify}}>{children}</ComponentSessionHost>
+      <ComponentSessionHost kit={{...inputs,userId,brand,theme,canvasConfig,defaultTreeFor,notify}}>{children}</ComponentSessionHost>
     </KitContext.Provider>
   );
 }
