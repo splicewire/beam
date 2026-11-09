@@ -1,5 +1,5 @@
 {
- "producer": "laravel-beam-docs 2a1dc5af2eb8815eb1f9a6f67ddea79cdea36403 splicewire:beam:docs:php-api:generate over tests/Fixtures/PhpApi pkg-a, pkg-d, pkg-e, pkg-f, pkg-g",
+ "producer": "laravel-beam-docs 2a1dc5af2eb8815eb1f9a6f67ddea79cdea36403 splicewire:beam:docs:php-api:generate over tests/Fixtures/PhpApi pkg-a, pkg-d, pkg-e, pkg-f, pkg-g and beam-docs tests/fixtures/php-api-src/pkg-h (03b)",
  "audiences": {
   "public": {
    "index": {
@@ -227,6 +227,33 @@
         "fqn": "Fixture\\ApiG\\Tagged",
         "kind": "class",
         "summary": "A named, weighted tag."
+       }
+      ]
+     },
+     {
+      "name": "fixture/php-api-h",
+      "version": null,
+      "published": 4,
+      "symbols": [
+       {
+        "fqn": "Fixture\\ApiH\\Doc\\Mixed",
+        "kind": "class",
+        "summary": "Names both a sibling and the global class of the same short name: {@see Hidden} and {@see \\Hidden}, then\n{@see \\Fixture\\ApiH\\Doc\\Hidden} written out in full."
+       },
+       {
+        "fqn": "Fixture\\ApiH\\Doc\\Page",
+        "kind": "class",
+        "summary": "A page that points at its sibling, {@see Hidden}, and at {@see Hidden::open()}."
+       },
+       {
+        "fqn": "Hidden",
+        "kind": "class",
+        "summary": "The unrelated GLOBAL class with the same short name as Fixture\\ApiH\\Doc\\Hidden. Public."
+       },
+       {
+        "fqn": "Other",
+        "kind": "class",
+        "summary": "A public global class only a property docblock names, which the producer does not resolve into any `see`."
        }
       ]
      }
@@ -2609,6 +2636,183 @@
      "see": [],
      "inherited": [],
      "implementers": []
+    },
+    "Fixture\\ApiH\\Doc\\Mixed": {
+     "fqn": "Fixture\\ApiH\\Doc\\Mixed",
+     "package": "fixture/php-api-h",
+     "kind": "class",
+     "modifiers": [
+      "final"
+     ],
+     "templates": [],
+     "extends": [],
+     "implements": [],
+     "traits": [],
+     "backingType": null,
+     "attributes": [],
+     "doc": [
+      "Names both a sibling and the global class of the same short name: {@see Hidden} and {@see \\Hidden}, then\n{@see \\Fixture\\ApiH\\Doc\\Hidden} written out in full."
+     ],
+     "tags": [],
+     "file": "src/Doc/Mixed.php",
+     "line": 11,
+     "constants": [],
+     "cases": [],
+     "properties": [],
+     "methods": [],
+     "see": [
+      {
+       "target": "Fixture\\ApiH\\Doc\\Hidden",
+       "published": false
+      },
+      {
+       "target": "Hidden",
+       "published": true
+      }
+     ],
+     "inherited": [],
+     "implementers": []
+    },
+    "Fixture\\ApiH\\Doc\\Page": {
+     "fqn": "Fixture\\ApiH\\Doc\\Page",
+     "package": "fixture/php-api-h",
+     "kind": "class",
+     "modifiers": [
+      "final"
+     ],
+     "templates": [],
+     "extends": [],
+     "implements": [],
+     "traits": [],
+     "backingType": null,
+     "attributes": [],
+     "doc": [
+      "A page that points at its sibling, {@see Hidden}, and at {@see Hidden::open()}.",
+      "Data for @splicewire/beam-docs 03b (resolved-link identity). It is never loaded: laravel-beam-docs' generator only\nparses it. PHP resolves the unqualified `Hidden` against this file's namespace, so the producer's target is\nFixture\\ApiH\\Doc\\Hidden (unpublished under `public`), never the unrelated global \\Hidden that is in the index."
+     ],
+     "tags": [],
+     "file": "src/Doc/Page.php",
+     "line": 14,
+     "constants": [],
+     "cases": [],
+     "properties": [
+      {
+       "name": "note",
+       "visibility": "public",
+       "static": false,
+       "readonly": false,
+       "type": "?object",
+       "default": "null",
+       "promoted": false,
+       "attributes": [],
+       "line": 17,
+       "doc": [
+        "Holds a reference the producer does not resolve for this symbol: {@see Other}."
+       ],
+       "tags": []
+      }
+     ],
+     "methods": [
+      {
+       "name": "open",
+       "visibility": "public",
+       "static": false,
+       "abstract": false,
+       "final": false,
+       "byRef": false,
+       "params": [],
+       "returnType": "void",
+       "templates": [],
+       "attributes": [],
+       "signature": "public function open(): void",
+       "line": 20,
+       "doc": [
+        "Opens it."
+       ],
+       "tags": []
+      }
+     ],
+     "see": [
+      {
+       "target": "Fixture\\ApiH\\Doc\\Hidden",
+       "published": false
+      },
+      {
+       "target": "Fixture\\ApiH\\Doc\\Hidden::open()",
+       "published": false
+      }
+     ],
+     "inherited": [],
+     "implementers": []
+    },
+    "Hidden": {
+     "fqn": "Hidden",
+     "package": "fixture/php-api-h",
+     "kind": "class",
+     "modifiers": [],
+     "templates": [],
+     "extends": [],
+     "implements": [],
+     "traits": [],
+     "backingType": null,
+     "attributes": [],
+     "doc": [
+      "The unrelated GLOBAL class with the same short name as Fixture\\ApiH\\Doc\\Hidden. Public."
+     ],
+     "tags": [],
+     "file": "legacy/Hidden.php",
+     "line": 8,
+     "constants": [],
+     "cases": [],
+     "properties": [],
+     "methods": [
+      {
+       "name": "open",
+       "visibility": "public",
+       "static": false,
+       "abstract": false,
+       "final": false,
+       "byRef": false,
+       "params": [],
+       "returnType": "void",
+       "templates": [],
+       "attributes": [],
+       "signature": "public function open(): void",
+       "line": 11,
+       "doc": [
+        "Opens it."
+       ],
+       "tags": []
+      }
+     ],
+     "see": [],
+     "inherited": [],
+     "implementers": []
+    },
+    "Other": {
+     "fqn": "Other",
+     "package": "fixture/php-api-h",
+     "kind": "class",
+     "modifiers": [],
+     "templates": [],
+     "extends": [],
+     "implements": [],
+     "traits": [],
+     "backingType": null,
+     "attributes": [],
+     "doc": [
+      "A public global class only a property docblock names, which the producer does not resolve into any `see`."
+     ],
+     "tags": [],
+     "file": "legacy/Other.php",
+     "line": 8,
+     "constants": [],
+     "cases": [],
+     "properties": [],
+     "methods": [],
+     "see": [],
+     "inherited": [],
+     "implementers": []
     }
    }
   },
@@ -2863,6 +3067,38 @@
         "fqn": "Fixture\\ApiG\\Tagged",
         "kind": "class",
         "summary": "A named, weighted tag."
+       }
+      ]
+     },
+     {
+      "name": "fixture/php-api-h",
+      "version": null,
+      "published": 5,
+      "symbols": [
+       {
+        "fqn": "Fixture\\ApiH\\Doc\\Hidden",
+        "kind": "class",
+        "summary": "The namespaced sibling: unmarked, so published only under the `internal` audience."
+       },
+       {
+        "fqn": "Fixture\\ApiH\\Doc\\Mixed",
+        "kind": "class",
+        "summary": "Names both a sibling and the global class of the same short name: {@see Hidden} and {@see \\Hidden}, then\n{@see \\Fixture\\ApiH\\Doc\\Hidden} written out in full."
+       },
+       {
+        "fqn": "Fixture\\ApiH\\Doc\\Page",
+        "kind": "class",
+        "summary": "A page that points at its sibling, {@see Hidden}, and at {@see Hidden::open()}."
+       },
+       {
+        "fqn": "Hidden",
+        "kind": "class",
+        "summary": "The unrelated GLOBAL class with the same short name as Fixture\\ApiH\\Doc\\Hidden. Public."
+       },
+       {
+        "fqn": "Other",
+        "kind": "class",
+        "summary": "A public global class only a property docblock names, which the producer does not resolve into any `see`."
        }
       ]
      }
@@ -5594,6 +5830,236 @@
        "comment": ""
       }
      ],
+     "see": [],
+     "inherited": [],
+     "implementers": []
+    },
+    "Fixture\\ApiH\\Doc\\Hidden": {
+     "fqn": "Fixture\\ApiH\\Doc\\Hidden",
+     "package": "fixture/php-api-h",
+     "kind": "class",
+     "modifiers": [],
+     "templates": [],
+     "extends": [],
+     "implements": [],
+     "traits": [],
+     "backingType": null,
+     "attributes": [],
+     "doc": [
+      "The namespaced sibling: unmarked, so published only under the `internal` audience."
+     ],
+     "tags": [],
+     "comment": "The namespaced sibling: unmarked, so published only under the `internal` audience.",
+     "file": "src/Doc/Hidden.php",
+     "line": 6,
+     "constants": [],
+     "cases": [],
+     "properties": [],
+     "methods": [
+      {
+       "name": "open",
+       "visibility": "public",
+       "static": false,
+       "abstract": false,
+       "final": false,
+       "byRef": false,
+       "params": [],
+       "returnType": "void",
+       "templates": [],
+       "attributes": [],
+       "signature": "public function open(): void",
+       "line": 9,
+       "doc": [
+        "Opens it."
+       ],
+       "tags": [],
+       "comment": "Opens it."
+      }
+     ],
+     "see": [],
+     "inherited": [],
+     "implementers": []
+    },
+    "Fixture\\ApiH\\Doc\\Mixed": {
+     "fqn": "Fixture\\ApiH\\Doc\\Mixed",
+     "package": "fixture/php-api-h",
+     "kind": "class",
+     "modifiers": [
+      "final"
+     ],
+     "templates": [],
+     "extends": [],
+     "implements": [],
+     "traits": [],
+     "backingType": null,
+     "attributes": [],
+     "doc": [
+      "Names both a sibling and the global class of the same short name: {@see Hidden} and {@see \\Hidden}, then\n{@see \\Fixture\\ApiH\\Doc\\Hidden} written out in full."
+     ],
+     "tags": [],
+     "comment": "Names both a sibling and the global class of the same short name: {@see Hidden} and {@see \\Hidden}, then\n{@see \\Fixture\\ApiH\\Doc\\Hidden} written out in full.\n\n@api",
+     "file": "src/Doc/Mixed.php",
+     "line": 11,
+     "constants": [],
+     "cases": [],
+     "properties": [],
+     "methods": [],
+     "see": [
+      {
+       "target": "Fixture\\ApiH\\Doc\\Hidden",
+       "published": true
+      },
+      {
+       "target": "Hidden",
+       "published": true
+      }
+     ],
+     "inherited": [],
+     "implementers": []
+    },
+    "Fixture\\ApiH\\Doc\\Page": {
+     "fqn": "Fixture\\ApiH\\Doc\\Page",
+     "package": "fixture/php-api-h",
+     "kind": "class",
+     "modifiers": [
+      "final"
+     ],
+     "templates": [],
+     "extends": [],
+     "implements": [],
+     "traits": [],
+     "backingType": null,
+     "attributes": [],
+     "doc": [
+      "A page that points at its sibling, {@see Hidden}, and at {@see Hidden::open()}.",
+      "Data for @splicewire/beam-docs 03b (resolved-link identity). It is never loaded: laravel-beam-docs' generator only\nparses it. PHP resolves the unqualified `Hidden` against this file's namespace, so the producer's target is\nFixture\\ApiH\\Doc\\Hidden (unpublished under `public`), never the unrelated global \\Hidden that is in the index."
+     ],
+     "tags": [],
+     "comment": "A page that points at its sibling, {@see Hidden}, and at {@see Hidden::open()}.\n\nData for @splicewire/beam-docs 03b (resolved-link identity). It is never loaded: laravel-beam-docs' generator only\nparses it. PHP resolves the unqualified `Hidden` against this file's namespace, so the producer's target is\nFixture\\ApiH\\Doc\\Hidden (unpublished under `public`), never the unrelated global \\Hidden that is in the index.\n\n@api",
+     "file": "src/Doc/Page.php",
+     "line": 14,
+     "constants": [],
+     "cases": [],
+     "properties": [
+      {
+       "name": "note",
+       "visibility": "public",
+       "static": false,
+       "readonly": false,
+       "type": "?object",
+       "default": "null",
+       "promoted": false,
+       "attributes": [],
+       "line": 17,
+       "doc": [
+        "Holds a reference the producer does not resolve for this symbol: {@see Other}."
+       ],
+       "tags": [],
+       "comment": "Holds a reference the producer does not resolve for this symbol: {@see Other}."
+      }
+     ],
+     "methods": [
+      {
+       "name": "open",
+       "visibility": "public",
+       "static": false,
+       "abstract": false,
+       "final": false,
+       "byRef": false,
+       "params": [],
+       "returnType": "void",
+       "templates": [],
+       "attributes": [],
+       "signature": "public function open(): void",
+       "line": 20,
+       "doc": [
+        "Opens it."
+       ],
+       "tags": [],
+       "comment": "Opens it."
+      }
+     ],
+     "see": [
+      {
+       "target": "Fixture\\ApiH\\Doc\\Hidden",
+       "published": true
+      },
+      {
+       "target": "Fixture\\ApiH\\Doc\\Hidden::open()",
+       "published": true
+      }
+     ],
+     "inherited": [],
+     "implementers": []
+    },
+    "Hidden": {
+     "fqn": "Hidden",
+     "package": "fixture/php-api-h",
+     "kind": "class",
+     "modifiers": [],
+     "templates": [],
+     "extends": [],
+     "implements": [],
+     "traits": [],
+     "backingType": null,
+     "attributes": [],
+     "doc": [
+      "The unrelated GLOBAL class with the same short name as Fixture\\ApiH\\Doc\\Hidden. Public."
+     ],
+     "tags": [],
+     "comment": "The unrelated GLOBAL class with the same short name as Fixture\\ApiH\\Doc\\Hidden. Public.\n\n@api",
+     "file": "legacy/Hidden.php",
+     "line": 8,
+     "constants": [],
+     "cases": [],
+     "properties": [],
+     "methods": [
+      {
+       "name": "open",
+       "visibility": "public",
+       "static": false,
+       "abstract": false,
+       "final": false,
+       "byRef": false,
+       "params": [],
+       "returnType": "void",
+       "templates": [],
+       "attributes": [],
+       "signature": "public function open(): void",
+       "line": 11,
+       "doc": [
+        "Opens it."
+       ],
+       "tags": [],
+       "comment": "Opens it."
+      }
+     ],
+     "see": [],
+     "inherited": [],
+     "implementers": []
+    },
+    "Other": {
+     "fqn": "Other",
+     "package": "fixture/php-api-h",
+     "kind": "class",
+     "modifiers": [],
+     "templates": [],
+     "extends": [],
+     "implements": [],
+     "traits": [],
+     "backingType": null,
+     "attributes": [],
+     "doc": [
+      "A public global class only a property docblock names, which the producer does not resolve into any `see`."
+     ],
+     "tags": [],
+     "comment": "A public global class only a property docblock names, which the producer does not resolve into any `see`.\n\n@api",
+     "file": "legacy/Other.php",
+     "line": 8,
+     "constants": [],
+     "cases": [],
+     "properties": [],
+     "methods": [],
      "see": [],
      "inherited": [],
      "implementers": []
