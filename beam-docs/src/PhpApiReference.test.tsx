@@ -318,3 +318,80 @@ describe('escaped Markdown', () => {
         }
     });
 });
+
+/**
+ * Slice 3 amend (final review REVISE e5a010df, Spec 1-2), on the same REAL producer fixture (now with pkg-d):
+ * the complete effective declaration (method templates, parameter attributes, an adapted inherited declaration's own
+ * attributes) is drawn, and inline `{@see Class::member}` honours the producer's member-level `published` verdict.
+ */
+describe('amend: complete declarations and member-level link verdicts', () => {
+    const show = async (audience: Audience, fqn: string) => {
+        at(`?${new URLSearchParams({ symbol: fqn })}`);
+        const view = await mounted(audience);
+        return { view, article: await openSymbol(fqn) };
+    };
+    const member = (article: HTMLElement, name: string) => article.querySelector(`[data-php-api-member="${name}"]`) as HTMLElement;
+
+    for (const audience of ['public', 'internal'] as const) {
+        it(`draws a method's templates (${audience})`, async () => {
+            const { article, view } = await show(audience, 'Fixture\\ApiA\\Box');
+            const map = member(article, 'map');
+            expect(within(map).getByLabelText('Templates').textContent).toBe('Templates: U');
+            expect(member(article, 'area').querySelector('[aria-label="Templates"]')).toBeNull();
+            view.unmount();
+        });
+
+        it(`draws each parameter's attributes (${audience})`, async () => {
+            const { article, view } = await show(audience, 'Fixture\\ApiG\\Shaped');
+            const params = within(member(article, 'place')).getByLabelText('Parameter attributes');
+            expect(Array.from(params.querySelectorAll('li')).map((li) => li.textContent)).toEqual([
+                "$x #[Fixture\\ApiG\\Tagged('x')]",
+                "$y #[Fixture\\ApiG\\Tagged('y', weight: 1)]",
+                '$label #[Fixture\\ApiG\\Plain]',
+            ]);
+            view.unmount();
+        });
+
+        it(`draws an adapted inherited declaration's own attributes, never a private original (${audience})`, async () => {
+            const { article, view } = await show(audience, 'Fixture\\ApiE\\Kit');
+            const revealed = article.querySelector('[data-php-api-inherited="revealed"]') as HTMLElement;
+            expect(within(revealed).getByLabelText('Attributes').textContent).toContain("#[Fixture\\ApiE\\Marker('quietly')]");
+            expect(revealed.querySelector('[aria-label="Parameter attributes"]')).toBeNull();
+            expect(article.textContent).not.toContain('secretly');
+            const loud = article.querySelector('[data-php-api-inherited="loud"]') as HTMLElement;
+            expect(loud.textContent).toContain('alias of shout()');
+            view.unmount();
+        });
+
+        it(`inline {@see Class::member} links only where the producer published that member (${audience})`, async () => {
+            const { article, view } = await show(audience, 'Fixture\\ApiD\\Links');
+            const prose = article.querySelector('.beam-php-api-doc') as HTMLElement;
+            const linked = Array.from(prose.querySelectorAll('a')).map((a) => [a.textContent, a.getAttribute('href')]);
+            expect(linked).toEqual([
+                ['Base::keep()', symbolHref('Fixture\\ApiD\\Base')],
+                ['Base::run()', symbolHref('Fixture\\ApiD\\Base')],
+                ['Made::$name', symbolHref('Fixture\\ApiD\\Made')],
+            ]);
+            // The producer said false: a missing member and one Derived does not publish stay code, although both
+            // classes are in the index.
+            const code = Array.from(prose.querySelectorAll('code')).filter((c) => !c.closest('a')).map((c) => c.textContent);
+            expect(code).toEqual(expect.arrayContaining(['Base::missing()', 'Derived::run()']));
+            // The See also section agrees with the prose, member for member.
+            const see = within(article).getByRole('region', { name: 'See also' });
+            expect(Array.from(see.querySelectorAll('a')).map((a) => a.textContent)).toEqual([
+                'Fixture\\ApiD\\Base::keep()', 'Fixture\\ApiD\\Base::run()', 'Fixture\\ApiD\\Made::$name',
+            ]);
+            view.unmount();
+        });
+    }
+
+    it('a member target the producer did not resolve for this symbol is not linked by class alone', async () => {
+        const { symbols } = (wire as any).audiences.public;
+        const box = { ...symbols['Fixture\\ApiA\\Box'], doc: ['See {@see Kind::Circle} and {@see Kind}.'] };
+        at(`?${new URLSearchParams({ symbol: 'Fixture\\ApiA\\Box' })}`);
+        await mounted('public', { [symbolUrl('Fixture\\ApiA\\Box')]: { data: box } });
+        const prose = (await openSymbol('Fixture\\ApiA\\Box')).querySelector('.beam-php-api-doc') as HTMLElement;
+        expect(Array.from(prose.querySelectorAll('a')).map((a) => a.textContent)).toEqual(['Kind']);
+        expect(within(prose).getByText('Kind::Circle').closest('a')).toBeNull();
+    });
+});

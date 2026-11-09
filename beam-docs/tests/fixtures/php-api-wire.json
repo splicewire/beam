@@ -1,5 +1,5 @@
 {
- "producer": "laravel-beam-docs 2a1dc5af2eb8815eb1f9a6f67ddea79cdea36403 splicewire:beam:docs:php-api:generate over tests/Fixtures/PhpApi pkg-a, pkg-e, pkg-f, pkg-g",
+ "producer": "laravel-beam-docs 2a1dc5af2eb8815eb1f9a6f67ddea79cdea36403 splicewire:beam:docs:php-api:generate over tests/Fixtures/PhpApi pkg-a, pkg-d, pkg-e, pkg-f, pkg-g",
  "audiences": {
   "public": {
    "index": {
@@ -59,6 +59,83 @@
         "fqn": "Fixture_OldHelper",
         "kind": "class",
         "summary": "A classmap helper with no namespace."
+       }
+      ]
+     },
+     {
+      "name": "fixture/php-api-d",
+      "version": null,
+      "published": 14,
+      "symbols": [
+       {
+        "fqn": "Fixture\\ApiD\\Attributed",
+        "kind": "class",
+        "summary": null
+       },
+       {
+        "fqn": "Fixture\\ApiD\\AttributedCase",
+        "kind": "enum",
+        "summary": null
+       },
+       {
+        "fqn": "Fixture\\ApiD\\Base",
+        "kind": "class",
+        "summary": null
+       },
+       {
+        "fqn": "Fixture\\ApiD\\Derived",
+        "kind": "class",
+        "summary": null
+       },
+       {
+        "fqn": "Fixture\\ApiD\\Links",
+        "kind": "class",
+        "summary": "Links: {@see Base::keep()} {@see Base::missing()} {@see Derived::run()} {@see Base::run()} {@see Made::$name}"
+       },
+       {
+        "fqn": "Fixture\\ApiD\\Made",
+        "kind": "class",
+        "summary": null
+       },
+       {
+        "fqn": "Fixture\\ApiD\\Person",
+        "kind": "class",
+        "summary": "Composes two traits with adaptations."
+       },
+       {
+        "fqn": "Fixture\\ApiD\\Traits\\Greets",
+        "kind": "trait",
+        "summary": null
+       },
+       {
+        "fqn": "Fixture\\ApiD\\Traits\\Nested",
+        "kind": "trait",
+        "summary": null
+       },
+       {
+        "fqn": "Fixture\\ApiD\\Traits\\Waves",
+        "kind": "trait",
+        "summary": null
+       },
+       {
+        "fqn": "Fixture\\ApiD\\Typed",
+        "kind": "class",
+        "summary": "A typed holder."
+       },
+       {
+        "fqn": "Fixture_D_Hh",
+        "kind": "class",
+        "summary": "A classmap file with the.hh extension."
+       },
+       {
+        "fqn": "Fixture_D_IncHelper",
+        "kind": "class",
+        "summary": "A classmap file with the.inc extension."
+       },
+       {
+        "fqn": "Fixture_D_One",
+        "kind": "class",
+        "summary": "Reached through a classmap glob root (lib/*\\/)."
        }
       ]
      },
@@ -867,6 +944,764 @@
        "tags": []
       }
      ],
+     "see": [],
+     "inherited": [],
+     "implementers": []
+    },
+    "Fixture\\ApiD\\Attributed": {
+     "fqn": "Fixture\\ApiD\\Attributed",
+     "package": "fixture/php-api-d",
+     "kind": "class",
+     "modifiers": [],
+     "templates": [],
+     "extends": [],
+     "implements": [],
+     "traits": [],
+     "backingType": null,
+     "attributes": [],
+     "doc": [],
+     "tags": [],
+     "file": "src/Attributed.php",
+     "line": 6,
+     "constants": [
+      {
+       "name": "LIMIT",
+       "visibility": "public",
+       "final": false,
+       "type": null,
+       "value": "3",
+       "attributes": [
+        {
+         "name": "Fixture\\ApiD\\Marker",
+         "arguments": [
+          "'constant'"
+         ]
+        }
+       ],
+       "line": 9,
+       "doc": [],
+       "tags": []
+      }
+     ],
+     "cases": [],
+     "properties": [
+      {
+       "name": "label",
+       "visibility": "public",
+       "static": false,
+       "readonly": false,
+       "type": "string",
+       "default": "''",
+       "promoted": false,
+       "attributes": [
+        {
+         "name": "Fixture\\ApiD\\Marker",
+         "arguments": [
+          "'property'"
+         ]
+        }
+       ],
+       "line": 12,
+       "doc": [],
+       "tags": []
+      }
+     ],
+     "methods": [],
+     "see": [],
+     "inherited": [],
+     "implementers": []
+    },
+    "Fixture\\ApiD\\AttributedCase": {
+     "fqn": "Fixture\\ApiD\\AttributedCase",
+     "package": "fixture/php-api-d",
+     "kind": "enum",
+     "modifiers": [],
+     "templates": [],
+     "extends": [],
+     "implements": [],
+     "traits": [],
+     "backingType": null,
+     "attributes": [],
+     "doc": [],
+     "tags": [],
+     "file": "src/AttributedCase.php",
+     "line": 6,
+     "constants": [],
+     "cases": [
+      {
+       "name": "One",
+       "visibility": "public",
+       "value": null,
+       "attributes": [
+        {
+         "name": "Fixture\\ApiD\\Marker",
+         "arguments": [
+          "'case'"
+         ]
+        }
+       ],
+       "line": 8,
+       "doc": [],
+       "tags": []
+      }
+     ],
+     "properties": [],
+     "methods": [],
+     "see": [],
+     "inherited": [],
+     "implementers": []
+    },
+    "Fixture\\ApiD\\Base": {
+     "fqn": "Fixture\\ApiD\\Base",
+     "package": "fixture/php-api-d",
+     "kind": "class",
+     "modifiers": [],
+     "templates": [],
+     "extends": [],
+     "implements": [],
+     "traits": [],
+     "backingType": null,
+     "attributes": [],
+     "doc": [],
+     "tags": [],
+     "file": "src/Base.php",
+     "line": 6,
+     "constants": [],
+     "cases": [],
+     "properties": [],
+     "methods": [
+      {
+       "name": "keep",
+       "visibility": "public",
+       "static": false,
+       "abstract": false,
+       "final": false,
+       "byRef": false,
+       "params": [],
+       "returnType": "void",
+       "templates": [],
+       "attributes": [],
+       "signature": "public function keep(): void",
+       "line": 10,
+       "doc": [],
+       "tags": []
+      },
+      {
+       "name": "run",
+       "visibility": "public",
+       "static": false,
+       "abstract": false,
+       "final": false,
+       "byRef": false,
+       "params": [],
+       "returnType": "void",
+       "templates": [],
+       "attributes": [],
+       "signature": "public function run(): void",
+       "line": 8,
+       "doc": [],
+       "tags": []
+      }
+     ],
+     "see": [],
+     "inherited": [],
+     "implementers": []
+    },
+    "Fixture\\ApiD\\Derived": {
+     "fqn": "Fixture\\ApiD\\Derived",
+     "package": "fixture/php-api-d",
+     "kind": "class",
+     "modifiers": [],
+     "templates": [],
+     "extends": [
+      {
+       "fqn": "Fixture\\ApiD\\Base",
+       "published": true
+      }
+     ],
+     "implements": [],
+     "traits": [],
+     "backingType": null,
+     "attributes": [],
+     "doc": [],
+     "tags": [],
+     "file": "src/Derived.php",
+     "line": 6,
+     "constants": [],
+     "cases": [],
+     "properties": [],
+     "methods": [],
+     "see": [],
+     "inherited": [
+      {
+       "kind": "method",
+       "name": "keep",
+       "from": "Fixture\\ApiD\\Base",
+       "visibility": "public",
+       "abstract": false
+      }
+     ],
+     "implementers": []
+    },
+    "Fixture\\ApiD\\Links": {
+     "fqn": "Fixture\\ApiD\\Links",
+     "package": "fixture/php-api-d",
+     "kind": "class",
+     "modifiers": [],
+     "templates": [],
+     "extends": [],
+     "implements": [],
+     "traits": [],
+     "backingType": null,
+     "attributes": [],
+     "doc": [
+      "Links: {@see Base::keep()} {@see Base::missing()} {@see Derived::run()} {@see Base::run()} {@see Made::$name}"
+     ],
+     "tags": [],
+     "file": "src/Links.php",
+     "line": 10,
+     "constants": [],
+     "cases": [],
+     "properties": [],
+     "methods": [],
+     "see": [
+      {
+       "target": "Fixture\\ApiD\\Base::keep()",
+       "published": true
+      },
+      {
+       "target": "Fixture\\ApiD\\Base::missing()",
+       "published": false
+      },
+      {
+       "target": "Fixture\\ApiD\\Base::run()",
+       "published": true
+      },
+      {
+       "target": "Fixture\\ApiD\\Derived::run()",
+       "published": false
+      },
+      {
+       "target": "Fixture\\ApiD\\Made::$name",
+       "published": true
+      }
+     ],
+     "inherited": [],
+     "implementers": []
+    },
+    "Fixture\\ApiD\\Made": {
+     "fqn": "Fixture\\ApiD\\Made",
+     "package": "fixture/php-api-d",
+     "kind": "class",
+     "modifiers": [
+      "final"
+     ],
+     "templates": [],
+     "extends": [],
+     "implements": [],
+     "traits": [],
+     "backingType": null,
+     "attributes": [],
+     "doc": [],
+     "tags": [],
+     "file": "src/Made.php",
+     "line": 6,
+     "constants": [],
+     "cases": [],
+     "properties": [
+      {
+       "name": "name",
+       "visibility": "public",
+       "static": false,
+       "readonly": false,
+       "type": "string",
+       "default": null,
+       "promoted": true,
+       "attributes": [
+        {
+         "name": "Fixture\\ApiD\\Marker",
+         "arguments": [
+          "'promoted'"
+         ]
+        }
+       ],
+       "line": 8,
+       "doc": [],
+       "tags": []
+      }
+     ],
+     "methods": [
+      {
+       "name": "of",
+       "visibility": "public",
+       "static": true,
+       "abstract": false,
+       "final": false,
+       "byRef": false,
+       "params": [
+        {
+         "name": "name",
+         "type": "string",
+         "default": null,
+         "byRef": false,
+         "variadic": false,
+         "promoted": false,
+         "attributes": []
+        }
+       ],
+       "returnType": "self",
+       "templates": [],
+       "attributes": [],
+       "signature": "public static function of(string $name): self",
+       "line": 10,
+       "doc": [],
+       "tags": []
+      }
+     ],
+     "see": [],
+     "inherited": [],
+     "implementers": []
+    },
+    "Fixture\\ApiD\\Person": {
+     "fqn": "Fixture\\ApiD\\Person",
+     "package": "fixture/php-api-d",
+     "kind": "class",
+     "modifiers": [],
+     "templates": [],
+     "extends": [],
+     "implements": [],
+     "traits": [
+      {
+       "fqn": "Fixture\\ApiD\\Traits\\Greets",
+       "published": true
+      },
+      {
+       "fqn": "Fixture\\ApiD\\Traits\\Waves",
+       "published": true
+      }
+     ],
+     "backingType": null,
+     "attributes": [],
+     "doc": [
+      "Composes two traits with adaptations."
+     ],
+     "tags": [],
+     "file": "src/Person.php",
+     "line": 13,
+     "constants": [],
+     "cases": [],
+     "properties": [],
+     "methods": [],
+     "see": [],
+     "inherited": [
+      {
+       "kind": "method",
+       "name": "hello",
+       "from": "Fixture\\ApiD\\Traits\\Greets",
+       "visibility": "public",
+       "abstract": false
+      },
+      {
+       "kind": "method",
+       "name": "nestedMethod",
+       "from": "Fixture\\ApiD\\Traits\\Nested",
+       "visibility": "public",
+       "abstract": false
+      },
+      {
+       "kind": "method",
+       "name": "revealed",
+       "from": "Fixture\\ApiD\\Traits\\Greets",
+       "visibility": "public",
+       "abstract": false,
+       "declaration": {
+        "name": "revealed",
+        "visibility": "public",
+        "static": false,
+        "abstract": false,
+        "final": false,
+        "byRef": false,
+        "params": [],
+        "returnType": "void",
+        "templates": [],
+        "attributes": [],
+        "signature": "public function revealed(): void",
+        "line": 15,
+        "doc": [],
+        "tags": []
+       }
+      },
+      {
+       "kind": "method",
+       "name": "waveHello",
+       "from": "Fixture\\ApiD\\Traits\\Waves",
+       "visibility": "public",
+       "abstract": false,
+       "original": "hello",
+       "declaration": {
+        "name": "waveHello",
+        "visibility": "public",
+        "static": false,
+        "abstract": false,
+        "final": false,
+        "byRef": false,
+        "params": [],
+        "returnType": "string",
+        "templates": [],
+        "attributes": [],
+        "signature": "public function waveHello(): string",
+        "line": 10,
+        "doc": [],
+        "tags": []
+       }
+      }
+     ],
+     "implementers": []
+    },
+    "Fixture\\ApiD\\Traits\\Greets": {
+     "fqn": "Fixture\\ApiD\\Traits\\Greets",
+     "package": "fixture/php-api-d",
+     "kind": "trait",
+     "modifiers": [],
+     "templates": [],
+     "extends": [],
+     "implements": [],
+     "traits": [],
+     "backingType": null,
+     "attributes": [],
+     "doc": [],
+     "tags": [],
+     "file": "src/Traits/Greets.php",
+     "line": 6,
+     "constants": [],
+     "cases": [],
+     "properties": [],
+     "methods": [
+      {
+       "name": "bye",
+       "visibility": "public",
+       "static": false,
+       "abstract": false,
+       "final": false,
+       "byRef": false,
+       "params": [],
+       "returnType": "void",
+       "templates": [],
+       "attributes": [],
+       "signature": "public function bye(): void",
+       "line": 13,
+       "doc": [],
+       "tags": []
+      },
+      {
+       "name": "hello",
+       "visibility": "public",
+       "static": false,
+       "abstract": false,
+       "final": false,
+       "byRef": false,
+       "params": [],
+       "returnType": "string",
+       "templates": [],
+       "attributes": [],
+       "signature": "public function hello(): string",
+       "line": 8,
+       "doc": [],
+       "tags": []
+      }
+     ],
+     "see": [],
+     "inherited": [],
+     "implementers": []
+    },
+    "Fixture\\ApiD\\Traits\\Nested": {
+     "fqn": "Fixture\\ApiD\\Traits\\Nested",
+     "package": "fixture/php-api-d",
+     "kind": "trait",
+     "modifiers": [],
+     "templates": [],
+     "extends": [],
+     "implements": [],
+     "traits": [],
+     "backingType": null,
+     "attributes": [],
+     "doc": [],
+     "tags": [],
+     "file": "src/Traits/Nested.php",
+     "line": 6,
+     "constants": [],
+     "cases": [],
+     "properties": [],
+     "methods": [
+      {
+       "name": "nestedMethod",
+       "visibility": "public",
+       "static": false,
+       "abstract": false,
+       "final": false,
+       "byRef": false,
+       "params": [],
+       "returnType": "void",
+       "templates": [],
+       "attributes": [],
+       "signature": "public function nestedMethod(): void",
+       "line": 8,
+       "doc": [],
+       "tags": []
+      }
+     ],
+     "see": [],
+     "inherited": [],
+     "implementers": []
+    },
+    "Fixture\\ApiD\\Traits\\Waves": {
+     "fqn": "Fixture\\ApiD\\Traits\\Waves",
+     "package": "fixture/php-api-d",
+     "kind": "trait",
+     "modifiers": [],
+     "templates": [],
+     "extends": [],
+     "implements": [],
+     "traits": [
+      {
+       "fqn": "Fixture\\ApiD\\Traits\\Nested",
+       "published": true
+      }
+     ],
+     "backingType": null,
+     "attributes": [],
+     "doc": [],
+     "tags": [],
+     "file": "src/Traits/Waves.php",
+     "line": 6,
+     "constants": [],
+     "cases": [],
+     "properties": [],
+     "methods": [
+      {
+       "name": "hello",
+       "visibility": "public",
+       "static": false,
+       "abstract": false,
+       "final": false,
+       "byRef": false,
+       "params": [],
+       "returnType": "string",
+       "templates": [],
+       "attributes": [],
+       "signature": "public function hello(): string",
+       "line": 10,
+       "doc": [],
+       "tags": []
+      }
+     ],
+     "see": [],
+     "inherited": [
+      {
+       "kind": "method",
+       "name": "nestedMethod",
+       "from": "Fixture\\ApiD\\Traits\\Nested",
+       "visibility": "public",
+       "abstract": false
+      }
+     ],
+     "implementers": []
+    },
+    "Fixture\\ApiD\\Typed": {
+     "fqn": "Fixture\\ApiD\\Typed",
+     "package": "fixture/php-api-d",
+     "kind": "class",
+     "modifiers": [],
+     "templates": [
+      {
+       "name": "T",
+       "bound": "object",
+       "default": "\\stdClass",
+       "variance": "covariant"
+      }
+     ],
+     "extends": [
+      {
+       "fqn": "Fixture\\ApiD\\Base",
+       "published": true
+      }
+     ],
+     "implements": [
+      {
+       "fqn": "IteratorAggregate",
+       "published": false
+      }
+     ],
+     "traits": [],
+     "backingType": null,
+     "attributes": [],
+     "doc": [
+      "A typed holder."
+     ],
+     "tags": [
+      {
+       "tag": "@implements",
+       "type": "\\IteratorAggregate<int, T>"
+      }
+     ],
+     "file": "src/Typed.php",
+     "line": 16,
+     "constants": [],
+     "cases": [],
+     "properties": [],
+     "methods": [
+      {
+       "name": "first",
+       "visibility": "public",
+       "static": false,
+       "abstract": false,
+       "final": false,
+       "byRef": false,
+       "params": [
+        {
+         "name": "items",
+         "type": "array",
+         "default": null,
+         "byRef": false,
+         "variadic": false,
+         "promoted": false,
+         "attributes": []
+        }
+       ],
+       "returnType": "object",
+       "templates": [],
+       "attributes": [],
+       "signature": "public function first(array $items): object",
+       "line": 26,
+       "doc": [
+        "Hold the items."
+       ],
+       "tags": [
+        {
+         "tag": "@param",
+         "type": "list<T>",
+         "name": "$items",
+         "description": "The items to hold."
+        },
+        {
+         "tag": "@return",
+         "type": "T",
+         "description": "The first one."
+        },
+        {
+         "tag": "@throws",
+         "type": "\\RuntimeException",
+         "description": "When there are none."
+        }
+       ]
+      },
+      {
+       "name": "getIterator",
+       "visibility": "public",
+       "static": false,
+       "abstract": false,
+       "final": false,
+       "byRef": false,
+       "params": [],
+       "returnType": "Iterator",
+       "templates": [],
+       "attributes": [],
+       "signature": "public function getIterator(): Iterator",
+       "line": 31,
+       "doc": [],
+       "tags": []
+      }
+     ],
+     "see": [],
+     "inherited": [
+      {
+       "kind": "method",
+       "name": "keep",
+       "from": "Fixture\\ApiD\\Base",
+       "visibility": "public",
+       "abstract": false
+      },
+      {
+       "kind": "method",
+       "name": "run",
+       "from": "Fixture\\ApiD\\Base",
+       "visibility": "public",
+       "abstract": false
+      }
+     ],
+     "implementers": []
+    },
+    "Fixture_D_Hh": {
+     "fqn": "Fixture_D_Hh",
+     "package": "fixture/php-api-d",
+     "kind": "class",
+     "modifiers": [],
+     "templates": [],
+     "extends": [],
+     "implements": [],
+     "traits": [],
+     "backingType": null,
+     "attributes": [],
+     "doc": [
+      "A classmap file with the.hh extension."
+     ],
+     "tags": [],
+     "file": "inc-dir/Hack.hh",
+     "line": 8,
+     "constants": [],
+     "cases": [],
+     "properties": [],
+     "methods": [],
+     "see": [],
+     "inherited": [],
+     "implementers": []
+    },
+    "Fixture_D_IncHelper": {
+     "fqn": "Fixture_D_IncHelper",
+     "package": "fixture/php-api-d",
+     "kind": "class",
+     "modifiers": [],
+     "templates": [],
+     "extends": [],
+     "implements": [],
+     "traits": [],
+     "backingType": null,
+     "attributes": [],
+     "doc": [
+      "A classmap file with the.inc extension."
+     ],
+     "tags": [],
+     "file": "inc-dir/Helper.inc",
+     "line": 8,
+     "constants": [],
+     "cases": [],
+     "properties": [],
+     "methods": [],
+     "see": [],
+     "inherited": [],
+     "implementers": []
+    },
+    "Fixture_D_One": {
+     "fqn": "Fixture_D_One",
+     "package": "fixture/php-api-d",
+     "kind": "class",
+     "modifiers": [],
+     "templates": [],
+     "extends": [],
+     "implements": [],
+     "traits": [],
+     "backingType": null,
+     "attributes": [],
+     "doc": [
+      "Reached through a classmap glob root (lib/*\\/)."
+     ],
+     "tags": [],
+     "file": "lib/one/One.php",
+     "line": 8,
+     "constants": [],
+     "cases": [],
+     "properties": [],
+     "methods": [],
      "see": [],
      "inherited": [],
      "implementers": []
@@ -1844,6 +2679,93 @@
       ]
      },
      {
+      "name": "fixture/php-api-d",
+      "version": null,
+      "published": 16,
+      "symbols": [
+       {
+        "fqn": "Fixture\\ApiD\\Attributed",
+        "kind": "class",
+        "summary": null
+       },
+       {
+        "fqn": "Fixture\\ApiD\\AttributedCase",
+        "kind": "enum",
+        "summary": null
+       },
+       {
+        "fqn": "Fixture\\ApiD\\Base",
+        "kind": "class",
+        "summary": null
+       },
+       {
+        "fqn": "Fixture\\ApiD\\Derived",
+        "kind": "class",
+        "summary": null
+       },
+       {
+        "fqn": "Fixture\\ApiD\\Hidden",
+        "kind": "class",
+        "summary": "Unmarked: never published under public."
+       },
+       {
+        "fqn": "Fixture\\ApiD\\Links",
+        "kind": "class",
+        "summary": "Links: {@see Base::keep()} {@see Base::missing()} {@see Derived::run()} {@see Base::run()} {@see Made::$name}"
+       },
+       {
+        "fqn": "Fixture\\ApiD\\Made",
+        "kind": "class",
+        "summary": null
+       },
+       {
+        "fqn": "Fixture\\ApiD\\Marker",
+        "kind": "class",
+        "summary": null
+       },
+       {
+        "fqn": "Fixture\\ApiD\\Person",
+        "kind": "class",
+        "summary": "Composes two traits with adaptations."
+       },
+       {
+        "fqn": "Fixture\\ApiD\\Traits\\Greets",
+        "kind": "trait",
+        "summary": null
+       },
+       {
+        "fqn": "Fixture\\ApiD\\Traits\\Nested",
+        "kind": "trait",
+        "summary": null
+       },
+       {
+        "fqn": "Fixture\\ApiD\\Traits\\Waves",
+        "kind": "trait",
+        "summary": null
+       },
+       {
+        "fqn": "Fixture\\ApiD\\Typed",
+        "kind": "class",
+        "summary": "A typed holder."
+       },
+       {
+        "fqn": "Fixture_D_Hh",
+        "kind": "class",
+        "summary": "A classmap file with the .hh extension."
+       },
+       {
+        "fqn": "Fixture_D_IncHelper",
+        "kind": "class",
+        "summary": "A classmap file with the .inc extension."
+       },
+       {
+        "fqn": "Fixture_D_One",
+        "kind": "class",
+        "summary": "Reached through a classmap glob root (lib/*\\/)."
+       }
+      ]
+     },
+     {
       "name": "fixture/php-api-e",
       "version": null,
       "published": 12,
@@ -2732,6 +3654,893 @@
        "comment": ""
       }
      ],
+     "see": [],
+     "inherited": [],
+     "implementers": []
+    },
+    "Fixture\\ApiD\\Attributed": {
+     "fqn": "Fixture\\ApiD\\Attributed",
+     "package": "fixture/php-api-d",
+     "kind": "class",
+     "modifiers": [],
+     "templates": [],
+     "extends": [],
+     "implements": [],
+     "traits": [],
+     "backingType": null,
+     "attributes": [],
+     "doc": [],
+     "tags": [],
+     "comment": "@api",
+     "file": "src/Attributed.php",
+     "line": 6,
+     "constants": [
+      {
+       "name": "LIMIT",
+       "visibility": "public",
+       "final": false,
+       "type": null,
+       "value": "3",
+       "attributes": [
+        {
+         "name": "Fixture\\ApiD\\Marker",
+         "arguments": [
+          "'constant'"
+         ]
+        }
+       ],
+       "line": 9,
+       "doc": [],
+       "tags": [],
+       "comment": ""
+      }
+     ],
+     "cases": [],
+     "properties": [
+      {
+       "name": "label",
+       "visibility": "public",
+       "static": false,
+       "readonly": false,
+       "type": "string",
+       "default": "''",
+       "promoted": false,
+       "attributes": [
+        {
+         "name": "Fixture\\ApiD\\Marker",
+         "arguments": [
+          "'property'"
+         ]
+        }
+       ],
+       "line": 12,
+       "doc": [],
+       "tags": [],
+       "comment": ""
+      }
+     ],
+     "methods": [],
+     "see": [],
+     "inherited": [],
+     "implementers": []
+    },
+    "Fixture\\ApiD\\AttributedCase": {
+     "fqn": "Fixture\\ApiD\\AttributedCase",
+     "package": "fixture/php-api-d",
+     "kind": "enum",
+     "modifiers": [],
+     "templates": [],
+     "extends": [],
+     "implements": [],
+     "traits": [],
+     "backingType": null,
+     "attributes": [],
+     "doc": [],
+     "tags": [],
+     "comment": "@api",
+     "file": "src/AttributedCase.php",
+     "line": 6,
+     "constants": [],
+     "cases": [
+      {
+       "name": "One",
+       "visibility": "public",
+       "value": null,
+       "attributes": [
+        {
+         "name": "Fixture\\ApiD\\Marker",
+         "arguments": [
+          "'case'"
+         ]
+        }
+       ],
+       "line": 8,
+       "doc": [],
+       "tags": [],
+       "comment": ""
+      }
+     ],
+     "properties": [],
+     "methods": [],
+     "see": [],
+     "inherited": [],
+     "implementers": []
+    },
+    "Fixture\\ApiD\\Base": {
+     "fqn": "Fixture\\ApiD\\Base",
+     "package": "fixture/php-api-d",
+     "kind": "class",
+     "modifiers": [],
+     "templates": [],
+     "extends": [],
+     "implements": [],
+     "traits": [],
+     "backingType": null,
+     "attributes": [],
+     "doc": [],
+     "tags": [],
+     "comment": "@api",
+     "file": "src/Base.php",
+     "line": 6,
+     "constants": [],
+     "cases": [],
+     "properties": [],
+     "methods": [
+      {
+       "name": "keep",
+       "visibility": "public",
+       "static": false,
+       "abstract": false,
+       "final": false,
+       "byRef": false,
+       "params": [],
+       "returnType": "void",
+       "templates": [],
+       "attributes": [],
+       "signature": "public function keep(): void",
+       "line": 10,
+       "doc": [],
+       "tags": [],
+       "comment": ""
+      },
+      {
+       "name": "run",
+       "visibility": "public",
+       "static": false,
+       "abstract": false,
+       "final": false,
+       "byRef": false,
+       "params": [],
+       "returnType": "void",
+       "templates": [],
+       "attributes": [],
+       "signature": "public function run(): void",
+       "line": 8,
+       "doc": [],
+       "tags": [],
+       "comment": ""
+      }
+     ],
+     "see": [],
+     "inherited": [],
+     "implementers": []
+    },
+    "Fixture\\ApiD\\Derived": {
+     "fqn": "Fixture\\ApiD\\Derived",
+     "package": "fixture/php-api-d",
+     "kind": "class",
+     "modifiers": [],
+     "templates": [],
+     "extends": [
+      {
+       "fqn": "Fixture\\ApiD\\Base",
+       "published": true
+      }
+     ],
+     "implements": [],
+     "traits": [],
+     "backingType": null,
+     "attributes": [],
+     "doc": [],
+     "tags": [],
+     "comment": "@api",
+     "file": "src/Derived.php",
+     "line": 6,
+     "constants": [],
+     "cases": [],
+     "properties": [],
+     "methods": [],
+     "see": [],
+     "inherited": [
+      {
+       "kind": "method",
+       "name": "keep",
+       "from": "Fixture\\ApiD\\Base",
+       "visibility": "public",
+       "abstract": false
+      }
+     ],
+     "implementers": []
+    },
+    "Fixture\\ApiD\\Hidden": {
+     "fqn": "Fixture\\ApiD\\Hidden",
+     "package": "fixture/php-api-d",
+     "kind": "class",
+     "modifiers": [],
+     "templates": [],
+     "extends": [],
+     "implements": [],
+     "traits": [],
+     "backingType": null,
+     "attributes": [],
+     "doc": [
+      "Unmarked: never published under public."
+     ],
+     "tags": [],
+     "comment": "Unmarked: never published under public.",
+     "file": "src/Hidden.php",
+     "line": 6,
+     "constants": [],
+     "cases": [],
+     "properties": [],
+     "methods": [],
+     "see": [],
+     "inherited": [],
+     "implementers": []
+    },
+    "Fixture\\ApiD\\Links": {
+     "fqn": "Fixture\\ApiD\\Links",
+     "package": "fixture/php-api-d",
+     "kind": "class",
+     "modifiers": [],
+     "templates": [],
+     "extends": [],
+     "implements": [],
+     "traits": [],
+     "backingType": null,
+     "attributes": [],
+     "doc": [
+      "Links: {@see Base::keep()} {@see Base::missing()} {@see Derived::run()} {@see Base::run()} {@see Made::$name}"
+     ],
+     "tags": [],
+     "comment": "Links: {@see Base::keep()} {@see Base::missing()} {@see Derived::run()} {@see Base::run()} {@see Made::$name}\n\n@api",
+     "file": "src/Links.php",
+     "line": 10,
+     "constants": [],
+     "cases": [],
+     "properties": [],
+     "methods": [],
+     "see": [
+      {
+       "target": "Fixture\\ApiD\\Base::keep()",
+       "published": true
+      },
+      {
+       "target": "Fixture\\ApiD\\Base::missing()",
+       "published": false
+      },
+      {
+       "target": "Fixture\\ApiD\\Base::run()",
+       "published": true
+      },
+      {
+       "target": "Fixture\\ApiD\\Derived::run()",
+       "published": false
+      },
+      {
+       "target": "Fixture\\ApiD\\Made::$name",
+       "published": true
+      }
+     ],
+     "inherited": [],
+     "implementers": []
+    },
+    "Fixture\\ApiD\\Made": {
+     "fqn": "Fixture\\ApiD\\Made",
+     "package": "fixture/php-api-d",
+     "kind": "class",
+     "modifiers": [
+      "final"
+     ],
+     "templates": [],
+     "extends": [],
+     "implements": [],
+     "traits": [],
+     "backingType": null,
+     "attributes": [],
+     "doc": [],
+     "tags": [],
+     "comment": "@api",
+     "file": "src/Made.php",
+     "line": 6,
+     "constants": [],
+     "cases": [],
+     "properties": [
+      {
+       "name": "name",
+       "visibility": "public",
+       "static": false,
+       "readonly": false,
+       "type": "string",
+       "default": null,
+       "promoted": true,
+       "attributes": [
+        {
+         "name": "Fixture\\ApiD\\Marker",
+         "arguments": [
+          "'promoted'"
+         ]
+        }
+       ],
+       "line": 8,
+       "doc": [],
+       "tags": [],
+       "comment": ""
+      }
+     ],
+     "methods": [
+      {
+       "name": "of",
+       "visibility": "public",
+       "static": true,
+       "abstract": false,
+       "final": false,
+       "byRef": false,
+       "params": [
+        {
+         "name": "name",
+         "type": "string",
+         "default": null,
+         "byRef": false,
+         "variadic": false,
+         "promoted": false,
+         "attributes": []
+        }
+       ],
+       "returnType": "self",
+       "templates": [],
+       "attributes": [],
+       "signature": "public static function of(string $name): self",
+       "line": 10,
+       "doc": [],
+       "tags": [],
+       "comment": ""
+      }
+     ],
+     "see": [],
+     "inherited": [],
+     "implementers": []
+    },
+    "Fixture\\ApiD\\Marker": {
+     "fqn": "Fixture\\ApiD\\Marker",
+     "package": "fixture/php-api-d",
+     "kind": "class",
+     "modifiers": [
+      "final"
+     ],
+     "templates": [],
+     "extends": [],
+     "implements": [],
+     "traits": [],
+     "backingType": null,
+     "attributes": [
+      {
+       "name": "Attribute",
+       "arguments": []
+      }
+     ],
+     "doc": [],
+     "tags": [],
+     "comment": "",
+     "file": "src/Marker.php",
+     "line": 5,
+     "constants": [],
+     "cases": [],
+     "properties": [
+      {
+       "name": "where",
+       "visibility": "public",
+       "static": false,
+       "readonly": false,
+       "type": "string",
+       "default": null,
+       "promoted": true,
+       "attributes": [],
+       "line": 8,
+       "doc": [],
+       "tags": [],
+       "comment": ""
+      }
+     ],
+     "methods": [
+      {
+       "name": "__construct",
+       "visibility": "public",
+       "static": false,
+       "abstract": false,
+       "final": false,
+       "byRef": false,
+       "params": [
+        {
+         "name": "where",
+         "type": "string",
+         "default": null,
+         "byRef": false,
+         "variadic": false,
+         "promoted": true,
+         "attributes": []
+        }
+       ],
+       "returnType": null,
+       "templates": [],
+       "attributes": [],
+       "signature": "public function __construct(string $where)",
+       "line": 8,
+       "doc": [],
+       "tags": [],
+       "comment": ""
+      }
+     ],
+     "see": [],
+     "inherited": [],
+     "implementers": []
+    },
+    "Fixture\\ApiD\\Person": {
+     "fqn": "Fixture\\ApiD\\Person",
+     "package": "fixture/php-api-d",
+     "kind": "class",
+     "modifiers": [],
+     "templates": [],
+     "extends": [],
+     "implements": [],
+     "traits": [
+      {
+       "fqn": "Fixture\\ApiD\\Traits\\Greets",
+       "published": true
+      },
+      {
+       "fqn": "Fixture\\ApiD\\Traits\\Waves",
+       "published": true
+      }
+     ],
+     "backingType": null,
+     "attributes": [],
+     "doc": [
+      "Composes two traits with adaptations."
+     ],
+     "tags": [],
+     "comment": "Composes two traits with adaptations.\n\n@api",
+     "file": "src/Person.php",
+     "line": 13,
+     "constants": [],
+     "cases": [],
+     "properties": [],
+     "methods": [],
+     "see": [],
+     "inherited": [
+      {
+       "kind": "method",
+       "name": "hello",
+       "from": "Fixture\\ApiD\\Traits\\Greets",
+       "visibility": "public",
+       "abstract": false
+      },
+      {
+       "kind": "method",
+       "name": "nestedMethod",
+       "from": "Fixture\\ApiD\\Traits\\Nested",
+       "visibility": "public",
+       "abstract": false
+      },
+      {
+       "kind": "method",
+       "name": "revealed",
+       "from": "Fixture\\ApiD\\Traits\\Greets",
+       "visibility": "public",
+       "abstract": false,
+       "declaration": {
+        "name": "revealed",
+        "visibility": "public",
+        "static": false,
+        "abstract": false,
+        "final": false,
+        "byRef": false,
+        "params": [],
+        "returnType": "void",
+        "templates": [],
+        "attributes": [],
+        "signature": "public function revealed(): void",
+        "line": 15,
+        "doc": [],
+        "tags": [],
+        "comment": ""
+       }
+      },
+      {
+       "kind": "method",
+       "name": "waveHello",
+       "from": "Fixture\\ApiD\\Traits\\Waves",
+       "visibility": "public",
+       "abstract": false,
+       "original": "hello",
+       "declaration": {
+        "name": "waveHello",
+        "visibility": "public",
+        "static": false,
+        "abstract": false,
+        "final": false,
+        "byRef": false,
+        "params": [],
+        "returnType": "string",
+        "templates": [],
+        "attributes": [],
+        "signature": "public function waveHello(): string",
+        "line": 10,
+        "doc": [],
+        "tags": [],
+        "comment": ""
+       }
+      }
+     ],
+     "implementers": []
+    },
+    "Fixture\\ApiD\\Traits\\Greets": {
+     "fqn": "Fixture\\ApiD\\Traits\\Greets",
+     "package": "fixture/php-api-d",
+     "kind": "trait",
+     "modifiers": [],
+     "templates": [],
+     "extends": [],
+     "implements": [],
+     "traits": [],
+     "backingType": null,
+     "attributes": [],
+     "doc": [],
+     "tags": [],
+     "comment": "@api",
+     "file": "src/Traits/Greets.php",
+     "line": 6,
+     "constants": [],
+     "cases": [],
+     "properties": [],
+     "methods": [
+      {
+       "name": "bye",
+       "visibility": "public",
+       "static": false,
+       "abstract": false,
+       "final": false,
+       "byRef": false,
+       "params": [],
+       "returnType": "void",
+       "templates": [],
+       "attributes": [],
+       "signature": "public function bye(): void",
+       "line": 13,
+       "doc": [],
+       "tags": [],
+       "comment": ""
+      },
+      {
+       "name": "hello",
+       "visibility": "public",
+       "static": false,
+       "abstract": false,
+       "final": false,
+       "byRef": false,
+       "params": [],
+       "returnType": "string",
+       "templates": [],
+       "attributes": [],
+       "signature": "public function hello(): string",
+       "line": 8,
+       "doc": [],
+       "tags": [],
+       "comment": ""
+      }
+     ],
+     "see": [],
+     "inherited": [],
+     "implementers": []
+    },
+    "Fixture\\ApiD\\Traits\\Nested": {
+     "fqn": "Fixture\\ApiD\\Traits\\Nested",
+     "package": "fixture/php-api-d",
+     "kind": "trait",
+     "modifiers": [],
+     "templates": [],
+     "extends": [],
+     "implements": [],
+     "traits": [],
+     "backingType": null,
+     "attributes": [],
+     "doc": [],
+     "tags": [],
+     "comment": "@api",
+     "file": "src/Traits/Nested.php",
+     "line": 6,
+     "constants": [],
+     "cases": [],
+     "properties": [],
+     "methods": [
+      {
+       "name": "nestedMethod",
+       "visibility": "public",
+       "static": false,
+       "abstract": false,
+       "final": false,
+       "byRef": false,
+       "params": [],
+       "returnType": "void",
+       "templates": [],
+       "attributes": [],
+       "signature": "public function nestedMethod(): void",
+       "line": 8,
+       "doc": [],
+       "tags": [],
+       "comment": ""
+      }
+     ],
+     "see": [],
+     "inherited": [],
+     "implementers": []
+    },
+    "Fixture\\ApiD\\Traits\\Waves": {
+     "fqn": "Fixture\\ApiD\\Traits\\Waves",
+     "package": "fixture/php-api-d",
+     "kind": "trait",
+     "modifiers": [],
+     "templates": [],
+     "extends": [],
+     "implements": [],
+     "traits": [
+      {
+       "fqn": "Fixture\\ApiD\\Traits\\Nested",
+       "published": true
+      }
+     ],
+     "backingType": null,
+     "attributes": [],
+     "doc": [],
+     "tags": [],
+     "comment": "@api",
+     "file": "src/Traits/Waves.php",
+     "line": 6,
+     "constants": [],
+     "cases": [],
+     "properties": [],
+     "methods": [
+      {
+       "name": "hello",
+       "visibility": "public",
+       "static": false,
+       "abstract": false,
+       "final": false,
+       "byRef": false,
+       "params": [],
+       "returnType": "string",
+       "templates": [],
+       "attributes": [],
+       "signature": "public function hello(): string",
+       "line": 10,
+       "doc": [],
+       "tags": [],
+       "comment": ""
+      }
+     ],
+     "see": [],
+     "inherited": [
+      {
+       "kind": "method",
+       "name": "nestedMethod",
+       "from": "Fixture\\ApiD\\Traits\\Nested",
+       "visibility": "public",
+       "abstract": false
+      }
+     ],
+     "implementers": []
+    },
+    "Fixture\\ApiD\\Typed": {
+     "fqn": "Fixture\\ApiD\\Typed",
+     "package": "fixture/php-api-d",
+     "kind": "class",
+     "modifiers": [],
+     "templates": [
+      {
+       "name": "T",
+       "bound": "object",
+       "default": "\\stdClass",
+       "variance": "covariant"
+      }
+     ],
+     "extends": [
+      {
+       "fqn": "Fixture\\ApiD\\Base",
+       "published": true
+      }
+     ],
+     "implements": [
+      {
+       "fqn": "IteratorAggregate",
+       "published": false
+      }
+     ],
+     "traits": [],
+     "backingType": null,
+     "attributes": [],
+     "doc": [
+      "A typed holder."
+     ],
+     "tags": [
+      {
+       "tag": "@implements",
+       "type": "\\IteratorAggregate<int, T>"
+      }
+     ],
+     "comment": "A typed holder.\n\n@api\n\n@template-covariant T of object = \\stdClass\n\n@extends Base\n\n@implements \\IteratorAggregate<int, T>",
+     "file": "src/Typed.php",
+     "line": 16,
+     "constants": [],
+     "cases": [],
+     "properties": [],
+     "methods": [
+      {
+       "name": "first",
+       "visibility": "public",
+       "static": false,
+       "abstract": false,
+       "final": false,
+       "byRef": false,
+       "params": [
+        {
+         "name": "items",
+         "type": "array",
+         "default": null,
+         "byRef": false,
+         "variadic": false,
+         "promoted": false,
+         "attributes": []
+        }
+       ],
+       "returnType": "object",
+       "templates": [],
+       "attributes": [],
+       "signature": "public function first(array $items): object",
+       "line": 26,
+       "doc": [
+        "Hold the items."
+       ],
+       "tags": [
+        {
+         "tag": "@param",
+         "type": "list<T>",
+         "name": "$items",
+         "description": "The items to hold (ticket 12)."
+        },
+        {
+         "tag": "@return",
+         "type": "T",
+         "description": "The first one."
+        },
+        {
+         "tag": "@throws",
+         "type": "\\RuntimeException",
+         "description": "When there are none."
+        }
+       ],
+       "comment": "Hold the items.\n\n@param  list<T>  $items  The items to hold (ticket 12).\n@return T The first one.\n\n@throws \\RuntimeException When there are none."
+      },
+      {
+       "name": "getIterator",
+       "visibility": "public",
+       "static": false,
+       "abstract": false,
+       "final": false,
+       "byRef": false,
+       "params": [],
+       "returnType": "Iterator",
+       "templates": [],
+       "attributes": [],
+       "signature": "public function getIterator(): Iterator",
+       "line": 31,
+       "doc": [],
+       "tags": [],
+       "comment": ""
+      }
+     ],
+     "see": [],
+     "inherited": [
+      {
+       "kind": "method",
+       "name": "keep",
+       "from": "Fixture\\ApiD\\Base",
+       "visibility": "public",
+       "abstract": false
+      },
+      {
+       "kind": "method",
+       "name": "run",
+       "from": "Fixture\\ApiD\\Base",
+       "visibility": "public",
+       "abstract": false
+      }
+     ],
+     "implementers": []
+    },
+    "Fixture_D_Hh": {
+     "fqn": "Fixture_D_Hh",
+     "package": "fixture/php-api-d",
+     "kind": "class",
+     "modifiers": [],
+     "templates": [],
+     "extends": [],
+     "implements": [],
+     "traits": [],
+     "backingType": null,
+     "attributes": [],
+     "doc": [
+      "A classmap file with the .hh extension."
+     ],
+     "tags": [],
+     "comment": "A classmap file with the .hh extension.\n\n@api",
+     "file": "inc-dir/Hack.hh",
+     "line": 8,
+     "constants": [],
+     "cases": [],
+     "properties": [],
+     "methods": [],
+     "see": [],
+     "inherited": [],
+     "implementers": []
+    },
+    "Fixture_D_IncHelper": {
+     "fqn": "Fixture_D_IncHelper",
+     "package": "fixture/php-api-d",
+     "kind": "class",
+     "modifiers": [],
+     "templates": [],
+     "extends": [],
+     "implements": [],
+     "traits": [],
+     "backingType": null,
+     "attributes": [],
+     "doc": [
+      "A classmap file with the .inc extension."
+     ],
+     "tags": [],
+     "comment": "A classmap file with the .inc extension.\n\n@api",
+     "file": "inc-dir/Helper.inc",
+     "line": 8,
+     "constants": [],
+     "cases": [],
+     "properties": [],
+     "methods": [],
+     "see": [],
+     "inherited": [],
+     "implementers": []
+    },
+    "Fixture_D_One": {
+     "fqn": "Fixture_D_One",
+     "package": "fixture/php-api-d",
+     "kind": "class",
+     "modifiers": [],
+     "templates": [],
+     "extends": [],
+     "implements": [],
+     "traits": [],
+     "backingType": null,
+     "attributes": [],
+     "doc": [
+      "Reached through a classmap glob root (lib/*\\/)."
+     ],
+     "tags": [],
+     "comment": "Reached through a classmap glob root (lib/*\\/).\n\n@api",
+     "file": "lib/one/One.php",
+     "line": 8,
+     "constants": [],
+     "cases": [],
+     "properties": [],
+     "methods": [],
      "see": [],
      "inherited": [],
      "implementers": []
