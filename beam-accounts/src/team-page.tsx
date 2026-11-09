@@ -244,7 +244,7 @@ function TeamInner({
               />
               {disabledSelf && (
                 <span
-                  title="min-1-owner: you are the last owner and can't demote yourself"
+                  title="You're the last owner, so you can't change your own role"
                   className="text-muted-foreground"
                 >
                   <ShieldAlert className="size-3.5" />
@@ -312,7 +312,7 @@ function TeamInner({
               disabled={lockRemove || removeMember.isPending}
               title={
                 lockRemove
-                  ? "min-1-owner: the last owner can’t be removed"
+                  ? "A team always keeps at least one owner, so the last owner can’t be removed"
                   : undefined
               }
               onClick={(event) => {
