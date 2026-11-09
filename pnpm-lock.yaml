@@ -55,6 +55,36 @@ importers:
       '@changesets/cli':
         specifier: ^2.27.9
         version: 2.31.1(@types/node@26.1.1)
+      '@schemastud/big-calendar':
+        specifier: link:../schemastud/big-calendar
+        version: link:../schemastud/big-calendar
+      '@schemastud/blockdoc':
+        specifier: link:../schemastud/blockdoc
+        version: link:../schemastud/blockdoc
+      '@schemastud/chat':
+        specifier: link:../schemastud/chat
+        version: link:../schemastud/chat
+      '@schemastud/combobox':
+        specifier: link:../schemastud/combobox
+        version: link:../schemastud/combobox
+      '@schemastud/frame':
+        specifier: link:../schemastud/frame
+        version: link:../schemastud/frame
+      '@schemastud/mainframe':
+        specifier: link:../schemastud/mainframe
+        version: link:../schemastud/mainframe
+      '@schemastud/nav':
+        specifier: link:../schemastud/nav
+        version: link:../schemastud/nav
+      '@schemastud/seam':
+        specifier: link:../schemastud/seam
+        version: link:../schemastud/seam
+      '@schemastud/ui':
+        specifier: link:../schemastud/ui
+        version: link:../schemastud/ui
+      '@splicewire/beam-resources':
+        specifier: link:beam-resources
+        version: link:beam-resources
       '@storybook/react-vite':
         specifier: ^10.5.4
         version: 10.5.4(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(esbuild@0.27.7)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(rollup@4.62.2)(storybook@10.5.4(@types/react@19.2.17)(prettier@2.8.8)(react@19.2.7))(typescript@5.9.3)(vite@8.1.5(@types/node@26.1.1)(esbuild@0.27.7)(jiti@2.7.0)(yaml@2.9.0))
@@ -64,6 +94,12 @@ importers:
       '@tailwindcss/vite':
         specifier: ^4.3.3
         version: 4.3.3(vite@8.1.5(@types/node@26.1.1)(esbuild@0.27.7)(jiti@2.7.0)(yaml@2.9.0))
+      '@tanstack/react-query':
+        specifier: 5.101.4
+        version: 5.101.4(react@19.2.7)
+      '@tanstack/react-table':
+        specifier: 8.21.3
+        version: 8.21.3(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
       jest-image-snapshot:
         specifier: ^6.5.2
         version: 6.5.2(jest@30.4.2(@types/node@26.1.1))
