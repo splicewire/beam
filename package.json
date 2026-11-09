@@ -30,7 +30,7 @@
     "storybook": "^10.5.4",
     "tailwindcss": "^4.3.3"
   },
-  "//pnpm.overrides": "Every first-party package resolves to its checkout, as the npm workspace linked them: the beam workspaces in this repo and the schemastud/_resources siblings beside it (~/Workspaces/js/packages). Releases never read these: release-package builds each package alone, from its own manifest, against released versions.",
+  "//pnpm.overrides": "Every first-party package resolves to its checkout, as the npm workspace linked them: the beam workspaces in this repo and the schemastud/_resources siblings beside it (~/Workspaces/js/packages). Releases never read these: release-package builds each package alone, from its own manifest, against released versions. The parent-scoped pins (<workspace>>@types/node, beam-embed>lucide-react, the react-is-19 alias) keep every version the npm lock resolved when the workspace moved to pnpm (launch ticket 34): pnpm import collapses a range to one version per lock, and the npm lock held 22.20.1 in twelve workspaces beside 22.20.2 in three.",
   "pnpm": {
     "overrides": {
       "@splicewire/beam-resources": "link:beam-resources",
@@ -60,7 +60,21 @@
       "@schemastud/nav": "link:../schemastud/nav",
       "@schemastud/seam": "link:../schemastud/seam",
       "@schemastud/ui": "link:../schemastud/ui",
-      "@splicewire/_resources": "link:../splicewire/_resources"
+      "@splicewire/_resources": "link:../splicewire/_resources",
+      "@splicewire/beam-accounts>@types/node": "22.20.1",
+      "@splicewire/beam-calendar>@types/node": "22.20.1",
+      "@splicewire/beam-content>@types/node": "22.20.1",
+      "@splicewire/beam-mainframe>@types/node": "22.20.1",
+      "@splicewire/beam-market>@types/node": "22.20.1",
+      "@splicewire/beam-mdx>@types/node": "22.20.1",
+      "@splicewire/beam-transforms>@types/node": "22.20.1",
+      "@splicewire/beam-ux-canvas>@types/node": "22.20.1",
+      "@splicewire/beam-ux-prototype>@types/node": "22.20.1",
+      "@splicewire/beam-ux>@types/node": "22.20.1",
+      "@splicewire/beam-versioning>@types/node": "22.20.1",
+      "@splicewire/beam-workflows>@types/node": "22.20.1",
+      "@splicewire/beam-embed>lucide-react": "0.475.0",
+      "react-is-19": "npm:react-is@19.2.8"
     }
   }
 }
