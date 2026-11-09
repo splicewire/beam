@@ -8,6 +8,7 @@ import {
 import { ApiReference, type ApiReferenceFactory, type ApiReferenceLoader } from './ApiReference.js';
 import { DataExample } from './DataExample.js';
 import { DocsLayout } from './DocsLayout.js';
+import { PhpApiReference } from './PhpApiReference.js';
 import { RegistryRegistrants } from './RegistryRegistrants.js';
 import { setDocsConfiguration } from './config.js';
 import type { DocsTransport } from './publications.js';
@@ -25,6 +26,11 @@ export type DocsConfig = {
     loadApiReference?: ApiReferenceLoader;
     /** Base of the registry routes the registrant panel reads (`{base}/{root}/registrants`). Null turns the panel off. */
     registriesEndpoint?: string | null;
+    /**
+     * Base of the PHP API reference's reads (`{base}/php-api-index`, `{base}/php-api-symbol`, php-api-reference slice 3).
+     * Default `/beam/docs`, where laravel-beam-docs mounts them. Null renders `<PhpApiReference />` as nothing.
+     */
+    phpApiEndpoint?: string | null;
     /**
      * The docs rail's `kind → component` map (docs-feedback ticket 07), merged over the packaged one
      * (`beam-docs/registry-index` → `RegistryIndexNav`). A host entry wins, so a host can redraw a packaged kind.
@@ -44,6 +50,7 @@ export function configureDocs(options: DocsConfig = {}): void {
             ? '/beam/docs/registry-link' : options.registryLinkEndpoint,
         searchEndpoint: options.searchEndpoint === undefined ? '/beam/docs/search' : options.searchEndpoint,
         registriesEndpoint: options.registriesEndpoint === undefined ? '/beam/docs/registries' : options.registriesEndpoint,
+        phpApiEndpoint: options.phpApiEndpoint === undefined ? '/beam/docs' : options.phpApiEndpoint,
         createApiReference: options.createApiReference,
         loadApiReference: options.loadApiReference,
         transport: options.transport,
@@ -57,6 +64,7 @@ export function configureDocs(options: DocsConfig = {}): void {
     // DOCS-12). Host entries come last and win. The kit's stylesheet stays the host's import (`@splicewire/beam-mdx/kit/css`).
     const kit = { Figure, FileTree, Terminal, Callout, Steps, Step, DoctorOutput, SectionLanding, CardGrid, Card };
     // The registry pages' registrant panel (`<RegistryRegistrants root="…" />`, registry-docs) and their captured data
-    // examples (`<DataExample source="…">`, docs-feedback ticket 09), contributed the same way.
-    configureEntryPage({ components: { ApiReference, RegistryRegistrants, DataExample, ...kit, ...entryPageConfig().components } });
+    // examples (`<DataExample source="…">`, docs-feedback ticket 09), contributed the same way, and the PHP API reference
+    // the seeded `docs-php-api` page places beside ApiReference (`<PhpApiReference />`, php-api-reference slice 3).
+    configureEntryPage({ components: { ApiReference, PhpApiReference, RegistryRegistrants, DataExample, ...kit, ...entryPageConfig().components } });
 }

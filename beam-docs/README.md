@@ -41,6 +41,15 @@ described it; it lists each entry and its registrant only where the response say
 shows the response's one-line note otherwise. The server filters every read. A failed or unreadable response renders
 nothing. Set `registriesEndpoint` to move the base, or `null` to turn the panel off.
 
+`configureDocs()` registers `PhpApiReference` beside `ApiReference`. laravel-beam-docs seeds a `/docs/php` page placing
+`<PhpApiReference />`, which reads the generated PHP API reference from `/beam/docs/php-api-index` and
+`/beam/docs/php-api-symbol?fqn=`. Those answer 404 whenever the reference is off for the reader, and then nothing
+renders. It draws a package → namespace rail with a filter over every symbol, and a symbol's declaration, docs (the
+first paragraph, the rest behind an expander), members, inherited members, implementers and links. The open symbol is
+the page's `?symbol=` query, so it is linkable and back/forward follow it. Docblocks render as escaped Markdown: raw
+HTML shows as text, and only `http(s):`, `mailto:` and same-origin links are drawn. Set `phpApiEndpoint` to move the
+base, or `null` to turn it off.
+
 It registers `DataExample` the same way: a registry page's captured example, the PHP that ran beside the JSON it
 returned, side by side where the frame is wide and stacked, PHP first, where it is not. A page never writes it by hand. The package's
 `docs:examples` script captures the output and writes `<DataExample source="…">` with the two fenced code blocks
