@@ -271,40 +271,53 @@ function SymbolView({ base, fqn, fetcher, link: linkIndex }: { base: string; fqn
         return () => controller.abort();
     }, [base, fqn, fetcher]);
 
-    // Prose keeps a docblock's names as written (`{@see Kind}`, `{@see Base::keep()}`); the generator resolved them for
-    // `see`, with a `published` verdict each. The class part resolves as written, through this symbol's resolved `see`
-    // targets (by short name), or in its namespace, and must be in the index. Then the PRODUCER decides (slice 3 amend,
-    // review e5a010df): a class target whose verdict is false is not linked, and a MEMBER target links (to its class's
-    // page; there are no member URLs) only when its resolved target's verdict is true. A member target the producer did
-    // not resolve for this symbol is never linked by its class alone, so prose and See also always agree.
+    // Prose keeps a docblock's names AS WRITTEN (`{@see Hidden}`, `{@see Base::keep()}`); the producer resolved each one
+    // the way PHP does (namespace and `use` imports) into this symbol's `see`, with a `published` verdict. The producer's
+    // resolution is the identity (03b, review b44b3f2b); the client never re-resolves a name against the class index,
+    // which would send `{@see Hidden}` in `App\Doc` to an unrelated global `Hidden`.
+    //
+    // - An explicit `\Fq\Name` (leading backslash) is its own identity. It links when indexed and its verdict is not false;
+    //   a member (`\Fq\Name::m()`) only when that member's verdict is true.
+    // - A name as written matches the `see` classes it can denote: the same name, or one ending in `\<name>`. Exactly ONE
+    //   candidate identity is required; none (the producer did not resolve it for this symbol) or several (ambiguous)
+    //   is refused, never guessed.
+    // - Then the verdict decides: a class links when its verdict is true; a member links (to its class's page; there are
+    //   no member URLs) only when `<class>::<member>`'s verdict is true. So prose and See also always agree.
     const link = useMemo<SymbolLinker>(() => {
         const verdicts = new Map((loaded?.data?.see ?? []).map((x) => [x.target, x.published] as const));
-        const seeClasses = [...verdicts.keys()].map((t) => t.split('::')[0]);
-        const namespace = fqn.includes('\\') ? fqn.slice(0, fqn.lastIndexOf('\\')) : '';
-        const resolveClass = (name: string): string | null => {
-            if (linkIndex(name)) return name;
-            if (name.includes('\\')) return null;
-            const fromSee = seeClasses.find((t) => shortName(t) === name);
-            if (fromSee && linkIndex(fromSee)) return fromSee;
-            return namespace && linkIndex(`${namespace}\\${name}`) ? `${namespace}\\${name}` : null;
-        };
+        const seeClasses = [...new Set([...verdicts.keys()].map((t) => t.split('::')[0]))];
         return (target: string) => {
-            const raw = target.replace(/^\\/, '');
+            const explicit = target.startsWith('\\');
+            const raw = explicit ? target.slice(1) : target;
             const at = raw.indexOf('::');
-            const cls = resolveClass(at === -1 ? raw : raw.slice(0, at));
-            if (!cls) return null;
-            if (at === -1) return verdicts.get(cls) === false ? null : linkIndex(cls);
-            return verdicts.get(`${cls}${raw.slice(at)}`) === true ? linkIndex(cls) : null;
+            const written = at === -1 ? raw : raw.slice(0, at);
+            const member = at === -1 ? '' : raw.slice(at);
+            let cls: string;
+            if (explicit) {
+                cls = written;
+            } else {
+                const candidates = seeClasses.filter((c) => c === written || c.endsWith(`\\${written}`));
+                if (candidates.length !== 1) return null;
+                cls = candidates[0];
+            }
+            const verdict = verdicts.get(`${cls}${member}`);
+            if (member !== '') return verdict === true ? linkIndex(cls) : null;
+            if (explicit) return verdict === false ? null : linkIndex(cls);
+            return verdict === true ? linkIndex(cls) : null;
         };
-    }, [loaded, fqn, linkIndex]);
+    }, [loaded, linkIndex]);
 
     if (!loaded) return <p className="beam-php-api-note" role="status">Loading <code>{fqn}</code>…</p>;
     const s = loaded.data;
     if (!s) return <p className="beam-php-api-note" role="status"><code>{fqn}</code> could not be read.</p>;
 
-    const named = (fqnOrName: string, isPublished: boolean) => {
-        const href = isPublished ? link(fqnOrName) : null;
-        return href ? <a href={href} className="beam-php-api-link"><code>{fqnOrName}</code></a> : <code>{fqnOrName}</code>;
+    /**
+     * A name the PRODUCER already resolved (a relation, an implementer, a `see` target, an inherited member's source):
+     * linked by its own verdict to its class's page when indexed, never re-resolved through the prose rules.
+     */
+    const named = (resolved: string, isPublished: boolean) => {
+        const href = isPublished ? linkIndex(resolved.split('::')[0]) : null;
+        return href ? <a href={href} className="beam-php-api-link"><code>{resolved}</code></a> : <code>{resolved}</code>;
     };
 
     return (
@@ -483,7 +496,7 @@ function Inherited({ rows, named, link }: {
                         {r.visibility ? <span className="beam-php-api-flag">{r.visibility}</span> : null}
                         {r.abstract === true ? <span className="beam-php-api-flag">abstract requirement</span> : null}
                         {r.original !== undefined ? <span className="beam-php-api-flag">alias of <code>{r.original}()</code></span> : null}
-                        <span className="beam-php-api-flag">from {named(r.from, link(r.from) !== null)}</span>
+                        <span className="beam-php-api-flag">from {named(r.from, true)}</span>
                     </div>
                     {r.declaration && <Declaration kind="method" member={r.declaration} link={link} />}
                 </div>
