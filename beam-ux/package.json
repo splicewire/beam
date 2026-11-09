@@ -118,7 +118,7 @@
         "test:artifact-contract": "vitest run --config vitest.artifact-contract.config.ts",
         "typecheck": "tsc --noEmit",
         "lint:imports": "node scripts/check-imports.mjs",
-        "prepublishOnly": "npm run build"
+        "prepublishOnly": "pnpm run build"
     },
     "dependencies": {
         "@babel/parser": "^7.29.7",

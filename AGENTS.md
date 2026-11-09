@@ -3,7 +3,7 @@
 One git repo, one npm workspace — not one-repo-per-package like the rest of the fleet. Per
 ADR-0082's layering (*frame = editor/UI tooling; **beam = app substrate**; beam-\* = capabilities*),
 this holds the implementation/app/site-level substrate, sitting above the `schemastud/js` core/tooling
-layer. For the current package roster, see the `workspaces` field in this repo's own `package.json`;
+layer. For the current package roster, see the `packages` list in this repo's own `pnpm-workspace.yaml`;
 that's the source of truth, not this file. Publishes under the `@splicewire` npm scope,
 independently versioned per package via Changesets.
 

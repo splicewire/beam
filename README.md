@@ -22,11 +22,15 @@ registry; no consumer breakage.
 ## Dev
 
 ```bash
-npm install
-npm run build
-npm run typecheck
-npm run test
+pnpm install
+pnpm run build
+pnpm run typecheck
+pnpm run test
 ```
+
+beam is a pnpm workspace (`pnpm-workspace.yaml`, leaves first). Its first-party dependencies link to their
+checkouts: the beam packages here, and the `schemastud` and `splicewire/_resources` siblings beside this repo
+(`~/Workspaces/js/packages`), through the root `pnpm.overrides`.
 
 ## Release
 

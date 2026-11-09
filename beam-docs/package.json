@@ -32,14 +32,14 @@
         "directory": "beam-docs"
     },
     "scripts": {
-        "build": "tsup && npm run test:types",
+        "build": "tsup && pnpm run test:types",
         "dev": "tsup --watch",
-        "test": "npm run contracts:check && vitest run",
+        "test": "pnpm run contracts:check && vitest run",
         "contracts:generate": "node scripts/generate-contracts.mjs",
         "contracts:check": "node --test scripts/contracts.test.mjs",
         "typecheck": "tsc --noEmit",
         "test:types": "tsc --project tests/consumer/tsconfig.json",
-        "prepublishOnly": "npm run contracts:check && npm run build"
+        "prepublishOnly": "pnpm run contracts:check && pnpm run build"
     },
     "peerDependencies": {
         "@inertiajs/react": ">=2",

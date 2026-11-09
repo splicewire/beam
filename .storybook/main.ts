@@ -1,10 +1,10 @@
 import type { StorybookConfig } from '@storybook/react-vite';
 import tailwindcss from '@tailwindcss/vite';
 import { fileURLToPath } from 'node:url';
-import { readFileSync } from 'node:fs';
 import { canonicalCommerceInput, workspaceStoryPatterns } from './canonical-commerce-stories.mjs';
+import { workspaces as workspaceList } from '../scripts/workspaces.mjs';
 
-const workspaces: string[] = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8')).workspaces;
+const workspaces: string[] = workspaceList();
 const commerce = canonicalCommerceInput(fileURLToPath(new URL('./commerce-source.local.json', import.meta.url)));
 
 /**
