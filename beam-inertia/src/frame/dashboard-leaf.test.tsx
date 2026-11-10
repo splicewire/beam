@@ -32,6 +32,7 @@ import type {
 import type { ReactNode } from "react";
 import { MemoryRouter, type RouteObject, useRoutes } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { kitFor } from "./kit";
 import type { FrameManifest } from "./manifest";
 import { FrameRealmProvider } from "./realm";
 import { TenantFrameProvider } from "./provider";
@@ -67,59 +68,30 @@ vi.mock("@inertiajs/react", () => ({
   router: { visit: vi.fn() },
 }));
 
-// The transport is the one seam a unit test owns: `list` answers the rows below for whichever
-// resource the shell asks about; the facets methods answer "no filters" so the shell mounts at all.
-const transport = vi.hoisted(() => ({
+// The transport is the one seam a unit test owns: the operator realm kit's own transport, stubbed
+// method by method. `list` answers the rows below for whichever resource the shell asks about; the
+// facets methods answer "no filters" so the shell mounts at all.
+const transport = {
   rows: [] as Row[],
   list: vi.fn(),
-}));
+};
 
-vi.mock("./transport", () => {
-  const frameTransport = {
-    getFilterSchema: vi.fn(async () => ({ type: "object", properties: {} })),
-    getFilterVariants: vi.fn(async (resource: string) => ({
-      resource,
-      variants: [],
-    })),
-    getFilterOptions: vi.fn(async () => []),
-    getSavedFilters: vi.fn(async () => []),
-    saveFilter: vi.fn(async () => ({
-      id: "1",
-      name: "v",
-      resource: "x",
-      queryParameters: {},
-      visibility: "private",
-      isDefault: false,
-    })),
-    deleteSavedFilter: vi.fn(async () => undefined),
-    list: transport.list,
-    get: vi.fn(async (_r: string, id: string) => ({ id })),
-    getFormSchema: vi.fn(async () => ({ type: "object", properties: {} })),
-    create: vi.fn(async (_resource: string, data: unknown) =>
-      Response.json({ id: "3", ...(data as object) }).json()
-    ),
-    save: vi.fn(async (_r: string, id: string, data: unknown) => ({
-      id,
-      ...(data as Row),
-    })),
-    remove: vi.fn(async () => undefined),
-  } as unknown as FrameTransport;
+const manifestState = { current: undefined as FrameManifest | undefined };
 
-  return { frameTransport };
-});
+// The provider reads the manifest through the kit's `getManifest`; the router is handed it as a
+// prop. Both get the SAME hand-built object, exactly as the console page arranges it.
+const stubs: Partial<FrameTransport> = {
+  getManifest: async () => manifestState.current ?? { resources: [], contexts: {} },
+  getFilterSchema: async () => ({ type: "object", properties: {} }) as never,
+  getFilterVariants: async (resource: string) => ({ resource, variants: [] }) as never,
+  getFilterOptions: async () => [],
+  getSavedFilters: async () => [],
+  list: transport.list,
+  get: async (_r: string, id: string) => ({ id }),
+  getFormSchema: async () => ({ type: "object", properties: {} }),
+};
 
-const manifestState = vi.hoisted(() => ({ current: undefined as unknown }));
-
-// The provider reads the manifest through `useFrameManifest`; the router is handed it as a prop.
-// Both get the SAME hand-built object, exactly as the console page arranges it.
-vi.mock("./manifest", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("./manifest")>()),
-  useFrameManifest: () => ({
-    data: manifestState.current,
-    isLoading: false,
-    error: null,
-  }),
-}));
+const kitTransport = kitFor("/operator/frame/manifest").transport;
 
 const known = KNOWN_CONTEXTS;
 
@@ -152,12 +124,16 @@ const seat = (key: string, label: string, icon: string | null) => ({
   key,
   creatable: false,
   editable: false,
+  data: `App.Data.${key}`,
+  editData: null,
+  createResultData: null,
+  form: "enriched" as const,
   deletable: false,
   showable: false,
   nav: { label, group: null, icon },
 });
 
-const MANIFEST: FrameManifest = {
+const MANIFEST = {
   resources: [
     seat("operator-dashboard", "Dashboard", "layout-dashboard"),
     seat("users", "Users", "users"),
@@ -201,7 +177,7 @@ const MANIFEST: FrameManifest = {
       resource: "operator-dashboard",
     },
   ],
-};
+} satisfies FrameManifest;
 
 const ROWS: DashboardRow[] = [
   {
@@ -252,6 +228,9 @@ const ROWS: DashboardRow[] = [
 ];
 
 beforeEach(() => {
+  for (const [name, impl] of Object.entries(stubs)) {
+    vi.spyOn(kitTransport, name as "list").mockImplementation(impl as never);
+  }
   manifestState.current = MANIFEST;
   transport.list.mockImplementation(
     async (): Promise<Paginated<Row>> => ({
@@ -266,6 +245,7 @@ beforeEach(() => {
 afterEach(() => {
   cleanup();
   transport.list.mockReset();
+  vi.restoreAllMocks();
 });
 
 function mountLeaf(rows: DashboardRow[]) {
@@ -481,7 +461,7 @@ const seatWith = (routeName: string) => ({
   ],
 });
 
-function withSeat(routeName: string, leaves: FrameManifest["routeContext"]): FrameManifest {
+function withSeat(routeName: string, leaves: RouteContextEntry[]): FrameManifest {
   return {
     ...MANIFEST,
     resources: [...MANIFEST.resources, seat("operator-reports-overview", "Reports", "chart-bar")],

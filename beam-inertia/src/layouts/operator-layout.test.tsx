@@ -72,7 +72,12 @@ beforeEach(() => {
         status: 200,
         json: async () => ({ resources: [], contexts: {}, nav: { items: [] }, routeContext: [] }),
     });
-    vi.stubGlobal('fetch', fetchMock);
+    // Each test's answer is a `{ ok, status, json }` stand-in; the kit's HTTP transport reads a real
+    // `Response`, so the stub hands one over built from it. `fetchMock` still records every request.
+    vi.stubGlobal('fetch', async (...args: Parameters<typeof fetch>) => {
+        const answer = await fetchMock(...args);
+        return Response.json(await answer.json(), { status: answer.status });
+    });
 });
 
 afterEach(() => {

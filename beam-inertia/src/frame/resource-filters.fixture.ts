@@ -27,6 +27,10 @@ export function resourceFiltersFixture({
     resources: [
       {
         key: "files",
+        data: "App.Data.FileData",
+        editData: null,
+        createResultData: null,
+        form: "enriched",
         creatable: false,
         editable: false,
         deletable: false,

@@ -74,9 +74,12 @@ function ConsoleBody() {
                 <p className="max-w-prose text-sm text-muted-foreground">
                     {/* Names the URL this console actually asked for. The old copy said
                         "GET /frame/manifest failed." in every realm, which is a wrong URL in a
-                        message whose only job is to name the request that failed. */}
+                        message whose only job is to name the request that failed. The kit's
+                        transport puts the server's message first and the request in `cause`. */}
                     {error instanceof Error
-                        ? error.message
+                        ? error.cause instanceof Error
+                            ? error.cause.message
+                            : error.message
                         : `GET ${manifestUrl} failed.`}
                 </p>
             </div>

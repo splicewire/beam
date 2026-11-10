@@ -19,8 +19,12 @@
  * The props below are the fix, and they default to today's values, so an existing tenant mount that
  * passes nothing is byte-for-byte what it was — which is the first thing asserted.
  */
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { cleanup, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+// Imported once at module scope (the mocks below are hoisted above it): the page now pulls in
+// frame through the realm kit, which is too heavy to import inside a 5s test.
+import FrameConsole from './console';
 
 // `usePage` is read by `useFrameRealm` for the LAYOUT-level readers (the rail, the provider), which
 // sit above the page and outside its context. Empty props here: these tests drive the context path.
@@ -54,7 +58,12 @@ beforeEach(() => {
         status: 200,
         json: async () => ({ resources: [], contexts: {}, nav: { items: [] }, routeContext: [] }),
     });
-    vi.stubGlobal('fetch', fetchMock);
+    // Each test's answer is a `{ ok, status, json }` stand-in; the kit's HTTP transport reads a real
+    // `Response`, so the stub hands one over built from it. `fetchMock` still records every request.
+    vi.stubGlobal('fetch', async (...args: Parameters<typeof fetch>) => {
+        const answer = await fetchMock(...args);
+        return Response.json(await answer.json(), { status: answer.status });
+    });
 });
 
 afterEach(() => {
@@ -64,9 +73,6 @@ afterEach(() => {
 
 async function mountConsole(props: Record<string, unknown>, pathname: string) {
     window.history.replaceState({}, '', pathname);
-
-    const { QueryClient, QueryClientProvider } = await import('@tanstack/react-query');
-    const FrameConsole = (await import('./console')).default;
 
     const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
 
@@ -114,13 +120,15 @@ describe('frame/console — realm', () => {
 
         await waitFor(() => expect(fetchMock).toHaveBeenCalled());
 
-        const keys = client
+        // The kit keys its manifest by the endpoint (third) and the transport's scope (fourth): the
+        // realm is told apart by the manifest URL it is served from.
+        const endpoints = client
             .getQueryCache()
             .getAll()
-            .map((q) => JSON.stringify(q.queryKey));
+            .filter((q) => q.queryKey[0] === 'frame' && q.queryKey[1] === 'manifest')
+            .map((q) => q.queryKey[2]);
 
-        expect(keys).toContain(JSON.stringify(['frame', 'manifest', 'operator']));
-        expect(keys).not.toContain(JSON.stringify(['frame', 'manifest', 'tenant']));
+        expect(endpoints).toEqual(['/operator/frame/manifest']);
     });
 
     it('names the realm it failed to load, not a hardcoded URL', async () => {

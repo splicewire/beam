@@ -3,16 +3,20 @@ import { router } from '@inertiajs/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { createWidgetRegistry, FrameProvider, KNOWN_CONTEXTS } from '@schemastud/frame';
-import type { FrameInjection, RouteContextEntry } from '@schemastud/frame';
+import type { FrameInjection, FramePrimitives, RouteContextEntry } from '@schemastud/frame';
 import type { AnchorHTMLAttributes } from 'react';
 import { MemoryRouter } from 'react-router';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import FrameConsole from '../pages/frame/console';
 import type { FrameManifest } from './manifest';
+import { kitFor } from './kit';
 import { framePrimitives } from './primitives';
 import { FrameRealmProvider } from './realm';
 import { FrameRoutes } from './router';
-import { frameTransport } from './transport';
+
+// The operator realm's kit, the one `mount()` below renders: its transport is the object the
+// shells call, so a spy on it sees every create and save.
+const frameTransport = kitFor('/operator/frame/manifest').transport;
 
 // The shared page props each test sets (the `realms` HostIa payload the host shares on every Inertia request).
 const page = vi.hoisted(() => ({ props: {} as Record<string, unknown> }));
@@ -45,10 +49,13 @@ const leaf = (
 });
 
 function fixture({ create = true, show = true, editable = false, host = false, guard = null as string | null } = {}) {
-    const manifest: FrameManifest = {
+    const manifest = {
         resources: [
             {
                 key: 'documents',
+                data: 'App.Data.DocumentData',
+                editData: null,
+                createResultData: null,
                 creatable: create,
                 editable,
                 deletable: false,
@@ -75,7 +82,7 @@ function fixture({ create = true, show = true, editable = false, host = false, g
                 ? [leaf('documents.edit', 'catalog/:id', editable ? 'edit' : 'detail')]
                 : []),
         ],
-    };
+    } satisfies FrameManifest;
     const requests: { path: string; method: string; body: unknown }[] = [];
     const fetch: typeof globalThis.fetch = async (input, init) => {
         const url = new URL(
@@ -310,7 +317,8 @@ describe('explicit Frame creation destinations', () => {
         );
         const injection: FrameInjection = {
             transport: frameTransport,
-            primitives: framePrimitives,
+            // The widget leaf draws no facet control, so this host's seven components are enough here.
+            primitives: framePrimitives as FramePrimitives,
             registry,
             can: () => true,
             schemaFetcher: async () => ({}),
@@ -318,6 +326,7 @@ describe('explicit Frame creation destinations', () => {
         };
         render(
             <QueryClientProvider client={client}>
+                {/* frame:override a test of the seam: one widget registered on a hand-built injection */}
                 <FrameProvider value={injection}>
                     <FrameRealmProvider basename="/operator">
                         <MemoryRouter

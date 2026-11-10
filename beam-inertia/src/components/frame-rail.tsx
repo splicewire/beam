@@ -33,7 +33,7 @@ export function FrameRail({ omitHrefs = [] }: { omitHrefs?: string[] } = {}) {
             activeTrail: active || children.some((child) => child.active || child.activeTrail),
         };
     };
-    const items = (manifest?.nav.items ?? [])
+    const items = (manifest?.nav?.items ?? [])
         .filter((node) => !(node.children.length === 0 && node.href !== null && omitHrefs.includes(node.href)))
         .map(stamp);
 
