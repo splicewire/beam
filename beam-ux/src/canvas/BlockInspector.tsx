@@ -1,5 +1,5 @@
 import {useEffect,useId,useState} from 'react';
-import {useEditShellMount} from '@schemastud/frame';
+import {useEditShellMount} from '@schemastud/frame/editor';
 import {SchemaForm,type SchemaNode} from '@schemastud/seam';
 import type {BlockStyle} from '../blockdoc/style';
 import {DEFAULT_STYLE_REGISTRY} from '../blockdoc/style-runtime';

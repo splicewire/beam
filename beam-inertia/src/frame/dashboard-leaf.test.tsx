@@ -23,12 +23,12 @@ import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import { buildRealmRoutes, createGuardRegistry, createRouteRegistry, KNOWN_CONTEXTS } from "@schemastud/frame";
 import type {
   ContextManifest,
-  DashboardRow,
   FrameTransport,
   Paginated,
   RouteContextEntry,
   Row,
 } from "@schemastud/frame";
+import type { DashboardRow } from "@schemastud/frame/cards";
 import type { ReactNode } from "react";
 import { MemoryRouter, type RouteObject, useRoutes } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";

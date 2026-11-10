@@ -1,7 +1,7 @@
 import {useState,useMemo,useRef} from 'react';
 import {render,screen,fireEvent,cleanup,within,waitFor} from '@testing-library/react';
 import {beforeEach,afterEach,it,expect,vi} from 'vitest';
-import {FiveRegionEditShell} from '@schemastud/frame';
+import {FiveRegionEditShell} from '@schemastud/frame/editor';
 import {createWidgetRegistry, type WidgetResolution} from '@schemastud/seam';
 import {CanvasProvider,type CanvasConfig} from './context';
 import {CanvasWidget, type CanvasWidgetProps} from './CanvasWidget';

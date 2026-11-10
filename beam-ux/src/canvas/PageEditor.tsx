@@ -33,7 +33,7 @@ export { __resetEditMode, useEditMode } from "../edit-mode-store.js";
 import {
   EditShellMountProvider,
   useEditShellMountController,
-} from "@schemastud/frame";
+} from "@schemastud/frame/editor";
 import { BlockInspector } from "./BlockInspector";
 import { WidgetRegistryContext } from "@schemastud/seam";
 import { getAt, isJsonBlock } from "../blockdoc/json.js";

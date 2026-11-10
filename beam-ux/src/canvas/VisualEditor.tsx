@@ -11,7 +11,7 @@
 // every edit) would make React see a brand-new widget TYPE at that position and remount it, losing
 // all local canvas state (text-edit focus, drag state, the open context menu) on every keystroke.
 import { useMemo, useRef } from 'react';
-import { FiveRegionEditShell, useEditShellMount } from '@schemastud/frame';
+import { FiveRegionEditShell, useEditShellMount } from '@schemastud/frame/editor';
 import { CanvasPalette } from './CanvasPalette.js';
 import { BlockInspector } from './BlockInspector';
 import { CanvasWidget } from './CanvasWidget.js';

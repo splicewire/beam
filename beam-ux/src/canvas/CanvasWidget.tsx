@@ -12,7 +12,7 @@ import {clipboardText,parseClipboard,pasteBlocks,wrapBlocks,unwrapBlock,removeBl
 // palette/save-pill drive (and are driven by) the same channel a plain `<VisualEditor>` used to own
 // entirely by itself.
 import { useEffect, useMemo, useRef, useState } from 'react';
-import type { HeavyweightWidgetProps } from '@schemastud/frame';
+import type { HeavyweightWidgetProps } from '@schemastud/frame/editor';
 import {
     duplicateAt,
     getAt,
