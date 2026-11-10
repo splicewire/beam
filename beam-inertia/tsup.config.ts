@@ -1,6 +1,6 @@
 import { defineConfig } from "tsup";
 export default defineConfig({
-  entry: ["src/index.tsx"],
+  entry: { index: "src/index.tsx", "frame-readers": "src/frame-readers.ts" },
   format: ["esm"],
   dts: true,
   sourcemap: true,
