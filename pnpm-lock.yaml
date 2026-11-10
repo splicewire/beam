@@ -319,6 +319,9 @@ importers:
       '@schemastud/combobox':
         specifier: link:../../schemastud/combobox
         version: link:../../schemastud/combobox
+      '@schemastud/frame':
+        specifier: link:../../schemastud/frame
+        version: link:../../schemastud/frame
       '@schemastud/nav':
         specifier: link:../../schemastud/nav
         version: link:../../schemastud/nav
@@ -614,6 +617,9 @@ importers:
         specifier: link:../../splicewire/_resources
         version: link:../../splicewire/_resources
     devDependencies:
+      '@schemastud/frame':
+        specifier: link:../../schemastud/frame
+        version: link:../../schemastud/frame
       '@schemastud/seam':
         specifier: link:../../schemastud/seam
         version: link:../../schemastud/seam

@@ -1,4 +1,5 @@
 import type { JsonDoc } from "@splicewire/beam-ux/jsondoc";
+import { createSessionRequest, xsrfHeader } from "@schemastud/frame/session";
 import { getBeamInertiaConfig } from "../config";
 // The host-supplied entry-body transport — the ONE injection seam the promoted editor + Mainframe host
 // load/save an entry body through. Mirrors `splicewire/www`'s and `rushing/audiostud`'s: a same-origin,
@@ -34,13 +35,16 @@ import type {
   EntryPublicationState,
   UxBuilderClient,
 } from "@splicewire/beam-ux";
-/** Read the Laravel `XSRF-TOKEN` cookie for the stateful mutating POST. */
-function csrfToken(): string {
-  const m = document.cookie.match(/(?:^|;\s*)XSRF-TOKEN=([^;]+)/);
+// The JSON calls go through frame's session request (ticket 49): same-origin, JSON headers and the XSRF token. A refusal
+// rejects with frame's FrameActionError: its `status`, `errors` and the server's `message`.
+const request = createSessionRequest();
 
-  return m ? decodeURIComponent(m[1]) : "";
+/** One JSON call, the beam envelope's payload one unwrap down. */
+async function send(method: string, url: string, body?: unknown, init?: { signal?: AbortSignal }): Promise<unknown> {
+  return (await request<{ data: unknown }>(method, url, undefined, body, init)).data.data;
 }
 
+/** The two non-JSON-request calls (a FormData upload, a body-less DELETE) keep their own fetch and read the answer here. */
 async function readData(res: Response, what: string): Promise<unknown> {
   if (!res.ok) {
     const problem = await res.json().catch(() => ({}));
@@ -53,30 +57,15 @@ async function readData(res: Response, what: string): Promise<unknown> {
 }
 
 const defaultBodyClient: UxBuilderClient = {
-  componentCapabilities: async id => readData(await fetch(`/beam-ux-entries/${id}/component-capabilities`, {credentials:'same-origin',headers:{Accept:'application/json'}}),'component capabilities') as ReturnType<NonNullable<UxBuilderClient['componentCapabilities']>>,
-  createComponent: async (id,input) => readData(await fetch(`/beam-ux-entries/${id}/create-component`, {method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json',Accept:'application/json','X-XSRF-TOKEN':csrfToken()},body:JSON.stringify(input)}),'create component') as ReturnType<NonNullable<UxBuilderClient['createComponent']>>,
-  duplicateComponent: async id => readData(await fetch(`/beam-ux-entries/${id}/duplicate-component`, {method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json',Accept:'application/json','X-XSRF-TOKEN':csrfToken()},body:JSON.stringify({})}),'duplicate component') as ReturnType<NonNullable<UxBuilderClient['duplicateComponent']>>,
+  componentCapabilities: async id => send('GET',`/beam-ux-entries/${id}/component-capabilities`) as ReturnType<NonNullable<UxBuilderClient['componentCapabilities']>>,
+  createComponent: async (id,input) => send('POST',`/beam-ux-entries/${id}/create-component`,input) as ReturnType<NonNullable<UxBuilderClient['createComponent']>>,
+  duplicateComponent: async id => send('POST',`/beam-ux-entries/${id}/duplicate-component`,{}) as ReturnType<NonNullable<UxBuilderClient['duplicateComponent']>>,
   canvasBindings: async (id, body, recordValue, options) => {
-    const response = await fetch(`/beam-ux-entries/${id}/canvas-bindings`, {
-      method: 'POST', credentials: 'same-origin',
-      headers: {'Content-Type':'application/json', Accept:'application/json', 'X-XSRF-TOKEN':csrfToken()},
-      body: JSON.stringify({body,recordValue:recordValue ?? null}),
-      ...(options?.signal ? {signal:options.signal} : {}),
-    });
-    return await readData(response,'canvas bindings') as Awaited<ReturnType<NonNullable<UxBuilderClient['canvasBindings']>>>;
+    // The signal rides through, so a superseded bindings read is aborted (beam-ux's use-canvas-bindings).
+    return await send('POST', `/beam-ux-entries/${id}/canvas-bindings`, {body,recordValue:recordValue ?? null}, {signal:options?.signal}) as Awaited<ReturnType<NonNullable<UxBuilderClient['canvasBindings']>>>;
   },
   makeEditable: async (slug, body) => {
-    const res = await fetch("/beam-ux-entries/make-editable", {
-      method: "POST",
-      credentials: "same-origin",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-        "X-XSRF-TOKEN": csrfToken(),
-      },
-      body: JSON.stringify({ slug, body }),
-    });
-    return (await readData(res, "make-editable")) as Awaited<
+    return (await send("POST", "/beam-ux-entries/make-editable", { slug, body })) as Awaited<
       ReturnType<NonNullable<UxBuilderClient["makeEditable"]>>
     >;
   },
@@ -86,46 +75,24 @@ const defaultBodyClient: UxBuilderClient = {
    * `?namespace=` disambiguator is therefore not merely ignored — appending one fails loudly.
    */
   loadBody: async (id) => {
-    const res = await fetch(`/beam-ux-entries/${id}/body`, {
-      headers: { Accept: "application/json" },
-      credentials: "same-origin",
-    });
-
-    return (await readData(res, "load")) as Awaited<
+    return (await send("GET", `/beam-ux-entries/${id}/body`)) as Awaited<
       ReturnType<UxBuilderClient["loadBody"]>
     >;
   },
   saveBlocks: async (id, body) => {
-    const request = {
-      method: "POST",
-      credentials: "same-origin" as const,
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-        "X-XSRF-TOKEN": csrfToken(),
-      },
-      body: JSON.stringify({ body }),
-    };
-    let response = await fetch(`/beam-ux-entries/${id}/save-blocks`, request);
-    // Older hosts may not mount the typed operation yet. Never bypass a validation/auth refusal.
-    if (response.status === 404 || response.status === 405) {
-      response = await fetch(`/beam-ux-entries/${id}/save-body`, request);
+    let saved: unknown;
+    try {
+      saved = await send("POST", `/beam-ux-entries/${id}/save-blocks`, { body });
+    } catch (error) {
+      // Older hosts may not mount the typed operation yet. Never bypass a validation/auth refusal.
+      const status = (error as { status?: unknown }).status;
+      if (status !== 404 && status !== 405) throw error;
+      saved = await send("POST", `/beam-ux-entries/${id}/save-body`, { body });
     }
-    return await readData(response, "save-blocks") as Awaited<ReturnType<UxBuilderClient["saveBody"]>>;
+    return saved as Awaited<ReturnType<UxBuilderClient["saveBody"]>>;
   },
   saveBody: async (id, body) => {
-    const res = await fetch(`/beam-ux-entries/${id}/save-body`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-XSRF-TOKEN": csrfToken(),
-        Accept: "application/json",
-      },
-      credentials: "same-origin",
-      body: JSON.stringify({ body }),
-    });
-
-    return (await readData(res, "save")) as Awaited<
+    return (await send("POST", `/beam-ux-entries/${id}/save-body`, { body })) as Awaited<
       ReturnType<UxBuilderClient["saveBody"]>
     >;
   },
@@ -146,22 +113,10 @@ async function reconcilePost(
   op: string,
   input: import("@splicewire/beam-ux").FileReconcileInput,
 ) {
-  const response = await fetch(
+  return (await send(
+    "POST",
     `/beam-ux-release-files/${encodeURIComponent(memberId)}/${op}`,
-    {
-      method: "POST",
-      credentials: "same-origin",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-        "X-XSRF-TOKEN": csrfToken(),
-      },
-      body: JSON.stringify(input),
-    },
-  );
-  return (await readData(
-    response,
-    op,
+    input,
   )) as import("@splicewire/beam-ux").FileReconcileResult;
 }
 const publicationClient = {
@@ -176,16 +131,9 @@ const publicationClient = {
       body: JsonDoc;
     },
   inspectReleaseFile: async (memberId: string) => {
-    const response = await fetch(
+    return (await send(
+      "GET",
       `/beam-ux-release-files/${encodeURIComponent(memberId)}/inspect-file`,
-      {
-        credentials: "same-origin",
-        headers: { Accept: "application/json" },
-      },
-    );
-    return (await readData(
-      response,
-      "file inspection",
     )) as import("@splicewire/beam-ux").FileInspection;
   },
   takeReleaseFile: (
@@ -206,80 +154,36 @@ const publicationClient = {
       NonNullable<UxBuilderClient["takeAllReleaseFiles"]>
     >[1],
   ) => {
-    const response = await fetch(
+    return (await send(
+      "POST",
       `/beam-ux-release-files/${encodeURIComponent(id)}/take-all-drafts`,
-      {
-        method: "POST",
-        credentials: "same-origin",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-          "X-XSRF-TOKEN": csrfToken(),
-        },
-        body: JSON.stringify(input),
-      },
-    );
-    return (await readData(
-      response,
-      "take-all-drafts",
+      input,
     )) as Awaited<
       ReturnType<NonNullable<UxBuilderClient["takeAllReleaseFiles"]>>
     >;
   },
   recordReleaseFile: async (memberId: string, releaseId: string) => {
-    const response = await fetch(
+    return (await send(
+      "POST",
       `/beam-ux-release-files/${encodeURIComponent(memberId)}/commit-now`,
-      {
-        method: "POST",
-        credentials: "same-origin",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-          "X-XSRF-TOKEN": csrfToken(),
-        },
-        body: JSON.stringify({ releaseId }),
-      },
-    );
-    return (await readData(
-      response,
-      "recording",
+      { releaseId },
     )) as import("@splicewire/beam-ux").ReleaseRecording;
   },
   listReleases: async () => {
-    const response = await fetch("/beam-ux-releases", {
-      credentials: "same-origin",
-      headers: { Accept: "application/json" },
-    });
-    return (await readData(
-      response,
-      "releases",
-    )) as import("@splicewire/beam-ux").ReleaseRecord[];
+    return (await send("GET", "/beam-ux-releases")) as import("@splicewire/beam-ux").ReleaseRecord[];
   },
   releaseCommand: async (
     id: string,
     command: import("@splicewire/beam-ux").ReleaseCommand,
   ) => {
-    const response = await fetch(`/beam-ux-releases/${id}/command`, {
-      method: "POST",
-      credentials: "same-origin",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-        "X-XSRF-TOKEN": csrfToken(),
-      },
-      body: JSON.stringify(command),
-    });
-    return (await readData(
-      response,
-      "release",
-    )) as import("@splicewire/beam-ux").ReleaseRecord;
+    return (await send("POST", `/beam-ux-releases/${id}/command`, command)) as import("@splicewire/beam-ux").ReleaseRecord;
   },
   // ux-0236 d2: an unwanted Redirect a Release left is removed through the Redirect resource.
   removeRedirect: async (id: string) => {
     const response = await fetch(`/beam-ux-redirects/${id}`, {
       method: "DELETE",
       credentials: "same-origin",
-      headers: { Accept: "application/json", "X-XSRF-TOKEN": csrfToken() },
+      headers: { Accept: "application/json", ...xsrfHeader() },
     });
     if (!response.ok) {
       await readData(response, "redirect");
@@ -287,12 +191,7 @@ const publicationClient = {
   },
 
   listVersions: async (id: string) => {
-    const res = await fetch(`/beam-ux-entries/${id}/versions`, {
-      headers: { Accept: "application/json" },
-      credentials: "same-origin",
-    });
-
-    return (await readData(res, "versions")) as EntryPublicationState;
+    return (await send("GET", `/beam-ux-entries/${id}/versions`)) as EntryPublicationState;
   },
   previewVersion: async (id: string, versionId: string) =>
     (await publicationPost(id, "preview", { versionId })) as { url: string },
@@ -327,37 +226,23 @@ const publicationClient = {
     })) as EntryPublicationState,
 };
 
-/** The shared write leg: a stateful, cookie-authed POST carrying the XSRF header axios would add. */
+/** The shared write leg: a stateful, cookie-authed POST through the session request. */
 async function publicationPost(
   id: string,
   op: string,
   payload: Record<string, unknown>,
 ): Promise<unknown> {
-  const res = await fetch(`/beam-ux-entries/${id}/${op}`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "X-XSRF-TOKEN": csrfToken(),
-      Accept: "application/json",
-    },
-    credentials: "same-origin",
-    body: JSON.stringify(payload),
-  });
-
-  return readData(res, op);
+  return send("POST", `/beam-ux-entries/${id}/${op}`, payload);
 }
 
 const imageClient = {
   async listImages(id: string) {
-    const res = await fetch(`/beam-ux-entries/${encodeURIComponent(id)}/media`, {
-      credentials: 'same-origin', headers: {Accept:'application/json'},
-    });
-    return await readData(res, 'entry images') as import('@splicewire/beam-ux').EntryImageLibraryData;
+    return await send('GET', `/beam-ux-entries/${encodeURIComponent(id)}/media`) as import('@splicewire/beam-ux').EntryImageLibraryData;
   },
   async uploadImage(id: string, file: File) {
     const body = new FormData();body.append('file',file);
     const res = await fetch(`/beam-ux-entries/${encodeURIComponent(id)}/upload-image`, {
-      method:'POST',credentials:'same-origin',headers:{Accept:'application/json','X-XSRF-TOKEN':csrfToken()},body,
+      method:'POST',credentials:'same-origin',headers:{Accept:'application/json',...xsrfHeader()},body,
     });
     return await readData(res, 'uploaded image') as import('@splicewire/beam-ux').EntryImageData;
   },

@@ -78,6 +78,7 @@ export default defineConfig({
             '@schemastud/frame/cards': schemastud('@schemastud/frame/cards'),
             '@schemastud/frame/picker': schemastud('@schemastud/frame/picker'),
             '@schemastud/frame/wire': schemastud('@schemastud/frame/wire'),
+            '@schemastud/frame/session': schemastud('@schemastud/frame/session'),
             '@schemastud/frame': schemastud('@schemastud/frame'),
             // The nav primitives the `/docs` layout composes (`<OnThisPage>`); same cross-workspace
             // `file:` link, same second-React hazard, same pin to the built dist.

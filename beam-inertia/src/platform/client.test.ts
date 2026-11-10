@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { resolveBeamPage } from '../pages';
-import { createPlatformConnectionClient } from './client';
+import { createSessionRequest } from '@schemastud/frame/session';
+import { createPlatformConnectionClient as createClient } from './client';
 import type { PlatformConnectionEndpoints } from './types';
 
 /**
@@ -18,11 +19,14 @@ const endpoints: PlatformConnectionEndpoints = {
     disconnect: '/operator/platform-connection/disconnect',
 };
 
-function stubFetch(response: Partial<Response> & { json: () => Promise<unknown> }) {
-    const fetchMock = vi.fn(async () => response as Response);
+/** The client as the panel builds it: over frame's session request. */
+const createPlatformConnectionClient = (endpoints: PlatformConnectionEndpoints) => createClient(createSessionRequest(), endpoints);
+
+function stubFetch(response: Response) {
+    const fetchMock = vi.fn(async () => response);
     vi.stubGlobal('fetch', fetchMock);
     // This package's vitest runs in node with no DOM — deliberately, it has no jsdom dependency and
-    // its other suites never needed one. `jsonHeaders()` reads the `XSRF-TOKEN` cookie, so the
+    // its other suites never needed one. The session request reads the `XSRF-TOKEN` cookie, so the
     // cookie jar is the one browser fact these cases need, and stubbing it is cheaper and more
     // legible than making the whole package carry a DOM environment for four assertions.
     vi.stubGlobal('document', { cookie: 'XSRF-TOKEN=a-test-token' });
@@ -34,7 +38,7 @@ afterEach(() => vi.unstubAllGlobals());
 
 describe('platform connection client', () => {
     it('unwraps the particle operation envelope rather than handing back the envelope', async () => {
-        stubFetch({ ok: true, json: async () => ({ data: { state: 'pending', userCode: 'WXYZ-1234' } }) });
+        stubFetch(Response.json({ data: { state: 'pending', userCode: 'WXYZ-1234' } }));
 
         const connection = await createPlatformConnectionClient(endpoints).connect('ux-demo');
 
@@ -47,7 +51,7 @@ describe('platform connection client', () => {
         // from something that is not the operation. A blind `body.data` would make every one of
         // those render as "not connected", which is a security-relevant claim this client does not
         // have the evidence for.
-        stubFetch({ ok: true, json: async () => ({ state: 'paired' }) });
+        stubFetch(Response.json({ state: 'paired' }));
 
         await expect(createPlatformConnectionClient(endpoints).poll()).rejects.toThrow(
             /answered a body with no data envelope/,
@@ -55,11 +59,7 @@ describe('platform connection client', () => {
     });
 
     it("surfaces the server's own refusal message ahead of the status code", async () => {
-        stubFetch({
-            ok: false,
-            status: 403,
-            json: async () => ({ message: 'This action is unauthorized.' }),
-        });
+        stubFetch(Response.json({ message: 'This action is unauthorized.' }, { status: 403 }));
 
         await expect(createPlatformConnectionClient(endpoints).disconnect()).rejects.toThrow(
             'This action is unauthorized.',
@@ -67,19 +67,15 @@ describe('platform connection client', () => {
     });
 
     it('falls back to the status when the refusal body carries no message', async () => {
-        stubFetch({
-            ok: false,
-            status: 500,
-            json: async () => {
-                throw new Error('not json');
-            },
-        });
+        stubFetch(new Response('<h1>Server Error</h1>', { status: 500 }));
 
         await expect(createPlatformConnectionClient(endpoints).poll()).rejects.toThrow('(500)');
     });
 
     it('checks the connection with no surface, and sends the label with the pairing', async () => {
-        const fetchMock = stubFetch({ ok: true, json: async () => ({ data: { ok: true } }) });
+        const fetchMock = vi.fn(async () => Response.json({ data: { ok: true } }));
+        vi.stubGlobal('fetch', fetchMock);
+        vi.stubGlobal('document', { cookie: 'XSRF-TOKEN=a-test-token' });
         const client = createPlatformConnectionClient(endpoints);
 
         await client.check();
