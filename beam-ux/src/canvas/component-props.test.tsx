@@ -113,7 +113,7 @@ function Fixture({
     >
       <CanvasWidget
         value={doc}
-        readOnly={readOnly}
+        readonly={readOnly}
         onChange={(next) => {
           change(next);
           setDoc(next);

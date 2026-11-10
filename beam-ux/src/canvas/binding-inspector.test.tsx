@@ -15,7 +15,7 @@ beforeEach(()=>vi.stubGlobal('ResizeObserver',class{observe(){}unobserve(){}disc
 afterEach(()=>{cleanup();vi.unstubAllGlobals();});
 function Harness({readOnly=false,change=()=>{},port}:{readOnly?:boolean;change?:(doc:JsonDoc)=>void;port?:CanvasConfig['bindingPreview']}){
  const [doc,setDoc]=useState(initial);const state=useRef({doc,readOnly});state.current={doc,readOnly};
- const registry=useMemo(()=>{const r=createWidgetRegistry();r.registerWidget('canvas',props=><CanvasWidget {...props} value={state.current.doc} readOnly={state.current.readOnly} onChange={next=>{setDoc(next);change(next);}}/>);return r;},[]);
+ const registry=useMemo(()=>{const r=createWidgetRegistry();r.registerWidget('canvas',props=><CanvasWidget {...props} value={state.current.doc} readonly={state.current.readOnly} onChange={next=>{setDoc(next);change(next);}}/>);return r;},[]);
  return <CanvasProvider config={{registry:{},profile,bindingPreview:port??{entryId:'page',pagePublic:true}}}><FiveRegionEditShell widget="canvas" schema={{type:'object'}} registry={registry} record={doc as unknown as Record<string,unknown>} inspector={<BlockInspector/>}/><output data-testid="doc">{JSON.stringify(doc)}</output></CanvasProvider>;
 }
 it('handpicks named author-readable Records through the real schema form and existing canvas command',async()=>{

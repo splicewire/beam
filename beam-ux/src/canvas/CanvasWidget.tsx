@@ -12,7 +12,7 @@ import {clipboardText,parseClipboard,pasteBlocks,wrapBlocks,unwrapBlock,removeBl
 // palette/save-pill drive (and are driven by) the same channel a plain `<VisualEditor>` used to own
 // entirely by itself.
 import { useEffect, useMemo, useRef, useState } from 'react';
-import type { EditShellMountValue } from '@schemastud/frame';
+import type { HeavyweightWidgetProps } from '@schemastud/frame';
 import {
     duplicateAt,
     getAt,
@@ -54,13 +54,12 @@ import { assertDocRegistry, profileAttrs, profileTemplates, profileTemplatesAtPa
 export const TEMPLATE_DATA_KEY = 'application/x-beam-ux-template';
 const EMPTY_DOC:JsonDoc=[];
 
-export interface CanvasWidgetProps {
-    /** WidgetSurface passes the record as BOTH `value` and `formData`; either is accepted. */
-    value?: JsonDoc;
-    formData?: JsonDoc;
-    onChange?: (doc: JsonDoc) => void;
-    editShellMount?: EditShellMountValue;
-    readOnly?: boolean;
+/**
+ * Frame's full-surface contract (`HeavyweightWidgetProps`, ruling 04), optional because a host also renders the
+ * canvas directly. WidgetSurface passes the record as BOTH `value` and `formData`; either is accepted. The lock is
+ * `readonly`, the one spelling every widget receives.
+ */
+export interface CanvasWidgetProps extends Partial<HeavyweightWidgetProps<JsonDoc>> {
     /** The host's theme (same object VisualEditor/PageEditor thread into `veCss()`/`peCss()`) — drives
      * the selection/drop-indicator accent color. Defaults to `DEFAULT_CANVAS_THEME.accent` when absent. */
     theme?: Partial<CanvasTheme>;
@@ -111,7 +110,7 @@ export function CanvasWidget({
     formData,
     onChange,
     editShellMount: mount,
-    readOnly = false,
+    readonly: readOnly = false,
     theme,
     hideBreadcrumb = false,
 }: CanvasWidgetProps) {
