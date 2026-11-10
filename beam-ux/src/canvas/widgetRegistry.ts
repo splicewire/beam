@@ -12,7 +12,7 @@
 // widget, and with it every bit of local canvas state: text-edit focus, drag state, the open menu).
 import { createWidgetRegistry } from '@schemastud/seam';
 import type { ComponentType } from 'react';
-import type { WidgetRegistry } from '@schemastud/seam';
+import type { WidgetRegistry, WidgetResolution } from '@schemastud/seam';
 import { CanvasWidget } from './CanvasWidget.js';
 import type { CanvasWidgetProps } from './CanvasWidget.js';
 import { ClassChipsWidget, StyleRowsWidget } from './widgets.js';
@@ -27,6 +27,10 @@ export function createCanvasWidgetRegistry(
     const registry = createWidgetRegistry();
     registry.registerWidget('class-chips', ClassChipsWidget);
     registry.registerWidget('style-rows', StyleRowsWidget);
-    registry.registerWidget(CANVAS_WIDGET_NAME, canvasWidget);
+    // The canvas is a full-surface (heavyweight) editor: it takes frame's HeavyweightWidgetProps, not RJSF's
+    // WidgetProps, so it is neither a Widget nor a Field. It registers through the heavyweight narrowing, which
+    // frame's WidgetSurface reverses at its one mount (ruling 04 §5-6; the pattern 34 accepted for frame's harness).
+    // The target is seam's own WidgetResolution, so the narrowing names the registry's RJSF copy, never beam's.
+    registry.registerWidget(CANVAS_WIDGET_NAME, canvasWidget as unknown as WidgetResolution);
     return registry;
 }

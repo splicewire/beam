@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { createWidgetRegistry, FrameProvider, KNOWN_CONTEXTS } from '@schemastud/frame';
 import type { FrameInjection, FramePrimitives, RouteContextEntry } from '@schemastud/frame';
+import type { WidgetResolution } from '@schemastud/seam';
 import type { AnchorHTMLAttributes } from 'react';
 import { MemoryRouter } from 'react-router';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -307,13 +308,15 @@ describe('explicit Frame creation destinations', () => {
         vi.stubGlobal('fetch', data.fetch);
         const create = vi.spyOn(frameTransport, 'create');
         const registry = createWidgetRegistry();
+        // A heavyweight (full-surface) test editor takes frame's HeavyweightWidgetProps, not RJSF's WidgetProps: it
+        // registers through the heavyweight narrowing that frame's WidgetSurface reverses at its mount (ruling 04 §5-6).
         registry.registerWidget(
             'document-editor',
-            ({ onSubmit }: { onSubmit?: (data: { name: string }) => void }) => (
+            (({ onSubmit }: { onSubmit?: (data: { name: string }) => void }) => (
                 <button onClick={() => onSubmit?.({ name: 'Widget draft' })}>
                     Create widget draft
                 </button>
-            )
+            )) as unknown as WidgetResolution,
         );
         const injection: FrameInjection = {
             transport: frameTransport,
