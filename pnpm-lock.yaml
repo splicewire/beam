@@ -121,6 +121,9 @@ importers:
 
   beam-accounts:
     dependencies:
+      '@schemastud/frame':
+        specifier: link:../../schemastud/frame
+        version: link:../../schemastud/frame
       '@splicewire/beam-resources':
         specifier: link:../beam-resources
         version: link:../beam-resources
