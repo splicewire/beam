@@ -1,143 +1,143 @@
 {
-    "name": "@splicewire/beam-mdx",
-    "version": "0.2.4",
-    "description": "The file-driven MDX content rung: a build-time draft-exclusion Vite plugin + MDX preset, a module-map content resolver (resolveContent / essaysList), a cross-property citation kit (Ref / Receipts), a frontmatter-driven JSON-LD builder, an embed-by-reference <Content>, a parameterized <ContentShow> renderer, and a token-driven .site-prose base stylesheet. Satellites keep their own references manifest and brand tokens; everything else rides the package.",
-    "license": "MIT",
-    "type": "module",
-    "main": "dist/index.js",
-    "types": "dist/index.d.ts",
-    "exports": {
-        ".": {
-            "types": "./dist/index.d.ts",
-            "import": "./dist/index.js"
-        },
-        "./vite": {
-            "types": "./dist/vite.d.ts",
-            "import": "./dist/vite.js"
-        },
-        "./kit": {
-            "types": "./dist/kit.d.ts",
-            "import": "./dist/kit.js"
-        },
-        "./editor": {
-            "types": "./dist/editor.d.ts",
-            "import": "./dist/editor.js"
-        },
-        "./lens": {
-            "types": "./dist/lens.d.ts",
-            "import": "./dist/lens.js"
-        },
-        "./editor/css": "./dist/editor.css",
-        "./kit/css": "./dist/kit.css",
-        "./css": "./dist/site-prose.css"
+  "name": "@splicewire/beam-mdx",
+  "version": "0.2.4",
+  "description": "The file-driven MDX content rung: a build-time draft-exclusion Vite plugin + MDX preset, a module-map content resolver (resolveContent / essaysList), a cross-property citation kit (Ref / Receipts), a frontmatter-driven JSON-LD builder, an embed-by-reference <Content>, a parameterized <ContentShow> renderer, and a token-driven .site-prose base stylesheet. Satellites keep their own references manifest and brand tokens; everything else rides the package.",
+  "license": "MIT",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
     },
-    "sideEffects": [
-        "**/*.css"
-    ],
-    "files": [
-        "dist",
-        "src",
-        "README.md"
-    ],
-    "publishConfig": {
-        "registry": "https://registry.npmjs.org",
-        "access": "public"
+    "./vite": {
+      "types": "./dist/vite.d.ts",
+      "import": "./dist/vite.js"
     },
-    "repository": {
-        "type": "git",
-        "url": "https://github.com/splicewire/beam.git",
-        "directory": "beam-mdx"
+    "./kit": {
+      "types": "./dist/kit.d.ts",
+      "import": "./dist/kit.js"
     },
-    "scripts": {
-        "build": "tsup",
-        "dev": "tsup --watch",
-        "test": "vitest run --passWithNoTests",
-        "typecheck": "tsc --noEmit"
+    "./editor": {
+      "types": "./dist/editor.d.ts",
+      "import": "./dist/editor.js"
     },
-    "dependencies": {
-        "mdast-util-from-markdown": "^2.0.0",
-        "mdast-util-gfm-table": "^2.0.0",
-        "mdast-util-mdx": "^3.0.0",
-        "mdast-util-to-markdown": "^2.1.0",
-        "micromark-extension-gfm-table": "^2.1.0",
-        "micromark-extension-mdxjs": "^3.0.0",
-        "shiki": "^4.3.1",
-        "unified": "^11.0.5"
+    "./lens": {
+      "types": "./dist/lens.d.ts",
+      "import": "./dist/lens.js"
     },
-    "peerDependencies": {
-        "@inertiajs/react": ">=2",
-        "@mdx-js/mdx": "^3",
-        "@mdx-js/rollup": "^3",
-        "@mdxeditor/editor": "^4",
-        "@rjsf/core": "^6",
-        "@rjsf/shadcn": "^6",
-        "@rjsf/utils": "^6",
-        "@rjsf/validator-ajv8": "^6",
-        "@splicewire/beam-ux": ">=0.9.0 <0.12.0 || ^0.12.0 || ^0.13.0",
-        "react": ">=18",
-        "remark-frontmatter": "^5",
-        "remark-mdx-frontmatter": "^5",
-        "vite": ">=5"
+    "./editor/css": "./dist/editor.css",
+    "./kit/css": "./dist/kit.css",
+    "./css": "./dist/site-prose.css"
+  },
+  "sideEffects": [
+    "**/*.css"
+  ],
+  "files": [
+    "dist",
+    "src",
+    "README.md"
+  ],
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org",
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/splicewire/beam.git",
+    "directory": "beam-mdx"
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "vitest run --passWithNoTests",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "mdast-util-from-markdown": "^2.0.0",
+    "mdast-util-gfm-table": "^2.0.0",
+    "mdast-util-mdx": "^3.0.0",
+    "mdast-util-to-markdown": "^2.1.0",
+    "micromark-extension-gfm-table": "^2.1.0",
+    "micromark-extension-mdxjs": "^3.0.0",
+    "shiki": "^4.3.1",
+    "unified": "^11.0.5"
+  },
+  "peerDependencies": {
+    "@inertiajs/react": ">=2",
+    "@mdx-js/mdx": "^3",
+    "@mdx-js/rollup": "^3",
+    "@mdxeditor/editor": "^4",
+    "@rjsf/core": "^6",
+    "@rjsf/shadcn": "^6",
+    "@rjsf/utils": "^6",
+    "@rjsf/validator-ajv8": "^6",
+    "@splicewire/beam-ux": ">=0.9.0 <0.12.0 || ^0.12.0 || ^0.13.0",
+    "react": ">=18",
+    "remark-frontmatter": "^5",
+    "remark-mdx-frontmatter": "^5",
+    "vite": ">=5"
+  },
+  "peerDependenciesMeta": {
+    "@mdx-js/mdx": {
+      "optional": true
     },
-    "peerDependenciesMeta": {
-        "@mdx-js/mdx": {
-            "optional": true
-        },
-        "@mdx-js/rollup": {
-            "optional": true
-        },
-        "@mdxeditor/editor": {
-            "optional": true
-        },
-        "@rjsf/core": {
-            "optional": true
-        },
-        "@rjsf/shadcn": {
-            "optional": true
-        },
-        "@rjsf/utils": {
-            "optional": true
-        },
-        "@rjsf/validator-ajv8": {
-            "optional": true
-        },
-        "@splicewire/beam-ux": {
-            "optional": true
-        },
-        "remark-frontmatter": {
-            "optional": true
-        },
-        "remark-mdx-frontmatter": {
-            "optional": true
-        },
-        "vite": {
-            "optional": true
-        }
+    "@mdx-js/rollup": {
+      "optional": true
     },
-    "devDependencies": {
-        "@inertiajs/react": "^3.0.0",
-        "@mdx-js/mdx": "^3.1.1",
-        "@mdx-js/rollup": "^3.1.1",
-        "@mdxeditor/editor": "^4.1.0",
-        "@rjsf/core": "^6.0.0",
-        "@rjsf/shadcn": "^6.0.0",
-        "@rjsf/utils": "^6.0.0",
-        "@rjsf/validator-ajv8": "^6.0.0",
-        "@splicewire/beam-ux": "file:../beam-ux",
-        "@types/mdast": "^4.0.0",
-        "@types/node": "^22.20.1",
-        "@types/react": "^19.0.0",
-        "@types/react-dom": "^19.0.0",
-        "mdast-util-mdx-expression": "^2.0.1",
-        "mdast-util-mdx-jsx": "^3.2.1",
-        "mdast-util-mdxjs-esm": "^2.0.1",
-        "react": "^19.2.0",
-        "react-dom": "^19.2.0",
-        "remark-frontmatter": "^5.0.0",
-        "remark-mdx-frontmatter": "^5.2.0",
-        "tsup": "^8.5.1",
-        "typescript": "^5.7.2",
-        "vite": "^8.0.0",
-        "vitest": "^4.1.10"
+    "@mdxeditor/editor": {
+      "optional": true
+    },
+    "@rjsf/core": {
+      "optional": true
+    },
+    "@rjsf/shadcn": {
+      "optional": true
+    },
+    "@rjsf/utils": {
+      "optional": true
+    },
+    "@rjsf/validator-ajv8": {
+      "optional": true
+    },
+    "@splicewire/beam-ux": {
+      "optional": true
+    },
+    "remark-frontmatter": {
+      "optional": true
+    },
+    "remark-mdx-frontmatter": {
+      "optional": true
+    },
+    "vite": {
+      "optional": true
     }
+  },
+  "devDependencies": {
+    "@inertiajs/react": "^3.0.0",
+    "@mdx-js/mdx": "^3.1.1",
+    "@mdx-js/rollup": "^3.1.1",
+    "@mdxeditor/editor": "^4.1.0",
+    "@rjsf/core": "^6.0.0",
+    "@rjsf/shadcn": "^6.0.0",
+    "@rjsf/utils": "^6.0.0",
+    "@rjsf/validator-ajv8": "^6.0.0",
+    "@splicewire/beam-ux": "github:splicewire/beam#708a31cc913b036c2a10a94765cc3f22b1a030d2&path:/beam-ux",
+    "@types/mdast": "^4.0.0",
+    "@types/node": "^22.20.1",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "mdast-util-mdx-expression": "^2.0.1",
+    "mdast-util-mdx-jsx": "^3.2.1",
+    "mdast-util-mdxjs-esm": "^2.0.1",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "remark-frontmatter": "^5.0.0",
+    "remark-mdx-frontmatter": "^5.2.0",
+    "tsup": "^8.5.1",
+    "typescript": "^5.7.2",
+    "vite": "^8.0.0",
+    "vitest": "^4.1.10"
+  }
 }
