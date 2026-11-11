@@ -1,0 +1,84 @@
+name: CI
+
+# Build, typecheck and test the beam workspace on every push to main and every pull request (frame-foundation 47).
+#
+# beam is developed against its sibling checkouts, not against released packages: the root devDependencies, the pnpm
+# overrides and the lock `link:` ../schemastud/<pkg> (schemastud/js) and ../splicewire/_resources. So the runner
+# reproduces that workbench layout under $GITHUB_WORKSPACE, checks each sibling out at its main, builds the ones beam
+# reads as built output, and then installs beam from its own lock:
+#
+#   beam/                    this repository
+#   schemastud/              schemastud/js (public), built: npm workspaces plus big-calendar (not a workspace)
+#   splicewire/_resources/   splicewire/_resources (PRIVATE; types only, no build)
+#
+# Reading the private sibling needs the repository secret SIBLINGS_READ_TOKEN: a fine-grained token with
+# contents:read on splicewire/_resources only. Pull requests from forks do not receive it.
+#
+# This tests beam against its siblings' main: a red can come from a sibling's landing. The released versions are
+# checked by tools/js-release/release-package's clean rooms, not here. This workflow publishes nothing and does not
+# touch release.yml.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: beam
+
+      - name: Check out schemastud/js (sibling, main)
+        uses: actions/checkout@v4
+        with:
+          repository: schemastud/js
+          ref: main
+          path: schemastud
+
+      - name: Check out splicewire/_resources (private sibling, main)
+        uses: actions/checkout@v4
+        with:
+          repository: splicewire/_resources
+          ref: main
+          path: splicewire/_resources
+          token: ${{ secrets.SIBLINGS_READ_TOKEN }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Enable pnpm (packageManager pnpm@9.15.3)
+        run: corepack enable
+
+      - name: Build schemastud
+        working-directory: schemastud
+        run: |
+          npm ci
+          npm run build
+          npm run build:big-calendar
+
+      - name: Install beam from its lock
+        working-directory: beam
+        run: pnpm install --frozen-lockfile
+
+      - name: Build (topological)
+        working-directory: beam
+        run: pnpm run build
+
+      - name: Typecheck
+        working-directory: beam
+        run: pnpm run typecheck
+
+      - name: Test
+        working-directory: beam
+        run: pnpm run test
