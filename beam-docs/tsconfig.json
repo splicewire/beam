@@ -1,5 +1,11 @@
 {
     "extends": "../tsconfig.base.json",
-    "compilerOptions": { "resolveJsonModule": true },
+    "compilerOptions": {
+        "resolveJsonModule": true,
+        // CONFORM 04-5: a linked schemastud's types resolve @rjsf/* to this package's one copy (ticket 46).
+        "paths": {
+            "@rjsf/utils": ["./node_modules/@rjsf/utils"]
+        }
+    },
     "include": ["src"]
 }

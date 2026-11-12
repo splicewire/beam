@@ -11,7 +11,14 @@
         "noEmit": true,
         "verbatimModuleSyntax": true,
         "noUnusedLocals": true,
-        "noUnusedParameters": true
+        "noUnusedParameters": true,
+        // CONFORM 04-5: a linked schemastud's types resolve @rjsf/* to this package's one copy (ticket 46).
+        "paths": {
+            "@rjsf/utils": ["./node_modules/@rjsf/utils"],
+            "@rjsf/core": ["./node_modules/@rjsf/core"],
+            "@rjsf/shadcn": ["./node_modules/@rjsf/shadcn"],
+            "@rjsf/validator-ajv8": ["./node_modules/@rjsf/validator-ajv8"]
+        }
     },
     "include": ["src"]
 }
