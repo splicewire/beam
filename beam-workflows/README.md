@@ -9,9 +9,9 @@ editor, and `@xyflow/react` as a heavy peer.
 The surfaces own their react-query data logic and presentation; the host supplies **injected
 services** (transport + real-time subscription + feedback + host chrome) through
 `<WorkflowsProvider>`. They are typed off the generated `Workflow*Data` projection delivered via
-`@splicewire/beam-resources`, so the PHP source of truth travels into the package as a real build
-dependency (the `import type … from '@splicewire/beam-resources/types/workflows'` edge survives into
-`dist/index.d.ts`).
+`@splicewire/beam-resources`, so the PHP source of truth travels into the package as a direct
+dependency with a 0.5.0 minimum for this profile. The `import type … from
+'@splicewire/beam-resources/types/workflows'` edge survives into `dist/index.d.ts`.
 
 ## What ships today (slices 02–05 — the full component tree)
 

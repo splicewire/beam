@@ -39,8 +39,7 @@
         "@schemastud/ui": "*",
         "@schemastud/seam": "*",
         "@tanstack/react-query": ">=5",
-        "react": ">=18",
-        "@splicewire/beam-resources": "*"
+        "react": ">=18"
     },
     "devDependencies": {
         "@schemastud/frame": "file:../../schemastud/frame",
@@ -58,5 +57,8 @@
         "typescript": "^5.7.2",
         "vitest": "^4.1.10",
         "@splicewire/beam-resources": "file:../beam-resources"
+    },
+    "dependencies": {
+        "@splicewire/beam-resources": "^0.5.0"
     }
 }
