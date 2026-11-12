@@ -37,8 +37,7 @@
         "test": "vitest run",
         "typecheck": "tsc --noEmit",
         "lint:imports": "node scripts/check-imports.mjs",
-        "prepublishOnly": "npm run lint:imports && npm run build",
-        "prepare": "npm run build"
+        "prepublishOnly": "pnpm run lint:imports && pnpm run build"
     },
     "peerDependencies": {
         "@schemastud/ui": "*",

@@ -8,6 +8,9 @@
 
 export { TokensProvider, useTokensServices, useNotify } from "./provider";
 export { TokensPage } from "./tokens-page";
+// The tokens client over the host's session request (frame-foundation 51): the host passes `createSessionRequest()`
+// and the endpoints laravel-beam-accounts hands its tokens page.
+export { createTokensClient, type TokensEndpoints } from "./tokens-client";
 export {
   useTokens,
   usePermissions,

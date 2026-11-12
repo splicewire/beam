@@ -5,11 +5,25 @@ import { expect, userEvent, within } from 'storybook/test';
 import { useEffect, useState } from 'react';
 import CreateTeam from './account/create-team';
 import AcceptInvitation from './auth/accept-invitation';
-import { useFrameManifest } from '../frame/manifest';
+import { createFrameKit, type FrameManifest } from '@schemastud/frame';
+import { createMemoryTransport, type MemoryTransportFixtures } from '@schemastud/frame/testing';
 import { setStubPage } from '../story-harness';
 
+// The selected team's manifest, served from memory. A team change resets every `['frame', …]`
+// query, which is the kit's manifest entry, so the next read sees whatever this fixture holds then.
+const manifestFixture: MemoryTransportFixtures = {};
+const teamKit = createFrameKit({ transport: createMemoryTransport(manifestFixture) });
+const TEAMLESS: FrameManifest = { resources: [], contexts: {} };
+const JOINED: FrameManifest = {
+    resources: [{
+        key: 'requests', data: 'App.Data.RequestData', editData: null, createResultData: null,
+        form: 'enriched', nav: { label: 'Requests' },
+    }],
+    contexts: {},
+};
+
 function Readiness() {
-    const { data } = useFrameManifest();
+    const { data } = teamKit.useManifest();
     return <p role="status">{data?.resources.length ? 'Shared requests available' : 'No team resources'}</p>;
 }
 
@@ -22,29 +36,19 @@ function Stage({ accept = false, refused = false }: { accept?: boolean; refused?
         viewerEmail: 'member@example.test', acceptUrl: '/invitations/fixture/redeem',
     } : { action: '/teams/create', cancelUrl: '/dashboard' });
     useEffect(() => {
-        const originalFetch = globalThis.fetch;
         const originalPost = router.post;
-        let selected = false;
+        manifestFixture.manifest = TEAMLESS;
         const cache = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-        cache.setQueryData(['frame', 'manifest'], { resources: [], contexts: {}, nav: { items: [] }, routeContext: [] });
-        globalThis.fetch = async (input, init) => {
-            if (String(input) === '/frame/manifest') {
-                return new Response(JSON.stringify({ resources: selected ? [{ key: 'requests' }] : [] }), {
-                    headers: { 'Content-Type': 'application/json' },
-                });
-            }
-            return originalFetch(input, init);
-        };
         router.post = (_url, _data, options) => {
             if (refused) {
                 options?.onError?.({ name: 'Refused', invitation: 'Refused' });
                 return;
             }
-            selected = true;
+            manifestFixture.manifest = JOINED;
             void options?.onSuccess?.(page);
         };
         setClient(cache);
-        return () => { router.post = originalPost; globalThis.fetch = originalFetch; cache.clear(); };
+        return () => { router.post = originalPost; cache.clear(); };
     }, [accept, refused]);
     return client ? <QueryClientProvider client={client}>
         <div className="max-w-lg space-y-6"><Readiness />{accept ? <AcceptInvitation /> : <CreateTeam />}</div>

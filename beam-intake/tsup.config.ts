@@ -12,5 +12,6 @@ export default defineConfig({
         '@tanstack/react-query',
         '@schemastud/ui',
         '@schemastud/seam',
+        '@schemastud/frame/session',
     ],
 });

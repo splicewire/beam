@@ -18,11 +18,16 @@ export default meta;
 
 const answer = (data: RegistryRegistrantsData): DocsTransport => async () => data;
 
+// The package's default route. The panel renders nothing without an endpoint (`configureDocs` sets one for MDX pages),
+// so each story names it; the stub transport answers it and nothing is requested.
+const endpoint = '/beam/docs/registries';
+
 /** Per-entry registrants, where the registry records them. */
 export const RecordsRegistrants: StoryObj = {
     render: () => (
         <RegistryRegistrants
             root="beam.particle.resources"
+            endpoint={endpoint}
             transport={answer({
                 root: 'beam.particle.resources',
                 describedHere: true,
@@ -46,6 +51,7 @@ export const DoesNotRecord: StoryObj = {
     render: () => (
         <RegistryRegistrants
             root="beam.particle.operations"
+            endpoint={endpoint}
             transport={answer({
                 root: 'beam.particle.operations',
                 describedHere: true,
@@ -65,6 +71,7 @@ export const NotOnThisSite: StoryObj = {
     render: () => (
         <RegistryRegistrants
             root="composition.kinds"
+            endpoint={endpoint}
             transport={answer({
                 root: 'composition.kinds',
                 describedHere: false,

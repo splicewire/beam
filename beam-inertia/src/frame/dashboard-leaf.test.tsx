@@ -20,17 +20,19 @@
  */
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
-import { KNOWN_CONTEXTS } from "@schemastud/frame";
+import { buildRealmRoutes, createGuardRegistry, createRouteRegistry, KNOWN_CONTEXTS } from "@schemastud/frame";
 import type {
   ContextManifest,
-  DashboardRow,
   FrameTransport,
   Paginated,
+  RouteContextEntry,
   Row,
 } from "@schemastud/frame";
+import type { DashboardRow } from "@schemastud/frame/cards";
 import type { ReactNode } from "react";
-import { MemoryRouter } from "react-router";
+import { MemoryRouter, type RouteObject, useRoutes } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { kitFor } from "./kit";
 import type { FrameManifest } from "./manifest";
 import { FrameRealmProvider } from "./realm";
 import { TenantFrameProvider } from "./provider";
@@ -66,59 +68,30 @@ vi.mock("@inertiajs/react", () => ({
   router: { visit: vi.fn() },
 }));
 
-// The transport is the one seam a unit test owns: `list` answers the rows below for whichever
-// resource the shell asks about; the facets methods answer "no filters" so the shell mounts at all.
-const transport = vi.hoisted(() => ({
+// The transport is the one seam a unit test owns: the operator realm kit's own transport, stubbed
+// method by method. `list` answers the rows below for whichever resource the shell asks about; the
+// facets methods answer "no filters" so the shell mounts at all.
+const transport = {
   rows: [] as Row[],
   list: vi.fn(),
-}));
+};
 
-vi.mock("./transport", () => {
-  const frameTransport = {
-    getFilterSchema: vi.fn(async () => ({ type: "object", properties: {} })),
-    getFilterVariants: vi.fn(async (resource: string) => ({
-      resource,
-      variants: [],
-    })),
-    getFilterOptions: vi.fn(async () => []),
-    getSavedFilters: vi.fn(async () => []),
-    saveFilter: vi.fn(async () => ({
-      id: "1",
-      name: "v",
-      resource: "x",
-      queryParameters: {},
-      visibility: "private",
-      isDefault: false,
-    })),
-    deleteSavedFilter: vi.fn(async () => undefined),
-    list: transport.list,
-    get: vi.fn(async (_r: string, id: string) => ({ id })),
-    getFormSchema: vi.fn(async () => ({ type: "object", properties: {} })),
-    create: vi.fn(async (_resource: string, data: unknown) =>
-      Response.json({ id: "3", ...(data as object) }).json()
-    ),
-    save: vi.fn(async (_r: string, id: string, data: unknown) => ({
-      id,
-      ...(data as Row),
-    })),
-    remove: vi.fn(async () => undefined),
-  } as unknown as FrameTransport;
+const manifestState = { current: undefined as FrameManifest | undefined };
 
-  return { frameTransport };
-});
+// The provider reads the manifest through the kit's `getManifest`; the router is handed it as a
+// prop. Both get the SAME hand-built object, exactly as the console page arranges it.
+const stubs: Partial<FrameTransport> = {
+  getManifest: async () => manifestState.current ?? { resources: [], contexts: {} },
+  getFilterSchema: async () => ({ type: "object", properties: {} }) as never,
+  getFilterVariants: async (resource: string) => ({ resource, variants: [] }) as never,
+  getFilterOptions: async () => [],
+  getSavedFilters: async () => [],
+  list: transport.list,
+  get: async (_r: string, id: string) => ({ id }),
+  getFormSchema: async () => ({ type: "object", properties: {} }),
+};
 
-const manifestState = vi.hoisted(() => ({ current: undefined as unknown }));
-
-// The provider reads the manifest through `useFrameManifest`; the router is handed it as a prop.
-// Both get the SAME hand-built object, exactly as the console page arranges it.
-vi.mock("./manifest", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("./manifest")>()),
-  useFrameManifest: () => ({
-    data: manifestState.current,
-    isLoading: false,
-    error: null,
-  }),
-}));
+const kitTransport = kitFor("/operator/frame/manifest").transport;
 
 const known = KNOWN_CONTEXTS;
 
@@ -151,12 +124,16 @@ const seat = (key: string, label: string, icon: string | null) => ({
   key,
   creatable: false,
   editable: false,
+  data: `App.Data.${key}`,
+  editData: null,
+  createResultData: null,
+  form: "enriched" as const,
   deletable: false,
   showable: false,
   nav: { label, group: null, icon },
 });
 
-const MANIFEST: FrameManifest = {
+const MANIFEST = {
   resources: [
     seat("operator-dashboard", "Dashboard", "layout-dashboard"),
     seat("users", "Users", "users"),
@@ -200,7 +177,7 @@ const MANIFEST: FrameManifest = {
       resource: "operator-dashboard",
     },
   ],
-};
+} satisfies FrameManifest;
 
 const ROWS: DashboardRow[] = [
   {
@@ -251,6 +228,9 @@ const ROWS: DashboardRow[] = [
 ];
 
 beforeEach(() => {
+  for (const [name, impl] of Object.entries(stubs)) {
+    vi.spyOn(kitTransport, name as "list").mockImplementation(impl as never);
+  }
   manifestState.current = MANIFEST;
   transport.list.mockImplementation(
     async (): Promise<Paginated<Row>> => ({
@@ -265,6 +245,7 @@ beforeEach(() => {
 afterEach(() => {
   cleanup();
   transport.list.mockReset();
+  vi.restoreAllMocks();
 });
 
 function mountLeaf(rows: DashboardRow[]) {
@@ -444,5 +425,101 @@ describe("the {realm}-dashboard leaf through the manifest router", () => {
     const settings = screen.getByRole("link", { name: "Account settings" });
     expect(settings.getAttribute("href")).toBe("/settings/profile");
     expect(settings.hasAttribute("data-inertia-link")).toBe(true);
+  });
+});
+
+// ADR-0222 decision 9 (laravel-beam). A section with an overview seats its nav node on the overview's own list route, at the
+// overview leaf's path, and keeps its children. The shape below is what beam-ux's NavSectionProjector and
+// RouteContextProjector emit for a flagged seat (laravel-beam-ux tests/SectionOverviewTest.php pins that half).
+const overviewLeaf = {
+  routeName: "operator-reports-overview.index",
+  path: "reports",
+  shell: null,
+  lazy: false,
+  guard: null,
+  mounts: "list",
+  resource: "operator-reports-overview",
+} as const;
+
+const seatWith = (routeName: string) => ({
+  kind: "section",
+  title: "Reports",
+  href: "/operator/reports",
+  icon: "chart-bar",
+  routeName,
+  locked: null,
+  children: [
+    {
+      kind: "link",
+      title: "Users",
+      href: "/operator/users",
+      icon: "users",
+      routeName: "users.index",
+      locked: null,
+      children: [],
+    },
+  ],
+});
+
+function withSeat(routeName: string, leaves: RouteContextEntry[]): FrameManifest {
+  return {
+    ...MANIFEST,
+    resources: [...MANIFEST.resources, seat("operator-reports-overview", "Reports", "chart-bar")],
+    contexts: { ...MANIFEST.contexts, "operator-reports-overview": DASHBOARD },
+    nav: { items: [...MANIFEST.nav.items, seatWith(routeName)] },
+    routeContext: [...MANIFEST.routeContext, ...leaves],
+  } as FrameManifest;
+}
+
+function mountSeat(manifest: FrameManifest, rows: DashboardRow[]) {
+  manifestState.current = manifest;
+  transport.rows = rows as unknown as Row[];
+
+  return render(
+    <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
+      <FrameRealmProvider realm="operator" basename="/operator" manifestUrl="/operator/frame/manifest">
+        <TenantFrameProvider>
+          <MemoryRouter basename="/operator" initialEntries={["/operator/reports"]}>
+            <FrameRoutes manifest={manifest} />
+          </MemoryRouter>
+        </TenantFrameProvider>
+      </FrameRealmProvider>
+    </QueryClientProvider>
+  );
+}
+
+describe("a section seat with an overview", () => {
+  it("the Inertia console lands on the overview, not the section index", async () => {
+    const { container } = mountSeat(withSeat(overviewLeaf.routeName, [overviewLeaf]), ROWS);
+
+    await waitFor(() => expect(cells(container)).toHaveLength(ROWS.length));
+    expect(transport.list).toHaveBeenCalledWith("operator-reports-overview", expect.anything());
+    expect(screen.getByRole("heading", { name: "Reports" })).toBeTruthy();
+    expect(screen.queryByText(/surfaces? in this section/)).toBeNull();
+  });
+
+  it("control: the same seat on {key}.section draws the section index, which is what binding the route avoids", async () => {
+    mountSeat(withSeat("reports.section", []), ROWS);
+
+    await screen.findByText(/1 surface in this section/);
+    expect(transport.list).not.toHaveBeenCalled();
+  });
+
+  it("the SPA route builder mounts the overview's leaf at the seat's path through its list verb", () => {
+    const mounted = vi.fn((entry: RouteContextEntry) => (entry.mounts === "list" ? () => <h1>{entry.resource}</h1> : undefined));
+    const routes = buildRealmRoutes([...MANIFEST.routeContext, overviewLeaf], {
+      routes: createRouteRegistry(),
+      guards: createGuardRegistry(),
+      fallback: mounted,
+    });
+    const Tree = () => useRoutes(routes as RouteObject[]);
+
+    render(
+      <MemoryRouter basename="/operator" initialEntries={["/operator/reports"]}>
+        <Tree />
+      </MemoryRouter>
+    );
+
+    expect(screen.getByRole("heading", { name: "operator-reports-overview" })).toBeTruthy();
   });
 });

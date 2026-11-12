@@ -1,3 +1,4 @@
+import { xsrfHeader } from '@schemastud/frame/session';
 import { createFormValidator } from '@schemastud/seam';
 import type { RJSFSchema } from '@rjsf/utils';
 import publicationSchema from './generated/publication.schema.json';
@@ -31,15 +32,15 @@ export const fetchDocs: DocsTransport = async (url, init = {}) => {
     if (init.body !== undefined) headers.set('Content-Type', 'application/json');
 
     if ((init.method ?? 'GET').toUpperCase() !== 'GET') {
-        const cookie = document.cookie.split(';').map((part) => part.trim())
-            .find((part) => part.startsWith('XSRF-TOKEN='));
+        let token: Record<string, string>;
+        try {
+            token = xsrfHeader();
+        } catch {
+            throw new DocsRequestError('Your session token is invalid. Reload this page and try again.');
+        }
         const meta = document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content;
-        if (cookie) {
-            try {
-                headers.set('X-XSRF-TOKEN', decodeURIComponent(cookie.slice('XSRF-TOKEN='.length)));
-            } catch {
-                throw new DocsRequestError('Your session token is invalid. Reload this page and try again.');
-            }
+        if (Object.keys(token).length > 0) {
+            for (const [name, value] of Object.entries(token)) headers.set(name, value);
         } else if (meta) {
             headers.set('X-CSRF-TOKEN', meta);
         }

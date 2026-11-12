@@ -18,6 +18,27 @@ const client: UxBuilderClient = {
   loadBody: async () => envelope,
   saveBody: async () => envelope,
 };
+/**
+ * A call as frame's session request (`@schemastud/frame/session`, ticket 49) puts it on the wire: header names come
+ * back lower-cased, as `Headers` keeps them.
+ */
+function sent(call: unknown[] | undefined) {
+  const [url, init = {}] = (call ?? []) as [string, RequestInit?];
+  return {
+    url,
+    method: init.method,
+    credentials: init.credentials,
+    headers: Object.fromEntries(new Headers(init.headers)),
+    ...(init.body === undefined ? {} : { body: init.body }),
+  };
+}
+/** The session request's headers: JSON, the XHR marker, the token when the cookie has one, the content type with a body. */
+const sessionHeaders = (token: string | null, withBody: boolean) => ({
+  accept: "application/json",
+  "x-requested-with": "XMLHttpRequest",
+  ...(withBody ? { "content-type": "application/json" } : {}),
+  ...(token ? { "x-xsrf-token": token } : {}),
+});
 afterEach(() => {
   configureBeamInertia({});
   vi.unstubAllGlobals();
@@ -30,28 +51,23 @@ it("loads and saves the default body through canonical ID routes with stateful r
   configureBeamInertia({});
 
   expect(await bodyClient.loadBody("entry-uuid")).toEqual(envelope);
-  expect(fetch).toHaveBeenNthCalledWith(1, "/beam-ux-entries/entry-uuid/body", {
-    headers: { Accept: "application/json" },
+  expect(sent(fetch.mock.calls[0])).toEqual({
+    url: "/beam-ux-entries/entry-uuid/body",
+    method: "GET",
     credentials: "same-origin",
+    headers: sessionHeaders("csrf token", false),
   });
 
   fetch.mockResolvedValueOnce(Response.json({ data: envelope }));
   const body = { content: "Retain this draft" };
   expect(await bodyClient.saveBody("entry-uuid", body)).toEqual(envelope);
-  expect(fetch).toHaveBeenNthCalledWith(
-    2,
-    "/beam-ux-entries/entry-uuid/save-body",
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-XSRF-TOKEN": "csrf token",
-        Accept: "application/json",
-      },
-      credentials: "same-origin",
-      body: JSON.stringify({ body }),
-    },
-  );
+  expect(sent(fetch.mock.calls[1])).toEqual({
+    url: "/beam-ux-entries/entry-uuid/save-body",
+    method: "POST",
+    credentials: "same-origin",
+    headers: sessionHeaders("csrf token", true),
+    body: JSON.stringify({ body }),
+  });
 });
 
 it("preserves publication absence on an injected body-only client without using default HTTP", async () => {
@@ -80,12 +96,12 @@ it("uses addressed GET admission and CSRF-protected native component writes", as
   vi.stubGlobal("document", {cookie:"XSRF-TOKEN=component%20token"});
   configureBeamInertia({});
   await bodyClient.componentCapabilities!("component");
-  expect(fetch).toHaveBeenNthCalledWith(1,"/beam-ux-entries/component/component-capabilities",{credentials:"same-origin",headers:{Accept:"application/json"}});
+  expect(sent(fetch.mock.calls[0])).toEqual({url:"/beam-ux-entries/component/component-capabilities",method:"GET",credentials:"same-origin",headers:sessionHeaders("component token",false)});
   const input:Parameters<NonNullable<UxBuilderClient["createComponent"]>>[1]={title:"Card",body:[{kind:"block",name:"section",isComponent:false,dynamic:false,props:[],children:[],component:{name:"Card",props:[]}}]};
   await bodyClient.createComponent!("page",input);
-  expect(fetch).toHaveBeenNthCalledWith(2,"/beam-ux-entries/page/create-component",{method:"POST",credentials:"same-origin",headers:{"Content-Type":"application/json",Accept:"application/json","X-XSRF-TOKEN":"component token"},body:JSON.stringify(input)});
+  expect(sent(fetch.mock.calls[1])).toEqual({url:"/beam-ux-entries/page/create-component",method:"POST",credentials:"same-origin",headers:sessionHeaders("component token",true),body:JSON.stringify(input)});
   await bodyClient.duplicateComponent!("component");
-  expect(fetch).toHaveBeenNthCalledWith(3,"/beam-ux-entries/component/duplicate-component",{method:"POST",credentials:"same-origin",headers:{"Content-Type":"application/json",Accept:"application/json","X-XSRF-TOKEN":"component token"},body:"{}"});
+  expect(sent(fetch.mock.calls[2])).toEqual({url:"/beam-ux-entries/component/duplicate-component",method:"POST",credentials:"same-origin",headers:sessionHeaders("component token",true),body:"{}"});
 });
 
 it("assembles and schedules Releases using the mounted package operations", async () => {
@@ -105,7 +121,7 @@ it("assembles and schedules Releases using the mounted package operations", asyn
   expect(await bodyClient.releaseCommand!("r1", command)).toEqual(release);
   expect(fetch.mock.calls[1][0]).toBe("/beam-ux-releases/r1/command");
   expect(JSON.parse(fetch.mock.calls[1][1].body)).toEqual(command);
-  expect(fetch.mock.calls[1][1].headers["X-XSRF-TOKEN"]).toBe("token");
+  expect(sent(fetch.mock.calls[1]).headers["x-xsrf-token"]).toBe("token");
   fetch.mockResolvedValueOnce(
     Response.json({ data: [release, { id: "old", status: "published" }] }),
   );
@@ -159,19 +175,13 @@ it("requests an author preview URL for one saved version through the stateful pr
   await expect(bodyClient.previewVersion?.("entry-uuid", "version-uuid")).resolves.toEqual({
     url: "https://example.test/signed-preview",
   });
-  expect(fetch).toHaveBeenCalledWith(
-    "/beam-ux-entries/entry-uuid/preview",
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-XSRF-TOKEN": "csrf token",
-        Accept: "application/json",
-      },
-      credentials: "same-origin",
-      body: JSON.stringify({ versionId: "version-uuid" }),
-    },
-  );
+  expect(sent(fetch.mock.calls[0])).toEqual({
+    url: "/beam-ux-entries/entry-uuid/preview",
+    method: "POST",
+    credentials: "same-origin",
+    headers: sessionHeaders("csrf token", true),
+    body: JSON.stringify({ versionId: "version-uuid" }),
+  });
 });
 
 it("clears through the canonical clear-body route, and an injected client without it offers none", async () => {
@@ -192,14 +202,11 @@ it("clears through the canonical clear-body route, and an injected client withou
   configureBeamInertia({});
 
   expect(await bodyClient.clearBody?.("entry-uuid")).toEqual(state);
-  expect(fetch).toHaveBeenCalledWith("/beam-ux-entries/entry-uuid/clear-body", {
+  expect(sent(fetch.mock.calls[0])).toEqual({
+    url: "/beam-ux-entries/entry-uuid/clear-body",
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "X-XSRF-TOKEN": "csrf token",
-      Accept: "application/json",
-    },
     credentials: "same-origin",
+    headers: sessionHeaders("csrf token", true),
     body: JSON.stringify({}),
   });
 
@@ -297,15 +304,13 @@ it("uses the declared Release routes with cookie CSRF and retains absence on cus
   expect(await bodyClient.releaseCommand!("r1", { action: "approve" })).toEqual(
     release,
   );
-  expect(fetch).toHaveBeenCalledWith(
-    "/beam-ux-releases/r1/command",
-    expect.objectContaining({
-      method: "POST",
-      credentials: "same-origin",
-      headers: expect.objectContaining({ "X-XSRF-TOKEN": "release csrf" }),
-      body: JSON.stringify({ action: "approve" }),
-    }),
-  );
+  expect(sent(fetch.mock.calls[0])).toMatchObject({
+    url: "/beam-ux-releases/r1/command",
+    method: "POST",
+    credentials: "same-origin",
+    headers: { "x-xsrf-token": "release csrf" },
+    body: JSON.stringify({ action: "approve" }),
+  });
   fetch.mockResolvedValueOnce(Response.json({ data: [release] }));
   expect(await bodyClient.listReleases!()).toEqual([release]);
   configureBeamInertia({ entryClient: client });
@@ -328,15 +333,13 @@ it("records only the explicitly selected Release through the addressed Files ope
   expect(await bodyClient.recordReleaseFile!("member/id", "r1")).toEqual(
     recording,
   );
-  expect(fetch).toHaveBeenCalledWith(
-    "/beam-ux-release-files/member%2Fid/commit-now",
-    expect.objectContaining({
-      method: "POST",
-      credentials: "same-origin",
-      headers: expect.objectContaining({ "X-XSRF-TOKEN": "recording csrf" }),
-      body: JSON.stringify({ releaseId: "r1" }),
-    }),
-  );
+  expect(sent(fetch.mock.calls[0])).toMatchObject({
+    url: "/beam-ux-release-files/member%2Fid/commit-now",
+    method: "POST",
+    credentials: "same-origin",
+    headers: { "x-xsrf-token": "recording csrf" },
+    body: JSON.stringify({ releaseId: "r1" }),
+  });
   fetch.mockResolvedValueOnce(
     Response.json(
       {
@@ -372,29 +375,23 @@ it("uses captured file preconditions, declared routes and CSRF without silent re
   await bodyClient.inspectReleaseFile!("member/id");
   await bodyClient.takeReleaseFile!("member/id", input);
   await bodyClient.restoreMissingReleaseFile!("member/id", input);
-  expect(fetch).toHaveBeenNthCalledWith(
-    1,
-    "/beam-ux-release-files/member%2Fid/inspect-file",
-    { credentials: "same-origin", headers: { Accept: "application/json" } },
-  );
+  expect(sent(fetch.mock.calls[0])).toEqual({
+    url: "/beam-ux-release-files/member%2Fid/inspect-file",
+    method: "GET",
+    credentials: "same-origin",
+    headers: sessionHeaders("file csrf", false),
+  });
   for (const [position, op] of [
     [2, "take-file-draft"],
     [3, "restore-missing-file"],
   ] as const) {
-    expect(fetch).toHaveBeenNthCalledWith(
-      position,
-      `/beam-ux-release-files/member%2Fid/${op}`,
-      {
-        method: "POST",
-        credentials: "same-origin",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-          "X-XSRF-TOKEN": "file csrf",
-        },
-        body: JSON.stringify(input),
-      },
-    );
+    expect(sent(fetch.mock.calls[position - 1])).toEqual({
+      url: `/beam-ux-release-files/member%2Fid/${op}`,
+      method: "POST",
+      credentials: "same-origin",
+      headers: sessionHeaders("file csrf", true),
+      body: JSON.stringify(input),
+    });
   }
   fetch.mockResolvedValueOnce(
     Response.json({ message: "Published pin moved" }, { status: 409 }),
@@ -458,20 +455,13 @@ it("remirrors one file and takes all release files through the declared routes",
     [1, "remirror-file", input],
     [2, "take-all-drafts", batchInput],
   ] as const) {
-    expect(fetch).toHaveBeenNthCalledWith(
-      position,
-      `/beam-ux-release-files/member%2Fid/${op}`,
-      {
-        method: "POST",
-        credentials: "same-origin",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-          "X-XSRF-TOKEN": "files csrf",
-        },
-        body: JSON.stringify(payload),
-      },
-    );
+    expect(sent(fetch.mock.calls[position - 1])).toEqual({
+      url: `/beam-ux-release-files/member%2Fid/${op}`,
+      method: "POST",
+      credentials: "same-origin",
+      headers: sessionHeaders("files csrf", true),
+      body: JSON.stringify(payload),
+    });
   }
 
   configureBeamInertia({ entryClient: client });
@@ -503,9 +493,7 @@ it('reads live canvas bindings via one addressed stateful POST, with no refusal 
  const fetch=vi.fn().mockResolvedValue(Response.json({data:payload}));vi.stubGlobal('fetch',fetch);
  vi.stubGlobal('document',{cookie:'XSRF-TOKEN=author%20csrf'});
  expect(await bodyClient.canvasBindings?.('entry-id',[],null)).toEqual(payload);
- expect(fetch).toHaveBeenCalledWith('/beam-ux-entries/entry-id/canvas-bindings',{
-  method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json',Accept:'application/json','X-XSRF-TOKEN':'author csrf'},body:JSON.stringify({body:[],recordValue:null}),
- });
+ expect(sent(fetch.mock.calls[0])).toEqual({url:'/beam-ux-entries/entry-id/canvas-bindings',method:'POST',credentials:'same-origin',headers:sessionHeaders('author csrf',true),body:JSON.stringify({body:[],recordValue:null})});
  fetch.mockResolvedValueOnce(Response.json({data:payload}));
  const controller=new AbortController();
  await bodyClient.canvasBindings?.('entry-id',[],null,{signal:controller.signal});

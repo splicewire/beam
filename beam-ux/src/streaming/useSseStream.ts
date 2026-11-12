@@ -10,6 +10,7 @@
  * concern (chat keeps its `foldEvent`; a simpler consumer like circuits writes its own), per
  * ticket 27's finding that only the low-level parsing generalizes, not the reducer.
  */
+import { xsrfHeader } from '@schemastud/frame/session';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { readSse } from '@schemastud/chat/core';
 
@@ -50,27 +51,9 @@ function joinUrl(baseURL: string | undefined, path: string): string {
     return `${baseURL.replace(/\/+$/, '')}/${path.replace(/^\/+/, '')}`;
 }
 
-/**
- * What axios itself sends for a stateful (session-cookie) SPA call that a raw `fetch` does not
- * get for free: the `XSRF-TOKEN` cookie, URL-decoded, as `X-XSRF-TOKEN`. Mirrors
- * `ui/src/lib/api.ts`'s `xsrfHeaders()` — every tenant subdomain is a Sanctum stateful domain and
- * the `api` group runs `EnsureFrontendRequestsAreStateful` first, so a same-origin POST that
- * carries the session cookie but not this header is refused with a 419. Empty when there is no
- * cookie (a token-only client never had one), so the caller can spread it unconditionally.
- * Surfaced by G6-FLAGSHIP-PLAYWRIGHT once the URL join above stopped masking it: fixing the join
- * let the request reach the route for the first time, exposing that this raw fetch — unlike the
- * bespoke chat transport it was generalized from — never carried the XSRF header or credentials.
- */
-function xsrfHeader(): Record<string, string> {
-    if (typeof document === 'undefined') {
-        return {};
-    }
-    const match = document.cookie.match(/(?:^|;\s*)XSRF-TOKEN=([^;]*)/);
-    if (!match || match[1] === '') {
-        return {};
-    }
-    return { 'X-XSRF-TOKEN': decodeURIComponent(match[1]) };
-}
+// The XSRF header comes from frame's session request (ticket 49, `xsrfHeader()`): the Laravel session cookie's token,
+// URL-decoded, which a raw `fetch` does not get for free and a Sanctum stateful route refuses without (419). Empty with
+// no cookie, so the stream spreads it unconditionally. Surfaced by G6-FLAGSHIP-PLAYWRIGHT.
 
 export type SseStreamStatus = 'idle' | 'streaming' | 'done' | 'error';
 

@@ -1,10 +1,10 @@
 import {useState,useMemo,useRef} from 'react';
 import {render,screen,fireEvent,cleanup,within,waitFor} from '@testing-library/react';
 import {beforeEach,afterEach,it,expect,vi} from 'vitest';
-import {FiveRegionEditShell} from '@schemastud/frame';
-import {createWidgetRegistry} from '@schemastud/seam';
+import {FiveRegionEditShell} from '@schemastud/frame/editor';
+import {createWidgetRegistry, type WidgetResolution} from '@schemastud/seam';
 import {CanvasProvider,type CanvasConfig} from './context';
-import {CanvasWidget} from './CanvasWidget';
+import {CanvasWidget, type CanvasWidgetProps} from './CanvasWidget';
 import {BlockInspector} from './BlockInspector';
 import {isJsonBlock,type JsonDoc} from '../blockdoc/json';
 const initial:JsonDoc=[{kind:'block',name:'p',id:'paragraph',dynamic:false,isComponent:false,props:[],children:[{kind:'text',value:'Fallback'}]}];
@@ -15,7 +15,7 @@ beforeEach(()=>vi.stubGlobal('ResizeObserver',class{observe(){}unobserve(){}disc
 afterEach(()=>{cleanup();vi.unstubAllGlobals();});
 function Harness({readOnly=false,change=()=>{},port}:{readOnly?:boolean;change?:(doc:JsonDoc)=>void;port?:CanvasConfig['bindingPreview']}){
  const [doc,setDoc]=useState(initial);const state=useRef({doc,readOnly});state.current={doc,readOnly};
- const registry=useMemo(()=>{const r=createWidgetRegistry();r.registerWidget('canvas',props=><CanvasWidget {...props} value={state.current.doc} readOnly={state.current.readOnly} onChange={next=>{setDoc(next);change(next);}}/>);return r;},[]);
+ const registry=useMemo(()=>{const r=createWidgetRegistry();r.registerWidget('canvas',((props:CanvasWidgetProps)=><CanvasWidget {...props} value={state.current.doc} readonly={state.current.readOnly} onChange={next=>{setDoc(next);change(next);}}/>) as unknown as WidgetResolution);return r;},[]);
  return <CanvasProvider config={{registry:{},profile,bindingPreview:port??{entryId:'page',pagePublic:true}}}><FiveRegionEditShell widget="canvas" schema={{type:'object'}} registry={registry} record={doc as unknown as Record<string,unknown>} inspector={<BlockInspector/>}/><output data-testid="doc">{JSON.stringify(doc)}</output></CanvasProvider>;
 }
 it('handpicks named author-readable Records through the real schema form and existing canvas command',async()=>{

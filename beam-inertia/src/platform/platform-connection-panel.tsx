@@ -1,3 +1,4 @@
+import { createSessionRequest } from '@schemastud/frame/session';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/button';
@@ -103,7 +104,7 @@ export function PlatformConnectionPanel({
     pollIntervalMs = 5000,
 }: Props) {
     const client = useMemo(
-        () => injected ?? createPlatformConnectionClient(endpoints),
+        () => injected ?? createPlatformConnectionClient(createSessionRequest(), endpoints),
         [injected, endpoints],
     );
 

@@ -15,7 +15,9 @@ it('uses save-blocks for canvas writes and preserves the stateful envelope', asy
     const fetch = setup(Response.json({ data: envelope }));
     expect(await bodyClient.saveBlocks!('entry', body)).toEqual(envelope);
     expect(fetch.mock.calls[0][0]).toBe('/beam-ux-entries/entry/save-blocks');
-    expect(fetch.mock.calls[0][1]).toMatchObject({ credentials: 'same-origin', headers: { 'X-XSRF-TOKEN': 'token' }, body: JSON.stringify({ body }) });
+    expect(fetch.mock.calls[0][1]).toMatchObject({ credentials: 'same-origin', body: JSON.stringify({ body }) });
+    // The session request sends a Headers object (ticket 49).
+    expect(new Headers(fetch.mock.calls[0][1].headers).get('X-XSRF-TOKEN')).toBe('token');
 });
 it.each([404, 405])('falls back only for an older host lacking the operation (%s)', async status => {
     const fetch = setup(Response.json({ message: 'Missing operation' }, { status }), Response.json({ data: envelope }));

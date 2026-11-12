@@ -71,7 +71,14 @@ export default defineConfig({
             '@schemastud/ui': schemastud('@schemastud/ui'),
             '@schemastud/seam': schemastud('@schemastud/seam'),
             // The /appshell entry's overlay reads the frame side-panel store; its mode-core types
-            // off mainframe. Resolve both to their built dist (their published entries).
+            // off mainframe. Resolve both to their built dist (their published entries). frame's
+            // subpaths (ruling 02 §8) are listed BEFORE the bare specifier for the same reason as
+            // mainframe's '/os' below: the bare key would otherwise swallow them.
+            '@schemastud/frame/editor': schemastud('@schemastud/frame/editor'),
+            '@schemastud/frame/cards': schemastud('@schemastud/frame/cards'),
+            '@schemastud/frame/picker': schemastud('@schemastud/frame/picker'),
+            '@schemastud/frame/wire': schemastud('@schemastud/frame/wire'),
+            '@schemastud/frame/session': schemastud('@schemastud/frame/session'),
             '@schemastud/frame': schemastud('@schemastud/frame'),
             // The nav primitives the `/docs` layout composes (`<OnThisPage>`); same cross-workspace
             // `file:` link, same second-React hazard, same pin to the built dist.

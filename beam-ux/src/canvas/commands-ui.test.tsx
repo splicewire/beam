@@ -1,11 +1,11 @@
 import {useState,useMemo,useRef} from 'react';
 import {render,screen,fireEvent,cleanup,waitFor,act} from '@testing-library/react';
 import {afterEach,it,expect,vi} from 'vitest';
-import {FiveRegionEditShell} from '@schemastud/frame';
-import {createWidgetRegistry} from '@schemastud/seam';
+import {FiveRegionEditShell} from '@schemastud/frame/editor';
+import {createWidgetRegistry, type WidgetResolution} from '@schemastud/seam';
 import {CanvasProvider} from './context';
 import type {CanvasConfig} from './context';
-import {CanvasWidget} from './CanvasWidget';
+import {CanvasWidget, type CanvasWidgetProps} from './CanvasWidget';
 import {BlockInspector} from './BlockInspector';
 import type {JsonBlock,JsonDoc} from '../blockdoc/json';
 const block=(id:string,color:string):JsonBlock=>({kind:'block',id,name:'div',dynamic:false,isComponent:false,props:[],children:[],style:{layers:[{declarations:{color}}]}});
@@ -14,7 +14,7 @@ afterEach(()=>{cleanup();vi.restoreAllMocks();});
 function Harness({readOnly=false,onChange=()=>{},initial,profile}:{readOnly?:boolean;onChange?:(doc:JsonDoc)=>void;initial?:JsonDoc;profile?:CanvasConfig['profile']}){
  const [doc,setDoc]=useState<JsonDoc>(initial??[block('a','red'),block('b','blue')]);
  const state=useRef({doc,readOnly,onChange});state.current={doc,readOnly,onChange};
- const registry=useMemo(()=>{const r=createWidgetRegistry();r.registerWidget('canvas',props=><CanvasWidget {...props} value={state.current.doc} readOnly={state.current.readOnly} onChange={next=>{setDoc(next);state.current.onChange(next);}}/>);return r;},[]);
+ const registry=useMemo(()=>{const r=createWidgetRegistry();r.registerWidget('canvas',((props:CanvasWidgetProps)=><CanvasWidget {...props} value={state.current.doc} readonly={state.current.readOnly} onChange={next=>{setDoc(next);state.current.onChange(next);}}/>) as unknown as WidgetResolution);return r;},[]);
  return <CanvasProvider config={{...config,profile}}><button onClick={()=>setDoc([block('replacement','yellow')])}>Replace document</button><FiveRegionEditShell widget="canvas" schema={{type:'object'}} registry={registry} record={doc as unknown as Record<string,unknown>} inspector={<BlockInspector/>}/><output data-testid="doc">{JSON.stringify(doc)}</output></CanvasProvider>;
 }
 it('selects several outline blocks and applies one mixed-value style edit',async()=>{

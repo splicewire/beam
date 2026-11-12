@@ -32,18 +32,20 @@
         "test": "vitest run",
         "typecheck": "tsc --noEmit",
         "lint:imports": "node scripts/check-imports.mjs",
-        "prepublishOnly": "npm run build"
+        "prepublishOnly": "pnpm run build"
     },
     "dependencies": {
         "@splicewire/_resources": "file:../../splicewire/_resources"
     },
     "peerDependencies": {
+        "@schemastud/frame": "*",
         "@schemastud/ui": "*",
         "@schemastud/seam": "*",
         "@tanstack/react-query": ">=5",
         "react": ">=18"
     },
     "devDependencies": {
+        "@schemastud/frame": "file:../../schemastud/frame",
         "@schemastud/ui": "file:../../schemastud/ui",
         "@schemastud/seam": "file:../../schemastud/seam",
         "@tanstack/react-query": "^5.62.0",

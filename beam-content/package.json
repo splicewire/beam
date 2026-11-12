@@ -33,7 +33,7 @@
         "test": "vitest run",
         "typecheck": "tsc --noEmit",
         "lint:imports": "node scripts/check-imports.mjs",
-        "prepublishOnly": "npm run build"
+        "prepublishOnly": "pnpm run build"
     },
     "peerDependencies": {
         "@schemastud/blockdoc": "*",

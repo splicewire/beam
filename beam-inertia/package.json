@@ -10,6 +10,10 @@
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
+    },
+    "./frame-readers": {
+      "types": "./dist/frame-readers.d.ts",
+      "import": "./dist/frame-readers.js"
     }
   },
   "sideEffects": false,
@@ -32,7 +36,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "lint:imports": "node scripts/check-imports.mjs",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "pnpm run build"
   },
   "peerDependencies": {
     "@inertiajs/core": "^3.5.0",

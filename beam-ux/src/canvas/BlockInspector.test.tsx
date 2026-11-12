@@ -1,7 +1,7 @@
 import {useEffect,useState} from 'react';
 import {render,screen,fireEvent,cleanup,waitFor} from '@testing-library/react';
 import {afterEach,expect,it,vi} from 'vitest';
-import {FiveRegionEditShell,useEditShellMount} from '@schemastud/frame';
+import {FiveRegionEditShell,useEditShellMount} from '@schemastud/frame/editor';
 import {createWidgetRegistry} from '@schemastud/seam';
 import {BlockInspector} from './BlockInspector';
 import {CanvasProvider,type CanvasConfig} from './context';

@@ -3,6 +3,14 @@ export {
 } from './ApiReference.js';
 export { DocsLayout, docsNavKinds } from './DocsLayout.js';
 export {
+    PhpApiReference, PHP_API_CSS, PHP_API_SYMBOL_PARAM, phpApiIndexUrl, phpApiSymbolUrl, readPhpApiIndex, readPhpApiSymbol,
+    symbolHref, type PhpApiReferenceProps,
+} from './PhpApiReference.js';
+export { safeHref } from './PhpApiProse.js';
+export type {
+    PhpApiIndexData, PhpApiInheritedData, PhpApiMemberData, PhpApiPackageData, PhpApiSymbolData, PhpApiSymbolRowData,
+} from './generated/types.js';
+export {
     RegistryIndexNav, REGISTRY_INDEX_KIND, type RegistryIndexNavNode,
 } from './RegistryIndexNav.js';
 export { REGISTRY_INDEX_CSS } from './registry-index-css.js';

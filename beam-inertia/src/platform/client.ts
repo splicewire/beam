@@ -1,4 +1,4 @@
-import { jsonHeaders } from '../frame/xsrf';
+import type { SessionRequest } from '@schemastud/frame/session';
 import type {
     PlatformConnection,
     PlatformConnectionEndpoints,
@@ -11,6 +11,9 @@ import type {
  * A named port rather than a `fetch` call inline, for the reason the tokens surface already
  * established: a host with its own client runtime (interceptors, an operator tier, an axios
  * instance) substitutes it, and the panel's tests drive it without a network.
+ *
+ * The default client sends through the request it is handed (ticket 48: `(request, endpoints)`); the panel hands it
+ * `createSessionRequest()` from `@schemastud/frame/session`.
  */
 export type PlatformConnectionClient = {
     connect(label: string | null): Promise<PlatformConnection>;
@@ -34,35 +37,14 @@ function unwrap<T>(body: unknown, url: string): T {
 }
 
 export function createPlatformConnectionClient(
+    request: SessionRequest,
     endpoints: PlatformConnectionEndpoints,
 ): PlatformConnectionClient {
+    // A refusal rejects with frame's FrameActionError, whose message is the server's own (a 422's validation message, a
+    // 403's entitlement refusal) ahead of the status, which is what the operator needs to read. An empty body still
+    // posts `{}`, as the operations' declared input expects.
     async function post<T>(url: string, body?: unknown): Promise<T> {
-        const response = await fetch(url, {
-            method: 'POST',
-            credentials: 'same-origin',
-            headers: jsonHeaders(),
-            body: body === undefined ? '{}' : JSON.stringify(body),
-        });
-
-        if (!response.ok) {
-            // The server's own refusal beats a status code every time: a 422 here carries the
-            // validation message and a 403 carries the entitlement refusal, and both are what the
-            // operator needs to read. The status is kept as the fallback for a body that has none.
-            let message = `The request failed (${response.status}).`;
-
-            try {
-                const payload = (await response.json()) as { message?: string };
-                if (typeof payload?.message === 'string' && payload.message !== '') {
-                    message = payload.message;
-                }
-            } catch {
-                // A non-JSON error body (an HTML error page) leaves the status-code fallback standing.
-            }
-
-            throw new Error(message);
-        }
-
-        return unwrap<T>(await response.json(), url);
+        return unwrap<T>((await request('POST', url, undefined, body ?? {})).data, url);
     }
 
     return {

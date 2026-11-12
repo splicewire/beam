@@ -1,0 +1,7 @@
+{
+    "name": "fixture/php-api-h",
+    "autoload": {
+        "psr-4": { "Fixture\\ApiH\\": "src/" },
+        "classmap": ["legacy/"]
+    }
+}

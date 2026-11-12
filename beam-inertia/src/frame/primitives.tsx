@@ -1,5 +1,4 @@
 import type { FramePrimitives } from '@schemastud/frame';
-import { Popover, PopoverContent, PopoverTrigger, SimpleSelect } from '@schemastud/ui';
 import type { ReactNode } from 'react';
 import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/button';
@@ -9,12 +8,9 @@ import { Label } from '../components/ui/label';
 import { Sheet, SheetContent } from '../components/ui/sheet';
 import { Skeleton } from '../components/ui/skeleton';
 
-// This host's binding of frame's FramePrimitives seam to its own shadcn kit — the same seam
-// rushing/audiostud and splicewire bind, against the same component set.
-//
-// Filter controls use the shared UI kit; each resource's advertised capability decides
-// whether Frame renders them. Table rendering is supplied by the list slots.
-const Passthrough = ({ children }: { children?: ReactNode }) => <>{children}</>;
+// This host's seven components, merged by the kit over frame's default `@schemastud/ui` bundle
+// (ruling 02 §3). They are this package's own shadcn copies; the popover and select the filter
+// controls draw come from the default bundle, and the list's table is the `Table` slot.
 
 function FrameSidePanel({
     open,
@@ -34,17 +30,12 @@ function FrameSidePanel({
     );
 }
 
-export const framePrimitives: FramePrimitives = {
+export const framePrimitives: Partial<FramePrimitives> = {
     Button,
     Input,
     Label,
     Badge,
     Skeleton,
-    Popover,
-    PopoverTrigger,
-    PopoverContent,
-    SimpleSelect,
-    Table: Passthrough,
     Dialog: ({
         open,
         onOpenChange,

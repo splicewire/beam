@@ -1,3 +1,4 @@
+import { xsrfHeader } from '@schemastud/frame/session';
 import { createContext, useContext, useRef, useState, type ReactNode } from 'react';
 import { SchemaForm } from '@schemastud/seam';
 import { useOptionalIntakeServices } from './provider';
@@ -29,17 +30,9 @@ export function PublicIntakeProvider({ value, children }: { value: PublicIntakeS
     return <PublicIntakeContext.Provider value={value}>{children}</PublicIntakeContext.Provider>;
 }
 
-/** Read Laravel's `XSRF-TOKEN` cookie, as beam's other mutating transports do. */
-function xsrfToken(): string | undefined {
-    if (typeof document === 'undefined') return undefined;
-    const match = document.cookie.match(/(?:^|;\s*)XSRF-TOKEN=([^;]+)/);
-
-    return match ? decodeURIComponent(match[1]) : undefined;
-}
-
 /**
- * POST a submission to laravel-beam's public intake door (`POST /beam/intake/{schema}`). It sends the CSRF header the
- * other beam transports send, so a host that mounts the door inside its session middleware accepts it too. The door
+ * POST a submission to laravel-beam's public intake door (`POST /beam/intake/{schema}`). It sends frame's session XSRF header
+ * (`xsrfHeader()`, as the other beam transports do), so a host that mounts the door inside its session middleware accepts it too. The door
  * answers 422 with errors keyed by JSON pointer (`/field`, or `''` for the document) and 429 past its throttle.
  */
 export async function submitToIntakeDoor(
@@ -47,11 +40,10 @@ export async function submitToIntakeDoor(
     payload: Record<string, unknown>,
     endpoint = '/beam/intake',
 ): Promise<PublicIntakeResult> {
-    const token = xsrfToken();
     const response = await fetch(`${endpoint}/${encodeURI(captureKey)}`, {
         method: 'POST',
         credentials: 'same-origin',
-        headers: { 'Content-Type': 'application/json', Accept: 'application/json', ...(token ? { 'X-XSRF-TOKEN': token } : {}) },
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json', ...xsrfHeader() },
         body: JSON.stringify(payload),
     });
     if (response.ok) {

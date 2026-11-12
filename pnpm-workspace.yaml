@@ -1,0 +1,22 @@
+# The beam workspace (ticket 34: pnpm, like the rest of the family).
+# TOPOLOGICAL order (leaves first): the root `build` runs the packages in this order, so a package whose build reads a
+# sibling's dist (its types, its entries) comes after that sibling (tests/workspace-build-order.test.mjs).
+packages:
+  - beam-resources
+  - beam-ux-canvas
+  - beam-content
+  - beam-ux-prototype
+  - beam-mainframe
+  - beam-workflows
+  - beam-ux
+  - beam-mdx
+  - beam-accounts
+  - beam-docs
+  - beam-market
+  - beam-transforms
+  - beam-calendar
+  - beam-versioning
+  - beam-ingest
+  - beam-intake
+  - beam-inertia
+  - beam-embed

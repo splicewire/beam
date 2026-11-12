@@ -6,7 +6,11 @@ import { configureBeamInertia } from '../config';
 import { PageEditor } from './page-editor';
 import AuthEntry from '../pages/auth/entry';
 
-const pageProps = vi.hoisted(() => ({ auth: { canAuthorUx: true, user: { id: "author" } } }));
+const pageProps = vi.hoisted(() => ({
+    auth: { canAuthorUx: true, user: { id: "author" } },
+    brand: undefined as undefined | { name: string; logo: null; titleTemplate: null; legalEntity: null; passkeyCopy: string },
+    name: undefined as undefined | string,
+}));
 
 vi.mock('@inertiajs/react', () => ({
     usePage: () => ({ props: pageProps }),
@@ -61,6 +65,8 @@ const historyClient = () => ({
 
 afterEach(() => {
     pageProps.auth.canAuthorUx = true;
+    pageProps.brand = undefined;
+    pageProps.name = undefined;
     cleanup();
     __resetEditMode();
     configureBeamInertia({});
@@ -256,4 +262,40 @@ it('refuses to mount the inline editor when the entry has no Publication Pin', a
     expect((await screen.findByRole('alert')).textContent).toContain('Publication Pin');
     expect(screen.queryByRole('button', { name: 'Save draft' })).toBeNull();
     expect(screen.queryByRole('button', { name: 'Publish' })).toBeNull();
+});
+
+/**
+ * Launch ticket 05 slice 4 (owner ruling, option A): the editor bar names the host's app (the shared `brand`, from
+ * APP_NAME through `Brand::for()`) with a monogram mark, and the package spells no brand of its own.
+ */
+const openEditor = async () => {
+    configureBeamInertia({ entryClient: { ...historyClient(), loadBody: async () => envelope, saveBody: async () => envelope } });
+    const view = render(<PageEditor slug="home" entryId="a" />);
+    await act(async () => {
+        window.dispatchEvent(new CustomEvent('beam-ux:mode', { detail: { mode: 'window' } }));
+    });
+
+    return view.container;
+};
+
+it("names the host's app in the editor bar, with its monogram", async () => {
+    pageProps.brand = { name: 'Acme', logo: null, titleTemplate: null, legalEntity: null, passkeyCopy: '' };
+    const bar = await openEditor();
+
+    expect(bar.querySelector('.pe-brand')?.textContent).toBe('AAcme · editor');
+    expect(bar.querySelector('.pe-mark')?.textContent).toBe('A');
+});
+
+it('falls back to the shared app name when a host shares no brand yet', async () => {
+    pageProps.name = 'Satellite';
+    const bar = await openEditor();
+
+    expect(bar.querySelector('.pe-brand')?.textContent).toBe('SSatellite · editor');
+});
+
+it('spells no brand of its own in the default editor chrome', async () => {
+    const bar = await openEditor();
+
+    expect(bar.querySelector('.pe-bar')?.textContent).not.toMatch(/beam-starter|Beam Starter|Laravel/);
+    expect(bar.querySelector('.pe-brand')?.textContent).toBe('editing · home');
 });

@@ -7,7 +7,7 @@ import {
     ListShell,
     EditShell,
 } from '@schemastud/frame';
-import type { RealmRouteObject, RouteContextEntry } from '@schemastud/frame';
+import type { ManifestLookup, RealmRouteObject, ResourceKey, RouteContextEntry } from '@schemastud/frame';
 import type { ReactNode } from 'react';
 import { useMemo } from 'react';
 import { useParams, useRoutes } from 'react-router';
@@ -15,7 +15,7 @@ import { createFrameGuards } from './guards';
 import { frameIcon } from './icons';
 import type { FrameManifest, FrameNavNode } from './manifest';
 import { realmHref, realmRelative, useFrameRealm } from './realm';
-import { formFromManifest, labelFromManifest, manifestLookup } from './manifest';
+import { formFromManifest, labelFromManifest } from './manifest';
 
 /**
  * The tenant realm's CLIENT router — the half `/frame/manifest`'s `routeContext` has always been
@@ -141,9 +141,11 @@ export function FrameRoutes({ manifest }: { manifest: FrameManifest }) {
 
     const routes = useMemo<RealmRouteObject[]>(() => {
         const declined = new Map<string, string>();
-        // The ONE lookup, built once per manifest: the dispatcher's `manifestFor`, the list leaves'
-        // own context block below, and the provider's injection all read the same table.
-        const manifestFor = manifestLookup(manifest);
+        // The manifest this router is handed is the realm kit's (the console reads it through
+        // `useFrameManifest`), so this lookup and the injection's `manifestFor` read one table.
+        const manifestFor: ManifestLookup = (resource) => manifest.contexts[resource];
+        // `routeContext` and `nav` are served only where a nav contributor is bound (laravel-beam-ux).
+        const routeContext = manifest.routeContext ?? [];
 
         const dispatch = createMountDispatcher({
             // A hook, called during the dispatched component's render — exactly how the dispatcher
@@ -167,13 +169,14 @@ export function FrameRoutes({ manifest }: { manifest: FrameManifest }) {
         // and create destinations the foundation cannot know.
         const routeRegistry = createRouteRegistry();
 
-        for (const entry of manifest.routeContext) {
+        for (const entry of routeContext) {
             if (entry.mounts !== 'list' || !entry.resource) {
                 continue;
             }
 
-            const resource = entry.resource;
-            const twin = manifest.routeContext.find(
+            // The key arrives off the wire; cast once here, so every shell below takes a `ResourceKey`.
+            const resource = entry.resource as ResourceKey;
+            const twin = routeContext.find(
                 (candidate) =>
                     candidate.resource === resource &&
                     candidate.shell === entry.shell &&
@@ -182,7 +185,7 @@ export function FrameRoutes({ manifest }: { manifest: FrameManifest }) {
             const stem = entry.routeName.endsWith('.index')
                 ? entry.routeName.slice(0, -'.index'.length)
                 : resource;
-            const create = manifest.routeContext.find(
+            const create = routeContext.find(
                 (candidate) =>
                     candidate.resource === resource &&
                     candidate.shell === entry.shell &&
@@ -245,7 +248,7 @@ export function FrameRoutes({ manifest }: { manifest: FrameManifest }) {
             }
         }
 
-        const generated = buildRealmRoutes(manifest.routeContext, {
+        const generated = buildRealmRoutes(routeContext, {
             routes: routeRegistry,
             // Every guard key a realm stamps is bound (the operator realm's `root`), so a guarded leaf never renders
             // unguarded and never trips Frame's fail-closed refusal for an unregistered guard.
@@ -275,7 +278,7 @@ export function FrameRoutes({ manifest }: { manifest: FrameManifest }) {
 
         // Wrap every generated leaf in its manifest-declared heading.
         const byPath = new Map(
-            manifest.routeContext.map((entry) => [entry.path, entry]),
+            routeContext.map((entry) => [entry.path, entry]),
         );
         const titled = generated.map((leaf) => {
             const entry = byPath.get(leaf.path);
@@ -298,8 +301,8 @@ export function FrameRoutes({ manifest }: { manifest: FrameManifest }) {
         // an href and no children, and these landings are matched BEFORE the generated leaves — so
         // without this exclusion `SectionIndex` won the match and rendered "0 surfaces in this
         // section" where the cards belonged (measured at beam.test 2026-09-14).
-        const bound = new Set(manifest.routeContext.map((entry) => entry.routeName));
-        const sections: RealmRouteObject[] = manifest.nav.items
+        const bound = new Set(routeContext.map((entry) => entry.routeName));
+        const sections: RealmRouteObject[] = (manifest.nav?.items ?? [])
             .filter(
                 (item): item is FrameNavNode & { href: string } =>
                     typeof item.href === 'string' &&

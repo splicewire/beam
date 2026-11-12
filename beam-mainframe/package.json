@@ -32,7 +32,7 @@
         "dev": "tsup --watch",
         "test": "vitest run --passWithNoTests",
         "typecheck": "tsc --noEmit",
-        "prepublishOnly": "npm run build"
+        "prepublishOnly": "pnpm run build"
     },
     "peerDependencies": {
         "react": ">=18"

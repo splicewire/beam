@@ -4,7 +4,7 @@
 // DataTransfer under TEMPLATE_DATA_KEY — a cross-tree drag (this pane is a REACT SIBLING of the
 // canvas widget under FiveRegionEditShell, not an ancestor/descendant) has no shared React state to
 // use instead, so CanvasWidget's onDrop reads it straight off the browser event.
-import { useEditShellMount } from '@schemastud/frame';
+import { useEditShellMount } from '@schemastud/frame/editor';
 import { TEMPLATE_DATA_KEY } from './CanvasWidget.js';
 
 interface Candidate {

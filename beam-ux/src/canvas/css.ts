@@ -80,7 +80,7 @@ export function veCss(t?: Partial<CanvasTheme>): string {
 .ve-root{position:fixed;inset:0;z-index:2147483100;display:flex;flex-direction:column;background:${c.rootBg};font-family:${c.fontBody}}
 .ve-bar{display:flex;align-items:center;gap:16px;height:40px;flex:none;padding:0 16px;background:${c.panelBg};color:${c.panelFg};border-bottom:1px solid rgba(255,255,255,.08);font-family:${c.fontBody};font-size:11px;letter-spacing:.06em}
 .ve-brand{display:flex;align-items:center;gap:8px;color:#fff}
-.ve-mark{width:15px;height:15px;border-radius:23%;background:${c.accent}}
+.ve-mark{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:23%;background:${c.accent};color:inherit;font:600 10px/1 ${c.fontBody};letter-spacing:0}
 .ve-hint{color:${c.muted}}
 .ve-spacer{flex:1}
 .ve-toggle{background:none;border:1px solid rgba(255,255,255,.14);border-radius:8px;color:${c.panelFg};cursor:pointer;font:inherit;font-size:11px;padding:5px 11px}
@@ -116,16 +116,16 @@ export function veCss(t?: Partial<CanvasTheme>): string {
 .ve-canvas .ve-opaque{position:relative}
 .ve-opaque-src{margin:0;padding:10px 12px;background:rgba(0,0,0,.05);border:1px dashed rgba(0,0,0,.18);border-radius:8px;font-family:${c.fontMono};font-size:11px;white-space:pre-wrap;color:color-mix(in srgb, ${c.ink} 70%, ${c.canvas});overflow:auto}
 .ve-mdx-block{position:relative}
-.ve-mdx-handle{display:inline-flex;align-items:center;gap:6px;cursor:pointer;font:10px ${c.fontMono};letter-spacing:.1em;text-transform:uppercase;color:color-mix(in srgb, ${c.ink} 70%, ${c.canvas});background:rgba(0,0,0,.05);border:1px solid rgba(0,0,0,.14);border-radius:6px;padding:3px 9px;margin-bottom:8px;user-select:none}
+.ve-mdx-handle{display:inline-flex;align-items:center;gap:6px;cursor:pointer;font:600 10px ${c.fontBody};letter-spacing:.1em;text-transform:uppercase;color:color-mix(in srgb, ${c.ink} 70%, ${c.canvas});background:rgba(0,0,0,.05);border:1px solid rgba(0,0,0,.14);border-radius:6px;padding:3px 9px;margin-bottom:8px;user-select:none}
 .ve-mdx-handle:hover{color:${c.accentHover};border-color:${c.accent}80}
 .beam-content-ref{border:1px solid rgba(0,0,0,.14);border-radius:10px;overflow:hidden;margin:12px 0;background:#fff}
 .beam-content-ref-bar{display:flex;align-items:center;gap:8px;padding:6px 10px;background:rgba(0,0,0,.04);border-bottom:1px solid rgba(0,0,0,.1)}
-.beam-content-ref-tag{font:10px ${c.fontMono};letter-spacing:.1em;text-transform:uppercase;color:color-mix(in srgb, ${c.ink} 70%, ${c.canvas})}
-.beam-content-ref-pick{margin-left:auto;font:11px ${c.fontMono};color:${c.ink};background:${c.canvas};border:1px solid rgba(0,0,0,.16);border-radius:6px;padding:3px 6px;max-width:220px}
+.beam-content-ref-tag{font:600 10px ${c.fontBody};letter-spacing:.1em;text-transform:uppercase;color:color-mix(in srgb, ${c.ink} 70%, ${c.canvas})}
+.beam-content-ref-pick{margin-left:auto;font:11px ${c.fontBody};color:${c.ink};background:${c.canvas};border:1px solid rgba(0,0,0,.16);border-radius:6px;padding:3px 6px;max-width:220px}
 .beam-content-ref-body{padding:12px 14px;color:${c.ink}}
 /* mdxeditor popups (link dialog, selects) must sit ABOVE the fixed editor panels. */
 .mdxeditor-popup-container{z-index:2147483600 !important}
-.ve-canvas .ve-island::before,.pe-canvas .ve-island::before{content:"◆ component";position:absolute;top:0;left:0;z-index:5;background:${c.panelBg};color:${c.muted};font:10px ${c.fontMono};letter-spacing:.1em;padding:2px 6px;border-radius:0 0 6px 0;opacity:0;pointer-events:none}
+.ve-canvas .ve-island::before,.pe-canvas .ve-island::before{content:"◆ component";position:absolute;top:0;left:0;z-index:5;background:${c.panelBg};color:${c.muted};font:10px ${c.fontBody};letter-spacing:.1em;padding:2px 6px;border-radius:0 0 6px 0;opacity:0;pointer-events:none}
 .ve-canvas .ve-island:hover::before,.pe-canvas .ve-island:hover::before{opacity:.9}
 .ve-canvas .ve-gated::before,.pe-canvas .ve-gated::before{content:"sealed"}
 .ve-canvas .ve-gated::after,.pe-canvas .ve-gated::after{content:"";position:absolute;inset:0;z-index:4;outline:1.5px dashed #E0A030;outline-offset:-1px;pointer-events:none}
@@ -235,7 +235,7 @@ export function peCss(t?: Partial<CanvasTheme>): string {
 .pe-page-settings-fields label{display:grid;gap:4px}
 .pe-page-settings-fields input,.pe-page-settings-fields select{box-sizing:border-box;width:100%;min-width:0;padding:6px 8px;border:1px solid rgba(255,255,255,.24);border-radius:4px;background:${c.rootBg};color:${c.panelFg};font:inherit}
 .pe-brand{display:flex;align-items:center;gap:8px;color:#fff}
-.pe-mark{width:14px;height:14px;border-radius:23%;background:${c.accent}}
+.pe-mark{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:23%;background:${c.accent};color:inherit;font:600 10px/1 ${c.fontBody};letter-spacing:0}
 .pe-btn{background:none;border:1px solid rgba(255,255,255,.16);border-radius:8px;color:${c.panelFg};cursor:pointer;font:inherit;font-size:11px;padding:5px 12px}
 .pe-btn:hover{color:#fff;border-color:${c.accent}80}
 .pe-btn:disabled{opacity:.35;cursor:not-allowed}
