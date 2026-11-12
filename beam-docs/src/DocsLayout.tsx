@@ -5,14 +5,15 @@ import { docsConfiguration } from './config.js';
 import { REGISTRY_INDEX_KIND, RegistryIndexNav } from './RegistryIndexNav.js';
 import { DOCS_LAYOUT_CSS } from './layout-css.js';
 import type { ChromeProps } from '@splicewire/beam-ux/docs';
+import { DocsBreadcrumb } from './DocsBreadcrumb.js';
 import { DocsHeader } from './DocsHeader.js';
 import { ThemeDocsStyle } from './ThemeDocsStyle.js';
 import { HeadingAnchors } from './HeadingAnchors.js';
 import type { DocsChromeData } from './generated/types.js';
 
 /**
- * `DocsLayout` — the docs chrome, out of the box: header slot · breadcrumb slot · rail · main ·
- * on-this-page.
+ * `DocsLayout` — the docs chrome, out of the box: header slot · breadcrumb (packaged `DocsBreadcrumb`, or the
+ * host's slot) · rail · main · on-this-page.
  *
  * ## Why the package ships this
  *
@@ -120,7 +121,17 @@ export function DocsLayout({ nav, linkComponent, currentHref, slots, classNames,
                 </aside>
 
                 <main id={mainId} ref={setMain} className={[DEFAULTS.main, classNames?.main].filter(Boolean).join(' ')}>
-                    {slots?.breadcrumb}
+                    {/* A host's `slots.breadcrumb` replaces the packaged trail; an explicit `null` (or `false`) draws none. */}
+                    {slots?.breadcrumb !== undefined ? (
+                        slots.breadcrumb
+                    ) : (
+                        <DocsBreadcrumb
+                            items={nav?.items ?? []}
+                            currentHref={currentHref}
+                            linkComponent={linkComponent}
+                            className={classNames?.breadcrumb}
+                        />
+                    )}
                     {children}
                 </main>
 

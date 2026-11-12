@@ -24,6 +24,12 @@ embed `DocsPublishingPanel` in an existing authorized operator page.
 Update imports from `@splicewire/beam-ux/site` to `@splicewire/beam-docs`. `DocsLayout` and
 `DOCS_LAYOUT_CSS` also move here; other exports from `@splicewire/beam-ux/docs` stay in place.
 
+`DocsLayout` draws a breadcrumb above every page, `DocsBreadcrumb`: the page's ancestors in the navigation tree
+the layout already receives (the same tree as the rail, so the two agree), then the page, unlinked. A group
+heading is a crumb without a link, the site's home is left out, and the docs root draws none. A host's
+`slots.breadcrumb` replaces it; `slots: { breadcrumb: null }` draws none. Its rules are structural only
+(`.beam-docs-breadcrumb`, `--beam-docs-breadcrumb-gap`); add classes with `classNames.breadcrumb`.
+
 Standalone `ApiReference` makes no Registry-link request. `configureDocs()` enables
 `/beam/docs/registry-link`; that server endpoint returns `{ data: { url: string | null } }` according
 to successful publication and current display/access policy. Set `registryLinkEndpoint: null` to

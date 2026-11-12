@@ -2,6 +2,7 @@ export {
     ApiReference, SCALAR_CDN_URL, type ApiReferenceFactory, type ApiReferenceProps,
 } from './ApiReference.js';
 export { DocsLayout, docsNavKinds } from './DocsLayout.js';
+export { DocsBreadcrumb, docsTrail } from './DocsBreadcrumb.js';
 export {
     PhpApiReference, PHP_API_CSS, PHP_API_SYMBOL_PARAM, phpApiIndexUrl, phpApiSymbolUrl, readPhpApiIndex, readPhpApiSymbol,
     symbolHref, type PhpApiReferenceProps,
