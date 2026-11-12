@@ -2,6 +2,7 @@ export {
     ApiReference, SCALAR_CDN_URL, type ApiReferenceFactory, type ApiReferenceProps,
 } from './ApiReference.js';
 export { DocsLayout, docsNavKinds } from './DocsLayout.js';
+export { DocsBreadcrumb, docsTrail } from './DocsBreadcrumb.js';
 export {
     RegistryIndexNav, REGISTRY_INDEX_KIND, type RegistryIndexNavNode,
 } from './RegistryIndexNav.js';

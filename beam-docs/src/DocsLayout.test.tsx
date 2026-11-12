@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it } from 'vitest';
 import {
     clearChromeRegistry, configureEntryPage, entryPageConfig, registerLayout, resetEntryPageConfig,
@@ -237,4 +237,67 @@ it('keeps absent and malformed docs themes inert and refuses CSS declaration inj
         } } }}>Content</DocsLayout>,
     );
     expect(container.querySelector('[data-beam-docs-theme]')).toBeNull();
+});
+
+// owner-review-20261112 07: the packaged trail, read from the whole nav tree (the rail keeps only the section's children).
+describe('DocsLayout breadcrumb', () => {
+    const nav = { items: [
+        { title: 'Home', href: '/' },
+        { title: 'Pricing', href: '/pricing' },
+        { title: 'Docs', href: '/docs', children: [
+            { title: 'Get started', children: [
+                { title: 'API keys', href: '/docs/api-keys' },
+                { title: 'Webhooks', href: '/docs/webhooks' },
+            ] },
+        ] },
+    ] };
+    const trail = () => screen.queryByRole('navigation', { name: 'Breadcrumb' });
+
+    it('shows a nested page its trail: the section linked, the group as text, the page current and unlinked', () => {
+        render(<DocsLayout {...props} nav={nav} currentHref="/docs/api-keys"><p>Guide</p></DocsLayout>);
+
+        const crumbs = Array.from(trail()!.querySelectorAll('li')).map((li) => li.textContent);
+        expect(crumbs).toEqual(['Docs', 'Get started', 'API keys']);
+        expect(within(trail()!).getByRole('link', { name: 'Docs' }).getAttribute('href')).toBe('/docs');
+        expect(within(trail()!).queryByRole('link', { name: 'Get started' })).toBeNull();
+        expect(within(trail()!).queryByRole('link', { name: 'API keys' })).toBeNull();
+        expect(within(trail()!).getByText('API keys').getAttribute('aria-current')).toBe('page');
+        // The site's home is the header's to link; another top-level section never joins the trail.
+        expect(within(trail()!).queryByText('Home')).toBeNull();
+        expect(within(trail()!).queryByText('Pricing')).toBeNull();
+    });
+
+    it('draws its links with the host link component', () => {
+        const HostLink = ({ href, children }: { href: string; children?: React.ReactNode }) => <a href={href} data-host-link="">{children}</a>;
+        render(<DocsLayout {...props} nav={nav} currentHref="/docs/webhooks" linkComponent={HostLink}><p>Guide</p></DocsLayout>);
+
+        expect(within(trail()!).getByRole('link', { name: 'Docs' }).hasAttribute('data-host-link')).toBe(true);
+    });
+
+    it('shows none on the docs root', () => {
+        render(<DocsLayout {...props} nav={nav} currentHref="/docs"><p>Index</p></DocsLayout>);
+
+        expect(trail()).toBeNull();
+    });
+
+    it('yields to the host slot, and an explicit empty slot draws none', () => {
+        const { rerender } = render(
+            <DocsLayout {...props} nav={nav} currentHref="/docs/api-keys" slots={{ breadcrumb: <p>Host trail</p> }}>
+                <p>Guide</p>
+            </DocsLayout>,
+        );
+        expect(screen.getByText('Host trail')).toBeTruthy();
+        expect(trail()).toBeNull();
+
+        rerender(<DocsLayout {...props} nav={nav} currentHref="/docs/api-keys" slots={{ breadcrumb: null }}><p>Guide</p></DocsLayout>);
+        expect(trail()).toBeNull();
+        expect(screen.queryByText('Host trail')).toBeNull();
+    });
+
+    it('keeps the section for a page the nav does not list, without marking the section current', () => {
+        render(<DocsLayout {...props} nav={nav} currentHref="/docs/unlisted"><p>Guide</p></DocsLayout>);
+
+        expect(within(trail()!).getByRole('link', { name: 'Docs' })).toBeTruthy();
+        expect(trail()!.querySelector('[aria-current]')).toBeNull();
+    });
 });

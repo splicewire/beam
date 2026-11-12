@@ -20,6 +20,13 @@ export const DOCS_LAYOUT_CSS = `
 .beam-docs-main table { display: block; max-width: 100%; overflow-x: auto; }
 .beam-docs-aside { width: var(--beam-docs-aside, 14rem); flex: none; }
 
+/* The packaged trail (owner-review-20261112 07): one wrapping row, a separator drawn between crumbs, no colour named. */
+.beam-docs-breadcrumb { margin-block-end: var(--beam-docs-breadcrumb-gap, 1.5rem); font-size: 0.875rem; }
+.beam-docs-breadcrumb ol { display: flex; flex-wrap: wrap; align-items: center; gap: 0.375rem; margin: 0; padding: 0; list-style: none; }
+.beam-docs-breadcrumb li { display: inline-flex; align-items: center; gap: 0.375rem; min-width: 0; }
+.beam-docs-breadcrumb li + li::before { content: '/'; opacity: 0.5; }
+.beam-docs-breadcrumb [aria-current='page'] { font-weight: 500; }
+
 /* The two side columns are the first thing to go on a narrow viewport: a rail and an on-this-page
    column beside a reading measure is three columns in the width of one. The rail's content is still
    reachable — it is the same projection the site nav renders from (ADR-0210 §5, one payload). */
