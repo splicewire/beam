@@ -1,6 +1,6 @@
 {
   "name": "@splicewire/beam-embed",
-  "version": "0.1.8",
+  "version": "0.1.9",
   "description": "Portable embed privacy and retention controls.",
   "license": "MIT",
   "type": "module",
