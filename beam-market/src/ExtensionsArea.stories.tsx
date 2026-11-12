@@ -30,6 +30,7 @@ const listing: MarketExtension = {
   // ux-demo-convergence G5 — no provenance: a listing this host published itself.
   marketName: null,
   syncedAt: null,
+  installMediated: false,
 };
 const installed: InstalledExtension = {
   installId: "installed-uuid",

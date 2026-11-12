@@ -50,6 +50,7 @@ const CATALOG: ExtensionsCatalogRead = {
       changelog: [],
       marketName: null,
       syncedAt: null,
+      installMediated: false,
       createdAt: "2026-08-01T00:00:00Z",
     },
     {
@@ -70,6 +71,7 @@ const CATALOG: ExtensionsCatalogRead = {
       changelog: [],
       marketName: null,
       syncedAt: null,
+      installMediated: false,
       createdAt: "2026-08-01T00:00:00Z",
     },
   ],

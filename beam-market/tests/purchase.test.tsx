@@ -48,6 +48,7 @@ const PAID: MarketExtension = {
   changelog: [],
   marketName: null,
   syncedAt: null,
+  installMediated: false,
   createdAt: "2026-09-01T00:00:00Z",
 };
 
@@ -387,7 +388,6 @@ it.each([
     if (listing.isFree || listing.isEntitled) {
       const install = await screen.findByRole<HTMLButtonElement>("button", {
         name: "Install",
-        exact: true,
       });
       expect(install.disabled).toBe(!allowed);
     } else await screen.findByRole("button", { name: "Buy $19.00" });
@@ -409,7 +409,6 @@ it("preserves one-argument operator permission for a free listing", async () => 
     (
       await screen.findByRole<HTMLButtonElement>("button", {
         name: "Install",
-        exact: true,
       })
     ).disabled,
   ).toBe(false);
