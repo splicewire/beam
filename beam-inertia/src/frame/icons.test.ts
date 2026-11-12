@@ -54,6 +54,26 @@ describe('frameIcon', () => {
         expect(frameIcon(kebab)).toBe(frameIcon(name));
     });
 
+    // owner-review-20261112 08: the names the flagship's manifest dumps carried unmapped (Guest Links, Privacy, Activity,
+    // Grounding, Silos, the Exec board), as the wire spells them. Each drew the dot before this map held it.
+    it.each([
+        ['book-open-check', 'BookOpenCheck'],
+        ['box', 'Box'],
+        ['code', 'Code'],
+        ['eye-off', 'EyeOff'],
+        ['folder-tree', 'FolderTree'],
+        ['history', 'History'],
+        ['share-2', 'Share2'],
+        ['circle-dollar-sign', 'CircleDollarSign'],
+        ['pie-chart', 'PieChart'],
+        ['presentation', 'Presentation'],
+        ['trending-up', 'TrendingUp'],
+        ['triangle-alert', 'TriangleAlert'],
+    ])('maps %s and %s to one icon', (kebab, pascal) => {
+        expect(frameIcon(pascal)).not.toBe(Circle);
+        expect(frameIcon(kebab)).toBe(frameIcon(pascal));
+    });
+
     it('falls back to the neutral dot for an unmapped or missing name', () => {
         expect(frameIcon('not-an-icon')).toBe(Circle);
         expect(frameIcon(null)).toBe(Circle);
