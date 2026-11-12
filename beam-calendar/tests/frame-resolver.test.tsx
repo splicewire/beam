@@ -3,14 +3,14 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import {
     DefaultFormBody,
-    FrameProvider,
     createFormResolver,
     createFormIntentBus,
+    createFrameKit,
     type FormBodySlotProps,
-    type FrameInjection,
     type Row,
     type SchemaNode,
 } from '@schemastud/frame';
+import { createMemoryTransport } from '@schemastud/frame/testing';
 import { describe, expect, it, vi } from 'vitest';
 import {
     CalendarCellForm,
@@ -24,7 +24,7 @@ import {
 /**
  * The resolver bar (frame-canonical-forms ticket 03) — the isolation proof that the rehomed cell
  * form renders THROUGH `@schemastud/frame`'s `DefaultFormBody` → form resolver, with NO app. This is
- * the twin of the app's prod wiring: a FrameInjection whose `formResolver` registers the cell form
+ * the twin of the app's prod wiring: a frame kit whose `formResolver` registers the cell form
  * against its `composition-ref` / `series` kinds, and a `DefaultFormBody` handed a schema whose `$id`
  * terminates in `composition-ref` + a cell record as `formData`. If DefaultFormBody mounts the
  * bespoke form (not a generic schema dump) and its injected client saves, the seam is proven.
@@ -84,20 +84,18 @@ function CellFormBody({ formData, onSubmit, registerSubmit }: FormBodySlotProps)
 }
 
 /** A Frame host whose resolver maps the two calendar cell kinds to the bespoke form. */
-function frameInjection(): FrameInjection {
-    const formResolver = createFormResolver();
-    formResolver.registerFormForSchema('series', CellFormBody);
-    formResolver.registerFormForSchema('composition-ref', CellFormBody);
-    // Only `formResolver` is reached on DefaultFormBody's canonical path.
-    return { formResolver } as unknown as FrameInjection;
-}
+const formResolver = createFormResolver();
+formResolver.registerFormForSchema('series', CellFormBody);
+formResolver.registerFormForSchema('composition-ref', CellFormBody);
+// The kit's defaults, except the resolver and an in-memory transport (the test has no laravel-frame socket).
+const frame = createFrameKit({ transport: createMemoryTransport(), formResolver });
 
 function mountThroughResolver(services: CalendarCellFormServices, kindUrl: string, formData: Row) {
     const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     return render(
         <QueryClientProvider client={qc}>
             <CalendarCellFormProvider services={services}>
-                <FrameProvider value={frameInjection()}>
+                <frame.Provider>
                     <DefaultFormBody
                         schema={{ $id: kindUrl, type: 'object' } as SchemaNode}
                         formData={formData}
@@ -108,7 +106,7 @@ function mountThroughResolver(services: CalendarCellFormServices, kindUrl: strin
                         onChange={() => {}}
                         onSubmit={() => {}}
                     />
-                </FrameProvider>
+                </frame.Provider>
             </CalendarCellFormProvider>
         </QueryClientProvider>,
     );
