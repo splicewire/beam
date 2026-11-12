@@ -10,9 +10,12 @@ name: CI
 #   beam/                    this repository
 #   schemastud/              schemastud/js (public), built: npm workspaces plus big-calendar (not a workspace)
 #   splicewire/_resources/   splicewire/_resources (PRIVATE; types only, no build)
+#   php/laravel-beam-docs/   splicewire/laravel-beam-docs (public), composer-installed: its vendor/bin/testbench is
+#                            beam-docs' contract producer (BEAM_DOCS_ARTISAN), so contracts:check runs for real (57)
 #
 # Reading the private sibling needs the repository secret SIBLINGS_READ_TOKEN: a fine-grained token with
-# contents:read on splicewire/_resources only. Pull requests from forks do not receive it.
+# contents:read on splicewire/_resources only. Pull requests from forks do not receive it. No sibling checkout keeps
+# its credentials (persist-credentials: false), so no token stays in Git config while the job runs PR code.
 #
 # This tests beam against its siblings' main: a red can come from a sibling's landing. The released versions are
 # checked by tools/js-release/release-package's clean rooms, not here. This workflow publishes nothing and does not
@@ -44,6 +47,7 @@ jobs:
           repository: schemastud/js
           ref: main
           path: schemastud
+          persist-credentials: false
 
       - name: Check out splicewire/_resources (private sibling, main)
         uses: actions/checkout@v4
@@ -52,6 +56,15 @@ jobs:
           ref: main
           path: splicewire/_resources
           token: ${{ secrets.SIBLINGS_READ_TOKEN }}
+          persist-credentials: false
+
+      - name: Check out splicewire/laravel-beam-docs (sibling, main; beam-docs' contract producer)
+        uses: actions/checkout@v4
+        with:
+          repository: splicewire/laravel-beam-docs
+          ref: main
+          path: php/laravel-beam-docs
+          persist-credentials: false
 
       - uses: actions/setup-node@v4
         with:
@@ -67,6 +80,17 @@ jobs:
           npm run build
           npm run build:big-calendar
 
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          tools: composer:v2
+          coverage: none
+
+      - name: Install laravel-beam-docs (the contract producer)
+        working-directory: php/laravel-beam-docs
+        # laravel-beam-docs commits no composer.lock, so this resolves its dev-main requirements at run time.
+        run: composer install --no-interaction --no-progress
+
       - name: Install beam from its lock
         working-directory: beam
         run: pnpm install --frozen-lockfile
@@ -81,4 +105,6 @@ jobs:
 
       - name: Test
         working-directory: beam
+        env:
+          BEAM_DOCS_ARTISAN: ${{ github.workspace }}/php/laravel-beam-docs/vendor/bin/testbench
         run: pnpm run test
