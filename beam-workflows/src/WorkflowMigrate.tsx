@@ -9,7 +9,7 @@ import {
     type PlaceMap,
     resolvedMap,
 } from './migratePlan';
-import type { WorkflowVersionData } from '@splicewire/_resources/types/workflows';
+import type { WorkflowVersionData } from '@splicewire/beam-resources/types/workflows';
 import { toDraft } from './blueprint';
 import { useNotify, useWorkflowsServices } from './provider';
 import { errorMessage } from './utils';

@@ -1,6 +1,8 @@
 # @splicewire/beam-intake
 
-Portable entity-intake section submission, typed from the generated intake DTO projection.
+Portable entity-intake section submission, typed from `@splicewire/beam-resources/types/intake`.
+The canonical section and submission DTOs belong to public `splicewire/laravel-beam` intake;
+the host generates their projection through `resources:beam`.
 Wrap `IntakeSectionForm` in the host's `QueryClientProvider` and `IntakeProvider`.
 The injected `client.submit(sectionKey, fields)` resolves the declared submission receipt.
 The host owns entity identity, authentication, endpoint construction, section selection, and route reads.

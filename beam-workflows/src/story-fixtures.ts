@@ -18,7 +18,7 @@ import type {
     WorkflowProjectionData,
     WorkflowTypeOptionData,
     WorkflowVersionData,
-} from '@splicewire/_resources/types/workflows';
+} from '@splicewire/beam-resources/types/workflows';
 
 /** A small draft→review→published blueprint with a guarded transition + a notify effect. */
 export const publishBlueprintV1: WorkflowBlueprintData = {

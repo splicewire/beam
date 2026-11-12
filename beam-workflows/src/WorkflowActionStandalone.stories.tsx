@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import type { WorkflowProjectionData } from '@splicewire/_resources/types/workflows';
+import type { WorkflowProjectionData } from '@splicewire/beam-resources/types/workflows';
 import type { CalendarActionData, CalendarActionRecordData } from '@splicewire/beam-resources/types/calendar-actions';
 import { Button } from '@schemastud/ui';
 import { WorkflowActionForm } from './WorkflowActionForm';

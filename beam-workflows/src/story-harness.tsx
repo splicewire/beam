@@ -28,7 +28,7 @@ import type {
     WorkflowLineageData,
     WorkflowProjectionData,
     WorkflowVersionData,
-} from '@splicewire/_resources/types/workflows';
+} from '@splicewire/beam-resources/types/workflows';
 import { toDraft } from './blueprint';
 import {
     catalog as defaultCatalog,

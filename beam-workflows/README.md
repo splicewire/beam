@@ -9,15 +9,16 @@ editor, and `@xyflow/react` as a heavy peer.
 The surfaces own their react-query data logic and presentation; the host supplies **injected
 services** (transport + real-time subscription + feedback + host chrome) through
 `<WorkflowsProvider>`. They are typed off the generated `Workflow*Data` projection delivered via
-`@splicewire/_resources`, so the PHP source of truth travels into the package as a real build
-dependency (the `import type … from '@splicewire/_resources/types/workflows'` edge survives into
+`@splicewire/beam-resources`, so the PHP source of truth travels into the package as a real build
+dependency (the `import type … from '@splicewire/beam-resources/types/workflows'` edge survives into
 `dist/index.d.ts`).
 
 ## What ships today (slices 02–05 — the full component tree)
 
-- **The generated Workflow\* projection**, re-exported off `@splicewire/_resources/types/workflows`
-  (12 DTOs: lineage / version / blueprint / transition / catalog / guard-catalog-entry / coverage
-  (+version) / projection / type-option / binding / principal-kind). The projection travels as a
+- **The generated Workflow\* projection**, re-exported off `@splicewire/beam-resources/types/workflows`
+  (14 workflow DTOs plus Accounts `RoleOptionData`: lineage / version / blueprint / transition /
+  catalog / guard-catalog-entry / coverage (+version) / projection / type-option / binding /
+  principal-kind / transition request and attempt). The projection travels as a
   dependency edge — no bundling.
 - **The editable blueprint aliases** (`BlueprintDraft`, `BlueprintTransition`, `GuardCatalogEntry`)
   and the shared `toDraft` normalizer in their own `blueprint.ts` module, so the logic modules +
@@ -136,6 +137,6 @@ their own transport, subject resolver and principal/tenant authority.
 `@splicewire/beam-workflows/action-form` exports the existing `WorkflowActionForm`, its selection type
 and generated WorkflowProjectionData. `npm run build:action-form --workspace beam-workflows` builds
 that entry without replacing the existing barrel. It needs the existing generated
-`@splicewire/_resources/types/workflows` projection (WorkflowProjectionData and WorkflowTransitionData)
+`@splicewire/beam-resources/types/workflows` projection (WorkflowProjectionData and WorkflowTransitionData)
 as a type-only build/consumer input. It does not require graph/admin runtime peers. Scheduling
 transport/admission remains injected; the entry does not bind a scheduler or enable scheduling.

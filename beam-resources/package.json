@@ -26,7 +26,8 @@
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
-    "prepack": "pnpm run typecheck"
+    "prepack": "pnpm run typecheck",
+    "test:public-contract": "node checks/public-consumer.mjs"
   },
   "devDependencies": {
     "typescript": "^5.7.0"

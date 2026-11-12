@@ -1,6 +1,6 @@
 import { useId, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import { Button, Input } from '@schemastud/ui';
-import type { WorkflowProjectionData } from '@splicewire/_resources/types/workflows';
+import type { WorkflowProjectionData } from '@splicewire/beam-resources/types/workflows';
 import type {
     WorkflowReactionData,
     WorkflowReactionSubjectData,

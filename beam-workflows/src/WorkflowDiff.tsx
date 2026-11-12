@@ -1,6 +1,6 @@
 import { type ReactNode, useMemo, useState } from 'react';
 import { SimpleSelect } from '@schemastud/ui';
-import type { WorkflowVersionData } from '@splicewire/_resources/types/workflows';
+import type { WorkflowVersionData } from '@splicewire/beam-resources/types/workflows';
 import { toDraft } from './blueprint';
 import {
     type BlueprintDiff,

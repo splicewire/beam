@@ -3,4 +3,4 @@ export {
   WorkflowActionForm,
   type WorkflowActionSelection,
 } from "./WorkflowActionForm";
-export type { WorkflowProjectionData } from "@splicewire/_resources/types/workflows";
+export type { WorkflowProjectionData } from "@splicewire/beam-resources/types/workflows";

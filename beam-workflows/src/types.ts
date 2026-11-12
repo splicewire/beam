@@ -10,7 +10,7 @@ import type {
     WorkflowVersionData,
     WorkflowBindingData,
     WorkflowProjectionData,
-} from '@splicewire/_resources/types/workflows';
+} from '@splicewire/beam-resources/types/workflows';
 import type { BlueprintDraft } from './blueprint';
 import type { MigrationReport, PlaceMap } from './migratePlan';
 

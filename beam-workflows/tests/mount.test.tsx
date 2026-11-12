@@ -8,7 +8,7 @@ import type {
     WorkflowLineageData,
     WorkflowVersionData,
     PrincipalKindData,
-} from '@splicewire/_resources/types/workflows';
+} from '@splicewire/beam-resources/types/workflows';
 import {
     RecipientPicker,
     WorkflowActions,

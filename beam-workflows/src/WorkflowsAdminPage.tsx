@@ -20,7 +20,7 @@ import {
 import type {
     WorkflowLineageData,
     WorkflowTypeOptionData,
-} from '@splicewire/_resources/types/workflows';
+} from '@splicewire/beam-resources/types/workflows';
 import { toDraft, type BlueprintDraft, type GuardCatalogEntry } from './blueprint';
 import { useNotify, useWorkflowsServices } from './provider';
 import { errorMessage } from './utils';

@@ -2,7 +2,7 @@ import { afterEach, beforeAll, expect, it, vi } from 'vitest';
 import { cleanup, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import type { WorkflowLineageData } from '@splicewire/_resources/types/workflows';
+import type { WorkflowLineageData } from '@splicewire/beam-resources/types/workflows';
 import { WorkflowsAdminPage } from '../src/WorkflowsAdminPage';
 import { WorkflowsProvider } from '../src/provider';
 import { makeMockClient } from '../src/story-harness';

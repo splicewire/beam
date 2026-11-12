@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import type {
     EntityIntakeFormSectionData,
     EntityIntakeSectionSubmittedData,
-} from '@splicewire/_resources/types/intake';
+} from '@splicewire/beam-resources/types/intake';
 
 export type { EntityIntakeFormSectionData, EntityIntakeSectionSubmittedData };
 export type IntakeFields = Record<string, unknown>;

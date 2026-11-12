@@ -12,9 +12,9 @@ export default defineConfig({
     // the read-only workflow graph's viz lib, a HEAVY generic dep the host already carries,
     // so it lands as a peer (not a bundled foundation primitive; brief §4 / 07 delta #6).
     //
-    // @splicewire/_resources (the generated DTO projection, rehome-components 01/08) stays a
+    // @splicewire/beam-resources (the generated DTO projection, rehome-components 01/08) stays a
     // real dependency, not bundled: the emitted `dist/index.d.ts` keeps its `import type` from
-    // `@splicewire/_resources/types/workflows`, and the dependency edge (see package.json) makes
+    // `@splicewire/beam-resources/types/workflows`, and the dependency edge (see package.json) makes
     // the projection TRAVEL with the package so a consumer resolves it transitively. (Type-only,
     // so it never appears in the JS bundle.)
     external: [

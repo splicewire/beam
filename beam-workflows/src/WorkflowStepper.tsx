@@ -11,7 +11,7 @@ import {
     DialogTitle,
     cn,
 } from '@schemastud/ui';
-import type { WorkflowProjectionData } from '@splicewire/_resources/types/workflows';
+import type { WorkflowProjectionData } from '@splicewire/beam-resources/types/workflows';
 import { humanizeWorkflowKey } from './humanizeWorkflowKey';
 import { useSubscribe } from './provider';
 

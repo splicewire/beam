@@ -615,10 +615,6 @@ importers:
         version: 4.1.10(@types/node@22.20.2)(jsdom@25.0.1)(vite@8.1.5(@types/node@22.20.2)(esbuild@0.27.7)(jiti@2.7.0)(yaml@2.9.0))
 
   beam-intake:
-    dependencies:
-      '@splicewire/_resources':
-        specifier: link:../../splicewire/_resources
-        version: link:../../splicewire/_resources
     devDependencies:
       '@schemastud/frame':
         specifier: link:../../schemastud/frame
@@ -629,6 +625,9 @@ importers:
       '@schemastud/ui':
         specifier: link:../../schemastud/ui
         version: link:../../schemastud/ui
+      '@splicewire/beam-resources':
+        specifier: link:../beam-resources
+        version: link:../beam-resources
       '@tanstack/react-query':
         specifier: ^5.62.0
         version: 5.101.4(react@19.2.7)
@@ -1121,10 +1120,6 @@ importers:
         version: 4.1.10(@types/node@22.20.1)(jsdom@25.0.1)(vite@8.1.5(@types/node@22.20.1)(esbuild@0.27.7)(jiti@2.7.0)(yaml@2.9.0))
 
   beam-workflows:
-    dependencies:
-      '@splicewire/_resources':
-        specifier: link:../../splicewire/_resources
-        version: link:../../splicewire/_resources
     devDependencies:
       '@schemastud/ui':
         specifier: link:../../schemastud/ui

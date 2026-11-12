@@ -34,15 +34,13 @@
         "lint:imports": "node scripts/check-imports.mjs",
         "prepublishOnly": "pnpm run build"
     },
-    "dependencies": {
-        "@splicewire/_resources": "file:../../splicewire/_resources"
-    },
     "peerDependencies": {
         "@schemastud/frame": "*",
         "@schemastud/ui": "*",
         "@schemastud/seam": "*",
         "@tanstack/react-query": ">=5",
-        "react": ">=18"
+        "react": ">=18",
+        "@splicewire/beam-resources": "*"
     },
     "devDependencies": {
         "@schemastud/frame": "file:../../schemastud/frame",
@@ -58,6 +56,7 @@
         "react-dom": "^19.2.0",
         "tsup": "^8.5.1",
         "typescript": "^5.7.2",
-        "vitest": "^4.1.10"
+        "vitest": "^4.1.10",
+        "@splicewire/beam-resources": "file:../beam-resources"
     }
 }

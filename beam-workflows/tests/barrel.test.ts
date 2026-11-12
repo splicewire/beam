@@ -11,7 +11,7 @@ import {
 
 /**
  * The slice-02 isolation bar (rehome-components §8a, DOM-free tier): the public barrel resolves
- * off nothing but the package + its `@splicewire/_resources` DTO edge — no Laravel, no `@/`. If a
+ * off nothing but the package + its `@splicewire/beam-resources` DTO edge — no Laravel, no `@/`. If a
  * logic module had smuggled an app coupling (or the DTO projection failed to travel as a
  * dependency), importing `../src/index` here would fail to resolve and this file would not load.
  * The per-module `*.test.ts` files carry the exhaustive behaviour; this proves the barrel.

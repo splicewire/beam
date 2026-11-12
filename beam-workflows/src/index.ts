@@ -5,11 +5,11 @@
 // feedback / chrome) through <WorkflowsProvider>; everything else — the react-query data logic,
 // the DTO typing off the generated projection, the presentation — travels inside the package.
 //
-// The whole tree ships: the generated Workflow* projection (re-exported off @splicewire/_resources),
+// The whole tree ships: the generated Workflow* projection (re-exported off @splicewire/beam-resources),
 // the editable blueprint aliases + toDraft, the zero-DOM logic modules, the provider/client/subscribe
 // seams, and all seven components (Admin root, Editor, Stepper, Migrate, Diff, Graph, RecipientPicker).
 
-// The generated DTO projection (rehome-components 01/08), delivered via @splicewire/_resources.
+// The generated DTO projection (rehome-components 01/08), delivered via @splicewire/beam-resources.
 export type {
     WorkflowLineageData,
     WorkflowVersionData,
@@ -23,7 +23,7 @@ export type {
     WorkflowTypeOptionData,
     WorkflowBindingData,
     PrincipalKindData,
-} from '@splicewire/_resources/types/workflows';
+} from '@splicewire/beam-resources/types/workflows';
 
 // The editable blueprint shapes (aliases of the DTOs) the editor + logic modules share, plus the
 // shared draft normalizer.

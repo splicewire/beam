@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
-import type { WorkflowProjectionData } from '@splicewire/_resources/types/workflows';
+import type { WorkflowProjectionData } from '@splicewire/beam-resources/types/workflows';
 import { WorkflowActionForm } from '../src/index';
 
 afterEach(cleanup);

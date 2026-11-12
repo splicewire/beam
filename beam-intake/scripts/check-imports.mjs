@@ -18,6 +18,7 @@ const SRC = join(dirname(fileURLToPath(import.meta.url)), '..', 'src');
 // The deny-list: app-local paths, in-app singletons, and host-only libs a portable
 // component must never reach for. Mirrors the rehome-components contract §6.
 const FORBIDDEN = [
+    { re: /@splicewire\/_resources|Splicewire[.\\]Tower/, why: 'private host DTO dependency; use the public Beam projection' },
     { re: /@splicewire\/splice/, why: 'upward paid-domain dependency' },
     {
         re: /--splice-|--swc-|#[0-9a-fA-F]{3,8}\b/,
