@@ -1,24 +1,24 @@
 {
   "version": 1,
   "counts": {
-    "@splicewire/beam-accounts": 257,
-    "@splicewire/beam-calendar": 27,
-    "@splicewire/beam-commerce": 185,
+    "@splicewire/beam-accounts": 296,
+    "@splicewire/beam-calendar": 46,
+    "@splicewire/beam-commerce": 212,
     "@splicewire/beam-content": 18,
-    "@splicewire/beam-docs": 109,
+    "@splicewire/beam-docs": 114,
     "@splicewire/beam-embed": 80,
-    "@splicewire/beam-inertia": 260,
+    "@splicewire/beam-inertia": 315,
     "@splicewire/beam-ingest": 9,
-    "@splicewire/beam-intake": 5,
+    "@splicewire/beam-intake": 7,
     "@splicewire/beam-mainframe": 7,
-    "@splicewire/beam-market": 153,
-    "@splicewire/beam-mdx": 12,
+    "@splicewire/beam-market": 194,
+    "@splicewire/beam-mdx": 15,
     "@splicewire/beam-resources": 0,
-    "@splicewire/beam-transforms": 38,
-    "@splicewire/beam-ux": 712,
+    "@splicewire/beam-transforms": 45,
+    "@splicewire/beam-ux": 800,
     "@splicewire/beam-ux-canvas": 0,
-    "@splicewire/beam-ux-prototype": 18,
-    "@splicewire/beam-versioning": 18,
-    "@splicewire/beam-workflows": 176
+    "@splicewire/beam-ux-prototype": 19,
+    "@splicewire/beam-versioning": 22,
+    "@splicewire/beam-workflows": 186
   }
 }
