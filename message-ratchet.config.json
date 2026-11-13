@@ -1,0 +1,63 @@
+{
+  "version": 1,
+  "baseline": "./message-ratchet.baseline.json",
+  "packages": {
+    "@splicewire/beam-accounts": [
+      "beam-accounts/src"
+    ],
+    "@splicewire/beam-calendar": [
+      "beam-calendar/src"
+    ],
+    "@splicewire/beam-commerce": [
+      "beam-commerce/src"
+    ],
+    "@splicewire/beam-content": [
+      "beam-content/src"
+    ],
+    "@splicewire/beam-docs": [
+      "beam-docs/src"
+    ],
+    "@splicewire/beam-embed": [
+      "beam-embed/src"
+    ],
+    "@splicewire/beam-inertia": [
+      "beam-inertia/src"
+    ],
+    "@splicewire/beam-ingest": [
+      "beam-ingest/src"
+    ],
+    "@splicewire/beam-intake": [
+      "beam-intake/src"
+    ],
+    "@splicewire/beam-mainframe": [
+      "beam-mainframe/src"
+    ],
+    "@splicewire/beam-market": [
+      "beam-market/src"
+    ],
+    "@splicewire/beam-mdx": [
+      "beam-mdx/src"
+    ],
+    "@splicewire/beam-resources": [
+      "beam-resources/types"
+    ],
+    "@splicewire/beam-transforms": [
+      "beam-transforms/src"
+    ],
+    "@splicewire/beam-ux": [
+      "beam-ux/src"
+    ],
+    "@splicewire/beam-ux-canvas": [
+      "beam-ux-canvas/src"
+    ],
+    "@splicewire/beam-ux-prototype": [
+      "beam-ux-prototype/src"
+    ],
+    "@splicewire/beam-versioning": [
+      "beam-versioning/src"
+    ],
+    "@splicewire/beam-workflows": [
+      "beam-workflows/src"
+    ]
+  }
+}
