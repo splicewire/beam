@@ -20,12 +20,13 @@ export interface AgreementsScreenProps {
 
 /** A person's own entries: what they agreed to, each with its version, and a withdraw where the resource offers one. */
 export function AgreementsAndConsents(props: AgreementsScreenProps) {
-    return <EntriesScreen {...props} label="Agreements & consents" />;
+    // Keyed by resource: an opened entry belongs to the resource it was opened from, so a new resource starts at its list.
+    return <EntriesScreen key={props.resource} {...props} label="Agreements & consents" />;
 }
 
 /** The entries made on an organisation's behalf, for its owner: the same composition over the organisation's resource. */
 export function OrganisationAgreements(props: AgreementsScreenProps) {
-    return <EntriesScreen {...props} label="Agreed for the organisation" />;
+    return <EntriesScreen key={props.resource} {...props} label="Agreed for the organisation" />;
 }
 
 function EntriesScreen({ resource, heading, label }: AgreementsScreenProps & { label: string }) {
@@ -49,7 +50,9 @@ function EntriesScreen({ resource, heading, label }: AgreementsScreenProps & { l
                     <Button type="button" variant="ghost" onClick={() => setOpened(null)}>
                         Back to the list
                     </Button>
-                    <EditShell resource={resource} id={opened} readOnly container="bare" />
+                    {/* `readOnly` only stops editing; the read projection is asked for by purpose, so a field the
+                        resource serves on read (and never accepts on write) still shows. */}
+                    <EditShell resource={resource} id={opened} readOnly schemaPurpose="read" container="bare" />
                 </>
             )}
         </section>

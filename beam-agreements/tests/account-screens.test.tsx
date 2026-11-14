@@ -155,6 +155,36 @@ describe("the account's agreements & consents", () => {
         await waitFor(() => expect(invoke).toHaveBeenCalledWith(WITHDRAW, { id: '2', data: undefined }));
     });
 
+    it("asks for the resource's read projection for the detail, so a read-only field shows", async () => {
+        // Distinct fixture projections: the read one carries a field the write one never accepts.
+        const getFormSchema = vi.fn(async (_resource: string, _form: unknown, purpose?: string) =>
+            (purpose === 'read'
+                ? { type: 'object', properties: { title: { type: 'string', title: 'Title' }, served: { type: 'string', title: 'Served on read' } } }
+                : DETAIL_SCHEMA) as SchemaNode,
+        );
+        const rows = { [MINE]: [{ id: '1', title: 'First fixture entry', served: 'Read-only fixture value' }] };
+        mount(({ kit }) => <kit.Provider><AgreementsAndConsents resource={MINE} /></kit.Provider>, { manifest: withdrawable, rows }, { getFormSchema });
+
+        fireEvent.click(await screen.findByText('First fixture entry'));
+        const served = await screen.findByRole('textbox', { name: /Served on read/ });
+        expect((served as HTMLInputElement).value).toBe('Read-only fixture value');
+        expect(getFormSchema.mock.calls.some(([resource, , purpose]) => resource === MINE && purpose === 'read')).toBe(true);
+    });
+
+    it('returns to the list when the resource changes, rather than opening the old id under the new resource', async () => {
+        const both = manifest(context(columns({ title: 'Title' }), [], {}), context(columns({ title: 'Title' }), [], {}));
+        const transport = createMemoryTransport({ rows: { [MINE]: ROWS, [ORG]: [{ id: '1', title: 'Other resource, same id' }] }, formSchema: { '*': DETAIL_SCHEMA as SchemaNode }, manifest: both });
+        const kit = createFrameKit({ transport });
+        const view = render(<kit.Provider><AgreementsAndConsents resource={MINE} /></kit.Provider>);
+
+        fireEvent.click(await screen.findByText('First fixture entry'));
+        await screen.findByRole('button', { name: 'Back to the list' });
+
+        view.rerender(<kit.Provider><AgreementsAndConsents resource={ORG} /></kit.Provider>);
+        expect(screen.queryByRole('button', { name: 'Back to the list' })).toBeNull();
+        expect(await screen.findByText('Other resource, same id')).toBeTruthy();
+    });
+
     it('draws no withdraw where the actor may not press it, or where the resource declares none', async () => {
         const refused = manifest(context(columns({ title: 'Title' }), [WITHDRAW], { withdraw: false }));
         mount(({ kit }) => <kit.Provider><AgreementsAndConsents resource={MINE} /></kit.Provider>, { manifest: refused });
