@@ -20,3 +20,4 @@ packages:
   - beam-intake
   - beam-inertia
   - beam-embed
+  - beam-agreements

@@ -65,6 +65,7 @@
       "@splicewire/beam-intake": "link:beam-intake",
       "@splicewire/beam-inertia": "link:beam-inertia",
       "@splicewire/beam-embed": "link:beam-embed",
+      "@splicewire/beam-agreements": "link:beam-agreements",
       "@splicewire/beam-accounts>@types/node": "22.20.1",
       "@splicewire/beam-calendar>@types/node": "22.20.1",
       "@splicewire/beam-content>@types/node": "22.20.1",
