@@ -1,3 +1,4 @@
+import { useBeamMessages } from '../messages';
 import { usePage } from '@inertiajs/react';
 import { createGuardRegistry, type GuardRegistry } from '@schemastud/frame';
 import type { HostRealms } from '@splicewire/beam-ux/nav';
@@ -11,13 +12,14 @@ import type { ReactNode } from 'react';
  * server still authorizes every read; this keeps a refused principal from a page of 403s.
  */
 export function RequireOperatorRealm({ children }: { children: ReactNode }) {
+    const m = useBeamMessages();
     const { realms } = usePage<{ realms?: HostRealms }>().props;
     const offered = (realms?.realms ?? []).some((realm) => realm.key === 'operator' && !realm.locked);
 
     if (!offered) {
         return (
             <div role="alert" data-page-state="forbidden" className="p-6 text-sm">
-                <p className="font-medium">This operator page is not available to you.</p>
+                <p className="font-medium">{m.t('splicewire-beam-inertia::messages.surfaces_operator_forbidden')}</p>
             </div>
         );
     }

@@ -1,3 +1,4 @@
+import { useBeamMessages } from '../messages';
 /** Zero-prop Inertia desktop adapter. Portable roster/window helpers stay in beam-ux/shell. */
 import { MainframeOutlet, MainframeProvider } from '@schemastud/mainframe';
 import { Link, router, usePage } from '@inertiajs/react';
@@ -26,11 +27,13 @@ export interface DefaultOsDesktopProps {
 }
 
 function DefaultBrand() {
-    return <span style={{ fontWeight: 600, fontSize: 14, letterSpacing: '-0.01em' }}>beam</span>;
+    const m = useBeamMessages();
+    return <span style={{ fontWeight: 600, fontSize: 14, letterSpacing: '-0.01em' }}>{m.t('splicewire-beam-inertia::messages.surfaces_beam')}</span>;
 }
 
 /** Mounts `DefaultOsDesktop` with everything wired: manifest read, roster build, chrome, window host. */
 export function DefaultOsDesktop({ surfaceMap = {}, exclude, brand, status, backdrop, onNavigate, chrome }: DefaultOsDesktopProps) {
+    const m = useBeamMessages();
     const manifest = (usePage<{ realmManifest?: RealmManifestEntry[] }>().props.realmManifest as RealmManifestEntry[] | undefined) ?? [];
 
     const apps = buildAppsFromManifest(manifest, {
@@ -45,7 +48,7 @@ export function DefaultOsDesktop({ surfaceMap = {}, exclude, brand, status, back
         brand: brand ?? <DefaultBrand />,
         status,
         backdrop,
-        launcherHeading: 'Realms',
+        launcherHeading: m.t('splicewire-beam-inertia::messages.surfaces_realms'),
         onNavigate: onNavigate ?? ((app) => router.visit(app.route ?? '/')),
         ...chrome,
     });

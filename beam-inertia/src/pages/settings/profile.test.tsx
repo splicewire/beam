@@ -24,6 +24,7 @@ vi.mock("@inertiajs/react", () => ({
     </form>
   ),
   Head: () => null,
+  setLayoutProps: () => {},
   Link: ({ children }: { children: ReactNode }) => <a>{children}</a>,
   usePage: () => ({
     props: {

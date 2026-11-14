@@ -1,3 +1,4 @@
+import { useBeamMessages } from '../../messages';
 import { Head } from '@inertiajs/react';
 
 /**
@@ -6,18 +7,18 @@ import { Head } from '@inertiajs/react';
  * (sidebar + data-driven nav + plan/profile blocks from `accountShell`) renders from config only.
  */
 export default function AccountHome() {
+    const messages = useBeamMessages();
     return (
         <>
-            <Head title="Account" />
+            <Head title={messages.t('splicewire-beam-inertia::messages.chrome_account')} />
             <div style={{ padding: 24 }}>
                 <h1
                     style={{ fontSize: 28, fontWeight: 700, margin: '0 0 8px' }}
                 >
-                    Account home
+                    {messages.t('splicewire-beam-inertia::messages.chrome_account_home')}
                 </h1>
                 <p style={{ color: '#64748b', maxWidth: 560, lineHeight: 1.6 }}>
-                    Manage your profile, security, API tokens and team from the
-                    sidebar (behind the menu button on a narrow screen).
+                    {messages.t('splicewire-beam-inertia::messages.chrome_account_home_description')}
                 </p>
             </div>
         </>

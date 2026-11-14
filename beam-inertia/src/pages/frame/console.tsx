@@ -1,3 +1,4 @@
+import { useBeamMessages } from '../../messages';
 import { Head } from '@inertiajs/react';
 import { BrowserRouter } from 'react-router';
 import { useFrameManifest } from '../../frame/manifest';
@@ -52,14 +53,15 @@ export default function FrameConsole(props: Partial<FrameRealmContext>) {
 }
 
 function ConsoleBody() {
+    const m = useBeamMessages();
     const { manifestUrl } = useFrameRealm();
     const { data: manifest, isLoading, error } = useFrameManifest();
 
     if (isLoading) {
         return (
             <div className="px-6 py-8 text-sm text-muted-foreground">
-                <Head title="Console" />
-                Loading the console…
+                <Head title={m.t('splicewire-beam-inertia::messages.surfaces_console_title')} />
+                {m.t('splicewire-beam-inertia::messages.surfaces_console_loading')}
             </div>
         );
     }
@@ -67,9 +69,9 @@ function ConsoleBody() {
     if (error || !manifest) {
         return (
             <div className="px-6 py-8">
-                <Head title="Console" />
+                <Head title={m.t('splicewire-beam-inertia::messages.surfaces_console_title')} />
                 <h1 className="mb-1 text-2xl font-semibold">
-                    The frame manifest did not load
+                    {m.t('splicewire-beam-inertia::messages.surfaces_manifest_failed')}
                 </h1>
                 <p className="max-w-prose text-sm text-muted-foreground">
                     {/* Names the URL this console actually asked for. The old copy said
@@ -80,7 +82,7 @@ function ConsoleBody() {
                         ? error.cause instanceof Error
                             ? error.cause.message
                             : error.message
-                        : `GET ${manifestUrl} failed.`}
+                        : m.t('splicewire-beam-inertia::messages.surfaces_manifest_request_failed', { url: manifestUrl })}
                 </p>
             </div>
         );
@@ -88,7 +90,7 @@ function ConsoleBody() {
 
     return (
         <>
-            <Head title="Console" />
+            <Head title={m.t('splicewire-beam-inertia::messages.surfaces_console_title')} />
             <FrameRoutes manifest={manifest} />
         </>
     );

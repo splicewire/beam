@@ -1,3 +1,4 @@
+import { useBeamMessages } from '../../messages';
 import { Head, router, usePage } from '@inertiajs/react';
 import { CreateTeamForm } from '@splicewire/beam-accounts';
 import { useState } from 'react';
@@ -21,13 +22,14 @@ type CreateTeamPageProps = {
 };
 
 export default function CreateTeam() {
+    const messages = useBeamMessages();
     const { action, cancelUrl, errors } = usePage<CreateTeamPageProps>().props;
     const [processing, setProcessing] = useState(false);
     const queryClient = useQueryClient();
 
     return (
         <>
-            <Head title="Create a team" />
+            <Head title={messages.t('splicewire-beam-inertia::messages.chrome_create_team')} />
             <div className="p-6">
                 <CreateTeamForm
                     processing={processing}

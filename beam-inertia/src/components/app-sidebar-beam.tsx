@@ -1,3 +1,4 @@
+import { useBeamMessages } from '../messages';
 import { Link, usePage } from '@inertiajs/react';
 import { AccountShell } from '@splicewire/beam-accounts/account';
 import type { AccountNavItem } from '@splicewire/beam-accounts/account';
@@ -36,6 +37,7 @@ type ShellData = {
 };
 
 export function AppSidebarBeam({ children }: { children: ReactNode }) {
+    const messages = useBeamMessages();
     const page = usePage<{
         accountNav?: AccountNavTree;
         accountShell?: ShellData | null;
@@ -54,7 +56,7 @@ export function AppSidebarBeam({ children }: { children: ReactNode }) {
     return (
         <AccountShell
             nav={{ items: navItems }}
-            navLabel="Account"
+            navLabel={messages.t('splicewire-beam-inertia::messages.chrome_account')}
             linkComponent={Link}
             brand={<AppLogo />}
             brandHref="/dashboard"
@@ -67,7 +69,7 @@ export function AppSidebarBeam({ children }: { children: ReactNode }) {
             }
             shell={page.props.accountShell ?? null}
             sections={{ plan: true, profile: true }}
-            sectionLabels={{ plan: 'Plan', profile: 'Profile' }}
+            sectionLabels={{ plan: messages.t('splicewire-beam-inertia::messages.chrome_plan'), profile: messages.t('splicewire-beam-inertia::messages.chrome_profile') }}
             user={<NavUser />}
             defaultOpen={page.props.sidebarOpen ?? true}
         >

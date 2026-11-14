@@ -1,3 +1,4 @@
+import { useBeamMessages } from '../messages';
 import type { LucideIcon } from 'lucide-react';
 import { Monitor, Moon, Sun } from 'lucide-react';
 import type { HTMLAttributes } from 'react';
@@ -9,12 +10,13 @@ export default function AppearanceToggleTab({
     className = '',
     ...props
 }: HTMLAttributes<HTMLDivElement>) {
+    const messages = useBeamMessages();
     const { appearance, updateAppearance } = useAppearance();
 
     const tabs: { value: Appearance; icon: LucideIcon; label: string }[] = [
-        { value: 'light', icon: Sun, label: 'Light' },
-        { value: 'dark', icon: Moon, label: 'Dark' },
-        { value: 'system', icon: Monitor, label: 'System' },
+        { value: 'light', icon: Sun, label: messages.t('splicewire-beam-inertia::messages.auth_light') },
+        { value: 'dark', icon: Moon, label: messages.t('splicewire-beam-inertia::messages.auth_dark') },
+        { value: 'system', icon: Monitor, label: messages.t('splicewire-beam-inertia::messages.auth_system') },
     ];
 
     return (

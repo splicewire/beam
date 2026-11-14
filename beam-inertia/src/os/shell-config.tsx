@@ -1,3 +1,5 @@
+import { useBeamMessages, englishBeamMessages } from '../messages';
+import { surfaceMessage } from './surface-message';
 import { resolveBeamPage } from '../pages';
 import { getBeamInertiaConfig } from '../config';
 // beam-starter · OS-shell HOST config (frontend-surfaces.md, desktop/OS shell). HOST CONFIG only, not
@@ -174,7 +176,17 @@ class SurfaceBoundary extends Component<
     }
     render() {
         if (this.state.error) {
-            return (
+            return <SurfaceError title={this.props.title} route={this.props.route} error={this.state.error} />;
+        }
+
+        return this.props.children;
+    }
+}
+
+
+function SurfaceError({ title, route, error }: { title: string; route: string; error: Error }) {
+    const m = useBeamMessages();
+    return (
                 <div
                     style={{
                         padding: 28,
@@ -194,15 +206,13 @@ class SurfaceBoundary extends Component<
                             marginBottom: 10,
                         }}
                     >
-                        Surface needs its page props
+                        {m.t('splicewire-beam-inertia::messages.surfaces_surface_needs_props')}
                     </div>
                     <p style={{ maxWidth: '46ch' }}>
-                        The real <b>{this.props.title}</b> component crashed
-                        without its page-specific Inertia props. Open the live
-                        route:
+                        {surfaceMessage(m, 'splicewire-beam-inertia::messages.surfaces_surface_crashed', { title: <b>{title}</b> })}
                     </p>
-                    <Link href={this.props.route} style={{ color: '#2563eb' }}>
-                        open {this.props.route} ↗
+                    <Link href={route} style={{ color: '#2563eb' }}>
+                        {m.t('splicewire-beam-inertia::messages.surfaces_open_route', { route })}
                     </Link>
                     <pre
                         style={{
@@ -211,14 +221,10 @@ class SurfaceBoundary extends Component<
                             color: '#b91c1c',
                         }}
                     >
-                        {String(this.state.error.message)}
+                        {String(error.message)}
                     </pre>
                 </div>
             );
-        }
-
-        return this.props.children;
-    }
 }
 
 // ── The nested-window scope factory (the recursion) ─────────────────────────────────────────────────
@@ -245,7 +251,7 @@ function surfaceInjection(
     mainframes.register('surface', surfaceMainframe);
     slots.contribute({
         slot: 'main',
-        key: `surface:${title}`,
+        key: `surface:${route}`,
         render: () => (
             <SurfaceBoundary title={title} route={route}>
                 {render()}
@@ -264,9 +270,9 @@ function surfaceInjection(
 // so registering a NEW realm PHP-side surfaces a dock tile + placeholder with ZERO edits here.
 export const SURFACE_MAP: Record<string, RealmSurfaceBinding> = {
     site: {
-        label: 'Site',
+        label: englishBeamMessages.t('splicewire-beam-inertia::messages.surfaces_site'),
         route: '/',
-        subtitle: 'Public · marketing',
+        subtitle: englishBeamMessages.t('splicewire-beam-inertia::messages.surfaces_site_subtitle'),
         accent: '#3b82f6',
         geometry: { x: 60, y: 70, width: 640, height: 540 },
         render: () => (
@@ -276,13 +282,13 @@ export const SURFACE_MAP: Record<string, RealmSurfaceBinding> = {
         ),
     },
     user: {
-        label: 'Account',
+        label: englishBeamMessages.t('splicewire-beam-inertia::messages.surfaces_account'),
         // `/account-home` until 2026-09-05 — a route that has never existed. `binding.route` is
         // copied to `DesktopApp.route` (beam-ux shell/realm.ts:109) and dispatched by the launcher's
         // `router.visit(a.route)` below, so the Account dock tile navigated to a 404. The authed
         // home is `dashboard` (routes/web.php:53).
         route: '/dashboard',
-        subtitle: 'Authed · account',
+        subtitle: englishBeamMessages.t('splicewire-beam-inertia::messages.surfaces_account_subtitle'),
         accent: '#10b981',
         geometry: { x: 180, y: 150, width: 760, height: 500 },
         render: () => (
@@ -294,9 +300,9 @@ export const SURFACE_MAP: Record<string, RealmSurfaceBinding> = {
         ),
     },
     operator: {
-        label: 'Operator',
+        label: englishBeamMessages.t('splicewire-beam-inertia::messages.surfaces_operator'),
         route: '/operator',
-        subtitle: 'Frame · back-office',
+        subtitle: englishBeamMessages.t('splicewire-beam-inertia::messages.surfaces_operator_subtitle'),
         accent: '#f59e0b',
         geometry: { x: 220, y: 90, width: 720, height: 540 },
         render: () => (
@@ -321,7 +327,8 @@ export function realmForComponent(name: string): string | undefined {
 }
 
 // ── Auto-surface fallback ───────────────────────────────────────────────────────────────────────────
-function genericSurface(entry: RealmManifestEntry): ReactNode {
+function GenericSurface({ entry }: { entry: RealmManifestEntry }) {
+    const m = useBeamMessages();
     return (
         <div
             style={{
@@ -342,16 +349,13 @@ function genericSurface(entry: RealmManifestEntry): ReactNode {
                     marginBottom: 10,
                 }}
             >
-                Realm auto-surfaced
+                {m.t('splicewire-beam-inertia::messages.surfaces_realm_auto_surface')}
             </div>
             <p style={{ maxWidth: '46ch' }}>
-                The <b>{entry.title}</b> realm (<code>{entry.key}</code>) is
-                registered PHP-side and appears in the manifest, but no /os
-                surface is bound to its key yet. Bind one by adding a{' '}
-                <code>SURFACE_MAP[&apos;{entry.key}&apos;]</code> row.
+                {surfaceMessage(m, 'splicewire-beam-inertia::messages.surfaces_unbound_realm', { title: <b>{entry.title}</b>, key: <code>{entry.key}</code>, binding: <code>SURFACE_MAP[&apos;{entry.key}&apos;]</code> })}
             </p>
             <Link href={entry.routeBase || '/'} style={{ color: '#2563eb' }}>
-                open {entry.routeBase || '/'} ↗
+                {m.t('splicewire-beam-inertia::messages.surfaces_open_route', { route: entry.routeBase || '/' })}
             </Link>
         </div>
     );
@@ -360,10 +364,10 @@ function genericSurface(entry: RealmManifestEntry): ReactNode {
 const GENERIC_BINDING = (entry: RealmManifestEntry): RealmSurfaceBinding => ({
     label: entry.title,
     route: entry.routeBase || '/',
-    subtitle: 'Realm · unbound surface',
+    subtitle: englishBeamMessages.t('splicewire-beam-inertia::messages.surfaces_unbound_subtitle'),
     accent: '#64748b',
     geometry: { x: 240, y: 130, width: 640, height: 480 },
-    render: () => genericSurface(entry),
+    render: () => <GenericSurface entry={entry} />,
 });
 
 // `tenant` = a page/tool reached via nav, not a launchable realm.
@@ -372,27 +376,42 @@ const OS_REALM_EXCLUDE = new Set(['tenant']);
 export function osAppsFromManifest(
     manifest: RealmManifestEntry[],
 ): DesktopApp[] {
+    return localizedOsApps(manifest, englishBeamMessages);
+}
+
+function localizedOsApps(manifest: RealmManifestEntry[], m: ReturnType<typeof useBeamMessages>): DesktopApp[] {
+    const surfaceMap = { ...SURFACE_MAP };
+    for (const [key, label, subtitle] of [
+        ['site', m.t('splicewire-beam-inertia::messages.surfaces_site'), m.t('splicewire-beam-inertia::messages.surfaces_site_subtitle')],
+        ['user', m.t('splicewire-beam-inertia::messages.surfaces_account'), m.t('splicewire-beam-inertia::messages.surfaces_account_subtitle')],
+        ['operator', m.t('splicewire-beam-inertia::messages.surfaces_operator'), m.t('splicewire-beam-inertia::messages.surfaces_operator_subtitle')],
+    ]) {
+        const binding = surfaceMap[key];
+        surfaceMap[key] = { ...binding, label, subtitle };
+    }
     return buildAppsFromManifest(manifest, {
-        surfaceMap: SURFACE_MAP,
+        surfaceMap,
         exclude: OS_REALM_EXCLUDE,
-        genericBinding: GENERIC_BINDING,
+        genericBinding: (entry) => ({ ...GENERIC_BINDING(entry), subtitle: m.t('splicewire-beam-inertia::messages.surfaces_unbound_subtitle') }),
         surfaceInjection,
     });
 }
 
 // ── Host-supplied desktop chrome nodes ──────────────────────────────────────────────────────────────
 function OsBrand() {
+    const m = useBeamMessages();
     return (
         <span className="os-brand">
             <Mark className="mark" />
             <span className="osname">
-                <b>beam</b>·os
+                <b>{m.t('splicewire-beam-inertia::messages.surfaces_beam')}</b>{m.t('splicewire-beam-inertia::messages.surfaces_os_suffix')}
             </span>
         </span>
     );
 }
 
 function OsStatus() {
+    const m = useBeamMessages();
     return (
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <span
@@ -404,27 +423,29 @@ function OsStatus() {
                     textTransform: 'uppercase',
                 }}
             >
-                Window mode
+                {m.t('splicewire-beam-inertia::messages.surfaces_window_mode')}
             </span>
             <Clock />
         </div>
     );
 }
 
-const OS_BACKDROP = (
+function OsBackdrop() {
+    const m = useBeamMessages();
+    return (
     <>
         <div className="wallmark">
-            beam
+            {m.t('splicewire-beam-inertia::messages.surfaces_beam')}
             <br />
-            os
+            {m.t('splicewire-beam-inertia::messages.surfaces_os')}
         </div>
         <div className="hint">
-            beam·<b>os</b> — the front-end CMS as an operating system. Each
-            realm is a launchable app; a window frames its <b>real</b> surface
-            (its actual page component).
+            {surfaceMessage(m, 'splicewire-beam-inertia::messages.surfaces_desktop_hint', { os: <b>{m.t('splicewire-beam-inertia::messages.surfaces_os')}</b>, real: <b>{m.t('splicewire-beam-inertia::messages.surfaces_real')}</b> })}
         </div>
     </>
 );
+
+}
 
 // ── Workspace persistence (host-owned localStorage) ─────────────────────────────────────────────────
 const WORKSPACE_KEY = 'beam-starter.os.workspace.v1';
@@ -455,6 +476,7 @@ const OS_ENTER_KEY = 'os.enter';
 
 /** APP-FIRST fallback: one maximized real surface, no desktop chrome (guest / unentitled principal). */
 function AppFirstSurface({ apps }: { apps: DesktopApp[] }) {
+    const m = useBeamMessages();
     const primary =
         apps.find((a) => a.key === 'user' && !a.locked) ??
         apps.find((a) => !a.locked) ??
@@ -485,7 +507,7 @@ function AppFirstSurface({ apps }: { apps: DesktopApp[] }) {
                     </SurfaceBoundary>
                 ) : (
                     <div style={{ padding: 40, color: '#64748b' }}>
-                        No surface available.
+                        {m.t('splicewire-beam-inertia::messages.surfaces_no_surface_available')}
                     </div>
                 )}
             </div>
@@ -498,6 +520,7 @@ function AppFirstSurface({ apps }: { apps: DesktopApp[] }) {
  * Entitled (`can['os.enter']`) → the full desktop; unentitled → app-first (one maximized surface).
  */
 export function OsShellDesktop() {
+    const m = useBeamMessages();
     const page = usePage<{
         realmManifest?: RealmManifestEntry[];
         can?: Record<string, boolean>;
@@ -508,7 +531,7 @@ export function OsShellDesktop() {
         page.props.can as Record<string, boolean> | undefined
     )?.[OS_ENTER_KEY];
     const currentComponent = page.component;
-    const apps = osAppsFromManifest(manifest);
+    const apps = localizedOsApps(manifest, m);
 
     // DEV override: `?os=off` forces app-first to verify the unentitled fusion character in-browser.
     const devForceAppFirst =
@@ -525,17 +548,16 @@ export function OsShellDesktop() {
         apps,
         brand: <OsBrand />,
         status: <OsStatus />,
-        backdrop: OS_BACKDROP,
+        backdrop: <OsBackdrop />,
         statusLine: (
             <span
                 style={{ fontFamily: 'ui-monospace,monospace', fontSize: 10 }}
             >
-                {apps.length} realms · window manager live · layout persists per
-                session
+                {m.t('splicewire-beam-inertia::messages.surfaces_desktop_status', { count: apps.length })}
             </span>
         ),
         activeKey,
-        launcherHeading: 'Realms',
+        launcherHeading: m.t('splicewire-beam-inertia::messages.surfaces_realms'),
         onNavigate: (a) => router.visit(a.route ?? '/'),
         persist: writePersistedWorkspace,
     });

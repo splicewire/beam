@@ -1,3 +1,5 @@
+import { AuthMessage } from '../../components/auth-message';
+import { useBeamMessages } from '../../messages';
 import { Form, usePage } from '@inertiajs/react';
 import InputError from '../../components/input-error';
 import PasswordInput from '../../components/password-input';
@@ -12,6 +14,7 @@ import { reportEvent } from '@splicewire/beam-ux/site';
 // theme-entries-and-authoring STR-03: a sealed island (editor/registry.tsx), no longer the top-level
 // Inertia page — read via usePage() instead of received as a direct component prop.
 export default function Register() {
+    const messages = useBeamMessages();
     const { passwordRules } = usePage<AuthEntryPageData>().props;
 
     return (
@@ -28,7 +31,7 @@ export default function Register() {
                     <>
                         <div className="grid gap-6">
                             <div className="grid gap-2">
-                                <Label htmlFor="name">Name</Label>
+                                <Label htmlFor="name">{messages.t('splicewire-beam-inertia::messages.auth_name')}</Label>
                                 <Input
                                     id="name"
                                     type="text"
@@ -37,7 +40,7 @@ export default function Register() {
                                     tabIndex={1}
                                     autoComplete="name"
                                     name="name"
-                                    placeholder="Full name"
+                                    placeholder={messages.t('splicewire-beam-inertia::messages.auth_full_name')}
                                 />
                                 <InputError
                                     message={errors.name}
@@ -46,7 +49,7 @@ export default function Register() {
                             </div>
 
                             <div className="grid gap-2">
-                                <Label htmlFor="email">Email address</Label>
+                                <Label htmlFor="email">{messages.t('splicewire-beam-inertia::messages.auth_email_address')}</Label>
                                 <Input
                                     id="email"
                                     type="email"
@@ -54,20 +57,20 @@ export default function Register() {
                                     tabIndex={2}
                                     autoComplete="email"
                                     name="email"
-                                    placeholder="email@example.com"
+                                    placeholder={messages.t('splicewire-beam-inertia::messages.auth_email_example_com_lowercase')}
                                 />
                                 <InputError message={errors.email} />
                             </div>
 
                             <div className="grid gap-2">
-                                <Label htmlFor="password">Password</Label>
+                                <Label htmlFor="password">{messages.t('splicewire-beam-inertia::messages.auth_password')}</Label>
                                 <PasswordInput
                                     id="password"
                                     required
                                     tabIndex={3}
                                     autoComplete="new-password"
                                     name="password"
-                                    placeholder="Password"
+                                    placeholder={messages.t('splicewire-beam-inertia::messages.auth_password')}
                                     passwordrules={passwordRules}
                                 />
                                 <InputError message={errors.password} />
@@ -75,15 +78,14 @@ export default function Register() {
 
                             <div className="grid gap-2">
                                 <Label htmlFor="passwordConfirmation">
-                                    Confirm password
-                                </Label>
+                                    {messages.t('splicewire-beam-inertia::messages.auth_confirm_password')}</Label>
                                 <PasswordInput
                                     id="passwordConfirmation"
                                     required
                                     tabIndex={4}
                                     autoComplete="new-password"
                                     name="passwordConfirmation"
-                                    placeholder="Confirm password"
+                                    placeholder={messages.t('splicewire-beam-inertia::messages.auth_confirm_password')}
                                     passwordrules={passwordRules}
                                 />
                                 <InputError
@@ -98,15 +100,12 @@ export default function Register() {
                                 data-test="register-user-button"
                             >
                                 {processing && <Spinner />}
-                                Create account
-                            </Button>
+                                {messages.t('splicewire-beam-inertia::messages.auth_create_account')}</Button>
                         </div>
 
                         <div className="text-center text-sm text-muted-foreground">
-                            Already have an account?{' '}
-                            <TextLink href="/login" tabIndex={6}>
-                                Log in
-                            </TextLink>
+                            <AuthMessage text={messages.t('splicewire-beam-inertia::messages.auth_login_prompt', { action: '\uFFFC0\uFFFC' })} parts={[<TextLink href="/login" tabIndex={6}>
+                                {messages.t('splicewire-beam-inertia::messages.auth_log_in')}</TextLink>]} />
                         </div>
                     </>
                 )}

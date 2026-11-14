@@ -1,3 +1,4 @@
+import { useBeamMessages } from '../../messages';
 import { Head } from '@inertiajs/react';
 import type { ComponentType } from 'react';
 import { useEditMode } from '@splicewire/beam-ux/canvas';
@@ -62,6 +63,7 @@ export default function SiteHome({
     /** Inside a Preview, the bar the route composed (ADR-0232 d15, EP-18); the entry's artifact is then the Preview's. */
     preview?: PreviewBarData | null;
 }) {
+    const messages = useBeamMessages();
     const editing = useEditMode();
     const artifact = entry?.artifact ?? null;
     // As on the packaged entry page: where the host takes the server's head, its title is the page's.
@@ -69,7 +71,7 @@ export default function SiteHome({
 
     const page = (
         <SiteLayout>
-            {!serverHead && <Head title="Home" />}
+            {!serverHead && <Head title={messages.t('splicewire-beam-inertia::messages.chrome_home')} />}
             {/* EP-07d: as on the packaged entry page, the body's forms read the schemas the server put on the page. */}
             <IntakeFormsFromPage>
                 <div

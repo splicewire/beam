@@ -1,3 +1,4 @@
+import { useBeamMessages } from '../messages';
 // beam·os — the direct full-desktop `/os` entry. Mounts the shared OsShellDesktop (menu bar + dock +
 // launcher + floating window manager) with the starter's realms as launchable apps and a NEUTRAL theme.
 // Route-gated on `auth,verified` (production gates on the projected `os.enter` entitlement). The whole
@@ -7,9 +8,10 @@ import { Head } from '@inertiajs/react';
 import { OsShellDesktop } from '../os/shell-config';
 
 export default function Os() {
+    const m = useBeamMessages();
     return (
         <>
-            <Head title="beam·os" />
+            <Head title={m.t('splicewire-beam-inertia::messages.surfaces_os_title')} />
             <OsShellDesktop />
         </>
     );

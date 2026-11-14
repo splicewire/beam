@@ -1,3 +1,4 @@
+import { useBeamMessages } from '../messages';
 import { Form } from '@inertiajs/react';
 import { ShieldCheck } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
@@ -13,6 +14,7 @@ export type Props = {
 };
 
 export default function ManageTwoFactor(props: Props) {
+    const messages = useBeamMessages();
     const requiresConfirmation = props.requiresConfirmation ?? false;
     const twoFactorEnabled = props.twoFactorEnabled ?? false;
 
@@ -46,16 +48,13 @@ export default function ManageTwoFactor(props: Props) {
         <div className="space-y-6">
             <Heading
                 variant="small"
-                title="Two-factor authentication"
-                description="Manage your two-factor authentication settings"
+                title={messages.t('splicewire-beam-inertia::messages.auth_two_factor_authentication')}
+                description={messages.t('splicewire-beam-inertia::messages.auth_manage_your_two_factor_authentication_settings')}
             />
             {twoFactorEnabled ? (
                 <div className="flex flex-col items-start justify-start space-y-4">
                     <p className="text-sm text-muted-foreground">
-                        You will be prompted for a secure, random pin during
-                        login, which you can retrieve from the TOTP-supported
-                        application on your phone.
-                    </p>
+                        {messages.t('splicewire-beam-inertia::messages.auth_you_will_be_prompted_for_a_secure_random_pin_during_login_which_you_can_retrieve_from_the_totp_supported_appli')}</p>
 
                     <div className="relative inline">
                         <Form
@@ -68,8 +67,7 @@ export default function ManageTwoFactor(props: Props) {
                                     type="submit"
                                     disabled={processing}
                                 >
-                                    Disable 2FA
-                                </Button>
+                                    {messages.t('splicewire-beam-inertia::messages.auth_disable_2fa')}</Button>
                             )}
                         </Form>
                     </div>
@@ -83,18 +81,13 @@ export default function ManageTwoFactor(props: Props) {
             ) : (
                 <div className="flex flex-col items-start justify-start space-y-4">
                     <p className="text-sm text-muted-foreground">
-                        When you enable two-factor authentication, you will be
-                        prompted for a secure pin during login. This pin can be
-                        retrieved from a TOTP-supported application on your
-                        phone.
-                    </p>
+                        {messages.t('splicewire-beam-inertia::messages.auth_when_you_enable_two_factor_authentication_you_will_be_prompted_for_a_secure_pin_during_login_this_pin_can_be_r')}</p>
 
                     <div>
                         {hasSetupData ? (
                             <Button onClick={() => setShowSetupModal(true)}>
                                 <ShieldCheck />
-                                Continue setup
-                            </Button>
+                                {messages.t('splicewire-beam-inertia::messages.auth_continue_setup')}</Button>
                         ) : (
                             <Form
                                 action="/user/two-factor-authentication"
@@ -103,8 +96,7 @@ export default function ManageTwoFactor(props: Props) {
                             >
                                 {({ processing }) => (
                                     <Button type="submit" disabled={processing}>
-                                        Enable 2FA
-                                    </Button>
+                                        {messages.t('splicewire-beam-inertia::messages.auth_enable_2fa')}</Button>
                                 )}
                             </Form>
                         )}

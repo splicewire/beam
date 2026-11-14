@@ -1,3 +1,4 @@
+import { useBeamMessages } from '../messages';
 import { Link, usePage } from '@inertiajs/react';
 import { ManifestTable, SiteNav as BeamSiteNav } from '@splicewire/beam-ux/site';
 import type { SiteNavProps } from '@splicewire/beam-ux/site';
@@ -76,28 +77,29 @@ export function defaultComponents(): Record<
  * renders a stated refusal, never a form that cannot work (EP-42: a palette-placed reset island rendered a token-less
  * form on a starter's home page).
  */
-function authIsland(page: string, route: string, form: string): ComponentType<Record<string, unknown>> {
+function authIsland(page: string, route: string, form: Parameters<ReturnType<typeof useBeamMessages>['t']>[0]): ComponentType<Record<string, unknown>> {
     const Page = lazy(async () => ({ default: (await resolveBeamPage(page)) as ComponentType<Record<string, unknown>> }));
     const path = new RegExp(`^${route.replace(/\{[^}]+\}/g, '[^/]+')}$`);
 
     return function AuthIsland() {
+        const m = useBeamMessages();
         const { url, props } = usePage<Record<string, unknown>>();
 
         if (!path.test(url.split(/[?#]/)[0])) {
-            return <div role="note" data-auth-island-refused={route} className="p-4 text-sm">The {form} works only on its own page.</div>;
+            return <div role="note" data-auth-island-refused={route} className="p-4 text-sm">{m.t(form)}</div>;
         }
 
         return <Suspense fallback={null}><Page {...props} /></Suspense>;
     };
 }
 
-const Login = authIsland('auth/login', '/login', 'sign-in form');
-const Register = authIsland('auth/register', '/register', 'sign-up form');
-const ForgotPassword = authIsland('auth/forgot-password', '/forgot-password', 'password reset request');
-const ResetPassword = authIsland('auth/reset-password', '/reset-password/{token}', 'password reset form');
-const ConfirmPassword = authIsland('auth/confirm-password', '/user/confirm-password', 'password confirmation');
-const TwoFactorChallenge = authIsland('auth/two-factor-challenge', '/two-factor-challenge', 'two-factor challenge');
-const VerifyEmail = authIsland('auth/verify-email', '/email/verify', 'email verification notice');
+const Login = authIsland('auth/login', '/login', 'splicewire-beam-inertia::messages.surfaces_sign_in_own_page');
+const Register = authIsland('auth/register', '/register', 'splicewire-beam-inertia::messages.surfaces_sign_up_own_page');
+const ForgotPassword = authIsland('auth/forgot-password', '/forgot-password', 'splicewire-beam-inertia::messages.surfaces_password_request_own_page');
+const ResetPassword = authIsland('auth/reset-password', '/reset-password/{token}', 'splicewire-beam-inertia::messages.surfaces_password_reset_own_page');
+const ConfirmPassword = authIsland('auth/confirm-password', '/user/confirm-password', 'splicewire-beam-inertia::messages.surfaces_password_confirmation_own_page');
+const TwoFactorChallenge = authIsland('auth/two-factor-challenge', '/two-factor-challenge', 'splicewire-beam-inertia::messages.surfaces_two_factor_own_page');
+const VerifyEmail = authIsland('auth/verify-email', '/email/verify', 'splicewire-beam-inertia::messages.surfaces_email_verification_own_page');
 
 /** `<SiteNav>` draws the site's nav projection, a page prop, as the header's SiteNav reads it (components/site-nav.tsx). */
 function PageSiteNav(props: Record<string, unknown>) {

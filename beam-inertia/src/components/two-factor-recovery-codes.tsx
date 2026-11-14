@@ -1,3 +1,5 @@
+import { AuthMessage } from './auth-message';
+import { useBeamMessages } from '../messages';
 import { Form } from '@inertiajs/react';
 import { Eye, EyeOff, LockKeyhole, RefreshCw } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -21,6 +23,7 @@ export default function TwoFactorRecoveryCodes({
     fetchRecoveryCodes,
     errors,
 }: Props) {
+    const messages = useBeamMessages();
     const [codesAreVisible, setCodesAreVisible] = useState<boolean>(false);
     const codesSectionRef = useRef<HTMLDivElement | null>(null);
     const canRegenerateCodes = recoveryCodesList.length > 0 && codesAreVisible;
@@ -55,12 +58,9 @@ export default function TwoFactorRecoveryCodes({
             <CardHeader>
                 <CardTitle className="flex gap-3">
                     <LockKeyhole className="size-4" aria-hidden="true" />
-                    2FA recovery codes
-                </CardTitle>
+                    {messages.t('splicewire-beam-inertia::messages.auth_2fa_recovery_codes')}</CardTitle>
                 <CardDescription>
-                    Recovery codes let you regain access if you lose your 2FA
-                    device. Store them in a secure password manager.
-                </CardDescription>
+                    {messages.t('splicewire-beam-inertia::messages.auth_recovery_codes_let_you_regain_access_if_you_lose_your_2fa_device_store_them_in_a_secure_password_manager')}</CardDescription>
             </CardHeader>
             <CardContent>
                 <div className="flex flex-col gap-3 select-none sm:flex-row sm:items-center sm:justify-between">
@@ -74,7 +74,7 @@ export default function TwoFactorRecoveryCodes({
                             className="size-4"
                             aria-hidden="true"
                         />
-                        {codesAreVisible ? 'Hide' : 'View'} recovery codes
+                        {codesAreVisible ? messages.t('splicewire-beam-inertia::messages.auth_hide_recovery_codes') : messages.t('splicewire-beam-inertia::messages.auth_view_recovery_codes')}
                     </Button>
 
                     {canRegenerateCodes && (
@@ -91,8 +91,7 @@ export default function TwoFactorRecoveryCodes({
                                     disabled={processing}
                                     aria-describedby="regenerate-warning"
                                 >
-                                    <RefreshCw /> Regenerate codes
-                                </Button>
+                                    <RefreshCw />{' '}{messages.t('splicewire-beam-inertia::messages.auth_regenerate_codes')}</Button>
                             )}
                         </Form>
                     )}
@@ -111,7 +110,7 @@ export default function TwoFactorRecoveryCodes({
                                     ref={codesSectionRef}
                                     className="grid gap-1 rounded-lg bg-muted p-4 font-mono text-sm"
                                     role="list"
-                                    aria-label="Recovery codes"
+                                    aria-label={messages.t('splicewire-beam-inertia::messages.auth_recovery_codes')}
                                 >
                                     {recoveryCodesList.length ? (
                                         recoveryCodesList.map((code, index) => (
@@ -126,7 +125,7 @@ export default function TwoFactorRecoveryCodes({
                                     ) : (
                                         <div
                                             className="space-y-2"
-                                            aria-label="Loading recovery codes"
+                                            aria-label={messages.t('splicewire-beam-inertia::messages.auth_loading_recovery_codes')}
                                         >
                                             {Array.from(
                                                 { length: 8 },
@@ -144,13 +143,7 @@ export default function TwoFactorRecoveryCodes({
 
                                 <div className="text-xs text-muted-foreground select-none">
                                     <p id="regenerate-warning">
-                                        Each recovery code can be used once to
-                                        access your account and will be removed
-                                        after use. If you need more, click{' '}
-                                        <span className="font-bold">
-                                            Regenerate codes
-                                        </span>{' '}
-                                        above.
+                                        <AuthMessage text={messages.t('splicewire-beam-inertia::messages.auth_recovery_codes_warning', { action: '\uFFFC0\uFFFC' })} parts={[<span className="font-bold">{messages.t('splicewire-beam-inertia::messages.auth_regenerate_codes')}</span>]} />
                                     </p>
                                 </div>
                             </>

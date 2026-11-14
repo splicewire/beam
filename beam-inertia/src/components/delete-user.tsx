@@ -1,3 +1,4 @@
+import { useBeamMessages } from '../messages';
 import { Form } from '@inertiajs/react';
 import { useRef } from 'react';
 import Heading from './heading';
@@ -16,21 +17,21 @@ import {
 import { Label } from './ui/label';
 
 export default function DeleteUser() {
+    const messages = useBeamMessages();
     const passwordInput = useRef<HTMLInputElement>(null);
 
     return (
         <div className="space-y-6">
             <Heading
                 variant="small"
-                title="Delete account"
-                description="Delete your account and all of its resources"
+                title={messages.t('splicewire-beam-inertia::messages.auth_delete_account')}
+                description={messages.t('splicewire-beam-inertia::messages.auth_delete_your_account_and_all_of_its_resources')}
             />
             <div className="space-y-4 rounded-lg border border-red-100 bg-red-50 p-4 dark:border-red-200/10 dark:bg-red-700/10">
                 <div className="relative space-y-0.5 text-red-600 dark:text-red-100">
-                    <p className="font-medium">Warning</p>
+                    <p className="font-medium">{messages.t('splicewire-beam-inertia::messages.auth_warning')}</p>
                     <p className="text-sm">
-                        Please proceed with caution, this cannot be undone.
-                    </p>
+                        {messages.t('splicewire-beam-inertia::messages.auth_please_proceed_with_caution_this_cannot_be_undone')}</p>
                 </div>
 
                 <Dialog>
@@ -39,19 +40,13 @@ export default function DeleteUser() {
                             variant="destructive"
                             data-test="delete-user-button"
                         >
-                            Delete account
-                        </Button>
+                            {messages.t('splicewire-beam-inertia::messages.auth_delete_account')}</Button>
                     </DialogTrigger>
                     <DialogContent>
                         <DialogTitle>
-                            Are you sure you want to delete your account?
-                        </DialogTitle>
+                            {messages.t('splicewire-beam-inertia::messages.auth_are_you_sure_you_want_to_delete_your_account')}</DialogTitle>
                         <DialogDescription>
-                            Once your account is deleted, all of its resources
-                            and data will also be permanently deleted. Please
-                            enter your password to confirm you would like to
-                            permanently delete your account.
-                        </DialogDescription>
+                            {messages.t('splicewire-beam-inertia::messages.auth_once_your_account_is_deleted_all_of_its_resources_and_data_will_also_be_permanently_deleted_please_enter_your')}</DialogDescription>
 
                         <Form
                             action="/settings/profile"
@@ -70,14 +65,13 @@ export default function DeleteUser() {
                                             htmlFor="password"
                                             className="sr-only"
                                         >
-                                            Password
-                                        </Label>
+                                            {messages.t('splicewire-beam-inertia::messages.auth_password')}</Label>
 
                                         <PasswordInput
                                             id="password"
                                             name="password"
                                             ref={passwordInput}
-                                            placeholder="Password"
+                                            placeholder={messages.t('splicewire-beam-inertia::messages.auth_password')}
                                             autoComplete="current-password"
                                         />
 
@@ -92,8 +86,7 @@ export default function DeleteUser() {
                                                     resetAndClearErrors()
                                                 }
                                             >
-                                                Cancel
-                                            </Button>
+                                                {messages.t('splicewire-beam-inertia::messages.auth_cancel')}</Button>
                                         </DialogClose>
 
                                         <Button
@@ -105,8 +98,7 @@ export default function DeleteUser() {
                                                 type="submit"
                                                 data-test="confirm-delete-user-button"
                                             >
-                                                Delete account
-                                            </button>
+                                                {messages.t('splicewire-beam-inertia::messages.auth_delete_account')}</button>
                                         </Button>
                                     </DialogFooter>
                                 </>

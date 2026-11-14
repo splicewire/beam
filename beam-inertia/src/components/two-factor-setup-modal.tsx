@@ -1,3 +1,4 @@
+import { useBeamMessages } from '../messages';
 import { Form } from '@inertiajs/react';
 import { REGEXP_ONLY_DIGITS } from 'input-otp';
 import { Check, Copy, ScanLine } from 'lucide-react';
@@ -60,6 +61,7 @@ function TwoFactorSetupStep({
     onNextStep: () => void;
     errors: string[];
 }) {
+    const messages = useBeamMessages();
     const { resolvedAppearance } = useAppearance();
     const [copiedText, copy] = useClipboard();
     const IconComponent = copiedText === manualSetupKey ? Check : Copy;
@@ -102,8 +104,7 @@ function TwoFactorSetupStep({
                     <div className="relative flex w-full items-center justify-center">
                         <div className="absolute inset-0 top-1/2 h-px w-full bg-border" />
                         <span className="relative bg-card px-2 py-1">
-                            or, enter the code manually
-                        </span>
+                            {messages.t('splicewire-beam-inertia::messages.auth_or_enter_the_code_manually_lowercase')}</span>
                     </div>
 
                     <div className="flex w-full space-x-2">
@@ -143,6 +144,7 @@ function TwoFactorVerificationStep({
     onClose: () => void;
     onBack: () => void;
 }) {
+    const messages = useBeamMessages();
     const [code, setCode] = useState<string>('');
     const pinInputContainerRef = useRef<HTMLDivElement>(null);
 
@@ -209,8 +211,7 @@ function TwoFactorVerificationStep({
                                 onClick={onBack}
                                 disabled={processing}
                             >
-                                Back
-                            </Button>
+                                {messages.t('splicewire-beam-inertia::messages.auth_back')}</Button>
                             <Button
                                 type="submit"
                                 className="flex-1"
@@ -218,8 +219,7 @@ function TwoFactorVerificationStep({
                                     processing || code.length < OTP_MAX_LENGTH
                                 }
                             >
-                                Confirm
-                            </Button>
+                                {messages.t('splicewire-beam-inertia::messages.auth_confirm')}</Button>
                         </div>
                     </div>
                 </>
@@ -251,6 +251,7 @@ export default function TwoFactorSetupModal({
     fetchSetupData,
     errors,
 }: Props) {
+    const messages = useBeamMessages();
     const [showVerificationStep, setShowVerificationStep] =
         useState<boolean>(false);
 
@@ -261,29 +262,29 @@ export default function TwoFactorSetupModal({
     }>(() => {
         if (twoFactorEnabled) {
             return {
-                title: 'Two-factor authentication enabled',
+                title: messages.t('splicewire-beam-inertia::messages.auth_two_factor_authentication_enabled'),
                 description:
-                    'Two-factor authentication is now enabled. Scan the QR code or enter the setup key in your authenticator app.',
-                buttonText: 'Close',
+                    messages.t('splicewire-beam-inertia::messages.auth_two_factor_authentication_is_now_enabled_scan_the_qr_code_or_enter_the_setup_key_in_your_authenticator_app'),
+                buttonText: messages.t('splicewire-beam-inertia::messages.auth_close'),
             };
         }
 
         if (showVerificationStep) {
             return {
-                title: 'Verify authentication code',
+                title: messages.t('splicewire-beam-inertia::messages.auth_verify_authentication_code'),
                 description:
-                    'Enter the 6-digit code from your authenticator app',
-                buttonText: 'Continue',
+                    messages.t('splicewire-beam-inertia::messages.auth_enter_the_6_digit_code_from_your_authenticator_app'),
+                buttonText: messages.t('splicewire-beam-inertia::messages.auth_continue'),
             };
         }
 
         return {
-            title: 'Enable two-factor authentication',
+            title: messages.t('splicewire-beam-inertia::messages.auth_enable_two_factor_authentication'),
             description:
-                'To finish enabling two-factor authentication, scan the QR code or enter the setup key in your authenticator app',
-            buttonText: 'Continue',
+                messages.t('splicewire-beam-inertia::messages.auth_to_finish_enabling_two_factor_authentication_scan_the_qr_code_or_enter_the_setup_key_in_your_authenticator_app'),
+            buttonText: messages.t('splicewire-beam-inertia::messages.auth_continue'),
         };
-    }, [twoFactorEnabled, showVerificationStep]);
+    }, [twoFactorEnabled, showVerificationStep, messages]);
 
     const resetModalState = useCallback(() => {
         if (twoFactorEnabled) {

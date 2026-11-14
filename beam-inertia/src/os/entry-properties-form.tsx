@@ -1,3 +1,5 @@
+import { surfaceMessage } from './surface-message';
+import { useBeamMessages } from '../messages';
 // The page's ENTRY FORM, as the body of the "Page properties" window — Frame's own `EditShell` over the
 // `beam-ux-entry` ParticleResource, for the entry the current page renders.
 //
@@ -17,10 +19,11 @@ import { DefaultFrameRealm, FrameRealmProvider } from '../frame/realm';
 export const ENTRY_RESOURCE = 'beam-ux-entry';
 
 function EntryForm({ entryId }: { entryId: string }) {
+    const m = useBeamMessages();
     const { data: manifest, isLoading, error } = useFrameManifest();
 
     if (isLoading) {
-        return <p className="p-4 text-sm text-muted-foreground">Loading the entry form…</p>;
+        return <p className="p-4 text-sm text-muted-foreground">{m.t('splicewire-beam-inertia::messages.surfaces_entry_loading')}</p>;
     }
 
     if (error || !manifest || !manifest.resources.some((r) => r.key === ENTRY_RESOURCE)) {
@@ -28,8 +31,7 @@ function EntryForm({ entryId }: { entryId: string }) {
         // here, and the console would refuse them the same way.
         return (
             <p role="note" className="p-4 text-sm text-muted-foreground">
-                The entry form is not available here ({ENTRY_RESOURCE} is not in this realm&rsquo;s frame
-                manifest).
+                {surfaceMessage(m, 'splicewire-beam-inertia::messages.surfaces_entry_unavailable', { resource: ENTRY_RESOURCE })}
             </p>
         );
     }

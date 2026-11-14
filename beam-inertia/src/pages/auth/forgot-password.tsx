@@ -1,3 +1,5 @@
+import { AuthMessage } from '../../components/auth-message';
+import { useBeamMessages } from '../../messages';
 // Components
 import { Form, usePage } from '@inertiajs/react';
 import { LoaderCircle } from 'lucide-react';
@@ -10,6 +12,7 @@ import type { AuthEntryPageData } from '@splicewire/beam-resources/types/account
 // theme-entries-and-authoring STR-03: a sealed island (editor/registry.tsx), no longer the top-level
 // Inertia page — read via usePage() instead of received as a direct component prop.
 export default function ForgotPassword() {
+    const messages = useBeamMessages();
     const { status } = usePage<AuthEntryPageData>().props;
 
     return (
@@ -25,14 +28,14 @@ export default function ForgotPassword() {
                     {({ processing, errors }) => (
                         <>
                             <div className="grid gap-2">
-                                <Label htmlFor="email">Email address</Label>
+                                <Label htmlFor="email">{messages.t('splicewire-beam-inertia::messages.auth_email_address')}</Label>
                                 <Input
                                     id="email"
                                     type="email"
                                     name="email"
                                     autoComplete="off"
                                     autoFocus
-                                    placeholder="email@example.com"
+                                    placeholder={messages.t('splicewire-beam-inertia::messages.auth_email_example_com_lowercase')}
                                 />
 
                                 <InputError message={errors.email} />
@@ -47,16 +50,14 @@ export default function ForgotPassword() {
                                     {processing && (
                                         <LoaderCircle className="h-4 w-4 animate-spin" />
                                     )}
-                                    Email password reset link
-                                </Button>
+                                    {messages.t('splicewire-beam-inertia::messages.auth_email_password_reset_link')}</Button>
                             </div>
                         </>
                     )}
                 </Form>
 
                 <div className="space-x-1 text-center text-sm text-muted-foreground">
-                    <span>Or, return to</span>
-                    <TextLink href="/login">log in</TextLink>
+                    <AuthMessage text={messages.t('splicewire-beam-inertia::messages.auth_return_to_login', { action: '\uFFFC0\uFFFC' })} parts={[<TextLink href="/login">{messages.t('splicewire-beam-inertia::messages.auth_log_in_lowercase')}</TextLink>]} />
                 </div>
             </div>
         </>

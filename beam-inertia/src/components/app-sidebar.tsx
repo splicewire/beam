@@ -1,3 +1,4 @@
+import { useBeamMessages } from '../messages';
 import { Link, usePage } from '@inertiajs/react';
 import { RealmHeader, RealmNav, useCurrentRealm, type HostRealms, type RealmNavNode } from '@splicewire/beam-ux/nav';
 import AppLogo from './app-logo';
@@ -23,22 +24,23 @@ import { FrameRealmProvider, useFrameRealm, type FrameRealmContext } from '../fr
  * The tenant rail keeps its Account group (Billing, API tokens, Team): since starter de4f17b nothing else draws the
  * `accountNav` seats, and moving them into the `user` realm is UX-12b's (IA-13), not this slice's.
  */
-function accountSeats(accountNav: { items?: { title: string; href: string | null }[] } | undefined): RealmNavNode[] {
+function accountSeats(accountNav: { items?: { title: string; href: string | null }[] } | undefined, accountLabel: string): RealmNavNode[] {
     const children = (accountNav?.items ?? [])
         .filter((item): item is { title: string; href: string } => !!item.href && item.href !== '/dashboard')
         .map((item) => ({ title: item.title, href: item.href, icon: 'settings' }));
 
-    return children.length > 0 ? [{ title: 'Account', children }] : [];
+    return children.length > 0 ? [{ title: accountLabel, children }] : [];
 }
 
 export function AppSidebar({ realm }: { realm?: FrameRealmContext } = {}) {
+    const messages = useBeamMessages();
     const page = usePage<{ realms?: HostRealms; accountNav?: { items?: { title: string; href: string | null }[] } }>();
     const pageRealm = useFrameRealm();
     const railRealm = realm ?? pageRealm;
     const { realm: current, back } = useCurrentRealm(page.props.realms, new URL(page.url, 'http://local').pathname);
     // The brand mark keeps you in the realm (IA-4): the current realm's home, else the rail realm's own.
     const home = current?.href ?? (railRealm.realm === null ? '/dashboard' : railRealm.basename);
-    const account = !realm && railRealm.realm === null ? accountSeats(page.props.accountNav) : [];
+    const account = !realm && railRealm.realm === null ? accountSeats(page.props.accountNav, messages.t('splicewire-beam-inertia::messages.chrome_account')) : [];
     const rail = realm ? (
         <FrameRealmProvider {...realm}>
             <FrameRail />

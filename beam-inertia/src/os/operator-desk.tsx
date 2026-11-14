@@ -1,3 +1,4 @@
+import { useBeamMessages } from '../messages';
 import { resolveBeamPage } from '../pages';
 // beam-starter · os — the OPERATOR META-EDITOR OVERLAY.
 //
@@ -35,23 +36,10 @@ const OperatorDashboard = lazy(async () => ({ default: await resolveBeamPage('op
 
 // `OperatorDashboard`'s own props are optional (renders with sensible fallbacks) precisely so it can
 // mount standalone in a float, with no Inertia route props threaded in.
-const TOOLS: OperatorTool[] = [
-    {
-        key: 'dashboard',
-        title: 'Dashboard',
-        accent: '#4B5563',
-        render: () => (
-            <Suspense
-                fallback={
-                    <div className="p-6 text-sm text-slate-500">Loading…</div>
-                }
-            >
-                <OperatorDashboard />
-            </Suspense>
-        ),
-        size: { width: 720, height: 560 },
-    },
-];
+function ToolLoading() {
+    const m = useBeamMessages();
+    return <div className="p-6 text-sm text-slate-500">{m.t('splicewire-beam-inertia::messages.surfaces_loading')}</div>;
+}
 
 // The beam mark — same glyph as splicewire's `@/components/app-logo-icon`, inlined so the accent node
 // rides `--beam-accent` rather than that component's own hardcoded fill. This host has no
@@ -87,6 +75,26 @@ function BeamMark({ className }: { className?: string }) {
 }
 
 export default function OperatorDesk() {
+    const m = useBeamMessages();
+    const TOOLS: OperatorTool[] = [
+    {
+        key: 'dashboard',
+        title: m.t('splicewire-beam-inertia::messages.surfaces_dashboard'),
+        accent: '#4B5563',
+        render: () => (
+            <Suspense
+                fallback={
+                    <ToolLoading />
+                }
+            >
+                <OperatorDashboard />
+            </Suspense>
+        ),
+        size: { width: 720, height: 560 },
+    },
+];
+
+
     const page = usePage<{ entry?: { id?: string; slug?: string } | null }>();
     const component = page.component;
     // The entry the page under the desk renders — shared as `props.entry` by `PageEntryRef` (a
@@ -104,11 +112,11 @@ export default function OperatorDesk() {
             inControlPanel={!!component?.startsWith('operator/')}
             // UX-12a: the dock is the in-place editor, so it reads "Edit"; the Operator realm is crossed only
             // through RealmSwitcher (IA-3).
-            orbLabel="Edit"
+            orbLabel={m.t('splicewire-beam-inertia::messages.surfaces_edit')}
             orbIcon={<BeamMark className="mark" />}
             brand={{
                 mark: <BeamMark className="op-menu-brand-mark" />,
-                label: 'beam',
+                label: m.t('splicewire-beam-inertia::messages.surfaces_beam'),
             }}
             links={{
                 frontend: { href: '/' },

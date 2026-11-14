@@ -1,3 +1,4 @@
+import { useBeamMessages } from '../../messages';
 import { Link } from '@inertiajs/react';
 import type { PropsWithChildren } from 'react';
 import Heading from '../../components/heading';
@@ -7,39 +8,39 @@ import { useCurrentUrl } from '../../hooks/use-current-url';
 import { cn, toUrl } from '../../lib/utils';
 import type { NavItem } from '../../types';
 
-const sidebarNavItems: NavItem[] = [
-    {
-        title: 'Profile',
-        href: { method: 'get', url: '/settings/profile' },
-        icon: null,
-    },
-    {
-        title: 'Security',
-        href: { method: 'get', url: '/settings/security' },
-        icon: null,
-    },
-    {
-        title: 'Appearance',
-        href: { method: 'get', url: '/settings/appearance' },
-        icon: null,
-    },
-];
-
 export default function SettingsLayout({ children }: PropsWithChildren) {
+    const messages = useBeamMessages();
+    const sidebarNavItems: NavItem[] = [
+        {
+            title: messages.t('splicewire-beam-inertia::messages.chrome_profile'),
+            href: { method: 'get', url: '/settings/profile' },
+            icon: null,
+        },
+        {
+            title: messages.t('splicewire-beam-inertia::messages.chrome_security'),
+            href: { method: 'get', url: '/settings/security' },
+            icon: null,
+        },
+        {
+            title: messages.t('splicewire-beam-inertia::messages.chrome_appearance'),
+            href: { method: 'get', url: '/settings/appearance' },
+            icon: null,
+        },
+    ];
     const { isCurrentOrParentUrl } = useCurrentUrl();
 
     return (
         <div className="px-4 py-6">
             <Heading
-                title="Settings"
-                description="Manage your profile and account settings"
+                title={messages.t('splicewire-beam-inertia::messages.chrome_settings')}
+                description={messages.t('splicewire-beam-inertia::messages.chrome_settings_description')}
             />
 
             <div className="flex flex-col lg:flex-row lg:space-x-12">
                 <aside className="w-full max-w-xl lg:w-48">
                     <nav
                         className="flex flex-col space-y-1 space-x-0"
-                        aria-label="Settings"
+                        aria-label={messages.t('splicewire-beam-inertia::messages.chrome_settings')}
                     >
                         {sidebarNavItems.map((item, index) => (
                             <Button

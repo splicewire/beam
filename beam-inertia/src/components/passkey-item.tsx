@@ -1,3 +1,4 @@
+import { useBeamMessages } from '../messages';
 import { KeyRound, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { Button } from "./ui/button";
@@ -18,6 +19,7 @@ type Props = {
 };
 
 export default function PasskeyItem({ passkey, onDelete }: Props) {
+    const messages = useBeamMessages();
   const [isDeleting, setIsDeleting] = useState(false);
 
   const handleDelete = () => {
@@ -41,11 +43,11 @@ export default function PasskeyItem({ passkey, onDelete }: Props) {
             )}
           </div>
           <p className="text-sm text-muted-foreground">
-            Added {passkey.createdAtDiff}
+            {messages.t('splicewire-beam-inertia::messages.auth_passkey_added', { date: passkey.createdAtDiff })}
             {passkey.lastUsedAtDiff && (
               <>
                 <span className="mx-1 text-muted-foreground/50">/</span>
-                Last used {passkey.lastUsedAtDiff}
+                {messages.t('splicewire-beam-inertia::messages.auth_passkey_last_used', { date: passkey.lastUsedAtDiff })}
               </>
             )}
           </p>
@@ -60,25 +62,24 @@ export default function PasskeyItem({ passkey, onDelete }: Props) {
             className="text-destructive hover:bg-destructive/10 hover:text-destructive"
           >
             <Trash2 className="h-4 w-4" />
-            <span className="sr-only">Remove</span>
+            <span className="sr-only">{messages.t('splicewire-beam-inertia::messages.auth_remove')}</span>
           </Button>
         </DialogTrigger>
         <DialogContent>
-          <DialogTitle>Remove passkey</DialogTitle>
+          <DialogTitle>{messages.t('splicewire-beam-inertia::messages.auth_remove_passkey')}</DialogTitle>
           <DialogDescription>
-            Are you sure you want to remove the "{passkey.name}" passkey? You
-            will no longer be able to use it to sign in.
+            {messages.t('splicewire-beam-inertia::messages.auth_passkey_remove_confirmation', { name: passkey.name })}
           </DialogDescription>
           <DialogFooter className="gap-2">
             <DialogClose asChild>
-              <Button variant="secondary">Cancel</Button>
+              <Button variant="secondary">{messages.t('splicewire-beam-inertia::messages.auth_cancel')}</Button>
             </DialogClose>
             <Button
               variant="destructive"
               onClick={handleDelete}
               disabled={isDeleting}
             >
-              {isDeleting ? "Removing..." : "Remove passkey"}
+              {isDeleting ? messages.t('splicewire-beam-inertia::messages.auth_removing') : messages.t('splicewire-beam-inertia::messages.auth_remove_passkey')}
             </Button>
           </DialogFooter>
         </DialogContent>

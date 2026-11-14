@@ -1,3 +1,4 @@
+import { useBeamMessages } from '../messages';
 import { router } from '@inertiajs/react';
 import { KeyRound } from 'lucide-react';
 import Heading from './heading';
@@ -11,20 +12,21 @@ export type Props = {
 };
 
 const EmptyState = () => {
+    const messages = useBeamMessages();
     return (
         <div className="p-8 text-center">
             <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-muted">
                 <KeyRound className="h-7 w-7 text-muted-foreground" />
             </div>
-            <p className="font-medium">No passkeys yet</p>
+            <p className="font-medium">{messages.t('splicewire-beam-inertia::messages.auth_no_passkeys_yet')}</p>
             <p className="mt-1 text-sm text-muted-foreground">
-                Add a passkey to sign in without a password
-            </p>
+                {messages.t('splicewire-beam-inertia::messages.auth_add_a_passkey_to_sign_in_without_a_password')}</p>
         </div>
     );
 };
 
 export default function ManagePasskeys(props: Props) {
+    const messages = useBeamMessages();
     const passkeys = props.passkeys ?? [];
 
     const handleDelete = (id: number, onError: () => void) => {
@@ -46,8 +48,8 @@ export default function ManagePasskeys(props: Props) {
         <div className="space-y-6">
             <Heading
                 variant="small"
-                title="Passkeys"
-                description="Manage your passkeys for passwordless sign-in"
+                title={messages.t('splicewire-beam-inertia::messages.auth_passkeys')}
+                description={messages.t('splicewire-beam-inertia::messages.auth_manage_your_passkeys_for_passwordless_sign_in')}
             />
 
             <div className="overflow-hidden rounded-lg border border-border">

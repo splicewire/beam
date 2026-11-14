@@ -1,3 +1,4 @@
+import { useBeamMessages } from '../../messages';
 import { featureEnabled } from '../../config';
 import { Form } from '@inertiajs/react';
 import InputError from '../../components/input-error';
@@ -12,6 +13,7 @@ import PasskeyVerify from '../../components/passkey-verify';
 // theme-entries-and-authoring STR-03: a sealed island (editor/registry.tsx), no longer the top-level
 // Inertia page.
 export default function ConfirmPassword() {
+    const messages = useBeamMessages();
     return (
         <>
             {featureEnabled('passkeys') && (<>
@@ -23,9 +25,9 @@ export default function ConfirmPassword() {
                     },
                     submit: { method: 'post', url: '/passkeys/confirm' },
                 }}
-                label="Confirm with passkey"
-                loadingLabel="Confirming..."
-                separator="Or confirm with password"
+                label={messages.t('splicewire-beam-inertia::messages.auth_confirm_with_passkey')}
+                loadingLabel={messages.t('splicewire-beam-inertia::messages.auth_confirming')}
+                separator={messages.t('splicewire-beam-inertia::messages.auth_or_confirm_with_password')}
             />
             </>)}
 
@@ -37,11 +39,11 @@ export default function ConfirmPassword() {
                 {({ processing, errors }) => (
                     <div className="space-y-6">
                         <div className="grid gap-2">
-                            <Label htmlFor="password">Password</Label>
+                            <Label htmlFor="password">{messages.t('splicewire-beam-inertia::messages.auth_password')}</Label>
                             <PasswordInput
                                 id="password"
                                 name="password"
-                                placeholder="Password"
+                                placeholder={messages.t('splicewire-beam-inertia::messages.auth_password')}
                                 autoComplete="current-password"
                                 autoFocus
                             />
@@ -56,8 +58,7 @@ export default function ConfirmPassword() {
                                 data-test="confirm-password-button"
                             >
                                 {processing && <Spinner />}
-                                Confirm password
-                            </Button>
+                                {messages.t('splicewire-beam-inertia::messages.auth_confirm_password')}</Button>
                         </div>
                     </div>
                 )}

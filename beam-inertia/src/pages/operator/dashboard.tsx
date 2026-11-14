@@ -1,3 +1,5 @@
+import { surfaceMessage } from '../../os/surface-message';
+import { useBeamMessages } from '../../messages';
 import { Head, Link } from '@inertiajs/react';
 import { StatTile } from '@schemastud/ui';
 
@@ -26,30 +28,31 @@ type Props = {
 };
 
 export default function OperatorDashboard({ staff, stats, surfaces }: Props) {
-    const s = staff ?? { name: 'Operator', email: 'operator@example.test' };
+    const m = useBeamMessages();
+    const s = staff ?? { name: m.t('splicewire-beam-inertia::messages.surfaces_operator'), email: 'operator@example.test' };
     const st = stats ?? { users: 0, sitemaps: 0, entries: 0 };
 
     return (
         <div className="mx-auto max-w-4xl px-6 py-10">
-            <Head title="Operator" />
-            <h1 className="font-serif text-3xl font-semibold">Operator</h1>
+            <Head title={m.t('splicewire-beam-inertia::messages.surfaces_operator')} />
+            <h1 className="font-serif text-3xl font-semibold">{m.t('splicewire-beam-inertia::messages.surfaces_operator')}</h1>
             <p className="mt-1 text-sm text-muted-foreground">
-                Signed in as {s.name} ({s.email})
+                {m.t('splicewire-beam-inertia::messages.surfaces_signed_in', { name: s.name, email: s.email })}
             </p>
 
             {/* `@schemastud/ui`'s StatTile — the same tile frame's `stat-row` card draws, so this
                 landing and the `{realm}-dashboard` leaf that supersedes it (realm-dashboards ticket
                 05) read as one system. The `stats` prop itself is retired in that ticket. */}
             <div className="mt-6 grid grid-cols-3 gap-4">
-                <StatTile label="Users" value={st.users} />
-                <StatTile label="Sitemaps" value={st.sitemaps} />
-                <StatTile label="UX entries" value={st.entries} />
+                <StatTile label={m.t('splicewire-beam-inertia::messages.surfaces_users')} value={st.users} />
+                <StatTile label={m.t('splicewire-beam-inertia::messages.surfaces_sitemaps')} value={st.sitemaps} />
+                <StatTile label={m.t('splicewire-beam-inertia::messages.surfaces_ux_entries')} value={st.entries} />
             </div>
 
             {surfaces && surfaces.length > 0 && (
-                <nav className="mt-8" aria-label="Operator surfaces" data-testid="operator-surfaces">
+                <nav className="mt-8" aria-label={m.t('splicewire-beam-inertia::messages.surfaces_operator_surfaces')} data-testid="operator-surfaces">
                     <h2 className="text-xs tracking-wide text-muted-foreground uppercase">
-                        Surfaces
+                        {m.t('splicewire-beam-inertia::messages.surfaces_surfaces')}
                     </h2>
                     <ul className="mt-2 divide-y divide-border rounded-xl border border-border">
                         {surfaces.map((surface) => (
@@ -72,12 +75,7 @@ export default function OperatorDashboard({ staff, stats, surfaces }: Props) {
             )}
 
             <p className="mt-8 text-sm text-muted-foreground">
-                This is the operator realm's front-end, framed by the promoted{' '}
-                <code className="rounded bg-muted px-1 py-0.5">
-                    @splicewire/beam-mainframe
-                </code>{' '}
-                Mainframe host. Resource lists are served by Frame's generic
-                particle CRUD socket; this landing is a thin stats roll-up.
+                {surfaceMessage(m, 'splicewire-beam-inertia::messages.surfaces_operator_explanation', { host: <code className="rounded bg-muted px-1 py-0.5">{m.t('splicewire-beam-inertia::messages.surfaces_mainframe_package')}</code> })}
             </p>
         </div>
     );

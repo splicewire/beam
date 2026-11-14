@@ -1,3 +1,5 @@
+import { surfaceMessage } from './surface-message';
+import { useBeamMessages } from '../messages';
 // The "Page properties" window — ported from rushing/audiostud's own os/page-properties.tsx (owner
 // call 2026-08-07: "Edit this page" opens a `page:{slug}` float carrying the entry's properties, and
 // its "Edit content" hands off to the in-place editor for the body).
@@ -37,16 +39,17 @@ export function PageProperties({
     onEditContent: () => void;
     onExitContent: () => void;
 }) {
+    const m = useBeamMessages();
     return (
         <div className="pp">
             <style dangerouslySetInnerHTML={{ __html: PP_CSS }} />
             <div className="pp-head">
                 <div className="pp-row pp-meta">
                     <span>
-                        slug <b>{slug}</b>
+                        {surfaceMessage(m, 'splicewire-beam-inertia::messages.surfaces_slug', { slug: <b>{slug}</b> })}
                     </span>
                     <span className={editable ? 'pp-pub on' : 'pp-pub'}>
-                        {editable ? '● editable' : '○ read-only'}
+                        {editable ? m.t('splicewire-beam-inertia::messages.surfaces_editable') : m.t('splicewire-beam-inertia::messages.surfaces_read_only')}
                     </span>
                 </div>
 
@@ -57,7 +60,7 @@ export function PageProperties({
                             className="pp-btn"
                             onClick={onExitContent}
                         >
-                            ✕ Exit editing
+                            {m.t('splicewire-beam-inertia::messages.surfaces_exit_editing')}
                         </button>
                     ) : (
                         <button
@@ -66,7 +69,7 @@ export function PageProperties({
                             disabled={!editable}
                             onClick={onEditContent}
                         >
-                            ✎ Edit content
+                            {m.t('splicewire-beam-inertia::messages.surfaces_edit_content')}
                         </button>
                     )}
                 </div>
@@ -77,7 +80,7 @@ export function PageProperties({
                     <Suspense
                         fallback={
                             <p className="p-4 text-sm text-muted-foreground">
-                                Loading the entry form…
+                                {m.t('splicewire-beam-inertia::messages.surfaces_entry_loading')}
                             </p>
                         }
                     >
@@ -85,7 +88,7 @@ export function PageProperties({
                     </Suspense>
                 ) : (
                     <p role="note" className="p-4 text-sm text-muted-foreground">
-                        Open the {slug} page to edit its entry here.
+                        {m.t('splicewire-beam-inertia::messages.surfaces_open_entry', { slug })}
                     </p>
                 )}
             </div>

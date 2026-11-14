@@ -10,7 +10,7 @@ import {
 import type { AnchorHTMLAttributes } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import FrameConsole from "../pages/frame/console";
-import { resourceFiltersFixture } from "./resource-filters.fixture";
+import { resourceFiltersFixture } from "./resource-filters.fixtures";
 
 vi.mock("@inertiajs/react", () => ({
   Head: () => null,

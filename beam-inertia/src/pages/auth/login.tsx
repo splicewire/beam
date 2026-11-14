@@ -1,3 +1,5 @@
+import { AuthMessage } from '../../components/auth-message';
+import { useBeamMessages } from '../../messages';
 import { featureEnabled } from '../../config';
 import { DemoLogin } from '@splicewire/beam-accounts';
 import { Form, usePage } from '@inertiajs/react';
@@ -21,6 +23,7 @@ import { deferPasswordLoginForTwoFactor, isTwoFactorChallengeUrl, reportAuthenti
 // Inertia page — these are FortifyServiceProvider's per-request props, still flowing exactly as
 // before, read via usePage() instead of received as direct component props.
 export default function Login() {
+    const messages = useBeamMessages();
     const {
         status,
         canResetPassword,
@@ -53,7 +56,7 @@ export default function Login() {
                     <>
                         <div className="grid gap-6">
                             <div className="grid gap-2">
-                                <Label htmlFor="email">Email address</Label>
+                                <Label htmlFor="email">{messages.t('splicewire-beam-inertia::messages.auth_email_address')}</Label>
                                 <Input
                                     id="email"
                                     type="email"
@@ -62,22 +65,21 @@ export default function Login() {
                                     autoFocus
                                     tabIndex={1}
                                     autoComplete="email"
-                                    placeholder="email@example.com"
+                                    placeholder={messages.t('splicewire-beam-inertia::messages.auth_email_example_com_lowercase')}
                                 />
                                 <InputError message={errors.email} />
                             </div>
 
                             <div className="grid gap-2">
                                 <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-                                    <Label htmlFor="password">Password</Label>
+                                    <Label htmlFor="password">{messages.t('splicewire-beam-inertia::messages.auth_password')}</Label>
                                     {canResetPassword && (
                                         <TextLink
                                             href="/forgot-password"
                                             className="ml-auto whitespace-nowrap text-sm"
                                             tabIndex={5}
                                         >
-                                            Forgot your password?
-                                        </TextLink>
+                                            {messages.t('splicewire-beam-inertia::messages.auth_forgot_your_password')}</TextLink>
                                     )}
                                 </div>
                                 <PasswordInput
@@ -86,7 +88,7 @@ export default function Login() {
                                     required
                                     tabIndex={2}
                                     autoComplete="current-password"
-                                    placeholder="Password"
+                                    placeholder={messages.t('splicewire-beam-inertia::messages.auth_password')}
                                 />
                                 <InputError message={errors.password} />
                             </div>
@@ -97,7 +99,7 @@ export default function Login() {
                                     name="remember"
                                     tabIndex={3}
                                 />
-                                <Label htmlFor="remember">Remember me</Label>
+                                <Label htmlFor="remember">{messages.t('splicewire-beam-inertia::messages.auth_remember_me')}</Label>
                             </div>
 
                             <Button
@@ -108,8 +110,7 @@ export default function Login() {
                                 data-test="login-button"
                             >
                                 {processing && <Spinner />}
-                                Log in
-                            </Button>
+                                {messages.t('splicewire-beam-inertia::messages.auth_log_in')}</Button>
                         </div>
 
                         {/* The Sign up affordance follows the SERVER registration policy
@@ -120,10 +121,8 @@ export default function Login() {
                             above. */}
                         {canRegister && (<>
                         <div className="text-center text-sm text-muted-foreground">
-                            Don't have an account?{' '}
-                            <TextLink href="/register" tabIndex={5}>
-                                Sign up
-                            </TextLink>
+                            <AuthMessage text={messages.t('splicewire-beam-inertia::messages.auth_register_prompt', { action: '\uFFFC0\uFFFC' })} parts={[<TextLink href="/register" tabIndex={5}>
+                                {messages.t('splicewire-beam-inertia::messages.auth_sign_up')}</TextLink>]} />
                         </div>
                         </>)}
                     </>

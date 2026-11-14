@@ -1,3 +1,4 @@
+import { useBeamMessages } from '../messages';
 import { Link, usePage } from '@inertiajs/react';
 import { useBrand } from '../hooks/use-brand';
 import { SiteLayout as BeamSiteLayout } from '@splicewire/beam-ux/site';
@@ -205,6 +206,7 @@ function appHref(realms: { realms?: { key: string; href: string }[] } | undefine
 }
 
 function AuthNavLinks() {
+    const messages = useBeamMessages();
     const page = usePage<{
         auth?: { user: { name: string } | null };
         can?: Record<string, boolean>;
@@ -218,10 +220,10 @@ function AuthNavLinks() {
         return (
             <>
                 <a className="navlink" href="/login">
-                    Sign in
+                    {messages.t('splicewire-beam-inertia::messages.chrome_sign_in')}
                 </a>
                 <a className="btn-primary" href="/dashboard">
-                    Dashboard
+                    {messages.t('splicewire-beam-inertia::messages.chrome_dashboard')}
                 </a>
             </>
         );
@@ -232,7 +234,7 @@ function AuthNavLinks() {
     return (
         <>
             <Link className="navlink" href={appHref(realms)}>
-                Open app
+                {messages.t('splicewire-beam-inertia::messages.chrome_open_app')}
             </Link>
             {realms?.realms && (
                 <RealmSwitcher
@@ -262,6 +264,7 @@ const nav = (
 );
 
 export default function SiteLayout({ children }: { children: ReactNode }) {
+    const messages = useBeamMessages();
     const dark = useSiteDark();
     const page = usePage<{
         auth?: { user: unknown };
@@ -273,14 +276,14 @@ export default function SiteLayout({ children }: { children: ReactNode }) {
     const contentLinks = page.props.nav?.items
         .filter((item): item is { title: string; href: string } => Boolean(item.href))
         .map(({ title, href }) => ({ title, href })) ?? [
-        { title: 'Home', href: '/' },
-        { title: 'About', href: '/about' },
+        { title: messages.t('splicewire-beam-inertia::messages.chrome_home'), href: '/' },
+        { title: messages.t('splicewire-beam-inertia::messages.chrome_about'), href: '/about' },
     ];
     const footerLinks = [
         ...contentLinks,
         page.props.auth?.user
-            ? { title: 'Open app', href: appHref(page.props.realms) }
-            : { title: 'Sign in', href: '/login' },
+            ? { title: messages.t('splicewire-beam-inertia::messages.chrome_open_app'), href: appHref(page.props.realms) }
+            : { title: messages.t('splicewire-beam-inertia::messages.chrome_sign_in'), href: '/login' },
     ];
 
     return (

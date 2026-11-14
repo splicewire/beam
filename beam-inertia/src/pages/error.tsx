@@ -1,3 +1,4 @@
+import { useBeamMessages } from '../messages';
 import { Head, Link } from '@inertiajs/react';
 import type { ComponentType, ReactNode } from 'react';
 import BeamAccountLayout from '../layouts/beam-account-layout';
@@ -48,13 +49,14 @@ const muted = 'var(--st-muted, var(--muted-foreground))';
 const border = 'var(--st-border, var(--border))';
 
 export default function ErrorPage({ status, title, message, realm, auth }: ErrorPageProps) {
+    const messages = useBeamMessages();
     const signedIn = Boolean(auth?.user);
     const home =
         realm === 'operator' && signedIn
-            ? { href: '/operator', label: 'Go to the operator console' }
+            ? { href: '/operator', label: messages.t('splicewire-beam-inertia::messages.chrome_go_operator') }
             : signedIn
-              ? { href: '/dashboard', label: 'Go to your dashboard' }
-              : { href: '/', label: 'Go to the home page' };
+              ? { href: '/dashboard', label: messages.t('splicewire-beam-inertia::messages.chrome_go_dashboard') }
+              : { href: '/', label: messages.t('splicewire-beam-inertia::messages.chrome_go_home') };
 
     return (
         <>
@@ -68,7 +70,7 @@ export default function ErrorPage({ status, title, message, realm, auth }: Error
                     className="font-mono text-sm"
                     style={{ color: muted, margin: 0 }}
                 >
-                    Error {status}
+                    {messages.t('splicewire-beam-inertia::messages.chrome_error_status', { status })}
                 </p>
                 <h1
                     className="text-3xl font-semibold tracking-tight"
@@ -99,7 +101,7 @@ export default function ErrorPage({ status, title, message, realm, auth }: Error
                             cursor: 'pointer',
                         }}
                     >
-                        Go back
+                        {messages.t('splicewire-beam-inertia::messages.chrome_go_back')}
                     </button>
                 </div>
             </main>

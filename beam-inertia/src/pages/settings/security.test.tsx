@@ -26,6 +26,7 @@ vi.mock("@inertiajs/react", () => ({
     );
   },
   Head: () => null,
+  setLayoutProps: () => {},
 }));
 vi.mock("../../config", () => ({ featureEnabled: () => false }));
 

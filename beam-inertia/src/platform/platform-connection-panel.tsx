@@ -1,3 +1,5 @@
+import { surfaceMessage } from '../os/surface-message';
+import { useBeamMessages } from '../messages';
 import { createSessionRequest } from '@schemastud/frame/session';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Badge } from '../components/ui/badge';
@@ -55,38 +57,6 @@ type Props = {
     pollIntervalMs?: number;
 };
 
-const STATE_COPY: Record<PlatformConnectionState, { label: string; tone: string; blurb: string }> = {
-    unpaired: {
-        label: 'Not connected',
-        tone: 'bg-muted text-muted-foreground',
-        blurb: 'This site holds no platform credential. Start a pairing to connect it to your tower.',
-    },
-    pending: {
-        label: 'Awaiting approval',
-        tone: 'bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-200',
-        blurb: 'A pairing request is open. Approve it on the tower with the code below.',
-    },
-    paired: {
-        label: 'Connected',
-        tone: 'bg-emerald-100 text-emerald-900 dark:bg-emerald-950 dark:text-emerald-200',
-        blurb: 'This site holds a live platform credential.',
-    },
-    denied: {
-        label: 'Denied',
-        tone: 'bg-red-100 text-red-900 dark:bg-red-950 dark:text-red-200',
-        blurb: 'The pairing request was refused at the tower. Nothing new was issued — any credential this site already held is untouched, and is shown below. You can request a new code.',
-    },
-    expired: {
-        label: 'Expired',
-        tone: 'bg-orange-100 text-orange-900 dark:bg-orange-950 dark:text-orange-200',
-        blurb: 'The pairing code ran out before anyone answered it. Nothing was refused, and any credential this site already held is untouched. Request a new code.',
-    },
-    revoked: {
-        label: 'Revoked',
-        tone: 'bg-red-100 text-red-900 dark:bg-red-950 dark:text-red-200',
-        blurb: 'The platform has refused this site’s credential — it was revoked at the tower. The stale credential is still stored here; pair again to restore the connection.',
-    },
-};
 
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
     return (
@@ -103,6 +73,41 @@ export function PlatformConnectionPanel({
     client: injected,
     pollIntervalMs = 5000,
 }: Props) {
+    const m = useBeamMessages();
+    const STATE_COPY: Record<PlatformConnectionState, { label: string; tone: string; blurb: string }> = {
+    unpaired: {
+        label: m.t('splicewire-beam-inertia::messages.surfaces_connection_not_connected'),
+        tone: 'bg-muted text-muted-foreground',
+        blurb: m.t('splicewire-beam-inertia::messages.surfaces_connection_this_site_holds_no_platform_credential_start_a_pairing'),
+    },
+    pending: {
+        label: m.t('splicewire-beam-inertia::messages.surfaces_connection_awaiting_approval'),
+        tone: 'bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-200',
+        blurb: m.t('splicewire-beam-inertia::messages.surfaces_connection_a_pairing_request_is_open_approve_it_on_the_tower_with'),
+    },
+    paired: {
+        label: m.t('splicewire-beam-inertia::messages.surfaces_connection_connected'),
+        tone: 'bg-emerald-100 text-emerald-900 dark:bg-emerald-950 dark:text-emerald-200',
+        blurb: m.t('splicewire-beam-inertia::messages.surfaces_connection_this_site_holds_a_live_platform_credential'),
+    },
+    denied: {
+        label: m.t('splicewire-beam-inertia::messages.surfaces_connection_denied'),
+        tone: 'bg-red-100 text-red-900 dark:bg-red-950 dark:text-red-200',
+        blurb: m.t('splicewire-beam-inertia::messages.surfaces_connection_the_pairing_request_was_refused_at_the_tower_nothing_n'),
+    },
+    expired: {
+        label: m.t('splicewire-beam-inertia::messages.surfaces_connection_expired'),
+        tone: 'bg-orange-100 text-orange-900 dark:bg-orange-950 dark:text-orange-200',
+        blurb: m.t('splicewire-beam-inertia::messages.surfaces_connection_the_pairing_code_ran_out_before_anyone_answered_it_not'),
+    },
+    revoked: {
+        label: m.t('splicewire-beam-inertia::messages.surfaces_connection_revoked'),
+        tone: 'bg-red-100 text-red-900 dark:bg-red-950 dark:text-red-200',
+        blurb: m.t('splicewire-beam-inertia::messages.surfaces_connection_the_platform_has_refused_this_site_s_credential_it_was'),
+    },
+};
+
+
     const client = useMemo(
         () => injected ?? createPlatformConnectionClient(createSessionRequest(), endpoints),
         [injected, endpoints],
@@ -112,7 +117,7 @@ export function PlatformConnectionPanel({
     const [health, setHealth] = useState<PlatformConnectionHealth | null>(null);
     const [label, setLabel] = useState<string>('');
     const [busy, setBusy] = useState<string | null>(null);
-    const [error, setError] = useState<string | null>(null);
+    const [error, setError] = useState<{ raw: string } | { fallback: true } | null>(null);
 
     // Guards every async settle. Without it a poll that returns after the operator disconnected
     // re-renders the pairing they just cancelled — the classic "it came back on its own" bug.
@@ -134,7 +139,7 @@ export function PlatformConnectionPanel({
                 const value = await work();
                 if (live.current) settle(value);
             } catch (e) {
-                if (live.current) setError(e instanceof Error ? e.message : 'Something went wrong.');
+                if (live.current) setError(e instanceof Error ? { raw: e.message } : { fallback: true });
             } finally {
                 if (live.current) setBusy(null);
             }
@@ -199,10 +204,8 @@ export function PlatformConnectionPanel({
 
     return (
         <div className="mx-auto max-w-3xl px-6 py-10" data-testid="platform-connection">
-            <h1 className="text-3xl font-semibold">Splicewire connection</h1>
-            <p className="mt-1 text-sm text-muted-foreground">
-                How this site pairs with Splicewire, and whether the connection works.
-            </p>
+            <h1 className="text-3xl font-semibold">{m.t('splicewire-beam-inertia::messages.surfaces_connection_splicewire_connection')}</h1>
+            <p className="mt-1 text-sm text-muted-foreground">{m.t('splicewire-beam-inertia::messages.surfaces_connection_how_this_site_pairs_with_splicewire_and_whether_the_connection_wo')}</p>
 
             <div className="mt-6 rounded-xl border border-border bg-card p-5">
                 <div className="flex flex-wrap items-center gap-3">
@@ -219,31 +222,31 @@ export function PlatformConnectionPanel({
                 </p>
 
                 <div className="mt-4 border-t border-border pt-3">
-                    <Row label="Platform">
+                    <Row label={m.t('splicewire-beam-inertia::messages.surfaces_connection_platform')}>
                         <span data-testid="platform-url">
-                            {connection.platformUrl ?? 'Not configured'}
+                            {connection.platformUrl ?? m.t('splicewire-beam-inertia::messages.surfaces_connection_not_configured')}
                         </span>
                     </Row>
                     {(connection.state === 'paired' || connection.state === 'revoked') && (
-                        <Row label="Paired as">
+                        <Row label={m.t('splicewire-beam-inertia::messages.surfaces_connection_paired_as')}>
                             <span data-testid="platform-identity">
                                 {connection.identity
-                                    ? `${connection.identity.name ?? 'Unknown'} (${connection.identity.email ?? '—'})`
+                                    ? m.t('splicewire-beam-inertia::messages.surfaces_connection_identity', { name: connection.identity.name ?? m.t('splicewire-beam-inertia::messages.surfaces_connection_unknown'), email: connection.identity.email ?? '—' })
                                     : (connection.identityError ??
                                       // A revoked pairing cannot name its other end: the probe that
                                       // would is the same call the platform is refusing. "Not yet
                                       // confirmed" would read as "still checking" for something that
                                       // will never resolve while the credential stands.
                                       (connection.state === 'revoked'
-                                          ? 'Cannot be confirmed — the platform refuses this credential'
-                                          : 'Not yet confirmed'))}
+                                          ? m.t('splicewire-beam-inertia::messages.surfaces_connection_cannot_be_confirmed_the_platform_refuses_this_credenti')
+                                          : m.t('splicewire-beam-inertia::messages.surfaces_connection_not_yet_confirmed')))}
                             </span>
                         </Row>
                     )}
-                    {connection.label && <Row label="Label">{connection.label}</Row>}
-                    <Row label="Credential stored">
+                    {connection.label && <Row label={m.t('splicewire-beam-inertia::messages.surfaces_connection_label')}>{connection.label}</Row>}
+                    <Row label={m.t('splicewire-beam-inertia::messages.surfaces_connection_credential_stored')}>
                         <span data-testid="token-present">
-                            {connection.tokenPresent ? 'Yes' : 'No'}
+                            {connection.tokenPresent ? m.t('splicewire-beam-inertia::messages.surfaces_connection_yes') : m.t('splicewire-beam-inertia::messages.surfaces_connection_no')}
                         </span>
                     </Row>
                 </div>
@@ -254,9 +257,7 @@ export function PlatformConnectionPanel({
                     className="mt-4 rounded-xl border border-border bg-card p-5"
                     data-testid="pending-panel"
                 >
-                    <div className="text-xs tracking-wide text-muted-foreground uppercase">
-                        Enter this code at the tower
-                    </div>
+                    <div className="text-xs tracking-wide text-muted-foreground uppercase">{m.t('splicewire-beam-inertia::messages.surfaces_connection_enter_this_code_at_the_tower')}</div>
                     <div
                         className="mt-2 font-mono text-3xl font-semibold tracking-widest"
                         data-testid="user-code"
@@ -281,8 +282,7 @@ export function PlatformConnectionPanel({
                     )}
                     {connection.expiresAt && (
                         <p className="mt-2 text-xs text-muted-foreground">
-                            This code expires at{' '}
-                            {new Date(connection.expiresAt).toLocaleTimeString()}.
+                            {m.t('splicewire-beam-inertia::messages.surfaces_connection_expires', { time: new Date(connection.expiresAt).toLocaleTimeString() })}
                         </p>
                     )}
                     <div className="mt-4 flex gap-2">
@@ -292,16 +292,12 @@ export function PlatformConnectionPanel({
                             onClick={() =>
                                 run('poll', () => client.poll(), setConnection)
                             }
-                        >
-                            Check now
-                        </Button>
+                        >{m.t('splicewire-beam-inertia::messages.surfaces_connection_check_now')}</Button>
                         <Button
                             variant="ghost"
                             disabled={busy !== null}
                             onClick={onDisconnect}
-                        >
-                            Cancel
-                        </Button>
+                        >{m.t('splicewire-beam-inertia::messages.surfaces_connection_cancel')}</Button>
                     </div>
                 </div>
             )}
@@ -310,21 +306,18 @@ export function PlatformConnectionPanel({
                 <div className="mt-4 rounded-xl border border-border bg-card p-5">
                     <h2 className="text-lg font-semibold">
                         {connection.state === 'paired'
-                            ? 'Re-pair this site'
-                            : 'Pair this site'}
+                            ? m.t('splicewire-beam-inertia::messages.surfaces_connection_re_pair_this_site')
+                            : m.t('splicewire-beam-inertia::messages.surfaces_connection_pair_this_site')}
                     </h2>
-                    <p className="mt-1 text-sm text-muted-foreground">
-                        The tower names the credential it issues after this label, so make it
-                        something you will recognise when you come to revoke it.
-                    </p>
+                    <p className="mt-1 text-sm text-muted-foreground">{m.t('splicewire-beam-inertia::messages.surfaces_connection_the_tower_names_the_credential_it_issues_after_this_label_so_make')}</p>
                     <div className="mt-3 flex flex-wrap items-end gap-3">
                         <div className="grow">
-                            <Label htmlFor="pairing-label">Label</Label>
+                            <Label htmlFor="pairing-label">{m.t('splicewire-beam-inertia::messages.surfaces_connection_label')}</Label>
                             <Input
                                 id="pairing-label"
                                 data-testid="pairing-label"
                                 value={label}
-                                placeholder="this site’s hostname"
+                                placeholder={m.t('splicewire-beam-inertia::messages.surfaces_connection_hostname')}
                                 onChange={(e) => setLabel(e.target.value)}
                             />
                         </div>
@@ -333,18 +326,15 @@ export function PlatformConnectionPanel({
                             disabled={busy !== null || connection.platformUrl === null}
                             onClick={onConnect}
                         >
-                            {busy === 'connect' ? 'Requesting…' : 'Start pairing'}
+                            {busy === 'connect' ? m.t('splicewire-beam-inertia::messages.surfaces_connection_requesting') : m.t('splicewire-beam-inertia::messages.surfaces_connection_start_pairing')}
                         </Button>
                     </div>
                 </div>
             )}
 
             <div className="mt-4 rounded-xl border border-border bg-card p-5">
-                <h2 className="text-lg font-semibold">Connection check</h2>
-                <p className="mt-1 text-sm text-muted-foreground">
-                    Ask Splicewire to answer with this site’s credential. A refused credential shows
-                    here as revoked.
-                </p>
+                <h2 className="text-lg font-semibold">{m.t('splicewire-beam-inertia::messages.surfaces_connection_connection_check')}</h2>
+                <p className="mt-1 text-sm text-muted-foreground">{m.t('splicewire-beam-inertia::messages.surfaces_connection_ask_splicewire_to_answer_with_this_site_s_credential_a_refused_cr')}</p>
                 <div className="mt-3 flex flex-wrap items-center gap-3">
                     <Button
                         data-testid="check-connection"
@@ -352,7 +342,7 @@ export function PlatformConnectionPanel({
                         disabled={busy !== null || !connection.tokenPresent}
                         onClick={onCheck}
                     >
-                        {busy === 'check' ? 'Checking…' : 'Check connection'}
+                        {busy === 'check' ? m.t('splicewire-beam-inertia::messages.surfaces_connection_checking') : m.t('splicewire-beam-inertia::messages.surfaces_connection_check_connection')}
                     </Button>
                     {health && (
                         <p
@@ -364,8 +354,8 @@ export function PlatformConnectionPanel({
                             data-testid="connection-health"
                         >
                             {health.ok
-                                ? `The connection works. Checked at ${new Date(health.checkedAt).toLocaleTimeString()}.`
-                                : (health.error ?? `Splicewire answered ${health.status ?? 'nothing'}.`)}
+                                ? m.t('splicewire-beam-inertia::messages.surfaces_connection_works', { time: new Date(health.checkedAt).toLocaleTimeString() })
+                                : (health.error ?? m.t('splicewire-beam-inertia::messages.surfaces_connection_answered', { status: health.status ?? m.t('splicewire-beam-inertia::messages.surfaces_connection_nothing') }))}
                         </p>
                     )}
                 </div>
@@ -373,7 +363,7 @@ export function PlatformConnectionPanel({
 
             {connection.tokenPresent && (
                 <div className="mt-4 rounded-xl border border-border bg-card p-5">
-                    <h2 className="text-lg font-semibold">Disconnect</h2>
+                    <h2 className="text-lg font-semibold">{m.t('splicewire-beam-inertia::messages.surfaces_connection_disconnect')}</h2>
                     {/*
                       The wording is load-bearing. This button clears the LOCAL credential and nothing
                       else — no remote revoke exists on the platform's client surface, and
@@ -381,10 +371,7 @@ export function PlatformConnectionPanel({
                       tell an operator a security action had happened that had not.
                     */}
                     <p className="mt-1 text-sm text-muted-foreground">
-                        Clears the credential stored on this site. It does{' '}
-                        <strong>not</strong> revoke the credential at the tower — revoke it there
-                        too, or anyone holding a copy can still use it.
-                    </p>
+{surfaceMessage(m, 'splicewire-beam-inertia::messages.surfaces_connection_disconnect_explanation', { not: <strong>{m.t('splicewire-beam-inertia::messages.surfaces_not')}</strong> })}</p>
                     <Button
                         className="mt-3"
                         variant="destructive"
@@ -392,7 +379,7 @@ export function PlatformConnectionPanel({
                         disabled={busy !== null}
                         onClick={onDisconnect}
                     >
-                        {busy === 'disconnect' ? 'Clearing…' : 'Disconnect this site'}
+                        {busy === 'disconnect' ? m.t('splicewire-beam-inertia::messages.surfaces_connection_clearing') : m.t('splicewire-beam-inertia::messages.surfaces_connection_disconnect_this_site')}
                     </Button>
                 </div>
             )}
@@ -402,7 +389,7 @@ export function PlatformConnectionPanel({
                     className="mt-4 text-sm text-red-700 dark:text-red-400"
                     data-testid="panel-error"
                 >
-                    {error}
+                    {'raw' in error ? error.raw : m.t('splicewire-beam-inertia::messages.surfaces_connection_something_went_wrong')}
                 </p>
             )}
         </div>

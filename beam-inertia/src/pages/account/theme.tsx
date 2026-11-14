@@ -1,3 +1,4 @@
+import { useBeamMessages } from '../../messages';
 import { Head } from '@inertiajs/react';
 import { bodyClient } from '../../editor/transport';
 import { ThemeEditor, UxBuilderProvider } from '@splicewire/beam-ux';
@@ -24,6 +25,7 @@ type EntryPageData = {entry: PageEntryData | null};
  * silently save nowhere.
  */
 export default function AccountTheme({ entry }: EntryPageData) {
+    const messages = useBeamMessages();
     const services = useMemo<UxBuilderServices>(
         () => ({
             client: bodyClient,
@@ -37,7 +39,7 @@ export default function AccountTheme({ entry }: EntryPageData) {
 
     return (
         <>
-            <Head title="Theme" />
+            <Head title={messages.t('splicewire-beam-inertia::messages.chrome_theme')} />
             <div className="p-6">
                 {entry ? (
                     <UxBuilderProvider services={services}>
@@ -45,7 +47,7 @@ export default function AccountTheme({ entry }: EntryPageData) {
                     </UxBuilderProvider>
                 ) : (
                     <p className="text-sm text-muted-foreground">
-                        This site is using the default theme — there is no custom theme to edit yet.
+                        {messages.t('splicewire-beam-inertia::messages.chrome_default_theme')}
                     </p>
                 )}
             </div>

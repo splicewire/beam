@@ -1,3 +1,4 @@
+import { useBeamMessages } from '../../messages';
 import { Head, usePage } from '@inertiajs/react';
 import { useEffect, useState } from 'react';
 import PageEditor from '../../editor/page-editor';
@@ -33,15 +34,7 @@ import type { AuthEntryPageData } from '@splicewire/beam-resources/types/account
  * between "Authentication code"/"Recovery code" based on LOCAL SESSION STATE, not editorial copy, so its
  * tree is the sealed island alone and its own component keeps calling `setLayoutProps` itself.
  */
-const HEAD_TITLES: Record<string, string> = {
-    login: 'Log in',
-    register: 'Register',
-    'forgot-password': 'Forgot password',
-    'reset-password': 'Reset password',
-    'confirm-password': 'Confirm password',
-    'two-factor-challenge': 'Two-factor authentication',
-    'verify-email': 'Email verification',
-};
+
 
 function AuthEntryForSlug({
     slug,
@@ -52,6 +45,17 @@ function AuthEntryForSlug({
     body?: unknown;
     entryId: string | null;
 }) {
+    const messages = useBeamMessages();
+    const HEAD_TITLES: Record<string, string> = {
+        login: messages.t('splicewire-beam-inertia::messages.auth_log_in'),
+        register: messages.t('splicewire-beam-inertia::messages.auth_register'),
+        'forgot-password': messages.t('splicewire-beam-inertia::messages.auth_forgot_password'),
+        'reset-password': messages.t('splicewire-beam-inertia::messages.auth_reset_password'),
+        'confirm-password': messages.t('splicewire-beam-inertia::messages.auth_confirm_password'),
+        'two-factor-challenge': messages.t('splicewire-beam-inertia::messages.auth_two_factor_authentication'),
+        'verify-email': messages.t('splicewire-beam-inertia::messages.auth_email_verification'),
+    };
+
     const canAuthorUx =
         usePage<{ auth?: { canAuthorUx?: boolean } }>().props.auth
             ?.canAuthorUx ?? false;
@@ -74,15 +78,14 @@ function AuthEntryForSlug({
 
     return (
         <>
-            <Head title={HEAD_TITLES[slug] ?? 'Account'} />
+            <Head title={HEAD_TITLES[slug] ?? messages.t('splicewire-beam-inertia::messages.auth_account')} />
             {canAuthorUx && !editing && (
                 <button
                     type="button"
                     onClick={() => setEditing(true)}
                     className="fixed top-3 right-3 z-40 rounded-lg border bg-background px-3 py-1.5 text-sm shadow-sm"
                 >
-                    Edit content
-                </button>
+                    {messages.t('splicewire-beam-inertia::messages.auth_edit_content')}</button>
             )}
             <PageEditor slug={slug} body={body} entryId={entryId} />
         </>

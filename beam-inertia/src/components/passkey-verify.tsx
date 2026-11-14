@@ -1,3 +1,4 @@
+import { useBeamMessages } from '../messages';
 import type { UrlMethodPair } from '@inertiajs/core';
 import { router } from '@inertiajs/react';
 import { usePasskeyVerify } from '@laravel/passkeys/react';
@@ -25,6 +26,7 @@ export default function PasskeyVerify({
     separator,
     onAuthenticated,
 }: Props = {}) {
+    const messages = useBeamMessages();
     const { verify, isLoading, error, isSupported } = usePasskeyVerify({
         ...(routes && {
             routes: {
@@ -54,8 +56,8 @@ export default function PasskeyVerify({
                 >
                     {isLoading ? <Spinner /> : <KeyRound className="h-4 w-4" />}
                     {isLoading
-                        ? (loadingLabel ?? 'Authenticating...')
-                        : (label ?? 'Sign in with a passkey')}
+                        ? (loadingLabel ?? messages.t('splicewire-beam-inertia::messages.auth_authenticating'))
+                        : (label ?? messages.t('splicewire-beam-inertia::messages.auth_sign_in_with_a_passkey'))}
                 </Button>
                 {error && (
                     <InputError message={error} className="text-center" />
@@ -68,7 +70,7 @@ export default function PasskeyVerify({
                 </div>
                 <div className="relative flex justify-center text-xs uppercase">
                     <span className="bg-background px-2 text-muted-foreground">
-                        {separator ?? 'Or continue with email'}
+                        {separator ?? messages.t('splicewire-beam-inertia::messages.auth_or_continue_with_email')}
                     </span>
                 </div>
             </div>

@@ -1,3 +1,4 @@
+import { useBeamMessages } from '../../messages';
 import { Form, usePage } from '@inertiajs/react';
 import InputError from '../../components/input-error';
 import PasswordInput from '../../components/password-input';
@@ -10,6 +11,7 @@ import type { ResetPasswordPageData } from '@splicewire/beam-resources/types/acc
 // theme-entries-and-authoring STR-03: a sealed island (editor/registry.tsx), no longer the top-level
 // Inertia page — read via usePage() instead of received as direct component props.
 export default function ResetPassword() {
+    const messages = useBeamMessages();
     const { token, email, passwordRules } =
         usePage<ResetPasswordPageData>().props;
     // Query input is unvalidated on GET; only text belongs in the email form control.
@@ -26,7 +28,7 @@ export default function ResetPassword() {
                 {({ processing, errors }) => (
                     <div className="grid gap-6">
                         <div className="grid gap-2">
-                            <Label htmlFor="email">Email</Label>
+                            <Label htmlFor="email">{messages.t('splicewire-beam-inertia::messages.auth_email')}</Label>
                             <Input
                                 id="email"
                                 type="email"
@@ -43,14 +45,14 @@ export default function ResetPassword() {
                         </div>
 
                         <div className="grid gap-2">
-                            <Label htmlFor="password">Password</Label>
+                            <Label htmlFor="password">{messages.t('splicewire-beam-inertia::messages.auth_password')}</Label>
                             <PasswordInput
                                 id="password"
                                 name="password"
                                 autoComplete="new-password"
                                 className="mt-1 block w-full"
                                 autoFocus
-                                placeholder="Password"
+                                placeholder={messages.t('splicewire-beam-inertia::messages.auth_password')}
                                 passwordrules={passwordRules}
                             />
                             <InputError message={errors.password} />
@@ -58,14 +60,13 @@ export default function ResetPassword() {
 
                         <div className="grid gap-2">
                             <Label htmlFor="passwordConfirmation">
-                                Confirm password
-                            </Label>
+                                {messages.t('splicewire-beam-inertia::messages.auth_confirm_password')}</Label>
                             <PasswordInput
                                 id="passwordConfirmation"
                                 name="passwordConfirmation"
                                 autoComplete="new-password"
                                 className="mt-1 block w-full"
-                                placeholder="Confirm password"
+                                placeholder={messages.t('splicewire-beam-inertia::messages.auth_confirm_password')}
                                 passwordrules={passwordRules}
                             />
                             <InputError
@@ -81,8 +82,7 @@ export default function ResetPassword() {
                             data-test="reset-password-button"
                         >
                             {processing && <Spinner />}
-                            Reset password
-                        </Button>
+                            {messages.t('splicewire-beam-inertia::messages.auth_reset_password')}</Button>
                     </div>
                 )}
             </Form>

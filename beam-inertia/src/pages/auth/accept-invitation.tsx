@@ -1,3 +1,4 @@
+import { useBeamMessages } from '../../messages';
 import { Head, router, usePage } from '@inertiajs/react';
 import { AcceptInvitationPanel, type InvitationState } from '@splicewire/beam-accounts';
 import { useState } from 'react';
@@ -35,16 +36,19 @@ type AcceptInvitationPageProps = {
     errors?: Record<string, string>;
 };
 
-const TITLES: Record<InvitationState, string> = {
-    ready: 'Accept invitation',
-    guest: 'Accept invitation',
-    'wrong-account': 'Invitation',
-    expired: 'Invitation expired',
-    used: 'Invitation used',
-    invalid: 'Invitation',
-};
+
 
 export default function AcceptInvitation() {
+    const messages = useBeamMessages();
+    const TITLES: Record<InvitationState, string> = {
+        ready: messages.t('splicewire-beam-inertia::messages.auth_accept_invitation'),
+        guest: messages.t('splicewire-beam-inertia::messages.auth_accept_invitation'),
+        'wrong-account': messages.t('splicewire-beam-inertia::messages.auth_invitation'),
+        expired: messages.t('splicewire-beam-inertia::messages.auth_invitation_expired'),
+        used: messages.t('splicewire-beam-inertia::messages.auth_invitation_used'),
+        invalid: messages.t('splicewire-beam-inertia::messages.auth_invitation'),
+    };
+
     const props = usePage<AcceptInvitationPageProps>().props;
     const [processing, setProcessing] = useState(false);
     const queryClient = useQueryClient();
@@ -71,7 +75,7 @@ export default function AcceptInvitation() {
 
     return (
         <>
-            <Head title={TITLES[props.state] ?? 'Invitation'} />
+            <Head title={TITLES[props.state] ?? messages.t('splicewire-beam-inertia::messages.auth_invitation')} />
             <AcceptInvitationPanel
                 state={props.state}
                 teamName={props.teamName}

@@ -1,3 +1,5 @@
+import { AuthMessage } from '../../components/auth-message';
+import { useBeamMessages } from '../../messages';
 import { Form, setLayoutProps } from '@inertiajs/react';
 import { REGEXP_ONLY_DIGITS } from 'input-otp';
 import { useMemo, useState } from 'react';
@@ -15,6 +17,7 @@ import { completePendingLogin } from './analytics';
 // Inertia page. Its dynamic title/description toggle (below) is session-state-driven, not editorial
 // copy, so it keeps calling setLayoutProps itself rather than going through the composable tree.
 export default function TwoFactorChallenge() {
+    const messages = useBeamMessages();
     const [showRecoveryInput, setShowRecoveryInput] = useState<boolean>(false);
     const [code, setCode] = useState<string>('');
 
@@ -25,20 +28,20 @@ export default function TwoFactorChallenge() {
     }>(() => {
         if (showRecoveryInput) {
             return {
-                title: 'Recovery code',
+                title: messages.t('splicewire-beam-inertia::messages.auth_recovery_code'),
                 description:
-                    'Please confirm access to your account by entering one of your emergency recovery codes.',
-                toggleText: 'login using an authentication code',
+                    messages.t('splicewire-beam-inertia::messages.auth_please_confirm_access_to_your_account_by_entering_one_of_your_emergency_recovery_codes'),
+                toggleText: messages.t('splicewire-beam-inertia::messages.auth_login_using_an_authentication_code_lowercase'),
             };
         }
 
         return {
-            title: 'Authentication code',
+            title: messages.t('splicewire-beam-inertia::messages.auth_authentication_code'),
             description:
-                'Enter the authentication code provided by your authenticator application.',
-            toggleText: 'login using a recovery code',
+                messages.t('splicewire-beam-inertia::messages.auth_enter_the_authentication_code_provided_by_your_authenticator_application'),
+            toggleText: messages.t('splicewire-beam-inertia::messages.auth_login_using_a_recovery_code_lowercase'),
         };
-    }, [showRecoveryInput]);
+    }, [showRecoveryInput, messages]);
 
     setLayoutProps({
         title: authConfigContent.title,
@@ -69,7 +72,7 @@ export default function TwoFactorChallenge() {
                                     <Input
                                         name="recovery_code"
                                         type="text"
-                                        placeholder="Enter recovery code"
+                                        placeholder={messages.t('splicewire-beam-inertia::messages.auth_enter_recovery_code')}
                                         autoFocus={showRecoveryInput}
                                         required
                                     />
@@ -111,12 +114,10 @@ export default function TwoFactorChallenge() {
                                 className="w-full"
                                 disabled={processing}
                             >
-                                Continue
-                            </Button>
+                                {messages.t('splicewire-beam-inertia::messages.auth_continue')}</Button>
 
                             <div className="text-center text-sm text-muted-foreground">
-                                <span>or you can </span>
-                                <button
+                                <AuthMessage text={messages.t('splicewire-beam-inertia::messages.auth_recovery_mode_prompt', { action: '\uFFFC0\uFFFC' })} parts={[<button
                                     type="button"
                                     className="cursor-pointer text-foreground underline decoration-neutral-300 underline-offset-4 transition-colors duration-300 ease-out hover:decoration-current! dark:decoration-neutral-500"
                                     onClick={() =>
@@ -124,7 +125,7 @@ export default function TwoFactorChallenge() {
                                     }
                                 >
                                     {authConfigContent.toggleText}
-                                </button>
+                                </button>]} />
                             </div>
                         </>
                     )}

@@ -1,3 +1,4 @@
+import { useBeamMessages } from '../messages';
 import { useHttp } from '@inertiajs/react';
 import { useCallback, useState } from 'react';
 export type UseTwoFactorAuthReturn = {
@@ -18,12 +19,14 @@ export type UseTwoFactorAuthReturn = {
 export const OTP_MAX_LENGTH = 6;
 
 export const useTwoFactorAuth = (): UseTwoFactorAuthReturn => {
+    const messages = useBeamMessages();
     const { submit } = useHttp();
 
     const [qrCodeSvg, setQrCodeSvg] = useState<string | null>(null);
     const [manualSetupKey, setManualSetupKey] = useState<string | null>(null);
     const [recoveryCodesList, setRecoveryCodesList] = useState<string[]>([]);
-    const [errors, setErrors] = useState<string[]>([]);
+    type ErrorKey = 'splicewire-beam-inertia::messages.auth_failed_to_fetch_qr_code' | 'splicewire-beam-inertia::messages.auth_failed_to_fetch_a_setup_key' | 'splicewire-beam-inertia::messages.auth_failed_to_fetch_recovery_codes';
+    const [errorKeys, setErrors] = useState<ErrorKey[]>([]);
 
     const hasSetupData = qrCodeSvg !== null && manualSetupKey !== null;
 
@@ -56,7 +59,7 @@ export const useTwoFactorAuth = (): UseTwoFactorAuthReturn => {
 
             setQrCodeSvg(svg);
         } catch {
-            setErrors((prev) => [...prev, 'Failed to fetch QR code']);
+            setErrors((prev) => [...prev, 'splicewire-beam-inertia::messages.auth_failed_to_fetch_qr_code']);
             setQrCodeSvg(null);
         }
     }, [submit]);
@@ -72,7 +75,7 @@ export const useTwoFactorAuth = (): UseTwoFactorAuthReturn => {
 
             setManualSetupKey(key);
         } catch {
-            setErrors((prev) => [...prev, 'Failed to fetch a setup key']);
+            setErrors((prev) => [...prev, 'splicewire-beam-inertia::messages.auth_failed_to_fetch_a_setup_key']);
             setManualSetupKey(null);
         }
     }, [submit]);
@@ -86,7 +89,7 @@ export const useTwoFactorAuth = (): UseTwoFactorAuthReturn => {
             })) as string[];
             setRecoveryCodesList(codes);
         } catch {
-            setErrors((prev) => [...prev, 'Failed to fetch recovery codes']);
+            setErrors((prev) => [...prev, 'splicewire-beam-inertia::messages.auth_failed_to_fetch_recovery_codes']);
             setRecoveryCodesList([]);
         }
     }, [submit]);
@@ -106,7 +109,7 @@ export const useTwoFactorAuth = (): UseTwoFactorAuthReturn => {
         manualSetupKey,
         recoveryCodesList,
         hasSetupData,
-        errors,
+        errors: errorKeys.map((key) => messages.t(key)),
         clearErrors,
         clearSetupData,
         clearTwoFactorAuthData,

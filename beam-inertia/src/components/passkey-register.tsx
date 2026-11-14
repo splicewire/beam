@@ -1,3 +1,4 @@
+import { useBeamMessages } from '../messages';
 import { usePasskeyRegister } from '@laravel/passkeys/react';
 import { useState } from 'react';
 import InputError from './input-error';
@@ -10,6 +11,7 @@ type Props = {
 };
 
 export default function PasskeyRegistration({ onSuccess }: Props) {
+    const messages = useBeamMessages();
     const [name, setName] = useState(() => {
         const ua = navigator.userAgent;
 
@@ -29,7 +31,9 @@ export default function PasskeyRegistration({ onSuccess }: Props) {
             { pattern: /Windows/, name: 'Windows' },
         ].find(({ pattern }) => pattern.test(ua))?.name;
 
-        return [browser, os].filter(Boolean).join(' on ') || '';
+        return browser && os
+            ? messages.t('splicewire-beam-inertia::messages.auth_passkey_device_name', { browser, os })
+            : browser ?? os ?? '';
     });
 
     const [showForm, setShowForm] = useState(false);
@@ -59,16 +63,14 @@ export default function PasskeyRegistration({ onSuccess }: Props) {
     if (!isSupported) {
         return (
             <div className="text-sm text-muted-foreground">
-                Passkeys are not supported in this browser.
-            </div>
+                {messages.t('splicewire-beam-inertia::messages.auth_passkeys_are_not_supported_in_this_browser')}</div>
         );
     }
 
     if (!showForm) {
         return (
             <Button variant="outline" onClick={() => setShowForm(true)}>
-                Add passkey
-            </Button>
+                {messages.t('splicewire-beam-inertia::messages.auth_add_passkey')}</Button>
         );
     }
 
@@ -78,30 +80,28 @@ export default function PasskeyRegistration({ onSuccess }: Props) {
             className="space-y-4 rounded-lg border border-border bg-muted/50 p-4"
         >
             <div className="grid gap-2">
-                <Label htmlFor="passkey-name">Passkey name</Label>
+                <Label htmlFor="passkey-name">{messages.t('splicewire-beam-inertia::messages.auth_passkey_name')}</Label>
                 <Input
                     id="passkey-name"
                     type="text"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    placeholder="e.g., MacBook Pro, iPhone"
+                    placeholder={messages.t('splicewire-beam-inertia::messages.auth_e_g_macbook_pro_iphone_lowercase')}
                     className="mt-1 block w-full border-foreground/20"
                     autoFocus
                 />
                 <p className="text-xs text-muted-foreground">
-                    A name helps you identify this passkey later.
-                </p>
+                    {messages.t('splicewire-beam-inertia::messages.auth_a_name_helps_you_identify_this_passkey_later')}</p>
             </div>
 
             {error && <InputError message={error} />}
 
             <div className="flex gap-2">
                 <Button type="submit" disabled={isLoading || !name.trim()}>
-                    {isLoading ? 'Registering...' : 'Register passkey'}
+                    {isLoading ? messages.t('splicewire-beam-inertia::messages.auth_registering') : messages.t('splicewire-beam-inertia::messages.auth_register_passkey')}
                 </Button>
                 <Button type="button" variant="ghost" onClick={handleCancel}>
-                    Cancel
-                </Button>
+                    {messages.t('splicewire-beam-inertia::messages.auth_cancel')}</Button>
             </div>
         </form>
     );

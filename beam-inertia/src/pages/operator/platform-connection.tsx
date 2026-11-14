@@ -1,3 +1,4 @@
+import { useBeamMessages } from '../../messages';
 import { Head } from '@inertiajs/react';
 import { PlatformConnectionPanel } from '../../platform/platform-connection-panel';
 import type {
@@ -24,9 +25,10 @@ type Props = {
 };
 
 export default function OperatorPlatformConnection({ connection, endpoints }: Props) {
+    const m = useBeamMessages();
     return (
         <>
-            <Head title="Splicewire connection" />
+            <Head title={m.t('splicewire-beam-inertia::messages.surfaces_connection_title')} />
             <PlatformConnectionPanel connection={connection} endpoints={endpoints} />
         </>
     );

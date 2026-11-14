@@ -4,7 +4,7 @@ import { router } from "@inertiajs/react";
 import { KNOWN_CONTEXTS } from "@schemastud/frame";
 import { expect, within, userEvent } from "storybook/test";
 import { useEffect, useState } from "react";
-import { resourceFiltersFixture } from "../../frame/resource-filters.fixture";
+import { resourceFiltersFixture } from "../../frame/resource-filters.fixtures";
 import { setStubPage } from "../../story-harness";
 import FrameConsole from "./console";
 

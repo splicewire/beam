@@ -1,3 +1,5 @@
+import { englishBeamMessages, useBeamMessages } from '../../messages';
+import { setLayoutProps } from '@inertiajs/react';
 import { featureEnabled } from "../../config";
 import { Form, Head } from "@inertiajs/react";
 import { useRef } from "react";
@@ -14,6 +16,8 @@ import ManageTwoFactor from "../../components/manage-two-factor";
 import type { SecurityPageData } from "@splicewire/beam-resources/types/accounts-pages";
 
 export default function Security(props: SecurityPageData) {
+    const messages = useBeamMessages();
+    setLayoutProps({ breadcrumbs: [{ title: messages.t('splicewire-beam-inertia::messages.auth_security_settings'), href: { method: 'get', url: '/settings/security' } }] });
   const passwordInput = useRef<HTMLInputElement>(null);
   const currentPasswordInput = useRef<HTMLInputElement>(null);
 
@@ -22,15 +26,15 @@ export default function Security(props: SecurityPageData) {
     // direct children when that layout wraps it, so a bare mount put each section's Save
     // flush against the next heading.
     <div className="space-y-12">
-      <Head title="Security settings" />
+      <Head title={messages.t('splicewire-beam-inertia::messages.auth_security_settings')} />
 
-      <h1 className="sr-only">Security settings</h1>
+      <h1 className="sr-only">{messages.t('splicewire-beam-inertia::messages.auth_security_settings')}</h1>
 
       <div className="space-y-6">
         <Heading
           variant="small"
-          title="Update password"
-          description="Ensure your account is using a long, random password to stay secure"
+          title={messages.t('splicewire-beam-inertia::messages.auth_update_password')}
+          description={messages.t('splicewire-beam-inertia::messages.auth_ensure_your_account_is_using_a_long_random_password_to_stay_secure')}
         />
 
         <Form
@@ -55,7 +59,7 @@ export default function Security(props: SecurityPageData) {
           {({ errors, processing }) => (
             <>
               <div className="grid gap-2">
-                <Label htmlFor="current_password">Current password</Label>
+                <Label htmlFor="current_password">{messages.t('splicewire-beam-inertia::messages.auth_current_password')}</Label>
 
                 <PasswordInput
                   id="current_password"
@@ -63,14 +67,14 @@ export default function Security(props: SecurityPageData) {
                   name="currentPassword"
                   className="mt-1 block w-full"
                   autoComplete="current-password"
-                  placeholder="Current password"
+                  placeholder={messages.t('splicewire-beam-inertia::messages.auth_current_password')}
                 />
 
                 <InputError message={errors.currentPassword} />
               </div>
 
               <div className="grid gap-2">
-                <Label htmlFor="password">New password</Label>
+                <Label htmlFor="password">{messages.t('splicewire-beam-inertia::messages.auth_new_password')}</Label>
 
                 <PasswordInput
                   id="password"
@@ -78,7 +82,7 @@ export default function Security(props: SecurityPageData) {
                   name="password"
                   className="mt-1 block w-full"
                   autoComplete="new-password"
-                  placeholder="New password"
+                  placeholder={messages.t('splicewire-beam-inertia::messages.auth_new_password')}
                   passwordrules={props.passwordRules}
                 />
 
@@ -86,14 +90,14 @@ export default function Security(props: SecurityPageData) {
               </div>
 
               <div className="grid gap-2">
-                <Label htmlFor="password_confirmation">Confirm password</Label>
+                <Label htmlFor="password_confirmation">{messages.t('splicewire-beam-inertia::messages.auth_confirm_password')}</Label>
 
                 <PasswordInput
                   id="password_confirmation"
                   name="passwordConfirmation"
                   className="mt-1 block w-full"
                   autoComplete="new-password"
-                  placeholder="Confirm password"
+                  placeholder={messages.t('splicewire-beam-inertia::messages.auth_confirm_password')}
                   passwordrules={props.passwordRules}
                 />
 
@@ -105,8 +109,7 @@ export default function Security(props: SecurityPageData) {
                   disabled={processing}
                   data-test="update-password-button"
                 >
-                  Save
-                </Button>
+                  {messages.t('splicewire-beam-inertia::messages.auth_save')}</Button>
               </div>
             </>
           )}
@@ -138,7 +141,7 @@ export default function Security(props: SecurityPageData) {
 Security.layout = {
   breadcrumbs: [
     {
-      title: "Security settings",
+      title: englishBeamMessages.t('splicewire-beam-inertia::messages.auth_security_settings'),
       href: { method: "get", url: "/settings/security" },
     },
   ],

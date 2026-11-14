@@ -1,3 +1,4 @@
+import { useBeamMessages } from '../../messages';
 import { usePage } from '@inertiajs/react';
 import {
     createMainframeHost,
@@ -131,6 +132,11 @@ async function loadEntryBody(ref: EntryRef): Promise<HostEntryBody | null> {
  */
 export { CanvasOrRefusal } from '@splicewire/beam-ux/editor';
 
+function LoadingEditor() {
+    const messages = useBeamMessages();
+    return <div className="p-6 text-sm text-slate-500">{messages.t('splicewire-beam-inertia::messages.chrome_loading_editor')}</div>;
+}
+
 export default createMainframeHost({
     // Every starter route page renders its OWN body (its layout chrome + scoped CSS). So read mode must
     // NOT swap the page for the bare entry body. Author (window) mode still opens the in-place editor.
@@ -193,9 +199,7 @@ export default createMainframeHost({
             <CanvasOrRefusal entry={ref}>
                 <Suspense
                     fallback={
-                        <div className="p-6 text-sm text-slate-500">
-                            Loading editor…
-                        </div>
+                        <LoadingEditor />
                     }
                 >
                     <VisualEditorMount entryRef={ref} />

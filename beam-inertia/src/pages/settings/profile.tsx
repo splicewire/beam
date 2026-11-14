@@ -1,3 +1,6 @@
+import { AuthMessage } from '../../components/auth-message';
+import { setLayoutProps } from '@inertiajs/react';
+import { englishBeamMessages, useBeamMessages } from '../../messages';
 import { featureEnabled } from '../../config';
 import { Form, Head, usePage } from '@inertiajs/react';
 
@@ -35,6 +38,8 @@ export default function Profile(
     { mustVerifyEmail, status, preferredLocale = null, supportedLocales = [] }: ProfilePageData,
     
 ) {
+    const messages = useBeamMessages();
+    setLayoutProps({ breadcrumbs: [{ title: messages.t('splicewire-beam-inertia::messages.auth_profile_settings'), href: { method: 'get', url: '/settings/profile' } }] });
     const { auth } = usePage<PageProps>().props;
 
     return (
@@ -42,15 +47,15 @@ export default function Profile(
         // direct children when that layout wraps it, so a bare mount put each section's Save
         // flush against the next heading.
         <div className="space-y-12">
-            <Head title="Profile settings" />
+            <Head title={messages.t('splicewire-beam-inertia::messages.auth_profile_settings')} />
 
-            <h1 className="sr-only">Profile settings</h1>
+            <h1 className="sr-only">{messages.t('splicewire-beam-inertia::messages.auth_profile_settings')}</h1>
 
             <div className="space-y-6">
                 <Heading
                     variant="small"
-                    title="Profile"
-                    description="Update your name and email address"
+                    title={messages.t('splicewire-beam-inertia::messages.auth_profile')}
+                    description={messages.t('splicewire-beam-inertia::messages.auth_update_your_name_and_email_address')}
                 />
 
                 <Form
@@ -64,7 +69,7 @@ export default function Profile(
                     {({ processing, errors }) => (
                         <>
                             <div className="grid gap-2">
-                                <Label htmlFor="name">Name</Label>
+                                <Label htmlFor="name">{messages.t('splicewire-beam-inertia::messages.auth_name')}</Label>
 
                                 <Input
                                     id="name"
@@ -73,7 +78,7 @@ export default function Profile(
                                     name="name"
                                     required
                                     autoComplete="name"
-                                    placeholder="Full name"
+                                    placeholder={messages.t('splicewire-beam-inertia::messages.auth_full_name')}
                                 />
 
                                 <InputError
@@ -83,7 +88,7 @@ export default function Profile(
                             </div>
 
                             <div className="grid gap-2">
-                                <Label htmlFor="email">Email address</Label>
+                                <Label htmlFor="email">{messages.t('splicewire-beam-inertia::messages.auth_email_address')}</Label>
 
                                 <Input
                                     id="email"
@@ -93,7 +98,7 @@ export default function Profile(
                                     name="email"
                                     required
                                     autoComplete="username"
-                                    placeholder="Email address"
+                                    placeholder={messages.t('splicewire-beam-inertia::messages.auth_email_address')}
                                 />
 
                                 <InputError
@@ -106,7 +111,7 @@ export default function Profile(
                                 by this explicit submit, never by negotiation. */}
                             {supportedLocales.length > 0 && (
                                 <div className="grid gap-2">
-                                    <Label htmlFor="preferredLocale">Language</Label>
+                                    <Label htmlFor="preferredLocale">{messages.t('splicewire-beam-inertia::messages.auth_language')}</Label>
 
                                     <select
                                         id="preferredLocale"
@@ -114,7 +119,7 @@ export default function Profile(
                                         defaultValue={preferredLocale ?? ''}
                                         className="mt-1 block h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-xs md:text-sm"
                                     >
-                                        <option value="">Automatic</option>
+                                        <option value="">{messages.t('splicewire-beam-inertia::messages.auth_automatic')}</option>
                                         {supportedLocales.map((tag) => (
                                             <option key={tag} value={tag} lang={tag}>
                                                 {languageName(tag)}
@@ -134,24 +139,19 @@ export default function Profile(
                                 auth.user.email_verified_at === null && (
                                     <div>
                                         <p className="-mt-4 text-sm text-muted-foreground">
-                                            Your email address is unverified.{' '}
-                                            <Link
+                                            <AuthMessage text={messages.t('splicewire-beam-inertia::messages.auth_unverified_email_prompt', { action: '\uFFFC0\uFFFC' })} parts={[<Link
                                                 href="/email/verification-notification"
                                                 method="post"
                                                 as="button"
                                                 className="text-foreground underline decoration-neutral-300 underline-offset-4 transition-colors duration-300 ease-out hover:decoration-current! dark:decoration-neutral-500"
                                             >
-                                                Click here to re-send the
-                                                verification email.
-                                            </Link>
+                                                {messages.t('splicewire-beam-inertia::messages.auth_click_here_to_re_send_the_verification_email')}</Link>]} />
                                         </p>
 
                                         {status ===
                                             'verification-link-sent' && (
                                             <div className="mt-2 text-sm font-medium text-primary">
-                                                A new verification link has been
-                                                sent to your email address.
-                                            </div>
+                                                {messages.t('splicewire-beam-inertia::messages.auth_a_new_verification_link_has_been_sent_to_your_email_address')}</div>
                                         )}
                                     </div>
                                 )}
@@ -162,8 +162,7 @@ export default function Profile(
                                     disabled={processing}
                                     data-test="update-profile-button"
                                 >
-                                    Save
-                                </Button>
+                                    {messages.t('splicewire-beam-inertia::messages.auth_save')}</Button>
                             </div>
                         </>
                     )}
@@ -178,7 +177,7 @@ export default function Profile(
 Profile.layout = {
     breadcrumbs: [
         {
-            title: 'Profile settings',
+            title: englishBeamMessages.t('splicewire-beam-inertia::messages.auth_profile_settings'),
             href: { method: 'get', url: '/settings/profile' },
         },
     ],

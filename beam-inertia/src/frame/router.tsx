@@ -1,3 +1,5 @@
+import { surfaceMessage } from '../os/surface-message';
+import { useBeamMessages } from '../messages';
 import { getBeamInertiaConfig } from '../config';
 import { Link, router } from '@inertiajs/react';
 import {
@@ -54,13 +56,12 @@ const isDev = (): boolean => Boolean(getBeamInertiaConfig().development);
 
 /** A hand-written section landing: a nav parent (`/authoring`, `/ops`) has no routeContext leaf. */
 function SectionIndex({ node }: { node: FrameNavNode }) {
+    const m = useBeamMessages();
     return (
         <div className="px-6 py-8">
             <h1 className="mb-1 text-2xl font-semibold">{node.title}</h1>
             <p className="mb-6 text-sm text-muted-foreground">
-                {node.children.length}{' '}
-                {node.children.length === 1 ? 'surface' : 'surfaces'} in this
-                section.
+                {m.choice('splicewire-beam-inertia::messages.surfaces_section_surfaces', node.children.length)}
             </p>
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                 {node.children.map((child) => {
@@ -83,12 +84,12 @@ function SectionIndex({ node }: { node: FrameNavNode }) {
 }
 
 function NotFound() {
+    const m = useBeamMessages();
     return (
         <div className="px-6 py-8">
-            <h1 className="mb-1 text-2xl font-semibold">No surface here</h1>
+            <h1 className="mb-1 text-2xl font-semibold">{m.t('splicewire-beam-inertia::messages.surfaces_no_surface_here')}</h1>
             <p className="text-sm text-muted-foreground">
-                This path is served by the tenant frame console, but the
-                manifest declares no route for it.
+                {m.t('splicewire-beam-inertia::messages.surfaces_route_missing')}
             </p>
         </div>
     );
@@ -102,13 +103,12 @@ function Undispatchable({
     entry: RouteContextEntry;
     reason: string;
 }) {
+    const m = useBeamMessages();
     return (
         <div className="px-6 py-8">
             <h1 className="mb-1 text-2xl font-semibold">{entry.routeName}</h1>
             <p className="max-w-prose text-sm text-muted-foreground">
-                The manifest declares this route (
-                <code>mounts: {String(entry.mounts)}</code>) and the generic
-                mount dispatcher cannot render it: {reason}
+                {surfaceMessage(m, 'splicewire-beam-inertia::messages.surfaces_dispatch_failed', { mounts: <code>{m.t('splicewire-beam-inertia::messages.surfaces_mount_type', { type: String(entry.mounts) })}</code>, reason })}
             </p>
         </div>
     );
