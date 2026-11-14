@@ -15,6 +15,10 @@
             "types": "./dist/canvas.d.ts",
             "import": "./dist/canvas.js"
         },
+        "./timeline": {
+            "types": "./dist/timeline.d.ts",
+            "import": "./dist/timeline.js"
+        },
         "./edit-mode": {
             "types": "./dist/edit-mode.d.ts",
             "import": "./dist/edit-mode.js"
