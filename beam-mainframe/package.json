@@ -1,6 +1,6 @@
 {
     "name": "@splicewire/beam-mainframe",
-    "version": "0.1.1",
+    "version": "0.2.0",
     "description": "The app-level frame that hosts schemastud Frames: the missing site-shell for a beam site. Ships the frozen slot contract (as types), an SSR-safe named-slot registry, a Mainframe registry (register a mode-layout by name), the host→Mainframe delegation seam (state-preserving child-swap under a stable host), and a `can`-gated resolver. The moat is the engines, gated at the call-site — never this chrome (ADR-0092, ADR-0099).",
     "license": "MIT",
     "type": "module",
