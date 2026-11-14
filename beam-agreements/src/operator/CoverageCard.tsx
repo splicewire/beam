@@ -27,6 +27,9 @@ export function CoverageCard({ resource, params = NO_PARAMS }: CoverageCardProps
     const summary = useQuery({
         queryKey: resourceQueryKey(transport, resource, 'summary', params),
         queryFn: () => transport.summary(resource, params),
+        // Never a placeholder, whatever the host's query client defaults to: a previous request's figures (another
+        // resource, other params, another transport's authority) must not stand in for this one's.
+        placeholderData: () => undefined,
     });
 
     if (summary.isPending) return <div data-beam-agreements="coverage" aria-busy="true" />;

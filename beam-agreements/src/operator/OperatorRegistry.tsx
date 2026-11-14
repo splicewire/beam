@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import type { ResourceKey } from '@schemastud/frame';
+import { NestedFrame } from '../internal/NestedFrame';
 import { RecordBrowser } from '../internal/RecordBrowser';
 import { CoverageCard } from './CoverageCard';
 
@@ -33,11 +34,14 @@ export function OperatorRegistry({ agreements, versions, entries, coverage, head
     );
 }
 
+/** One of the registry's lists. Its filters, sort and page are its own, so working one list never moves another. */
 function Part({ label, resource }: { label: string; resource: ResourceKey }) {
     return (
         <section aria-label={label} data-beam-agreements="registry-list">
             <h3>{label}</h3>
-            <RecordBrowser key={resource} resource={resource} />
+            <NestedFrame key={resource}>
+                <RecordBrowser resource={resource} />
+            </NestedFrame>
         </section>
     );
 }

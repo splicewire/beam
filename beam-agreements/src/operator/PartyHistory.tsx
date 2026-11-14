@@ -1,5 +1,6 @@
 import { useMemo, type ReactNode } from 'react';
-import { FrameProvider, useFrameInjection, type ResourceKey } from '@schemastud/frame';
+import { useFrameInjection, type ResourceKey } from '@schemastud/frame';
+import { NestedFrame } from '../internal/NestedFrame';
 import { RecordBrowser } from '../internal/RecordBrowser';
 import { scopeTransport } from './scopeTransport';
 
@@ -8,8 +9,9 @@ import { scopeTransport } from './scopeTransport';
  * party, listed in the order the resource serves them, each opening read-only.
  *
  * The party arrives opaque. `scope` is the request parameters the host's entries resource reads to narrow to one party
- * (17b declares them), and this screen only passes them on, so it names no filter and no field. The frozen text, the
- * columns and any export are the resource's declarations.
+ * (17b declares them), and this screen only passes them on (see `scopeTransport` for which reads carry them), so it
+ * names no filter and no field. The frozen text, the columns and any export are the resource's declarations. The list
+ * keeps its own filters, sort and page, apart from the host's and from any other history beside it.
  */
 export interface PartyHistoryProps {
     /** The entries resource, as the host declared it. */
@@ -21,19 +23,18 @@ export interface PartyHistoryProps {
 }
 
 export function PartyHistory({ resource, scope, heading }: PartyHistoryProps) {
-    const injection = useFrameInjection();
+    const { transport: hostTransport } = useFrameInjection();
     // The scope's identity is its content: a new object with the same parameters is the same history.
     const scopeKey = JSON.stringify(Object.entries(scope).sort(([a], [b]) => a.localeCompare(b)));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    const transport = useMemo(() => scopeTransport(injection.transport, resource, scope), [injection.transport, resource, scopeKey]);
-    const value = useMemo(() => ({ ...injection, transport }), [injection, transport]);
+    const transport = useMemo(() => scopeTransport(hostTransport, resource, scope), [hostTransport, resource, scopeKey]);
 
     return (
         <section aria-label="History" data-beam-agreements="party-history">
             <h2>{heading ?? 'History'}</h2>
-            <FrameProvider value={value}>
-                <RecordBrowser key={`${resource}|${scopeKey}`} resource={resource} />
-            </FrameProvider>
+            <NestedFrame key={`${resource}|${scopeKey}`} transport={transport}>
+                <RecordBrowser resource={resource} />
+            </NestedFrame>
         </section>
     );
 }

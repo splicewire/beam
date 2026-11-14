@@ -1,5 +1,5 @@
 import type { ReactElement } from 'react';
-import { QueryClient } from '@tanstack/react-query';
+import { QueryClient, keepPreviousData } from '@tanstack/react-query';
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import {
     KNOWN_CONTEXTS,
@@ -15,7 +15,7 @@ import type { SummaryPayload } from '@schemastud/frame/cards';
 import { createMemoryTransport, type MemoryTransportFixtures } from '@schemastud/frame/testing';
 import type { SchemaNode } from '@schemastud/seam';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { OperatorRegistry, PartyHistory } from '../src/index';
+import { CoverageCard, OperatorRegistry, PartyHistory } from '../src/index';
 
 afterEach(cleanup);
 
@@ -86,16 +86,24 @@ function mount(
     const list = vi.spyOn(transport, 'list').mockImplementation((target, params) => {
         // Narrow to one party the way the host's entries resource would read the fixture parameter.
         const party = params[PARTY];
-        if (party === undefined) return memoryList(target, params);
-        const data = (ROWS[target] ?? []).filter((row) => row.who === party);
-        return Promise.resolve({ data, total: data.length, page: 1, perPage: 25 }) as ReturnType<typeof memoryList>;
+        if (party !== undefined) {
+            const data = (ROWS[target] ?? []).filter((row) => row.who === party);
+            return Promise.resolve({ data, total: data.length, page: 1, perPage: 25 }) as ReturnType<typeof memoryList>;
+        }
+        // The unscoped entries list has more than one page, so its pagination draws.
+        if (target === ENTRIES) {
+            const page = Number(params.page ?? '1');
+            return Promise.resolve({ data: ROWS[ENTRIES], total: 60, page, perPage: 25 }) as ReturnType<typeof memoryList>;
+        }
+        return memoryList(target, params);
     });
     const get = vi.spyOn(transport, 'get');
+    const getFormSchema = vi.spyOn(transport, 'getFormSchema');
     const getFilterSchema = vi.spyOn(transport, 'getFilterSchema');
     const summary = vi.spyOn(transport, 'summary');
     const kit = createFrameKit({ transport, ...(queryClient ? { queryClient } : {}) });
-    render(ui(kit));
-    return { list, get, getFilterSchema, summary };
+    const view = render(ui(kit));
+    return { list, get, getFormSchema, getFilterSchema, summary, kit, view };
 }
 
 describe("the operator's registry", () => {
@@ -118,6 +126,27 @@ describe("the operator's registry", () => {
         expect(within(registry).queryByRole('button', { name: /delete|edit/i })).toBeNull();
         // Each list asks for its resource's declared filters (the facets bar mounts on them).
         await waitFor(() => expect(getFilterSchema.mock.calls.map(([target]) => target)).toEqual(expect.arrayContaining([AGREEMENTS, VERSIONS, ENTRIES])));
+    });
+
+    it("keeps each list's page its own: paging entries sends no page to agreements or versions", async () => {
+        const { list } = mount((kit) => (
+            <kit.Provider>
+                <OperatorRegistry agreements={AGREEMENTS} versions={VERSIONS} entries={ENTRIES} />
+            </kit.Provider>
+        ));
+        const entries = screen.getByRole('region', { name: 'Entries' });
+        await within(entries).findByText('Fixture entry for p-2');
+        await screen.findByText('Fixture agreement');
+        list.mockClear();
+
+        // The kit's pagination control, whatever its exact wording ("Next", "Go to next page").
+        const next = within(entries).queryAllByRole('button', { name: /next/i })[0] ?? within(entries).getAllByRole('link', { name: /next/i })[0];
+        fireEvent.click(next);
+
+        await waitFor(() => expect(list.mock.calls.some(([target, params]) => target === ENTRIES && params.page === '2')).toBe(true));
+        expect(list.mock.calls.filter(([target]) => target !== ENTRIES).every(([, params]) => params.page === undefined)).toBe(true);
+        // The other lists still show their first page, unrefetched with a foreign page.
+        expect(within(screen.getByRole('region', { name: 'Agreements' })).getByText('Fixture agreement')).toBeTruthy();
     });
 
     it('opens a record read-only and returns to its list', async () => {
@@ -165,6 +194,34 @@ describe("the operator's registry", () => {
         expect((await screen.findByRole('alert')).textContent).toContain('Fixture summary refusal.');
     });
 
+    it("never shows a previous request's figures while the next loads, even when the host keeps previous data", async () => {
+        const pending = new Promise<SummaryPayload>(() => {});
+        const summaryFor = vi.fn(async (_target: string, params: Record<string, string>) =>
+            params.period === 'next' ? pending : { ...COVERAGE, label: 'Fixture coverage, first period' },
+        );
+        const keeping = new QueryClient({ defaultOptions: { queries: { retry: false, placeholderData: keepPreviousData } } });
+        const { kit, view } = mount(
+            (kit) => (
+                <kit.Provider>
+                    <CoverageCard resource={AGREEMENTS} params={{ period: 'first' }} />
+                </kit.Provider>
+            ),
+            {},
+            { summary: summaryFor },
+            keeping,
+        );
+        expect(await screen.findByText('Fixture coverage, first period')).toBeTruthy();
+
+        view.rerender(
+            <kit.Provider>
+                <CoverageCard resource={AGREEMENTS} params={{ period: 'next' }} />
+            </kit.Provider>,
+        );
+        await waitFor(() => expect(summaryFor).toHaveBeenCalledWith(AGREEMENTS, { period: 'next' }));
+        expect(screen.queryByText('Fixture coverage, first period')).toBeNull();
+        expect(document.querySelector('[data-beam-agreements="coverage"][aria-busy="true"]')).not.toBeNull();
+    });
+
     it('draws no coverage card without a coverage resource', async () => {
         const { summary } = mount((kit) => (
             <kit.Provider>
@@ -178,8 +235,8 @@ describe("the operator's registry", () => {
 });
 
 describe("one party's history", () => {
-    it("passes the host's scope on every read of the entries resource, and lists only that party", async () => {
-        const { list, get } = mount((kit) => (
+    it("passes the host's scope on the entries resource's parameterized reads, and lists only that party", async () => {
+        const { list, get, getFormSchema } = mount((kit) => (
             <kit.Provider>
                 <PartyHistory resource={ENTRIES} scope={{ [PARTY]: 'p-1' }} />
             </kit.Provider>
@@ -194,6 +251,9 @@ describe("one party's history", () => {
         fireEvent.click(within(history).getByText('Second fixture entry for p-1'));
         expect(await within(history).findByRole('textbox', { name: /Title/ })).toBeTruthy();
         expect(get).toHaveBeenCalledWith(ENTRIES, 'e3', expect.objectContaining({ [PARTY]: 'p-1' }));
+        // The detail's schema read (the read projection) carries the scope too.
+        expect(getFormSchema).toHaveBeenCalledWith(ENTRIES, expect.anything(), 'read', expect.objectContaining({ [PARTY]: 'p-1' }));
+        expect(getFormSchema.mock.calls.filter(([target]) => target === ENTRIES).every(([, , , params]) => params?.[PARTY] === 'p-1')).toBe(true);
     });
 
     it('keeps two histories apart, each its own party, beside the unscoped list', async () => {
