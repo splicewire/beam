@@ -57,15 +57,9 @@ importers:
       '@schemastud/combobox':
         specifier: link:../schemastud/combobox
         version: link:../schemastud/combobox
-      '@schemastud/facets':
-        specifier: github:schemastud/js#72e8e8086d55e285ce387cba0032e264c09939fc&path:/facets
-        version: https://codeload.github.com/schemastud/js/tar.gz/72e8e8086d55e285ce387cba0032e264c09939fc#path:/facets(@tanstack/react-query@5.101.4(react@19.2.7))(lucide-react@1.27.0(react@19.2.7))(react@19.2.7)
       '@schemastud/frame':
         specifier: link:../schemastud/frame
         version: link:../schemastud/frame
-      '@schemastud/frame-remote':
-        specifier: github:schemastud/js#0eed0fa963044bf72fb937837299a2fd9e68982e&path:/frame-remote
-        version: https://codeload.github.com/schemastud/js/tar.gz/0eed0fa963044bf72fb937837299a2fd9e68982e#path:/frame-remote(@preact/signals-core@1.14.4)(@rjsf/core@6.7.1(@rjsf/utils@6.7.1(react@19.2.7))(react@19.2.7))(@rjsf/shadcn@6.7.1(@rjsf/core@6.7.1(@rjsf/utils@6.7.1(react@19.2.7))(react@19.2.7))(@rjsf/utils@6.7.1(react@19.2.7))(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(tailwindcss@4.3.3))(@rjsf/utils@6.7.1(react@19.2.7))(@rjsf/validator-ajv8@6.7.1(@rjsf/utils@6.7.1(react@19.2.7)))(ajv@8.20.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(vite@8.1.5(@types/node@26.1.1)(esbuild@0.27.7)(jiti@2.7.0)(yaml@2.9.0))
       '@schemastud/mainframe':
         specifier: link:../schemastud/mainframe
         version: link:../schemastud/mainframe
