@@ -1,0 +1,239 @@
+/**
+ * Fixture `beam-config` rows for the Config area's tests and stories, typed from the generated slice. Real key names
+ * and real shapes (laravel-beam ADR-0245 §8; the ticket-01 capture's findings), covering every state 10a draws.
+ *
+ * `SECRET_CANARY` is a value no rendered surface may ever show. A real row redacts a secret to `null` and its layers
+ * carry no values; this fixture plants the canary there anyway, so the test proves the area never reads it.
+ */
+import type { ConfigSectionData } from '@splicewire/beam-resources/types/config';
+
+export const SECRET_CANARY = 'sk-canary-0f3a9c-never-render';
+
+const UX_PACKAGE = 'vendor/splicewire/laravel-beam-ux/config/beam/ux.php';
+const UX_HOST = 'config/beam/ux.php';
+
+export const BEAM_UX: ConfigSectionData = {
+    id: 'beam.ux',
+    root: 'beam.ux',
+    title: 'Beam UX',
+    description: 'The site builder: its cache, the paths it reserves and its editor defaults.',
+    owner: 'splicewire/laravel-beam-ux',
+    files: { package: UX_PACKAGE, host: UX_HOST },
+    schema: {
+        type: 'object',
+        properties: {
+            cache_ttl: { type: 'integer', title: 'Page cache lifetime', description: 'Seconds a rendered page stays cached.' },
+            mode: { type: 'string', enum: ['strict', 'lenient'], title: 'Validation mode' },
+            theme: { type: 'string', title: 'Brand theme', 'x-widget': 'brand-picker' },
+            legacy_blocks: { type: 'boolean', title: 'Legacy blocks' },
+            site: {
+                type: 'object',
+                properties: {
+                    artifact_root: { type: 'string', title: 'Artifact root' },
+                    reserved_prefixes: { type: 'array', items: { type: 'string' }, title: 'Reserved URL prefixes' },
+                },
+            },
+        },
+    },
+    values: {},
+    keys: [
+        {
+            pointer: '/cache_ttl',
+            value: 600,
+            tier: 'host',
+            hostShadowsPackage: false,
+            layers: [
+                { tier: 'package', value: 300, source: `${UX_PACKAGE}:14`, shadowed: false, removed: false },
+                { tier: 'host', value: 600, source: `${UX_HOST}:14`, shadowed: false, removed: false },
+            ],
+            env: { name: 'BEAM_UX_CACHE_TTL', set: false, file: UX_HOST, line: 14 },
+            effect: 'reload',
+            ceiling: 'operator',
+            overridable: true,
+            secret: false,
+            set: true,
+            merge: 'replace',
+        },
+        {
+            pointer: '/mode',
+            value: 'strict',
+            tier: 'package',
+            hostShadowsPackage: false,
+            layers: [{ tier: 'package', value: 'strict', source: `${UX_PACKAGE}:21`, shadowed: false, removed: false }],
+            env: null,
+            effect: 'live',
+            ceiling: 'tenant',
+            overridable: true,
+            secret: false,
+            set: true,
+            merge: 'replace',
+        },
+        {
+            pointer: '/theme',
+            value: 'ember',
+            tier: 'package',
+            hostShadowsPackage: false,
+            layers: [{ tier: 'package', value: 'ember', source: `${UX_PACKAGE}:30`, shadowed: false, removed: false }],
+            env: null,
+            effect: 'deploy',
+            ceiling: 'package',
+            overridable: false,
+            secret: false,
+            set: true,
+            merge: 'replace',
+        },
+        {
+            pointer: '/legacy_blocks',
+            value: null,
+            tier: 'provider',
+            hostShadowsPackage: false,
+            layers: [
+                { tier: 'package', value: true, source: `${UX_PACKAGE}:40`, shadowed: false, removed: true },
+                { tier: 'provider', value: null, source: 'BeamUxServiceProvider.php:196 packageRegistered()', shadowed: false, removed: false },
+            ],
+            env: null,
+            effect: 'deploy',
+            ceiling: 'package',
+            overridable: false,
+            secret: false,
+            set: true,
+            merge: 'replace',
+        },
+        {
+            pointer: '/site/artifact_root',
+            value: 'storage/site',
+            tier: 'host',
+            hostShadowsPackage: true,
+            layers: [
+                { tier: 'package', value: 'storage/app/artifacts', source: `${UX_PACKAGE}:52`, shadowed: true, removed: false },
+                { tier: 'host', value: 'storage/site', source: `${UX_HOST}:50`, shadowed: false, removed: false },
+            ],
+            env: null,
+            effect: 'deploy',
+            ceiling: 'package',
+            overridable: false,
+            secret: false,
+            set: true,
+            merge: 'replace',
+        },
+        {
+            pointer: '/site/reserved_prefixes',
+            value: ['admin', 'api', 'frame'],
+            tier: 'provider',
+            hostShadowsPackage: false,
+            layers: [
+                { tier: 'package', value: [], source: `${UX_PACKAGE}:55`, shadowed: false, removed: false },
+                { tier: 'host', value: ['admin'], source: `${UX_HOST}:51`, shadowed: false, removed: false },
+                { tier: 'provider', value: ['admin', 'api', 'frame'], source: 'BeamUxServiceProvider.php:196 packageRegistered()', shadowed: false, removed: false },
+            ],
+            env: null,
+            effect: 'deploy',
+            ceiling: 'package',
+            overridable: false,
+            secret: false,
+            set: true,
+            merge: 'extend',
+        },
+    ],
+    shadowedPackageKeys: ['/site/artifact_root'],
+    counts: { keys: 6, overridable: 2, deploy: 4, secrets: 0, envBound: 1 },
+};
+
+const CHAT_HOST = 'config/app/chat.php';
+
+export const APP_CHAT: ConfigSectionData = {
+    id: 'app.chat',
+    root: 'app.chat',
+    title: 'Chat',
+    description: 'The chat assistant’s provider, model and search grounding.',
+    owner: 'splicewire/splicewire-app',
+    files: { package: null, host: CHAT_HOST },
+    schema: {
+        type: 'object',
+        properties: {
+            openai: { type: 'object', properties: { api_key: { type: 'string', title: 'OpenAI API key' } } },
+            // A declared control: the test kit registers `model-picker` through the kit's `widgets` function, as a host does.
+            default_model: { type: 'string', title: 'Default model', 'x-widget': 'model-picker' },
+            'google.cse.query': { type: 'object', properties: { limit: { type: 'integer' } } },
+        },
+    },
+    values: { openai: { api_key: null }, default_model: 'gpt-x', 'google.cse.query': { limit: 8 } },
+    keys: [
+        {
+            pointer: '/openai/api_key',
+            // A real row redacts this to null and its layer carries no value; the canary proves nothing reads it.
+            value: SECRET_CANARY,
+            tier: 'host',
+            hostShadowsPackage: false,
+            layers: [{ tier: 'host', value: SECRET_CANARY, source: '.env OPENAI_API_KEY', shadowed: false, removed: false }],
+            env: { name: 'OPENAI_API_KEY', set: true, file: CHAT_HOST, line: 8 },
+            effect: 'deploy',
+            ceiling: 'host',
+            overridable: false,
+            secret: true,
+            set: true,
+            merge: 'replace',
+        },
+        {
+            pointer: '/default_model',
+            value: 'gpt-x',
+            tier: 'host',
+            hostShadowsPackage: false,
+            layers: [{ tier: 'host', value: 'gpt-x', source: `${CHAT_HOST}:12`, shadowed: false, removed: false }],
+            env: { name: 'CHAT_DEFAULT_MODEL', set: null, file: CHAT_HOST, line: 12 },
+            effect: 'live',
+            ceiling: 'tenant',
+            overridable: true,
+            secret: false,
+            set: true,
+            merge: 'replace',
+        },
+        {
+            pointer: '/google.cse.query/limit',
+            value: 8,
+            tier: 'host',
+            hostShadowsPackage: false,
+            layers: [{ tier: 'host', value: 8, source: `${CHAT_HOST}:20`, shadowed: false, removed: false }],
+            env: null,
+            effect: 'deploy',
+            ceiling: 'host',
+            overridable: false,
+            secret: false,
+            set: true,
+            merge: 'replace',
+        },
+    ],
+    shadowedPackageKeys: [],
+    counts: { keys: 3, overridable: 1, deploy: 2, secrets: 1, envBound: 2 },
+};
+
+export const BEAM_TENANCY: ConfigSectionData = {
+    id: 'beam.tenancy',
+    root: 'beam.tenancy',
+    title: 'Tenancy',
+    description: 'How workspaces are isolated.',
+    owner: 'splicewire/laravel-beam-tenancy',
+    files: { package: 'vendor/splicewire/laravel-beam-tenancy/config/beam/tenancy.php', host: null },
+    schema: { type: 'object', properties: { pooled: { type: 'boolean', title: 'Pooled tenants' } } },
+    values: { pooled: true },
+    keys: [
+        {
+            pointer: '/pooled',
+            value: true,
+            tier: 'package',
+            hostShadowsPackage: false,
+            layers: [{ tier: 'package', value: true, source: 'vendor/splicewire/laravel-beam-tenancy/config/beam/tenancy.php:9', shadowed: false, removed: false }],
+            env: null,
+            effect: 'deploy',
+            ceiling: 'package',
+            overridable: false,
+            secret: false,
+            set: true,
+            merge: 'replace',
+        },
+    ],
+    shadowedPackageKeys: [],
+    counts: { keys: 1, overridable: 0, deploy: 1, secrets: 0, envBound: 0 },
+};
+
+export const CONFIG_SECTIONS: ConfigSectionData[] = [APP_CHAT, BEAM_UX, BEAM_TENANCY];
