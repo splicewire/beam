@@ -117,9 +117,6 @@ importers:
 
   beam-accounts:
     dependencies:
-      '@schemastud/frame':
-        specifier: '*'
-        version: 0.2.2(e2tzx5gnww4tp22i7ncgbmtot4)
       '@splicewire/beam-resources':
         specifier: link:../beam-resources
         version: link:../beam-resources
@@ -127,12 +124,15 @@ importers:
       '@schemastud/combobox':
         specifier: github:schemastud/js#921e870797f2506ddf3c06721dea84c2901c18d7&path:/combobox
         version: https://codeload.github.com/schemastud/js/tar.gz/921e870797f2506ddf3c06721dea84c2901c18d7#path:/combobox(react@19.2.7)
+      '@schemastud/frame':
+        specifier: github:schemastud/js#9503dcf4d839c269ee6053a6a421800bbbb7f974&path:/frame
+        version: https://codeload.github.com/schemastud/js/tar.gz/9503dcf4d839c269ee6053a6a421800bbbb7f974#path:/frame(zushqzocay55ikuxkos7aavrdq)
       '@schemastud/seam':
         specifier: github:schemastud/js#aae63180fd740d3a9497fa2a12e7fbc7c206bc92&path:/seam
         version: https://codeload.github.com/schemastud/js/tar.gz/aae63180fd740d3a9497fa2a12e7fbc7c206bc92#path:/seam(@rjsf/core@6.7.1(@rjsf/utils@6.7.1(react@19.2.7))(react@19.2.7))(@rjsf/shadcn@6.7.1(@rjsf/core@6.7.1(@rjsf/utils@6.7.1(react@19.2.7))(react@19.2.7))(@rjsf/utils@6.7.1(react@19.2.7))(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(tailwindcss@4.3.3))(@rjsf/utils@6.7.1(react@19.2.7))(@rjsf/validator-ajv8@6.7.1(@rjsf/utils@6.7.1(react@19.2.7)))(ajv@8.20.0)(react@19.2.7)(vite@8.1.5(@types/node@22.20.1)(esbuild@0.27.7)(jiti@2.7.0)(yaml@2.9.0))
       '@schemastud/ui':
         specifier: github:schemastud/js#abef468b39df9b1e81fd9a2081e69f8094c60e4e&path:/ui
-        version: https://codeload.github.com/schemastud/js/tar.gz/abef468b39df9b1e81fd9a2081e69f8094c60e4e#path:/ui(@radix-ui/react-dialog@1.1.23(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-select@2.3.7(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-separator@1.1.15(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-slot@1.3.3(@types/react@19.2.17)(react@19.2.7))(@radix-ui/react-switch@1.4.1(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-tooltip@1.2.16(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@tanstack/react-table@8.21.3(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(lucide-react@0.468.0(react@19.2.7))(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
+        version: https://codeload.github.com/schemastud/js/tar.gz/abef468b39df9b1e81fd9a2081e69f8094c60e4e#path:/ui(@radix-ui/react-dialog@1.1.23(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-select@2.3.7(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-separator@1.1.15(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-slot@1.5.0(@types/react@19.2.17)(react@19.2.7))(@radix-ui/react-switch@1.4.1(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-tooltip@1.2.16(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@tanstack/react-table@8.21.3(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(lucide-react@0.468.0(react@19.2.7))(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
       '@splicewire/beam-ux':
         specifier: link:../beam-ux
         version: link:../beam-ux
@@ -202,10 +202,10 @@ importers:
         version: https://codeload.github.com/schemastud/js/tar.gz/af4f6b6af02767e9c8287f864baa5006dabc3bf3#path:/big-calendar(@tanstack/react-query@5.101.4(react@19.2.7))(date-fns@3.6.0)(react-big-calendar@1.20.0(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(react@19.2.7)
       '@schemastud/frame':
         specifier: github:schemastud/js#9503dcf4d839c269ee6053a6a421800bbbb7f974&path:/frame
-        version: https://codeload.github.com/schemastud/js/tar.gz/9503dcf4d839c269ee6053a6a421800bbbb7f974#path:/frame(e2tzx5gnww4tp22i7ncgbmtot4)
+        version: https://codeload.github.com/schemastud/js/tar.gz/9503dcf4d839c269ee6053a6a421800bbbb7f974#path:/frame(zushqzocay55ikuxkos7aavrdq)
       '@schemastud/ui':
         specifier: github:schemastud/js#abef468b39df9b1e81fd9a2081e69f8094c60e4e&path:/ui
-        version: https://codeload.github.com/schemastud/js/tar.gz/abef468b39df9b1e81fd9a2081e69f8094c60e4e#path:/ui(@radix-ui/react-dialog@1.1.23(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-select@2.3.7(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-separator@1.1.15(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-slot@1.3.3(@types/react@19.2.17)(react@19.2.7))(@radix-ui/react-switch@1.4.1(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-tooltip@1.2.16(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@tanstack/react-table@8.21.3(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(lucide-react@0.468.0(react@19.2.7))(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
+        version: https://codeload.github.com/schemastud/js/tar.gz/abef468b39df9b1e81fd9a2081e69f8094c60e4e#path:/ui(@radix-ui/react-dialog@1.1.23(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-select@2.3.7(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-separator@1.1.15(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-slot@1.5.0(@types/react@19.2.17)(react@19.2.7))(@radix-ui/react-switch@1.4.1(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-tooltip@1.2.16(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@tanstack/react-table@8.21.3(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(lucide-react@0.468.0(react@19.2.7))(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
       '@tanstack/react-query':
         specifier: ^5.62.0
         version: 5.101.4(react@19.2.7)
@@ -320,7 +320,7 @@ importers:
         version: https://codeload.github.com/schemastud/js/tar.gz/921e870797f2506ddf3c06721dea84c2901c18d7#path:/combobox(react@19.2.7)
       '@schemastud/frame':
         specifier: github:schemastud/js#9503dcf4d839c269ee6053a6a421800bbbb7f974&path:/frame
-        version: https://codeload.github.com/schemastud/js/tar.gz/9503dcf4d839c269ee6053a6a421800bbbb7f974#path:/frame(o6tvzh5nnngwl3t62h7zwanhl4)
+        version: https://codeload.github.com/schemastud/js/tar.gz/9503dcf4d839c269ee6053a6a421800bbbb7f974#path:/frame(yknonjujqmri6c3vc3zmc364ua)
       '@schemastud/nav':
         specifier: github:schemastud/js#ea1bb1a06d83de66164e19f9b6798342ed2a8c51&path:/nav
         version: https://codeload.github.com/schemastud/js/tar.gz/ea1bb1a06d83de66164e19f9b6798342ed2a8c51#path:/nav(react@19.2.7)
@@ -387,7 +387,7 @@ importers:
     devDependencies:
       '@schemastud/ui':
         specifier: github:schemastud/js#abef468b39df9b1e81fd9a2081e69f8094c60e4e&path:/ui
-        version: https://codeload.github.com/schemastud/js/tar.gz/abef468b39df9b1e81fd9a2081e69f8094c60e4e#path:/ui(@radix-ui/react-dialog@1.1.23(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-select@2.3.7(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-separator@1.1.15(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-slot@1.3.3(@types/react@19.2.17)(react@19.2.7))(@radix-ui/react-switch@1.4.1(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-tooltip@1.2.16(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@tanstack/react-table@8.21.3(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(lucide-react@0.475.0(react@19.2.7))(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
+        version: https://codeload.github.com/schemastud/js/tar.gz/abef468b39df9b1e81fd9a2081e69f8094c60e4e#path:/ui(@radix-ui/react-dialog@1.1.23(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-select@2.3.7(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-separator@1.1.15(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-slot@1.5.0(@types/react@19.2.17)(react@19.2.7))(@radix-ui/react-switch@1.4.1(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-tooltip@1.2.16(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@tanstack/react-table@8.21.3(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(lucide-react@0.475.0(react@19.2.7))(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
       '@testing-library/dom':
         specifier: ^10.4.1
         version: 10.4.1
@@ -478,18 +478,6 @@ importers:
       '@radix-ui/react-tooltip':
         specifier: ^1.1.8
         version: 1.2.16(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
-      '@schemastud/frame':
-        specifier: ^0.2.2 || ^0.5.0
-        version: 0.2.2(2avcm2qx2u4spdses3mas53agu)
-      '@schemastud/mainframe':
-        specifier: 0.1.0 || ^0.1.0
-        version: 0.1.0(@preact/signals-core@1.14.4)(@rjsf/core@6.7.1(@rjsf/utils@6.7.1(react@19.2.7))(react@19.2.7))(@rjsf/shadcn@6.7.1(@rjsf/core@6.7.1(@rjsf/utils@6.7.1(react@19.2.7))(react@19.2.7))(@rjsf/utils@6.7.1(react@19.2.7))(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(tailwindcss@4.3.3))(@rjsf/utils@6.7.1(react@19.2.7))(@rjsf/validator-ajv8@6.7.1(@rjsf/utils@6.7.1(react@19.2.7)))(ajv@8.20.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(vite@8.1.5(@types/node@26.1.1)(esbuild@0.27.7)(jiti@2.7.0)(yaml@2.9.0))
-      '@schemastud/seam':
-        specifier: 0.2.2 || ^0.4.0
-        version: 0.2.2(@rjsf/core@6.7.1(@rjsf/utils@6.7.1(react@19.2.7))(react@19.2.7))(@rjsf/shadcn@6.7.1(@rjsf/core@6.7.1(@rjsf/utils@6.7.1(react@19.2.7))(react@19.2.7))(@rjsf/utils@6.7.1(react@19.2.7))(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(tailwindcss@4.3.3))(@rjsf/utils@6.7.1(react@19.2.7))(@rjsf/validator-ajv8@6.7.1(@rjsf/utils@6.7.1(react@19.2.7)))(ajv@8.20.0)(react@19.2.7)(vite@8.1.5(@types/node@26.1.1)(esbuild@0.27.7)(jiti@2.7.0)(yaml@2.9.0))
-      '@schemastud/ui':
-        specifier: ^0.1.2 || ^0.2.0
-        version: 0.1.2(@radix-ui/react-dialog@1.1.23(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-select@2.3.7(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-separator@1.1.15(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-slot@1.3.3(@types/react@19.2.17)(react@19.2.7))(@radix-ui/react-switch@1.4.1(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-tooltip@1.2.16(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@tanstack/react-table@8.21.3(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(lucide-react@0.475.0(react@19.2.7))(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
       '@splicewire/beam-accounts':
         specifier: link:../beam-accounts
         version: link:../beam-accounts
@@ -530,6 +518,18 @@ importers:
         specifier: ^3.0.1
         version: 3.6.0
     devDependencies:
+      '@schemastud/frame':
+        specifier: github:schemastud/js#9503dcf4d839c269ee6053a6a421800bbbb7f974&path:/frame
+        version: https://codeload.github.com/schemastud/js/tar.gz/9503dcf4d839c269ee6053a6a421800bbbb7f974#path:/frame(2avcm2qx2u4spdses3mas53agu)
+      '@schemastud/mainframe':
+        specifier: github:schemastud/js#436d9db67d77d35d64e5db946ea2341a81e2d988&path:/mainframe
+        version: https://codeload.github.com/schemastud/js/tar.gz/436d9db67d77d35d64e5db946ea2341a81e2d988#path:/mainframe(@preact/signals-core@1.14.4)(@rjsf/core@6.7.1(@rjsf/utils@6.7.1(react@19.2.7))(react@19.2.7))(@rjsf/shadcn@6.7.1(@rjsf/core@6.7.1(@rjsf/utils@6.7.1(react@19.2.7))(react@19.2.7))(@rjsf/utils@6.7.1(react@19.2.7))(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(tailwindcss@4.3.3))(@rjsf/utils@6.7.1(react@19.2.7))(@rjsf/validator-ajv8@6.7.1(@rjsf/utils@6.7.1(react@19.2.7)))(ajv@8.20.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(vite@8.1.5(@types/node@26.1.1)(esbuild@0.27.7)(jiti@2.7.0)(yaml@2.9.0))
+      '@schemastud/seam':
+        specifier: github:schemastud/js#aae63180fd740d3a9497fa2a12e7fbc7c206bc92&path:/seam
+        version: https://codeload.github.com/schemastud/js/tar.gz/aae63180fd740d3a9497fa2a12e7fbc7c206bc92#path:/seam(@rjsf/core@6.7.1(@rjsf/utils@6.7.1(react@19.2.7))(react@19.2.7))(@rjsf/shadcn@6.7.1(@rjsf/core@6.7.1(@rjsf/utils@6.7.1(react@19.2.7))(react@19.2.7))(@rjsf/utils@6.7.1(react@19.2.7))(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(tailwindcss@4.3.3))(@rjsf/utils@6.7.1(react@19.2.7))(@rjsf/validator-ajv8@6.7.1(@rjsf/utils@6.7.1(react@19.2.7)))(ajv@8.20.0)(react@19.2.7)(vite@8.1.5(@types/node@26.1.1)(esbuild@0.27.7)(jiti@2.7.0)(yaml@2.9.0))
+      '@schemastud/ui':
+        specifier: github:schemastud/js#abef468b39df9b1e81fd9a2081e69f8094c60e4e&path:/ui
+        version: https://codeload.github.com/schemastud/js/tar.gz/abef468b39df9b1e81fd9a2081e69f8094c60e4e#path:/ui(@radix-ui/react-dialog@1.1.23(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-select@2.3.7(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-separator@1.1.15(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-slot@1.3.3(@types/react@19.2.17)(react@19.2.7))(@radix-ui/react-switch@1.4.1(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-tooltip@1.2.16(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@tanstack/react-table@8.21.3(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(lucide-react@0.475.0(react@19.2.7))(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
       '@testing-library/react':
         specifier: 16.3.2
         version: 16.3.2(@testing-library/dom@10.4.1)(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
@@ -575,7 +575,7 @@ importers:
     devDependencies:
       '@schemastud/ui':
         specifier: github:schemastud/js#abef468b39df9b1e81fd9a2081e69f8094c60e4e&path:/ui
-        version: https://codeload.github.com/schemastud/js/tar.gz/abef468b39df9b1e81fd9a2081e69f8094c60e4e#path:/ui(@radix-ui/react-dialog@1.1.23(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-select@2.3.7(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-separator@1.1.15(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-slot@1.3.3(@types/react@19.2.17)(react@19.2.7))(@radix-ui/react-switch@1.4.1(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-tooltip@1.2.16(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@tanstack/react-table@8.21.3(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(lucide-react@1.27.0(react@19.2.7))(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
+        version: https://codeload.github.com/schemastud/js/tar.gz/abef468b39df9b1e81fd9a2081e69f8094c60e4e#path:/ui(@radix-ui/react-dialog@1.1.23(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-select@2.3.7(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-separator@1.1.15(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-slot@1.5.0(@types/react@19.2.17)(react@19.2.7))(@radix-ui/react-switch@1.4.1(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-tooltip@1.2.16(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@tanstack/react-table@8.21.3(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(lucide-react@1.27.0(react@19.2.7))(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
       '@tanstack/react-query':
         specifier: ^5.62.0
         version: 5.101.4(react@19.2.7)
@@ -618,13 +618,13 @@ importers:
     devDependencies:
       '@schemastud/frame':
         specifier: github:schemastud/js#9503dcf4d839c269ee6053a6a421800bbbb7f974&path:/frame
-        version: https://codeload.github.com/schemastud/js/tar.gz/9503dcf4d839c269ee6053a6a421800bbbb7f974#path:/frame(j7jytj55ihdvnkx6arh55zceue)
+        version: https://codeload.github.com/schemastud/js/tar.gz/9503dcf4d839c269ee6053a6a421800bbbb7f974#path:/frame(qpra2htu6kkzlf5jz6i7jpqtw4)
       '@schemastud/seam':
         specifier: github:schemastud/js#aae63180fd740d3a9497fa2a12e7fbc7c206bc92&path:/seam
         version: https://codeload.github.com/schemastud/js/tar.gz/aae63180fd740d3a9497fa2a12e7fbc7c206bc92#path:/seam(@rjsf/core@6.7.1(@rjsf/utils@6.7.1(react@19.2.7))(react@19.2.7))(@rjsf/shadcn@6.7.1(@rjsf/core@6.7.1(@rjsf/utils@6.7.1(react@19.2.7))(react@19.2.7))(@rjsf/utils@6.7.1(react@19.2.7))(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(tailwindcss@4.3.3))(@rjsf/utils@6.7.1(react@19.2.7))(@rjsf/validator-ajv8@6.7.1(@rjsf/utils@6.7.1(react@19.2.7)))(ajv@8.20.0)(react@19.2.7)(vite@8.1.5(@types/node@22.20.2)(esbuild@0.27.7)(jiti@2.7.0)(yaml@2.9.0))
       '@schemastud/ui':
         specifier: github:schemastud/js#abef468b39df9b1e81fd9a2081e69f8094c60e4e&path:/ui
-        version: https://codeload.github.com/schemastud/js/tar.gz/abef468b39df9b1e81fd9a2081e69f8094c60e4e#path:/ui(@radix-ui/react-dialog@1.1.23(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-select@2.3.7(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-separator@1.1.15(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-slot@1.3.3(@types/react@19.2.17)(react@19.2.7))(@radix-ui/react-switch@1.4.1(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-tooltip@1.2.16(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@tanstack/react-table@8.21.3(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(lucide-react@1.27.0(react@19.2.7))(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
+        version: https://codeload.github.com/schemastud/js/tar.gz/abef468b39df9b1e81fd9a2081e69f8094c60e4e#path:/ui(@radix-ui/react-dialog@1.1.23(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-select@2.3.7(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-separator@1.1.15(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-slot@1.5.0(@types/react@19.2.17)(react@19.2.7))(@radix-ui/react-switch@1.4.1(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-tooltip@1.2.16(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@tanstack/react-table@8.21.3(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(lucide-react@1.27.0(react@19.2.7))(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
       '@tanstack/react-query':
         specifier: ^5.62.0
         version: 5.101.4(react@19.2.7)
@@ -701,7 +701,7 @@ importers:
     devDependencies:
       '@schemastud/ui':
         specifier: github:schemastud/js#abef468b39df9b1e81fd9a2081e69f8094c60e4e&path:/ui
-        version: https://codeload.github.com/schemastud/js/tar.gz/abef468b39df9b1e81fd9a2081e69f8094c60e4e#path:/ui(@radix-ui/react-dialog@1.1.23(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-select@2.3.7(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-separator@1.1.15(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-slot@1.3.3(@types/react@19.2.17)(react@19.2.7))(@radix-ui/react-switch@1.4.1(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-tooltip@1.2.16(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@tanstack/react-table@8.21.3(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(lucide-react@0.468.0(react@19.2.7))(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
+        version: https://codeload.github.com/schemastud/js/tar.gz/abef468b39df9b1e81fd9a2081e69f8094c60e4e#path:/ui(@radix-ui/react-dialog@1.1.23(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-select@2.3.7(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-separator@1.1.15(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-slot@1.5.0(@types/react@19.2.17)(react@19.2.7))(@radix-ui/react-switch@1.4.1(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-tooltip@1.2.16(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@tanstack/react-table@8.21.3(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(lucide-react@0.468.0(react@19.2.7))(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
       '@tanstack/react-query':
         specifier: ^5.62.0
         version: 5.101.4(react@19.2.7)
@@ -864,7 +864,7 @@ importers:
     devDependencies:
       '@schemastud/ui':
         specifier: github:schemastud/js#abef468b39df9b1e81fd9a2081e69f8094c60e4e&path:/ui
-        version: https://codeload.github.com/schemastud/js/tar.gz/abef468b39df9b1e81fd9a2081e69f8094c60e4e#path:/ui(@radix-ui/react-dialog@1.1.23(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-select@2.3.7(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-separator@1.1.15(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-slot@1.3.3(@types/react@19.2.17)(react@19.2.7))(@radix-ui/react-switch@1.4.1(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-tooltip@1.2.16(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@tanstack/react-table@8.21.3(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(lucide-react@0.468.0(react@19.2.7))(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
+        version: https://codeload.github.com/schemastud/js/tar.gz/abef468b39df9b1e81fd9a2081e69f8094c60e4e#path:/ui(@radix-ui/react-dialog@1.1.23(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-select@2.3.7(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-separator@1.1.15(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-slot@1.5.0(@types/react@19.2.17)(react@19.2.7))(@radix-ui/react-switch@1.4.1(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-tooltip@1.2.16(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@tanstack/react-table@8.21.3(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(lucide-react@0.468.0(react@19.2.7))(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
       '@tanstack/react-query':
         specifier: ^5.62.0
         version: 5.101.4(react@19.2.7)
@@ -946,7 +946,7 @@ importers:
         version: https://codeload.github.com/schemastud/js/tar.gz/5211ec4ece570d07b947c1bce4839cb5a6acf78f#path:/chat(zl3dypv54q7kiesso25whpo7u4)
       '@schemastud/frame':
         specifier: github:schemastud/js#9503dcf4d839c269ee6053a6a421800bbbb7f974&path:/frame
-        version: https://codeload.github.com/schemastud/js/tar.gz/9503dcf4d839c269ee6053a6a421800bbbb7f974#path:/frame(e2tzx5gnww4tp22i7ncgbmtot4)
+        version: https://codeload.github.com/schemastud/js/tar.gz/9503dcf4d839c269ee6053a6a421800bbbb7f974#path:/frame(zushqzocay55ikuxkos7aavrdq)
       '@schemastud/mainframe':
         specifier: github:schemastud/js#436d9db67d77d35d64e5db946ea2341a81e2d988&path:/mainframe
         version: https://codeload.github.com/schemastud/js/tar.gz/436d9db67d77d35d64e5db946ea2341a81e2d988#path:/mainframe(@preact/signals-core@1.14.4)(@rjsf/core@6.7.1(@rjsf/utils@6.7.1(react@19.2.7))(react@19.2.7))(@rjsf/shadcn@6.7.1(@rjsf/core@6.7.1(@rjsf/utils@6.7.1(react@19.2.7))(react@19.2.7))(@rjsf/utils@6.7.1(react@19.2.7))(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(tailwindcss@4.3.3))(@rjsf/utils@6.7.1(react@19.2.7))(@rjsf/validator-ajv8@6.7.1(@rjsf/utils@6.7.1(react@19.2.7)))(ajv@8.20.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(vite@8.1.5(@types/node@22.20.1)(esbuild@0.27.7)(jiti@2.7.0)(yaml@2.9.0))
@@ -958,7 +958,7 @@ importers:
         version: https://codeload.github.com/schemastud/js/tar.gz/aae63180fd740d3a9497fa2a12e7fbc7c206bc92#path:/seam(@rjsf/core@6.7.1(@rjsf/utils@6.7.1(react@19.2.7))(react@19.2.7))(@rjsf/shadcn@6.7.1(@rjsf/core@6.7.1(@rjsf/utils@6.7.1(react@19.2.7))(react@19.2.7))(@rjsf/utils@6.7.1(react@19.2.7))(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(tailwindcss@4.3.3))(@rjsf/utils@6.7.1(react@19.2.7))(@rjsf/validator-ajv8@6.7.1(@rjsf/utils@6.7.1(react@19.2.7)))(ajv@8.20.0)(react@19.2.7)(vite@8.1.5(@types/node@22.20.1)(esbuild@0.27.7)(jiti@2.7.0)(yaml@2.9.0))
       '@schemastud/ui':
         specifier: github:schemastud/js#abef468b39df9b1e81fd9a2081e69f8094c60e4e&path:/ui
-        version: https://codeload.github.com/schemastud/js/tar.gz/abef468b39df9b1e81fd9a2081e69f8094c60e4e#path:/ui(@radix-ui/react-dialog@1.1.23(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-select@2.3.7(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-separator@1.1.15(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-slot@1.3.3(@types/react@19.2.17)(react@19.2.7))(@radix-ui/react-switch@1.4.1(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-tooltip@1.2.16(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@tanstack/react-table@8.21.3(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(lucide-react@0.468.0(react@19.2.7))(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
+        version: https://codeload.github.com/schemastud/js/tar.gz/abef468b39df9b1e81fd9a2081e69f8094c60e4e#path:/ui(@radix-ui/react-dialog@1.1.23(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-select@2.3.7(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-separator@1.1.15(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-slot@1.5.0(@types/react@19.2.17)(react@19.2.7))(@radix-ui/react-switch@1.4.1(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-tooltip@1.2.16(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@tanstack/react-table@8.21.3(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(lucide-react@0.468.0(react@19.2.7))(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
       '@splicewire/beam-workflows':
         specifier: link:../beam-workflows
         version: link:../beam-workflows
@@ -1045,7 +1045,7 @@ importers:
     devDependencies:
       '@schemastud/ui':
         specifier: github:schemastud/js#abef468b39df9b1e81fd9a2081e69f8094c60e4e&path:/ui
-        version: https://codeload.github.com/schemastud/js/tar.gz/abef468b39df9b1e81fd9a2081e69f8094c60e4e#path:/ui(@radix-ui/react-dialog@1.1.23(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-select@2.3.7(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-separator@1.1.15(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-slot@1.3.3(@types/react@19.2.17)(react@19.2.7))(@radix-ui/react-switch@1.4.1(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-tooltip@1.2.16(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@tanstack/react-table@8.21.3(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(lucide-react@0.525.0(react@19.2.7))(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
+        version: https://codeload.github.com/schemastud/js/tar.gz/abef468b39df9b1e81fd9a2081e69f8094c60e4e#path:/ui(@radix-ui/react-dialog@1.1.23(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-select@2.3.7(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-separator@1.1.15(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-slot@1.5.0(@types/react@19.2.17)(react@19.2.7))(@radix-ui/react-switch@1.4.1(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-tooltip@1.2.16(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@tanstack/react-table@8.21.3(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(lucide-react@0.525.0(react@19.2.7))(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
       '@types/node':
         specifier: 22.20.1
         version: 22.20.1
@@ -1078,7 +1078,7 @@ importers:
     devDependencies:
       '@schemastud/ui':
         specifier: github:schemastud/js#abef468b39df9b1e81fd9a2081e69f8094c60e4e&path:/ui
-        version: https://codeload.github.com/schemastud/js/tar.gz/abef468b39df9b1e81fd9a2081e69f8094c60e4e#path:/ui(@radix-ui/react-dialog@1.1.23(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-select@2.3.7(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-separator@1.1.15(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-slot@1.3.3(@types/react@19.2.17)(react@19.2.7))(@radix-ui/react-switch@1.4.1(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-tooltip@1.2.16(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@tanstack/react-table@8.21.3(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(lucide-react@0.468.0(react@19.2.7))(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
+        version: https://codeload.github.com/schemastud/js/tar.gz/abef468b39df9b1e81fd9a2081e69f8094c60e4e#path:/ui(@radix-ui/react-dialog@1.1.23(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-select@2.3.7(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-separator@1.1.15(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-slot@1.5.0(@types/react@19.2.17)(react@19.2.7))(@radix-ui/react-switch@1.4.1(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-tooltip@1.2.16(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@tanstack/react-table@8.21.3(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(lucide-react@0.468.0(react@19.2.7))(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
       '@tanstack/react-query':
         specifier: ^5.62.0
         version: 5.101.4(react@19.2.7)
@@ -1124,7 +1124,7 @@ importers:
     devDependencies:
       '@schemastud/ui':
         specifier: github:schemastud/js#abef468b39df9b1e81fd9a2081e69f8094c60e4e&path:/ui
-        version: https://codeload.github.com/schemastud/js/tar.gz/abef468b39df9b1e81fd9a2081e69f8094c60e4e#path:/ui(@radix-ui/react-dialog@1.1.23(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-select@2.3.7(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-separator@1.1.15(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-slot@1.3.3(@types/react@19.2.17)(react@19.2.7))(@radix-ui/react-switch@1.4.1(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-tooltip@1.2.16(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@tanstack/react-table@8.21.3(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(lucide-react@0.468.0(react@19.2.7))(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
+        version: https://codeload.github.com/schemastud/js/tar.gz/abef468b39df9b1e81fd9a2081e69f8094c60e4e#path:/ui(@radix-ui/react-dialog@1.1.23(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-select@2.3.7(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-separator@1.1.15(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-slot@1.5.0(@types/react@19.2.17)(react@19.2.7))(@radix-ui/react-switch@1.4.1(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-tooltip@1.2.16(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@tanstack/react-table@8.21.3(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(lucide-react@0.468.0(react@19.2.7))(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
       '@tanstack/react-query':
         specifier: ^5.62.0
         version: 5.101.4(react@19.2.7)
@@ -3328,13 +3328,6 @@ packages:
     peerDependencies:
       react: '>=18'
 
-  '@schemastud/facets@0.2.2':
-    resolution: {integrity: sha512-APjmOPlhdGsEjU39YL/GIm/bvgUoP0lToyUj+mdPlBVO15WaxVSkZK3Oh4l19kmcuLp5Q2gBq1OcwreEAS9wCg==}
-    peerDependencies:
-      '@tanstack/react-query': ^5.0.0
-      lucide-react: '>=0.4.0'
-      react: '>=18'
-
   '@schemastud/facets@https://codeload.github.com/schemastud/js/tar.gz/72e8e8086d55e285ce387cba0032e264c09939fc#path:/facets':
     resolution: {path: /facets, tarball: https://codeload.github.com/schemastud/js/tar.gz/72e8e8086d55e285ce387cba0032e264c09939fc}
     version: 0.2.3
@@ -3342,17 +3335,6 @@ packages:
       '@tanstack/react-query': ^5.0.0
       lucide-react: '>=0.4.0'
       react: '>=18'
-
-  '@schemastud/frame-remote@0.1.0':
-    resolution: {integrity: sha512-GK/7eLvRAmo6DD5H97dyTtxu+r3/YSPPsDHYFES/GigQ0++h5bCztNvwz0lHlrh2bdLcVkOS4lSFUAErOvlXnw==}
-    peerDependencies:
-      react: '>=18'
-      react-dom: '>=18'
-    peerDependenciesMeta:
-      react:
-        optional: true
-      react-dom:
-        optional: true
 
   '@schemastud/frame-remote@https://codeload.github.com/schemastud/js/tar.gz/0eed0fa963044bf72fb937837299a2fd9e68982e#path:/frame-remote':
     resolution: {path: /frame-remote, tarball: https://codeload.github.com/schemastud/js/tar.gz/0eed0fa963044bf72fb937837299a2fd9e68982e}
@@ -3365,19 +3347,6 @@ packages:
         optional: true
       react-dom:
         optional: true
-
-  '@schemastud/frame@0.2.2':
-    resolution: {integrity: sha512-qfKvAmo4jGqZ23PfTdGKf5OfzgmfYswkpBKpxA8moy4j9QxwILeHBHzKoInxkPcAzoajOjCQgTfs6pou6/ytUg==}
-    peerDependencies:
-      '@rjsf/core': ^6.0.0
-      '@rjsf/shadcn': ^6.0.0
-      '@rjsf/utils': ^6.0.0
-      '@rjsf/validator-ajv8': ^6.0.0
-      '@tanstack/react-query': ^5.0.0
-      lucide-react: '>=0.4.0'
-      react: '>=18'
-      react-dom: '>=18'
-      zustand: '>=4'
 
   '@schemastud/frame@https://codeload.github.com/schemastud/js/tar.gz/9503dcf4d839c269ee6053a6a421800bbbb7f974#path:/frame':
     resolution: {path: /frame, tarball: https://codeload.github.com/schemastud/js/tar.gz/9503dcf4d839c269ee6053a6a421800bbbb7f974}
@@ -3394,11 +3363,6 @@ packages:
       react-dom: '>=18'
       zustand: '>=4'
 
-  '@schemastud/mainframe@0.1.0':
-    resolution: {integrity: sha512-vfCznlQ7EMZ4jorzHdsOcLUDDXZ5li7iHSMbPbNnwxzo5F+ZwPuEVGSGgJhMlh+wDJOMOpTUBtivc4QXPkZrgw==}
-    peerDependencies:
-      react: '>=18'
-
   '@schemastud/mainframe@https://codeload.github.com/schemastud/js/tar.gz/436d9db67d77d35d64e5db946ea2341a81e2d988#path:/mainframe':
     resolution: {path: /mainframe, tarball: https://codeload.github.com/schemastud/js/tar.gz/436d9db67d77d35d64e5db946ea2341a81e2d988}
     version: 0.1.2
@@ -3410,20 +3374,6 @@ packages:
     version: 0.1.0
     peerDependencies:
       react: '>=18'
-
-  '@schemastud/seam@0.2.2':
-    resolution: {integrity: sha512-2wetFKVxWrlSEPDt2RLFnuJQNkgfUXW5pNBcUY6akXii2Oio1MooOggK+7tX7n79OOErJ4hhEZ09lbSjn4L6Zw==}
-    peerDependencies:
-      '@rjsf/core': ^6.0.0
-      '@rjsf/shadcn': ^6.0.0
-      '@rjsf/utils': ^6.0.0
-      '@rjsf/validator-ajv8': ^6.0.0
-      ajv: ^8.12.0
-      react: '>=18'
-      vite: '>=5'
-    peerDependenciesMeta:
-      vite:
-        optional: true
 
   '@schemastud/seam@https://codeload.github.com/schemastud/js/tar.gz/aae63180fd740d3a9497fa2a12e7fbc7c206bc92#path:/seam':
     resolution: {path: /seam, tarball: https://codeload.github.com/schemastud/js/tar.gz/aae63180fd740d3a9497fa2a12e7fbc7c206bc92}
@@ -3439,20 +3389,6 @@ packages:
     peerDependenciesMeta:
       vite:
         optional: true
-
-  '@schemastud/ui@0.1.2':
-    resolution: {integrity: sha512-JCKUA5csPAUeHwdk8Q+w7PUUnCp3XV5yrcz6D+TLJkiIZ1FgwwDYFE0650k6HwdVc9mC+R5h49OfP23Q1+vjjA==}
-    peerDependencies:
-      '@radix-ui/react-dialog': ^1.1.0
-      '@radix-ui/react-select': ^2.3.3
-      '@radix-ui/react-separator': ^1.1.0
-      '@radix-ui/react-slot': ^1.1.0
-      '@radix-ui/react-switch': ^1.1.0
-      '@radix-ui/react-tooltip': ^1.1.0
-      '@tanstack/react-table': ^8.20.0
-      lucide-react: '>=0.4.0'
-      react: '>=18'
-      react-dom: '>=18'
 
   '@schemastud/ui@https://codeload.github.com/schemastud/js/tar.gz/abef468b39df9b1e81fd9a2081e69f8094c60e4e#path:/ui':
     resolution: {path: /ui, tarball: https://codeload.github.com/schemastud/js/tar.gz/abef468b39df9b1e81fd9a2081e69f8094c60e4e}
@@ -10052,18 +9988,6 @@ snapshots:
     dependencies:
       react: 19.2.7
 
-  '@schemastud/facets@0.2.2(@tanstack/react-query@5.101.4(react@19.2.7))(lucide-react@0.468.0(react@19.2.7))(react@19.2.7)':
-    dependencies:
-      '@tanstack/react-query': 5.101.4(react@19.2.7)
-      lucide-react: 0.468.0(react@19.2.7)
-      react: 19.2.7
-
-  '@schemastud/facets@0.2.2(@tanstack/react-query@5.101.4(react@19.2.7))(lucide-react@0.475.0(react@19.2.7))(react@19.2.7)':
-    dependencies:
-      '@tanstack/react-query': 5.101.4(react@19.2.7)
-      lucide-react: 0.475.0(react@19.2.7)
-      react: 19.2.7
-
   '@schemastud/facets@https://codeload.github.com/schemastud/js/tar.gz/72e8e8086d55e285ce387cba0032e264c09939fc#path:/facets(@tanstack/react-query@5.101.4(react@19.2.7))(lucide-react@0.468.0(react@19.2.7))(react@19.2.7)':
     dependencies:
       '@tanstack/react-query': 5.101.4(react@19.2.7)
@@ -10081,24 +10005,6 @@ snapshots:
       '@tanstack/react-query': 5.101.4(react@19.2.7)
       lucide-react: 1.27.0(react@19.2.7)
       react: 19.2.7
-
-  '@schemastud/frame-remote@0.1.0(@preact/signals-core@1.14.4)(@rjsf/core@6.7.1(@rjsf/utils@6.7.1(react@19.2.7))(react@19.2.7))(@rjsf/shadcn@6.7.1(@rjsf/core@6.7.1(@rjsf/utils@6.7.1(react@19.2.7))(react@19.2.7))(@rjsf/utils@6.7.1(react@19.2.7))(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(tailwindcss@4.3.3))(@rjsf/utils@6.7.1(react@19.2.7))(@rjsf/validator-ajv8@6.7.1(@rjsf/utils@6.7.1(react@19.2.7)))(ajv@8.20.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(vite@8.1.5(@types/node@26.1.1)(esbuild@0.27.7)(jiti@2.7.0)(yaml@2.9.0))':
-    dependencies:
-      '@remote-dom/core': 1.12.1(@preact/signals-core@1.14.4)
-      '@schemastud/seam': 0.2.2(@rjsf/core@6.7.1(@rjsf/utils@6.7.1(react@19.2.7))(react@19.2.7))(@rjsf/shadcn@6.7.1(@rjsf/core@6.7.1(@rjsf/utils@6.7.1(react@19.2.7))(react@19.2.7))(@rjsf/utils@6.7.1(react@19.2.7))(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(tailwindcss@4.3.3))(@rjsf/utils@6.7.1(react@19.2.7))(@rjsf/validator-ajv8@6.7.1(@rjsf/utils@6.7.1(react@19.2.7)))(ajv@8.20.0)(react@19.2.7)(vite@8.1.5(@types/node@26.1.1)(esbuild@0.27.7)(jiti@2.7.0)(yaml@2.9.0))
-      quickjs-emscripten: 0.32.0
-    optionalDependencies:
-      react: 19.2.7
-      react-dom: 19.2.7(react@19.2.7)
-    transitivePeerDependencies:
-      - '@preact/signals-core'
-      - '@rjsf/core'
-      - '@rjsf/shadcn'
-      - '@rjsf/utils'
-      - '@rjsf/validator-ajv8'
-      - ajv
-      - preact
-      - vite
 
   '@schemastud/frame-remote@https://codeload.github.com/schemastud/js/tar.gz/0eed0fa963044bf72fb937837299a2fd9e68982e#path:/frame-remote(@preact/signals-core@1.14.4)(@rjsf/core@6.7.1(@rjsf/utils@6.7.1(react@19.2.7))(react@19.2.7))(@rjsf/shadcn@6.7.1(@rjsf/core@6.7.1(@rjsf/utils@6.7.1(react@19.2.7))(react@19.2.7))(@rjsf/utils@6.7.1(react@19.2.7))(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(tailwindcss@4.3.3))(@rjsf/utils@6.7.1(react@19.2.7))(@rjsf/validator-ajv8@6.7.1(@rjsf/utils@6.7.1(react@19.2.7)))(ajv@8.20.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(vite@8.1.5(@types/node@22.20.1)(esbuild@0.27.7)(jiti@2.7.0)(yaml@2.9.0))':
     dependencies:
@@ -10136,114 +10042,14 @@ snapshots:
       - preact
       - vite
 
-  '@schemastud/frame@0.2.2(2avcm2qx2u4spdses3mas53agu)':
-    dependencies:
-      '@rjsf/core': 6.7.1(@rjsf/utils@6.7.1(react@19.2.7))(react@19.2.7)
-      '@rjsf/shadcn': 6.7.1(@rjsf/core@6.7.1(@rjsf/utils@6.7.1(react@19.2.7))(react@19.2.7))(@rjsf/utils@6.7.1(react@19.2.7))(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(tailwindcss@4.3.3)
-      '@rjsf/utils': 6.7.1(react@19.2.7)
-      '@rjsf/validator-ajv8': 6.7.1(@rjsf/utils@6.7.1(react@19.2.7))
-      '@schemastud/facets': 0.2.2(@tanstack/react-query@5.101.4(react@19.2.7))(lucide-react@0.475.0(react@19.2.7))(react@19.2.7)
-      '@schemastud/seam': 0.2.2(@rjsf/core@6.7.1(@rjsf/utils@6.7.1(react@19.2.7))(react@19.2.7))(@rjsf/shadcn@6.7.1(@rjsf/core@6.7.1(@rjsf/utils@6.7.1(react@19.2.7))(react@19.2.7))(@rjsf/utils@6.7.1(react@19.2.7))(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(tailwindcss@4.3.3))(@rjsf/utils@6.7.1(react@19.2.7))(@rjsf/validator-ajv8@6.7.1(@rjsf/utils@6.7.1(react@19.2.7)))(ajv@8.20.0)(react@19.2.7)(vite@8.1.5(@types/node@26.1.1)(esbuild@0.27.7)(jiti@2.7.0)(yaml@2.9.0))
-      '@schemastud/ui': 0.1.2(@radix-ui/react-dialog@1.1.23(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-select@2.3.7(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-separator@1.1.15(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-slot@1.3.3(@types/react@19.2.17)(react@19.2.7))(@radix-ui/react-switch@1.4.1(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-tooltip@1.2.16(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@tanstack/react-table@8.21.3(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(lucide-react@0.475.0(react@19.2.7))(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
-      '@tanstack/react-query': 5.101.4(react@19.2.7)
-      lucide-react: 0.475.0(react@19.2.7)
-      react: 19.2.7
-      react-dom: 19.2.7(react@19.2.7)
-      zustand: 4.5.7(@types/react@19.2.17)(react@19.2.7)
-    transitivePeerDependencies:
-      - '@radix-ui/react-dialog'
-      - '@radix-ui/react-select'
-      - '@radix-ui/react-separator'
-      - '@radix-ui/react-slot'
-      - '@radix-ui/react-switch'
-      - '@radix-ui/react-tooltip'
-      - '@tanstack/react-table'
-      - ajv
-      - vite
-
-  '@schemastud/frame@0.2.2(e2tzx5gnww4tp22i7ncgbmtot4)':
-    dependencies:
-      '@rjsf/core': 6.7.1(@rjsf/utils@6.7.1(react@19.2.7))(react@19.2.7)
-      '@rjsf/shadcn': 6.7.1(@rjsf/core@6.7.1(@rjsf/utils@6.7.1(react@19.2.7))(react@19.2.7))(@rjsf/utils@6.7.1(react@19.2.7))(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(tailwindcss@4.3.3)
-      '@rjsf/utils': 6.7.1(react@19.2.7)
-      '@rjsf/validator-ajv8': 6.7.1(@rjsf/utils@6.7.1(react@19.2.7))
-      '@schemastud/facets': 0.2.2(@tanstack/react-query@5.101.4(react@19.2.7))(lucide-react@0.468.0(react@19.2.7))(react@19.2.7)
-      '@schemastud/seam': 0.2.2(@rjsf/core@6.7.1(@rjsf/utils@6.7.1(react@19.2.7))(react@19.2.7))(@rjsf/shadcn@6.7.1(@rjsf/core@6.7.1(@rjsf/utils@6.7.1(react@19.2.7))(react@19.2.7))(@rjsf/utils@6.7.1(react@19.2.7))(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(tailwindcss@4.3.3))(@rjsf/utils@6.7.1(react@19.2.7))(@rjsf/validator-ajv8@6.7.1(@rjsf/utils@6.7.1(react@19.2.7)))(ajv@8.20.0)(react@19.2.7)(vite@8.1.5(@types/node@22.20.1)(esbuild@0.27.7)(jiti@2.7.0)(yaml@2.9.0))
-      '@schemastud/ui': 0.1.2(@radix-ui/react-dialog@1.1.23(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-select@2.3.7(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-separator@1.1.15(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-slot@1.3.3(@types/react@19.2.17)(react@19.2.7))(@radix-ui/react-switch@1.4.1(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-tooltip@1.2.16(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@tanstack/react-table@8.21.3(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(lucide-react@0.468.0(react@19.2.7))(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
-      '@tanstack/react-query': 5.101.4(react@19.2.7)
-      lucide-react: 0.468.0(react@19.2.7)
-      react: 19.2.7
-      react-dom: 19.2.7(react@19.2.7)
-      zustand: 4.5.7(@types/react@19.2.17)(react@19.2.7)
-    transitivePeerDependencies:
-      - '@radix-ui/react-dialog'
-      - '@radix-ui/react-select'
-      - '@radix-ui/react-separator'
-      - '@radix-ui/react-slot'
-      - '@radix-ui/react-switch'
-      - '@radix-ui/react-tooltip'
-      - '@tanstack/react-table'
-      - ajv
-      - vite
-
-  '@schemastud/frame@https://codeload.github.com/schemastud/js/tar.gz/9503dcf4d839c269ee6053a6a421800bbbb7f974#path:/frame(e2tzx5gnww4tp22i7ncgbmtot4)':
-    dependencies:
-      '@rjsf/core': 6.7.1(@rjsf/utils@6.7.1(react@19.2.7))(react@19.2.7)
-      '@rjsf/shadcn': 6.7.1(@rjsf/core@6.7.1(@rjsf/utils@6.7.1(react@19.2.7))(react@19.2.7))(@rjsf/utils@6.7.1(react@19.2.7))(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(tailwindcss@4.3.3)
-      '@rjsf/utils': 6.7.1(react@19.2.7)
-      '@rjsf/validator-ajv8': 6.7.1(@rjsf/utils@6.7.1(react@19.2.7))
-      '@schemastud/facets': https://codeload.github.com/schemastud/js/tar.gz/72e8e8086d55e285ce387cba0032e264c09939fc#path:/facets(@tanstack/react-query@5.101.4(react@19.2.7))(lucide-react@0.468.0(react@19.2.7))(react@19.2.7)
-      '@schemastud/seam': https://codeload.github.com/schemastud/js/tar.gz/aae63180fd740d3a9497fa2a12e7fbc7c206bc92#path:/seam(@rjsf/core@6.7.1(@rjsf/utils@6.7.1(react@19.2.7))(react@19.2.7))(@rjsf/shadcn@6.7.1(@rjsf/core@6.7.1(@rjsf/utils@6.7.1(react@19.2.7))(react@19.2.7))(@rjsf/utils@6.7.1(react@19.2.7))(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(tailwindcss@4.3.3))(@rjsf/utils@6.7.1(react@19.2.7))(@rjsf/validator-ajv8@6.7.1(@rjsf/utils@6.7.1(react@19.2.7)))(ajv@8.20.0)(react@19.2.7)(vite@8.1.5(@types/node@22.20.1)(esbuild@0.27.7)(jiti@2.7.0)(yaml@2.9.0))
-      '@schemastud/ui': https://codeload.github.com/schemastud/js/tar.gz/abef468b39df9b1e81fd9a2081e69f8094c60e4e#path:/ui(@radix-ui/react-dialog@1.1.23(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-select@2.3.7(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-separator@1.1.15(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-slot@1.3.3(@types/react@19.2.17)(react@19.2.7))(@radix-ui/react-switch@1.4.1(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-tooltip@1.2.16(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@tanstack/react-table@8.21.3(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(lucide-react@0.468.0(react@19.2.7))(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
-      '@tanstack/react-query': 5.101.4(react@19.2.7)
-      lucide-react: 0.468.0(react@19.2.7)
-      react: 19.2.7
-      react-dom: 19.2.7(react@19.2.7)
-      zustand: 4.5.7(@types/react@19.2.17)(react@19.2.7)
-    transitivePeerDependencies:
-      - '@radix-ui/react-dialog'
-      - '@radix-ui/react-select'
-      - '@radix-ui/react-separator'
-      - '@radix-ui/react-slot'
-      - '@radix-ui/react-switch'
-      - '@radix-ui/react-tooltip'
-      - '@tanstack/react-table'
-      - ajv
-      - vite
-
-  '@schemastud/frame@https://codeload.github.com/schemastud/js/tar.gz/9503dcf4d839c269ee6053a6a421800bbbb7f974#path:/frame(j7jytj55ihdvnkx6arh55zceue)':
-    dependencies:
-      '@rjsf/core': 6.7.1(@rjsf/utils@6.7.1(react@19.2.7))(react@19.2.7)
-      '@rjsf/shadcn': 6.7.1(@rjsf/core@6.7.1(@rjsf/utils@6.7.1(react@19.2.7))(react@19.2.7))(@rjsf/utils@6.7.1(react@19.2.7))(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(tailwindcss@4.3.3)
-      '@rjsf/utils': 6.7.1(react@19.2.7)
-      '@rjsf/validator-ajv8': 6.7.1(@rjsf/utils@6.7.1(react@19.2.7))
-      '@schemastud/facets': https://codeload.github.com/schemastud/js/tar.gz/72e8e8086d55e285ce387cba0032e264c09939fc#path:/facets(@tanstack/react-query@5.101.4(react@19.2.7))(lucide-react@1.27.0(react@19.2.7))(react@19.2.7)
-      '@schemastud/seam': https://codeload.github.com/schemastud/js/tar.gz/aae63180fd740d3a9497fa2a12e7fbc7c206bc92#path:/seam(@rjsf/core@6.7.1(@rjsf/utils@6.7.1(react@19.2.7))(react@19.2.7))(@rjsf/shadcn@6.7.1(@rjsf/core@6.7.1(@rjsf/utils@6.7.1(react@19.2.7))(react@19.2.7))(@rjsf/utils@6.7.1(react@19.2.7))(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(tailwindcss@4.3.3))(@rjsf/utils@6.7.1(react@19.2.7))(@rjsf/validator-ajv8@6.7.1(@rjsf/utils@6.7.1(react@19.2.7)))(ajv@8.20.0)(react@19.2.7)(vite@8.1.5(@types/node@22.20.2)(esbuild@0.27.7)(jiti@2.7.0)(yaml@2.9.0))
-      '@schemastud/ui': https://codeload.github.com/schemastud/js/tar.gz/abef468b39df9b1e81fd9a2081e69f8094c60e4e#path:/ui(@radix-ui/react-dialog@1.1.23(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-select@2.3.7(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-separator@1.1.15(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-slot@1.3.3(@types/react@19.2.17)(react@19.2.7))(@radix-ui/react-switch@1.4.1(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-tooltip@1.2.16(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@tanstack/react-table@8.21.3(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(lucide-react@1.27.0(react@19.2.7))(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
-      '@tanstack/react-query': 5.101.4(react@19.2.7)
-      lucide-react: 1.27.0(react@19.2.7)
-      react: 19.2.7
-      react-dom: 19.2.7(react@19.2.7)
-      zustand: 4.5.7(@types/react@19.2.17)(react@19.2.7)
-    transitivePeerDependencies:
-      - '@radix-ui/react-dialog'
-      - '@radix-ui/react-select'
-      - '@radix-ui/react-separator'
-      - '@radix-ui/react-slot'
-      - '@radix-ui/react-switch'
-      - '@radix-ui/react-tooltip'
-      - '@tanstack/react-table'
-      - ajv
-      - vite
-
-  '@schemastud/frame@https://codeload.github.com/schemastud/js/tar.gz/9503dcf4d839c269ee6053a6a421800bbbb7f974#path:/frame(o6tvzh5nnngwl3t62h7zwanhl4)':
+  '@schemastud/frame@https://codeload.github.com/schemastud/js/tar.gz/9503dcf4d839c269ee6053a6a421800bbbb7f974#path:/frame(2avcm2qx2u4spdses3mas53agu)':
     dependencies:
       '@rjsf/core': 6.7.1(@rjsf/utils@6.7.1(react@19.2.7))(react@19.2.7)
       '@rjsf/shadcn': 6.7.1(@rjsf/core@6.7.1(@rjsf/utils@6.7.1(react@19.2.7))(react@19.2.7))(@rjsf/utils@6.7.1(react@19.2.7))(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(tailwindcss@4.3.3)
       '@rjsf/utils': 6.7.1(react@19.2.7)
       '@rjsf/validator-ajv8': 6.7.1(@rjsf/utils@6.7.1(react@19.2.7))
       '@schemastud/facets': https://codeload.github.com/schemastud/js/tar.gz/72e8e8086d55e285ce387cba0032e264c09939fc#path:/facets(@tanstack/react-query@5.101.4(react@19.2.7))(lucide-react@0.475.0(react@19.2.7))(react@19.2.7)
-      '@schemastud/seam': https://codeload.github.com/schemastud/js/tar.gz/aae63180fd740d3a9497fa2a12e7fbc7c206bc92#path:/seam(@rjsf/core@6.7.1(@rjsf/utils@6.7.1(react@19.2.7))(react@19.2.7))(@rjsf/shadcn@6.7.1(@rjsf/core@6.7.1(@rjsf/utils@6.7.1(react@19.2.7))(react@19.2.7))(@rjsf/utils@6.7.1(react@19.2.7))(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(tailwindcss@4.3.3))(@rjsf/utils@6.7.1(react@19.2.7))(@rjsf/validator-ajv8@6.7.1(@rjsf/utils@6.7.1(react@19.2.7)))(ajv@8.20.0)(react@19.2.7)(vite@8.1.5(@types/node@22.20.2)(esbuild@0.27.7)(jiti@2.7.0)(yaml@2.9.0))
+      '@schemastud/seam': https://codeload.github.com/schemastud/js/tar.gz/aae63180fd740d3a9497fa2a12e7fbc7c206bc92#path:/seam(@rjsf/core@6.7.1(@rjsf/utils@6.7.1(react@19.2.7))(react@19.2.7))(@rjsf/shadcn@6.7.1(@rjsf/core@6.7.1(@rjsf/utils@6.7.1(react@19.2.7))(react@19.2.7))(@rjsf/utils@6.7.1(react@19.2.7))(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(tailwindcss@4.3.3))(@rjsf/utils@6.7.1(react@19.2.7))(@rjsf/validator-ajv8@6.7.1(@rjsf/utils@6.7.1(react@19.2.7)))(ajv@8.20.0)(react@19.2.7)(vite@8.1.5(@types/node@26.1.1)(esbuild@0.27.7)(jiti@2.7.0)(yaml@2.9.0))
       '@schemastud/ui': https://codeload.github.com/schemastud/js/tar.gz/abef468b39df9b1e81fd9a2081e69f8094c60e4e#path:/ui(@radix-ui/react-dialog@1.1.23(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-select@2.3.7(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-separator@1.1.15(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-slot@1.3.3(@types/react@19.2.17)(react@19.2.7))(@radix-ui/react-switch@1.4.1(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-tooltip@1.2.16(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@tanstack/react-table@8.21.3(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(lucide-react@0.475.0(react@19.2.7))(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
       '@tanstack/react-query': 5.101.4(react@19.2.7)
       lucide-react: 0.475.0(react@19.2.7)
@@ -10261,20 +10067,79 @@ snapshots:
       - ajv
       - vite
 
-  '@schemastud/mainframe@0.1.0(@preact/signals-core@1.14.4)(@rjsf/core@6.7.1(@rjsf/utils@6.7.1(react@19.2.7))(react@19.2.7))(@rjsf/shadcn@6.7.1(@rjsf/core@6.7.1(@rjsf/utils@6.7.1(react@19.2.7))(react@19.2.7))(@rjsf/utils@6.7.1(react@19.2.7))(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(tailwindcss@4.3.3))(@rjsf/utils@6.7.1(react@19.2.7))(@rjsf/validator-ajv8@6.7.1(@rjsf/utils@6.7.1(react@19.2.7)))(ajv@8.20.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(vite@8.1.5(@types/node@26.1.1)(esbuild@0.27.7)(jiti@2.7.0)(yaml@2.9.0))':
+  '@schemastud/frame@https://codeload.github.com/schemastud/js/tar.gz/9503dcf4d839c269ee6053a6a421800bbbb7f974#path:/frame(qpra2htu6kkzlf5jz6i7jpqtw4)':
     dependencies:
-      '@schemastud/frame-remote': 0.1.0(@preact/signals-core@1.14.4)(@rjsf/core@6.7.1(@rjsf/utils@6.7.1(react@19.2.7))(react@19.2.7))(@rjsf/shadcn@6.7.1(@rjsf/core@6.7.1(@rjsf/utils@6.7.1(react@19.2.7))(react@19.2.7))(@rjsf/utils@6.7.1(react@19.2.7))(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(tailwindcss@4.3.3))(@rjsf/utils@6.7.1(react@19.2.7))(@rjsf/validator-ajv8@6.7.1(@rjsf/utils@6.7.1(react@19.2.7)))(ajv@8.20.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(vite@8.1.5(@types/node@26.1.1)(esbuild@0.27.7)(jiti@2.7.0)(yaml@2.9.0))
+      '@rjsf/core': 6.7.1(@rjsf/utils@6.7.1(react@19.2.7))(react@19.2.7)
+      '@rjsf/shadcn': 6.7.1(@rjsf/core@6.7.1(@rjsf/utils@6.7.1(react@19.2.7))(react@19.2.7))(@rjsf/utils@6.7.1(react@19.2.7))(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(tailwindcss@4.3.3)
+      '@rjsf/utils': 6.7.1(react@19.2.7)
+      '@rjsf/validator-ajv8': 6.7.1(@rjsf/utils@6.7.1(react@19.2.7))
+      '@schemastud/facets': https://codeload.github.com/schemastud/js/tar.gz/72e8e8086d55e285ce387cba0032e264c09939fc#path:/facets(@tanstack/react-query@5.101.4(react@19.2.7))(lucide-react@1.27.0(react@19.2.7))(react@19.2.7)
+      '@schemastud/seam': https://codeload.github.com/schemastud/js/tar.gz/aae63180fd740d3a9497fa2a12e7fbc7c206bc92#path:/seam(@rjsf/core@6.7.1(@rjsf/utils@6.7.1(react@19.2.7))(react@19.2.7))(@rjsf/shadcn@6.7.1(@rjsf/core@6.7.1(@rjsf/utils@6.7.1(react@19.2.7))(react@19.2.7))(@rjsf/utils@6.7.1(react@19.2.7))(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(tailwindcss@4.3.3))(@rjsf/utils@6.7.1(react@19.2.7))(@rjsf/validator-ajv8@6.7.1(@rjsf/utils@6.7.1(react@19.2.7)))(ajv@8.20.0)(react@19.2.7)(vite@8.1.5(@types/node@22.20.2)(esbuild@0.27.7)(jiti@2.7.0)(yaml@2.9.0))
+      '@schemastud/ui': https://codeload.github.com/schemastud/js/tar.gz/abef468b39df9b1e81fd9a2081e69f8094c60e4e#path:/ui(@radix-ui/react-dialog@1.1.23(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-select@2.3.7(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-separator@1.1.15(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-slot@1.5.0(@types/react@19.2.17)(react@19.2.7))(@radix-ui/react-switch@1.4.1(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-tooltip@1.2.16(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@tanstack/react-table@8.21.3(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(lucide-react@1.27.0(react@19.2.7))(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
+      '@tanstack/react-query': 5.101.4(react@19.2.7)
+      lucide-react: 1.27.0(react@19.2.7)
       react: 19.2.7
-      react-rnd: 10.5.3(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
+      react-dom: 19.2.7(react@19.2.7)
+      zustand: 4.5.7(@types/react@19.2.17)(react@19.2.7)
     transitivePeerDependencies:
-      - '@preact/signals-core'
-      - '@rjsf/core'
-      - '@rjsf/shadcn'
-      - '@rjsf/utils'
-      - '@rjsf/validator-ajv8'
+      - '@radix-ui/react-dialog'
+      - '@radix-ui/react-select'
+      - '@radix-ui/react-separator'
+      - '@radix-ui/react-slot'
+      - '@radix-ui/react-switch'
+      - '@radix-ui/react-tooltip'
+      - '@tanstack/react-table'
       - ajv
-      - preact
-      - react-dom
+      - vite
+
+  '@schemastud/frame@https://codeload.github.com/schemastud/js/tar.gz/9503dcf4d839c269ee6053a6a421800bbbb7f974#path:/frame(yknonjujqmri6c3vc3zmc364ua)':
+    dependencies:
+      '@rjsf/core': 6.7.1(@rjsf/utils@6.7.1(react@19.2.7))(react@19.2.7)
+      '@rjsf/shadcn': 6.7.1(@rjsf/core@6.7.1(@rjsf/utils@6.7.1(react@19.2.7))(react@19.2.7))(@rjsf/utils@6.7.1(react@19.2.7))(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(tailwindcss@4.3.3)
+      '@rjsf/utils': 6.7.1(react@19.2.7)
+      '@rjsf/validator-ajv8': 6.7.1(@rjsf/utils@6.7.1(react@19.2.7))
+      '@schemastud/facets': https://codeload.github.com/schemastud/js/tar.gz/72e8e8086d55e285ce387cba0032e264c09939fc#path:/facets(@tanstack/react-query@5.101.4(react@19.2.7))(lucide-react@0.475.0(react@19.2.7))(react@19.2.7)
+      '@schemastud/seam': https://codeload.github.com/schemastud/js/tar.gz/aae63180fd740d3a9497fa2a12e7fbc7c206bc92#path:/seam(@rjsf/core@6.7.1(@rjsf/utils@6.7.1(react@19.2.7))(react@19.2.7))(@rjsf/shadcn@6.7.1(@rjsf/core@6.7.1(@rjsf/utils@6.7.1(react@19.2.7))(react@19.2.7))(@rjsf/utils@6.7.1(react@19.2.7))(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(tailwindcss@4.3.3))(@rjsf/utils@6.7.1(react@19.2.7))(@rjsf/validator-ajv8@6.7.1(@rjsf/utils@6.7.1(react@19.2.7)))(ajv@8.20.0)(react@19.2.7)(vite@8.1.5(@types/node@22.20.2)(esbuild@0.27.7)(jiti@2.7.0)(yaml@2.9.0))
+      '@schemastud/ui': https://codeload.github.com/schemastud/js/tar.gz/abef468b39df9b1e81fd9a2081e69f8094c60e4e#path:/ui(@radix-ui/react-dialog@1.1.23(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-select@2.3.7(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-separator@1.1.15(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-slot@1.5.0(@types/react@19.2.17)(react@19.2.7))(@radix-ui/react-switch@1.4.1(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-tooltip@1.2.16(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@tanstack/react-table@8.21.3(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(lucide-react@0.475.0(react@19.2.7))(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
+      '@tanstack/react-query': 5.101.4(react@19.2.7)
+      lucide-react: 0.475.0(react@19.2.7)
+      react: 19.2.7
+      react-dom: 19.2.7(react@19.2.7)
+      zustand: 4.5.7(@types/react@19.2.17)(react@19.2.7)
+    transitivePeerDependencies:
+      - '@radix-ui/react-dialog'
+      - '@radix-ui/react-select'
+      - '@radix-ui/react-separator'
+      - '@radix-ui/react-slot'
+      - '@radix-ui/react-switch'
+      - '@radix-ui/react-tooltip'
+      - '@tanstack/react-table'
+      - ajv
+      - vite
+
+  '@schemastud/frame@https://codeload.github.com/schemastud/js/tar.gz/9503dcf4d839c269ee6053a6a421800bbbb7f974#path:/frame(zushqzocay55ikuxkos7aavrdq)':
+    dependencies:
+      '@rjsf/core': 6.7.1(@rjsf/utils@6.7.1(react@19.2.7))(react@19.2.7)
+      '@rjsf/shadcn': 6.7.1(@rjsf/core@6.7.1(@rjsf/utils@6.7.1(react@19.2.7))(react@19.2.7))(@rjsf/utils@6.7.1(react@19.2.7))(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(tailwindcss@4.3.3)
+      '@rjsf/utils': 6.7.1(react@19.2.7)
+      '@rjsf/validator-ajv8': 6.7.1(@rjsf/utils@6.7.1(react@19.2.7))
+      '@schemastud/facets': https://codeload.github.com/schemastud/js/tar.gz/72e8e8086d55e285ce387cba0032e264c09939fc#path:/facets(@tanstack/react-query@5.101.4(react@19.2.7))(lucide-react@0.468.0(react@19.2.7))(react@19.2.7)
+      '@schemastud/seam': https://codeload.github.com/schemastud/js/tar.gz/aae63180fd740d3a9497fa2a12e7fbc7c206bc92#path:/seam(@rjsf/core@6.7.1(@rjsf/utils@6.7.1(react@19.2.7))(react@19.2.7))(@rjsf/shadcn@6.7.1(@rjsf/core@6.7.1(@rjsf/utils@6.7.1(react@19.2.7))(react@19.2.7))(@rjsf/utils@6.7.1(react@19.2.7))(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(tailwindcss@4.3.3))(@rjsf/utils@6.7.1(react@19.2.7))(@rjsf/validator-ajv8@6.7.1(@rjsf/utils@6.7.1(react@19.2.7)))(ajv@8.20.0)(react@19.2.7)(vite@8.1.5(@types/node@22.20.1)(esbuild@0.27.7)(jiti@2.7.0)(yaml@2.9.0))
+      '@schemastud/ui': https://codeload.github.com/schemastud/js/tar.gz/abef468b39df9b1e81fd9a2081e69f8094c60e4e#path:/ui(@radix-ui/react-dialog@1.1.23(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-select@2.3.7(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-separator@1.1.15(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-slot@1.5.0(@types/react@19.2.17)(react@19.2.7))(@radix-ui/react-switch@1.4.1(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-tooltip@1.2.16(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@tanstack/react-table@8.21.3(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(lucide-react@0.468.0(react@19.2.7))(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
+      '@tanstack/react-query': 5.101.4(react@19.2.7)
+      lucide-react: 0.468.0(react@19.2.7)
+      react: 19.2.7
+      react-dom: 19.2.7(react@19.2.7)
+      zustand: 4.5.7(@types/react@19.2.17)(react@19.2.7)
+    transitivePeerDependencies:
+      - '@radix-ui/react-dialog'
+      - '@radix-ui/react-select'
+      - '@radix-ui/react-separator'
+      - '@radix-ui/react-slot'
+      - '@radix-ui/react-switch'
+      - '@radix-ui/react-tooltip'
+      - '@tanstack/react-table'
+      - ajv
       - vite
 
   '@schemastud/mainframe@https://codeload.github.com/schemastud/js/tar.gz/436d9db67d77d35d64e5db946ea2341a81e2d988#path:/mainframe(@preact/signals-core@1.14.4)(@rjsf/core@6.7.1(@rjsf/utils@6.7.1(react@19.2.7))(react@19.2.7))(@rjsf/shadcn@6.7.1(@rjsf/core@6.7.1(@rjsf/utils@6.7.1(react@19.2.7))(react@19.2.7))(@rjsf/utils@6.7.1(react@19.2.7))(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(tailwindcss@4.3.3))(@rjsf/utils@6.7.1(react@19.2.7))(@rjsf/validator-ajv8@6.7.1(@rjsf/utils@6.7.1(react@19.2.7)))(ajv@8.20.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(vite@8.1.5(@types/node@22.20.1)(esbuild@0.27.7)(jiti@2.7.0)(yaml@2.9.0))':
@@ -10293,31 +10158,25 @@ snapshots:
       - react-dom
       - vite
 
+  '@schemastud/mainframe@https://codeload.github.com/schemastud/js/tar.gz/436d9db67d77d35d64e5db946ea2341a81e2d988#path:/mainframe(@preact/signals-core@1.14.4)(@rjsf/core@6.7.1(@rjsf/utils@6.7.1(react@19.2.7))(react@19.2.7))(@rjsf/shadcn@6.7.1(@rjsf/core@6.7.1(@rjsf/utils@6.7.1(react@19.2.7))(react@19.2.7))(@rjsf/utils@6.7.1(react@19.2.7))(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(tailwindcss@4.3.3))(@rjsf/utils@6.7.1(react@19.2.7))(@rjsf/validator-ajv8@6.7.1(@rjsf/utils@6.7.1(react@19.2.7)))(ajv@8.20.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(vite@8.1.5(@types/node@26.1.1)(esbuild@0.27.7)(jiti@2.7.0)(yaml@2.9.0))':
+    dependencies:
+      '@schemastud/frame-remote': https://codeload.github.com/schemastud/js/tar.gz/0eed0fa963044bf72fb937837299a2fd9e68982e#path:/frame-remote(@preact/signals-core@1.14.4)(@rjsf/core@6.7.1(@rjsf/utils@6.7.1(react@19.2.7))(react@19.2.7))(@rjsf/shadcn@6.7.1(@rjsf/core@6.7.1(@rjsf/utils@6.7.1(react@19.2.7))(react@19.2.7))(@rjsf/utils@6.7.1(react@19.2.7))(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(tailwindcss@4.3.3))(@rjsf/utils@6.7.1(react@19.2.7))(@rjsf/validator-ajv8@6.7.1(@rjsf/utils@6.7.1(react@19.2.7)))(ajv@8.20.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(vite@8.1.5(@types/node@26.1.1)(esbuild@0.27.7)(jiti@2.7.0)(yaml@2.9.0))
+      react: 19.2.7
+      react-rnd: 10.5.3(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
+    transitivePeerDependencies:
+      - '@preact/signals-core'
+      - '@rjsf/core'
+      - '@rjsf/shadcn'
+      - '@rjsf/utils'
+      - '@rjsf/validator-ajv8'
+      - ajv
+      - preact
+      - react-dom
+      - vite
+
   '@schemastud/nav@https://codeload.github.com/schemastud/js/tar.gz/ea1bb1a06d83de66164e19f9b6798342ed2a8c51#path:/nav(react@19.2.7)':
     dependencies:
       react: 19.2.7
-
-  '@schemastud/seam@0.2.2(@rjsf/core@6.7.1(@rjsf/utils@6.7.1(react@19.2.7))(react@19.2.7))(@rjsf/shadcn@6.7.1(@rjsf/core@6.7.1(@rjsf/utils@6.7.1(react@19.2.7))(react@19.2.7))(@rjsf/utils@6.7.1(react@19.2.7))(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(tailwindcss@4.3.3))(@rjsf/utils@6.7.1(react@19.2.7))(@rjsf/validator-ajv8@6.7.1(@rjsf/utils@6.7.1(react@19.2.7)))(ajv@8.20.0)(react@19.2.7)(vite@8.1.5(@types/node@22.20.1)(esbuild@0.27.7)(jiti@2.7.0)(yaml@2.9.0))':
-    dependencies:
-      '@rjsf/core': 6.7.1(@rjsf/utils@6.7.1(react@19.2.7))(react@19.2.7)
-      '@rjsf/shadcn': 6.7.1(@rjsf/core@6.7.1(@rjsf/utils@6.7.1(react@19.2.7))(react@19.2.7))(@rjsf/utils@6.7.1(react@19.2.7))(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(tailwindcss@4.3.3)
-      '@rjsf/utils': 6.7.1(react@19.2.7)
-      '@rjsf/validator-ajv8': 6.7.1(@rjsf/utils@6.7.1(react@19.2.7))
-      ajv: 8.20.0
-      react: 19.2.7
-    optionalDependencies:
-      vite: 8.1.5(@types/node@22.20.1)(esbuild@0.27.7)(jiti@2.7.0)(yaml@2.9.0)
-
-  '@schemastud/seam@0.2.2(@rjsf/core@6.7.1(@rjsf/utils@6.7.1(react@19.2.7))(react@19.2.7))(@rjsf/shadcn@6.7.1(@rjsf/core@6.7.1(@rjsf/utils@6.7.1(react@19.2.7))(react@19.2.7))(@rjsf/utils@6.7.1(react@19.2.7))(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(tailwindcss@4.3.3))(@rjsf/utils@6.7.1(react@19.2.7))(@rjsf/validator-ajv8@6.7.1(@rjsf/utils@6.7.1(react@19.2.7)))(ajv@8.20.0)(react@19.2.7)(vite@8.1.5(@types/node@26.1.1)(esbuild@0.27.7)(jiti@2.7.0)(yaml@2.9.0))':
-    dependencies:
-      '@rjsf/core': 6.7.1(@rjsf/utils@6.7.1(react@19.2.7))(react@19.2.7)
-      '@rjsf/shadcn': 6.7.1(@rjsf/core@6.7.1(@rjsf/utils@6.7.1(react@19.2.7))(react@19.2.7))(@rjsf/utils@6.7.1(react@19.2.7))(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(tailwindcss@4.3.3)
-      '@rjsf/utils': 6.7.1(react@19.2.7)
-      '@rjsf/validator-ajv8': 6.7.1(@rjsf/utils@6.7.1(react@19.2.7))
-      ajv: 8.20.0
-      react: 19.2.7
-    optionalDependencies:
-      vite: 8.1.5(@types/node@26.1.1)(esbuild@0.27.7)(jiti@2.7.0)(yaml@2.9.0)
 
   '@schemastud/seam@https://codeload.github.com/schemastud/js/tar.gz/aae63180fd740d3a9497fa2a12e7fbc7c206bc92#path:/seam(@rjsf/core@6.7.1(@rjsf/utils@6.7.1(react@19.2.7))(react@19.2.7))(@rjsf/shadcn@6.7.1(@rjsf/core@6.7.1(@rjsf/utils@6.7.1(react@19.2.7))(react@19.2.7))(@rjsf/utils@6.7.1(react@19.2.7))(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(tailwindcss@4.3.3))(@rjsf/utils@6.7.1(react@19.2.7))(@rjsf/validator-ajv8@6.7.1(@rjsf/utils@6.7.1(react@19.2.7)))(ajv@8.20.0)(react@19.2.7)(vite@8.1.5(@types/node@22.20.1)(esbuild@0.27.7)(jiti@2.7.0)(yaml@2.9.0))':
     dependencies:
@@ -10352,54 +10211,6 @@ snapshots:
     optionalDependencies:
       vite: 8.1.5(@types/node@26.1.1)(esbuild@0.27.7)(jiti@2.7.0)(yaml@2.9.0)
 
-  '@schemastud/ui@0.1.2(@radix-ui/react-dialog@1.1.23(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-select@2.3.7(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-separator@1.1.15(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-slot@1.3.3(@types/react@19.2.17)(react@19.2.7))(@radix-ui/react-switch@1.4.1(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-tooltip@1.2.16(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@tanstack/react-table@8.21.3(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(lucide-react@0.468.0(react@19.2.7))(react-dom@19.2.7(react@19.2.7))(react@19.2.7)':
-    dependencies:
-      '@radix-ui/react-dialog': 1.1.23(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
-      '@radix-ui/react-select': 2.3.7(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
-      '@radix-ui/react-separator': 1.1.15(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
-      '@radix-ui/react-slot': 1.3.3(@types/react@19.2.17)(react@19.2.7)
-      '@radix-ui/react-switch': 1.4.1(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
-      '@radix-ui/react-tooltip': 1.2.16(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
-      '@tanstack/react-table': 8.21.3(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
-      class-variance-authority: 0.7.1
-      clsx: 2.1.1
-      lucide-react: 0.468.0(react@19.2.7)
-      react: 19.2.7
-      react-dom: 19.2.7(react@19.2.7)
-      tailwind-merge: 3.6.0
-
-  '@schemastud/ui@0.1.2(@radix-ui/react-dialog@1.1.23(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-select@2.3.7(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-separator@1.1.15(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-slot@1.3.3(@types/react@19.2.17)(react@19.2.7))(@radix-ui/react-switch@1.4.1(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-tooltip@1.2.16(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@tanstack/react-table@8.21.3(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(lucide-react@0.475.0(react@19.2.7))(react-dom@19.2.7(react@19.2.7))(react@19.2.7)':
-    dependencies:
-      '@radix-ui/react-dialog': 1.1.23(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
-      '@radix-ui/react-select': 2.3.7(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
-      '@radix-ui/react-separator': 1.1.15(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
-      '@radix-ui/react-slot': 1.3.3(@types/react@19.2.17)(react@19.2.7)
-      '@radix-ui/react-switch': 1.4.1(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
-      '@radix-ui/react-tooltip': 1.2.16(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
-      '@tanstack/react-table': 8.21.3(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
-      class-variance-authority: 0.7.1
-      clsx: 2.1.1
-      lucide-react: 0.475.0(react@19.2.7)
-      react: 19.2.7
-      react-dom: 19.2.7(react@19.2.7)
-      tailwind-merge: 3.6.0
-
-  ? '@schemastud/ui@https://codeload.github.com/schemastud/js/tar.gz/abef468b39df9b1e81fd9a2081e69f8094c60e4e#path:/ui(@radix-ui/react-dialog@1.1.23(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-select@2.3.7(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-separator@1.1.15(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-slot@1.3.3(@types/react@19.2.17)(react@19.2.7))(@radix-ui/react-switch@1.4.1(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-tooltip@1.2.16(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@tanstack/react-table@8.21.3(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(lucide-react@0.468.0(react@19.2.7))(react-dom@19.2.7(react@19.2.7))(react@19.2.7)'
-  : dependencies:
-      '@radix-ui/react-dialog': 1.1.23(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
-      '@radix-ui/react-select': 2.3.7(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
-      '@radix-ui/react-separator': 1.1.15(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
-      '@radix-ui/react-slot': 1.3.3(@types/react@19.2.17)(react@19.2.7)
-      '@radix-ui/react-switch': 1.4.1(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
-      '@radix-ui/react-tooltip': 1.2.16(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
-      '@tanstack/react-table': 8.21.3(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
-      class-variance-authority: 0.7.1
-      clsx: 2.1.1
-      lucide-react: 0.468.0(react@19.2.7)
-      react: 19.2.7
-      react-dom: 19.2.7(react@19.2.7)
-      tailwind-merge: 3.6.0
-
   ? '@schemastud/ui@https://codeload.github.com/schemastud/js/tar.gz/abef468b39df9b1e81fd9a2081e69f8094c60e4e#path:/ui(@radix-ui/react-dialog@1.1.23(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-select@2.3.7(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-separator@1.1.15(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-slot@1.3.3(@types/react@19.2.17)(react@19.2.7))(@radix-ui/react-switch@1.4.1(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-tooltip@1.2.16(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@tanstack/react-table@8.21.3(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(lucide-react@0.475.0(react@19.2.7))(react-dom@19.2.7(react@19.2.7))(react@19.2.7)'
   : dependencies:
       '@radix-ui/react-dialog': 1.1.23(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
@@ -10416,12 +10227,44 @@ snapshots:
       react-dom: 19.2.7(react@19.2.7)
       tailwind-merge: 3.6.0
 
-  ? '@schemastud/ui@https://codeload.github.com/schemastud/js/tar.gz/abef468b39df9b1e81fd9a2081e69f8094c60e4e#path:/ui(@radix-ui/react-dialog@1.1.23(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-select@2.3.7(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-separator@1.1.15(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-slot@1.3.3(@types/react@19.2.17)(react@19.2.7))(@radix-ui/react-switch@1.4.1(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-tooltip@1.2.16(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@tanstack/react-table@8.21.3(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(lucide-react@0.525.0(react@19.2.7))(react-dom@19.2.7(react@19.2.7))(react@19.2.7)'
+  ? '@schemastud/ui@https://codeload.github.com/schemastud/js/tar.gz/abef468b39df9b1e81fd9a2081e69f8094c60e4e#path:/ui(@radix-ui/react-dialog@1.1.23(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-select@2.3.7(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-separator@1.1.15(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-slot@1.5.0(@types/react@19.2.17)(react@19.2.7))(@radix-ui/react-switch@1.4.1(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-tooltip@1.2.16(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@tanstack/react-table@8.21.3(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(lucide-react@0.468.0(react@19.2.7))(react-dom@19.2.7(react@19.2.7))(react@19.2.7)'
   : dependencies:
       '@radix-ui/react-dialog': 1.1.23(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
       '@radix-ui/react-select': 2.3.7(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
       '@radix-ui/react-separator': 1.1.15(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
-      '@radix-ui/react-slot': 1.3.3(@types/react@19.2.17)(react@19.2.7)
+      '@radix-ui/react-slot': 1.5.0(@types/react@19.2.17)(react@19.2.7)
+      '@radix-ui/react-switch': 1.4.1(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
+      '@radix-ui/react-tooltip': 1.2.16(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
+      '@tanstack/react-table': 8.21.3(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
+      class-variance-authority: 0.7.1
+      clsx: 2.1.1
+      lucide-react: 0.468.0(react@19.2.7)
+      react: 19.2.7
+      react-dom: 19.2.7(react@19.2.7)
+      tailwind-merge: 3.6.0
+
+  ? '@schemastud/ui@https://codeload.github.com/schemastud/js/tar.gz/abef468b39df9b1e81fd9a2081e69f8094c60e4e#path:/ui(@radix-ui/react-dialog@1.1.23(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-select@2.3.7(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-separator@1.1.15(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-slot@1.5.0(@types/react@19.2.17)(react@19.2.7))(@radix-ui/react-switch@1.4.1(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-tooltip@1.2.16(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@tanstack/react-table@8.21.3(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(lucide-react@0.475.0(react@19.2.7))(react-dom@19.2.7(react@19.2.7))(react@19.2.7)'
+  : dependencies:
+      '@radix-ui/react-dialog': 1.1.23(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
+      '@radix-ui/react-select': 2.3.7(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
+      '@radix-ui/react-separator': 1.1.15(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
+      '@radix-ui/react-slot': 1.5.0(@types/react@19.2.17)(react@19.2.7)
+      '@radix-ui/react-switch': 1.4.1(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
+      '@radix-ui/react-tooltip': 1.2.16(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
+      '@tanstack/react-table': 8.21.3(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
+      class-variance-authority: 0.7.1
+      clsx: 2.1.1
+      lucide-react: 0.475.0(react@19.2.7)
+      react: 19.2.7
+      react-dom: 19.2.7(react@19.2.7)
+      tailwind-merge: 3.6.0
+
+  ? '@schemastud/ui@https://codeload.github.com/schemastud/js/tar.gz/abef468b39df9b1e81fd9a2081e69f8094c60e4e#path:/ui(@radix-ui/react-dialog@1.1.23(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-select@2.3.7(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-separator@1.1.15(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-slot@1.5.0(@types/react@19.2.17)(react@19.2.7))(@radix-ui/react-switch@1.4.1(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-tooltip@1.2.16(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@tanstack/react-table@8.21.3(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(lucide-react@0.525.0(react@19.2.7))(react-dom@19.2.7(react@19.2.7))(react@19.2.7)'
+  : dependencies:
+      '@radix-ui/react-dialog': 1.1.23(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
+      '@radix-ui/react-select': 2.3.7(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
+      '@radix-ui/react-separator': 1.1.15(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
+      '@radix-ui/react-slot': 1.5.0(@types/react@19.2.17)(react@19.2.7)
       '@radix-ui/react-switch': 1.4.1(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
       '@radix-ui/react-tooltip': 1.2.16(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
       '@tanstack/react-table': 8.21.3(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
@@ -10432,12 +10275,12 @@ snapshots:
       react-dom: 19.2.7(react@19.2.7)
       tailwind-merge: 3.6.0
 
-  ? '@schemastud/ui@https://codeload.github.com/schemastud/js/tar.gz/abef468b39df9b1e81fd9a2081e69f8094c60e4e#path:/ui(@radix-ui/react-dialog@1.1.23(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-select@2.3.7(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-separator@1.1.15(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-slot@1.3.3(@types/react@19.2.17)(react@19.2.7))(@radix-ui/react-switch@1.4.1(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-tooltip@1.2.16(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@tanstack/react-table@8.21.3(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(lucide-react@1.27.0(react@19.2.7))(react-dom@19.2.7(react@19.2.7))(react@19.2.7)'
+  ? '@schemastud/ui@https://codeload.github.com/schemastud/js/tar.gz/abef468b39df9b1e81fd9a2081e69f8094c60e4e#path:/ui(@radix-ui/react-dialog@1.1.23(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-select@2.3.7(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-separator@1.1.15(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-slot@1.5.0(@types/react@19.2.17)(react@19.2.7))(@radix-ui/react-switch@1.4.1(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-tooltip@1.2.16(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@tanstack/react-table@8.21.3(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(lucide-react@1.27.0(react@19.2.7))(react-dom@19.2.7(react@19.2.7))(react@19.2.7)'
   : dependencies:
       '@radix-ui/react-dialog': 1.1.23(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
       '@radix-ui/react-select': 2.3.7(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
       '@radix-ui/react-separator': 1.1.15(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
-      '@radix-ui/react-slot': 1.3.3(@types/react@19.2.17)(react@19.2.7)
+      '@radix-ui/react-slot': 1.5.0(@types/react@19.2.17)(react@19.2.7)
       '@radix-ui/react-switch': 1.4.1(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
       '@radix-ui/react-tooltip': 1.2.16(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
       '@tanstack/react-table': 8.21.3(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
