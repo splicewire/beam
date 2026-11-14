@@ -4,10 +4,12 @@
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import type { WidgetProps } from '@rjsf/utils';
 import { afterEach, describe, expect, it } from 'vitest';
-import { createFrameKit } from '@schemastud/frame';
+import { createFrameKit, type FrameTransport } from '@schemastud/frame';
 import { createMemoryTransport } from '@schemastud/frame/testing';
-import { ConfigArea } from './ConfigArea';
-import { APP_CHAT, BEAM_UX, CONFIG_SECTIONS, SECRET_CANARY } from './ConfigArea.fixtures';
+import type { ConfigSectionData } from '@splicewire/beam-resources/types/config';
+import { ConfigArea, listAllRows } from './ConfigArea';
+import { APP_CHAT, BEAM_TENANCY, BEAM_UX, CONFIG_SECTIONS, SECRET_CANARY } from './ConfigArea.fixtures';
+import { BEAM_CONFIG_MANIFEST } from './ConfigArea.manifest';
 
 /** A host's declared control, registered by name through the kit (row 05-10); it shows what `widgetProps` handed it. */
 function ModelPicker(props: WidgetProps) {
@@ -24,9 +26,14 @@ function ModelPicker(props: WidgetProps) {
     );
 }
 
-function mount(section?: string) {
+/**
+ * Mount the area as a host does: the kit serves the CURRENT `beam-config` manifest (laravel-frame's own build of
+ * ConfigSectionData's declarations), so ListShell resolves columns in manifest mode. `manifest: false` is the
+ * no-manifest fallback, kept to its own test.
+ */
+function mount(section?: string, { manifest = true }: { manifest?: boolean } = {}) {
     const kit = createFrameKit({
-        transport: createMemoryTransport({ rows: { 'beam-config': CONFIG_SECTIONS } }),
+        transport: createMemoryTransport({ rows: { 'beam-config': CONFIG_SECTIONS }, ...(manifest ? { manifest: BEAM_CONFIG_MANIFEST } : {}) }),
         urlState: 'memory',
         widgets: (registry) => registry.registerWidget('model-picker', ModelPicker),
     });
@@ -49,24 +56,117 @@ function rail() {
 
 afterEach(cleanup);
 
+/** The index table, once its rows have loaded. */
+async function indexTable() {
+    const table = await waitFor(() => {
+        const t = document.querySelector('[data-beam-config-area] table');
+        expect(t).not.toBeNull();
+        return t as HTMLElement;
+    });
+    await waitFor(() => expect(within(table).getByText('Beam UX')).toBeTruthy());
+    return table;
+}
+
+/** Each body row's cells as text, in column order. */
+function bodyCells(table: HTMLElement) {
+    return [...table.querySelectorAll('tbody tr')].map((tr) => [...tr.querySelectorAll('td')].map((td) => td.textContent?.trim() ?? ''));
+}
+
 describe('the all-sections index on ListShell', () => {
-    it('lists every section with its root, owner and counts, and opens one', async () => {
+    it('with the CURRENT beam-config manifest: its declared columns, our cells, and each section’s counts', async () => {
         mount();
-        const main = await waitFor(() => {
-            const table = document.querySelector('[data-beam-config-area] table');
-            expect(table).not.toBeNull();
-            return table as HTMLElement;
-        });
-        await waitFor(() => expect(within(main).getByText('beam.ux')).toBeTruthy());
+        const table = await indexTable();
+        // The manifest decides the set and order (#[Column] on root, title, owner); host columns only override cells.
+        expect(within(table).getAllByRole('columnheader').map((h) => h.textContent?.trim())).toEqual(['Root', 'Section', 'Owner']);
+        const rows = bodyCells(table);
+        expect(rows).toHaveLength(CONFIG_SECTIONS.length);
         for (const s of CONFIG_SECTIONS) {
-            expect(within(main).getByText(s.title)).toBeTruthy();
-            expect(within(main).getByText(s.owner)).toBeTruthy();
+            const row = rows.find((r) => r[0] === s.root);
+            expect(row?.[1]).toContain(s.title);
+            expect(row?.[2]).toBe(s.owner);
         }
-        expect(within(main).getAllByRole('columnheader').map((h) => h.textContent)).toEqual(
-            expect.arrayContaining(['Section', 'Owner', 'Keys', 'Changeable', 'Deploy-only', 'Secrets']),
-        );
-        fireEvent.click(within(main).getByText('Beam UX'));
+        // The counts ride the Section cell, one per kind, read from `counts`.
+        const ux = [...table.querySelectorAll('[data-config-counts]')].find((c) => c.closest('td')?.textContent?.includes('Beam UX'))!;
+        expect([...ux.querySelectorAll('[data-config-count]')].map((c) => c.textContent)).toEqual(['6 keys', '2 changeable', '4 deploy-only', '0 secrets']);
+        const chat = [...table.querySelectorAll('[data-config-counts]')].find((c) => c.closest('td')?.textContent?.includes('Chat'))!;
+        expect(chat.querySelector('[data-config-count="secrets"]')?.textContent).toBe('1 secret');
+
+        fireEvent.click(within(table).getByText('Beam UX'));
         await waitFor(() => expect(document.querySelector('[data-config-section="beam.ux"]')).not.toBeNull());
+    });
+
+    it('without a manifest (the fallback): the same three columns pass through, with the counts', async () => {
+        mount(undefined, { manifest: false });
+        const table = await indexTable();
+        expect(within(table).getAllByRole('columnheader').map((h) => h.textContent?.trim())).toEqual(['Root', 'Section', 'Owner']);
+        expect(bodyCells(table).find((r) => r[0] === 'beam.tenancy')?.[1]).toContain('1 key');
+    });
+});
+
+/** 101 sections: more than one page of the rail's 100. The last sorts last and is the one a search must find. */
+function manySections(): ConfigSectionData[] {
+    return Array.from({ length: 101 }, (_, i) => {
+        const n = String(i + 1).padStart(3, '0');
+        const root = i === 100 ? 'zeta.last' : `pkg.s${n}`;
+        return { ...BEAM_TENANCY, id: root, root, title: i === 100 ? 'Zeta the hundred-and-first' : `Section ${n}` };
+    });
+}
+
+/** A server that honours `per_page` and `page` and caps a page at 100, as the declared `perPage: 100` does. */
+function pagingServer(rows: ConfigSectionData[]) {
+    const calls: Record<string, string>[] = [];
+    const list = (async (_resource: string, params: Record<string, string>) => {
+        calls.push({ ...params });
+        const per = Math.min(Number(params.per_page ?? 25), 100);
+        const page = Number(params.page ?? 1);
+        return { data: rows.slice((page - 1) * per, page * per), total: rows.length, page, perPage: per };
+    }) as FrameTransport['list'];
+    return { calls, list };
+}
+
+describe('the rail reads every page', () => {
+    it('numbered pages: 101 sections across two pages of 100, and search finds the 101st', async () => {
+        const rows = manySections();
+        const server = pagingServer(rows);
+        const kit = createFrameKit({ transport: createMemoryTransport({ rows: { 'beam-config': rows }, manifest: BEAM_CONFIG_MANIFEST }, { list: server.list }), urlState: 'memory' });
+        render(
+            <kit.Provider>
+                <ConfigArea resource="beam-config" />
+            </kit.Provider>,
+        );
+        await waitFor(() => expect(within(rail()).getByText('All sections').parentElement?.textContent).toContain('101'));
+        expect(server.calls).toEqual(expect.arrayContaining([{ per_page: '100' }, { per_page: '100', page: '2' }]));
+        fireEvent.change(within(rail()).getByLabelText('Find a section'), { target: { value: 'zeta' } });
+        fireEvent.click(within(rail()).getByText('Zeta the hundred-and-first'));
+        await waitFor(() => expect(document.querySelector('[data-config-section="zeta.last"]')).not.toBeNull());
+    });
+
+    it('cursor pages: follows nextCursor until it is null', async () => {
+        const rows = manySections();
+        const kit = createFrameKit({
+            transport: createMemoryTransport({
+                cursorPages: {
+                    '': { data: rows.slice(0, 100), perPage: 100, nextCursor: 'c2' },
+                    c2: { data: rows.slice(100), perPage: 100, nextCursor: null },
+                },
+                rows: { 'beam-config': rows },
+                manifest: BEAM_CONFIG_MANIFEST,
+            }),
+            urlState: 'memory',
+        });
+        render(
+            <kit.Provider>
+                <ConfigArea resource="beam-config" />
+            </kit.Provider>,
+        );
+        await waitFor(() => expect(within(rail()).getByText('All sections').parentElement?.textContent).toContain('101'));
+        fireEvent.change(within(rail()).getByLabelText('Find a section'), { target: { value: 'zeta' } });
+        expect(within(rail()).getByText('Zeta the hundred-and-first')).toBeTruthy();
+    });
+
+    it('a transport that never ends its pages stops with an error, not a loop', async () => {
+        const list = (async () => ({ data: [{ ...BEAM_TENANCY, id: `x${Math.random()}` }], perPage: 1, nextCursor: 'again' })) as unknown as FrameTransport['list'];
+        await expect(listAllRows({ ...createMemoryTransport(), list }, 'beam-config', 1)).rejects.toThrow('more than 100 pages');
     });
 });
 

@@ -19,13 +19,16 @@
 import { useMemo, useState, type ReactNode } from 'react';
 import {
     ListShell,
-    useResourceList,
+    useFrameInjection,
     useResourceRecord,
     type FieldOf,
     type FrameColumn,
+    type FrameTransport,
     type ResourceKey,
+    type Row,
     type RowOf,
 } from '@schemastud/frame';
+import { useQuery } from '@tanstack/react-query';
 import type { SchemaNode } from '@schemastud/seam';
 import { Button, Input, cn } from '@schemastud/ui';
 import { AlertTriangle, Search, X } from 'lucide-react';
@@ -77,13 +80,41 @@ export function ConfigArea<K extends ResourceKey = ResourceKey>({ resource, sect
 
 /* ───────────────────────────── the rail ───────────────────────────── */
 
-const RAIL_PARAMS = { perPage: '100' };
+/** The rail's page size, in frame's own list parameter (`per_page`, as `useListPagination` writes it). */
+const RAIL_PAGE_SIZE = 100;
+/** A runaway guard: a transport that never ends its pages stops here with an error, not an endless loop. */
+const RAIL_MAX_PAGES = 100;
+
+/**
+ * Every row of a resource, following the transport's declared page envelope (frame's `ResourcePage`): a cursor page
+ * until `nextCursor` is null, a numbered page until the rows reach `total`. A transport that answers every row on the
+ * first page (frame's memory transport) ends there. The rail needs the whole set, because its search is over every
+ * section, and a host may register more sections than one page holds.
+ */
+export async function listAllRows(transport: FrameTransport, resource: string, pageSize = RAIL_PAGE_SIZE): Promise<Row[]> {
+    const rows = new Map<unknown, Row>();
+    const size = { per_page: String(pageSize) };
+    let params: Record<string, string> = size;
+    for (let pages = 0; pages < RAIL_MAX_PAGES; pages++) {
+        const page = await transport.list<Row>(resource, params);
+        for (const row of page.data) rows.set(row.id ?? rows.size, row);
+        if ('nextCursor' in page) {
+            if (page.nextCursor === null) return [...rows.values()];
+            params = { ...size, cursor: page.nextCursor };
+        } else {
+            if (page.data.length === 0 || rows.size >= page.total) return [...rows.values()];
+            params = { ...size, page: String(page.page + 1) };
+        }
+    }
+    throw new Error(`[beam-ux/config] ${resource}: more than ${RAIL_MAX_PAGES} pages of ${pageSize}`);
+}
 
 export function SectionRail<K extends ResourceKey = ResourceKey>({ resource, active, onPick }: { resource: K; active: string | null; onPick: (id: string | null) => void }) {
     const [q, setQ] = useState('');
-    const list = useResourceList(resource, RAIL_PARAMS);
+    const { transport } = useFrameInjection();
+    const list = useQuery({ queryKey: ['beam-ux/config', 'rail', resource], queryFn: () => listAllRows(transport, resource) });
     const sections = useMemo(
-        () => (list.data?.data ?? []).map((row) => asConfigSection(row)).filter((s): s is ConfigSectionData => s !== null),
+        () => (list.data ?? []).map((row) => asConfigSection(row)).filter((s): s is ConfigSectionData => s !== null),
         [list.data],
     );
     const needle = q.trim().toLowerCase();
@@ -135,6 +166,7 @@ export function SectionRail<K extends ResourceKey = ResourceKey>({ resource, act
                     </div>
                 ))}
                 {list.isSuccess && shown.length === 0 && <p className="px-2 py-3 text-xs text-muted-foreground">No section matches.</p>}
+                {list.isError && <p role="alert" className="px-2 py-3 text-xs text-destructive">The sections could not be listed.</p>}
             </div>
         </nav>
     );
@@ -142,38 +174,52 @@ export function SectionRail<K extends ResourceKey = ResourceKey>({ resource, act
 
 /* ───────────────────────────── the index: frame's ListShell over beam-config ───────────────────────────── */
 
+/**
+ * The index's per-field column overrides. Frame's columns seam has two modes (`resolveColumns`): with the resource's
+ * ContextManifest, which a kit always supplies for a mounted `beam-config`, the MANIFEST is the column set and order
+ * (`#[Column]` on `root`, `title` and `owner`) and a host column only overrides a declared field's header or cell;
+ * without one, host columns pass through as the set. So these name exactly the three declared fields, each once, and
+ * render the same in both modes. A section's counts have no column of their own (none is declared, and a host column
+ * cannot add one), so they ride the Section cell beneath its title.
+ */
+export function sectionIndexColumns<K extends ResourceKey = ResourceKey>(): FrameColumn<RowOf<K>>[] {
+    // A declared member of the row, as a column field. Unregistered, `FieldOf` is `string`; registered, the host's row
+    // is the generated `ConfigSectionData`, which carries each of the three.
+    const field = (member: 'root' | 'title' | 'owner') => member as FieldOf<RowOf<K>>;
+    return [
+        // Headers repeat the declared labels, so the no-manifest fallback reads the same.
+        { field: field('root'), header: 'Root', cell: (record) => <code className="font-mono text-xs text-muted-foreground">{asConfigSection(record)?.root}</code> },
+        { field: field('title'), header: 'Section', cell: (record) => <SectionCell section={asConfigSection(record)} /> },
+        { field: field('owner'), header: 'Owner', cell: (record) => <span className="font-mono text-xs text-muted-foreground">{asConfigSection(record)?.owner}</span> },
+    ];
+}
+
+/** The Section cell: the title, then the section's counts as one line (keys, changeable, deploy-only, secrets). */
+function SectionCell({ section }: { section: ConfigSectionData | null }) {
+    if (!section) return null;
+    const { keys, overridable, deploy, secrets } = section.counts;
+    const parts: [number, string, string][] = [
+        [keys, 'keys', keys === 1 ? 'key' : 'keys'],
+        [overridable, 'changeable', 'changeable'],
+        [deploy, 'deploy', 'deploy-only'],
+        [secrets, 'secrets', secrets === 1 ? 'secret' : 'secrets'],
+    ];
+    return (
+        <span className="block min-w-0">
+            <span className="block text-sm font-medium">{section.title}</span>
+            <span data-config-counts className="flex flex-wrap gap-x-2 font-mono text-[10.5px] text-muted-foreground">
+                {parts.map(([n, kind, word]) => (
+                    <span key={kind} data-config-count={kind} className={cn('tabular-nums', n > 0 && kind !== 'keys' && 'text-foreground/80')}>
+                        {n} {word}
+                    </span>
+                ))}
+            </span>
+        </span>
+    );
+}
+
 export function SectionsIndex<K extends ResourceKey = ResourceKey>({ resource, onPick }: { resource: K; onPick: (id: string) => void }) {
-    const columns = useMemo<FrameColumn<RowOf<K>>[]>(() => {
-        // A member of the row this area reads, as a column field. Unregistered, `FieldOf` is `string`; registered,
-        // the host's row is the generated `ConfigSectionData`, which carries every member named here.
-        const field = (member: keyof ConfigSectionData & string) => member as FieldOf<RowOf<K>>;
-        const count = (pick: (s: ConfigSectionData) => number) => (record: RowOf<K>) => {
-            const s = asConfigSection(record);
-            const n = s ? pick(s) : 0;
-            return <span className={cn('font-mono text-xs tabular-nums', n === 0 && 'text-muted-foreground')}>{n === 0 ? '—' : n}</span>;
-        };
-        return [
-            {
-                field: field('title'),
-                header: 'Section',
-                sortField: 'title',
-                cell: (record) => {
-                    const s = asConfigSection(record);
-                    return (
-                        <span className="block min-w-0">
-                            <span className="block text-sm font-medium">{s?.title}</span>
-                            <span className="block font-mono text-[10.5px] text-muted-foreground">{s?.root}</span>
-                        </span>
-                    );
-                },
-            },
-            { field: field('owner'), header: 'Owner', cell: (record) => <span className="font-mono text-xs text-muted-foreground">{asConfigSection(record)?.owner}</span> },
-            { field: field('counts'), header: 'Keys', cell: count((s) => s.counts.keys) },
-            { field: field('counts'), header: 'Changeable', cell: count((s) => s.counts.overridable) },
-            { field: field('counts'), header: 'Deploy-only', cell: count((s) => s.counts.deploy) },
-            { field: field('counts'), header: 'Secrets', cell: count((s) => s.counts.secrets) },
-        ];
-    }, []);
+    const columns = useMemo(() => sectionIndexColumns<K>(), []);
     return (
         <div className="space-y-3">
             <header className="space-y-1">
