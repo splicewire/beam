@@ -14,6 +14,8 @@ export default defineConfig({
         // owner-review-20261102 research 37: the Site map, the Site section's index.
         sitemap: 'src/sitemap/index.ts',
         canvas: 'src/canvas/index.ts',
+        // node-actions-and-takes 08: the OTIO timeline widget.
+        timeline: 'src/timeline/index.ts',
         'edit-mode': 'src/edit-mode.ts',
         site: 'src/site/index.ts',
         docs: 'src/docs/index.ts',
