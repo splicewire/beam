@@ -1,8 +1,14 @@
 // @vitest-environment jsdom
 
-import { render, screen } from "@testing-library/react";
+import { cleanup, render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
-import { expect, it, vi } from "vitest";
+import { afterEach, expect, it, vi } from "vitest";
+
+// B12-4: this package's vitest config leaves globals off, so RTL's automatic cleanup is not installed; unmount each
+// render here, or later cases see earlier forms.
+afterEach(() => {
+  cleanup();
+});
 
 vi.mock("@inertiajs/react", () => ({
   Form: ({
