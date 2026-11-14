@@ -19,6 +19,7 @@
 import { useMemo, useState, type ReactNode } from 'react';
 import {
     ListShell,
+    resourceQueryKey,
     useFrameInjection,
     useResourceRecord,
     type FieldOf,
@@ -112,7 +113,9 @@ export async function listAllRows(transport: FrameTransport, resource: string, p
 export function SectionRail<K extends ResourceKey = ResourceKey>({ resource, active, onPick }: { resource: K; active: string | null; onPick: (id: string | null) => void }) {
     const [q, setQ] = useState('');
     const { transport } = useFrameInjection();
-    const list = useQuery({ queryKey: ['beam-ux/config', 'rail', resource], queryFn: () => listAllRows(transport, resource) });
+    // Frame's own key: the resource, the rail's parts, and the transport's scope, so two sockets on one QueryClient
+    // never share the rail's rows.
+    const list = useQuery({ queryKey: resourceQueryKey(transport, resource, 'beam-ux/config', 'rail'), queryFn: () => listAllRows(transport, resource) });
     const sections = useMemo(
         () => (list.data ?? []).map((row) => asConfigSection(row)).filter((s): s is ConfigSectionData => s !== null),
         [list.data],
