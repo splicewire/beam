@@ -48,6 +48,7 @@ for (const [file, broken, diagnostic] of [
     ['intake.d.ts', null, 'Cannot find module'],
     ['intake.d.ts', '', 'has no exported member|is not a module'],
     ['workflows.d.ts', 'export {};\n', 'has no exported member'],
+    ['config.d.ts', 'export {};\n', 'has no exported member'],
     ['workflows.d.ts', 'export type MissingOwner = Splicewire.Tower.Data.PrincipalKindData;\n', 'Cannot find namespace'],
 ]) {
     const target = join(installed, 'types', file);

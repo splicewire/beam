@@ -52,3 +52,11 @@ export type RequiredIntakeWorkflowContract =
 export type RequiredCatalogMembers = WorkflowCatalogData['guards' | 'effects' | 'principals'];
 export type RequiredRoleOption = NonNullable<PrincipalKindData['options']>[number];
 export type RequiredIntakeReceipt = EntityIntakeSectionSubmittedData['submissionId'];
+
+// The `beam-config` row (splicewire/laravel-beam ADR-0245 §8) and its closure, as `@splicewire/beam-ux/config` reads it.
+import type { ConfigKeyData, ConfigSectionData } from '../types/config';
+
+export type RequiredConfigContract = ConfigSectionData | ConfigKeyData;
+export type RequiredConfigLayerTier = ConfigSectionData['keys'][number]['layers'][number]['tier'];
+export type RequiredConfigEnvSet = NonNullable<ConfigKeyData['env']>['set'];
+export type RequiredConfigCounts = ConfigSectionData['counts']['envBound'];

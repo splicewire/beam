@@ -14,6 +14,9 @@ The pipeline selects qualified declarations from the one generated TypeScript ar
 
 `@splicewire/_resources` remains private. It is not a publication prerequisite for this bundle.
 
+`types/config.d.ts` carries the `beam-config` row (`ConfigSectionData`, one row per Config Section) and its closure,
+declared by `splicewire/laravel-beam` (ADR-0245 §8). `@splicewire/beam-ux/config` reads it.
+
 `types/intake.d.ts` contains the two entity-section protocol DTOs owned by public Beam intake.
 `types/workflows.d.ts` contains the public Workflows catalog/runtime DTOs and their
 Accounts `RoleOptionData` closure. The same qualified public owners also supply the
