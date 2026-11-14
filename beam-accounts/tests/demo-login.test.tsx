@@ -57,7 +57,7 @@ describe('DemoLogin', () => {
         expect(screen.getByText('grace@navy.example')).toBeTruthy();
 
         // … and typing narrows it.
-        fireEvent.change(screen.getByLabelText('Search by name or email'), { target: { value: 'grace' } });
+        fireEvent.change(screen.getByRole('combobox', { name: 'Search by name or email' }), { target: { value: 'grace' } });
         await waitFor(() => expect(search).toHaveBeenLastCalledWith('grace'));
         const grace = await screen.findByRole('option', { name: /Grace Hopper/ });
         expect(screen.queryByText('Ada Lovelace')).toBeNull();
