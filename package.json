@@ -46,7 +46,7 @@
     "storybook": "^10.5.4",
     "tailwindcss": "^4.3.3"
   },
-  "//pnpm.overrides": "Every first-party package resolves to its checkout, as the npm workspace linked them: the beam workspaces in this repo and the schemastud/_resources siblings beside it (~/Workspaces/js/packages). Releases never read these: release-package builds each package alone, from its own manifest, against released versions. The parent-scoped pins (<workspace>>@types/node, beam-embed>lucide-react, the react-is-19 alias) keep every version the npm lock resolved when the workspace moved to pnpm (launch ticket 34): pnpm import collapses a range to one version per lock, and the npm lock held 22.20.1 in twelve workspaces beside 22.20.2 in three.",
+  "//pnpm.overrides": "The beam workspaces in this repo resolve to their checkouts here. @schemastud/* and @splicewire/_resources come from their release specs (the canonical JS repin), never from sibling checkouts; only the root devDependencies keep link:../schemastud/* as workbench-only Storybook inputs (root ruling 2026-11-09, option (b)). Releases never read these: release-package builds each package alone, from its own manifest, against released versions. The parent-scoped pins (<workspace>>@types/node, beam-embed>lucide-react, the react-is-19 alias) keep every version the npm lock resolved when the workspace moved to pnpm (launch ticket 34): pnpm import collapses a range to one version per lock, and the npm lock held 22.20.1 in twelve workspaces beside 22.20.2 in three.",
   "pnpm": {
     "overrides": {
       "@splicewire/beam-resources": "link:beam-resources",

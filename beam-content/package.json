@@ -42,6 +42,7 @@
     },
     "devDependencies": {
         "@schemastud/blockdoc": "github:schemastud/js#161a627e9a4f62f281e1709c9db5f10335d48859&path:/blockdoc",
+        "@schemastud/seam": "github:schemastud/js#aae63180fd740d3a9497fa2a12e7fbc7c206bc92&path:/seam",
         "@testing-library/dom": "^10.4.1",
         "@testing-library/react": "^16.1.0",
         "@testing-library/user-event": "^14.5.2",
