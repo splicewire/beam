@@ -54,6 +54,7 @@
     "@schemastud/frame": "*"
   },
   "devDependencies": {
+    "@schemastud/frame": "github:schemastud/js#9503dcf4d839c269ee6053a6a421800bbbb7f974&path:/frame",
     "react-remove-scroll-bar": "2.3.8",
     "react-remove-scroll": "2.7.2",
     "react-style-singleton": "2.2.3",
