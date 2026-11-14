@@ -42,6 +42,8 @@ export type ProfilePageData = {
 entry: PageEntryData | null,
 mustVerifyEmail: boolean,
 status: string | null,
+preferredLocale: string | null,
+supportedLocales: string[],
 };
 
 export type ResetPasswordPageData = {

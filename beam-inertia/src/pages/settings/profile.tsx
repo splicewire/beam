@@ -18,9 +18,21 @@ type PageProps = {
     auth: Auth;
 };
 
+/**
+ * A locale's own name for itself ("Español", "Deutsch"), so a reader finds their language in any UI language; the tag
+ * when the runtime cannot name it.
+ */
+export function languageName(tag: string): string {
+    try {
+        return new Intl.DisplayNames([tag], { type: 'language' }).of(tag) ?? tag;
+    } catch {
+        return tag;
+    }
+}
+
 export default function Profile(
     
-    { mustVerifyEmail, status }: ProfilePageData,
+    { mustVerifyEmail, status, preferredLocale = null, supportedLocales = [] }: ProfilePageData,
     
 ) {
     const { auth } = usePage<PageProps>().props;
@@ -89,6 +101,33 @@ export default function Profile(
                                     message={errors.email}
                                 />
                             </div>
+
+                            {/* localization 36: the person's language. "Automatic" (empty) clears the choice; it is saved only
+                                by this explicit submit, never by negotiation. */}
+                            {supportedLocales.length > 0 && (
+                                <div className="grid gap-2">
+                                    <Label htmlFor="preferredLocale">Language</Label>
+
+                                    <select
+                                        id="preferredLocale"
+                                        name="preferredLocale"
+                                        defaultValue={preferredLocale ?? ''}
+                                        className="mt-1 block h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-xs md:text-sm"
+                                    >
+                                        <option value="">Automatic</option>
+                                        {supportedLocales.map((tag) => (
+                                            <option key={tag} value={tag} lang={tag}>
+                                                {languageName(tag)}
+                                            </option>
+                                        ))}
+                                    </select>
+
+                                    <InputError
+                                        className="mt-2"
+                                        message={errors.preferredLocale}
+                                    />
+                                </div>
+                            )}
 
                             {featureEnabled('email-verification') && (<>
                             {mustVerifyEmail &&
