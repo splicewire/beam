@@ -355,7 +355,7 @@ export function PlatformConnectionPanel({
                         >
                             {health.ok
                                 ? m.t('splicewire-beam-inertia::messages.surfaces_connection_works', { time: new Date(health.checkedAt).toLocaleTimeString() })
-                                : (health.error ?? m.t('splicewire-beam-inertia::messages.surfaces_connection_answered', { status: health.status ?? m.t('splicewire-beam-inertia::messages.surfaces_connection_nothing') }))}
+                                : (health.error ?? (health.status == null ? m.t('splicewire-beam-inertia::messages.surfaces_connection_answered_nothing') : m.t('splicewire-beam-inertia::messages.surfaces_connection_answered', { status: health.status })))}
                         </p>
                     )}
                 </div>
@@ -371,7 +371,7 @@ export function PlatformConnectionPanel({
                       tell an operator a security action had happened that had not.
                     */}
                     <p className="mt-1 text-sm text-muted-foreground">
-{surfaceMessage(m, 'splicewire-beam-inertia::messages.surfaces_connection_disconnect_explanation', { not: <strong>{m.t('splicewire-beam-inertia::messages.surfaces_not')}</strong> })}</p>
+{surfaceMessage(m, 'splicewire-beam-inertia::messages.surfaces_connection_disconnect_explanation', {}, (text) => <strong>{text}</strong>)}</p>
                     <Button
                         className="mt-3"
                         variant="destructive"

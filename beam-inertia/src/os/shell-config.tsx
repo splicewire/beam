@@ -399,12 +399,11 @@ function localizedOsApps(manifest: RealmManifestEntry[], m: ReturnType<typeof us
 
 // ── Host-supplied desktop chrome nodes ──────────────────────────────────────────────────────────────
 function OsBrand() {
-    const m = useBeamMessages();
     return (
         <span className="os-brand">
             <Mark className="mark" />
             <span className="osname">
-                <b>{m.t('splicewire-beam-inertia::messages.surfaces_beam')}</b>{m.t('splicewire-beam-inertia::messages.surfaces_os_suffix')}
+                <b>beam</b>·os
             </span>
         </span>
     );
@@ -435,12 +434,12 @@ function OsBackdrop() {
     return (
     <>
         <div className="wallmark">
-            {m.t('splicewire-beam-inertia::messages.surfaces_beam')}
+            beam
             <br />
-            {m.t('splicewire-beam-inertia::messages.surfaces_os')}
+            os
         </div>
         <div className="hint">
-            {surfaceMessage(m, 'splicewire-beam-inertia::messages.surfaces_desktop_hint', { os: <b>{m.t('splicewire-beam-inertia::messages.surfaces_os')}</b>, real: <b>{m.t('splicewire-beam-inertia::messages.surfaces_real')}</b> })}
+            {surfaceMessage(m, 'splicewire-beam-inertia::messages.surfaces_desktop_hint', { brand: <>beam·<b>os</b></> }, (text) => <b>{text}</b>)}
         </div>
     </>
 );
@@ -553,7 +552,7 @@ export function OsShellDesktop() {
             <span
                 style={{ fontFamily: 'ui-monospace,monospace', fontSize: 10 }}
             >
-                {m.t('splicewire-beam-inertia::messages.surfaces_desktop_status', { count: apps.length })}
+                {m.choice('splicewire-beam-inertia::messages.surfaces_desktop_status', apps.length)}
             </span>
         ),
         activeKey,

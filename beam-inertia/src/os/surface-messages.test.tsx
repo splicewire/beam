@@ -35,7 +35,8 @@ describe('surface messages', () => {
         expect(screen.getByTestId('platform-identity').textContent).toContain('RAW NAME (raw@example.test)');
         expect(screen.getByText('RAW LABEL').textContent).toBe('RAW LABEL');
         expect(screen.getByTestId('platform-url').textContent).toBe('https://raw-tower.example');
-        expect(screen.getByTestId('platform-connection').querySelector('strong')?.textContent).toMatch(/^⟦/u);
+        expect(screen.getByTestId('platform-connection').querySelector('strong')?.textContent).toBe('nôt');
+        expect(screen.getByTestId('platform-connection').querySelector('strong')?.parentElement?.textContent).toMatch(/^⟦/u);
         expect(screen.getByTestId('connection-state-value').textContent).toBe('paired');
     });
 
@@ -89,4 +90,23 @@ it('updates an already-visible local fallback without retrying while raw diagnos
     await waitFor(() => expect(screen.getByTestId('panel-error').textContent).toBe('RAW remote :detail.'));
     view.rerender(<MessageProvider value={english}><PlatformConnectionPanel connection={connection} endpoints={endpoints} client={client} /></MessageProvider>);
     expect(screen.getByTestId('panel-error').textContent).toBe('RAW remote :detail.');
+});
+
+it('uses a complete no-answer sentence and preserves numeric status and remote diagnostic branches', async () => {
+    const check = vi.fn().mockResolvedValue({ ok: false, status: null, checkedAt: '2026-01-01', error: null });
+    const client: PlatformConnectionClient = { connect: vi.fn(), poll: vi.fn(), check, disconnect: vi.fn() };
+    const view = render(<PlatformConnectionPanel connection={connection} endpoints={endpoints} client={client} />);
+    fireEvent.click(screen.getByTestId('check-connection'));
+    await waitFor(() => expect(screen.getByTestId('connection-health').textContent).toBe('Splicewire answered nothing.'));
+    const translated: ClientCatalog = { ...catalog, messages: { 'splicewire-beam-inertia::messages.surfaces_connection_answered_nothing': { text: 'Keine Antwort.', sourceLocale: 'de' } } };
+    view.rerender(<MessageProvider value={translated}><PlatformConnectionPanel connection={connection} endpoints={endpoints} client={client} /></MessageProvider>);
+    // Provider wrapper addition remounts, so make a new explicit check request.
+    fireEvent.click(screen.getByTestId('check-connection'));
+    await waitFor(() => expect(screen.getByTestId('connection-health').textContent).toBe('Keine Antwort.'));
+    check.mockResolvedValueOnce({ ok: false, status: 503, checkedAt: '2026-01-01', error: null });
+    fireEvent.click(screen.getByTestId('check-connection'));
+    await waitFor(() => expect(screen.getByTestId('connection-health').textContent).toBe('Splicewire answered 503.'));
+    check.mockResolvedValueOnce({ ok: false, status: null, checkedAt: '2026-01-01', error: 'RAW remote bytes.' });
+    fireEvent.click(screen.getByTestId('check-connection'));
+    await waitFor(() => expect(screen.getByTestId('connection-health').textContent).toBe('RAW remote bytes.'));
 });

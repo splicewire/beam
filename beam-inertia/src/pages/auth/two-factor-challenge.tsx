@@ -117,7 +117,7 @@ export default function TwoFactorChallenge() {
                                 {messages.t('splicewire-beam-inertia::messages.auth_continue')}</Button>
 
                             <div className="text-center text-sm text-muted-foreground">
-                                <AuthMessage text={messages.t('splicewire-beam-inertia::messages.auth_recovery_mode_prompt', { action: '\uFFFC0\uFFFC' })} parts={[<button
+                                <AuthMessage wrapText={(text) => <span>{text}</span>} text={messages.t('splicewire-beam-inertia::messages.auth_recovery_mode_prompt', { action: '\uFFFC0\uFFFC' })} parts={[<button
                                     type="button"
                                     className="cursor-pointer text-foreground underline decoration-neutral-300 underline-offset-4 transition-colors duration-300 ease-out hover:decoration-current! dark:decoration-neutral-500"
                                     onClick={() =>

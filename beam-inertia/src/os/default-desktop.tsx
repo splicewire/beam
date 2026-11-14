@@ -27,8 +27,7 @@ export interface DefaultOsDesktopProps {
 }
 
 function DefaultBrand() {
-    const m = useBeamMessages();
-    return <span style={{ fontWeight: 600, fontSize: 14, letterSpacing: '-0.01em' }}>{m.t('splicewire-beam-inertia::messages.surfaces_beam')}</span>;
+    return <span style={{ fontWeight: 600, fontSize: 14, letterSpacing: '-0.01em' }}>beam</span>;
 }
 
 /** Mounts `DefaultOsDesktop` with everything wired: manifest read, roster build, chrome, window host. */

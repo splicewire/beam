@@ -116,7 +116,7 @@ export default function OperatorDesk() {
             orbIcon={<BeamMark className="mark" />}
             brand={{
                 mark: <BeamMark className="op-menu-brand-mark" />,
-                label: m.t('splicewire-beam-inertia::messages.surfaces_beam'),
+                label: 'beam',
             }}
             links={{
                 frontend: { href: '/' },

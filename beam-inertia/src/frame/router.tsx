@@ -108,7 +108,7 @@ function Undispatchable({
         <div className="px-6 py-8">
             <h1 className="mb-1 text-2xl font-semibold">{entry.routeName}</h1>
             <p className="max-w-prose text-sm text-muted-foreground">
-                {surfaceMessage(m, 'splicewire-beam-inertia::messages.surfaces_dispatch_failed', { mounts: <code>{m.t('splicewire-beam-inertia::messages.surfaces_mount_type', { type: String(entry.mounts) })}</code>, reason })}
+                {surfaceMessage(m, 'splicewire-beam-inertia::messages.surfaces_dispatch_failed', { mounts: <code>mounts: {String(entry.mounts)}</code>, reason })}
             </p>
         </div>
     );

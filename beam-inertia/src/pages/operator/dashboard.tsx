@@ -75,7 +75,7 @@ export default function OperatorDashboard({ staff, stats, surfaces }: Props) {
             )}
 
             <p className="mt-8 text-sm text-muted-foreground">
-                {surfaceMessage(m, 'splicewire-beam-inertia::messages.surfaces_operator_explanation', { host: <code className="rounded bg-muted px-1 py-0.5">{m.t('splicewire-beam-inertia::messages.surfaces_mainframe_package')}</code> })}
+                {surfaceMessage(m, 'splicewire-beam-inertia::messages.surfaces_operator_explanation', { host: <code className="rounded bg-muted px-1 py-0.5">@splicewire/beam-mainframe</code> })}
             </p>
         </div>
     );

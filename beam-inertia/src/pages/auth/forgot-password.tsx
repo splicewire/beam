@@ -57,7 +57,7 @@ export default function ForgotPassword() {
                 </Form>
 
                 <div className="space-x-1 text-center text-sm text-muted-foreground">
-                    <AuthMessage text={messages.t('splicewire-beam-inertia::messages.auth_return_to_login', { action: '\uFFFC0\uFFFC' })} parts={[<TextLink href="/login">{messages.t('splicewire-beam-inertia::messages.auth_log_in_lowercase')}</TextLink>]} />
+                    <AuthMessage wrapText={(text) => <span>{text}</span>} text={messages.t('splicewire-beam-inertia::messages.auth_return_to_login', { action: '\uFFFC0\uFFFC' })} parts={[<TextLink href="/login">{messages.t('splicewire-beam-inertia::messages.auth_log_in_lowercase')}</TextLink>]} />
                 </div>
             </div>
         </>

@@ -43,7 +43,7 @@ export default function PasskeyItem({ passkey, onDelete }: Props) {
             )}
           </div>
           <p className="text-sm text-muted-foreground">
-            {messages.t('splicewire-beam-inertia::messages.auth_passkey_added', { date: passkey.createdAtDiff })}
+            {messages.t('splicewire-beam-inertia::messages.auth_passkey_added', { date: passkey.createdAtDiff ?? '' })}
             {passkey.lastUsedAtDiff && (
               <>
                 <span className="mx-1 text-muted-foreground/50">/</span>

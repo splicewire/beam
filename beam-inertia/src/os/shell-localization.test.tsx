@@ -62,3 +62,29 @@ it('keeps raw configuration code byte-exact and the same rich nodes when transla
         expect(code.parentElement?.textContent).not.toMatch(/[\u0000\uFFFC]/u);
     } finally { state.page = previous; }
 });
+
+it.each([1, 2])('selects the translated whole desktop status for %i actual realms', (count) => {
+    const previous = state.page;
+    state.page = { ...previous, props: { ...previous.props, realmManifest: previous.props.realmManifest.slice(0, count) } };
+    try {
+        const translated: ClientCatalog = { ...catalog, messages: { 'splicewire-beam-inertia::messages.surfaces_desktop_status': { text: '{1} :count Bereich|[0,*] :count Bereiche', sourceLocale: 'de' } } };
+        render(<MessageProvider value={translated}><OsShellDesktop /></MessageProvider>);
+        const status = vi.mocked(buildDesktopChrome).mock.calls.at(-1)![0].statusLine;
+        render(<>{status}</>);
+        expect(screen.getByText(count === 1 ? '1 Bereich' : '2 Bereiche')).toBeTruthy();
+    } finally { state.page = previous; }
+});
+
+it('keeps the complete styled brand raw while translating the whole hint and its inner emphasis', () => {
+    render(<MessageProvider value={catalog}><OsShellDesktop /></MessageProvider>);
+    render(<>{vi.mocked(buildDesktopChrome).mock.calls.at(-1)![0].backdrop}</>);
+    expect(document.querySelector('.hint')?.innerHTML).toBe('beam·<b>os</b> — the front-end CMS as an operating system. Each realm is a launchable app; a window frames its <b>real</b> surface (its actual page component).');
+    cleanup();
+    render(<MessageProvider value={catalog} pseudo><OsShellDesktop /></MessageProvider>);
+    render(<MessageProvider value={catalog} pseudo>{vi.mocked(buildDesktopChrome).mock.calls.at(-1)![0].backdrop}</MessageProvider>);
+    expect(document.querySelector('.wallmark')?.textContent).toBe('beamos');
+    expect(document.querySelector('.hint')?.textContent).toContain('beam·os');
+    expect(document.querySelector('.hint b')?.textContent).toBe('os');
+    expect(document.querySelectorAll('.hint b')[1]?.textContent).toBe('rëál');
+    expect(document.querySelector('.hint')?.textContent).not.toMatch(/[\u0000\uFFFC]/u);
+});

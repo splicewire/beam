@@ -61,4 +61,4 @@ sandbox/negotiation are separate contracts; this adapter does not prove them.
 
 The committed `./messages` catalog uses namespace `splicewire-beam-inertia`; `npm run messages:catalog` checks the defaults and source key inventory. The private hook reads the existing `BeamMessages` provider from localization16-d and renders English without a provider. Host/server-authored titles, labels, diagnostics and brand values remain raw.28a proves the package source and fixture/provider behavior; host binding and walkthrough acceptance belong to28b.
 
-Run `npm run lint:messages` from this package for the real public ratchet function (the direct linked CLI has a known main-module guard issue at the pinned runtime). Its root baseline retains two reasoned non-copy AST findings from one machine code expression, documented in `../message-ratchet.baseline.notes.md`.
+Run `npm run lint:messages` from this package for the real public ratchet function (the direct linked CLI has a known main-module guard issue at the pinned runtime). Its root baseline retains reasoned non-copy brand and machine AST findings, documented in `../message-ratchet.baseline.notes.md`.
