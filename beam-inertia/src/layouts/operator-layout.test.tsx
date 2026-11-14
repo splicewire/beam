@@ -22,6 +22,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TooltipProvider } from '../components/ui/tooltip';
 import { useFrameRealm } from '../frame/realm';
 import { beamInertiaOptions } from '../index';
+import { BeamMessages } from '../localization/beam-messages';
 import AppLayout from './app-layout';
 import BeamAccountLayout from './beam-account-layout';
 import MainframeHost from './beam-ux/mainframe-host';
@@ -102,27 +103,36 @@ function requestedUrls(): string[] {
 
 describe('the layout switch', () => {
     const layoutFor = (name: string) => beamInertiaOptions().layout(name);
+    // localization 16-d: every layout list now starts with <BeamMessages> (the served catalog's provider; not chrome).
+    // The CHROME after it is exactly what each assertion below pinned before.
+    const chromeFor = (name: string) => {
+        const layouts = layoutFor(name);
+        expect(Array.isArray(layouts) ? layouts[0] : layouts).toBe(BeamMessages);
+
+        return (layouts as unknown[]).slice(1);
+    };
 
     it.each(['operator/dashboard', 'operator/platform-connection'])(
         'gives %s the operator app chrome, between the OS overlay and the Mainframe host',
         (name) => {
-            expect(layoutFor(name)).toEqual([OsLayout, OperatorLayout, MainframeHost]);
+            expect(chromeFor(name)).toEqual([OsLayout, OperatorLayout, MainframeHost]);
         },
     );
 
     it('still leaves the self-chromed OS desktop unwrapped', () => {
-        expect(layoutFor('os')).toBeNull();
+        // No chrome at all: the catalog's provider is its only layout.
+        expect(chromeFor('os')).toEqual([]);
     });
 
     it('leaves account, settings and the default realm resolving exactly as before', () => {
-        expect(layoutFor('account/home')).toEqual([OsLayout, BeamAccountLayout, MainframeHost]);
-        expect(layoutFor('settings/profile')).toEqual([
+        expect(chromeFor('account/home')).toEqual([OsLayout, BeamAccountLayout, MainframeHost]);
+        expect(chromeFor('settings/profile')).toEqual([
             OsLayout,
             AppLayout,
             SettingsLayout,
             MainframeHost,
         ]);
-        expect(layoutFor('frame/console')).toEqual([OsLayout, AppLayout, MainframeHost]);
+        expect(chromeFor('frame/console')).toEqual([OsLayout, AppLayout, MainframeHost]);
     });
 });
 

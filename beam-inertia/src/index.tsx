@@ -21,6 +21,7 @@ import OsLayout from "./layouts/os-layout";
 import SettingsLayout from "./layouts/settings/layout";
 import SiteLayout from "./layouts/site-layout";
 import { IntakeFormsFromPage } from "./editor/intake";
+import { BeamMessages, withBeamMessages, type ChromeLayout } from "./localization/beam-messages";
 
 /**
  * One client for the whole app. Any `@splicewire/beam-ux` surface that owns its own data logic uses
@@ -68,7 +69,9 @@ export function beamInertiaOptions(config: BeamInertiaConfig = {}) {
   configureEntryPage({
     linkComponent: Link,
     // EP-07d: the page's forms read the schemas and honeypot field the server put on it.
-    wrap: (node) => <SiteLayout><IntakeFormsFromPage>{node}</IntakeFormsFromPage></SiteLayout>,
+    // localization 16-d: an entry rendered through this wrap reads the served catalog too (outermost; a passthrough
+    // where nothing is served, and the same value as the layout's provider where one is).
+    wrap: (node) => <BeamMessages><SiteLayout><IntakeFormsFromPage>{node}</IntakeFormsFromPage></SiteLayout></BeamMessages>,
     // "Edit content" on a rendered entry opens the in-place editor WHERE THE BODY IS, inside the
     // entry's layout and template — not beside the page (beam.test `/about`, 2026-09-24). The
     // MainframeHost treats `site/entry` as self-managed accordingly (layouts/beam-ux/mainframe-host).
@@ -102,7 +105,10 @@ export function beamInertiaOptions(config: BeamInertiaConfig = {}) {
     // No prototype case here. The dev-only prototype host page declares its own empty `layout`,
     // which Inertia prefers over this callback. Naming that page here put its marker into every
     // production bundle and tripped `beam-verify-prototype-boundary` (prototype-boundary.test.ts).
-    layout: (name: string) => {
+    // localization 16-d: every layout array starts with <BeamMessages> (the served catalog's provider; persistent, so a
+    // navigation keeps it, and a passthrough where nothing is served). It is not chrome, so the self-chromed `/os` page
+    // gets it too: as its ONLY layout, wrapping no chrome. The chrome per page name is unchanged below.
+    layout: (name: string) => withBeamMessages(((): ChromeLayout => {
       switch (true) {
         // The OS-shell desktop is fully self-chromed (menu bar + dock + windows) — no wrapping layout,
         // never (re-)wrapped by the persistent OsLayout overlay either (it mounts its OWN operator
@@ -155,7 +161,7 @@ export function beamInertiaOptions(config: BeamInertiaConfig = {}) {
         default:
           return [OsLayout, AppLayout, MainframeHost];
       }
-    },
+    })()),
     strictMode: true,
     withApp(app: React.ReactNode) {
       return (

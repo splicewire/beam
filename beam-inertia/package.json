@@ -57,6 +57,7 @@
     "@radix-ui/react-tooltip": "^1.1.8",
     "@schemastud/frame": "^0.2.2 || ^0.5.0",
     "@schemastud/mainframe": "0.1.0 || ^0.1.0",
+    "@schemastud/messages": "^0.1.0",
     "@schemastud/seam": "0.2.2 || ^0.4.0",
     "@schemastud/ui": "^0.1.2 || ^0.2.0",
     "@splicewire/beam-accounts": "^0.3.0",
@@ -75,6 +76,7 @@
   "devDependencies": {
     "@schemastud/frame": "github:schemastud/js#9503dcf4d839c269ee6053a6a421800bbbb7f974&path:/frame",
     "@schemastud/mainframe": "github:schemastud/js#436d9db67d77d35d64e5db946ea2341a81e2d988&path:/mainframe",
+    "@schemastud/messages": "github:schemastud/js#47810c9e78aca3eb452f7b34a1eaaed909f4102c&path:/messages",
     "@schemastud/seam": "github:schemastud/js#aae63180fd740d3a9497fa2a12e7fbc7c206bc92&path:/seam",
     "@schemastud/ui": "github:schemastud/js#abef468b39df9b1e81fd9a2081e69f8094c60e4e&path:/ui",
     "jsdom": "25.0.1",
