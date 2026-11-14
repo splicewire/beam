@@ -126,7 +126,7 @@ describe('RegistryIndexNav — the search', () => {
         await openSearch();
 
         expect(screen.getAllByRole('option')).toHaveLength(7);
-        fireEvent.change(screen.getByRole('searchbox'), { target: { value: 'tower' } });
+        fireEvent.change(screen.getByPlaceholderText('Jump to a registry root'), { target: { value: 'tower' } });
         await act(async () => { await new Promise((r) => setTimeout(r, 5)); });
 
         const options = screen.getAllByRole('option');
@@ -144,14 +144,14 @@ describe('RegistryIndexNav — the search', () => {
         render(<RegistryIndexNav node={node} />);
         await openSearch();
 
-        const input = screen.getByRole('searchbox');
+        const input = screen.getByPlaceholderText('Jump to a registry root');
         fireEvent.change(input, { target: { value: 'workflow' } });
         await act(async () => { await new Promise((r) => setTimeout(r, 5)); });
         fireEvent.keyDown(input, { key: 'ArrowDown' });
         fireEvent.keyDown(input, { key: 'Enter' });
 
         expect(navigate).toHaveBeenCalledWith('/docs/registries/workflow');
-        expect(screen.queryByRole('searchbox')).toBeNull();
+        expect(screen.queryByPlaceholderText('Jump to a registry root')).toBeNull();
     });
 
     it('reveals an unserved root in the tree instead of opening its JSON deep link', async () => {
@@ -160,7 +160,7 @@ describe('RegistryIndexNav — the search', () => {
         const { container } = render(<RegistryIndexNav node={node} />);
         await openSearch();
 
-        fireEvent.change(screen.getByRole('searchbox'), { target: { value: 'conduit' } });
+        fireEvent.change(screen.getByPlaceholderText('Jump to a registry root'), { target: { value: 'conduit' } });
         await act(async () => { await new Promise((r) => setTimeout(r, 5)); });
         fireEvent.click(screen.getByRole('option'));
 
@@ -175,9 +175,9 @@ describe('RegistryIndexNav — the search', () => {
         render(<RegistryIndexNav node={node} />);
         await openSearch();
 
-        fireEvent.keyDown(screen.getByRole('searchbox'), { key: 'Escape' });
+        fireEvent.keyDown(screen.getByPlaceholderText('Jump to a registry root'), { key: 'Escape' });
 
-        expect(screen.queryByRole('searchbox')).toBeNull();
+        expect(screen.queryByPlaceholderText('Jump to a registry root')).toBeNull();
         expect(document.activeElement).toBe(screen.getByRole('button', { name: /Find a registry/ }));
     });
 
@@ -188,7 +188,7 @@ describe('RegistryIndexNav — the search', () => {
 
         fireEvent.keyDown(trigger, { key: 'Escape' });
 
-        expect(screen.queryByRole('searchbox')).toBeNull();
+        expect(screen.queryByPlaceholderText('Jump to a registry root')).toBeNull();
         expect(document.activeElement).toBe(trigger);
     });
 });
