@@ -1,0 +1,27 @@
+{
+    "$comment": "Generated from laravel-beam localization 16 Data classes (export-localization-schema.php). Do not edit by hand.",
+    "shapes": {
+        "ClientMessageLineData": {
+            "text": "string",
+            "sourceLocale": "string"
+        },
+        "ClientCatalogData": {
+            "version": "1",
+            "locale": "string",
+            "realm": "string | null",
+            "direction": "'ltr' | 'rtl'",
+            "messages": "Record<string, ClientMessageLineData>"
+        },
+        "ClientCatalogAddressData": {
+            "url": "string",
+            "hash": "string",
+            "version": "1",
+            "locale": "string",
+            "realm": "string | null"
+        },
+        "ClientLocalizationData": {
+            "address": "ClientCatalogAddressData",
+            "initial": "ClientCatalogData | null"
+        }
+    }
+}
