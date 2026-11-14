@@ -27,6 +27,8 @@ export default defineConfig({
         admin: 'src/admin/index.ts',
         state: 'src/state/index.ts',
         appearance: 'src/theme/appearance.ts',
+        // config-sections 10a: the Config area over the `beam-config` resource.
+        config: 'src/config/index.ts',
     },
     format: ['esm'],
     dts: true,

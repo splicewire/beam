@@ -31,6 +31,10 @@
             "types": "./dist/appearance.d.ts",
             "import": "./dist/appearance.js"
         },
+        "./config": {
+            "types": "./dist/config.d.ts",
+            "import": "./dist/config.js"
+        },
         "./state": {
             "types": "./dist/state.d.ts",
             "import": "./dist/state.js"
