@@ -1,5 +1,6 @@
-import { useState, type ReactNode } from 'react';
-import { EditShell, ListShell, useFrameInjection, type ResourceKey } from '@schemastud/frame';
+import type { ReactNode } from 'react';
+import type { ResourceKey } from '@schemastud/frame';
+import { RecordBrowser } from '../internal/RecordBrowser';
 
 /**
  * "Agreements & consents" under the account, and the organisation owner's equivalent (agreements 10a, seam-ahead
@@ -30,31 +31,10 @@ export function OrganisationAgreements(props: AgreementsScreenProps) {
 }
 
 function EntriesScreen({ resource, heading, label }: AgreementsScreenProps & { label: string }) {
-    const [opened, setOpened] = useState<string | null>(null);
-    const { Button } = useFrameInjection().primitives;
-
     return (
         <section aria-label={label} data-beam-agreements="entries">
             <h2>{heading ?? label}</h2>
-            {opened === null ? (
-                <ListShell
-                    resource={resource}
-                    onOpen={(record) => {
-                        // `{ id: null }` is the shell's "new" request; these entries are never created here.
-                        const id = (record as { id?: unknown }).id;
-                        if (id !== null && id !== undefined) setOpened(String(id));
-                    }}
-                />
-            ) : (
-                <>
-                    <Button type="button" variant="ghost" onClick={() => setOpened(null)}>
-                        Back to the list
-                    </Button>
-                    {/* `readOnly` only stops editing; the read projection is asked for by purpose, so a field the
-                        resource serves on read (and never accepts on write) still shows. */}
-                    <EditShell resource={resource} id={opened} readOnly schemaPurpose="read" container="bare" />
-                </>
-            )}
+            <RecordBrowser resource={resource} />
         </section>
     );
 }

@@ -24,6 +24,7 @@
     },
     "peerDependencies": {
         "@schemastud/frame": "*",
+        "@schemastud/seam": "*",
         "@tanstack/react-query": ">=5",
         "react": ">=18"
     },
