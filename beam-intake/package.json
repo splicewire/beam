@@ -42,9 +42,9 @@
         "react": ">=18"
     },
     "devDependencies": {
-        "@schemastud/frame": "file:../../schemastud/frame",
-        "@schemastud/ui": "file:../../schemastud/ui",
-        "@schemastud/seam": "file:../../schemastud/seam",
+        "@schemastud/frame": "github:schemastud/js#9503dcf4d839c269ee6053a6a421800bbbb7f974&path:/frame",
+        "@schemastud/ui": "github:schemastud/js#abef468b39df9b1e81fd9a2081e69f8094c60e4e&path:/ui",
+        "@schemastud/seam": "github:schemastud/js#aae63180fd740d3a9497fa2a12e7fbc7c206bc92&path:/seam",
         "@tanstack/react-query": "^5.62.0",
         "@testing-library/react": "^16.1.0",
         "@testing-library/user-event": "^14.5.2",
