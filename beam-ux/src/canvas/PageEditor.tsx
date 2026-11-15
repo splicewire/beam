@@ -35,6 +35,8 @@ import {
   useEditShellMountController,
 } from "@schemastud/frame/editor";
 import { BlockInspector } from "./BlockInspector";
+import { NodeActionControl } from "./NodeActionControl.js";
+import type { RefineNodePort } from "./node-action.js";
 import { WidgetRegistryContext } from "@schemastud/seam";
 import { getAt, isJsonBlock } from "../blockdoc/json.js";
 import type { JsonDoc } from "../blockdoc/json.js";
@@ -125,6 +127,12 @@ export interface PageEditorTransport {
    * saving an empty document, which stays an authored (and published) empty body.
    */
   clearBody?: (slug: string) => Promise<EntryPublicationState | unknown>;
+  /**
+   * Refine or regenerate one node through the entry's node-action operation (node-actions-and-takes 04). Optional:
+   * supplied, the inspector grows one Refine control for the selected node; omitted, nothing changes. The answer is
+   * a candidate only. Accepting it is one Local Session step, saved as an ordinary draft.
+   */
+  refineNode?: RefineNodePort;
 }
 
 /** Optional toast seam (host injects; the package never imports a toast lib). */
@@ -1124,6 +1132,15 @@ export function PageEditor({
               </>
             )}
             <BlockInspector />
+            {transport.refineNode && mount.selectedNodeId && (
+              <NodeActionControl
+                slug={slug}
+                doc={doc}
+                path={mount.selectedNodeId}
+                refine={transport.refineNode}
+                onApply={onCanvasChange}
+              />
+            )}
           </aside>
         )}
       </EditShellMountProvider>

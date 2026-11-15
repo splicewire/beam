@@ -48,6 +48,11 @@ export type { VisualEditorProps } from './VisualEditor.js';
 export { PageEditor } from './PageEditor.js';
 export { useEditMode, __resetEditMode } from '../edit-mode-store.js';
 export type { PageEditorProps, PageEditorTransport, Notify } from './PageEditor.js';
+// node-actions-and-takes 04: refine or regenerate one node; the answer is a candidate, accepted as one Local Session step.
+export { NodeActionControl } from './NodeActionControl.js';
+export type { NodeActionControlProps } from './NodeActionControl.js';
+export { candidateOf, refusalOf, pathSegments } from './node-action.js';
+export type { NodeActionDecision, NodeActionSnapshot, NodeActionVerdict, NodePathSegment, RefineNodePort, RefineNodeRequest } from './node-action.js';
 
 // The heavyweight widget adapter + its @schemastud/frame registration (window-mode mounting; PageEditor
 // mounts CanvasWidget directly, no registry needed there).
