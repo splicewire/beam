@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useEditShellMount } from '@schemastud/frame/editor';
 import { getAt, updateAt, isJsonBlock, isJsonText, type JsonDoc, type JsonNode } from '../blockdoc/json.js';
 import { candidateOf, idOf, pathOfId, pathSegments, refusalOf, type RefineNodePort } from './node-action.js';
@@ -12,6 +12,11 @@ import { candidateOf, idOf, pathOfId, pathSegments, refusalOf, type RefineNodePo
  */
 export interface NodeActionControlProps {
     slug: string;
+    /**
+     * The entry the `refine` port addresses (its row id). Offers and pending answers belong to it: a slug is the
+     * page's label and need not be unique per entry, so the late-answer guard keys on this. Defaults to `slug`.
+     */
+    entry?: string;
     doc: JsonDoc;
     /** The selected node's index path. */
     path: string;
@@ -27,26 +32,43 @@ function textOf(node: JsonNode): string {
     return '';
 }
 
-type Offer = { path: string; id?: string; node: JsonNode; reference: string; sent: JsonNode };
+/** An offer belongs to the entry and the selection it was asked for. */
+type Offer = { entry: string; path: string; id?: string; node: JsonNode; reference: string; sent: JsonNode };
 
-export function NodeActionControl({ slug, doc, path, refine, onApply }: NodeActionControlProps) {
+export function NodeActionControl({ slug, entry: entryId, doc, path, refine, onApply }: NodeActionControlProps) {
+    const entry = entryId ?? slug;
     const [instruction, setInstruction] = useState('');
     const [busy, setBusy] = useState(false);
     const [offer, setOffer] = useState<Offer | null>(null);
     const [refusal, setRefusal] = useState<string | null>(null);
+    // The selection generation: bumped whenever the entry (`entry`, else `slug`) or the selected path changes (and on unmount). A response
+    // that comes back under an older generation answers a node the inspector no longer shows, so it changes nothing:
+    // no offer, no refusal and no busy state for the newer selection. Credit: review-r1 (advisory review of 9908b70e).
+    const generation = useRef(0);
 
-    // A new selection drops what was offered for the previous one.
+    // A new entry or selection drops what was offered or pending for the previous one.
     useEffect(() => {
+        generation.current += 1;
         setOffer(null);
         setRefusal(null);
-    }, [path]);
+        setBusy(false);
+        return () => {
+            generation.current += 1;
+        };
+    }, [entry, path]);
 
     const node = getAt(doc, path);
     if (!node) return null;
 
+    // The effect above runs after the render that changes entry or selection, so the render itself also ignores an
+    // offer made for another entry or path; an entry change with the same numeric path never shows the old offer.
+    const shown = offer && offer.entry === entry && offer.path === path ? offer : null;
+
     const ask = async (mode: 'refine' | 'regenerate') => {
         const current = getAt(doc, path);
         if (!current) return;
+        const asked = generation.current;
+        const live = () => generation.current === asked;
         setBusy(true);
         setOffer(null);
         setRefusal(null);
@@ -59,20 +81,22 @@ export function NodeActionControl({ slug, doc, path, refine, onApply }: NodeActi
                 ...(mode === 'refine' ? { instruction: instruction.trim() } : {}),
                 body: doc,
             });
+            if (!live()) return;
             const candidate = candidateOf(decision);
             if (!candidate) setRefusal(refusalOf(decision));
             // A block keeps its stable id through a refine; a candidate that drops or changes it would orphan
             // whatever addresses the block, so it is not offered.
             else if (id && idOf(candidate) !== id) setRefusal('The candidate did not keep this block’s id, so it was not offered.');
-            else setOffer({ path, id, node: candidate, reference: decision.revision.reference, sent: current });
+            else setOffer({ entry, path, id, node: candidate, reference: decision.revision.reference, sent: current });
         } catch (failure) {
-            setRefusal(failure instanceof Error ? failure.message : String(failure));
+            if (live()) setRefusal(failure instanceof Error ? failure.message : String(failure));
         } finally {
-            setBusy(false);
+            if (live()) setBusy(false);
         }
     };
 
     const accept = () => {
+        const offer = shown;
         if (!offer) return;
         // The node the candidate was made for, found by its stable id where it has one (it may have moved) and by
         // path otherwise, must still be unchanged; otherwise the candidate answers a question nobody is asking now.
@@ -108,9 +132,9 @@ export function NodeActionControl({ slug, doc, path, refine, onApply }: NodeActi
                     {refusal}
                 </p>
             ) : null}
-            {offer ? (
-                <div role="group" aria-label="Candidate" data-node-action-candidate={offer.reference}>
-                    <p data-node-action-preview="">{textOf(offer.node)}</p>
+            {shown ? (
+                <div role="group" aria-label="Candidate" data-node-action-candidate={shown.reference}>
+                    <p data-node-action-preview="">{textOf(shown.node)}</p>
                     <button type="button" onClick={accept}>
                         Accept
                     </button>

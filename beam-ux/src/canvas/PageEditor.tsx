@@ -1132,7 +1132,7 @@ export function PageEditor({
               </>
             )}
             <BlockInspector />
-            <SelectedNodeAction slug={slug} doc={doc} refine={transport.refineNode} onApply={onCanvasChange} />
+            <SelectedNodeAction slug={slug} entry={entryId ?? undefined} doc={doc} refine={transport.refineNode} onApply={onCanvasChange} />
           </aside>
         )}
       </EditShellMountProvider>

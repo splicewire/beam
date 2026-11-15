@@ -237,3 +237,90 @@ describe('refusals leave the session untouched and say why', () => {
         expect(docText()).toContain('Edited meanwhile.');
     });
 });
+
+describe('a late answer belongs to the selection and entry it was asked for', () => {
+    // review-r1's advisory review of 9908b70e: select A, ask, select B, then A's answer arrives. It must not become an
+    // offer in B's inspector, where Accept would have edited A.
+    const OTHER: JsonDoc = [block('main', block('h2', text('Other heading')), block('p', text('Other paragraph.')))];
+
+    function Host({ refine }: { refine: RefineNodePort }) {
+        const [doc, setDoc] = useState<JsonDoc>(DOC);
+        const [entry, setEntry] = useState('entry-a');
+        const [path, setPath] = useState('0.1');
+        return (
+            <div>
+                <button type="button" onClick={() => setPath('0.0')}>Select heading</button>
+                <button type="button" onClick={() => { setEntry('entry-b'); setDoc(OTHER); }}>Open other entry</button>
+                <output data-testid="paragraph">{JSON.stringify(doc)}</output>
+                {/* Both entries share one slug (a draft and a published copy, or two tenants' pages): the guard keys
+                    on the entry the port addresses, not the label. */}
+                <NodeActionControl slug="shared-slug" entry={entry} doc={doc} path={path} refine={refine} onApply={setDoc} />
+            </div>
+        );
+    }
+
+    const deferred = () => {
+        const calls: Array<(value: NodeActionDecision) => void> = [];
+        const refine: RefineNodePort = () => new Promise((resolve) => calls.push(resolve));
+        return { refine, calls };
+    };
+
+    it('a selection change drops the earlier answer: nothing to accept for A from B’s inspector', async () => {
+        const { refine, calls } = deferred();
+        render(<Host refine={refine} />);
+        fireEvent.click(screen.getByRole('button', { name: 'Regenerate' }));
+        expect(screen.getByText(/Making a candidate/)).toBeTruthy();
+        fireEvent.click(screen.getByRole('button', { name: 'Select heading' }));
+        await act(async () => calls[0]!(decision()));
+
+        expect(screen.queryByRole('group', { name: 'Candidate' })).toBeNull();
+        expect(screen.queryByRole('alert')).toBeNull();
+        expect(screen.queryByText(/Making a candidate/)).toBeNull();
+        expect((screen.getByRole('button', { name: 'Regenerate' }) as HTMLButtonElement).disabled).toBe(false);
+        expect(docText()).toBe(JSON.stringify(DOC));
+
+        // B's own question still works, and its Accept edits B.
+        fireEvent.click(screen.getByRole('button', { name: 'Regenerate' }));
+        await act(async () => calls[1]!(decision({ node: block('h2', text('A sharper heading')) })));
+        fireEvent.click(within(await screen.findByRole('group', { name: 'Candidate' })).getByRole('button', { name: 'Accept' }));
+        expect(docText()).toContain('A sharper heading');
+        expect(docText()).toContain('Fixture paragraph.');
+    });
+
+    it('a late refusal or failure for A says nothing in B’s inspector', async () => {
+        const failing: RefineNodePort[] = [];
+        let fail!: (reason: Error) => void;
+        failing.push(() => new Promise((_resolve, reject) => (fail = reject)));
+        render(<Host refine={failing[0]!} />);
+        fireEvent.click(screen.getByRole('button', { name: 'Regenerate' }));
+        fireEvent.click(screen.getByRole('button', { name: 'Select heading' }));
+        await act(async () => fail(new Error('Generated code is not allowed for this entry.')));
+        expect(screen.queryByRole('alert')).toBeNull();
+        expect(screen.queryByText(/Making a candidate/)).toBeNull();
+    });
+
+    it('an entry change with the same slug and path drops the pending answer', async () => {
+        const { refine, calls } = deferred();
+        render(<Host refine={refine} />);
+        fireEvent.click(screen.getByRole('button', { name: 'Regenerate' }));
+        fireEvent.click(screen.getByRole('button', { name: 'Open other entry' }));
+        await act(async () => calls[0]!(decision()));
+
+        expect(screen.queryByRole('group', { name: 'Candidate' })).toBeNull();
+        expect(screen.queryByText(/Making a candidate/)).toBeNull();
+        expect(docText()).toBe(JSON.stringify(OTHER));
+    });
+
+    it('an offer made for one entry does not survive opening another with the same slug at the same path', async () => {
+        const { refine, calls } = deferred();
+        render(<Host refine={refine} />);
+        fireEvent.click(screen.getByRole('button', { name: 'Regenerate' }));
+        await act(async () => calls[0]!(decision()));
+        expect(await screen.findByRole('group', { name: 'Candidate' })).toBeTruthy();
+
+        fireEvent.click(screen.getByRole('button', { name: 'Open other entry' }));
+        expect(screen.queryByRole('group', { name: 'Candidate' })).toBeNull();
+        expect(screen.queryByRole('button', { name: 'Accept' })).toBeNull();
+        expect(docText()).toBe(JSON.stringify(OTHER));
+    });
+});

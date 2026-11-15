@@ -52,7 +52,7 @@ export interface VisualEditorProps {
      * inspector grows the Refine control for the selected node, and an accepted candidate goes through `onChange`
      * like any canvas edit (one Local Session step). Omitted, nothing changes.
      */
-    nodeAction?: { slug: string; refine: RefineNodePort };
+    nodeAction?: { slug: string; refine: RefineNodePort; /** The entry id the port addresses; keys the control's late-answer guard. */ entry?: string };
 }
 
 /** A JsonDoc has no formal JSON-Schema grammar (yet) — this is inert. `resolveWidgetFor` forces the
@@ -119,7 +119,7 @@ export function VisualEditor({
                 inspector={
                     <>
                         <BlockInspector />
-                        <SelectedNodeAction slug={nodeAction?.slug ?? ''} doc={value} refine={nodeAction?.refine} onApply={onChange} />
+                        <SelectedNodeAction slug={nodeAction?.slug ?? ''} entry={nodeAction?.entry} doc={value} refine={nodeAction?.refine} onApply={onChange} />
                     </>
                 }
             />
