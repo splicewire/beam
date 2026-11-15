@@ -4,6 +4,7 @@ import type { CardLinkRenderer, FrameKit } from '@schemastud/frame';
 import type { SchemaNode } from '@schemastud/seam';
 import { toast } from 'sonner';
 import { frameIcon } from './icons';
+import { FRAME_PREFIX } from './prefix';
 import type { FrameNav } from './manifest';
 import { framePrimitives } from './primitives';
 import { createReleaseFilesFormResolver } from './release-files-form';
@@ -24,9 +25,10 @@ const renderCardLink: CardLinkRenderer = ({ href, className, children, 'aria-lab
  * (ruling 02 §1, slice 9). A host mounts `FrameManifestController` once per realm, so the
  * manifest URL is what tells two realms apart; every reader of one realm — the provider, the
  * rail, the console, the router, the entry-properties form — gets the same kit and so shares one
- * manifest cache entry. Resources live under the one `/frame` socket in every realm.
+ * manifest cache entry. Resources live under the one socket in every realm, `FRAME_PREFIX` (`./prefix`).
  *
- * Only what differs from the kit's defaults is passed:
+ * Only what differs from the kit's defaults is passed, plus the socket itself:
+ *  - `prefix`: `FRAME_PREFIX`, always explicit, so the kit never falls back to frame's own default;
  *  - `primitives`: this host's seven components (its own shadcn copies);
  *  - `renderLink` and `iconFor`: Inertia's `Link` and this host's icon map, for the card set;
  *  - `schemaFetcher`: inert. Tenant-realm request schemas are self-contained (`forRequest()`),
@@ -47,6 +49,7 @@ export function kitFor(manifestUrl: string): FrameKit<FrameNav> {
     let kit = kits.get(manifestUrl);
     if (!kit) {
         kit = createFrameKit<FrameNav>({
+            prefix: FRAME_PREFIX,
             manifestUrl,
             primitives: framePrimitives,
             renderLink: renderCardLink,

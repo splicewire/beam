@@ -1,5 +1,6 @@
 import { usePage } from '@inertiajs/react';
 import { createContext, useContext, useMemo, type ReactNode } from 'react';
+import { FRAME_MANIFEST_URL } from './prefix';
 
 /**
  * Which realm this mounted Frame console is serving — the fact the packaged console never had.
@@ -10,7 +11,7 @@ import { createContext, useContext, useMemo, type ReactNode } from 'react';
  * reads the matched route's `defaults['realm']`, and its docblock states the intended shape outright —
  * *"a host mounts the same controller once per realm and the realm is a fact about the MOUNT, not
  * about the caller."* The client half had no counterpart. `pages/frame/console.tsx` fetched a
- * hardcoded `/frame/manifest` and mounted `<BrowserRouter>` with no basename, so one host could serve
+ * hardcoded root manifest URL and mounted `<BrowserRouter>` with no basename, so one host could serve
  * exactly ONE realm's console however many realms it declared.
  *
  * Measured on fresh-tower.test 2026-09-11: `config('frame.realms')['operator']` names `users` and
@@ -29,8 +30,8 @@ import { createContext, useContext, useMemo, type ReactNode } from 'react';
  * (`hrefs('operator')`, `contributeNav('operator')`, the segment regex); this is the fourth, and the
  * first one that reaches the browser.
  *
- * The defaults are today's values exactly — root manifest, no basename, no realm in the cache key —
- * so a tenant mount that passes nothing is byte-for-byte what it was.
+ * The defaults are the root realm's: the root manifest (`FRAME_MANIFEST_URL`, derived from the one `FRAME_PREFIX` socket),
+ * no basename, no realm in the cache key.
  */
 export interface FrameRealmContext {
     /** The realm key (`operator`, `tenant`, …), or null when the host mounts one unscoped console. */
@@ -44,7 +45,7 @@ export interface FrameRealmContext {
 export const DefaultFrameRealm: FrameRealmContext = {
     realm: null,
     basename: '/',
-    manifestUrl: '/frame/manifest',
+    manifestUrl: FRAME_MANIFEST_URL,
 };
 
 const FrameRealmCtx = createContext<FrameRealmContext>(DefaultFrameRealm);
@@ -74,7 +75,7 @@ export function FrameRealmProvider({
  * the page, therefore outside any provider the page renders. Measured on fresh-tower.test
  * 2026-09-12, with only the context in place: `/operator/users` served the operator users roster
  * correctly while the rail beside it listed the TENANT realm's sections (Authoring → Entries,
- * Schemas; Ops → Files, Git Repos, Sitemap), because `NavFrame` had fetched `/frame/manifest`.
+ * Schemas; Ops → Files, Git Repos, Sitemap), because `NavFrame` had fetched the root manifest.
  *
  * Inertia's page props reach both levels, and the mount already passes exactly these three values, so
  * the layout reads them from there. Context first so a nested or test mount can still override.
