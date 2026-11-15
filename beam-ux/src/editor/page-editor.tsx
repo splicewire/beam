@@ -5,6 +5,7 @@ import {useBindingPreviewPort} from './use-binding-preview-port';
 // injects only its CanvasConfig, transport, toast, theme, and defaults. Mount `<PageEditor slug body/>`
 // where a page's content goes; read mode renders the same body via the package's TreeRender.
 import type { JsonDoc } from '../blockdoc/json';
+import type { RefineNodeRequest } from '../canvas/node-action';
 import type { EntryPageSettings } from '../generated/page-settings';
 import {
     CanvasProvider,
@@ -197,6 +198,11 @@ export function PageEditor({ slug, body = null, entryId: suppliedId = null }: Pa
                     ...(entryId && bodyClient.printSource && bodyClient.readSource ? {
                         printSource: (_s: string, body: JsonDoc) => bodyClient.printSource!(entryId, body),
                         readSource: (_s: string, source: string, body: JsonDoc) => bodyClient.readSource!(entryId, source, body),
+                    } : {}),
+                    // node-actions-and-takes 04: the Refine control, only when there is a row to address and the
+                    // client supplies the operation. Addressed by the entry id, like the body transport.
+                    ...(entryId && bodyClient.refineNode ? {
+                        refineNode: (_s: string, request: RefineNodeRequest) => bodyClient.refineNode!(entryId, request),
                     } : {}),
                     // The publication seam (G2-BEAM-DRAFT-PUBLISH), spread in only when there is a row
                     // to address and the client supplies all four operations. A page whose entry is absent

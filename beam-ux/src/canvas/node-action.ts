@@ -8,11 +8,15 @@ import type { JsonDoc, JsonNode } from '../blockdoc/json.js';
  * existing save check.
  */
 
+/**
+ * One side of the revision. For a page node the operation (laravel-beam-ux `CanvasNodePreview`) puts the NODE ITSELF
+ * in `truth` and addresses it by its stable id, or by a JSON pointer ("/0/children/1") when it has none; its own HTTP
+ * test reads `data.revision.after.truth.children.0.value` (`tests/CanvasNodePreviewTest.php:148-150`).
+ */
 export interface NodeActionSnapshot {
-    /** The node's index path in the entry body, e.g. "0.2.1". */
     address: string;
-    truth: { node?: JsonNode } & Record<string, unknown>;
-    standing: Record<string, unknown>;
+    truth: JsonNode | Record<string, unknown>;
+    standing: unknown;
 }
 
 export interface NodeActionVerdict {
@@ -60,7 +64,7 @@ export type RefineNodePort = (slug: string, request: RefineNodeRequest) => Promi
 /** The candidate a decision offers, or null when it offers none (refused, or no node in the answer). */
 export function candidateOf(decision: NodeActionDecision): JsonNode | null {
     if (decision.decision !== 'kept' || decision.verdict?.hardFail) return null;
-    const node = decision.revision?.after?.truth?.node;
+    const node = decision.revision?.after?.truth;
     return node && typeof node === 'object' && 'kind' in node ? (node as JsonNode) : null;
 }
 

@@ -22,8 +22,10 @@ const decision = (over: Partial<NodeActionDecision> & { node?: JsonNode } = {}):
     decision: 'kept',
     revision: {
         reference: 'fixture-ref-1',
-        before: { address: '0.1', truth: { node: block('p', text('Fixture paragraph.')) }, standing: {} },
-        after: { address: '0.1', truth: over.node ? { node: over.node } : { node: block('p', text('A sharper fixture paragraph.')) }, standing: {} },
+        // The operation's real shape (laravel-beam-ux CanvasNodePreview + tests/CanvasNodePreviewTest.php:148-150):
+        // `truth` is the node itself, addressed by a JSON pointer when it has no id.
+        before: { address: '/0/children/1', truth: block('p', text('Fixture paragraph.')), standing: [] },
+        after: { address: '/0/children/1', truth: over.node ?? block('p', text('A sharper fixture paragraph.')), standing: [] },
     },
     verdict: { hardFail: false, softWorse: false, reasons: [] },
     ...over,

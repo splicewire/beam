@@ -47,6 +47,15 @@ export interface UxBuilderClient<TBody = BeamUxEntryBodyData> {
     source: string,
     body: import("./blockdoc/json").JsonDoc,
   ): Promise<{ body: import("./blockdoc/json").JsonDoc }>;
+  /**
+   * Refine or regenerate one node of the entry's body (node-actions-and-takes 04): laravel-beam-ux's `refine-node`
+   * operation, mounted by the host with `EditorRoutes::nodeActions`. Optional: supplied, the canvas inspector grows one
+   * Refine control for the selected node; omitted, nothing changes. The answer is a candidate only.
+   */
+  refineNode?(
+    id: string,
+    request: import("./canvas/node-action").RefineNodeRequest,
+  ): Promise<import("./canvas/node-action").NodeActionDecision>;
   /** Create an absent page from its default tree; PHP EntryMakeEditableOp, under ux.author. */
   makeEditable?(
     slug: string,
