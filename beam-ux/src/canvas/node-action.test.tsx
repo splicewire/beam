@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import type { JsonDoc, JsonNode } from '../blockdoc/json';
+import { getAt, type JsonDoc, type JsonNode } from '../blockdoc/json';
 import { NodeActionControl } from './NodeActionControl';
 import { candidateOf, pathSegments, refusalOf, type NodeActionDecision, type RefineNodePort } from './node-action';
 
@@ -59,11 +59,35 @@ function Editor({ refine, path = '0.1' }: { refine: RefineNodePort; path?: strin
 const docText = () => screen.getByTestId('paragraph').textContent ?? '';
 
 describe('the request path', () => {
-    it('turns the canvas dotted path into segments: ints for child indexes, strings for named steps', () => {
+    // The server's own spelling (laravel-beam-ux): `CanvasNodePreview::locate` appends `children` before a child index
+    // and `slots`, <name> before a slot's index; its tests address a top-level node as [0] (CanvasNodePreviewTest.php:147)
+    // and a nested one as [0, 'children', 0] (:120). No server test addresses a slot; the slot cases follow locate().
+    it('spells the canvas dotted path the way the operation locates nodes', () => {
         expect(pathSegments('0')).toEqual([0]);
-        expect(pathSegments('0.2.1')).toEqual([0, 2, 1]);
+        expect(pathSegments('0.0')).toEqual([0, 'children', 0]);
+        expect(pathSegments('0.2.1')).toEqual([0, 'children', 2, 'children', 1]);
         expect(pathSegments('0.slots.aside.0')).toEqual([0, 'slots', 'aside', 0]);
+        // A slot inside a child, and a child of a slotted block.
+        expect(pathSegments('0.1.slots.aside.0.2')).toEqual([0, 'children', 1, 'slots', 'aside', 0, 'children', 2]);
         expect(pathSegments('')).toEqual([]);
+    });
+
+    it('addresses the node the canvas path names: following the segments reaches the same node getAt does', () => {
+        const slotted = [{ ...(block('section', block('p', text('Child'))) as object), slots: { aside: [block('div', text('a'), block('em', text('Deep')))] } }] as unknown as JsonDoc;
+        // locate()'s walk, read literally: an int indexes the current list, 'children' / 'slots', <name> pick the next.
+        const follow = (segments: Array<string | number>): unknown => {
+            let list: unknown = slotted;
+            let node: unknown = null;
+            for (let i = 0; i < segments.length; i++) {
+                const s = segments[i];
+                if (typeof s === 'number') { node = (list as unknown[])[s]; continue; }
+                list = s === 'slots' ? (node as { slots: Record<string, unknown> }).slots[segments[++i] as string] : (node as { children: unknown }).children;
+            }
+            return node;
+        };
+        for (const path of ['0', '0.0', '0.slots.aside.0', '0.slots.aside.0.1']) {
+            expect(follow(pathSegments(path)), path).toBe(getAt(slotted, path));
+        }
     });
 });
 
@@ -87,7 +111,7 @@ describe('refine, candidate, accept, undo', () => {
 
         const candidate = await screen.findByRole('group', { name: 'Candidate' });
         // The whole current body travels (the save check judges a node by its parent), with the path.
-        expect(refine).toHaveBeenCalledWith('fixture-page', { path: [0, 1], mode: 'refine', instruction: 'Make it sharper', body: DOC });
+        expect(refine).toHaveBeenCalledWith('fixture-page', { path: [0, 'children', 1], mode: 'refine', instruction: 'Make it sharper', body: DOC });
         expect(within(candidate).getByText('A sharper fixture paragraph.')).toBeTruthy();
         // Seeing the candidate changes nothing.
         expect(docText()).toContain('Fixture paragraph.');
@@ -109,7 +133,7 @@ describe('refine, candidate, accept, undo', () => {
         expect((screen.getByRole('button', { name: 'Refine' }) as HTMLButtonElement).disabled).toBe(true);
         fireEvent.click(screen.getByRole('button', { name: 'Regenerate' }));
         await screen.findByRole('group', { name: 'Candidate' });
-        expect(refine).toHaveBeenCalledWith('fixture-page', { path: [0, 1], mode: 'regenerate', body: DOC });
+        expect(refine).toHaveBeenCalledWith('fixture-page', { path: [0, 'children', 1], mode: 'regenerate', body: DOC });
     });
 
     it('discards a candidate and changes nothing', async () => {
@@ -144,7 +168,7 @@ describe('a block with a stable id', () => {
         render(<Host />);
         fireEvent.click(screen.getByRole('button', { name: 'Regenerate' }));
         await screen.findByRole('group', { name: 'Candidate' });
-        expect(refine).toHaveBeenCalledWith('fixture-page', { path: [0, 1], nodeId: 'blk-1', mode: 'regenerate', body: IDDOC });
+        expect(refine).toHaveBeenCalledWith('fixture-page', { path: [0, 'children', 1], nodeId: 'blk-1', mode: 'regenerate', body: IDDOC });
 
         fireEvent.click(screen.getByRole('button', { name: 'Insert above' }));
         fireEvent.click(within(screen.getByRole('group', { name: 'Candidate' })).getByRole('button', { name: 'Accept' }));

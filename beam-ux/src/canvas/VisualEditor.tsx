@@ -14,6 +14,8 @@ import { useMemo, useRef } from 'react';
 import { FiveRegionEditShell, useEditShellMount } from '@schemastud/frame/editor';
 import { CanvasPalette } from './CanvasPalette.js';
 import { BlockInspector } from './BlockInspector';
+import { SelectedNodeAction } from './NodeActionControl.js';
+import type { RefineNodePort } from './node-action.js';
 import { CanvasWidget } from './CanvasWidget.js';
 import { veCss } from './css.js';
 import type { CanvasTheme } from './css.js';
@@ -45,6 +47,12 @@ export interface VisualEditorProps {
     onRedo?: () => void;
     canUndo?: boolean;
     canRedo?: boolean;
+    /**
+     * The entry's node-action port (node-actions-and-takes 04), bound by the host to one entry. Supplied, the
+     * inspector grows the Refine control for the selected node, and an accepted candidate goes through `onChange`
+     * like any canvas edit (one Local Session step). Omitted, nothing changes.
+     */
+    nodeAction?: { slug: string; refine: RefineNodePort };
 }
 
 /** A JsonDoc has no formal JSON-Schema grammar (yet) — this is inert. `resolveWidgetFor` forces the
@@ -62,6 +70,7 @@ export function VisualEditor({
     onRedo,
     canUndo = false,
     canRedo = false,
+    nodeAction,
 }: VisualEditorProps) {
     const onChangeRef = useRef(onChange);
     onChangeRef.current = onChange;
@@ -107,7 +116,12 @@ export function VisualEditor({
                     />
                 }
                 palette={<CanvasPalette />}
-                inspector={<BlockInspector />}
+                inspector={
+                    <>
+                        <BlockInspector />
+                        <SelectedNodeAction slug={nodeAction?.slug ?? ''} doc={value} refine={nodeAction?.refine} onApply={onChange} />
+                    </>
+                }
             />
         </>
     );

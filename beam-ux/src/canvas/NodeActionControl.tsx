@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useEditShellMount } from '@schemastud/frame/editor';
 import { getAt, updateAt, isJsonBlock, isJsonText, type JsonDoc, type JsonNode } from '../blockdoc/json.js';
 import { candidateOf, idOf, pathOfId, pathSegments, refusalOf, type RefineNodePort } from './node-action.js';
 
@@ -120,4 +121,15 @@ export function NodeActionControl({ slug, doc, path, refine, onApply }: NodeActi
             ) : null}
         </section>
     );
+}
+
+/**
+ * The control for whatever the edit shell has selected, shared by both canvas editors (PageEditor's inspector and
+ * VisualEditor's, which the editor kit's Site section mounts). Renders nothing without a `refine` port or a selection,
+ * so a host whose entry client has no `refineNode` sees no change. `onApply` is the editor's own canvas change.
+ */
+export function SelectedNodeAction({ refine, ...rest }: Omit<NodeActionControlProps, 'path' | 'refine'> & { refine?: RefineNodePort }) {
+    const selected = useEditShellMount().selectedNodeId;
+    if (!refine || !selected) return null;
+    return <NodeActionControl {...rest} path={selected} refine={refine} />;
 }

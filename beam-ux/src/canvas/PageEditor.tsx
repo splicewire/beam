@@ -35,7 +35,7 @@ import {
   useEditShellMountController,
 } from "@schemastud/frame/editor";
 import { BlockInspector } from "./BlockInspector";
-import { NodeActionControl } from "./NodeActionControl.js";
+import { SelectedNodeAction } from "./NodeActionControl.js";
 import type { RefineNodePort } from "./node-action.js";
 import { WidgetRegistryContext } from "@schemastud/seam";
 import { getAt, isJsonBlock } from "../blockdoc/json.js";
@@ -1132,15 +1132,7 @@ export function PageEditor({
               </>
             )}
             <BlockInspector />
-            {transport.refineNode && mount.selectedNodeId && (
-              <NodeActionControl
-                slug={slug}
-                doc={doc}
-                path={mount.selectedNodeId}
-                refine={transport.refineNode}
-                onApply={onCanvasChange}
-              />
-            )}
+            <SelectedNodeAction slug={slug} doc={doc} refine={transport.refineNode} onApply={onCanvasChange} />
           </aside>
         )}
       </EditShellMountProvider>
