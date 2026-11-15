@@ -237,7 +237,7 @@ function AddressedVisualEditor({ entryRef }: { entryRef: EntryRef }) {
             onSave={save} onUndo={local.undo} onRedo={local.redo}
             canUndo={local.session.canUndo} canRedo={local.session.canRedo}
             theme={theme} brand={brand ? `${brand} · editor` : "Entry editor"}
-            nodeAction={id && transport.refineNode ? { slug: entryRef.slug ?? id, refine: (_slug, request) => transport.refineNode!(id, request) } : undefined} />
+            nodeAction={id && transport.refineNode ? { slug: entryRef.slug ?? id, entry: id, refine: (_slug, request) => transport.refineNode!(id, request) } : undefined} />
         </SourceMode>
     </CanvasProvider>;
 }
