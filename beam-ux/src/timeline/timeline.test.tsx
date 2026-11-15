@@ -60,6 +60,33 @@ describe('layout', () => {
     });
 });
 
+describe('paint that survives a host CSS reset', () => {
+    // A Tailwind host's preflight makes a bare <button> transparent and borderless, so the widget paints inline.
+    it('gives every clip an inline background and border from beam tokens, and selection a ring', () => {
+        mount(MUSIC_DOC, musicLayout);
+        for (const button of [clipButton(/Lead: clip-verse/), clipButton(/Lead: clip-chorus/), ...within(screen.getByRole('group', { name: 'Takes' })).getAllByRole('button')]) {
+            expect(button.style.backgroundColor).toBe('var(--beam-green-tint, #eaf6ee)');
+            expect(button.style.borderStyle).toBe('solid');
+            expect(button.style.borderWidth).toBe('1px');
+            expect(button.style.borderColor).toBe('var(--beam-green, #14803f)');
+            expect(button.style.boxShadow).toBe('none');
+        }
+        fireEvent.click(clipButton(/Lead: clip-chorus/));
+        expect(clipButton(/Lead: clip-chorus/).style.boxShadow).toBe('inset 0 0 0 2px var(--beam-green-deep, #0f5f2e)');
+    });
+
+    it('separates ruler sections: each after the first has a visible left separator, and each keeps its colour', () => {
+        mount(MUSIC_DOC, musicLayout);
+        const [verse, chorus] = within(screen.getByRole('group', { name: 'Sections' })).getAllByRole('button');
+        expect(verse.style.borderLeftWidth).toBe('0px');
+        expect(chorus.style.borderLeftWidth).toBe('2px');
+        expect(chorus.style.borderLeftStyle).toBe('solid');
+        expect(chorus.style.borderLeftColor).toBe('var(--beam-paper-raised, #ffffff)');
+        expect(verse.style.backgroundColor.toLowerCase()).toBe('green');
+        expect(chorus.style.backgroundColor.toLowerCase()).toBe('red');
+    });
+});
+
 describe('the music timeline', () => {
     it('draws the ruler, one lead clip per section and the take, and selects through the mount', async () => {
         const probe = mount(MUSIC_DOC, musicLayout);

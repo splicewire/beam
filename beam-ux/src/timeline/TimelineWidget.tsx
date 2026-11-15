@@ -27,6 +27,44 @@ type Times = { start: number; duration: number };
 const round = (value: number) => Math.round(value * 10000) / 10000;
 const formatSeconds = (value: number) => `${round(value)}s`;
 
+// Paint is INLINE, from beam's own tokens with their light-theme values as fallbacks, because a host's CSS reset
+// (Tailwind preflight) makes a bare <button> transparent and borderless, and a clip then draws as nothing. Longhand
+// properties only, so a reset's shorthand cannot half-apply. Selection is an inset ring, so it never shifts layout.
+const ring = (on: boolean, color: string) => (on ? `inset 0 0 0 2px ${color}` : 'none');
+
+function clipPaint(isSelected: boolean): CSSProperties {
+    return {
+        boxSizing: 'border-box',
+        padding: 0,
+        borderWidth: 1,
+        borderStyle: 'solid',
+        borderColor: 'var(--beam-green, #14803f)',
+        borderRadius: 4,
+        backgroundColor: 'var(--beam-green-tint, #eaf6ee)',
+        color: 'var(--beam-green-deep, #0f5f2e)',
+        boxShadow: ring(isSelected, 'var(--beam-green-deep, #0f5f2e)'),
+    };
+}
+
+// A ruler section reads as its own block: the marker's colour (or the tint), and from the second section on a
+// separator in the paper colour, so adjacent sections of one marker colour no longer run together into one bar.
+function sectionPaint(color: string | null, index: number, isSelected: boolean): CSSProperties {
+    return {
+        boxSizing: 'border-box',
+        padding: '0 6px',
+        borderWidth: 0,
+        borderStyle: 'solid',
+        borderLeftWidth: index > 0 ? 2 : 0,
+        borderLeftColor: 'var(--beam-paper-raised, #ffffff)',
+        backgroundColor: color ?? 'var(--beam-green-tint, #eaf6ee)',
+        color: 'var(--beam-ink, #2e2c26)',
+        textAlign: 'left',
+        overflow: 'hidden',
+        whiteSpace: 'nowrap',
+        boxShadow: ring(isSelected, 'var(--beam-ink, #2e2c26)'),
+    };
+}
+
 export function TimelineWidget({ value, formData, editShellMount: mount, readonly = false, scale = 48 }: TimelineWidgetProps) {
     const ports = useTimelinePorts();
     const given = value ?? formData ?? null;
@@ -277,7 +315,7 @@ export function TimelineWidget({ value, formData, editShellMount: mount, readonl
                 <div style={{ width, minWidth: '100%' }}>
                     {sections.length > 0 ? (
                         <div role="group" aria-label="Sections" data-timeline-ruler="" style={{ position: 'relative', height: 28 }}>
-                            {sections.map((section) => (
+                            {sections.map((section, index) => (
                                 <button
                                     key={section.id}
                                     type="button"
@@ -285,7 +323,7 @@ export function TimelineWidget({ value, formData, editShellMount: mount, readonl
                                     aria-pressed={selected === section.id}
                                     aria-label={`Section ${section.name}, ${formatSeconds(section.start)} to ${formatSeconds(section.start + section.duration)}`}
                                     onClick={() => select(section.id)}
-                                    style={{ ...box(section.start, section.duration), background: section.color ?? undefined, overflow: 'hidden', whiteSpace: 'nowrap' }}
+                                    style={{ ...box(section.start, section.duration), ...sectionPaint(section.color, index, selected === section.id) }}
                                 >
                                     {section.name}
                                 </button>
@@ -321,7 +359,7 @@ export function TimelineWidget({ value, formData, editShellMount: mount, readonl
                                                 aria-label={`${lane.label}: ${clip.name}, ${formatSeconds(times.start)} to ${formatSeconds(times.start + times.duration)}`}
                                                 onClick={() => select(clip.id)}
                                                 onMouseDown={editable ? startDrag(clip, 'move') : undefined}
-                                                style={{ width: '100%', height: '100%', cursor: editable ? 'grab' : 'default', overflow: 'hidden' }}
+                                                style={{ width: '100%', height: '100%', cursor: editable ? 'grab' : 'default', overflow: 'hidden', ...clipPaint(selected === clip.id) }}
                                             >
                                                 {peaks ? <Peaks peaks={peaks} /> : null}
                                             </button>
