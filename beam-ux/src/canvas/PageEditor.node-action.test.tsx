@@ -32,8 +32,9 @@ const kept: NodeActionDecision = {
     decision: 'kept',
     revision: {
         reference: 'fixture-ref',
-        before: { address: '0', truth: { node: doc[0] }, standing: {} },
-        after: { address: '0', truth: { node: { kind: 'text', value: 'Fixture refined text' } }, standing: {} },
+        // The operation's real shape (laravel-beam-ux tests/CanvasNodePreviewTest.php:148-150): truth is the node.
+        before: { address: '/0', truth: doc[0], standing: [] },
+        after: { address: '/0', truth: { kind: 'text', value: 'Fixture refined text' }, standing: [] },
     },
     verdict: { hardFail: false, softWorse: false, reasons: [] },
 };
