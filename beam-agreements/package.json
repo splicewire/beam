@@ -1,56 +1,56 @@
 {
-    "name": "@splicewire/beam-agreements",
-    "version": "0.1.0",
-    "description": "Agreements and consents in the browser: the account and operator screens over frame's shells.",
-    "type": "module",
-    "sideEffects": false,
-    "files": [
-        "dist",
-        "src",
-        "README.md"
-    ],
-    "scripts": {
-        "build": "tsup",
-        "dev": "tsup --watch",
-        "test": "vitest run",
-        "typecheck": "tsc --noEmit",
-        "prepublishOnly": "npm run build"
-    },
-    "exports": {
-        ".": {
-            "types": "./dist/index.d.ts",
-            "import": "./dist/index.js"
-        }
-    },
-    "peerDependencies": {
-        "@schemastud/frame": "*",
-        "@schemastud/seam": "*",
-        "@tanstack/react-query": ">=5",
-        "react": ">=18"
-    },
-    "devDependencies": {
-        "@schemastud/frame": "github:schemastud/js#9503dcf4d839c269ee6053a6a421800bbbb7f974&path:/frame",
-        "@schemastud/seam": "github:schemastud/js#aae63180fd740d3a9497fa2a12e7fbc7c206bc92&path:/seam",
-        "@schemastud/ui": "github:schemastud/js#abef468b39df9b1e81fd9a2081e69f8094c60e4e&path:/ui",
-        "@tanstack/react-query": "^5.62.0",
-        "@testing-library/dom": "^10.4.1",
-        "@testing-library/react": "^16.1.0",
-        "@types/react": "^19.0.0",
-        "@types/react-dom": "^19.0.0",
-        "jsdom": "^25.0.1",
-        "react": "^19.2.0",
-        "react-dom": "^19.2.0",
-        "react-remove-scroll": "2.7.2",
-        "react-remove-scroll-bar": "2.3.8",
-        "react-style-singleton": "2.2.3",
-        "tsup": "^8.5.1",
-        "use-callback-ref": "1.3.3",
-        "use-sidecar": "1.1.3",
-        "typescript": "^5.7.2",
-        "vitest": "^4.1.10"
-    },
-    "publishConfig": {
-        "registry": "https://registry.npmjs.org",
-        "access": "public"
+  "name": "@splicewire/beam-agreements",
+  "version": "0.1.0",
+  "description": "Agreements and consents in the browser: the account and operator screens over frame's shells.",
+  "type": "module",
+  "sideEffects": false,
+  "files": [
+    "dist",
+    "src",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "npm run build"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
     }
+  },
+  "peerDependencies": {
+    "@schemastud/frame": "*",
+    "@schemastud/seam": "*",
+    "@tanstack/react-query": ">=5",
+    "react": ">=18"
+  },
+  "devDependencies": {
+    "@schemastud/frame": "github:schemastud/js#bfa13aee358a30425ee6d3f84c81c410cbf5be6a&path:/frame",
+    "@schemastud/seam": "github:schemastud/js#30f9ad9845f7ec73401c820dc3ee727d6cbd40db&path:/seam",
+    "@schemastud/ui": "github:schemastud/js#8f98a71ed077b827ecde105d6f781a946d26085c&path:/ui",
+    "@tanstack/react-query": "^5.62.0",
+    "@testing-library/dom": "^10.4.1",
+    "@testing-library/react": "^16.1.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "jsdom": "^25.0.1",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "react-remove-scroll": "2.7.2",
+    "react-remove-scroll-bar": "2.3.8",
+    "react-style-singleton": "2.2.3",
+    "tsup": "^8.5.1",
+    "use-callback-ref": "1.3.3",
+    "use-sidecar": "1.1.3",
+    "typescript": "^5.7.2",
+    "vitest": "^4.1.10"
+  },
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org",
+    "access": "public"
+  }
 }
