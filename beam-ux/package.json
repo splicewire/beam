@@ -19,6 +19,10 @@
             "types": "./dist/timeline.d.ts",
             "import": "./dist/timeline.js"
         },
+        "./takes": {
+            "types": "./dist/takes.d.ts",
+            "import": "./dist/takes.js"
+        },
         "./edit-mode": {
             "types": "./dist/edit-mode.d.ts",
             "import": "./dist/edit-mode.js"
