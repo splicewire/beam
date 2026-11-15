@@ -236,7 +236,8 @@ function AddressedVisualEditor({ entryRef }: { entryRef: EntryRef }) {
         <VisualEditor value={local.session.body as JsonDoc} onChange={local.change}
             onSave={save} onUndo={local.undo} onRedo={local.redo}
             canUndo={local.session.canUndo} canRedo={local.session.canRedo}
-            theme={theme} brand={brand ? `${brand} · editor` : "Entry editor"} />
+            theme={theme} brand={brand ? `${brand} · editor` : "Entry editor"}
+            nodeAction={id && transport.refineNode ? { slug: entryRef.slug ?? id, refine: (_slug, request) => transport.refineNode!(id, request) } : undefined} />
         </SourceMode>
     </CanvasProvider>;
 }

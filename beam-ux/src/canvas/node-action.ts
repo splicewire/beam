@@ -68,9 +68,25 @@ export function candidateOf(decision: NodeActionDecision): JsonNode | null {
     return node && typeof node === 'object' && 'kind' in node ? (node as JsonNode) : null;
 }
 
-/** The canvas's dotted path ("0.2.1", "0.slots.aside.0") as the operation's segments: ints for indexes, else strings. */
+/**
+ * The canvas's dotted path as the operation's node path. The canvas writes a child index straight after its parent
+ * ("0.2.1" is doc[0].children[2].children[1]) and a named slot as "slots.<name>" followed by the index inside it.
+ * The operation walks node positions spelled out (laravel-beam-ux `CanvasNodePreview::locate`): `[0, 'children', 2,
+ * 'children', 1]`, and `[0, 'slots', 'aside', 0]` inside a slot, the step after a slot name indexing the slot itself.
+ */
 export function pathSegments(path: string): NodePathSegment[] {
-    return path === '' ? [] : path.split('.').map((part) => (/^\d+$/.test(part) ? Number(part) : part));
+    if (path === '') return [];
+    const parts = path.split('.');
+    const segments: NodePathSegment[] = [Number(parts[0])];
+    for (let i = 1; i < parts.length; i++) {
+        if (parts[i] === 'slots') {
+            segments.push('slots', parts[i + 1], Number(parts[i + 2]));
+            i += 2;
+        } else {
+            segments.push('children', Number(parts[i]));
+        }
+    }
+    return segments;
 }
 
 /** A block's stable id, when it has one. */
