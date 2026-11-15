@@ -67,6 +67,35 @@ export const DistributionCircuit: Story = {
         await expect(canvas.getByRole('button', { name: 'Add follow-up' })).toBeEnabled();
     },
 };
+// The host fills the Circuit slot with its own control (the flagship mounts its circuit field here). The stub sets an id
+// that is not in any choices list, as a Circuit created in place would, and the form accepts it.
+export const HostCircuitField: Story = {
+    args: {
+        circuitAction: (id) => ({
+            action_kind: 'example.distribution',
+            action_payload: { destination: id },
+        }),
+        renderCircuitField: ({ id, value, onChange, disabled }) => (
+            <button
+                type="button"
+                id={id}
+                disabled={disabled}
+                className="rounded-md border border-input px-3 py-2 text-sm"
+                onClick={() => onChange('created-in-place')}
+            >
+                {value ? `Chosen: ${value}` : 'Create a circuit (host stub)'}
+            </button>
+        ),
+    },
+    play: async ({ canvasElement }) => {
+        const canvas = within(canvasElement);
+        await userEvent.selectOptions(canvas.getByLabelText('Follow-up action'), 'circuit');
+        await expect(canvas.getByRole('button', { name: 'Add follow-up' })).toBeDisabled();
+        await userEvent.click(await canvas.findByLabelText('Circuit'));
+        await expect(canvas.getByLabelText('Circuit')).toHaveTextContent('Chosen: created-in-place');
+        await expect(canvas.getByRole('button', { name: 'Add follow-up' })).toBeEnabled();
+    },
+};
 export const RefusedSave: Story = {
     args: {
         onConfigure: async () => {

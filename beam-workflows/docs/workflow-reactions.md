@@ -10,6 +10,10 @@ execution. Timing starts from the committed transition fact, including delayed p
 The host injects a subject picker or label, an opaque calendar association, Circuit choices,
 and `circuitAction(id)` returning the destination fields of `WorkflowReactionData`. The
 component never imports a Composition, Circuit request, tenant resolver, or HTTP client.
+A host with its own Circuit control passes `renderCircuitField(field)`, which replaces the
+`circuitChoices` select and gets `{ id, labelId, value, onChange, disabled }`; any non-empty id
+it sets is valid, and without it the select renders unchanged; without `circuitAction` the
+Circuit option and the slot never appear.
 Remount it when changing subjects; load a projection before mounting for named defaults.
 The server prepares the destination and authorizes both endpoints. Browser input never
 supplies principal identity, tenant context, definition pins, or a prepared payload.
