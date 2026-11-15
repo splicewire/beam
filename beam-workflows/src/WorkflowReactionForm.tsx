@@ -13,6 +13,20 @@ export type WorkflowReactionDestination = Pick<
     'action_kind' | 'action_payload'
 >;
 
+/** What the follow-up form hands a host-rendered Circuit control. */
+export interface WorkflowReactionCircuitFieldProps {
+    /** The id the form's "Circuit" label points at; put it on the control's focusable element. */
+    id: string;
+    /** The label element's id, for a control that labels itself with aria-labelledby. */
+    labelId: string;
+    /** The chosen Circuit id; '' when none is chosen. */
+    value: string;
+    /** Set the chosen id ('' clears it). A Circuit created in place passes its new id. */
+    onChange: (circuitId: string) => void;
+    /** True while the follow-up is saving; a portaled sheet does not inherit the fieldset's disabled. */
+    disabled: boolean;
+}
+
 export function WorkflowReactionForm({
     projection,
     subject,
@@ -22,6 +36,7 @@ export function WorkflowReactionForm({
     initialTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone,
     circuitChoices = [],
     circuitAction,
+    renderCircuitField,
     onConfigure,
 }: {
     projection: WorkflowProjectionData | null;
@@ -32,7 +47,12 @@ export function WorkflowReactionForm({
     initialTimezone?: string;
     circuitChoices?: { id: string; label: string }[];
     circuitAction?: (id: string) => WorkflowReactionDestination;
-    onConfigure: (input: WorkflowReactionData) => Promise<void>;
+    /**
+     * A host-rendered Circuit control that replaces the `circuitChoices` select. With it, any non-empty id the control
+     * sets is valid (a Circuit created in place is not among the choices) and the server stays the authority.
+     */
+    renderCircuitField?: (field: WorkflowReactionCircuitFieldProps) => ReactNode;
+    onConfigure:(input: WorkflowReactionData) => Promise<void>;
 }) {
     const id = useId();
     const names = [...new Set(projection?.transitions.map((transition) => transition.name) ?? [])];
@@ -61,7 +81,12 @@ export function WorkflowReactionForm({
     const validDestination =
         destination === 'transition'
             ? names.includes(target)
-            : Boolean(circuitAction && circuitChoices.some((choice) => choice.id === circuitId));
+            : Boolean(
+                  circuitAction &&
+                  (renderCircuitField
+                      ? circuitId !== ''
+                      : circuitChoices.some((choice) => choice.id === circuitId)),
+              );
     const valid = Boolean(
         subject.subject_id &&
         subject.subject_kind &&
@@ -202,29 +227,45 @@ export function WorkflowReactionForm({
                     </div>
                 ) : (
                     <div className="space-y-1.5">
-                        <label htmlFor={`${id}-circuit`} className="text-sm font-medium">
+                        <label
+                            id={`${id}-circuit-label`}
+                            htmlFor={`${id}-circuit`}
+                            className="text-sm font-medium"
+                        >
                             Circuit
                         </label>
-                        <select
-                            id={`${id}-circuit`}
-                            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                            required
-                            value={circuitId}
-                            onChange={(event) => setCircuitId(event.target.value)}
-                        >
-                            <option value="">Choose a Circuit…</option>
-                            {circuitChoices.map((choice) => (
-                                <option key={choice.id} value={choice.id}>
-                                    {choice.label}
-                                </option>
-                            ))}
-                        </select>
-                        {!circuitChoices.length ? (
-                            <p className="text-sm text-muted-foreground">
-                                No Circuits are available. Create a Circuit or choose another
-                                follow-up action.
-                            </p>
-                        ) : null}
+                        {renderCircuitField && circuitAction ? (
+                            renderCircuitField({
+                                id: `${id}-circuit`,
+                                labelId: `${id}-circuit-label`,
+                                value: circuitId,
+                                onChange: setCircuitId,
+                                disabled: pending,
+                            })
+                        ) : (
+                            <>
+                                <select
+                                    id={`${id}-circuit`}
+                                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                                    required
+                                    value={circuitId}
+                                    onChange={(event) => setCircuitId(event.target.value)}
+                                >
+                                    <option value="">Choose a Circuit…</option>
+                                    {circuitChoices.map((choice) => (
+                                        <option key={choice.id} value={choice.id}>
+                                            {choice.label}
+                                        </option>
+                                    ))}
+                                </select>
+                                {!circuitChoices.length ? (
+                                    <p className="text-sm text-muted-foreground">
+                                        No Circuits are available. Create a Circuit or choose
+                                        another follow-up action.
+                                    </p>
+                                ) : null}
+                            </>
+                        )}
                     </div>
                 )}
                 <div className="space-y-1.5">
