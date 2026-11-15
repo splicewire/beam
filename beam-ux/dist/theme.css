@@ -1,0 +1,19 @@
+/*
+ * @splicewire/beam-ux/theme.css — the beam tier's token defaults plus the Tailwind v4 bridge for the
+ * status semantics they add. Import it from a Tailwind v4 entry stylesheet, after `@import 'tailwindcss'`:
+ *
+ *     @import '@splicewire/beam-ux/theme.css';
+ *
+ * The bridge is what makes `bg-warning/10`, `text-warning-foreground`, `border-warning`, `text-signal`
+ * and `text-info` (used across the beam packages and @schemastud/*) generate at all; without a
+ * `--color-*` key Tailwind silently emits nothing for them. A non-Tailwind host imports `tokens.css`.
+ * Overriding and dark mode: see `tokens.css`.
+ */
+@import './tokens.css';
+
+@theme inline {
+    --color-signal: var(--signal);
+    --color-warning: var(--warning);
+    --color-warning-foreground: var(--warning-foreground);
+    --color-info: var(--info);
+}
