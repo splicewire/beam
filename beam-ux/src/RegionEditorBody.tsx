@@ -300,9 +300,9 @@ function FrameEditor() {
 }
 
 const LIST_ROWS = [
-    { slug: 'frontend-foundations', titleKey: 'splicewire-beam-ux::messages.region_sample_frontend_foundations', format: 'cohort', seats: 8 },
-    { slug: 'data-modeling', titleKey: 'splicewire-beam-ux::messages.region_sample_data_modeling', format: 'self-paced', seats: 0 },
-    { slug: 'live-systems-design', titleKey: 'splicewire-beam-ux::messages.region_sample_live_systems_design', format: 'live', seats: 3 },
+    { slug: 'frontend-foundations', titleKey: 'splicewire-beam-ux::messages.region_sample_frontend_foundations', formatKey: 'splicewire-beam-ux::messages.region_format_cohort', seats: 8 },
+    { slug: 'data-modeling', titleKey: 'splicewire-beam-ux::messages.region_sample_data_modeling', formatKey: 'splicewire-beam-ux::messages.region_format_self_paced', seats: 0 },
+    { slug: 'live-systems-design', titleKey: 'splicewire-beam-ux::messages.region_sample_live_systems_design', formatKey: 'splicewire-beam-ux::messages.region_format_live', seats: 3 },
 ] as const;
 
 function ListEditor() {
@@ -336,7 +336,7 @@ function ListEditor() {
                     >
                         <span className="flex-1 font-medium">{m.t(r.titleKey)}</span>
                         <Badge variant="outline" className="text-[10px]">
-                            {r.format}
+                            {m.t(r.formatKey)}
                         </Badge>
                         <span className="w-16 text-right font-mono text-xs text-muted-foreground">
                             {r.seats > 0 ? m.t('splicewire-beam-ux::messages.region_sample_seats', { count: r.seats }) : m.t('splicewire-beam-ux::messages.region_sample_full')}
