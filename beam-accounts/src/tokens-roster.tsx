@@ -41,6 +41,8 @@ import type {
   TokenProvenance,
   TokensServices,
 } from "./types";
+import { englishBeamAccountsMessages, useBeamAccountsMessages, type BeamAccountsMessages, type BeamAccountsMessageKey } from "./messages";
+import { richMessage } from "./rich-message";
 
 /** Token roster with grouped permission selection and reveal-once create/rotate flows.
  * Transport, feedback, and optional row activity are supplied by TokensProvider.
@@ -53,17 +55,17 @@ const FACETS: TokenProvenance[] = [
   "passkey",
 ];
 
-const PROVENANCE_LABEL: Record<TokenProvenance, string> = {
-  api: "API",
-  session: "Session",
-  dev: "Dev",
-  broker: "Broker",
-  passkey: "Passkey",
-  federation: "Federation",
+const PROVENANCE_LABEL: Record<TokenProvenance, BeamAccountsMessageKey> = {
+  api: 'splicewire-beam-accounts::messages.tokens_type_api',
+  session: 'splicewire-beam-accounts::messages.tokens_type_session',
+  dev: 'splicewire-beam-accounts::messages.tokens_type_dev',
+  broker: 'splicewire-beam-accounts::messages.tokens_type_broker',
+  passkey: 'splicewire-beam-accounts::messages.tokens_type_passkey',
+  federation: 'splicewire-beam-accounts::messages.tokens_type_federation',
   // The sync service identity's token — a machine principal, not a human one, which is
   // why it is absent from FACETS above (a deliberate 5-of-7 filter set) but required
   // here: both maps are exhaustive over TokenProvenance.
-  service: "Service",
+  service: 'splicewire-beam-accounts::messages.tokens_type_service',
 };
 
 const PROVENANCE_BADGE: Record<
@@ -80,39 +82,42 @@ const PROVENANCE_BADGE: Record<
 };
 
 const EXPIRY_OPTIONS = [
-  { value: 0, label: "Never expires" },
-  { value: 7, label: "7 days" },
-  { value: 30, label: "30 days" },
-  { value: 60, label: "60 days" },
-  { value: 90, label: "90 days" },
-];
+  { value: 0, labelKey: 'splicewire-beam-accounts::messages.tokens_never_expires' },
+  { value: 7, labelKey: 'splicewire-beam-accounts::messages.tokens_expiry_7_days' },
+  { value: 30, labelKey: 'splicewire-beam-accounts::messages.tokens_expiry_30_days' },
+  { value: 60, labelKey: 'splicewire-beam-accounts::messages.tokens_expiry_60_days' },
+  { value: 90, labelKey: 'splicewire-beam-accounts::messages.tokens_expiry_90_days' },
+] as const;
 
 // The create-token schema — the REAL SchemaForm artifact carrying name + expiry. `abilities` is NOT
 // a SchemaForm enum: the grouped scope picker (the ticket-Q1 enhancement) owns scope as a bespoke
 // grouped/searchable control. Both feed the one mint body ({ name, abilities, expiresInDays }).
-export const tokenScopeSchema: SchemaNode = {
+/** The create-token schema in the reader's locale; `tokenScopeSchema` is its English instance. */
+export function tokenScopeSchemaFor(messages: BeamAccountsMessages = englishBeamAccountsMessages): SchemaNode {
+  return {
   type: "object",
   properties: {
     name: {
       type: "string",
-      title: "Token name",
-      description:
-        'A label you recognise later — e.g. "ci-deploy-bot" or "laptop CLI".',
+      title: messages.t('splicewire-beam-accounts::messages.tokens_field_name'),
+      description: messages.t('splicewire-beam-accounts::messages.tokens_field_name_hint'),
       minLength: 1,
     },
     expiresInDays: {
       type: "integer",
-      title: "Expires",
-      description:
-        'When the token stops working. "Never" mints a token with no expiry.',
+      title: messages.t('splicewire-beam-accounts::messages.tokens_field_expires'),
+      description: messages.t('splicewire-beam-accounts::messages.tokens_field_expires_hint'),
       // Labels travel IN the schema as oneOf const/title pairs: the renderer (RJSF 6) never reads a
       // schema-level `enumNames`, so an enum showed the raw "0" for "Never" (TOWER-05 shots-r5).
-      oneOf: EXPIRY_OPTIONS.map((o) => ({ const: o.value, title: o.label })),
+      oneOf: EXPIRY_OPTIONS.map((o) => ({ const: o.value, title: messages.t(o.labelKey) })),
       default: 0,
     },
   },
   required: ["name"],
-};
+  };
+}
+
+export const tokenScopeSchema: SchemaNode = tokenScopeSchemaFor();
 
 // ─── small look helpers ──────────────────────────────────────────────────────
 
@@ -138,21 +143,21 @@ function fmtDate(value: string | null): string {
  *  columns; the subtitle used to print `PersonalAccessToken#<id>`, a server class name.) */
 export function expiryLabel(
   token: Pick<ApiTokenData, "expiresAt">,
-  now: number = Date.now()
+  now: number = Date.now(),
+  messages: BeamAccountsMessages = englishBeamAccountsMessages
 ): string {
-  if (!token.expiresAt) return "Never expires";
+  if (!token.expiresAt) return messages.t('splicewire-beam-accounts::messages.tokens_never_expires');
   const at = new Date(token.expiresAt);
-  return `${
-    at.getTime() < now ? "Expired" : "Expires"
-  } ${at.toLocaleDateString()}`;
+  // The date keeps the browser locale (toLocaleDateString) so English stays byte-identical; nominated.
+  return messages.t(at.getTime() < now ? 'splicewire-beam-accounts::messages.tokens_expired_on' : 'splicewire-beam-accounts::messages.tokens_expires_on', { date: at.toLocaleDateString() });
 }
 
-function fmtRelative(value: string | null): string {
-  if (!value) return "never";
+function fmtRelative(value: string | null, messages: BeamAccountsMessages): string {
+  if (!value) return messages.t('splicewire-beam-accounts::messages.tokens_never');
   const mins = (Date.now() - new Date(value).getTime()) / 60_000;
-  if (mins < 60) return `${Math.max(1, Math.round(mins))}m ago`;
-  if (mins < 1440) return `${Math.round(mins / 60)}h ago`;
-  return `${Math.round(mins / 1440)}d ago`;
+  if (mins < 60) return messages.t('splicewire-beam-accounts::messages.tokens_minutes_ago', { count: Math.max(1, Math.round(mins)) });
+  if (mins < 1440) return messages.t('splicewire-beam-accounts::messages.tokens_hours_ago', { count: Math.round(mins / 60) });
+  return messages.t('splicewire-beam-accounts::messages.tokens_days_ago', { count: Math.round(mins / 1440) });
 }
 
 // ─── scope grouping (the ticket-Q1 enhancement, client-side over listPermissions) ────
@@ -163,7 +168,7 @@ interface PermissionGroup {
   permissions: string[];
 }
 
-function groupPermissions(names: string[]): PermissionGroup[] {
+function groupPermissions(names: string[], messages: BeamAccountsMessages): PermissionGroup[] {
   const byResource = new Map<string, string[]>();
   for (const name of names) {
     const dot = name.indexOf(".");
@@ -180,7 +185,7 @@ function groupPermissions(names: string[]): PermissionGroup[] {
       resource,
       label:
         resource === "general"
-          ? "General"
+          ? messages.t('splicewire-beam-accounts::messages.tokens_group_general')
           : resource[0].toUpperCase() + resource.slice(1),
       permissions: permissions.sort(),
     }));
@@ -194,12 +199,13 @@ function actionLabel(name: string): string {
 // ─── the scope cell ──────────────────────────────────────────────────────────
 
 function ScopeChips({ abilities }: { abilities: string[] | null }) {
+  const m = useBeamAccountsMessages();
   if (!abilities || abilities.length === 0) {
     return (
       <span className="inline-flex items-center gap-1.5 rounded-md border border-warning/40 bg-warning/10 px-2 py-0.5 text-[11px] text-warning-foreground">
         <span className="size-1.5 rounded-full bg-warning" />
         {/* The label alone: the `['*']` wildcard is the wire shape, not something a person reads. */}
-        Full access
+        {m.t('splicewire-beam-accounts::messages.tokens_full_access')}
       </span>
     );
   }
@@ -212,7 +218,7 @@ function ScopeChips({ abilities }: { abilities: string[] | null }) {
           className="flex flex-col items-start gap-0.5 py-1"
         >
           {scopeLabel(a) && (
-            <span className="text-[11px] font-medium">{scopeLabel(a)}</span>
+            <span className="text-[11px] font-medium">{m.t(scopeLabel(a)!)}</span>
           )}
           <span className="font-mono text-[9px] text-muted-foreground">{a}</span>
         </Badge>
@@ -221,42 +227,42 @@ function ScopeChips({ abilities }: { abilities: string[] | null }) {
   );
 }
 
-const SCOPE_LABELS: Record<string, string> = {
-  "activity.view": "View activity",
-  "billing.manage": "Manage billing",
-  "billing.view": "View billing",
-  "conduit.delete": "Delete conduits",
-  "conduit.update": "Update conduits",
-  "content.author": "Author content",
-  "context-scopes.embeddings": "Search context scope embeddings",
-  "declarations.redetermine": "Redetermine declarations",
-  "embeddings.embed": "Generate embeddings",
-  "federation-grants.configure": "Configure federation grants",
-  "federation-grants.pin": "Pin federation grants",
-  "federation-grants.pull": "Pull federation grants",
-  "federation-grants.revoke": "Revoke federation grants",
-  "installed-extensions.refresh": "Refresh installed extensions",
-  "installed-extensions.remove": "Remove installed extensions",
-  "market-extensions.install": "Install marketplace extensions",
-  "market-extensions.purchase": "Purchase marketplace extensions",
-  "market-listing.create": "Create marketplace listings",
-  "market-listing.update": "Update marketplace listings",
-  "market-listing.view": "View marketplace listings",
-  "media.analyze": "Analyze media",
-  "media.ingest": "Ingest media",
-  "permission-cascade.platform_admin_permission": "Manage platform permissions",
-  "plans.checkout": "Checkout plans",
-  "platform.manage": "Manage platform objects",
-  "schemas.manage": "Manage schemas",
-  "silos.publish-corpus": "Publish silo corpus",
-  "silos.withdraw-corpus": "Withdraw silo corpus",
-  "site.edit": "Edit site",
-  "tenants.sync": "Sync workspaces",
-  "usage.view": "View usage",
-  "workflows.author": "Author workflows",
+const SCOPE_LABELS: Record<string, BeamAccountsMessageKey> = {
+  "activity.view": 'splicewire-beam-accounts::messages.tokens_scope_view_activity',
+  "billing.manage": 'splicewire-beam-accounts::messages.tokens_scope_manage_billing',
+  "billing.view": 'splicewire-beam-accounts::messages.tokens_scope_view_billing',
+  "conduit.delete": 'splicewire-beam-accounts::messages.tokens_scope_delete_conduits',
+  "conduit.update": 'splicewire-beam-accounts::messages.tokens_scope_update_conduits',
+  "content.author": 'splicewire-beam-accounts::messages.tokens_scope_author_content',
+  "context-scopes.embeddings": 'splicewire-beam-accounts::messages.tokens_scope_search_context_scope_embeddings',
+  "declarations.redetermine": 'splicewire-beam-accounts::messages.tokens_scope_redetermine_declarations',
+  "embeddings.embed": 'splicewire-beam-accounts::messages.tokens_scope_generate_embeddings',
+  "federation-grants.configure": 'splicewire-beam-accounts::messages.tokens_scope_configure_federation_grants',
+  "federation-grants.pin": 'splicewire-beam-accounts::messages.tokens_scope_pin_federation_grants',
+  "federation-grants.pull": 'splicewire-beam-accounts::messages.tokens_scope_pull_federation_grants',
+  "federation-grants.revoke": 'splicewire-beam-accounts::messages.tokens_scope_revoke_federation_grants',
+  "installed-extensions.refresh": 'splicewire-beam-accounts::messages.tokens_scope_refresh_installed_extensions',
+  "installed-extensions.remove": 'splicewire-beam-accounts::messages.tokens_scope_remove_installed_extensions',
+  "market-extensions.install": 'splicewire-beam-accounts::messages.tokens_scope_install_marketplace_extensions',
+  "market-extensions.purchase": 'splicewire-beam-accounts::messages.tokens_scope_purchase_marketplace_extensions',
+  "market-listing.create": 'splicewire-beam-accounts::messages.tokens_scope_create_marketplace_listings',
+  "market-listing.update": 'splicewire-beam-accounts::messages.tokens_scope_update_marketplace_listings',
+  "market-listing.view": 'splicewire-beam-accounts::messages.tokens_scope_view_marketplace_listings',
+  "media.analyze": 'splicewire-beam-accounts::messages.tokens_scope_analyze_media',
+  "media.ingest": 'splicewire-beam-accounts::messages.tokens_scope_ingest_media',
+  "permission-cascade.platform_admin_permission": 'splicewire-beam-accounts::messages.tokens_scope_manage_platform_permissions',
+  "plans.checkout": 'splicewire-beam-accounts::messages.tokens_scope_checkout_plans',
+  "platform.manage": 'splicewire-beam-accounts::messages.tokens_scope_manage_platform_objects',
+  "schemas.manage": 'splicewire-beam-accounts::messages.tokens_scope_manage_schemas',
+  "silos.publish-corpus": 'splicewire-beam-accounts::messages.tokens_scope_publish_silo_corpus',
+  "silos.withdraw-corpus": 'splicewire-beam-accounts::messages.tokens_scope_withdraw_silo_corpus',
+  "site.edit": 'splicewire-beam-accounts::messages.tokens_scope_edit_site',
+  "tenants.sync": 'splicewire-beam-accounts::messages.tokens_scope_sync_workspaces',
+  "usage.view": 'splicewire-beam-accounts::messages.tokens_scope_view_usage',
+  "workflows.author": 'splicewire-beam-accounts::messages.tokens_scope_author_workflows',
 };
 
-function scopeLabel(scope: string): string | null {
+function scopeLabel(scope: string): BeamAccountsMessageKey | null {
   return SCOPE_LABELS[scope] ?? null;
 }
 
@@ -271,8 +277,9 @@ function ScopePicker({
   selected: string[];
   onChange: (next: string[]) => void;
 }) {
+  const m = useBeamAccountsMessages();
   const [query, setQuery] = useState("");
-  const groups = useMemo(() => groupPermissions(permissions), [permissions]);
+  const groups = useMemo(() => groupPermissions(permissions, m), [permissions, m]);
   const q = query.trim().toLowerCase();
 
   function toggle(name: string) {
@@ -286,11 +293,10 @@ function ScopePicker({
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between gap-2">
-        <label className="text-[13px] font-medium">Scope (abilities)</label>
+        <label className="text-[13px] font-medium">{m.t('splicewire-beam-accounts::messages.tokens_scope_abilities')}</label>
         {selected.length === 0 ? (
           <span className="inline-flex items-center gap-1 font-mono text-[11px] text-warning-foreground">
-            <span className="size-1.5 rounded-full bg-warning" /> Unscoped ·
-            Full access
+            <span className="size-1.5 rounded-full bg-warning" /> {m.t('splicewire-beam-accounts::messages.tokens_unscoped_full_access')}
           </span>
         ) : (
           <button
@@ -298,7 +304,7 @@ function ScopePicker({
             onClick={() => onChange([])}
             className="font-mono text-[11px] text-muted-foreground hover:text-foreground"
           >
-            {selected.length} selected · clear
+            {m.t('splicewire-beam-accounts::messages.tokens_selected_clear', { count: selected.length })}
           </button>
         )}
       </div>
@@ -308,7 +314,7 @@ function ScopePicker({
         <Input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Filter permissions…"
+          placeholder={m.t('splicewire-beam-accounts::messages.tokens_filter_permissions')}
           className="h-8 pl-8 text-[12.5px]"
         />
       </div>
@@ -316,7 +322,7 @@ function ScopePicker({
       <div className="max-h-52 space-y-3 overflow-y-auto rounded-md border p-2.5">
         {groups.length === 0 && (
           <p className="text-[12.5px] text-muted-foreground">
-            You hold no scopable permissions on this team.
+            {m.t('splicewire-beam-accounts::messages.tokens_no_scopable')}
           </p>
         )}
         {groups.map((group) => {
@@ -342,7 +348,7 @@ function ScopePicker({
                   }
                   className="text-[10.5px] text-primary hover:underline"
                 >
-                  {allOn ? "clear group" : "select all"}
+                  {allOn ? m.t('splicewire-beam-accounts::messages.tokens_clear_group') : m.t('splicewire-beam-accounts::messages.tokens_select_all')}
                 </button>
               </div>
               <div className="flex flex-wrap gap-1">
@@ -371,8 +377,7 @@ function ScopePicker({
         })}
       </div>
       <p className="text-[11.5px] text-muted-foreground">
-        Leave everything unselected for a Full-access token. The picker only
-        offers access you already have.
+        {m.t('splicewire-beam-accounts::messages.tokens_leave_unselected')}
       </p>
     </div>
   );
@@ -389,6 +394,7 @@ function CreateTokenDialog({
   onOpenChange: (open: boolean) => void;
   onMinted: (token: CreatedTokenData) => void;
 }) {
+  const m = useBeamAccountsMessages();
   const permissions = usePermissions();
   const createToken = useCreateToken();
   const [values, setValues] = useState<Record<string, unknown>>({
@@ -432,17 +438,16 @@ function CreateTokenDialog({
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <KeyRound className="size-4 text-primary" /> New API token
+            <KeyRound className="size-4 text-primary" /> {m.t('splicewire-beam-accounts::messages.tokens_new_api_token')}
           </DialogTitle>
           <DialogDescription>
-            A token can&apos;t do more than you can: choose from your own
-            permissions. Its secret is shown only once.
+            {m.t('splicewire-beam-accounts::messages.tokens_create_description')}
           </DialogDescription>
         </DialogHeader>
 
         {/* name + expiry: the REAL @schemastud/seam SchemaForm off the schema. */}
         <SchemaForm
-          schema={tokenScopeSchema}
+          schema={tokenScopeSchemaFor(m)}
           formData={values}
           uiSchema={{
             "ui:options": { label: false },
@@ -463,19 +468,17 @@ function CreateTokenDialog({
         {/* Explain the security boundary in product language; the ADR stays in source history. */}
         <div className="flex gap-2.5 rounded-md border border-dashed border-primary/40 bg-primary/[0.04] p-3 text-[12px] leading-relaxed text-muted-foreground">
           <p>
-            Choosing fewer permissions limits what the token can do if it is
-            exposed. A token can only use access you currently have, and it
-            stops using a permission when you lose that permission.
+            {m.t('splicewire-beam-accounts::messages.tokens_fewer_permissions')}
           </p>
         </div>
 
         <DialogFooter>
           <Button variant="ghost" onClick={() => onOpenChange(false)}>
-            Cancel
+            {m.t('splicewire-beam-accounts::messages.tokens_cancel')}
           </Button>
           <Button onClick={mint} disabled={!name || createToken.isPending}>
             <Plus className="size-4" />{" "}
-            {createToken.isPending ? "Minting…" : "Mint token"}
+            {createToken.isPending ? m.t('splicewire-beam-accounts::messages.tokens_minting') : m.t('splicewire-beam-accounts::messages.tokens_mint')}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -494,6 +497,7 @@ function RevealOnceDialog({
   title: string;
   onOpenChange: (open: boolean) => void;
 }) {
+  const m = useBeamAccountsMessages();
   const [copied, setCopied] = useState(false);
   return (
     <Dialog open={created !== null} onOpenChange={onOpenChange}>
@@ -503,8 +507,7 @@ function RevealOnceDialog({
             <KeyRound className="size-4 text-primary" /> {title}
           </DialogTitle>
           <DialogDescription>
-            Copy the key for “{created?.name}” now — for your security, we
-            won&rsquo;t show it again.
+            {m.t('splicewire-beam-accounts::messages.tokens_copy_key_now', { name: created?.name ?? "" })}
           </DialogDescription>
         </DialogHeader>
 
@@ -531,18 +534,17 @@ function RevealOnceDialog({
                 setTimeout(() => setCopied(false), 2000);
               }}
             >
-              <Copy className="size-3.5" /> {copied ? "Copied" : "Copy"}
+              <Copy className="size-3.5" /> {copied ? m.t('splicewire-beam-accounts::messages.tokens_copied') : m.t('splicewire-beam-accounts::messages.tokens_copy')}
             </Button>
           </div>
           <div className="flex items-center gap-2 rounded-md border border-warning/40 bg-warning/10 px-3 py-2 text-[12.5px] text-warning-foreground">
             <span className="size-1.5 flex-none rounded-full bg-warning" />
-            This is the only time you&apos;ll see this token. Copy it now and
-            keep it somewhere safe, such as a password or secret manager.
+            {m.t('splicewire-beam-accounts::messages.tokens_only_time')}
           </div>
         </div>
 
         <DialogFooter>
-          <Button onClick={() => onOpenChange(false)}>Done</Button>
+          <Button onClick={() => onOpenChange(false)}>{m.t('splicewire-beam-accounts::messages.tokens_done')}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -560,9 +562,10 @@ function FacetBar({
   counts: Record<TokenProvenance, number>;
   onToggle: (facet: TokenProvenance) => void;
 }) {
+  const m = useBeamAccountsMessages();
   return (
     <div className="flex flex-wrap items-center gap-1.5">
-      <span className="mr-1 text-[12px] text-muted-foreground">Type</span>
+      <span className="mr-1 text-[12px] text-muted-foreground">{m.t('splicewire-beam-accounts::messages.tokens_col_type')}</span>
       {FACETS.map((f) => {
         const on = active.has(f);
         return (
@@ -578,7 +581,7 @@ function FacetBar({
                 : "border-border text-muted-foreground hover:bg-muted"
             )}
           >
-            {PROVENANCE_LABEL[f]}
+            {m.t(PROVENANCE_LABEL[f])}
             <span className="font-mono text-[10.5px] text-muted-foreground">
               {counts[f]}
             </span>
@@ -596,12 +599,13 @@ function buildColumns(
   busy: boolean,
   onRotate: (token: ApiTokenData) => void,
   onArchive: (token: ApiTokenData) => void,
-  onDelete: (token: ApiTokenData) => void
+  onDelete: (token: ApiTokenData) => void,
+  m: BeamAccountsMessages
 ): ColumnDef<ApiTokenData, unknown>[] {
   return [
     {
       id: "name",
-      header: "Name",
+      header: m.t('splicewire-beam-accounts::messages.tokens_col_name'),
       cell: ({ row }) => {
         const t = row.original;
         return (
@@ -614,12 +618,12 @@ function buildColumns(
               </span>
               {t.isCurrent && (
                 <Badge variant="secondary" className="shrink-0 text-[10px]">
-                  This session
+                  {m.t('splicewire-beam-accounts::messages.tokens_this_session')}
                 </Badge>
               )}
               {isExpiring(t) && (
                 <span className="inline-flex shrink-0 items-center gap-1 rounded bg-warning/15 px-1.5 py-0.5 text-[10px] text-warning-foreground">
-                  <Clock3 className="size-3" /> expiring
+                  <Clock3 className="size-3" /> {m.t('splicewire-beam-accounts::messages.tokens_expiring')}
                 </span>
               )}
               {t.archivedAt && (
@@ -627,7 +631,7 @@ function buildColumns(
                   variant="outline"
                   className="shrink-0 text-[10px] text-muted-foreground"
                 >
-                  archived
+                  {m.t('splicewire-beam-accounts::messages.tokens_archived')}
                 </Badge>
               )}
             </div>
@@ -636,7 +640,7 @@ function buildColumns(
             <span className="flex min-w-0 items-center gap-1.5 text-[11px] text-muted-foreground">
               <TokenFragmentText token={t} />
               <span aria-hidden="true">·</span>
-              <span className="truncate">{expiryLabel(t)}</span>
+              <span className="truncate">{expiryLabel(t, Date.now(), m)}</span>
             </span>
           </div>
         );
@@ -644,7 +648,7 @@ function buildColumns(
     },
     {
       id: "provenance",
-      header: "Type",
+      header: m.t('splicewire-beam-accounts::messages.tokens_col_type'),
       cell: ({ row }) => {
         const p = asProvenance(row.original.provenance);
         return (
@@ -652,28 +656,28 @@ function buildColumns(
             variant={PROVENANCE_BADGE[p]}
             className="font-mono text-[10.5px]"
           >
-            {PROVENANCE_LABEL[p]}
+            {m.t(PROVENANCE_LABEL[p])}
           </Badge>
         );
       },
     },
     {
       id: "scope",
-      header: "Scope",
+      header: m.t('splicewire-beam-accounts::messages.tokens_col_scope'),
       cell: ({ row }) => <ScopeChips abilities={row.original.abilities} />,
     },
     {
       id: "lastUsedAt",
-      header: "Last used",
+      header: m.t('splicewire-beam-accounts::messages.tokens_col_last_used'),
       cell: ({ row }) => (
         <span className="text-[12.5px] text-muted-foreground">
-          {fmtRelative(row.original.lastUsedAt)}
+          {fmtRelative(row.original.lastUsedAt, m)}
         </span>
       ),
     },
     {
       id: "createdAt",
-      header: "Created",
+      header: m.t('splicewire-beam-accounts::messages.tokens_col_created'),
       cell: ({ row }) => (
         <span className="text-[12.5px] text-muted-foreground">
           {fmtDate(row.original.createdAt)}
@@ -682,7 +686,7 @@ function buildColumns(
     },
     {
       id: "actions",
-      header: () => <span className="sr-only">Actions</span>,
+      header: () => <span className="sr-only">{m.t('splicewire-beam-accounts::messages.tokens_col_actions')}</span>,
       cell: ({ row }) => {
         const t = row.original;
         // isCurrent renders "—": the server 422 guard made a visible affordance.
@@ -704,17 +708,15 @@ function buildColumns(
                 disabled={busy}
                 onClick={() => onRotate(t)}
               >
-                <RotateCw className="size-3.5" /> Rotate
+                <RotateCw className="size-3.5" /> {m.t('splicewire-beam-accounts::messages.tokens_rotate')}
               </Button>
             )}
             <Button
               variant="ghost"
               size="sm"
               disabled={busy}
-              title={archived ? "Delete permanently" : "Archive"}
-              aria-label={`${archived ? "Delete permanently" : "Archive"} ${
-                t.name
-              }`}
+              title={archived ? m.t('splicewire-beam-accounts::messages.tokens_delete_permanently') : m.t('splicewire-beam-accounts::messages.tokens_archive')}
+              aria-label={m.t(archived ? 'splicewire-beam-accounts::messages.tokens_delete_named' : 'splicewire-beam-accounts::messages.tokens_archive_named', { name: t.name })}
               onClick={() => (archived ? onDelete(t) : onArchive(t))}
             >
               <Trash2 className="size-3.5" />
@@ -729,6 +731,7 @@ function buildColumns(
 // ─── the graduated surface ───────────────────────────────────────────────────
 
 export function TokensRoster() {
+  const m = useBeamAccountsMessages();
   const { renderTokenActivity } = useTokensServices();
   const notify = useNotify();
 
@@ -807,7 +810,7 @@ export function TokensRoster() {
   async function archive(token: ApiTokenData) {
     try {
       await archiveToken.mutateAsync(token.id);
-      notify({ type: "success", message: `Archived “${token.name}”.` });
+      notify({ type: "success", message: m.t('splicewire-beam-accounts::messages.tokens_archived_toast', { name: token.name }) });
     } catch {
       /* host error net */
     }
@@ -816,7 +819,7 @@ export function TokensRoster() {
   async function remove(token: ApiTokenData) {
     try {
       await deleteToken.mutateAsync(token.id);
-      notify({ type: "success", message: `Deleted “${token.name}”.` });
+      notify({ type: "success", message: m.t('splicewire-beam-accounts::messages.tokens_deleted_toast', { name: token.name }) });
     } catch {
       /* host error net */
     }
@@ -832,7 +835,7 @@ export function TokensRoster() {
   }
 
   const columns = useMemo(
-    () => buildColumns(renderTokenActivity, busy, rotate, archive, remove),
+    () => buildColumns(renderTokenActivity, busy, rotate, archive, remove, m),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [renderTokenActivity, busy]
   );
@@ -854,16 +857,14 @@ export function TokensRoster() {
           <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5">
             {/* The page's one h1: every host renders this roster as the whole Tokens page. */}
             <h1 className="text-[15px] font-semibold tracking-tight">
-              Personal access tokens
+              {m.t('splicewire-beam-accounts::messages.tokens_heading')}
             </h1>
             <span className="font-mono text-[11px] text-muted-foreground">
-              {health.active} active · {health.expiring} expiring ·{" "}
-              {health.archived} archived
+              {m.t('splicewire-beam-accounts::messages.tokens_health', { active: health.active, expiring: health.expiring, archived: health.archived })}
             </span>
           </div>
           <p className="text-[13px] text-muted-foreground">
-            Keys that let apps and scripts act on your behalf. A token
-            can&apos;t do more than you can.
+            {m.t('splicewire-beam-accounts::messages.tokens_description')}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -872,15 +873,14 @@ export function TokensRoster() {
               variant="ghost"
               size="sm"
               disabled={busy}
-              title="Signs out your other browser sessions only"
+              title={m.t('splicewire-beam-accounts::messages.tokens_revoke_others_title')}
               onClick={sweepSessions}
             >
-              Revoke {otherSessionCount} other session
-              {otherSessionCount === 1 ? "" : "s"}
+              {m.choice('splicewire-beam-accounts::messages.tokens_revoke_other_count', otherSessionCount)}
             </Button>
           )}
           <Button size="sm" onClick={() => setCreateOpen(true)}>
-            <Plus className="size-4" /> New token
+            <Plus className="size-4" /> {m.t('splicewire-beam-accounts::messages.tokens_new_token')}
           </Button>
         </div>
       </div>
@@ -890,7 +890,7 @@ export function TokensRoster() {
         <div className="flex items-center gap-3">
           {active.size === 0 && (
             <span className="text-[12px] text-muted-foreground">
-              Showing all types
+              {m.t('splicewire-beam-accounts::messages.tokens_showing_all_types')}
             </span>
           )}
           <label className="flex cursor-pointer select-none items-center gap-2 text-[12.5px] text-muted-foreground">
@@ -900,14 +900,14 @@ export function TokensRoster() {
               checked={showArchived}
               onChange={(e) => setShowArchived(e.target.checked)}
             />
-            Show archived
+            {m.t('splicewire-beam-accounts::messages.tokens_show_archived')}
           </label>
         </div>
       </div>
 
       {tokensQuery.isError ? (
         <p role="alert" className="py-8 text-sm text-destructive">
-          Could not load your tokens. Try refreshing this page.
+          {m.t('splicewire-beam-accounts::messages.tokens_load_failed')}
         </p>
       ) : (
         <DataTable
@@ -920,8 +920,8 @@ export function TokensRoster() {
           }
           emptyMessage={
             all.length === 0
-              ? "No tokens yet."
-              : "No tokens match the selected types."
+              ? m.t('splicewire-beam-accounts::messages.tokens_empty')
+              : m.t('splicewire-beam-accounts::messages.tokens_empty_filtered')
           }
         />
       )}
@@ -929,12 +929,10 @@ export function TokensRoster() {
       {/* The "log out everywhere else" teaching — Session-provenance ONLY. */}
       <div className="flex gap-2.5 rounded-md border border-warning/40 bg-warning/[0.06] p-3 text-[12.5px] leading-relaxed text-muted-foreground">
         <span className="mt-0.5 text-xs font-medium text-warning-foreground">
-          Browser sessions
+          {m.t('splicewire-beam-accounts::messages.tokens_browser_sessions')}
         </span>
         <p>
-          <b className="text-foreground">Revoke other sessions</b> signs out
-          your other browser sessions only. Your API, broker, dev and passkey
-          tokens keep working, and so does this session.
+          {richMessage(m, 'splicewire-beam-accounts::messages.tokens_revoke_others_explainer', { action: <b className="text-foreground">{m.t('splicewire-beam-accounts::messages.tokens_revoke_others')}</b> })}
         </p>
       </div>
 
@@ -945,12 +943,12 @@ export function TokensRoster() {
       />
       <RevealOnceDialog
         created={minted}
-        title={`Token “${minted?.name ?? ""}” created`}
+        title={m.t('splicewire-beam-accounts::messages.tokens_created_title', { name: minted?.name ?? "" })}
         onOpenChange={(open) => !open && setMinted(null)}
       />
       <RevealOnceDialog
         created={rotated}
-        title="Token rotated"
+        title={m.t('splicewire-beam-accounts::messages.tokens_rotated_title')}
         onOpenChange={(open) => !open && setRotated(null)}
       />
     </div>
