@@ -60,6 +60,7 @@ import { monogram } from "./monogram.js";
 import { TreeRender } from "./TreeRender.js";
 import { createCanvasWidgetRegistry } from "./widgetRegistry.js";
 import { useBeamUxMessages } from "../messages.js";
+import { notice, say, type Notice } from "../message-descriptor.js";
 
 /**
  * The persistence seam — the host injects load/save (audiostud routes them through puckClient).
@@ -324,7 +325,7 @@ export function PageEditor({
   const [publication, setPublication] = useState<EntryPublicationState | null>(
     null,
   );
-  const [publicationError, setPublicationError] = useState<string | null>(null);
+  const [publicationError, setPublicationError] = useState<Notice | null>(null);
   const [conflict, setConflict] = useState(false);
   const canvasConfig = useCanvas();
   const local = useLocalSession(
@@ -381,9 +382,7 @@ export function PageEditor({
       .then((state) => {
         if (!live) return;
         if (!canMountPublication(state)) {
-          setPublicationError(
-            m.t('splicewire-beam-ux::messages.page_no_publication_pin'),
-          );
+          setPublicationError(notice('splicewire-beam-ux::messages.page_no_publication_pin'));
         } else setPublication(state);
       })
       // Silent: the draft badge is an enrichment of a dock that works without it, and a toast on
@@ -391,9 +390,7 @@ export function PageEditor({
       .catch(
         () =>
           live &&
-          setPublicationError(
-            m.t('splicewire-beam-ux::messages.page_history_load_failed'),
-          ),
+          setPublicationError(notice('splicewire-beam-ux::messages.page_history_load_failed')),
       );
 
     return () => {
@@ -680,7 +677,7 @@ export function PageEditor({
       </div>
     );
   if (publicationError || local.error)
-    return <div role="alert">{publicationError ?? local.error}</div>;
+    return <div role="alert">{publicationError !== null ? say(m, publicationError) : local.error}</div>;
   if (local.pending)
     return (
       <div role="alertdialog" aria-label={m.t('splicewire-beam-ux::messages.page_session_base_moved')}>

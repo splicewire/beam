@@ -15,6 +15,7 @@ import {blockStyleFields} from './block-style';
 import {authoredEntry} from './authored-components';
 import {ComponentProps} from './ComponentProps';
 import {useBeamUxMessages,type BeamUxMessageKey} from '../messages.js';
+import {notice,say,type Notice} from '../message-descriptor.js';
 
 const PANELS:Record<string,string[]>={
  Size:['width','height','min-width','max-width','min-height','max-height','aspect-ratio','object-fit'],
@@ -35,7 +36,7 @@ export function BlockInspector(){
  const canvasSelection=useCanvasSelection();
  const {selection,select}=useStyleSelection();
  const registry=config.styleRegistry??DEFAULT_STYLE_REGISTRY;
- const [error,setError]=useState<string|null>(null);
+ const [error,setError]=useState<Notice|null>(null);
  const [rendered,setRendered]=useState<Record<string,string>>({});
  const [rawProperty,setRawProperty]=useState('');
  const [rawValue,setRawValue]=useState('');
@@ -101,11 +102,11 @@ export function BlockInspector(){
    {(property==='color'||property.endsWith('-color'))&&<ColourControls property={property} value={value||inherited?.value||rendered[property]||'#000000'} onChange={value=>write(property,value)} onError={setError}/>}
    <div><button type="button" onClick={()=>write(property,null)}>{m.t('splicewire-beam-ux::messages.inspect_unset_property',{property})}</button>
     <button type="button" onClick={event=>{const input=event.currentTarget.closest('div')?.parentElement?.querySelector('input');input?.focus();}}>{m.t('splicewire-beam-ux::messages.inspect_edit_as_text',{property})}</button>
-    <button type="button" onClick={()=>{void navigator.clipboard?.writeText(`${property}: ${value||inherited?.value||rendered[property]||''};`).catch(()=>setError(m.t('splicewire-beam-ux::messages.inspect_copy_failed')));}}>{m.t('splicewire-beam-ux::messages.inspect_copy_property',{property})}</button></div>
+    <button type="button" onClick={()=>{void navigator.clipboard?.writeText(`${property}: ${value||inherited?.value||rendered[property]||''};`).catch(()=>setError(notice('splicewire-beam-ux::messages.inspect_copy_failed')));}}>{m.t('splicewire-beam-ux::messages.inspect_copy_property',{property})}</button></div>
   </div>;
  };
  return <div data-frame-region="inspector" data-node-type={node.type} style={{padding:12,overflow:'auto'}}>
-  {error&&<p role="alert">{error}</p>}
+  {error&&<p role="alert">{say(m,error)}</p>}
   {selected.length<=1&&<BindingInspector key={id} path={id}/>}
   {selected.length>1&&<p>{m.choice('splicewire-beam-ux::messages.inspect_blocks_selected',selected.length)}</p>}
   {effectiveDeclaration(style,'display',{breakpoint:selection.breakpoint,state:null},registry)?.value==='none'&&<p>{m.t('splicewire-beam-ux::messages.inspect_hidden_at',{width:selection.breakpoint?`${selection.breakpoint}+`:m.t('splicewire-beam-ux::messages.inspect_all_widths')})}</p>}
@@ -145,7 +146,7 @@ export function BlockInspector(){
  </div>;
 }
 
-function ColourControls({property,value,onChange,onError}:{property:string;value:string;onChange:(value:string)=>void;onError:(error:string)=>void}){
+function ColourControls({property,value,onChange,onError}:{property:string;value:string;onChange:(value:string)=>void;onError:(error:Notice)=>void}){
  const m=useBeamUxMessages();
  const parsed=colourInput(value);
  const alpha=parsed?.alpha??1;
@@ -156,7 +157,7 @@ function ColourControls({property,value,onChange,onError}:{property:string;value
   {!parsed&&<small>{m.t('splicewire-beam-ux::messages.inspect_colour_format_unsupported')}</small>}
   <label>{m.t('splicewire-beam-ux::messages.inspect_property_colour',{property})}<input type="color" aria-label={m.t('splicewire-beam-ux::messages.inspect_property_colour',{property})} value={hex} disabled={!parsed} onChange={event=>change(event.target.value,alpha)}/></label>
   <label>{m.t('splicewire-beam-ux::messages.inspect_property_alpha',{property})}<input type="number" aria-label={m.t('splicewire-beam-ux::messages.inspect_property_alpha',{property})} min="0" max="1" step="0.05" value={alpha} disabled={!parsed} onChange={event=>{const next=Number(event.target.value);if(Number.isFinite(next)&&next>=0&&next<=1){change(hex,next);}}}/></label>
-  {EyeDropper?<button type="button" onClick={()=>{void new EyeDropper().open().then(result=>change(result.sRGBHex,alpha)).catch(error=>{if(error?.name!=='AbortError')onError(m.t('splicewire-beam-ux::messages.inspect_sample_failed'));});}}>{m.t('splicewire-beam-ux::messages.inspect_pick_from_screen',{property})}</button>:<small>{m.t('splicewire-beam-ux::messages.inspect_eyedropper_unavailable')}</small>}
+  {EyeDropper?<button type="button" onClick={()=>{void new EyeDropper().open().then(result=>change(result.sRGBHex,alpha)).catch(error=>{if(error?.name!=='AbortError')onError(notice('splicewire-beam-ux::messages.inspect_sample_failed'));});}}>{m.t('splicewire-beam-ux::messages.inspect_pick_from_screen',{property})}</button>:<small>{m.t('splicewire-beam-ux::messages.inspect_eyedropper_unavailable')}</small>}
  </div>;
 }
 
