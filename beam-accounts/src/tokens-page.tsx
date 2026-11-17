@@ -195,7 +195,7 @@ export function TokensPage() {
         ),
       },
       {
-        header: m.t('splicewire-beam-accounts::messages.tokens_field_expires'),
+        header: m.t('splicewire-beam-accounts::messages.tokens_col_expires'),
         meta: { sortField: "expires", sortAccessor: (t) => t.expiresAt },
         cell: ({ row }) => {
           const token = row.original;
@@ -211,7 +211,7 @@ export function TokensPage() {
               )}
             >
               {formatDate(token.expiresAt)}
-              {expired ? ` ${m.t('splicewire-beam-accounts::messages.tokens_page_expired_marker')}` : ""}
+              {expired ? m.t('splicewire-beam-accounts::messages.tokens_page_expired_marker') : ""}
             </span>
           );
         },
@@ -831,7 +831,7 @@ function CreateTokenDialog() {
               </DialogDescription>
             </DialogHeader>
             <div className="grid gap-1.5">
-              <Label htmlFor="token-name">{m.t('splicewire-beam-accounts::messages.tokens_col_name')}</Label>
+              <Label htmlFor="token-name">{m.t('splicewire-beam-accounts::messages.tokens_page_field_name')}</Label>
               <Input
                 id="token-name"
                 value={name}
@@ -847,7 +847,7 @@ function CreateTokenDialog() {
               <div className="grid grid-cols-2 gap-2">
                 {(
                   [
-                    ["full", 'splicewire-beam-accounts::messages.tokens_full_access', 'splicewire-beam-accounts::messages.tokens_page_acts_as_you'],
+                    ["full", 'splicewire-beam-accounts::messages.tokens_page_access_full', 'splicewire-beam-accounts::messages.tokens_page_acts_as_you'],
                     ["scoped", 'splicewire-beam-accounts::messages.tokens_page_limited', 'splicewire-beam-accounts::messages.tokens_page_pick_permissions'],
                   ] as const
                 ).map(([value, title, hint]) => {

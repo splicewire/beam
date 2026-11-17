@@ -566,7 +566,7 @@ function FacetBar({
   const m = useBeamAccountsMessages();
   return (
     <div className="flex flex-wrap items-center gap-1.5">
-      <span className="mr-1 text-[12px] text-muted-foreground">{m.t('splicewire-beam-accounts::messages.tokens_col_type')}</span>
+      <span className="mr-1 text-[12px] text-muted-foreground">{m.t('splicewire-beam-accounts::messages.tokens_filter_type')}</span>
       {FACETS.map((f) => {
         const on = active.has(f);
         return (

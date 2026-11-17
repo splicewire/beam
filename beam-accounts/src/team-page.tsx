@@ -554,7 +554,7 @@ function InviteForm({
       </div>
 
       <div className="grid gap-1.5">
-        <Label htmlFor="invite-role">{m.t('splicewire-beam-accounts::messages.team_col_role')}</Label>
+        <Label htmlFor="invite-role">{m.t('splicewire-beam-accounts::messages.team_invite_role')}</Label>
         <SimpleSelect
           id="invite-role"
           className="capitalize"
