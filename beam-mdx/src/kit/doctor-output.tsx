@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { useBeamMdxMessages, type BeamMdxMessageKey } from '../messages';
 
 // One parsed line of captured `splicewire:beam:doctor` output.
 export interface DoctorFinding {
@@ -19,10 +20,10 @@ const LEVEL_STATUS: Record<string, DoctorFinding['status']> = {
     FAIL: 'fail',
 };
 
-const STATUS_LABEL: Record<DoctorFinding['status'], string> = {
-    pass: 'Pass',
-    warn: 'Warn',
-    fail: 'Fail',
+const STATUS_LABEL: Record<DoctorFinding['status'], BeamMdxMessageKey> = {
+    pass: 'splicewire-beam-mdx::messages.doctor_pass',
+    warn: 'splicewire-beam-mdx::messages.doctor_warn',
+    fail: 'splicewire-beam-mdx::messages.doctor_fail',
 };
 
 // Parse captured doctor text (lenient, matches BEAM-02's plain-text format):
@@ -69,6 +70,7 @@ export function DoctorOutput({
     raw?: string;
     children?: ReactNode;
 }) {
+    const m = useBeamMdxMessages();
     const text = raw ?? (typeof children === 'string' ? children : String(children ?? ''));
     const findings = parseDoctorOutput(text);
 
@@ -86,7 +88,7 @@ export function DoctorOutput({
                     >
                         <span className="bkit-doctoroutput-pip" aria-hidden="true" />
                         <span className="bkit-doctoroutput-label">
-                            {STATUS_LABEL[finding.status]}
+                            {m.t(STATUS_LABEL[finding.status])}
                         </span>
                         <span className="bkit-doctoroutput-check">{finding.check}</span>
                         {finding.detail && (
@@ -96,7 +98,7 @@ export function DoctorOutput({
                 ))}
             </ul>
             <p className="bkit-doctoroutput-summary">
-                {passed} passed / {warned} warn / {failed} failed
+                {m.t('splicewire-beam-mdx::messages.doctor_summary', { passed, warned, failed })}
             </p>
         </div>
     );

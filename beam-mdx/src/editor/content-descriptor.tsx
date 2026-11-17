@@ -6,6 +6,7 @@
 import { useMdastNodeUpdater, type JsxComponentDescriptor } from '@mdxeditor/editor';
 import { Content } from '../components/content';
 import { KIT_JSX_DESCRIPTORS } from './descriptors';
+import { useBeamMdxMessages } from '../messages';
 
 type MdxJsxAttr = { type: string; name?: string | null; value?: unknown };
 type MdastJsxNode = { attributes?: MdxJsxAttr[] };
@@ -24,12 +25,13 @@ const attrValue = (node: MdastJsxNode, key: string): string => {
 export function contentJsxDescriptor(options: string[] = []): JsxComponentDescriptor {
     const ContentRefEditor: JsxComponentDescriptor['Editor'] = ({ mdastNode }) => {
         const update = useMdastNodeUpdater();
+        const m = useBeamMdxMessages();
         const name = attrValue(mdastNode as MdastJsxNode, 'name');
 
         return (
             <div className="beam-content-ref" contentEditable={false}>
                 <div className="beam-content-ref-bar">
-                    <span className="beam-content-ref-tag">▤ shared content</span>
+                    <span className="beam-content-ref-tag">▤ {m.t('splicewire-beam-mdx::messages.shared_content')}</span>
                     <select
                         className="beam-content-ref-pick"
                         value={name}

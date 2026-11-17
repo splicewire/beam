@@ -9,6 +9,7 @@ import {
     DialogTitle,
 } from '@schemastud/ui';
 import type { VersionData } from './types';
+import { useBeamVersioningMessages } from './messages';
 
 /**
  * Confirm-before-restore dialog, extracted from the composition VersionsDrawer. Carries NO
@@ -28,23 +29,23 @@ export function VersionRestoreDialog<TVersion extends VersionData = VersionData>
     onConfirm: () => void;
     onCancel: () => void;
 }) {
+    const m = useBeamVersioningMessages();
     return (
         <Dialog open={version !== null} onOpenChange={(next) => !next && onCancel()}>
             <DialogContent className="max-w-md">
                 <DialogHeader>
-                    <DialogTitle>Restore {version?.readable}?</DialogTitle>
+                    <DialogTitle>{m.t('splicewire-beam-versioning::messages.restore_title', { version: version?.readable ?? '' })}</DialogTitle>
                     <DialogDescription>
-                        Your working copy is replaced with {version?.readable}'s content. A new
-                        version is minted, so nothing is lost — you can roll back again.
+                        {m.t('splicewire-beam-versioning::messages.restore_description', { version: version?.readable ?? '' })}
                     </DialogDescription>
                 </DialogHeader>
                 <DialogFooter>
                     <Button variant="outline" onClick={onCancel}>
-                        Cancel
+                        {m.t('splicewire-beam-versioning::messages.cancel')}
                     </Button>
                     <Button disabled={pending} onClick={onConfirm}>
                         {pending ? <Loader2 className="animate-spin" /> : <RotateCcw />}
-                        Restore
+                        {m.t('splicewire-beam-versioning::messages.restore')}
                     </Button>
                 </DialogFooter>
             </DialogContent>

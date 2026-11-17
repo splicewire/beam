@@ -1,5 +1,6 @@
 import { Select, insertJsx$, usePublisher } from '@mdxeditor/editor';
 import { kitManifest } from './manifest';
+import { useBeamMdxMessages } from '../messages';
 
 // Sensible starter props for components with required attrs, so an inserted block is valid MDX.
 const STARTER_PROPS: Record<string, Record<string, string>> = {
@@ -18,13 +19,14 @@ const STARTER_PROPS: Record<string, Record<string, string>> = {
  * without an import (the components are ambient — verified).
  */
 export function InsertKitBlock() {
+    const m = useBeamMdxMessages();
     const insertJsx = usePublisher(insertJsx$);
 
     return (
         <Select
             value=""
-            triggerTitle="Insert component"
-            placeholder="Insert…"
+            triggerTitle={m.t('splicewire-beam-mdx::messages.insert_component')}
+            placeholder={m.t('splicewire-beam-mdx::messages.insert_placeholder')}
             onChange={(name) => {
                 if (!name) return;
                 const node = kitManifest.nodes.find((n) => n.name === name);

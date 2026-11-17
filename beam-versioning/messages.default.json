@@ -1,0 +1,32 @@
+{
+  "version": 1,
+  "package": "@splicewire/beam-versioning",
+  "sourceLocale": "en",
+  "namespace": "splicewire-beam-versioning",
+  "sharesWith": null,
+  "messages": {
+    "splicewire-beam-versioning::messages.already_current": "Already the current version",
+    "splicewire-beam-versioning::messages.cancel": "Cancel",
+    "splicewire-beam-versioning::messages.current_version_aria": ":version is the current version",
+    "splicewire-beam-versioning::messages.empty": "No versions yet — save one to capture this milestone.",
+    "splicewire-beam-versioning::messages.head": "HEAD",
+    "splicewire-beam-versioning::messages.label_aria": "Version label",
+    "splicewire-beam-versioning::messages.label_placeholder": "Optional label (e.g. before the rewrite)",
+    "splicewire-beam-versioning::messages.load_failed": "Could not load version history.",
+    "splicewire-beam-versioning::messages.loading": "Loading versions…",
+    "splicewire-beam-versioning::messages.restore": "Restore",
+    "splicewire-beam-versioning::messages.restore_description": "Your working copy is replaced with :version's content. A new version is minted, so nothing is lost — you can roll back again.",
+    "splicewire-beam-versioning::messages.restore_failed": "Restore failed",
+    "splicewire-beam-versioning::messages.restore_named": "Restore :version",
+    "splicewire-beam-versioning::messages.restore_title": "Restore :version?",
+    "splicewire-beam-versioning::messages.restored_toast": "Restored :target — now :version",
+    "splicewire-beam-versioning::messages.save": "Save",
+    "splicewire-beam-versioning::messages.save_failed": "Save version failed",
+    "splicewire-beam-versioning::messages.save_version": "Save version",
+    "splicewire-beam-versioning::messages.saved_toast": "Saved :version",
+    "splicewire-beam-versioning::messages.time_days_ago": ":countd ago",
+    "splicewire-beam-versioning::messages.time_hours_ago": ":counth ago",
+    "splicewire-beam-versioning::messages.time_just_now": "just now",
+    "splicewire-beam-versioning::messages.time_minutes_ago": ":countm ago"
+  }
+}

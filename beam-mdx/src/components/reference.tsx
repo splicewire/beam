@@ -3,16 +3,17 @@ import type { ReactNode } from 'react';
 import { useBeamMdx, useLinks } from '../context';
 import type { ReferenceKind } from '../references';
 import { resolveReference } from '../references';
+import { useBeamMdxMessages, type BeamMdxMessageKey } from '../messages';
 
 // Cross-property citation surfaces. Both read the citation manifest from the BeamMdx
 // context and the env-driven `links` map from Inertia's shared page props. See
 // ../references.ts for the kit and the non-drift rationale; the manifest itself is the
 // satellite's, injected via <BeamMdxProvider>.
 
-const KIND_LABEL: Record<ReferenceKind, string> = {
-    guide: 'Guide',
-    story: 'Customer story',
-    insight: 'Insight',
+const KIND_LABEL: Record<ReferenceKind, BeamMdxMessageKey> = {
+    guide: 'splicewire-beam-mdx::messages.kind_guide',
+    story: 'splicewire-beam-mdx::messages.kind_story',
+    insight: 'splicewire-beam-mdx::messages.kind_insight',
 };
 
 function devWarn(message: string): void {
@@ -57,6 +58,7 @@ export function Ref({ to, children }: { to: string; children: ReactNode }) {
  * unknown keys are dropped; renders nothing when no live entry remains.
  */
 export function Receipts({ keys }: { keys?: string[] }) {
+    const m = useBeamMdxMessages();
     const { references } = useBeamMdx();
     const links = useLinks();
 
@@ -73,13 +75,13 @@ export function Receipts({ keys }: { keys?: string[] }) {
     }
 
     return (
-        <aside className="receipts" aria-label="Receipts">
-            <p className="receipts-label">Receipts</p>
+        <aside className="receipts" aria-label={m.t('splicewire-beam-mdx::messages.receipts')}>
+            <p className="receipts-label">{m.t('splicewire-beam-mdx::messages.receipts')}</p>
             <ul>
                 {live.map((ref) => (
                     <li key={ref!.key}>
                         <span className="receipts-kind">
-                            {KIND_LABEL[ref!.kind]}
+                            {m.t(KIND_LABEL[ref!.kind])}
                         </span>
                         <a className="receipts-link" href={ref!.href}>
                             {ref!.title}

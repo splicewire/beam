@@ -1,0 +1,19 @@
+{
+  "splicewire-beam-content::messages.add_section": "Add section",
+  "splicewire-beam-content::messages.article_title": "Article title",
+  "splicewire-beam-content::messages.article_title_placeholder": "Article title…",
+  "splicewire-beam-content::messages.context": "Context",
+  "splicewire-beam-content::messages.excerpt": "Excerpt",
+  "splicewire-beam-content::messages.excerpt_placeholder": "A one-line excerpt…",
+  "splicewire-beam-content::messages.grounding": "Grounding",
+  "splicewire-beam-content::messages.image": "Image",
+  "splicewire-beam-content::messages.image_prompt_placeholder": "No image prompt",
+  "splicewire-beam-content::messages.outline": "Outline",
+  "splicewire-beam-content::messages.outline_empty": "No sections planned yet. Add the headings this article will expand into.",
+  "splicewire-beam-content::messages.remove_section": "Remove section :number",
+  "splicewire-beam-content::messages.section": "Section",
+  "splicewire-beam-content::messages.section_heading": "Section heading",
+  "splicewire-beam-content::messages.section_heading_numbered": "Section heading :number",
+  "splicewire-beam-content::messages.section_heading_placeholder": "Section heading…",
+  "splicewire-beam-content::messages.strategy": "Strategy"
+}

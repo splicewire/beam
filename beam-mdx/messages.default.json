@@ -1,0 +1,24 @@
+{
+  "version": 1,
+  "package": "@splicewire/beam-mdx",
+  "sourceLocale": "en",
+  "namespace": "splicewire-beam-mdx",
+  "sharesWith": null,
+  "messages": {
+    "splicewire-beam-mdx::messages.doctor_fail": "Fail",
+    "splicewire-beam-mdx::messages.doctor_pass": "Pass",
+    "splicewire-beam-mdx::messages.doctor_summary": ":passed passed / :warned warn / :failed failed",
+    "splicewire-beam-mdx::messages.doctor_warn": "Warn",
+    "splicewire-beam-mdx::messages.draft": "Draft",
+    "splicewire-beam-mdx::messages.insert_component": "Insert component",
+    "splicewire-beam-mdx::messages.insert_placeholder": "Insert…",
+    "splicewire-beam-mdx::messages.kind_guide": "Guide",
+    "splicewire-beam-mdx::messages.kind_insight": "Insight",
+    "splicewire-beam-mdx::messages.kind_story": "Customer story",
+    "splicewire-beam-mdx::messages.not_found_body": "Content “:slug” was not found.",
+    "splicewire-beam-mdx::messages.not_found_title": "Not found",
+    "splicewire-beam-mdx::messages.receipts": "Receipts",
+    "splicewire-beam-mdx::messages.shared_content": "shared content",
+    "splicewire-beam-mdx::messages.source_aria": "MDX source"
+  }
+}

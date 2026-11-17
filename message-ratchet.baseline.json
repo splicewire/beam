@@ -4,7 +4,7 @@
     "@splicewire/beam-accounts": 0,
     "@splicewire/beam-calendar": 1,
     "@splicewire/beam-commerce": 212,
-    "@splicewire/beam-content": 18,
+    "@splicewire/beam-content": 0,
     "@splicewire/beam-docs": 10,
     "@splicewire/beam-embed": 80,
     "@splicewire/beam-inertia": 13,
@@ -12,13 +12,13 @@
     "@splicewire/beam-intake": 7,
     "@splicewire/beam-mainframe": 7,
     "@splicewire/beam-market": 194,
-    "@splicewire/beam-mdx": 15,
+    "@splicewire/beam-mdx": 3,
     "@splicewire/beam-resources": 0,
     "@splicewire/beam-transforms": 45,
     "@splicewire/beam-ux": 9,
     "@splicewire/beam-ux-canvas": 0,
     "@splicewire/beam-ux-prototype": 19,
-    "@splicewire/beam-versioning": 22,
+    "@splicewire/beam-versioning": 0,
     "@splicewire/beam-workflows": 2
   }
 }

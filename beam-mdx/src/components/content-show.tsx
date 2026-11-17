@@ -11,6 +11,7 @@ import { BeamMdxProvider, useLinks } from '../context';
 import type { Reference } from '../references';
 import { contentJsonLd, JsonLd } from './json-ld';
 import { Receipts } from './reference';
+import { useBeamMdxMessages } from '../messages';
 
 /** The layout components a satellite maps each `layout` frontmatter value onto. */
 export type ContentLayouts = Record<
@@ -56,6 +57,7 @@ export function ContentShow({
     draftablePrefixes,
     renderEyebrow,
 }: ContentShowProps) {
+    const m = useBeamMdxMessages();
     const { url: pageUrl } = usePage();
     const links = useLinks();
     const mod = resolve(slug);
@@ -67,8 +69,8 @@ export function ContentShow({
 
         return (
             <Fallback>
-                <Head title="Not found" />
-                <p>Content “{slug}” was not found.</p>
+                <Head title={m.t('splicewire-beam-mdx::messages.not_found_title')} />
+                <p>{m.t('splicewire-beam-mdx::messages.not_found_body', { slug })}</p>
             </Fallback>
         );
     }
@@ -105,7 +107,7 @@ export function ContentShow({
                         <div className="eyebrow mb-6 flex items-center gap-3 font-mono text-xs tracking-wide uppercase">
                             {draft ? (
                                 <span className="eyebrow-draft rounded-sm px-1.5 py-0.5 font-medium">
-                                    Draft
+                                    {m.t('splicewire-beam-mdx::messages.draft')}
                                 </span>
                             ) : null}
                             {frontmatter.datePublished ? (

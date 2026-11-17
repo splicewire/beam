@@ -6,6 +6,7 @@ import { useNotify, useVersionsServices } from './provider';
 import { VersionRestoreDialog } from './version-restore-dialog';
 import { VersionsList } from './versions-list';
 import type { VersionData } from './types';
+import { useBeamVersioningMessages } from './messages';
 
 /**
  * The batteries-included version-history panel: wires the package's own react-query hooks to the
@@ -24,6 +25,7 @@ export function VersionsPanel({
     disabled?: boolean;
     showSaveButton?: boolean;
 }) {
+    const m = useBeamVersioningMessages();
     const { renderVersionMeta, onSaved, onRestored } = useVersionsServices();
     const notify = useNotify();
     const versions = useVersions();
@@ -41,12 +43,12 @@ export function VersionsPanel({
             { label: label.trim() || undefined },
             {
                 onSuccess: (v) => {
-                    notify({ type: 'success', message: `Saved ${v.readable}` });
+                    notify({ type: 'success', message: m.t('splicewire-beam-versioning::messages.saved_toast', { version: v.readable }) });
                     onSaved?.(v);
                     setLabelling(false);
                     setLabel('');
                 },
-                onError: () => notify({ type: 'error', message: 'Save version failed' }),
+                onError: () => notify({ type: 'error', message: m.t('splicewire-beam-versioning::messages.save_failed') }),
             },
         );
     }
@@ -60,12 +62,12 @@ export function VersionsPanel({
                 onSuccess: (v) => {
                     notify({
                         type: 'success',
-                        message: `Restored ${target.readable} — now ${v.readable}`,
+                        message: m.t('splicewire-beam-versioning::messages.restored_toast', { target: target.readable, version: v.readable }),
                     });
                     onRestored?.(v);
                     setConfirming(null);
                 },
-                onError: () => notify({ type: 'error', message: 'Restore failed' }),
+                onError: () => notify({ type: 'error', message: m.t('splicewire-beam-versioning::messages.restore_failed') }),
             },
         );
     }
@@ -86,13 +88,13 @@ export function VersionsPanel({
                             autoFocus
                             value={label}
                             onChange={(e) => setLabel(e.target.value)}
-                            placeholder="Optional label (e.g. before the rewrite)"
-                            aria-label="Version label"
+                            placeholder={m.t('splicewire-beam-versioning::messages.label_placeholder')}
+                            aria-label={m.t('splicewire-beam-versioning::messages.label_aria')}
                             className="h-8 text-sm"
                         />
                         <Button type="submit" size="sm" disabled={save.isPending}>
                             {save.isPending ? <Loader2 className="animate-spin" /> : <Save />}
-                            Save
+                            {m.t('splicewire-beam-versioning::messages.save')}
                         </Button>
                         <Button
                             type="button"
@@ -104,7 +106,7 @@ export function VersionsPanel({
                                 setLabel('');
                             }}
                         >
-                            Cancel
+                            {m.t('splicewire-beam-versioning::messages.cancel')}
                         </Button>
                     </form>
                 ) : (
@@ -113,7 +115,7 @@ export function VersionsPanel({
                         size="sm"
                         onClick={() => setLabelling(true)}
                     >
-                        <Save /> Save version
+                        <Save /> {m.t('splicewire-beam-versioning::messages.save_version')}
                     </Button>
                 ))}
 

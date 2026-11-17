@@ -324,6 +324,9 @@ importers:
       '@schemastud/blockdoc':
         specifier: github:schemastud/js#161a627e9a4f62f281e1709c9db5f10335d48859&path:/blockdoc
         version: https://codeload.github.com/schemastud/js/tar.gz/161a627e9a4f62f281e1709c9db5f10335d48859#path:/blockdoc(@floating-ui/dom@1.8.0)(@rjsf/core@6.7.1(@rjsf/utils@6.7.1(react@19.2.7))(react@19.2.7))(@rjsf/utils@6.7.1(react@19.2.7))(@schemastud/seam@https://codeload.github.com/schemastud/js/tar.gz/aae63180fd740d3a9497fa2a12e7fbc7c206bc92#path:/seam(@rjsf/core@6.7.1(@rjsf/utils@6.7.1(react@19.2.7))(react@19.2.7))(@rjsf/shadcn@6.7.1(@rjsf/core@6.7.1(@rjsf/utils@6.7.1(react@19.2.7))(react@19.2.7))(@rjsf/utils@6.7.1(react@19.2.7))(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(tailwindcss@4.3.3))(@rjsf/utils@6.7.1(react@19.2.7))(@rjsf/validator-ajv8@6.7.1(@rjsf/utils@6.7.1(react@19.2.7)))(ajv@8.20.0)(react@19.2.7)(vite@8.1.5(@types/node@22.20.1)(esbuild@0.27.7)(jiti@2.7.0)(yaml@2.9.0)))(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
+      '@schemastud/messages':
+        specifier: github:schemastud/js#47810c9e78aca3eb452f7b34a1eaaed909f4102c&path:/messages
+        version: https://codeload.github.com/schemastud/js/tar.gz/47810c9e78aca3eb452f7b34a1eaaed909f4102c#path:/messages(react@19.2.7)(typescript@5.9.3)
       '@schemastud/seam':
         specifier: github:schemastud/js#aae63180fd740d3a9497fa2a12e7fbc7c206bc92&path:/seam
         version: https://codeload.github.com/schemastud/js/tar.gz/aae63180fd740d3a9497fa2a12e7fbc7c206bc92#path:/seam(@rjsf/core@6.7.1(@rjsf/utils@6.7.1(react@19.2.7))(react@19.2.7))(@rjsf/shadcn@6.7.1(@rjsf/core@6.7.1(@rjsf/utils@6.7.1(react@19.2.7))(react@19.2.7))(@rjsf/utils@6.7.1(react@19.2.7))(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(tailwindcss@4.3.3))(@rjsf/utils@6.7.1(react@19.2.7))(@rjsf/validator-ajv8@6.7.1(@rjsf/utils@6.7.1(react@19.2.7)))(ajv@8.20.0)(react@19.2.7)(vite@8.1.5(@types/node@22.20.1)(esbuild@0.27.7)(jiti@2.7.0)(yaml@2.9.0))
@@ -875,6 +878,9 @@ importers:
       '@rjsf/validator-ajv8':
         specifier: ^6.0.0
         version: 6.7.1(@rjsf/utils@6.7.1(react@19.2.7))
+      '@schemastud/messages':
+        specifier: github:schemastud/js#47810c9e78aca3eb452f7b34a1eaaed909f4102c&path:/messages
+        version: https://codeload.github.com/schemastud/js/tar.gz/47810c9e78aca3eb452f7b34a1eaaed909f4102c#path:/messages(react@19.2.7)(typescript@5.9.3)
       '@splicewire/beam-ux':
         specifier: link:../beam-ux
         version: link:../beam-ux
@@ -1149,6 +1155,9 @@ importers:
 
   beam-versioning:
     devDependencies:
+      '@schemastud/messages':
+        specifier: github:schemastud/js#47810c9e78aca3eb452f7b34a1eaaed909f4102c&path:/messages
+        version: https://codeload.github.com/schemastud/js/tar.gz/47810c9e78aca3eb452f7b34a1eaaed909f4102c#path:/messages(react@19.2.7)(typescript@5.9.3)
       '@schemastud/ui':
         specifier: github:schemastud/js#abef468b39df9b1e81fd9a2081e69f8094c60e4e&path:/ui
         version: https://codeload.github.com/schemastud/js/tar.gz/abef468b39df9b1e81fd9a2081e69f8094c60e4e#path:/ui(@radix-ui/react-dialog@1.1.23(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-select@2.3.7(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-separator@1.1.15(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-slot@1.5.0(@types/react@19.2.17)(react@19.2.7))(@radix-ui/react-switch@1.4.1(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-tooltip@1.2.16(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@tanstack/react-table@8.21.3(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(lucide-react@0.468.0(react@19.2.7))(react-dom@19.2.7(react@19.2.7))(react@19.2.7)

@@ -14,6 +14,7 @@ export { VersionsPanel } from './versions-panel';
 export { VersionsList } from './versions-list';
 export { VersionRestoreDialog } from './version-restore-dialog';
 export { relativeTime } from './relative-time';
+export { useBeamVersioningMessages, type BeamVersioningMessages, type BeamVersioningMessageKey } from './messages';
 export type {
     VersionData,
     SaveVersionInput,

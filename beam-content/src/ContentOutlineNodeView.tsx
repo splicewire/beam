@@ -1,5 +1,6 @@
 import { ListTree, Plus, X } from 'lucide-react';
 import type { NodeViewComponentProps } from '@schemastud/blockdoc/react';
+import { useBeamContentMessages } from './messages';
 
 /**
  * Bespoke node-view for the `content_outline` block — the article plan (title + one-line excerpt +
@@ -12,6 +13,7 @@ import type { NodeViewComponentProps } from '@schemastud/blockdoc/react';
  * keystrokes as document content; attrs are patched through `updateAttrs` (id-preserving merge).
  */
 export function ContentOutlineNodeView({ node, updateAttrs }: NodeViewComponentProps) {
+    const m = useBeamContentMessages();
     const title = String(node.attrs.title ?? '');
     const excerpt = String(node.attrs.excerpt ?? '');
     const headings = Array.isArray(node.attrs.sectionHeadings)
@@ -24,29 +26,29 @@ export function ContentOutlineNodeView({ node, updateAttrs }: NodeViewComponentP
         <div className="blockdoc-content-outline rounded-lg border border-[var(--beam-ink-10)] bg-background" contentEditable={false}>
             <div className="flex items-center gap-2 px-3.5 pt-2.5">
                 <span className="inline-flex items-center gap-1 font-mono text-[9px] font-medium tracking-[0.14em] text-[var(--beam-ink-40)] uppercase">
-                    <ListTree className="size-3" /> Outline
+                    <ListTree className="size-3" /> {m.t('splicewire-beam-content::messages.outline')}
                 </span>
             </div>
 
             <input
                 value={title}
                 onChange={(event) => updateAttrs({ title: event.target.value })}
-                placeholder="Article title…"
-                aria-label="Article title"
+                placeholder={m.t('splicewire-beam-content::messages.article_title_placeholder')}
+                aria-label={m.t('splicewire-beam-content::messages.article_title')}
                 className="w-full bg-transparent px-3.5 py-1 text-[15px] font-semibold tracking-tight outline-none placeholder:text-[var(--beam-ink-30)]"
             />
             <input
                 value={excerpt}
                 onChange={(event) => updateAttrs({ excerpt: event.target.value })}
-                placeholder="A one-line excerpt…"
-                aria-label="Excerpt"
+                placeholder={m.t('splicewire-beam-content::messages.excerpt_placeholder')}
+                aria-label={m.t('splicewire-beam-content::messages.excerpt')}
                 className="w-full bg-transparent px-3.5 pb-1.5 text-[13px] text-[var(--beam-ink-60)] outline-none placeholder:text-[var(--beam-ink-30)]"
             />
 
             <ol className="space-y-1 px-3.5 pb-3">
                 {headings.length === 0 && (
                     <li className="ml-7 text-[12px] text-[var(--beam-ink-45)]">
-                        No sections planned yet. Add the headings this article will expand into.
+                        {m.t('splicewire-beam-content::messages.outline_empty')}
                     </li>
                 )}
                 {headings.map((heading, index) => (
@@ -61,14 +63,14 @@ export function ContentOutlineNodeView({ node, updateAttrs }: NodeViewComponentP
                                 next[index] = event.target.value;
                                 setHeadings(next);
                             }}
-                            placeholder="Section heading…"
-                            aria-label={`Section heading ${index + 1}`}
+                            placeholder={m.t('splicewire-beam-content::messages.section_heading_placeholder')}
+                            aria-label={m.t('splicewire-beam-content::messages.section_heading_numbered', { number: index + 1 })}
                             className="min-w-0 flex-1 rounded border border-transparent bg-[var(--beam-ink-04)] px-2 py-1 text-[13px] outline-none focus:border-[var(--beam-ink-15)] placeholder:text-[var(--beam-ink-30)]"
                         />
                         <button
                             type="button"
                             onClick={() => setHeadings(headings.filter((_, i) => i !== index))}
-                            aria-label={`Remove section ${index + 1}`}
+                            aria-label={m.t('splicewire-beam-content::messages.remove_section', { number: index + 1 })}
                             className="shrink-0 rounded p-1 text-[var(--beam-ink-40)] transition-colors hover:bg-[var(--beam-ink-08)] hover:text-foreground"
                         >
                             <X className="size-3.5" />
@@ -81,7 +83,7 @@ export function ContentOutlineNodeView({ node, updateAttrs }: NodeViewComponentP
                         onClick={() => setHeadings([...headings, ''])}
                         className="ml-7 inline-flex items-center gap-1 text-[12px] font-medium text-[var(--beam-green)] transition-colors hover:underline"
                     >
-                        <Plus className="size-3.5" /> Add section
+                        <Plus className="size-3.5" /> {m.t('splicewire-beam-content::messages.add_section')}
                     </button>
                 </li>
             </ol>

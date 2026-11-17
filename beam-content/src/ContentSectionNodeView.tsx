@@ -1,6 +1,7 @@
 import { ChevronDown, ImageIcon, Sparkles } from 'lucide-react';
 import { useState } from 'react';
 import type { NodeViewComponentProps } from '@schemastud/blockdoc/react';
+import { useBeamContentMessages } from './messages';
 
 /**
  * Bespoke node-view for the `contentSection` block (composition-authoring-ux
@@ -23,6 +24,7 @@ export function ContentSectionNodeView({
     updateAttrs,
     contentRef,
 }: NodeViewComponentProps) {
+    const m = useBeamContentMessages();
     const heading = String(node.attrs.heading ?? '');
     const imagePrompt = (node.attrs.imagePrompt as string | null) ?? '';
     const strategy = node.attrs.strategy as string | null;
@@ -41,7 +43,7 @@ export function ContentSectionNodeView({
             <div contentEditable={false} className={contentRef === null ? 'pb-2.5' : undefined}>
                     <div className="flex items-center gap-2 px-3.5 pt-2.5">
                         <span className="font-mono text-[9px] font-medium tracking-[0.14em] text-[var(--beam-ink-40)] uppercase">
-                            Section
+                            {m.t('splicewire-beam-content::messages.section')}
                         </span>
                         {hasContext && (
                             <button
@@ -49,7 +51,7 @@ export function ContentSectionNodeView({
                                 onClick={() => setShowContext((open) => !open)}
                                 className="ml-auto flex items-center gap-1 font-mono text-[9.5px] tracking-wide text-[var(--beam-ink-45)] uppercase transition-colors hover:text-foreground"
                             >
-                                <Sparkles className="size-3" /> Context
+                                <Sparkles className="size-3" /> {m.t('splicewire-beam-content::messages.context')}
                                 <ChevronDown
                                     className={`size-3 transition-transform ${showContext ? 'rotate-180' : ''}`}
                                 />
@@ -60,8 +62,8 @@ export function ContentSectionNodeView({
                     <input
                         value={heading}
                         onChange={(event) => updateAttrs({ heading: event.target.value })}
-                        placeholder="Section heading…"
-                        aria-label="Section heading"
+                        placeholder={m.t('splicewire-beam-content::messages.section_heading_placeholder')}
+                        aria-label={m.t('splicewire-beam-content::messages.section_heading')}
                         className="w-full bg-transparent px-3.5 py-1 text-[15px] font-semibold tracking-tight outline-none placeholder:text-[var(--beam-ink-30)]"
                     />
 
@@ -70,7 +72,7 @@ export function ContentSectionNodeView({
                             {strategy && (
                                 <div className="flex items-center gap-2 text-[11px]">
                                     <span className="font-mono tracking-wide text-[var(--beam-ink-45)] uppercase">
-                                        Strategy
+                                        {m.t('splicewire-beam-content::messages.strategy')}
                                     </span>
                                     <span className="font-medium text-[var(--beam-ink-70)]">
                                         {strategy}
@@ -79,21 +81,21 @@ export function ContentSectionNodeView({
                             )}
                             <label className="flex items-center gap-2 text-[11px]">
                                 <span className="inline-flex shrink-0 items-center gap-1 font-mono tracking-wide text-[var(--beam-ink-45)] uppercase">
-                                    <ImageIcon className="size-3" /> Image
+                                    <ImageIcon className="size-3" /> {m.t('splicewire-beam-content::messages.image')}
                                 </span>
                                 <input
                                     value={imagePrompt}
                                     onChange={(event) =>
                                         updateAttrs({ imagePrompt: event.target.value || null })
                                     }
-                                    placeholder="No image prompt"
+                                    placeholder={m.t('splicewire-beam-content::messages.image_prompt_placeholder')}
                                     className="min-w-0 flex-1 bg-transparent text-[var(--beam-ink-70)] outline-none placeholder:text-[var(--beam-ink-30)]"
                                 />
                             </label>
                             {groundingTokens.length > 0 && (
                                 <div className="flex flex-wrap items-center gap-1">
                                     <span className="font-mono text-[10px] tracking-wide text-[var(--beam-ink-45)] uppercase">
-                                        Grounding
+                                        {m.t('splicewire-beam-content::messages.grounding')}
                                     </span>
                                     {groundingTokens.map((token, index) => (
                                         <span

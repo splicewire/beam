@@ -1,6 +1,7 @@
 import { createElement, type ChangeEvent, type ReactElement, type ReactNode } from 'react';
 
 import { RuntimeMdx, type MdxComponentMap, type RuntimeMdxOptions } from './runtime-mdx';
+import { useBeamMdxMessages } from '../messages';
 
 /**
  * The **authoring** twin of {@link RuntimeMdx}: an editable MDX buffer beside a live preview that
@@ -55,14 +56,15 @@ export function MdxEditor({
     previewClassName,
     placeholder,
     spellCheck = false,
-    'aria-label': ariaLabel = 'MDX source',
+    'aria-label': ariaLabel,
 }: MdxEditorProps): ReactElement {
+    const m = useBeamMdxMessages();
     const textarea = createElement('textarea', {
         className: editorClassName,
         value,
         placeholder,
         spellCheck,
-        'aria-label': ariaLabel,
+        'aria-label': ariaLabel ?? m.t('splicewire-beam-mdx::messages.source_aria'),
         onChange: (event: ChangeEvent<HTMLTextAreaElement>) => onChange(event.target.value),
     });
 
