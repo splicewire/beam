@@ -138,6 +138,7 @@
   "splicewire-beam-inertia::messages.chrome_loading_editor": "Loading editor…",
   "splicewire-beam-inertia::messages.chrome_mobile_sidebar_description": "Displays the mobile sidebar.",
   "splicewire-beam-inertia::messages.chrome_more": "More",
+  "splicewire-beam-inertia::messages.chrome_notifications_region": "Notifications :hotkey",
   "splicewire-beam-inertia::messages.chrome_open_app": "Open app",
   "splicewire-beam-inertia::messages.chrome_plan": "Plan",
   "splicewire-beam-inertia::messages.chrome_profile": "Profile",
