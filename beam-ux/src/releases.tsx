@@ -4,6 +4,7 @@ import { WorkflowActionForm } from "@splicewire/beam-workflows/action-form";
 import type { WorkflowProjectionData } from "@splicewire/beam-workflows/action-form";
 import { ReleaseRecordingSummary } from "./recording";
 import { useBeamUxMessages } from "./messages.js";
+import { notice, noticeOf, say, type Notice } from "./message-descriptor.js";
 
 export interface ReleaseRecording {
   releaseId: string;
@@ -105,7 +106,7 @@ export function ReleasePanel({
   const [ref, setRef] = useState("");
   const [redirect, setRedirect] = useState("");
   const [pending, setPending] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<Notice | null>(null);
   const [previewError, setPreviewError] = useState(false);
   const entry = entries.find((item) => item.id === entryId);
   const immutable = release.status === "published";
@@ -115,11 +116,7 @@ export function ReleasePanel({
     try {
       await onCommand(command);
     } catch (failure) {
-      setError(
-        failure instanceof Error
-          ? failure.message
-          : m.t('splicewire-beam-ux::messages.releases_update_failed'),
-      );
+      setError(noticeOf(failure, notice('splicewire-beam-ux::messages.releases_update_failed')));
     } finally {
       setPending(false);
     }
@@ -215,7 +212,7 @@ export function ReleasePanel({
           {m.t('splicewire-beam-ux::messages.releases_review_required')}
         </p>
       )}
-      {error && <p role="alert">{error}</p>}
+      {error && <p role="alert">{say(m, error)}</p>}
       <ul className="space-y-2">
         {release.members.map((member) => (
           <li key={member.entryId}>
@@ -420,14 +417,14 @@ function ReleaseRedirects({
 }) {
   const m = useBeamUxMessages();
   const [removed, setRemoved] = useState<string[]>([]);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<Notice | null>(null);
   const remove = async (id: string) => {
     setError(null);
     try {
       await onRemove!(id);
       setRemoved((current) => [...current, id]);
     } catch (failure) {
-      setError(failure instanceof Error ? failure.message : m.t('splicewire-beam-ux::messages.releases_redirect_remove_failed'));
+      setError(noticeOf(failure, notice('splicewire-beam-ux::messages.releases_redirect_remove_failed')));
     }
   };
   return (
@@ -458,7 +455,7 @@ function ReleaseRedirects({
             </li>
           ))}
       </ul>
-      {error && <p role="alert">{error}</p>}
+      {error && <p role="alert">{say(m, error)}</p>}
     </section>
   );
 }
@@ -493,7 +490,7 @@ export function BuiltReleaseAssembly({
   const [releaseId, setReleaseId] = useState("");
   const [title, setTitle] = useState("");
   const [pending, setPending] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<Notice | null>(null);
   const activeRelease = releases.find((release) => release.id === releaseId);
 
   useEffect(() => {
@@ -511,11 +508,7 @@ export function BuiltReleaseAssembly({
       })
       .catch((reason) => {
         if (live) {
-          setError(
-            reason instanceof Error
-              ? reason.message
-              : m.t('splicewire-beam-ux::messages.releases_load_failed'),
-          );
+          setError(noticeOf(reason, notice('splicewire-beam-ux::messages.releases_load_failed')));
         }
       });
     return () => {
@@ -539,11 +532,7 @@ export function BuiltReleaseAssembly({
       setReleaseId(release.id);
       setTitle("");
     } catch (reason) {
-      setError(
-        reason instanceof Error
-          ? reason.message
-          : m.t('splicewire-beam-ux::messages.releases_create_failed'),
-      );
+      setError(noticeOf(reason, notice('splicewire-beam-ux::messages.releases_create_failed')));
     } finally {
       setPending(false);
     }
@@ -593,7 +582,7 @@ export function BuiltReleaseAssembly({
           </select>
         </label>
       )}
-      {error && <p role="alert">{error}</p>}
+      {error && <p role="alert">{say(m, error)}</p>}
       {activeRelease && (
         <ReleasePanel
           release={activeRelease}

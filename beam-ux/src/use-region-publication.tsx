@@ -6,6 +6,7 @@ import { useNotify, useUxBuilderServices } from './provider';
 import type { BeamUxEntryBodyData, EntryBody, EntryPublicationState } from './types';
 import type { ReleaseRecord } from './releases';
 import { useBeamUxMessages } from './messages.js';
+import { NoticeError, notice as line, noticeOf, say, type Notice } from './message-descriptor.js';
 
 /** A region keeps its loaded body and edit base together; Save never rebases an unsaved buffer implicitly. */
 export function useRegionPublication(id: string, bodyBound: boolean, readOnly = false) {
@@ -23,8 +24,8 @@ export function useRegionPublication(id: string, bodyBound: boolean, readOnly = 
     const [draft, setDraft] = useState<EntryBody | null>(null);
     const [busy, setBusy] = useState(false);
     const locked = useRef(false);
-    const [error, setError] = useState<string | null>(null);
-    const [notice, setNotice] = useState<string | null>(null);
+    const [error, setError] = useState<Notice | null>(null);
+    const [notice, setNotice] = useState<Notice | null>(null);
     const [history, setHistory] = useState<EntryPublicationState | null>(null);
     const [choice, setChoice] = useState<{ ref: string; releases: ReleaseRecord[]; selected: string } | null>(null);
 
@@ -35,13 +36,13 @@ export function useRegionPublication(id: string, bodyBound: boolean, readOnly = 
             const state = await client.listVersions!(id);
             if (before.headVersion === state.headVersion) return { envelope, state };
         }
-        throw new Error(m.t('splicewire-beam-ux::messages.publication_changed_while_loading'));
+        throw new NoticeError(line('splicewire-beam-ux::messages.publication_changed_while_loading'));
     };
     useEffect(() => {
         if (!publicationEnabled) return;
         let live = true;
         read().then(value => { if (live) setLoaded(value); })
-            .catch(failure => { if (live) setError(failure instanceof Error ? failure.message : m.t('splicewire-beam-ux::messages.publication_history_load_failed')); });
+            .catch(failure => { if (live) setError(noticeOf(failure, line('splicewire-beam-ux::messages.publication_history_load_failed'))); });
         return () => { live = false; };
     }, [id, client, publicationEnabled]);
 
@@ -59,25 +60,25 @@ export function useRegionPublication(id: string, bodyBound: boolean, readOnly = 
         catch (failure) {
             const status = (failure as { status?: number; response?: { status?: number } } | null)?.response?.status
                 ?? (failure as { status?: number } | null)?.status;
-            const message = status === 409
-                ? m.t('splicewire-beam-ux::messages.publication_conflict')
-                : status === 403 ? m.t('splicewire-beam-ux::messages.publication_forbidden')
-                : failure instanceof Error ? failure.message : m.t('splicewire-beam-ux::messages.publication_action_failed');
-            setError(message); notify({ type: 'error', message });
+            const message: Notice = status === 409
+                ? line('splicewire-beam-ux::messages.publication_conflict')
+                : status === 403 ? line('splicewire-beam-ux::messages.publication_forbidden')
+                : noticeOf(failure, line('splicewire-beam-ux::messages.publication_action_failed'));
+            setError(message); notify({ type: 'error', message: say(m, message) });
         } finally { locked.current = false; setBusy(false); }
     };
     const save = async (): Promise<EntryPublicationState> => {
-        if (!loaded || !client.saveDraft) throw new Error(m.t('splicewire-beam-ux::messages.publication_history_not_loaded'));
+        if (!loaded || !client.saveDraft) throw new NoticeError(line('splicewire-beam-ux::messages.publication_history_not_loaded'));
         const sent = body;
         const state = await client.saveDraft(id, sent, loaded.state.headVersion, 'UX builder draft');
-        if (!state.headVersion) throw new Error(m.t('splicewire-beam-ux::messages.publication_save_returned_no_version'));
+        if (!state.headVersion) throw new NoticeError(line('splicewire-beam-ux::messages.publication_save_returned_no_version'));
         const nextEnvelope = { ...loaded.envelope, body: sent };
         setLoaded({ envelope: nextEnvelope, state }); setDraft(null); setHistory(null);
         refreshBody(nextEnvelope);
         return state;
     };
     const onSave = () => void run(async () => {
-        if (publicationEnabled) { await save(); setNotice(m.t('splicewire-beam-ux::messages.publication_draft_saved')); notify({ type: 'success', message: m.t('splicewire-beam-ux::messages.publication_draft_saved') }); }
+        if (publicationEnabled) { await save(); setNotice(line('splicewire-beam-ux::messages.publication_draft_saved')); notify({ type: 'success', message: m.t('splicewire-beam-ux::messages.publication_draft_saved') }); }
         else {
             const value = await client.saveBody(id, body);
             refreshBody(value); setDraft(null); notify({ type: 'success', message: m.t('splicewire-beam-ux::messages.publication_saved') });
@@ -86,16 +87,16 @@ export function useRegionPublication(id: string, bodyBound: boolean, readOnly = 
     const publishRef = async (ref: string) => {
         const state = await client.publish!(id, ref);
         setLoaded(previous => previous && { ...previous, state }); setHistory(null); setChoice(null);
-        const message = state.compileError ? m.t('splicewire-beam-ux::messages.publication_failed', { error: state.compileError })
-            : state.release && state.release.status !== 'published' ? m.t('splicewire-beam-ux::messages.publication_release_status', { status: state.release.status })
-            : state.publishedVersion === ref ? m.t('splicewire-beam-ux::messages.publication_published') : m.t('splicewire-beam-ux::messages.publication_pending');
+        const message: Notice = state.compileError ? line('splicewire-beam-ux::messages.publication_failed', { error: state.compileError })
+            : state.release && state.release.status !== 'published' ? line('splicewire-beam-ux::messages.publication_release_status', { status: state.release.status })
+            : state.publishedVersion === ref ? line('splicewire-beam-ux::messages.publication_published') : line('splicewire-beam-ux::messages.publication_pending');
         setNotice(message);
-        notify({ type: state.compileError ? 'error' : 'success', message });
+        notify({ type: state.compileError ? 'error' : 'success', message: say(m, message) });
     };
     const publish = () => void run(async () => {
-        if (!loaded) throw new Error(m.t('splicewire-beam-ux::messages.publication_history_not_loaded'));
+        if (!loaded) throw new NoticeError(line('splicewire-beam-ux::messages.publication_history_not_loaded'));
         const state = dirty ? await save() : loaded.state;
-        if (!state.headVersion) throw new Error(m.t('splicewire-beam-ux::messages.publication_requires_saved_version'));
+        if (!state.headVersion) throw new NoticeError(line('splicewire-beam-ux::messages.publication_requires_saved_version'));
         if (client.previewVersion || (client.listReleases && client.releaseCommand)) {
             const releases = client.listReleases && client.releaseCommand
                 ? (await client.listReleases()).filter(release => ['draft', 'in_review', 'approved', 'scheduled'].includes(release.status)) : [];
@@ -106,7 +107,7 @@ export function useRegionPublication(id: string, bodyBound: boolean, readOnly = 
         if (!client.previewVersion) return;
         // Reserve the window in the author gesture, just as PageEditor does, before awaiting the signed URL.
         const tab = window.open('about:blank', '_blank');
-        if (!tab) { setError(m.t('splicewire-beam-ux::messages.publication_allow_popups')); return; }
+        if (!tab) { setError(line('splicewire-beam-ux::messages.publication_allow_popups')); return; }
         tab.opener = null;
         void run(async () => {
             try { const value = await client.previewVersion!(id, ref); tab.location.href = value.url; }
@@ -133,7 +134,7 @@ export function useRegionPublication(id: string, bodyBound: boolean, readOnly = 
                 </select>
                 <button type="button" disabled={busy || !choice.selected} onClick={() => void run(async () => {
                     const updated = await client.releaseCommand!(choice.selected, { action: 'member', entryId: id, ref: choice.ref });
-                    setNotice(m.t('splicewire-beam-ux::messages.publication_added_to_release', { title: updated.title })); setChoice(null);
+                    setNotice(line('splicewire-beam-ux::messages.publication_added_to_release', { title: updated.title })); setChoice(null);
                 })}>{m.t('splicewire-beam-ux::messages.publication_add_to_release')}</button>
             </>}
             <button type="button" disabled={busy} onClick={() => setChoice(null)}>{m.t('splicewire-beam-ux::messages.publication_cancel')}</button>
@@ -146,7 +147,7 @@ export function useRegionPublication(id: string, bodyBound: boolean, readOnly = 
                 <button type="button" disabled={busy || dirty || !!choice} onClick={() => void run(async () => {
                     await client.restoreVersion!(id, version.id);
                     const value = await read(); setLoaded(value); setDraft(null); setHistory(value.state); refreshBody(value.envelope);
-                    setNotice(m.t('splicewire-beam-ux::messages.publication_restored'));
+                    setNotice(line('splicewire-beam-ux::messages.publication_restored'));
                 })}>{m.t('splicewire-beam-ux::messages.publication_restore_version', { version: version.readable })}</button>
             </div>)}
             {dirty && <p>{m.t('splicewire-beam-ux::messages.publication_save_before_restore')}</p>}
@@ -161,6 +162,6 @@ export function useRegionPublication(id: string, bodyBound: boolean, readOnly = 
         saveLabel: publicationEnabled ? m.t('splicewire-beam-ux::messages.publication_save_draft') : undefined,
         saveDisabled: readOnly || incomplete || !!choice || (publicationEnabled && !loaded),
         disabled: readOnly || incomplete || busy || !!choice || (publicationEnabled && !loaded),
-        controls: <>{incomplete && <p role="alert">{m.t('splicewire-beam-ux::messages.publication_incomplete_transport')}</p>}{error && <p role="alert">{error}</p>}{notice && <p role="status">{notice}</p>}{controls}</>,
+        controls: <>{incomplete && <p role="alert">{m.t('splicewire-beam-ux::messages.publication_incomplete_transport')}</p>}{error && <p role="alert">{say(m, error)}</p>}{notice && <p role="status">{say(m, notice)}</p>}{controls}</>,
     };
 }

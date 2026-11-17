@@ -2,6 +2,7 @@ import { useEffect, useId, useRef, useState } from 'react';
 import type { FileBatchReconcileInput, FileBatchReconcileResult, FileInspection, FileReconcileInput, FileReconcileResult } from './files';
 import type { UxBuilderClient } from './types';
 import { useBeamUxMessages } from './messages.js';
+import { notice, noticeOf, say, type Notice } from './message-descriptor.js';
 
 const buttonClassName = 'inline-flex items-center justify-center rounded-md border bg-background px-3 py-2 text-sm font-medium shadow-sm hover:bg-muted focus-visible:outline focus-visible:outline-2 disabled:cursor-not-allowed disabled:opacity-50';
 type FileConfirmation =
@@ -18,7 +19,7 @@ export function FilesComparisonPanel({memberId, client, editorHref}: {
     const [inspection, setInspection] = useState<FileInspection | null>(null);
     const [confirmation, setConfirmation] = useState<FileConfirmation | null>(null);
     const [busy, setBusy] = useState(false);
-    const [error, setError] = useState('');
+    const [error, setError] = useState<Notice>('');
     const [result, setResult] = useState<FileReconcileResult | null>(null);
     const [batchResult, setBatchResult] = useState<FileBatchReconcileResult | null>(null);
     const [resultFormat, setResultFormat] = useState<string | null>(null);
@@ -104,7 +105,7 @@ export function FilesComparisonPanel({memberId, client, editorHref}: {
         } catch (failure) {
             if (epoch !== requestEpoch.current) return;
             setInspection(null);
-            setError(failure instanceof Error ? failure.message : m.t('splicewire-beam-ux::messages.files_nothing_confirmed'));
+            setError(noticeOf(failure, notice('splicewire-beam-ux::messages.files_nothing_confirmed')));
         } finally { if (epoch === requestEpoch.current) setBusy(false); }
     };
     const drafted = result?.status === 'drafted' || result?.status === 'drafted-with-compile-error';
@@ -117,7 +118,7 @@ export function FilesComparisonPanel({memberId, client, editorHref}: {
         <h2 id={headingId} className="text-lg font-semibold">{m.t('splicewire-beam-ux::messages.files_heading')}</h2>
         <p>{m.t('splicewire-beam-ux::messages.files_intro')}</p>
         <button className={buttonClassName} ref={reloadButton} type="button" disabled={busy} onClick={() => void load()}>{m.t('splicewire-beam-ux::messages.files_reload')}</button>
-        {error && <p role="alert">{m.t('splicewire-beam-ux::messages.files_error_retained', { error })}</p>}
+        {error && <p role="alert">{m.t('splicewire-beam-ux::messages.files_error_retained', { error: say(m, error) })}</p>}
         {result && <div className="space-y-2 rounded border bg-muted p-3 text-foreground">
             {compileFailed
                 ? <p role="alert">{m.t('splicewire-beam-ux::messages.files_compile_failed')}</p>
