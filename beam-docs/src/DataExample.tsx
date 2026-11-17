@@ -1,4 +1,5 @@
 import { Children, isValidElement, type ReactNode } from 'react';
+import { useBeamDocsMessages } from './messages.js';
 
 export type DataExampleProps = {
     /** The example's package-relative path (`docs/registries/examples/<page>/<name>.php`), shown as the PHP pane's label. */
@@ -36,6 +37,7 @@ function panes(children: ReactNode): ReactNode[] {
  * the frame, so a hand-placed tag still shows its content.
  */
 export function DataExample({ source, children, className }: DataExampleProps) {
+    const m = useBeamDocsMessages();
     const [code, result, ...rest] = panes(children);
     const classes = ['beam-docs-data-example', className].filter(Boolean).join(' ');
 
@@ -49,26 +51,27 @@ export function DataExample({ source, children, className }: DataExampleProps) {
     }
 
     return (
-        <figure className={classes} data-source={source} aria-label="Data example">
+        <figure className={classes} data-source={source} aria-label={m.t('splicewire-beam-docs::messages.data_example')}>
             <style>{DATA_EXAMPLE_CSS}</style>
             <div className="beam-docs-data-example-panes">
-                <section className="beam-docs-data-example-pane" aria-label="PHP">
+                <section className="beam-docs-data-example-pane" aria-label={m.t('splicewire-beam-docs::messages.data_example_php')}>
                     <div className="beam-docs-data-example-label">
-                        <span>PHP</span>
+                        <span>{m.t('splicewire-beam-docs::messages.data_example_php')}</span>
                         {source && <code>{source}</code>}
                     </div>
                     <div className="beam-docs-data-example-body">{code}</div>
                 </section>
-                <section className="beam-docs-data-example-pane" aria-label="Captured output">
+                <section className="beam-docs-data-example-pane" aria-label={m.t('splicewire-beam-docs::messages.data_example_output')}>
                     <div className="beam-docs-data-example-label">
-                        <span>Captured output</span>
+                        <span>{m.t('splicewire-beam-docs::messages.data_example_output')}</span>
+                        {/* A format name, shown as code. */}
                         <code>JSON</code>
                     </div>
                     <div className="beam-docs-data-example-body">{result}</div>
                 </section>
             </div>
             <figcaption className="beam-docs-data-example-note">
-                Captured from the PHP beside it, and re-checked by the package's test suite.
+                {m.t('splicewire-beam-docs::messages.data_example_note')}
             </figcaption>
         </figure>
     );

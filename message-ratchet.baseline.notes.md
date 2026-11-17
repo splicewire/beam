@@ -75,3 +75,12 @@ Part D1 (the seam, the publishing panel and page, publications.ts' request failu
 - beam-docs/src/ThemeDocsStyle.tsx — the `.beam-docs{…}` custom-property declarations (TemplateExpression).
 
 Not catalogued, by rule: the server's values (a publication's status, version, namespace, slug and failure text; a product's name and tagline; a search hit's title, trail and excerpt; the fallback link's label) render as given, as does a validator's own message other than the version pattern's. Part D2 takes PhpApiReference, PhpApiProse, RegistryRegistrants, RegistryIndexNav and DataExample.
+
+Part D2 (PhpApiReference, RegistryRegistrants, RegistryIndexNav, DataExample; PhpApiProse had none) moves 58 of their 66 nodes onto the catalog, so its --write lowers 68 to 10. The hand-rolled plurals (the overview's ":count symbol(s)" and the registrants' unattributed count) read m.choice, byte-identical in English; the filter's "Filter :count symbols" was never singular, so both of its plural forms keep "symbols" in English, and a translator gets both slots. Sentences that carry code (No published symbol is named <code>, Loading <code>…, <code> could not be read., alias of <code>, from <link>) go through richMessage. RegistryIndexNav's tree carries our "Overview" title, so it is rebuilt when the reader's messages change (m in the memo's deps); its "Other registries" track label was beyond the ratchet. The ten nodes left in beam-docs are not copy:
+
+- CSS: DataExample, HeadingAnchors, PhpApiReference, RegistryRegistrants (FirstTemplateToken) and ThemeDocsStyle (TemplateExpression).
+- CSS class names the scanner reads under a classes object's header/children keys: PhpApiReference `beam-php-api-header`, RegistryIndexNav `beam-registry-index-header` and `beam-registry-index-children` (StringLiteral).
+- DataExample `JSON` (JsxText): a format name, shown as code.
+- PhpApiReference `of …` (TemplateExpression): PHPDoc template syntax (`@template T of Bound`).
+
+One deliberate exception, beyond the ratchet (REVIEW-30D2): PhpApiReference's `(global)`, the rail heading for symbols in PHP's global namespace, stays English. ExpandableNav (@schemastud/nav) draws a group's KEY as its heading and derives the group's ids and persisted collapse-state keys from it, with no separate group label, so translating it would re-key a reader's saved rail state per locale. A `groupLabel` on ExpandableNav would lift it.

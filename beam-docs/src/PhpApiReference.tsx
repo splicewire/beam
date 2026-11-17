@@ -3,6 +3,8 @@ import { useCallback, useEffect, useMemo, useState, type MouseEvent, type ReactN
 import { docsConfiguration } from './config.js';
 import { fetchDocs, type DocsTransport } from './publications.js';
 import { Paragraph, inline, type SymbolLinker } from './PhpApiProse.js';
+import { useBeamDocsMessages, type BeamDocsMessageKey } from './messages.js';
+import { richMessage } from './rich-message.js';
 import type {
     PhpApiAttributeData, PhpApiIndexData, PhpApiInheritedData, PhpApiMemberData, PhpApiParamData, PhpApiSymbolData,
     PhpApiTagData, PhpApiTemplateData,
@@ -115,7 +117,14 @@ function currentSymbol(): string | null {
     return value && value.trim() !== '' ? value : null;
 }
 
-const namespaceOf = (fqn: string) => (fqn.includes('\\') ? fqn.slice(0, fqn.lastIndexOf('\\')) : '(global)');
+/**
+ * The group KEY for symbols in PHP's global namespace. It stays a fixed string, not a catalog line: ExpandableNav
+ * (@schemastud/nav) draws a group's key as its heading AND derives the group's ids and persisted collapse-state keys
+ * from it, and it takes no separate group label. Translating it would re-key a reader's saved rail state per locale.
+ * A deliberate, recorded exception (localization 30 part D2 review); a `groupLabel` on ExpandableNav would lift it.
+ */
+const GLOBAL_NAMESPACE_GROUP = '(global)';
+const namespaceOf = (fqn: string) => (fqn.includes('\\') ? fqn.slice(0, fqn.lastIndexOf('\\')) : GLOBAL_NAMESPACE_GROUP);
 const shortName = (fqn: string) => fqn.slice(fqn.lastIndexOf('\\') + 1);
 
 /**
@@ -139,6 +148,7 @@ export function PhpApiReference({ endpoint, transport, className }: PhpApiRefere
     const [index, setIndex] = useState<{ base: string; data: PhpApiIndexData | null } | null>(null);
     const [selected, setSelected] = useState<string | null>(currentSymbol);
     const [filter, setFilter] = useState('');
+    const m = useBeamDocsMessages();
 
     useEffect(() => {
         if (!base) return;
@@ -196,18 +206,19 @@ export function PhpApiReference({ endpoint, transport, className }: PhpApiRefere
     return (
         <div className={classes} data-php-api-audience={data.audience} onClick={follow}>
             <style>{PHP_API_CSS}</style>
-            <nav className="beam-php-api-rail" aria-label="PHP API">
+            <nav className="beam-php-api-rail" aria-label={m.t('splicewire-beam-docs::messages.php_rail')}>
                 <input
                     type="search"
                     className="beam-php-api-filter"
-                    aria-label="Filter symbols"
-                    placeholder={`Filter ${rows.length} symbols`}
+                    aria-label={m.t('splicewire-beam-docs::messages.php_filter_label')}
+                    // A plural the catalog can vary; English keeps "symbols" for every count, as before.
+                    placeholder={m.choice('splicewire-beam-docs::messages.php_filter_placeholder', rows.length)}
                     value={filter}
                     onChange={(e) => setFilter(e.target.value)}
                 />
                 {q !== '' ? (
                     matches.length ? (
-                        <ul className="beam-php-api-matches" aria-label="Matching symbols">
+                        <ul className="beam-php-api-matches" aria-label={m.t('splicewire-beam-docs::messages.php_matches')}>
                             {matches.map((r) => (
                                 <li key={r.fqn}>
                                     <a href={symbolHref(r.fqn)} aria-current={r.fqn === current ? 'page' : undefined}>
@@ -216,14 +227,14 @@ export function PhpApiReference({ endpoint, transport, className }: PhpApiRefere
                                 </li>
                             ))}
                         </ul>
-                    ) : <p className="beam-php-api-note">No symbol matches “{filter.trim()}”.</p>
+                    ) : <p className="beam-php-api-note">{m.t('splicewire-beam-docs::messages.php_no_match', { query: filter.trim() })}</p>
                 ) : (
                     <ExpandableNav
                         items={tree}
                         currentHref={current ? symbolHref(current) : undefined}
                         initialGroupState="collapsed"
                         storagePrefix="beam-docs:php-api"
-                        aria-label="Packages and namespaces"
+                        aria-label={m.t('splicewire-beam-docs::messages.php_tree')}
                         classes={{
                             track: 'beam-php-api-track-wrap', trackLabel: 'beam-php-api-track', group: 'beam-php-api-group',
                             header: 'beam-php-api-header', item: 'beam-php-api-item-wrap',
@@ -238,7 +249,9 @@ export function PhpApiReference({ endpoint, transport, className }: PhpApiRefere
                 {current ? (
                     <SymbolView key={current} base={base} fqn={current} fetcher={fetcher} link={link} />
                 ) : selected ? (
-                    <p className="beam-php-api-note" role="status">No published symbol is named <code>{selected}</code>.</p>
+                    <p className="beam-php-api-note" role="status">
+                        {richMessage(m, 'splicewire-beam-docs::messages.php_no_symbol', { name: <code>{selected}</code> })}
+                    </p>
                 ) : (
                     <Overview index={data} />
                 )}
@@ -248,20 +261,22 @@ export function PhpApiReference({ endpoint, transport, className }: PhpApiRefere
 }
 
 function Overview({ index }: { index: PhpApiIndexData }) {
+    const m = useBeamDocsMessages();
     return (
-        <section className="beam-php-api-overview" aria-label="Packages">
+        <section className="beam-php-api-overview" aria-label={m.t('splicewire-beam-docs::messages.php_packages')}>
             <ul className="beam-php-api-links">
                 {index.packages.map((p) => (
-                    <li key={p.name}><code>{p.name}</code>{p.version ? ` ${p.version}` : ''} · {p.published} symbol{p.published === 1 ? '' : 's'}</li>
+                    <li key={p.name}><code>{p.name}</code>{p.version ? ` ${p.version}` : ''} · {m.choice('splicewire-beam-docs::messages.php_symbol_count', p.published)}</li>
                 ))}
             </ul>
-            <p className="beam-php-api-note">Choose a symbol from the list, or filter it.</p>
+            <p className="beam-php-api-note">{m.t('splicewire-beam-docs::messages.php_choose')}</p>
         </section>
     );
 }
 
 function SymbolView({ base, fqn, fetcher, link: linkIndex }: { base: string; fqn: string; fetcher: DocsTransport; link: SymbolLinker }) {
     const [loaded, setLoaded] = useState<{ data: PhpApiSymbolData | null } | null>(null);
+    const m = useBeamDocsMessages();
 
     useEffect(() => {
         const controller = new AbortController();
@@ -307,9 +322,13 @@ function SymbolView({ base, fqn, fetcher, link: linkIndex }: { base: string; fqn
         };
     }, [loaded, linkIndex]);
 
-    if (!loaded) return <p className="beam-php-api-note" role="status">Loading <code>{fqn}</code>…</p>;
+    if (!loaded) {
+        return <p className="beam-php-api-note" role="status">{richMessage(m, 'splicewire-beam-docs::messages.php_loading', { name: <code>{fqn}</code> })}</p>;
+    }
     const s = loaded.data;
-    if (!s) return <p className="beam-php-api-note" role="status"><code>{fqn}</code> could not be read.</p>;
+    if (!s) {
+        return <p className="beam-php-api-note" role="status">{richMessage(m, 'splicewire-beam-docs::messages.php_unreadable', { name: <code>{fqn}</code> })}</p>;
+    }
 
     /**
      * A name the PRODUCER already resolved (a relation, an implementer, a `see` target, an inherited member's source):
@@ -323,32 +342,32 @@ function SymbolView({ base, fqn, fetcher, link: linkIndex }: { base: string; fqn
     return (
         <article className="beam-php-api-symbol" aria-labelledby="beam-php-api-title" data-php-api-symbol={s.fqn}>
             <h2 id="beam-php-api-title"><span className="beam-php-api-kind">{s.kind}</span>{s.fqn}</h2>
-            <pre className="beam-php-api-signature" aria-label="Declaration">{declaration(s)}</pre>
+            <pre className="beam-php-api-signature" aria-label={m.t('splicewire-beam-docs::messages.php_declaration')}>{declaration(s)}</pre>
             <p className="beam-php-api-note"><code>{s.package}</code> · <code>{s.file}:{s.line}</code></p>
             {s.extends.length || s.implements.length || s.traits.length ? (
                 <dl className="beam-php-api-relations">
-                    {s.extends.length > 0 && <><dt>Extends</dt><dd>{list(s.extends.map((l) => named(l.fqn, l.published)))}</dd></>}
-                    {s.implements.length > 0 && <><dt>Implements</dt><dd>{list(s.implements.map((l) => named(l.fqn, l.published)))}</dd></>}
-                    {s.traits.length > 0 && <><dt>Uses</dt><dd>{list(s.traits.map((l) => named(l.fqn, l.published)))}</dd></>}
+                    {s.extends.length > 0 && <><dt>{m.t('splicewire-beam-docs::messages.php_extends')}</dt><dd>{list(s.extends.map((l) => named(l.fqn, l.published)))}</dd></>}
+                    {s.implements.length > 0 && <><dt>{m.t('splicewire-beam-docs::messages.php_implements')}</dt><dd>{list(s.implements.map((l) => named(l.fqn, l.published)))}</dd></>}
+                    {s.traits.length > 0 && <><dt>{m.t('splicewire-beam-docs::messages.php_uses')}</dt><dd>{list(s.traits.map((l) => named(l.fqn, l.published)))}</dd></>}
                 </dl>
             ) : null}
             <Templates templates={s.templates} />
             <Attributes attributes={s.attributes} />
             <Docs doc={s.doc} tags={s.tags} comment={s.comment} link={link} />
-            <Members title="Cases" kind="case" members={s.cases} link={link} />
-            <Members title="Constants" kind="constant" members={s.constants} link={link} />
-            <Members title="Properties" kind="property" members={s.properties} link={link} />
-            <Members title="Methods" kind="method" members={s.methods} link={link} />
+            <Members titleKey="splicewire-beam-docs::messages.php_cases" kind="case" members={s.cases} link={link} />
+            <Members titleKey="splicewire-beam-docs::messages.php_constants" kind="constant" members={s.constants} link={link} />
+            <Members titleKey="splicewire-beam-docs::messages.php_properties" kind="property" members={s.properties} link={link} />
+            <Members titleKey="splicewire-beam-docs::messages.php_methods" kind="method" members={s.methods} link={link} />
             <Inherited rows={s.inherited} named={named} link={link} />
             {s.implementers.length > 0 && (
-                <section className="beam-php-api-section" aria-label="Implemented by">
-                    <h3>Implemented by</h3>
+                <section className="beam-php-api-section" aria-label={m.t('splicewire-beam-docs::messages.php_implemented_by')}>
+                    <h3>{m.t('splicewire-beam-docs::messages.php_implemented_by')}</h3>
                     {list(s.implementers.map((f) => named(f, true)))}
                 </section>
             )}
             {s.see.length > 0 && (
-                <section className="beam-php-api-section" aria-label="See also">
-                    <h3>See also</h3>
+                <section className="beam-php-api-section" aria-label={m.t('splicewire-beam-docs::messages.php_see_also')}>
+                    <h3>{m.t('splicewire-beam-docs::messages.php_see_also')}</h3>
                     {list(s.see.map((x) => named(x.target, x.published)))}
                 </section>
             )}
@@ -382,6 +401,7 @@ function memberSignature(kind: string, m: PhpApiMemberData): string {
 
 /** The first paragraph, shown; the rest, the tags and (internal audience) the whole comment behind an expander. */
 function Docs({ doc, tags, comment, link }: { doc: string[]; tags: PhpApiTagData[]; comment?: string; link: SymbolLinker }) {
+    const m = useBeamDocsMessages();
     const [first, ...rest] = doc;
     const more = rest.length > 0 || tags.length > 0;
     return (
@@ -389,10 +409,10 @@ function Docs({ doc, tags, comment, link }: { doc: string[]; tags: PhpApiTagData
             {first !== undefined && <Paragraph text={first} link={link} />}
             {more && (
                 <details className="beam-php-api-more">
-                    <summary>More</summary>
+                    <summary>{m.t('splicewire-beam-docs::messages.php_more')}</summary>
                     {rest.map((p, i) => <Paragraph key={i} text={p} link={link} />)}
                     {tags.length > 0 && (
-                        <ul className="beam-php-api-tags" aria-label="Tags">
+                        <ul className="beam-php-api-tags" aria-label={m.t('splicewire-beam-docs::messages.php_tags')}>
                             {tags.map((t, i) => (
                                 <li key={i}>
                                     <code>{[t.tag, t.type, t.name].filter(Boolean).join(' ')}</code>
@@ -405,7 +425,7 @@ function Docs({ doc, tags, comment, link }: { doc: string[]; tags: PhpApiTagData
             )}
             {comment !== undefined && (
                 <details className="beam-php-api-more">
-                    <summary>Full comment</summary>
+                    <summary>{m.t('splicewire-beam-docs::messages.php_full_comment')}</summary>
                     <pre className="beam-php-api-signature">{comment}</pre>
                 </details>
             )}
@@ -414,10 +434,12 @@ function Docs({ doc, tags, comment, link }: { doc: string[]; tags: PhpApiTagData
 }
 
 function Templates({ templates }: { templates: PhpApiTemplateData[] }) {
+    const m = useBeamDocsMessages();
     if (!templates.length) return null;
+    // The `of` / `=` inside each template are PHPDoc syntax (`@template T of Bound = Default`), code rather than copy.
     return (
-        <p className="beam-php-api-note" aria-label="Templates">
-            Templates: {templates.map((t, i) => (
+        <p className="beam-php-api-note" aria-label={m.t('splicewire-beam-docs::messages.php_templates')}>
+            {m.t('splicewire-beam-docs::messages.php_templates_prefix')} {templates.map((t, i) => (
                 <code key={i}>
                     {i > 0 ? ', ' : ''}
                     {t.variance !== 'invariant' ? `${t.variance} ` : ''}{t.name}{t.bound ? ` of ${t.bound}` : ''}{t.default ? ` = ${t.default}` : ''}
@@ -430,9 +452,10 @@ function Templates({ templates }: { templates: PhpApiTemplateData[] }) {
 const attributeText = (a: PhpApiAttributeData) => `#[${a.name}${a.arguments.length ? `(${a.arguments.join(', ')})` : ''}]`;
 
 function Attributes({ attributes }: { attributes: PhpApiAttributeData[] }) {
+    const m = useBeamDocsMessages();
     if (!attributes.length) return null;
     return (
-        <p className="beam-php-api-note" aria-label="Attributes">
+        <p className="beam-php-api-note" aria-label={m.t('splicewire-beam-docs::messages.php_attributes')}>
             {attributes.map((a, i) => <code key={i}>{attributeText(a)} </code>)}
         </p>
     );
@@ -440,10 +463,11 @@ function Attributes({ attributes }: { attributes: PhpApiAttributeData[] }) {
 
 /** Each parameter's own attributes (`$x #[Tagged('x')]`), which a method's signature string does not carry. */
 function ParameterAttributes({ params }: { params: PhpApiParamData[] }) {
+    const m = useBeamDocsMessages();
     const attributed = params.filter((p) => p.attributes.length > 0);
     if (!attributed.length) return null;
     return (
-        <ul className="beam-php-api-tags" aria-label="Parameter attributes">
+        <ul className="beam-php-api-tags" aria-label={m.t('splicewire-beam-docs::messages.php_param_attributes')}>
             {attributed.map((p) => (
                 <li key={p.name}><code>{`$${p.name}`}</code> <code>{p.attributes.map(attributeText).join(' ')}</code></li>
             ))}
@@ -468,14 +492,15 @@ function Declaration({ kind, member, link }: { kind: string; member: PhpApiMembe
     );
 }
 
-function Members({ title, kind, members, link }: { title: string; kind: string; members: PhpApiMemberData[]; link: SymbolLinker }) {
+function Members({ titleKey, kind, members, link }: { titleKey: BeamDocsMessageKey; kind: string; members: PhpApiMemberData[]; link: SymbolLinker }) {
+    const m = useBeamDocsMessages();
     if (!members.length) return null;
     return (
-        <section className="beam-php-api-section" aria-label={title}>
-            <h3>{title}</h3>
-            {members.map((m) => (
-                <div key={m.name} className="beam-php-api-member" data-php-api-member={m.name}>
-                    <Declaration kind={kind} member={m} link={link} />
+        <section className="beam-php-api-section" aria-label={m.t(titleKey)}>
+            <h3>{m.t(titleKey)}</h3>
+            {members.map((member) => (
+                <div key={member.name} className="beam-php-api-member" data-php-api-member={member.name}>
+                    <Declaration kind={kind} member={member} link={link} />
                 </div>
             ))}
         </section>
@@ -485,18 +510,23 @@ function Members({ title, kind, members, link }: { title: string; kind: string; 
 function Inherited({ rows, named, link }: {
     rows: PhpApiInheritedData[]; named: (fqn: string, published: boolean) => ReactNode; link: SymbolLinker;
 }) {
+    const m = useBeamDocsMessages();
     if (!rows.length) return null;
     return (
-        <section className="beam-php-api-section" aria-label="Inherited members">
-            <h3>Inherited</h3>
+        <section className="beam-php-api-section" aria-label={m.t('splicewire-beam-docs::messages.php_inherited_members')}>
+            <h3>{m.t('splicewire-beam-docs::messages.php_inherited')}</h3>
             {rows.map((r) => (
                 <div key={`${r.kind} ${r.name}`} className="beam-php-api-member" data-php-api-inherited={r.name}>
                     <div>
                         <code>{r.kind === 'method' ? `${r.name}()` : r.kind === 'property' ? `$${r.name}` : r.name}</code>
                         {r.visibility ? <span className="beam-php-api-flag">{r.visibility}</span> : null}
-                        {r.abstract === true ? <span className="beam-php-api-flag">abstract requirement</span> : null}
-                        {r.original !== undefined ? <span className="beam-php-api-flag">alias of <code>{r.original}()</code></span> : null}
-                        <span className="beam-php-api-flag">from {named(r.from, true)}</span>
+                        {r.abstract === true ? <span className="beam-php-api-flag">{m.t('splicewire-beam-docs::messages.php_abstract_requirement')}</span> : null}
+                        {r.original !== undefined ? (
+                            <span className="beam-php-api-flag">
+                                {richMessage(m, 'splicewire-beam-docs::messages.php_alias_of', { original: <code>{r.original}()</code> })}
+                            </span>
+                        ) : null}
+                        <span className="beam-php-api-flag">{richMessage(m, 'splicewire-beam-docs::messages.php_from', { source: named(r.from, true) })}</span>
                     </div>
                     {r.declaration && <Declaration kind="method" member={r.declaration} link={link} />}
                 </div>

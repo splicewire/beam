@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { docsConfiguration } from './config.js';
 import { fetchDocs, type DocsTransport } from './publications.js';
 import type { RegistryRegistrantData, RegistryRegistrantsData } from './generated/types.js';
+import { useBeamDocsMessages } from './messages.js';
 
 export type { RegistryRegistrantData, RegistryRegistrantsData } from './generated/types.js';
 
@@ -78,6 +79,7 @@ export function RegistryRegistrants({ root, endpoint, transport, className }: Re
     const fetcher = transport ?? docs.transport ?? fetchDocs;
     const url = base && root ? registrantsUrl(base, root) : null;
     const [loaded, setLoaded] = useState<{ url: string; data: RegistryRegistrantsData | null } | null>(null);
+    const m = useBeamDocsMessages();
 
     useEffect(() => {
         if (!url) return;
@@ -99,9 +101,10 @@ export function RegistryRegistrants({ root, endpoint, transport, className }: Re
 
     if (data.describedHere === false) {
         return (
-            <aside className={classes} aria-label="Registrants on this site" data-registry-root={root}>
+            <aside className={classes} aria-label={m.t('splicewire-beam-docs::messages.registrants_region')} data-registry-root={root}>
                 <style>{REGISTRANTS_CSS}</style>
-                <p className="beam-docs-registrants-note">{data.note ?? 'not available on this host'}</p>
+                {/* The server's note renders as given; our line only when it sent none. */}
+                <p className="beam-docs-registrants-note">{data.note ?? m.t('splicewire-beam-docs::messages.registrants_unavailable')}</p>
             </aside>
         );
     }
@@ -109,19 +112,19 @@ export function RegistryRegistrants({ root, endpoint, transport, className }: Re
     const entries = data.recordsRegistrants ? data.entries : null;
 
     return (
-        <aside className={classes} aria-label="Registrants on this site" data-registry-root={root}>
+        <aside className={classes} aria-label={m.t('splicewire-beam-docs::messages.registrants_region')} data-registry-root={root}>
             <style>{REGISTRANTS_CSS}</style>
-            <h2>On this site</h2>
+            <h2>{m.t('splicewire-beam-docs::messages.registrants_heading')}</h2>
             <dl>
                 {data.owner && (
                     <>
-                        <dt>Owner</dt>
+                        <dt>{m.t('splicewire-beam-docs::messages.registrants_owner')}</dt>
                         <dd><code>{data.owner}</code></dd>
                     </>
                 )}
                 {data.describedBy && (
                     <>
-                        <dt>Described by</dt>
+                        <dt>{m.t('splicewire-beam-docs::messages.registrants_described_by')}</dt>
                         <dd><code>{data.describedBy}</code></dd>
                     </>
                 )}
@@ -129,7 +132,7 @@ export function RegistryRegistrants({ root, endpoint, transport, className }: Re
             {entries ? (
                 <>
                     {entries.length > 0 && (
-                        <ul aria-label="Entries and who registered them">
+                        <ul aria-label={m.t('splicewire-beam-docs::messages.registrants_entries')}>
                             {entries.map((entry) => (
                                 <li key={entry.key}>
                                     <code>{entry.key}</code>
@@ -139,13 +142,11 @@ export function RegistryRegistrants({ root, endpoint, transport, className }: Re
                         </ul>
                     )}
                     {entries.length === 0 && !data.unattributed && (
-                        <p className="beam-docs-registrants-note">Nothing is registered here on this site.</p>
+                        <p className="beam-docs-registrants-note">{m.t('splicewire-beam-docs::messages.registrants_empty')}</p>
                     )}
                     {data.unattributed ? (
                         <p className="beam-docs-registrants-note">
-                            {data.unattributed === 1
-                                ? '1 entry does not name who registered it.'
-                                : `${data.unattributed} entries do not name who registered them.`}
+                            {m.choice('splicewire-beam-docs::messages.registrants_unattributed', data.unattributed)}
                         </p>
                     ) : null}
                 </>

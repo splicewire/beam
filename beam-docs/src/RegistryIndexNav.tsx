@@ -8,6 +8,7 @@ import {
 import { docsConfiguration } from './config.js';
 import type { RegistryIndexData, RegistryIndexGroupData, RegistryIndexRootData } from './generated/types.js';
 import { REGISTRY_INDEX_CSS } from './registry-index-css.js';
+import { useBeamDocsMessages, type BeamDocsMessages } from './messages.js';
 
 /** The `kind` laravel-beam-docs' `RegistryIndexNavNode` ships under (`beam.docs.registries.nav.widget` = `index`). */
 export const REGISTRY_INDEX_KIND = 'beam-docs/registry-index';
@@ -40,10 +41,12 @@ type IndexedRoot = RegistryIndexRootData & { trail: string[] };
  * the package's own, because a host's Tailwind does not scan this bundle.
  */
 export function RegistryIndexNav({ node, linkComponent, currentHref }: RealmNavKindProps) {
+    const m = useBeamDocsMessages();
     const index = (node as RegistryIndexNavNode).index ?? null;
     const roots = useMemo(() => (index ? flatten(index.groups) : []), [index]);
     const byHref = useMemo(() => new Map(roots.filter((r) => r.href).map((r) => [r.href as string, r])), [roots]);
-    const tree = useMemo(() => (index ? toTree(index.groups) : []), [index]);
+    // The tree carries our "Overview" title, so it is rebuilt when the reader's messages change (`m` in the deps).
+    const tree = useMemo(() => (index ? toTree(index.groups, m) : []), [index, m]);
     // The root a search chose that has no page: the tree opens on it as if it were current.
     const [revealed, setRevealed] = useState<string | null>(null);
     const rootRef = useRef<HTMLDivElement>(null);
@@ -90,15 +93,15 @@ export function RegistryIndexNav({ node, linkComponent, currentHref }: RealmNavK
                 trigger={
                     <button type="button" className="beam-registry-index-trigger" aria-haspopup="listbox">
                         <span aria-hidden="true">⌕</span>
-                        <span>Find a registry</span>
+                        <span>{m.t('splicewire-beam-docs::messages.registry_find')}</span>
                         <span className="beam-registry-index-count">{index.total}</span>
                     </button>
                 }
                 search={search}
                 onSelect={choose}
                 currentValue={current}
-                placeholder="Jump to a registry root"
-                emptyText="No registry matches"
+                placeholder={m.t('splicewire-beam-docs::messages.registry_jump')}
+                emptyText={m.t('splicewire-beam-docs::messages.registry_no_match')}
                 debounceMs={0}
                 contentClassName="beam-registry-index-popover"
                 inputClassName="beam-registry-index-input"
@@ -109,8 +112,8 @@ export function RegistryIndexNav({ node, linkComponent, currentHref }: RealmNavK
                 currentHref={revealed ?? currentHref}
                 initialGroupState="collapsed"
                 storagePrefix="beam-docs:registry-index"
-                trackLabel={(track) => (track === OTHER ? (tree.some((n) => n.track !== OTHER) ? 'Other registries' : '') : track)}
-                aria-label="Registry index"
+                trackLabel={(track) => (track === OTHER ? (tree.some((n) => n.track !== OTHER) ? m.t('splicewire-beam-docs::messages.registry_other') : '') : track)}
+                aria-label={m.t('splicewire-beam-docs::messages.registry_index')}
                 classes={{
                     nav: 'beam-registry-index-tree',
                     track: 'beam-registry-index-track',
@@ -201,7 +204,7 @@ function flatten(groups: RegistryIndexGroupData[], trail: string[] = []): Indexe
  * builder's one level, keyed by the page's last path segment). Deeper clusters and page-less nested clusters fold
  * their roots into the nearest level that can hold them. `order` keeps the server's order through the builder's sort.
  */
-function toTree(groups: RegistryIndexGroupData[]): TreeNode[] {
+function toTree(groups: RegistryIndexGroupData[], m: BeamDocsMessages): TreeNode[] {
     const nodes: TreeNode[] = [];
     let order = 0;
     let groupOrder = 0;
@@ -212,7 +215,7 @@ function toTree(groups: RegistryIndexGroupData[]): TreeNode[] {
         const push = (n: Omit<TreeNode, 'track' | 'group' | 'groupOrder' | 'order'>) =>
             nodes.push({ ...n, track, group: label, groupOrder: go, order: order++ });
         const hrefs = new Set(group.roots.map((r) => r.href));
-        if (group.href && !hrefs.has(group.href)) push({ title: 'Overview', href: group.href });
+        if (group.href && !hrefs.has(group.href)) push({ title: m.t('splicewire-beam-docs::messages.registry_overview'), href: group.href });
         group.roots.forEach((r) => push({ title: r.root, href: r.href ?? undefined }));
         for (const nested of group.groups) {
             // The nested cluster's page is the item its roots hang under; without a page they sit in the disclosure.
