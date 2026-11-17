@@ -27,3 +27,37 @@ it("returns helper copy in the reader's locale, and the pre-29 English without o
   const localized = tokenScopeSchemaFor(es).properties as Record<string, { title: string }>;
   expect(localized.name.title).toBe("Nombre del token");
 });
+
+it("re-renders the token table in the new locale on a live switch", async () => {
+  const { render, screen, cleanup } = await import("@testing-library/react");
+  const { QueryClient, QueryClientProvider } = await import("@tanstack/react-query");
+  const { MessageProvider } = await import("@schemastud/messages/react");
+  const { TokensRoster } = await import("../src/tokens-roster");
+  const { TokensProvider } = await import("../src/provider");
+  const { makeTokensClient, SAMPLE_TOKENS } = await import("../src/story-harness");
+  globalThis.ResizeObserver ??= class { observe() {} unobserve() {} disconnect() {} };
+  const english: ClientCatalog = { version: 1, locale: "en", realm: null, direction: "ltr", messages: {} };
+  const tableSpanish: ClientCatalog = {
+    ...spanish,
+    messages: { ...spanish.messages, "splicewire-beam-accounts::messages.tokens_col_last_used": { text: "Último uso", sourceLocale: "es" } },
+  };
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  const services = { client: makeTokensClient({ tokens: [SAMPLE_TOKENS[0]] }) };
+  const tree = (catalog: ClientCatalog) => (
+    <MessageProvider value={catalog}>
+      <QueryClientProvider client={client}>
+        <TokensProvider services={services}>
+          <TokensRoster />
+        </TokensProvider>
+      </QueryClientProvider>
+    </MessageProvider>
+  );
+  const view = render(tree(english));
+  expect((await screen.findAllByText("Last used")).length).toBeGreaterThan(0);
+
+  view.rerender(tree(tableSpanish));
+
+  expect(screen.getAllByText("Último uso").length).toBeGreaterThan(0);
+  expect(screen.queryByText("Last used")).toBeNull();
+  cleanup();
+});

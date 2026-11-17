@@ -11,5 +11,5 @@ export const englishBeamAccountsMessages = createMessages(catalog.messages);
 /** The messages object a schema builder or other non-hook helper takes; callers in a render pass the reader's. */
 export type BeamAccountsMessages = ReturnType<typeof useBeamAccountsMessages>;
 
-/** One of beam-ux's catalog keys. */
+/** One of beam-accounts' catalog keys. */
 export type BeamAccountsMessageKey = Parameters<BeamAccountsMessages['t']>[0];

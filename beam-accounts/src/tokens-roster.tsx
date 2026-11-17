@@ -395,6 +395,7 @@ function CreateTokenDialog({
   onMinted: (token: CreatedTokenData) => void;
 }) {
   const m = useBeamAccountsMessages();
+  const scopeSchema = useMemo(() => tokenScopeSchemaFor(m), [m]);
   const permissions = usePermissions();
   const createToken = useCreateToken();
   const [values, setValues] = useState<Record<string, unknown>>({
@@ -447,7 +448,7 @@ function CreateTokenDialog({
 
         {/* name + expiry: the REAL @schemastud/seam SchemaForm off the schema. */}
         <SchemaForm
-          schema={tokenScopeSchemaFor(m)}
+          schema={scopeSchema}
           formData={values}
           uiSchema={{
             "ui:options": { label: false },
@@ -836,8 +837,9 @@ export function TokensRoster() {
 
   const columns = useMemo(
     () => buildColumns(renderTokenActivity, busy, rotate, archive, remove, m),
+    // m: a live locale switch re-renders every header, badge, action label and toast the columns carry.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [renderTokenActivity, busy]
+    [renderTokenActivity, busy, m]
   );
 
   function toggleFacet(facet: TokenProvenance) {
