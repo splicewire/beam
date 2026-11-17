@@ -10,6 +10,7 @@ import type { Region } from "./types";
 import { ReleasePanel, type ReleaseRecord } from "./releases";
 import { VersionRecordingReferences } from "./recording";
 import { useBeamUxMessages } from "./messages.js";
+import { NoticeError, notice as line, noticeOf, say } from "./message-descriptor.js";
 
 /**
  * The THEME ENTRY's editor seat — the one surface that lets an author change a theme token through a
@@ -105,9 +106,7 @@ export function ThemeEditor({
     mutationFn: async (body: Record<string, unknown>) => {
       const state = versions.data;
       if (!client.saveDraft || !versions.isSuccess || !state)
-        throw new Error(
-          "Loaded version history and draft transport are required to edit this theme.",
-        );
+        throw new NoticeError(line('splicewire-beam-ux::messages.theme_requires_transport'));
       return client.saveDraft(entryId, body, state.headVersion);
     },
     onSuccess: async (state, savedBody) => {
@@ -120,7 +119,7 @@ export function ThemeEditor({
     mutationFn: async () => {
       const ref = versions.data?.headVersion;
       if (!client.releaseCommand || !releaseId || !ref)
-        throw new Error("Choose a Release and a saved theme version.");
+        throw new NoticeError(line('splicewire-beam-ux::messages.theme_choose_release_version'));
       return client.releaseCommand(releaseId, {
         action: "member",
         entryId,
@@ -131,15 +130,15 @@ export function ThemeEditor({
   const publish = useMutation({
     mutationFn: async () => {
       if (!client.publish)
-        throw new Error("Release publication is unavailable.");
+        throw new NoticeError(line('splicewire-beam-ux::messages.theme_publication_unavailable'));
       const state =
         draft === null ? versions.data : await save.mutateAsync(draft);
       if (!state?.headVersion)
-        throw new Error("Save a theme version before publishing.");
+        throw new NoticeError(line('splicewire-beam-ux::messages.theme_save_before_publish'));
       if (state.compileError) throw new Error(state.compileError);
       const result = await client.publish(entryId, state.headVersion);
       const release = result.release;
-      if (!release) throw new Error("The server did not return a Release.");
+      if (!release) throw new NoticeError(line('splicewire-beam-ux::messages.theme_no_release_returned'));
       setPublication(release);
       await Promise.all([
         versions.refetch(),
@@ -236,7 +235,7 @@ export function ThemeEditor({
         saveDisabled={!versions.isSuccess || !versions.data}
         saveLabel={m.t('splicewire-beam-ux::messages.theme_save_draft')}
       />
-      {save.isError && <p role="alert">{save.error.message}</p>}
+      {save.isError && <p role="alert">{say(m, noticeOf(save.error, save.error.message))}</p>}
       {versions.isError && (
         <p role="alert">
           {m.t('splicewire-beam-ux::messages.theme_history_load_failed')}{" "}
@@ -262,7 +261,7 @@ export function ThemeEditor({
           {m.t('splicewire-beam-ux::messages.theme_publish')}
         </Button>
       )}
-      {publish.isError && <p role="alert">{publish.error.message}</p>}
+      {publish.isError && <p role="alert">{say(m, noticeOf(publish.error, publish.error.message))}</p>}
       {publish.isSuccess && (
         <p role="status">
           {publication?.status === "published"
@@ -341,7 +340,7 @@ export function ThemeEditor({
           >
             {m.t('splicewire-beam-ux::messages.theme_add_to_release')}
           </Button>
-          {join.isError && <p role="alert">{join.error.message}</p>}
+          {join.isError && <p role="alert">{say(m, noticeOf(join.error, join.error.message))}</p>}
           {join.isSuccess && (
             <p role="status">{m.t('splicewire-beam-ux::messages.theme_added_to_release')}</p>
           )}

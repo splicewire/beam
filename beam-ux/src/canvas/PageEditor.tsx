@@ -693,9 +693,7 @@ export function PageEditor({
   if (!local.session) return <div role="status">{m.t('splicewire-beam-ux::messages.page_loading_session')}</div>;
   const resolveConflict = async (keepOurs: boolean) => {
     if (local.session?.source) {
-      notify?.error(
-        "Apply or discard Source Mode before resolving the conflict.",
-      );
+      notify?.error(m.t('splicewire-beam-ux::messages.page_source_before_conflict'));
       return;
     }
     if (!transport.listVersions || !transport.loadBody || !transport.saveDraft)
@@ -728,9 +726,7 @@ export function PageEditor({
       }
       setConflict(false);
     } catch {
-      notify?.error(
-        "The current version changed again; reload the conflict before retrying.",
-      );
+      notify?.error(m.t('splicewire-beam-ux::messages.page_conflict_changed_again'));
     }
   };
 

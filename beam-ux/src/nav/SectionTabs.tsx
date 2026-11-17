@@ -20,6 +20,7 @@
 // theme-neutral (the packaged strip classes are the default, overridable via `classNames`).
 import type { ComponentType, ReactNode } from 'react';
 import type { RealmNavNode } from './types.js';
+import { useBeamUxMessages } from '../messages.js';
 
 /**
  * A tab link, injected by the host. It speaks the intersection react-router's `NavLink` and the
@@ -144,6 +145,7 @@ function Strip({
  * leaf (no children) or no section matches — the host then draws its own chrome (the section name).
  */
 export function SectionTabs({ items, pathname, linkComponent, classNames, fallback }: SectionTabsProps) {
+    const m = useBeamUxMessages();
     const sections = (items ?? []).filter((node) => node.zone !== 'meta');
     const section = activeNode(sections, pathname);
     // No section matches the pathname at all → nothing (never the fallback: there is no section to name).
@@ -167,14 +169,14 @@ export function SectionTabs({ items, pathname, linkComponent, classNames, fallba
             <Strip
                 tabs={primary}
                 linkComponent={linkComponent}
-                ariaLabel={`${section.title} sub-sections`}
+                ariaLabel={m.t('splicewire-beam-ux::messages.nav_sub_sections', { title: section.title })}
                 className={classNames?.primary ?? DEFAULTS.primary}
             />
             {groupTabs.length > 0 && activeGroup ? (
                 <Strip
                     tabs={groupTabs}
                     linkComponent={linkComponent}
-                    ariaLabel={`${activeGroup.title} group sections`}
+                    ariaLabel={m.t('splicewire-beam-ux::messages.nav_group_sections', { title: activeGroup.title })}
                     className={classNames?.group ?? DEFAULTS.group}
                 />
             ) : null}

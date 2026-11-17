@@ -2,7 +2,7 @@ import { useEffect, useId, useRef, useState } from 'react';
 import type { FileBatchReconcileInput, FileBatchReconcileResult, FileInspection, FileReconcileInput, FileReconcileResult } from './files';
 import type { UxBuilderClient } from './types';
 import { useBeamUxMessages } from './messages.js';
-import { notice, noticeOf, say, type Notice } from './message-descriptor.js';
+import { NoticeError, notice, noticeOf, say, type Notice } from './message-descriptor.js';
 
 const buttonClassName = 'inline-flex items-center justify-center rounded-md border bg-background px-3 py-2 text-sm font-medium shadow-sm hover:bg-muted focus-visible:outline focus-visible:outline-2 disabled:cursor-not-allowed disabled:opacity-50';
 type FileConfirmation =
@@ -37,11 +37,11 @@ export function FilesComparisonPanel({memberId, client, editorHref}: {
         setBusy(true); setError(''); setConfirmation(null);
         setInspection(null);
         try {
-            if (!client.inspectReleaseFile) throw new Error('File inspection is unavailable in this host.');
+            if (!client.inspectReleaseFile) throw new NoticeError(notice('splicewire-beam-ux::messages.files_inspection_unavailable'));
             const response = await client.inspectReleaseFile(memberId);
             if (epoch === requestEpoch.current) setInspection(response);
         } catch (failure) {
-            if (epoch === requestEpoch.current) setError(failure instanceof Error ? failure.message : 'Comparison failed.');
+            if (epoch === requestEpoch.current) setError(noticeOf(failure, notice('splicewire-beam-ux::messages.files_comparison_failed')));
         }
         finally { if (epoch === requestEpoch.current) setBusy(false); }
     };
