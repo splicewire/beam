@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { docsConfiguration } from './config.js';
 import type { DocsSearchResultsData } from './generated/types.js';
 import { fetchDocs } from './publications.js';
+import { useBeamDocsMessages } from './messages.js';
 
 /**
  * The packaged docs search box (docs-walkthrough DM6, DOC-9; DOCS-14): the header's default `search` slot. It asks
@@ -14,6 +15,7 @@ import { fetchDocs } from './publications.js';
  * with `?q=`, once per distinct term. It searches as you type, so a settled query is not a search the reader made.
  */
 export function DocsSearch({ root }: { root: string }) {
+    const m = useBeamDocsMessages();
     const endpoint = docsConfiguration().searchEndpoint;
     const [q, setQ] = useState(() => (typeof window === 'undefined' ? '' : new URLSearchParams(window.location.search).get('q') ?? ''));
     const [found, setFound] = useState<DocsSearchResultsData | null>(null);
@@ -59,8 +61,8 @@ export function DocsSearch({ root }: { root: string }) {
         <div className="beam-docs-search" role="search">
             <input
                 type="search"
-                aria-label="Search docs"
-                placeholder="Search docs"
+                aria-label={m.t('splicewire-beam-docs::messages.search_label')}
+                placeholder={m.t('splicewire-beam-docs::messages.search_label')}
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
                 onKeyDown={(e) => {
@@ -68,16 +70,16 @@ export function DocsSearch({ root }: { root: string }) {
                 }}
             />
             {found && q.trim() !== '' && (
-                <div className="beam-docs-search-results" role="listbox" aria-label="Search results">
+                <div className="beam-docs-search-results" role="listbox" aria-label={m.t('splicewire-beam-docs::messages.search_results')}>
                     {found.results.map((hit) => (
                         <a key={hit.href} href={hit.href} role="option" aria-selected={false} data-docs-search-hit="" data-kind={hit.kind} onClick={() => commit(q)}>
                             <strong>{hit.title}</strong>
-                            {hit.kind === 'reference' && <span> · API reference</span>}
+                            {hit.kind === 'reference' && <span> · {m.t('splicewire-beam-docs::messages.search_api_reference')}</span>}
                             {hit.trail.length > 0 && <small>{hit.trail.join(' › ')}</small>}
                             {hit.excerpt && <p>{hit.excerpt}</p>}
                         </a>
                     ))}
-                    {found.results.every((hit) => hit.kind !== 'page') && <p>No pages match “{q.trim()}”.</p>}
+                    {found.results.every((hit) => hit.kind !== 'page') && <p>{m.t('splicewire-beam-docs::messages.search_no_pages', { query: q.trim() })}</p>}
                     {found.fallback && <a href={found.fallback.href}>{found.fallback.label}</a>}
                 </div>
             )}

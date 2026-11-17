@@ -10,6 +10,7 @@ import { DocsHeader } from './DocsHeader.js';
 import { ThemeDocsStyle } from './ThemeDocsStyle.js';
 import { HeadingAnchors } from './HeadingAnchors.js';
 import type { DocsChromeData } from './generated/types.js';
+import { useBeamDocsMessages } from './messages.js';
 
 /**
  * `DocsLayout` — the docs chrome, out of the box: header slot · breadcrumb (packaged `DocsBreadcrumb`, or the
@@ -72,6 +73,7 @@ export function DocsLayout({ nav, linkComponent, currentHref, slots, classNames,
     // leaves the docs path. An older server sends none, and the host header still renders, so a host is unchanged
     // until its server carries the chrome.
     const docsChrome = (page?.docsChrome ?? null) as DocsChromeData | null;
+    const m = useBeamDocsMessages();
     const [drawerOpen, setDrawerOpen] = useState(false);
     const [main, setMain] = useState<HTMLElement | null>(null);
     const [headingKey, setHeadingKey] = useState('');
@@ -109,7 +111,7 @@ export function DocsLayout({ nav, linkComponent, currentHref, slots, classNames,
             )}
 
             <div className={[DEFAULTS.body, classNames?.body].filter(Boolean).join(' ')}>
-                <aside className={[DEFAULTS.rail, classNames?.rail].filter(Boolean).join(' ')} aria-label="Docs sections">
+                <aside className={[DEFAULTS.rail, classNames?.rail].filter(Boolean).join(' ')} aria-label={m.t('splicewire-beam-docs::messages.docs_sections')}>
                     {slots?.railTop}
                     <RealmNav
                         items={items}

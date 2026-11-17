@@ -3,28 +3,40 @@ import { createFormValidator } from '@schemastud/seam';
 import type { RJSFSchema } from '@rjsf/utils';
 import publicationSchema from './generated/publication.schema.json';
 import type { PublicationData, PublishInputData } from './generated/types.js';
+import { notice, say, type Notice } from './message-descriptor.js';
+import { englishBeamDocsMessages, type BeamDocsMessageKey } from './messages.js';
 
 export type { PublicationData, PublicationStatus, PublishInputData } from './generated/types.js';
 
 /** Return decoded JSON, retaining the server's `{ data: ... }` envelope. */
 export type DocsTransport = (url: string, init?: RequestInit) => Promise<unknown>;
 
-export class DocsRequestError extends Error {}
+/**
+ * One of this package's fixed request failures: it carries the catalog line (`notice`) the panel renders in the
+ * reader's locale; `message` stays the English line for logs and for a host that reads it (localization 30).
+ */
+export class DocsRequestError extends Error {
+    constructor(readonly notice: Notice) {
+        super(say(englishBeamDocsMessages, notice));
+    }
+}
 
-function requestMessage(status: number): string {
-    if (status === 401 || status === 403) return 'You do not have permission to manage documentation publications.';
-    if (status === 419) return 'Your session has expired. Reload this page and try again.';
-    if (status === 422) return 'Check the release version and publication settings, then try again.';
-    if (status === 409) return 'This publication cannot be started again. Refresh its status.';
-    if (status === 404) return 'Documentation publishing is unavailable on this site.';
-    return 'The publication request failed. Try again or check the publishing service.';
+const failed = (key: BeamDocsMessageKey) => new DocsRequestError(notice(key));
+
+function requestMessage(status: number): BeamDocsMessageKey {
+    if (status === 401 || status === 403) return 'splicewire-beam-docs::messages.request_forbidden';
+    if (status === 419) return 'splicewire-beam-docs::messages.request_session_expired';
+    if (status === 422) return 'splicewire-beam-docs::messages.request_invalid';
+    if (status === 409) return 'splicewire-beam-docs::messages.request_conflict';
+    if (status === 404) return 'splicewire-beam-docs::messages.request_unavailable';
+    return 'splicewire-beam-docs::messages.request_failed';
 }
 
 /** Cookie-authenticated, same-origin Laravel transport; never renders an HTTP error body. */
 export const fetchDocs: DocsTransport = async (url, init = {}) => {
     const target = new URL(url, window.location.href);
     if (target.origin !== window.location.origin) {
-        throw new DocsRequestError('Documentation requests must use this site’s origin.');
+        throw failed('splicewire-beam-docs::messages.request_origin');
     }
 
     const headers = new Headers(init.headers);
@@ -36,7 +48,7 @@ export const fetchDocs: DocsTransport = async (url, init = {}) => {
         try {
             token = xsrfHeader();
         } catch {
-            throw new DocsRequestError('Your session token is invalid. Reload this page and try again.');
+            throw failed('splicewire-beam-docs::messages.request_token');
         }
         const meta = document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content;
         if (Object.keys(token).length > 0) {
@@ -49,7 +61,7 @@ export const fetchDocs: DocsTransport = async (url, init = {}) => {
     const response = await fetch(target.href, {
         ...init, headers, credentials: 'same-origin', cache: 'no-store', redirect: 'error',
     });
-    if (!response.ok) throw new DocsRequestError(requestMessage(response.status));
+    if (!response.ok) throw failed(requestMessage(response.status));
     return response.json();
 };
 
@@ -64,14 +76,14 @@ const schema: RJSFSchema = publicationSchema as RJSFSchema;
 function publication(value: unknown): PublicationData {
     validator ??= createFormValidator();
     if (!validator.isValid(schema, value, schema)) {
-        throw new DocsRequestError('The publishing service returned an unreadable status. Refresh and try again.');
+        throw failed('splicewire-beam-docs::messages.response_status');
     }
     return value as PublicationData;
 }
 
 function data(value: unknown): unknown {
     if (!record(value) || !('data' in value)) {
-        throw new DocsRequestError('The publishing service returned an unreadable response. Refresh and try again.');
+        throw failed('splicewire-beam-docs::messages.response_unreadable');
     }
     return value.data;
 }
@@ -84,7 +96,7 @@ export function createDocsPublicationsClient(
     return {
         async list(signal?: AbortSignal): Promise<PublicationData[]> {
             const result = data(await transport(base, { signal }));
-            if (!Array.isArray(result)) throw new DocsRequestError('The publishing service returned an unreadable list.');
+            if (!Array.isArray(result)) throw failed('splicewire-beam-docs::messages.response_list');
             return result.map(publication);
         },
         async get(id: string, signal?: AbortSignal): Promise<PublicationData> {
@@ -120,8 +132,10 @@ export async function fetchRegistryLink(endpoint: string, transport: DocsTranspo
     return record(result) && typeof result.url === 'string' ? scalarRegistryUrl(result.url) : null;
 }
 
-/** HTTP bodies and arbitrary transport exceptions may contain secrets; only our fixed messages pass. */
-export function publicationRequestMessage(error: unknown): string {
-    return error instanceof DocsRequestError ? error.message
-        : 'Could not reach the publishing service. Check your connection and try again.';
+/**
+ * HTTP bodies and arbitrary transport exceptions may contain secrets; only our fixed messages pass. Returned as a notice
+ * (a catalog key), so the panel keeps the key and renders it in the reader's current locale.
+ */
+export function publicationRequestMessage(error: unknown): Notice {
+    return error instanceof DocsRequestError ? error.notice : notice('splicewire-beam-docs::messages.request_unreachable');
 }

@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import type { LinkComponent, RealmNavNode } from '@splicewire/beam-ux/nav';
+import { useBeamDocsMessages } from './messages.js';
 
 /**
  * `DocsBreadcrumb` — the trail `DocsLayout` draws above a page by default: each ancestor of the current page in the
@@ -25,6 +26,7 @@ export function DocsBreadcrumb({
     linkComponent?: LinkComponent;
     className?: string;
 }) {
+    const m = useBeamDocsMessages();
     const { trail, endsOnPage } = docsTrail(items, currentHref);
     // Only ancestors make a trail: the page alone (the docs root) draws none.
     if (trail.length < (endsOnPage ? 2 : 1)) return null;
@@ -32,7 +34,7 @@ export function DocsBreadcrumb({
     const Link = linkComponent ?? PlainLink;
 
     return (
-        <nav aria-label="Breadcrumb" className={['beam-docs-breadcrumb', className].filter(Boolean).join(' ')}>
+        <nav aria-label={m.t('splicewire-beam-docs::messages.breadcrumb')} className={['beam-docs-breadcrumb', className].filter(Boolean).join(' ')}>
             <ol>
                 {trail.map((node, index) => {
                     const last = endsOnPage && index === trail.length - 1;

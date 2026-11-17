@@ -385,6 +385,9 @@ importers:
       '@schemastud/frame':
         specifier: github:schemastud/js#9503dcf4d839c269ee6053a6a421800bbbb7f974&path:/frame
         version: https://codeload.github.com/schemastud/js/tar.gz/9503dcf4d839c269ee6053a6a421800bbbb7f974#path:/frame(yknonjujqmri6c3vc3zmc364ua)
+      '@schemastud/messages':
+        specifier: github:schemastud/js#47810c9e78aca3eb452f7b34a1eaaed909f4102c&path:/messages
+        version: https://codeload.github.com/schemastud/js/tar.gz/47810c9e78aca3eb452f7b34a1eaaed909f4102c#path:/messages(react@19.2.7)(typescript@5.9.3)
       '@schemastud/nav':
         specifier: github:schemastud/js#ea1bb1a06d83de66164e19f9b6798342ed2a8c51&path:/nav
         version: https://codeload.github.com/schemastud/js/tar.gz/ea1bb1a06d83de66164e19f9b6798342ed2a8c51#path:/nav(react@19.2.7)

@@ -1,6 +1,7 @@
 import { scanHeadings, type TocHeading } from '@schemastud/nav';
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { useBeamDocsMessages, type BeamDocsMessageKey } from './messages.js';
 
 type AnchoredHeading = TocHeading & { host: HTMLElement };
 
@@ -15,8 +16,10 @@ export function HeadingAnchors({
     onScan: (key: string) => void;
 }) {
     const [headings, setHeadings] = useState<AnchoredHeading[]>([]);
+    const m = useBeamDocsMessages();
     const [copied, setCopied] = useState('');
-    const [status, setStatus] = useState('');
+    // The live status is kept as a catalog key and translated where it renders (localization 30), never as text.
+    const [status, setStatus] = useState<BeamDocsMessageKey | null>(null);
     const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
     const scanRevision = useRef(0);
 
@@ -119,7 +122,7 @@ export function HeadingAnchors({
         clearTimeout(timer.current);
         setCopied('');
         if (!navigator.clipboard?.writeText) {
-            setStatus('Copy unavailable');
+            setStatus('splicewire-beam-docs::messages.anchors_copy_unavailable');
             return;
         }
         const url = `${location.origin}${
@@ -131,13 +134,13 @@ export function HeadingAnchors({
                 markdown ? `[${label}](${url})` : url
             );
             setCopied(`${heading.id}:${markdown}`);
-            setStatus('Copied');
+            setStatus('splicewire-beam-docs::messages.anchors_copied');
             timer.current = setTimeout(() => {
                 setCopied('');
-                setStatus('');
+                setStatus(null);
             }, 1500);
         } catch {
-            setStatus('Copy unavailable');
+            setStatus('splicewire-beam-docs::messages.anchors_copy_unavailable');
         }
     };
 
@@ -145,18 +148,18 @@ export function HeadingAnchors({
         <>
             <style>{HEADING_ANCHORS_CSS}</style>
             <span className="beam-heading-copy-status" role="status">
-                {status}
+                {status ? m.t(status) : ''}
             </span>
             {headings.map((heading) =>
                 createPortal(
                     <>
                         <button
                             type="button"
-                            aria-label={`Copy link to ${heading.text}`}
-                            title="Copy link"
+                            aria-label={m.t('splicewire-beam-docs::messages.anchors_copy_link_to', { heading: heading.text })}
+                            title={m.t('splicewire-beam-docs::messages.anchors_copy_link')}
                             data-copy-label={
                                 copied === `${heading.id}:false`
-                                    ? 'Copied'
+                                    ? m.t('splicewire-beam-docs::messages.anchors_copied')
                                     : undefined
                             }
                             onClick={() => void copy(heading, false)}
@@ -167,11 +170,11 @@ export function HeadingAnchors({
                         </button>
                         <button
                             type="button"
-                            aria-label={`Copy Markdown link to ${heading.text}`}
-                            title="Copy Markdown link"
+                            aria-label={m.t('splicewire-beam-docs::messages.anchors_copy_markdown_link_to', { heading: heading.text })}
+                            title={m.t('splicewire-beam-docs::messages.anchors_copy_markdown_link')}
                             data-copy-label={
                                 copied === `${heading.id}:true`
-                                    ? 'Copied'
+                                    ? m.t('splicewire-beam-docs::messages.anchors_copied')
                                     : undefined
                             }
                             onClick={() => void copy(heading, true)}

@@ -5,6 +5,7 @@ import { docsConfiguration } from './config.js';
 import { AppearanceToggle } from './AppearanceToggle.js';
 import { DocsSearch } from './DocsSearch.js';
 import { ProductSwitcher } from './ProductSwitcher.js';
+import { useBeamDocsMessages } from './messages.js';
 
 type LinkComponent = NonNullable<ChromeProps['linkComponent']>;
 
@@ -29,6 +30,7 @@ export function DocsHeader({
     drawerOpen: boolean;
     onToggleDrawer: () => void;
 }) {
+    const m = useBeamDocsMessages();
     const Link = (linkComponent ?? PlainLink) as typeof PlainLink;
     const inSurface = (href: string) => !!currentHref && (currentHref === href || currentHref.startsWith(`${href}/`));
 
@@ -38,7 +40,7 @@ export function DocsHeader({
                 type="button"
                 className="beam-docs-drawer-toggle"
                 data-docs-drawer-toggle=""
-                aria-label="Docs sections"
+                aria-label={m.t('splicewire-beam-docs::messages.docs_sections')}
                 aria-expanded={drawerOpen}
                 onClick={onToggleDrawer}
             >
@@ -46,9 +48,9 @@ export function DocsHeader({
             </button>
             <Link href={chrome.home} className="beam-docs-brand" {...{ 'data-docs-home': '' }}>
                 {chrome.brand.logo && <img src={chrome.brand.logo} alt="" />}
-                <span>{chrome.brand.name} Docs</span>
+                <span>{m.t('splicewire-beam-docs::messages.header_brand_docs', { name: chrome.brand.name })}</span>
             </Link>
-            <nav className="beam-docs-surfaces" aria-label="Docs surfaces">
+            <nav className="beam-docs-surfaces" aria-label={m.t('splicewire-beam-docs::messages.header_surfaces')}>
                 {chrome.surfaces.map((surface) => (
                     <Link
                         key={surface.href}
@@ -66,7 +68,7 @@ export function DocsHeader({
                 {slots?.headerActions}
                 <ProductSwitcher related={chrome.related} />
                 <a href={chrome.back} className="beam-docs-back" data-docs-back="">
-                    ← Back to {chrome.brand.name}
+                    {m.t('splicewire-beam-docs::messages.header_back', { name: chrome.brand.name })}
                 </a>
             </div>
         </header>

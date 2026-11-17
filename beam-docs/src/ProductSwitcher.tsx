@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import type { DocsRelatedData } from './generated/types.js';
+import { useBeamDocsMessages } from './messages.js';
 
 /**
  * The docs product switcher (docs-walkthrough DOC-16, C-6): one packaged control, fed by `DocsChromeData.related`, that
@@ -10,6 +11,7 @@ import type { DocsRelatedData } from './generated/types.js';
  * landing outside dismiss it. Each product shows its brand tagline, its site and its docs.
  */
 export function ProductSwitcher({ related, className }: { related: DocsRelatedData[]; className?: string }) {
+    const m = useBeamDocsMessages();
     const [clicked, setClicked] = useState(false);
     const [hovered, setHovered] = useState(false);
     const root = useRef<HTMLDivElement>(null);
@@ -39,7 +41,8 @@ export function ProductSwitcher({ related, className }: { related: DocsRelatedDa
         return null;
     }
 
-    const label = related.length === 1 ? related[0].name : 'Products';
+    // A single product's name is the server's; the plural heading is ours.
+    const label = related.length === 1 ? related[0].name : m.t('splicewire-beam-docs::messages.switcher_products');
 
     return (
         <div
@@ -53,13 +56,13 @@ export function ProductSwitcher({ related, className }: { related: DocsRelatedDa
                 {label}
             </button>
             {open && (
-                <div role="dialog" aria-label="Other products" className="beam-docs-switcher-panel">
+                <div role="dialog" aria-label={m.t('splicewire-beam-docs::messages.switcher_other_products')} className="beam-docs-switcher-panel">
                     {related.map((product) => (
                         <div key={product.key} className="beam-docs-switcher-item">
                             <strong>{product.name}</strong>
                             {product.tagline && <p>{product.tagline}</p>}
-                            <a href={product.href}>Visit {product.name}</a>
-                            {product.docs && <a href={product.docs}>{product.name} docs</a>}
+                            <a href={product.href}>{m.t('splicewire-beam-docs::messages.switcher_visit', { name: product.name })}</a>
+                            {product.docs && <a href={product.docs}>{m.t('splicewire-beam-docs::messages.switcher_docs', { name: product.name })}</a>}
                         </div>
                     ))}
                 </div>

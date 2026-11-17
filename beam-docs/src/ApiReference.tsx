@@ -29,6 +29,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
 import { docsConfiguration } from './config.js';
 import { fetchDocs, fetchRegistryLink, scalarRegistryUrl, type DocsTransport } from './publications.js';
+import { useBeamDocsMessages } from './messages.js';
 
 /** The Scalar entry point this component drives. Structural — we never import the package. */
 export type ApiReferenceFactory = (
@@ -176,6 +177,7 @@ export function ApiReference({
     className,
     style,
 }: ApiReferenceProps) {
+    const m = useBeamDocsMessages();
     const mount = useRef<HTMLDivElement | null>(null);
     const docs = docsConfiguration();
     // The reference follows the ONE appearance (DM5): Scalar reads its mode once at mount, so a flip remounts it.
@@ -291,7 +293,7 @@ export function ApiReference({
         <div data-beam-full-bleed="">
             {link && (
                 <p data-beam-docs-registry-link="" style={{ margin: 0, padding: '0.75rem 1rem' }}>
-                    <a href={link} target="_blank" rel="noopener noreferrer">View published API in Scalar Registry</a>
+                    <a href={link} target="_blank" rel="noopener noreferrer">{m.t('splicewire-beam-docs::messages.api_registry_link')}</a>
                 </p>
             )}
             <div ref={mount} className={className} style={style} data-beam-ux-api-reference={specUrl} />

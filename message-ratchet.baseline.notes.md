@@ -66,3 +66,12 @@ Part C (the seam, CalendarCellForm.tsx and chrome.tsx) moves 45 of its 46 pinned
 - beam-calendar/src/CalendarCellForm.tsx — `renderContentPicker` (StringLiteral): a prop name, passed into the translated sentence as a code parameter.
 
 Not catalogued, by rule: the developer guards `CompositionCalendar single mount requires…`, `CalendarCellForm must be rendered inside…` and the client's `Aggregate create must target a calendar…` (thrown errors; a client failure renders as it arrived), and a status the server projects that the package does not declare (humanized, rendered as given).
+
+## @splicewire/beam-docs — localization 30
+
+Part D1 (the seam, the publishing panel and page, publications.ts' request failures, and the docs chrome: DocsHeader, DocsBreadcrumb, DocsLayout, AppearanceToggle, ProductSwitcher, DocsSearch, HeadingAnchors, ApiReference's registry link) moves 46 of its 48 nodes onto beam-docs' catalog, so its --write lowers 114 to 68. The census sized beam-docs at 56 (2026-11-12); re-taken at 114 on beam main d20e3def. The text scan added what the ratchet cannot see: the publishing panel's stored errors and live announcement, and publications.ts' fixed request failures (now a DocsRequestError carrying a catalog key; its message stays English), the HeadingAnchors copy status kept in state and its visible data-copy-label, the version placeholder, and the version field's label (the generated schema's title, now read through ui:title). The attempt time keeps toLocaleString() (the runtime's locale), as beam-ux, beam-inertia and beam-accounts do: catalog-locale dates are localization 29's nomination (c). The two D1 nodes left are CSS:
+
+- beam-docs/src/HeadingAnchors.tsx — the scoped `.beam-docs-main [data-beam-heading-controls]{…}` CSS (FirstTemplateToken).
+- beam-docs/src/ThemeDocsStyle.tsx — the `.beam-docs{…}` custom-property declarations (TemplateExpression).
+
+Not catalogued, by rule: the server's values (a publication's status, version, namespace, slug and failure text; a product's name and tagline; a search hit's title, trail and excerpt; the fallback link's label) render as given, as does a validator's own message other than the version pattern's. Part D2 takes PhpApiReference, PhpApiProse, RegistryRegistrants, RegistryIndexNav and DataExample.
