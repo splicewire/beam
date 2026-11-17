@@ -51,6 +51,7 @@ import {
 } from './model';
 import { EffectTag, envState, FedBy, KeyValue, PlainValue, SecretValue, TierPill } from './parts';
 import { englishBeamUxMessages, useBeamUxMessages, type BeamUxMessages } from '../messages.js';
+import { say } from '../message-descriptor.js';
 import { richMessage } from '../rich-message.js';
 
 export interface ConfigAreaProps<K extends ResourceKey = ResourceKey> {
@@ -203,13 +204,15 @@ export function sectionIndexColumns<K extends ResourceKey = ResourceKey>(m: Beam
 
 /** The Section cell: the title, then the section's counts as one line (keys, changeable, deploy-only, secrets). */
 function SectionCell({ section }: { section: ConfigSectionData | null }) {
+    const m = useBeamUxMessages();
     if (!section) return null;
     const { keys, overridable, deploy, secrets } = section.counts;
+    // English is the pre-31 wording exactly: "1 key", "2 keys", "3 changeable", "1 deploy-only", "1 secret".
     const parts: [number, string, string][] = [
-        [keys, 'keys', keys === 1 ? 'key' : 'keys'],
-        [overridable, 'changeable', 'changeable'],
-        [deploy, 'deploy', 'deploy-only'],
-        [secrets, 'secrets', secrets === 1 ? 'secret' : 'secrets'],
+        [keys, 'keys', m.choice('splicewire-beam-ux::messages.config_count_keys', keys)],
+        [overridable, 'changeable', m.t('splicewire-beam-ux::messages.config_count_changeable', { count: overridable })],
+        [deploy, 'deploy', m.t('splicewire-beam-ux::messages.config_count_deploy', { count: deploy })],
+        [secrets, 'secrets', m.choice('splicewire-beam-ux::messages.config_count_secrets', secrets)],
     ];
     return (
         <span className="block min-w-0">
@@ -217,7 +220,7 @@ function SectionCell({ section }: { section: ConfigSectionData | null }) {
             <span data-config-counts className="flex flex-wrap gap-x-2 font-mono text-[10.5px] text-muted-foreground">
                 {parts.map(([n, kind, word]) => (
                     <span key={kind} data-config-count={kind} className={cn('tabular-nums', n > 0 && kind !== 'keys' && 'text-foreground/80')}>
-                        {n} {word}
+                        {word}
                     </span>
                 ))}
             </span>
@@ -469,8 +472,8 @@ function KeyTable({
 /* ───────────────────────────── the Cascade inspector ───────────────────────────── */
 
 const STANDING_NOTE = {
-    shadowed: 'hidden by the host file’s top-level copy',
-    removed: 'removed from config() by a service provider',
+    shadowed: 'splicewire-beam-ux::messages.config_standing_shadowed',
+    removed: 'splicewire-beam-ux::messages.config_standing_removed',
 } as const;
 
 export function CascadeInspector({ section, keyData, onClose }: { section: ConfigSectionData; keyData: ConfigKeyData; onClose?: () => void }) {
@@ -528,7 +531,7 @@ export function CascadeInspector({ section, keyData, onClose }: { section: Confi
                                 <PlainValue value={layer.value} struck={standing !== 'wins'} />
                             )}
                             {(standing === 'shadowed' || standing === 'removed') && (
-                                <p className="font-mono text-[10.5px] text-muted-foreground">{STANDING_NOTE[standing]}</p>
+                                <p className="font-mono text-[10.5px] text-muted-foreground">{m.t(STANDING_NOTE[standing])}</p>
                             )}
                         </div>
                     </li>
@@ -536,7 +539,7 @@ export function CascadeInspector({ section, keyData, onClose }: { section: Confi
             </ol>
             {keyData.env && (
                 <p data-config-env-note className="font-mono text-[10.5px] text-muted-foreground">
-                    {keyData.env.name}: {envState(keyData.env.set)}
+                    {keyData.env.name}: {m.t(envState(keyData.env.set))}
                     {keyData.env.file && ` (${keyData.env.file}${keyData.env.line === null ? '' : `:${keyData.env.line}`})`}
                 </p>
             )}
@@ -559,13 +562,13 @@ function ChangeNote({ section, keyData }: { section: ConfigSectionData; keyData:
         <p data-config-change="deploy" className="text-xs text-muted-foreground">
             {source.kind === 'env' ? (
                 <>
-                    {richMessage(m, 'splicewire-beam-ux::messages.config_deploy_env', { name: <code className="font-mono text-foreground">{source.name}</code> })}
+                    {richMessage(m, 'splicewire-beam-ux::messages.config_deploy_env', { name: <code className="font-mono text-foreground">{say(m, source.name)}</code> })}
                 </>
             ) : source.kind === 'provider' ? (
                 <>{m.t('splicewire-beam-ux::messages.config_deploy_provider')}</>
             ) : (
                 <>
-                    {richMessage(m, 'splicewire-beam-ux::messages.config_deploy_file', { name: <code className="font-mono text-foreground">{source.name}</code> })}
+                    {richMessage(m, 'splicewire-beam-ux::messages.config_deploy_file', { name: <code className="font-mono text-foreground">{say(m, source.name)}</code> })}
                 </>
             )}
         </p>

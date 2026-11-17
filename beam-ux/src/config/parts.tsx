@@ -13,7 +13,7 @@ import {
     type SchemaNode,
 } from '@schemastud/seam';
 import { cn } from '@schemastud/ui';
-import { useBeamUxMessages } from '../messages.js';
+import { useBeamUxMessages, type BeamUxMessageKey } from '../messages.js';
 import { FileCode2, KeyRound, RotateCw, Rocket, TerminalSquare, Zap } from 'lucide-react';
 import {
     EFFECT_COPY,
@@ -75,10 +75,10 @@ export function EffectTag({ effect, className }: { effect: ConfigEffect; classNa
 }
 
 /** Whether the env var is set, in the three states `ConfigEnvData.set` carries. Unknown is never "file default". */
-export function envState(set: boolean | null): string {
-    if (set === true) return 'set in the environment';
-    if (set === false) return 'unset · file default';
-    return 'unknown under config:cache';
+export function envState(set: boolean | null): BeamUxMessageKey {
+    if (set === true) return 'splicewire-beam-ux::messages.config_env_set';
+    if (set === false) return 'splicewire-beam-ux::messages.config_env_unset';
+    return 'splicewire-beam-ux::messages.config_env_unknown';
 }
 
 /** The Fed-by cell: the env var feeding the key, else the provider, else the file its tier reads. */
@@ -93,7 +93,7 @@ export function FedBy({ section, keyData, compact }: { section: ConfigSectionDat
                     <TerminalSquare className="size-3 flex-none" aria-hidden />
                     <span className={cn('truncate', env.set === true && 'text-info')}>{env.name}</span>
                 </span>
-                {!compact && <span className="block pl-4 text-[10.5px]">{envState(env.set)}</span>}
+                {!compact && <span className="block pl-4 text-[10.5px]">{m.t(envState(env.set))}</span>}
             </span>
         );
     }

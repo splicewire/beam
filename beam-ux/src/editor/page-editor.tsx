@@ -79,7 +79,7 @@ export function PageEditor({ slug, body = null, entryId: suppliedId = null }: Pa
             if (!result.id) throw new NoticeError(line('splicewire-beam-ux::messages.editor_no_entry_returned'));
             setCreated({slug, id: result.id});
             if (result.compileError) toast.error(result.compileError);
-            else toast.success('This page is now editable');
+            else toast.success(m.t('splicewire-beam-ux::messages.editor_now_editable'));
         } catch (error) {
             toast.error(say(m, noticeOf(error, line('splicewire-beam-ux::messages.editor_make_editable_failed'))));
         } finally { setCreating(false); }

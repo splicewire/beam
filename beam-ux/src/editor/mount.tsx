@@ -237,7 +237,7 @@ function AddressedVisualEditor({ entryRef }: { entryRef: EntryRef }) {
         <VisualEditor value={local.session.body as JsonDoc} onChange={local.change}
             onSave={save} onUndo={local.undo} onRedo={local.redo}
             canUndo={local.session.canUndo} canRedo={local.session.canRedo}
-            theme={theme} brand={brand ? `${brand} · editor` : "Entry editor"} />
+            theme={theme} brand={brand ? m.t('splicewire-beam-ux::messages.mount_brand_editor', { brand }) : m.t('splicewire-beam-ux::messages.mount_entry_editor')} />
         </SourceMode>
     </CanvasProvider>;
 }

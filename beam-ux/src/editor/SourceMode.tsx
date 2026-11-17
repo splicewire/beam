@@ -2,6 +2,7 @@ import {useState, type ReactNode} from 'react';
 import type {JsonDoc} from '../blockdoc/json';
 import type {useLocalSession} from './use-local-session';
 import {useBeamUxMessages} from '../messages.js';
+import {noticeOf,say,type Notice} from '../message-descriptor.js';
 
 export interface SourceConversion {
  print(body: JsonDoc): Promise<{source:string}>;
@@ -15,15 +16,15 @@ export interface SourceConversion {
 export function SourceMode({local,conversion,allowed,language='tsx',children}:{local:ReturnType<typeof useLocalSession>;conversion?:SourceConversion;allowed:boolean;language?:string;children:ReactNode}) {
  const m=useBeamUxMessages();
  const [busy,setBusy]=useState(false);
- const [error,setError]=useState<string|null>(null);
- const run=async(fn:()=>Promise<void>)=>{setBusy(true);setError(null);try{await fn();}catch(e){setError(e instanceof Error?e.message:String(e));}finally{setBusy(false);}};
+ const [error,setError]=useState<Notice|null>(null);
+ const run=async(fn:()=>Promise<void>)=>{setBusy(true);setError(null);try{await fn();}catch(e){setError(noticeOf(e,String(e)));}finally{setBusy(false);}};
  const source=local.session?.source;
  if (!allowed || !conversion) {
   if(source) return <div role="alert">{m.t('splicewire-beam-ux::messages.editor_source_unavailable')}<button onClick={local.discardSource}>{m.t('splicewire-beam-ux::messages.editor_discard_pending_source')}</button></div>;
   return <>{children}</>;
  }
  return <>
-  {error&&<div role="alert">{error}</div>}
+  {error&&<div role="alert">{say(m,error)}</div>}
   {!source ? <><button disabled={busy || !local.session} onClick={()=>void run(async()=>{
    // Keyboard/programmatic activation need not blur the prose island first.
    // Its ordinary blur handler commits to the same Local Session before printing.

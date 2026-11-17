@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { SessionPageSettings } from './local-session';
 import { IndexedDbSessions, LocalSession, type SessionSnapshot } from './local-session';
-import { notice, type Notice } from '../message-descriptor.js';
+import { NoticeError, notice, type Notice } from '../message-descriptor.js';
 
 /** Persistence errors are visible: a session is never silently advertised as reload-safe. */
 export function useLocalSession(entry: string, user: string | undefined, base: string | null | undefined, body: unknown[], enabled: boolean, pageSettings: SessionPageSettings | null = null) {
@@ -33,7 +33,7 @@ export function useLocalSession(entry: string, user: string | undefined, base: s
         // to this entry and user. No stale state is applied before the author chooses.
         setPending(rows[rows.length - 1]);
       } else setSession(new LocalSession(identity, body, pageSettings));
-    }).catch(reason => live && setError(String(reason)));
+    }).catch(reason => live && setError(reason instanceof NoticeError ? ['Error: ', reason.notice] : String(reason)));
     return () => { live = false; void serial.current.finally(() => database.close()); };
     // The server base advances on Save without remounting or losing the undo stack.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -43,7 +43,7 @@ export function useLocalSession(entry: string, user: string | undefined, base: s
     const previous = persisted.current;
     persisted.current = snapshot.identity;
     serial.current = serial.current.then(() => store.current!.write(snapshot, previous));
-    void serial.current.catch(reason => setError(String(reason)));
+    void serial.current.catch(reason => setError(reason instanceof NoticeError ? ['Error: ', reason.notice] : String(reason)));
     render(value => value + 1);
   };
   const recover = async (restore: boolean) => {

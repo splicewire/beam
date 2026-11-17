@@ -5,6 +5,7 @@
  */
 import type { SchemaNode } from '@schemastud/seam';
 import type { BeamUxMessageKey } from '../messages.js';
+import { notice, type Notice } from '../message-descriptor.js';
 import type {
     ConfigEffect,
     ConfigKeyData,
@@ -183,9 +184,10 @@ export function asConfigSection(row: unknown): ConfigSectionData | null {
 }
 
 /** What to change, and where, for a key no override can reach: its env var, its host file, or the provider. */
-export function deploySource(section: ConfigSectionData, key: ConfigKeyData): { kind: 'env' | 'file' | 'provider'; name: string } {
+/** `name` is the env var or file as written, or a catalog line when there is none (render with say). */
+export function deploySource(section: ConfigSectionData, key: ConfigKeyData): { kind: 'env' | 'file' | 'provider'; name: Notice } {
     if (key.env) return { kind: 'env', name: key.env.name };
-    if (key.tier === 'provider') return { kind: 'provider', name: 'a service provider' };
+    if (key.tier === 'provider') return { kind: 'provider', name: notice('splicewire-beam-ux::messages.config_tier_word_provider') };
     const file = key.tier === 'package' ? section.files.package : section.files.host ?? section.files.package;
-    return { kind: 'file', name: file ?? 'the config file' };
+    return { kind: 'file', name: file ?? notice('splicewire-beam-ux::messages.config_the_config_file') };
 }
