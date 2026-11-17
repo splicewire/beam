@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { statusOf, messageOf } from "../state/page-state";
 import { SchemaForm, type SchemaNode } from "@schemastud/seam";
 import { englishBeamUxMessages, useBeamUxMessages } from "../messages.js";
+import { notice, say, type Notice } from "../message-descriptor.js";
 import type {
   CollectionDefinitionInputData,
   SchemaRegistrationConfirmationData,
@@ -74,7 +75,7 @@ export function CollectionDefinitionEditor({
   const m = useBeamUxMessages();
   const [draft, setDraft] = useState(initial);
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<Notice | null>(null);
   const [pending, setPending] = useState<{
     impact: SchemaVersionImpactData;
     value: CollectionDefinitionInputData;
@@ -119,10 +120,10 @@ export function CollectionDefinitionEditor({
       setError(
         messageOf(failure) ??
           (failure instanceof CollectionRegistrationImpact && failure.defaultMessage
-            ? m.t('splicewire-beam-ux::messages.collections_review_impact')
+            ? notice('splicewire-beam-ux::messages.collections_review_impact')
             : failure instanceof Error
               ? failure.message
-              : m.t('splicewire-beam-ux::messages.collections_save_failed')),
+              : notice('splicewire-beam-ux::messages.collections_save_failed')),
       );
     } finally {
       setSaving(false);
@@ -134,7 +135,7 @@ export function CollectionDefinitionEditor({
       <p>
         {m.t('splicewire-beam-ux::messages.collections_save_registers_version')}
       </p>
-      {error && <p role="alert">{error}</p>}
+      {error && <p role="alert">{say(m, error)}</p>}
       {pending && (
         <section aria-label={m.t('splicewire-beam-ux::messages.collections_pages_affected')} className="space-y-3">
           <h3>{m.t('splicewire-beam-ux::messages.collections_pages_affected')}</h3>
