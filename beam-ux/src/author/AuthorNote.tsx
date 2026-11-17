@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { useBeamUxMessages } from '../messages.js';
 
 /**
  * The ONE home for author chrome (app-walkthrough APP-10, APP-22, M14): wire types, routes, ADR numbers, config paths
@@ -8,6 +9,8 @@ import type { ReactNode } from 'react';
  * docblock.
  */
 export function AuthorNote({ children, className }: { children: ReactNode; className?: string }) {
+    // A shared development build is read by people who are not its authors, so the title is copy (31 ruling 04:30Z).
+    const m = useBeamUxMessages();
     if (!import.meta.env?.DEV) {
         return null;
     }
@@ -15,7 +18,7 @@ export function AuthorNote({ children, className }: { children: ReactNode; class
     return (
         <span
             data-author-note=""
-            title="Author note (development builds only)"
+            title={m.t('splicewire-beam-ux::messages.author_note_title')}
             className={['font-mono text-[10px] text-muted-foreground/70', className].filter(Boolean).join(' ')}
         >
             {children}

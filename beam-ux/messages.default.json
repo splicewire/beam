@@ -13,6 +13,7 @@
     "splicewire-beam-ux::messages.admin_promote_to_central": "Promote to central",
     "splicewire-beam-ux::messages.appshell_navigation": "Navigation",
     "splicewire-beam-ux::messages.appshell_open_navigation": "Open navigation",
+    "splicewire-beam-ux::messages.author_note_title": "Author note (development builds only)",
     "splicewire-beam-ux::messages.authoring_a_component_requires_a_block_root": "A component requires a block root",
     "splicewire-beam-ux::messages.authoring_a_component_text_reference_needs_a_string_prop_k": "A component text reference needs a string prop. Keep this numeric or boolean text outside the component, or replace it with literal text.",
     "splicewire-beam-ux::messages.authoring_a_literal_value_is_required": "A literal value is required",

@@ -6,7 +6,7 @@ Coord-lead@calcucrypt ruling 2026-11-17 03:15Z: the true start is 861. config-se
 
 Part A (the seam plus site/, entries/, shell/, collections/, desk/, state/, admin/, nav/, appshell/, author/) moves 106 of its 109 nodes onto beam-ux's catalog, so its --write lowers 861 to 755. Its three remaining nodes are not translatable copy and stay raw:
 
-- beam-ux/src/author/AuthorNote.tsx:18 — `Author note (development builds only)` (StringLiteral): the title of development-only author chrome, which is `null` in production builds.
+- (catalogued by 31 part A follow-up 2, ruling 11-17 04:30Z: a shared development build is read by people who are not its authors) beam-ux/src/author/AuthorNote.tsx — the author-note title.
 - beam-ux/src/shell/default-desktop.tsx:37 — `surfaceMap` (JsxText): a prop name, passed into the translated sentence as a code parameter.
 - beam-ux/src/site/EntryBody.tsx:230 — `php artisan splicewire:beam:ux:compile` (StringLiteral): a command, passed into the translated sentence as a code parameter.
 
@@ -27,7 +27,7 @@ Part C (the rest of canvas/) moves 113 of its 114 nodes onto the catalog, so its
 
 Part E (sitemap/) moves all 114 of its counted nodes onto the catalog, and ruling (c) renames the test/story fixture sitemap/fixture.ts to sitemap/fixtures.ts (its 6 nodes leave by the scanner's fixture convention, as 28a did), so its --write lowers 130 to 10. sitemap/ reads zero.
 
-The 10 nodes left in @splicewire/beam-ux are the raw nodes recorded above (A 3, D 4, F 2, C 1). Each is machine text: code tokens, CSS, a shell command, a JSON type, or dev-only chrome. Taking the count to zero needs a ruling that accepts them, as root did for beam-inertia's 13 in 28a.
+Part A follow-up 2 catalogues the AuthorNote title (10 -> 9). The 9 nodes left in @splicewire/beam-ux are the raw nodes recorded above (A 2, D 4, F 2, C 1). Each is machine text: code tokens, CSS, a shell command, a JSON type, or dev-only chrome. Taking the count to zero needs a ruling that accepts them, as root did for beam-inertia's 13 in 28a.
 
 ## @splicewire/beam-inertia — localization 28a
 
