@@ -127,3 +127,11 @@ Part S2 (the seam in each package). Re-taken on beam main 3fcff8d0; the census s
   - beam-mainframe/src/host.tsx — `beam-ux` (JsxText): the product's wordmark on the ribbon, a fixed product mark rather than a host-configurable brand (so not R3's brand copy), left as root 4a20610b reasoned for the wordmark under R8.
 
 Not catalogued, by rule: the developer guards `IntakeSectionForm requires an IntakeProvider.` and `IngestProgress requires an IngestProvider.`, the door's and a failed run's server messages, a section submission's reference id, an entry's slug or id, and the story harnesses' fixture data.
+
+## @splicewire/beam-transforms — localization 30-S
+
+Part S3 (the seam, and the RunnerTransform editor) moves 43 of its 45 pinned nodes onto beam-transforms' catalog, so its --write lowers 45 to 2. The census sized it "under 30" (2026-11-12); re-taken at 45 on beam main 3fcff8d0. The text scan added the runtime labels a constant held (now catalog keys under `labelKey`), the list read's failure lines, and the save and sample toasts (translated when emitted). The Net and Sharing selects' options carry `labelKey`s like the runtimes (their values stay the wire values), and the row's visibility and the grant badges' `:net` reuse those labels; a value the lists do not name renders as given. A test run's wall time reads `:wallms` (English `7ms`). The review note is one sentence through `richMessage` (W1's helper, copied per package), its grant values passed as code slots. The nodes left:
+
+- beam-transforms/src/runner-transform-editor.tsx — `net:open` and `platform` (JsxText): a grant and a visibility value, shown as code inside the translated note.
+
+Not catalogued, by rule: the provider guard, the wire values the selects submit and the runtime id on a row's badge, a transform's name, a run's outcome, error and stderr, and the story harness's fixture data.
