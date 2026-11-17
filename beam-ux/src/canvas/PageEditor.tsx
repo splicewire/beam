@@ -677,7 +677,7 @@ export function PageEditor({
       </div>
     );
   if (publicationError || local.error)
-    return <div role="alert">{publicationError !== null ? say(m, publicationError) : local.error}</div>;
+    return <div role="alert">{say(m, (publicationError ?? local.error)!)}</div>;
   if (local.pending)
     return (
       <div role="alertdialog" aria-label={m.t('splicewire-beam-ux::messages.page_session_base_moved')}>

@@ -9,7 +9,7 @@ import { createMemoryTransport } from '@schemastud/frame/testing';
 import type { ConfigSectionData } from '@splicewire/beam-resources/types/config';
 import { ConfigArea, listAllRows } from './ConfigArea';
 import { APP_CHAT, BEAM_TENANCY, BEAM_UX, CONFIG_SECTIONS, SECRET_CANARY } from './ConfigArea.fixtures';
-import { BEAM_CONFIG_MANIFEST } from './ConfigArea.manifest';
+import { BEAM_CONFIG_MANIFEST } from './ConfigArea.manifest.fixtures';
 
 /** A host's declared control, registered by name through the kit (row 05-10); it shows what `widgetProps` handed it. */
 function ModelPicker(props: WidgetProps) {

@@ -14,6 +14,8 @@ import type { EntryPublicationState } from '../types';
 import { CanvasProvider, VisualEditor } from '../canvas';
 import { useEditorKit } from './context';
 import { useLocalSession } from './use-local-session';
+import { useBeamUxMessages } from '../messages.js';
+import { NoticeError, notice as line, noticeOf, say, type Notice } from '../message-descriptor.js';
 
 /** The File Languages Source Mode prints and reads (beam JS ADR-0006 d4); the server's lens refuses the rest. */
 const SOURCE_LANGUAGES: readonly string[] = ['tsx', 'mdx'];
@@ -43,36 +45,37 @@ interface LoadedEnvelope {
  * One reading of the body envelope for every load: the first mount, a conflict's Reload theirs and a History restore,
  * so none of them drops what the others keep (the page settings, the Page Fields offer, the profile, the styles).
  */
-function readEnvelope(envelope: unknown, missing: string): LoadedEnvelope {
+function readEnvelope(envelope: unknown, missing: Notice): LoadedEnvelope {
     const read = (envelope ?? {}) as Partial<LoadedEnvelope> & { body?: unknown };
-    if (!Array.isArray(read.body)) throw new Error(missing);
+    if (!Array.isArray(read.body)) throw new NoticeError(missing);
     return { mediaLibrary: read.mediaLibrary===true, authoredComponents: read.authoredComponents, bindings: read.bindings, body: read.body as JsonDoc, pageSettings: read.pageSettings, pageFields: read.pageFields ?? null, fileLanguages: read.fileLanguages ?? [], redirects: read.redirects ?? null, styleRegistry: read.styleRegistry, profile: read.profile };
 }
 
 function AddressedVisualEditor({ entryRef }: { entryRef: EntryRef }) {
     const { transport, theme, canvasConfig, userId, canAuthor, notify, brand } = useEditorKit();
     const [loaded, setLoaded] = useState<(LoadedEnvelope & { state: EntryPublicationState }) | null>(null);
-    const [error, setError] = useState<string | null>(null);
+    const m = useBeamUxMessages();
+    const [error, setError] = useState<Notice | null>(null);
     const [conflict, setConflict] = useState(false);
     const [busy, setBusy] = useState(false);
     const [history, setHistory] = useState(false);
     const id = entryRef.id;
     const componentAuthoring=useComponentAuthoring(id,true,async()=>{
         if(!id)return;
-        const fresh=readEnvelope(await transport.loadBody(id),'The entry body is unavailable.');
+        const fresh=readEnvelope(await transport.loadBody(id), line('splicewire-beam-ux::messages.mount_body_unavailable'));
         setLoaded(previous=>previous?{...previous,profile:fresh.profile,authoredComponents:fresh.authoredComponents}:previous);
     });
     const local = useLocalSession(id ?? '', userId, loaded?.state.headVersion, loaded?.body ?? [], !!loaded && !!id, loaded?.pageSettings ?? null);
     useEffect(() => {
         if (!id || !userId || !canAuthor || !transport.listVersions || !transport.saveDraft || !transport.publish || !transport.restoreVersion) {
-            setError('The editor requires an authored entry, authenticated author, and publication transport.'); return;
+            setError(line('splicewire-beam-ux::messages.mount_requires_transport')); return;
         }
         let live = true;
         Promise.all([transport.loadBody(id), transport.listVersions(id)]).then(([envelope, state]) => {
             if (!live) return;
-            if (!canMountPublication(state,isAuthoredComponentEnvelope(envelope))) throw new Error('This entry has no Publication Pin. Publish its baseline before mounting the editor.');
-            setLoaded({ ...readEnvelope(envelope, 'The entry has no editable document.'), state });
-        }).catch(reason => live && setError(reason instanceof Error ? reason.message : 'Could not load editor history. Verify the versions and publication-pin migrations.'));
+            if (!canMountPublication(state,isAuthoredComponentEnvelope(envelope))) throw new NoticeError(line('splicewire-beam-ux::messages.mount_no_publication_pin'));
+            setLoaded({ ...readEnvelope(envelope, line('splicewire-beam-ux::messages.mount_no_editable_document')), state });
+        }).catch(reason => live && setError(noticeOf(reason, line('splicewire-beam-ux::messages.mount_history_load_failed'))));
         return () => { live = false; };
         // The transport may be a new object each render; the address owns the load lifecycle.
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -86,80 +89,80 @@ function AddressedVisualEditor({ entryRef }: { entryRef: EntryRef }) {
         try { await action(); }
         catch (reason) {
             if ((reason as { status?: number })?.status === 409) setConflict(true);
-            else notify.error(reason instanceof Error ? reason.message : 'Editor action failed');
+            else notify.error(say(m, noticeOf(reason, line('splicewire-beam-ux::messages.mount_action_failed'))));
         } finally { setBusy(false); }
     };
     const save = () => run(async () => {
         if (!id || !local.session || !transport.saveDraft) return;
-        if (local.session.source) throw new Error('Apply or discard Source Mode before saving.');
+        if (local.session.source) throw new NoticeError(line('splicewire-beam-ux::messages.mount_source_before_save'));
         const sent = local.session.body;
         const sentSettings = local.session.pageSettings;
         const state = sentSettings ? await transport.saveDraft(id, sent as unknown as Record<string, unknown>, local.session.identity.base, undefined, sentSettings) : await transport.saveDraft(id, sent as unknown as Record<string, unknown>, local.session.identity.base);
-        if (!state.headVersion) throw new Error('Save returned no version.');
+        if (!state.headVersion) throw new NoticeError(line('splicewire-beam-ux::messages.mount_save_returned_no_version'));
         local.saved(state.headVersion, sent, sentSettings);
         setLoaded(previous => previous && { ...previous, state });
-        notify.success('Draft saved');
+        notify.success(m.t('splicewire-beam-ux::messages.mount_draft_saved'));
     });
     const resolveConflict = (ours: boolean) => run(async () => {
-        if (local.session?.source) throw new Error('Apply or discard Source Mode before resolving the conflict.');
+        if (local.session?.source) throw new NoticeError(line('splicewire-beam-ux::messages.mount_source_before_conflict'));
         if (!id || !transport.listVersions || !transport.saveDraft || !local.session) return;
         const current = await transport.listVersions(id);
-        if (!current.headVersion) throw new Error('No current server version.');
+        if (!current.headVersion) throw new NoticeError(line('splicewire-beam-ux::messages.mount_no_current_version'));
         if (ours) {
             const sent = local.session.body;
             const sentSettings = local.session.pageSettings;
             const state = await transport.saveDraft(id, sent as unknown as Record<string, unknown>, current.headVersion, undefined, sentSettings);
-            if (!state.headVersion) throw new Error('Save returned no version.');
+            if (!state.headVersion) throw new NoticeError(line('splicewire-beam-ux::messages.mount_save_returned_no_version'));
             local.saved(state.headVersion, sent, sentSettings); setLoaded(previous => previous && { ...previous, state });
         } else {
-            const envelope = readEnvelope(await transport.loadBody(id), 'No current body.');
+            const envelope = readEnvelope(await transport.loadBody(id), line('splicewire-beam-ux::messages.mount_no_current_body'));
             local.reset(current.headVersion, envelope.body, envelope.pageSettings);
             setLoaded({ ...envelope, state: current });
         }
         setConflict(false);
     });
-    if (error || local.error) return <div role="alert">{error ?? local.error}</div>;
-    if (local.pending) return <div role="alertdialog" aria-label="Unsaved session base moved">
-        <p>The server base changed from {local.pending.identity.base}.</p>
-        <button onClick={() => void local.recover(true)}>Restore unsaved changes</button>
-        <button onClick={() => void local.recover(false)}>Discard</button>
+    if (error || local.error) return <div role="alert">{say(m, (error ?? local.error)!)}</div>;
+    if (local.pending) return <div role="alertdialog" aria-label={m.t('splicewire-beam-ux::messages.mount_session_base_moved')}>
+        <p>{m.t('splicewire-beam-ux::messages.mount_base_changed', { base: local.pending.identity.base })}</p>
+        <button onClick={() => void local.recover(true)}>{m.t('splicewire-beam-ux::messages.mount_restore_unsaved')}</button>
+        <button onClick={() => void local.recover(false)}>{m.t('splicewire-beam-ux::messages.mount_discard')}</button>
     </div>;
-    if (!loaded || !local.session) return <div role="status">Loading Local Session…</div>;
+    if (!loaded || !local.session) return <div role="status">{m.t('splicewire-beam-ux::messages.mount_loading_session')}</div>;
     const publish = () => run(async () => {
         if (!id || !transport.publish || !local.session) return;
-        if (local.session.source) throw new Error('Apply or discard Source Mode before publishing.');
+        if (local.session.source) throw new NoticeError(line('splicewire-beam-ux::messages.mount_source_before_publish'));
         let ref = local.session.identity.base;
         if (isUnauthored(loaded.state)) {
             if (!transport.saveDraft) return;
             const sent = local.session.body;
             const settings = local.session.pageSettings;
             const draft = await transport.saveDraft(id, sent as unknown as Record<string, unknown>, null, undefined, settings);
-            if (!draft.headVersion) throw new Error('Save returned no version.');
+            if (!draft.headVersion) throw new NoticeError(line('splicewire-beam-ux::messages.mount_save_returned_no_version'));
             ref = draft.headVersion;
             local.saved(ref, sent, settings);
             setLoaded(previous => previous && { ...previous, state: draft });
-        } else if (local.session.dirty) throw new Error('Save your draft before publishing it.');
-        if (!ref) throw new Error('Publish requires a saved version.');
+        } else if (local.session.dirty) throw new NoticeError(line('splicewire-beam-ux::messages.mount_save_before_publish'));
+        if (!ref) throw new NoticeError(line('splicewire-beam-ux::messages.mount_requires_saved_version'));
         const state = await transport.publish(id, ref);
         setLoaded(previous => previous && { ...previous, state });
         if (state.compileError) notify.error(state.compileError);
-        else notify.success(state.release && state.release.status !== 'published' ? 'Release submitted for review' : 'Published');
+        else notify.success(state.release && state.release.status !== 'published' ? m.t('splicewire-beam-ux::messages.mount_release_submitted') : m.t('splicewire-beam-ux::messages.mount_published'));
     });
     const restore = (ref: string) => run(async () => {
-        if (local.session!.dirty) throw new Error('Save or discard unsaved changes before restoring History.');
+        if (local.session!.dirty) throw new NoticeError(line('splicewire-beam-ux::messages.mount_save_before_restore'));
         if (!id || !transport.restoreVersion) return;
         const state = await transport.restoreVersion(id, ref);
-        const envelope = readEnvelope(await transport.loadBody(id), 'Could not load the restored draft.');
-        if (!state.headVersion) throw new Error('Could not load the restored draft.');
+        const envelope = readEnvelope(await transport.loadBody(id), line('splicewire-beam-ux::messages.mount_restored_load_failed'));
+        if (!state.headVersion) throw new NoticeError(line('splicewire-beam-ux::messages.mount_restored_load_failed'));
         local.reset(state.headVersion, envelope.body, envelope.pageSettings);
         setLoaded({ ...envelope, state });
-        notify.success('Restored into a draft');
+        notify.success(m.t('splicewire-beam-ux::messages.mount_restored'));
     });
     const openPreview = async (versionId: string) => {
         if (!id || !transport.previewVersion) return;
         const popup = window.open('about:blank', '_blank');
         if (!popup) {
-            notify.error('Allow popups to open a version preview');
+            notify.error(m.t('splicewire-beam-ux::messages.mount_allow_popups'));
             return;
         }
         popup.opener = null;
@@ -167,41 +170,39 @@ function AddressedVisualEditor({ entryRef }: { entryRef: EntryRef }) {
             const preview = await transport.previewVersion(id, versionId);
             const target = new URL(preview.url, window.location.href);
             if (target.origin !== window.location.origin) {
-                throw new Error('Preview URL must stay on this host');
+                throw new NoticeError(line('splicewire-beam-ux::messages.mount_preview_same_host'));
             }
             popup.location.href = target.href;
         } catch (reason) {
             popup.close();
-            notify.error(reason instanceof Error ? reason.message : 'Could not open the version preview');
+            notify.error(say(m, noticeOf(reason, line('splicewire-beam-ux::messages.mount_preview_failed'))));
         }
     };
     const dependencies = componentDependencies(local.session.body as JsonDoc, loaded.authoredComponents ?? []);
     const pendingComponents = dependencies.filter(entry => entry.headVersion && entry.headVersion !== entry.publishedVersion);
-    const componentChoices = pendingComponents.map(entry => ({id: entry.id, title: entry.definition.name ?? 'Component',
-        versions: [{id: entry.headVersion!, label: 'Pending component draft'}]}));
+    const componentChoices = pendingComponents.map(entry => ({id: entry.id, title: entry.definition.name ?? m.t('splicewire-beam-ux::messages.mount_component'),
+        versions: [{id: entry.headVersion!, label: m.t('splicewire-beam-ux::messages.mount_pending_component_draft')}]}));
     return <CanvasProvider config={{ ...canvasConfig, mediaLibrary, profile: loaded.profile, styleRegistry: loaded.styleRegistry,
         bindingPreview, bindings: loaded.bindings, authoredComponents: loaded.authoredComponents,
         componentAuthoring }}>
-        {conflict && <div role="alertdialog" aria-label="Save conflict">
-            <p>The server draft changed.</p>
-            <button disabled={busy} onClick={() => void resolveConflict(false)}>Reload theirs</button>
-            <button disabled={busy} onClick={() => void resolveConflict(true)}>Save ours as a new version</button>
+        {conflict && <div role="alertdialog" aria-label={m.t('splicewire-beam-ux::messages.mount_save_conflict')}>
+            <p>{m.t('splicewire-beam-ux::messages.mount_save_conflict_prompt')}</p>
+            <button disabled={busy} onClick={() => void resolveConflict(false)}>{m.t('splicewire-beam-ux::messages.mount_reload_theirs')}</button>
+            <button disabled={busy} onClick={() => void resolveConflict(true)}>{m.t('splicewire-beam-ux::messages.mount_save_ours')}</button>
         </div>}
-        {!!loaded.state.diagnostics?.length && <aside role="status" aria-label="Saved interface diagnostics"><ul>
+        {!!loaded.state.diagnostics?.length && <aside role="status" aria-label={m.t('splicewire-beam-ux::messages.mount_diagnostics')}><ul>
             {loaded.state.diagnostics.map(message => <li key={message}>{message}</li>)}
         </ul></aside>}
-        {pendingComponents.length > 0 && <aside aria-label="Component drafts">
-            <p>These components have pending drafts: {pendingComponents.map(entry => entry.definition.name).join(', ')}.
-                Add their saved drafts to the same built Release below to publish them together.
-                Otherwise this entry uses their published versions; never-published components must be included.</p>
+        {pendingComponents.length > 0 && <aside aria-label={m.t('splicewire-beam-ux::messages.mount_component_drafts')}>
+            <p>{m.t('splicewire-beam-ux::messages.mount_component_drafts_prompt', { names: pendingComponents.map(entry => entry.definition.name).join(', ') })}</p>
         </aside>}
-        <div aria-label="Publication controls">
-            <button disabled={busy || (local.session.dirty && !isUnauthored(loaded.state))} onClick={() => void publish()}>Publish</button>
-            <button onClick={() => setHistory(!history)}>History</button>
-            <span>{local.session.dirty ? 'Unsaved changes' : 'Draft saved'}</span>
+        <div aria-label={m.t('splicewire-beam-ux::messages.mount_publication_controls')}>
+            <button disabled={busy || (local.session.dirty && !isUnauthored(loaded.state))} onClick={() => void publish()}>{m.t('splicewire-beam-ux::messages.mount_publish')}</button>
+            <button onClick={() => setHistory(!history)}>{m.t('splicewire-beam-ux::messages.mount_history')}</button>
+            <span>{local.session.dirty ? m.t('splicewire-beam-ux::messages.mount_unsaved_changes') : m.t('splicewire-beam-ux::messages.mount_draft_saved')}</span>
         </div>
         {loaded.state.release && transport.releaseCommand && <ReleasePanel release={loaded.state.release}
-            entries={[{id:id!,title:entryRef.slug ?? 'This entry',versions:loaded.state.versions.map(version => ({id:version.id,label:version.readable ?? version.id}))}]}
+            entries={[{id:id!,title:entryRef.slug ?? m.t('splicewire-beam-ux::messages.mount_this_entry'),versions:loaded.state.versions.map(version => ({id:version.id,label:version.readable ?? version.id}))}]}
             onCommand={async command => {
                 const release = await transport.releaseCommand!(loaded.state.release!.id, command);
                 const state = await transport.listVersions!(id!);
@@ -211,7 +212,7 @@ function AddressedVisualEditor({ entryRef }: { entryRef: EntryRef }) {
         {id && loaded.state.headVersion && loaded.state.versions.length > 0 && transport.listReleases && transport.createRelease && transport.releaseCommand && (
             <BuiltReleaseAssembly
                 entryId={id}
-                entryTitle={entryRef.slug ?? 'This entry'}
+                entryTitle={entryRef.slug ?? m.t('splicewire-beam-ux::messages.mount_this_entry')}
                 versions={loaded.state.versions.map(version => ({id:version.id,label:version.readable ?? version.id}))}
                 canTakeDown={loaded.state.publishedVersion !== null}
                 relatedEntries={componentChoices}
@@ -221,13 +222,13 @@ function AddressedVisualEditor({ entryRef }: { entryRef: EntryRef }) {
                 removeRedirect={transport.removeRedirect && (redirectId => transport.removeRedirect!(redirectId))}
             />
         )}
-        {history && <aside aria-label="History">{loaded.state.versions.map(version => <div key={version.id}>
+        {history && <aside aria-label={m.t('splicewire-beam-ux::messages.mount_history')}>{loaded.state.versions.map(version => <div key={version.id}>
             <span>{version.readable} {version.label}</span>
             <VersionRecordingReferences recordings={version.recordings} />
             {transport.previewVersion && (
-                <button disabled={busy} onClick={() => void openPreview(version.id)}>Open</button>
+                <button disabled={busy} onClick={() => void openPreview(version.id)}>{m.t('splicewire-beam-ux::messages.mount_open')}</button>
             )}
-            <button disabled={busy || local.session!.dirty} onClick={() => void restore(version.id)}>Restore {version.readable} into draft</button>
+            <button disabled={busy || local.session!.dirty} onClick={() => void restore(version.id)}>{m.t('splicewire-beam-ux::messages.mount_restore_version', { version: version.readable })}</button>
         </div>)}</aside>}
         {!local.session.source && local.session.pageSettings && <PageSettings value={local.session.pageSettings} pageFields={loaded.pageFields} fileLanguages={loaded.fileLanguages} redirects={loaded.redirects} mediaLibrary={mediaLibrary} onChange={settings => local.change(local.session!.body, settings)} />}
         <SourceMode local={local} allowed={(!loaded.profile || !('x-admits-code' in loaded.profile) || loaded.profile['x-admits-code'] !== false) && (!entryRef.format || SOURCE_LANGUAGES.includes(entryRef.format))}

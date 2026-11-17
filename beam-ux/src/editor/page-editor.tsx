@@ -13,6 +13,8 @@ import {
 } from '../canvas';
 import { useEffect, useState } from 'react';
 import { useEditorKit } from './context';
+import { useBeamUxMessages } from '../messages.js';
+import { NoticeError, notice as line, noticeOf, say } from '../message-descriptor.js';
 
 /**
  * A persisted body is a JsonDoc only when it's a NON-EMPTY array of `{kind}` nodes; anything else —
@@ -62,6 +64,7 @@ const asBody = (doc: JsonDoc): Record<string, unknown> => doc as unknown as Reco
 export function PageEditor({ slug, body = null, entryId: suppliedId = null }: PageEditorProps) {
     // theme-entries-and-authoring ticket `str-01`: server-resolved theme, NEUTRAL_THEME as the
     // degrade-safe fallback (mirrors mount.tsx's VisualEditorMount).
+    const m = useBeamUxMessages();
     const { transport: bodyClient, theme, canAuthor, userId, canvasConfig, defaultTreeFor, notify: toast, brand } = useEditorKit();
 
     const [created, setCreated] = useState<{slug: string; id: string} | null>(null);
@@ -73,12 +76,12 @@ export function PageEditor({ slug, body = null, entryId: suppliedId = null }: Pa
         setCreating(true);
         try {
             const result = await bodyClient.makeEditable(slug, asBody(seed));
-            if (!result.id) throw new Error('The server did not return an entry.');
+            if (!result.id) throw new NoticeError(line('splicewire-beam-ux::messages.editor_no_entry_returned'));
             setCreated({slug, id: result.id});
             if (result.compileError) toast.error(result.compileError);
             else toast.success('This page is now editable');
         } catch (error) {
-            toast.error(error instanceof Error ? error.message : 'Could not make this page editable');
+            toast.error(say(m, noticeOf(error, line('splicewire-beam-ux::messages.editor_make_editable_failed'))));
         } finally { setCreating(false); }
     };
 
@@ -125,7 +128,7 @@ export function PageEditor({ slug, body = null, entryId: suppliedId = null }: Pa
             // A refused read is not an empty body: keep replacement writes unavailable.
             .catch(() => {
                 if (live) {
-                    toast.error('Could not load this page\u2019s saved content');
+                    toast.error(m.t('splicewire-beam-ux::messages.editor_page_load_failed_toast'));
                     setLoaded({ entryId, body: null, failed: true });
                 }
             });
@@ -148,11 +151,11 @@ export function PageEditor({ slug, body = null, entryId: suppliedId = null }: Pa
     // section A): the FIRST inline edit of a session vanished, because the load landed between the
     // insert and the commit. Waiting is the fix; re-seeding is the defect wearing a `reloadToken`.
     if (editing && entryId !== null && current === null) {
-        return <div style={{ padding: 24, color: '#64748b', fontSize: 13 }}>Loading editor…</div>;
+        return <div style={{ padding: 24, color: '#64748b', fontSize: 13 }}>{m.t('splicewire-beam-ux::messages.editor_loading_editor')}</div>;
     }
 
     if (editing && current?.failed) {
-        return <div role="alert">Could not load this page’s saved content.</div>;
+        return <div role="alert">{m.t('splicewire-beam-ux::messages.editor_page_load_failed')}</div>;
     }
 
     const {
@@ -173,7 +176,7 @@ export function PageEditor({ slug, body = null, entryId: suppliedId = null }: Pa
             list:()=>bodyClient.listImages!(entryId),upload:(file:File)=>bodyClient.uploadImage!(entryId,file),
         }:undefined, bindingPreview:editing?bindingPreview:undefined, profile: current?.profile, styleRegistry: current?.styleRegistry, bindings: current?.bindings, authoredComponents: current?.authoredComponents,componentAuthoring }}>
             {entryId === null && canAuthor && bodyClient.makeEditable && seed && (
-                <button type="button" disabled={creating} onClick={makeEditable}>Make this page editable</button>
+                <button type="button" disabled={creating} onClick={makeEditable}>{m.t('splicewire-beam-ux::messages.editor_make_editable')}</button>
             )}
             <CanvasPageEditor
                 key={entryId ?? slug}

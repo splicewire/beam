@@ -13,6 +13,7 @@ import {
     type SchemaNode,
 } from '@schemastud/seam';
 import { cn } from '@schemastud/ui';
+import { useBeamUxMessages } from '../messages.js';
 import { FileCode2, KeyRound, RotateCw, Rocket, TerminalSquare, Zap } from 'lucide-react';
 import {
     EFFECT_COPY,
@@ -35,6 +36,7 @@ const TIER_DOT: Record<ConfigTier, string> = {
 };
 
 export function TierPill({ tier, className }: { tier: ConfigTier; className?: string }) {
+    const m = useBeamUxMessages();
     return (
         <span
             data-config-tier={tier}
@@ -46,7 +48,7 @@ export function TierPill({ tier, className }: { tier: ConfigTier; className?: st
             )}
         >
             <span className={cn('size-1.5 rounded-full', TIER_DOT[tier])} aria-hidden />
-            {TIER_LABEL[tier]}
+            {m.t(TIER_LABEL[tier])}
         </span>
     );
 }
@@ -54,11 +56,12 @@ export function TierPill({ tier, className }: { tier: ConfigTier; className?: st
 const EFFECT_ICON: Record<ConfigEffect, typeof Zap> = { live: Zap, reload: RotateCw, deploy: Rocket };
 
 export function EffectTag({ effect, className }: { effect: ConfigEffect; className?: string }) {
+    const m = useBeamUxMessages();
     const Icon = EFFECT_ICON[effect];
     return (
         <span
             data-config-effect={effect}
-            title={EFFECT_COPY[effect].long}
+            title={m.t(EFFECT_COPY[effect].longKey)}
             className={cn(
                 'inline-flex items-center gap-1 whitespace-nowrap font-mono text-[10.5px]',
                 effect === 'live' ? 'text-primary' : effect === 'reload' ? 'text-info' : 'text-muted-foreground',
@@ -66,7 +69,7 @@ export function EffectTag({ effect, className }: { effect: ConfigEffect; classNa
             )}
         >
             <Icon className="size-3" aria-hidden />
-            {EFFECT_COPY[effect].label}
+            {m.t(EFFECT_COPY[effect].labelKey)}
         </span>
     );
 }
@@ -80,9 +83,10 @@ export function envState(set: boolean | null): string {
 
 /** The Fed-by cell: the env var feeding the key, else the provider, else the file its tier reads. */
 export function FedBy({ section, keyData, compact }: { section: ConfigSectionData; keyData: ConfigKeyData; compact?: boolean }) {
+    const m = useBeamUxMessages();
     const env = keyData.env;
     if (env) {
-        const where = env.file ? `${env.file}${env.line === null ? '' : `:${env.line}`}` : 'declared on the key';
+        const where = env.file ? `${env.file}${env.line === null ? '' : `:${env.line}`}` : m.t('splicewire-beam-ux::messages.config_declared_on_key');
         return (
             <span data-config-fed-by="env" className="block min-w-0 font-mono text-[11px] text-muted-foreground" title={where}>
                 <span className="flex min-w-0 items-center gap-1">
@@ -96,7 +100,7 @@ export function FedBy({ section, keyData, compact }: { section: ConfigSectionDat
     if (keyData.tier === 'provider') {
         return (
             <span data-config-fed-by="provider" className="font-mono text-[11px] text-warning-foreground">
-                written by a service provider
+                {m.t('splicewire-beam-ux::messages.config_written_by_provider')}
             </span>
         );
     }
@@ -114,10 +118,11 @@ export function FedBy({ section, keyData, compact }: { section: ConfigSectionDat
  * through it even if a row carried one.
  */
 export function SecretValue({ set, className }: { set: boolean; className?: string }) {
+    const m = useBeamUxMessages();
     return (
         <span data-config-secret={set ? 'set' : 'unset'} className={cn('inline-flex items-center gap-1.5 font-mono text-xs', set ? 'text-foreground' : 'text-muted-foreground', className)}>
             <KeyRound className="size-3" aria-hidden />
-            {set ? 'set' : 'not set'}
+            {set ? m.t('splicewire-beam-ux::messages.config_secret_set') : m.t('splicewire-beam-ux::messages.config_secret_not_set')}
         </span>
     );
 }

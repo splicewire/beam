@@ -50,6 +50,8 @@ import {
     type KeyFilter,
 } from './model';
 import { EffectTag, envState, FedBy, KeyValue, PlainValue, SecretValue, TierPill } from './parts';
+import { englishBeamUxMessages, useBeamUxMessages, type BeamUxMessages } from '../messages.js';
+import { richMessage } from '../rich-message.js';
 
 export interface ConfigAreaProps<K extends ResourceKey = ResourceKey> {
     /** The `beam-config` resource as the host mounts it (laravel-beam: `Particle::mount('beam-config', …)`). */
@@ -115,6 +117,7 @@ export function SectionRail<K extends ResourceKey = ResourceKey>({ resource, act
     const { transport } = useFrameInjection();
     // Frame's own key: the resource, the rail's parts, and the transport's scope, so two sockets on one QueryClient
     // never share the rail's rows.
+    const m = useBeamUxMessages();
     const list = useQuery({ queryKey: resourceQueryKey(transport, resource, 'beam-ux/config', 'rail'), queryFn: () => listAllRows(transport, resource) });
     const sections = useMemo(
         () => (list.data ?? []).map((row) => asConfigSection(row)).filter((s): s is ConfigSectionData => s !== null),
@@ -124,10 +127,10 @@ export function SectionRail<K extends ResourceKey = ResourceKey>({ resource, act
     const shown = sections.filter((s) => !needle || `${s.root} ${s.title}`.toLowerCase().includes(needle));
     const families = [...new Set(shown.map((s) => family(s.root)))];
     return (
-        <nav aria-label="Config sections" className="flex min-h-0 flex-col">
+        <nav aria-label={m.t('splicewire-beam-ux::messages.config_sections')} className="flex min-h-0 flex-col">
             <div className="relative p-3 pb-2">
                 <Search className="pointer-events-none absolute left-5 top-1/2 size-3.5 -translate-y-[40%] text-muted-foreground" aria-hidden />
-                <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Find a section" aria-label="Find a section" className="h-8 pl-7 text-sm" />
+                <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder={m.t('splicewire-beam-ux::messages.config_find_section')} aria-label={m.t('splicewire-beam-ux::messages.config_find_section')} className="h-8 pl-7 text-sm" />
             </div>
             <button
                 type="button"
@@ -135,7 +138,7 @@ export function SectionRail<K extends ResourceKey = ResourceKey>({ resource, act
                 aria-current={active === null ? 'page' : undefined}
                 className={cn('mx-2 flex items-center justify-between rounded-md px-2 py-1.5 text-left text-sm hover:bg-muted', active === null && 'bg-muted font-medium')}
             >
-                All sections <span className="font-mono text-[10.5px] text-muted-foreground">{sections.length}</span>
+                {m.t('splicewire-beam-ux::messages.config_all_sections')} <span className="font-mono text-[10.5px] text-muted-foreground">{sections.length}</span>
             </button>
             <div className="min-h-0 flex-1 overflow-y-auto px-2 pb-4">
                 {families.map((f) => (
@@ -159,7 +162,7 @@ export function SectionRail<K extends ResourceKey = ResourceKey>({ resource, act
                                                 <span className="block truncate text-sm">{s.title}</span>
                                                 <span className="block truncate font-mono text-[10.5px] text-muted-foreground">{s.root}</span>
                                             </span>
-                                            <span className="font-mono text-[10.5px] tabular-nums text-muted-foreground" title={`${s.counts.keys} keys`}>
+                                            <span className="font-mono text-[10.5px] tabular-nums text-muted-foreground" title={m.t('splicewire-beam-ux::messages.config_key_count', { count: s.counts.keys })}>
                                                 {s.counts.keys}
                                             </span>
                                         </button>
@@ -168,8 +171,8 @@ export function SectionRail<K extends ResourceKey = ResourceKey>({ resource, act
                         </ul>
                     </div>
                 ))}
-                {list.isSuccess && shown.length === 0 && <p className="px-2 py-3 text-xs text-muted-foreground">No section matches.</p>}
-                {list.isError && <p role="alert" className="px-2 py-3 text-xs text-destructive">The sections could not be listed.</p>}
+                {list.isSuccess && shown.length === 0 && <p className="px-2 py-3 text-xs text-muted-foreground">{m.t('splicewire-beam-ux::messages.config_no_section_matches')}</p>}
+                {list.isError && <p role="alert" className="px-2 py-3 text-xs text-destructive">{m.t('splicewire-beam-ux::messages.config_sections_list_failed')}</p>}
             </div>
         </nav>
     );
@@ -185,15 +188,16 @@ export function SectionRail<K extends ResourceKey = ResourceKey>({ resource, act
  * render the same in both modes. A section's counts have no column of their own (none is declared, and a host column
  * cannot add one), so they ride the Section cell beneath its title.
  */
-export function sectionIndexColumns<K extends ResourceKey = ResourceKey>(): FrameColumn<RowOf<K>>[] {
+/** `messages` is the reader's catalog when called in a render; English otherwise. */
+export function sectionIndexColumns<K extends ResourceKey = ResourceKey>(m: BeamUxMessages = englishBeamUxMessages): FrameColumn<RowOf<K>>[] {
     // A declared member of the row, as a column field. Unregistered, `FieldOf` is `string`; registered, the host's row
     // is the generated `ConfigSectionData`, which carries each of the three.
     const field = (member: 'root' | 'title' | 'owner') => member as FieldOf<RowOf<K>>;
     return [
         // Headers repeat the declared labels, so the no-manifest fallback reads the same.
-        { field: field('root'), header: 'Root', cell: (record) => <code className="font-mono text-xs text-muted-foreground">{asConfigSection(record)?.root}</code> },
-        { field: field('title'), header: 'Section', cell: (record) => <SectionCell section={asConfigSection(record)} /> },
-        { field: field('owner'), header: 'Owner', cell: (record) => <span className="font-mono text-xs text-muted-foreground">{asConfigSection(record)?.owner}</span> },
+        { field: field('root'), header: m.t('splicewire-beam-ux::messages.config_column_root'), cell: (record) => <code className="font-mono text-xs text-muted-foreground">{asConfigSection(record)?.root}</code> },
+        { field: field('title'), header: m.t('splicewire-beam-ux::messages.config_column_section'), cell: (record) => <SectionCell section={asConfigSection(record)} /> },
+        { field: field('owner'), header: m.t('splicewire-beam-ux::messages.config_column_owner'), cell: (record) => <span className="font-mono text-xs text-muted-foreground">{asConfigSection(record)?.owner}</span> },
     ];
 }
 
@@ -222,13 +226,14 @@ function SectionCell({ section }: { section: ConfigSectionData | null }) {
 }
 
 export function SectionsIndex<K extends ResourceKey = ResourceKey>({ resource, onPick }: { resource: K; onPick: (id: string) => void }) {
-    const columns = useMemo(() => sectionIndexColumns<K>(), []);
+    const m = useBeamUxMessages();
+    const columns = useMemo(() => sectionIndexColumns<K>(m), [m]);
     return (
         <div className="space-y-3">
             <header className="space-y-1">
-                <h1 className="text-[17px] font-semibold tracking-tight">Config</h1>
+                <h1 className="text-[17px] font-semibold tracking-tight">{m.t('splicewire-beam-ux::messages.config_heading')}</h1>
                 <p className="max-w-[68ch] text-sm text-muted-foreground">
-                    Every installed package’s config, the tier that set each value, and what changing it takes.
+                    {m.t('splicewire-beam-ux::messages.config_description')}
                 </p>
             </header>
             <ListShell<K>
@@ -247,12 +252,13 @@ export function SectionsIndex<K extends ResourceKey = ResourceKey>({ resource, o
 /* ───────────────────────────── one section ───────────────────────────── */
 
 export function SectionView<K extends ResourceKey = ResourceKey>({ resource, id, onBack }: { resource: K; id: string; onBack?: () => void }) {
+    const m = useBeamUxMessages();
     const record = useResourceRecord(resource, id);
     const section = asConfigSection(record.data);
     const [filter, setFilter] = useState<KeyFilter>('all');
     const [selected, setSelected] = useState<string | null>(null);
-    if (record.isPending) return <p className="text-sm text-muted-foreground">Loading section…</p>;
-    if (!section) return <p className="text-sm text-destructive">This section could not be read.</p>;
+    if (record.isPending) return <p className="text-sm text-muted-foreground">{m.t('splicewire-beam-ux::messages.config_loading_section')}</p>;
+    if (!section) return <p className="text-sm text-destructive">{m.t('splicewire-beam-ux::messages.config_section_read_failed')}</p>;
     const keys = section.keys.filter((k) => matchesFilter(k, filter));
     const inspected = section.keys.find((k) => k.pointer === selected) ?? null;
     return (
@@ -269,11 +275,12 @@ export function SectionView<K extends ResourceKey = ResourceKey>({ resource, id,
 }
 
 function SectionHeader({ section, onBack }: { section: ConfigSectionData; onBack?: () => void }) {
+    const m = useBeamUxMessages();
     return (
         <header className="space-y-2">
             {onBack && (
                 <button type="button" onClick={onBack} className="text-xs text-muted-foreground hover:text-foreground md:hidden">
-                    ← All sections
+                    {m.t('splicewire-beam-ux::messages.config_back_all_sections')}
                 </button>
             )}
             <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
@@ -283,23 +290,23 @@ function SectionHeader({ section, onBack }: { section: ConfigSectionData; onBack
             {section.description && <p className="max-w-[72ch] text-sm text-muted-foreground">{section.description}</p>}
             <dl className="flex flex-wrap gap-x-5 gap-y-1 font-mono text-[11px] text-muted-foreground">
                 <div className="flex gap-1.5">
-                    <dt>owner</dt>
+                    <dt>{m.t('splicewire-beam-ux::messages.config_meta_owner')}</dt>
                     <dd className="text-foreground">{section.owner}</dd>
                 </div>
                 {section.files.package && (
                     <div className="flex gap-1.5">
-                        <dt>package file</dt>
+                        <dt>{m.t('splicewire-beam-ux::messages.config_meta_package_file')}</dt>
                         <dd className="text-foreground">{section.files.package}</dd>
                     </div>
                 )}
                 {section.files.host && (
                     <div className="flex gap-1.5">
-                        <dt>host file</dt>
+                        <dt>{m.t('splicewire-beam-ux::messages.config_meta_host_file')}</dt>
                         <dd className="text-foreground">{section.files.host}</dd>
                     </div>
                 )}
                 <div className="flex gap-1.5">
-                    <dt>keys</dt>
+                    <dt>{m.t('splicewire-beam-ux::messages.config_meta_keys')}</dt>
                     <dd className="text-foreground">{section.counts.keys}</dd>
                 </div>
             </dl>
@@ -308,14 +315,14 @@ function SectionHeader({ section, onBack }: { section: ConfigSectionData; onBack
 }
 
 function SectionNotices({ section }: { section: ConfigSectionData }) {
+    const m = useBeamUxMessages();
     const providers = section.keys.filter((k) => k.tier === 'provider');
     if (section.shadowedPackageKeys.length === 0 && providers.length === 0) return null;
     return (
         <div className="space-y-1.5">
             {section.shadowedPackageKeys.length > 0 && (
                 <Notice>
-                    The host file replaces {section.shadowedPackageKeys.length} package key{section.shadowedPackageKeys.length === 1 ? '' : 's'} wholesale (a top-level
-                    copy hides the package’s nested defaults):{' '}
+                    {m.choice('splicewire-beam-ux::messages.config_host_replaces_keys', section.shadowedPackageKeys.length)}{' '}
                     {section.shadowedPackageKeys.map((k) => (
                         <code key={k} className="mr-1 font-mono">
                             {k}
@@ -325,8 +332,7 @@ function SectionNotices({ section }: { section: ConfigSectionData }) {
             )}
             {providers.length > 0 && (
                 <Notice>
-                    {providers.length} key{providers.length === 1 ? ' is' : 's are'} written by a service provider at boot, so no file sets{' '}
-                    {providers.length === 1 ? 'it' : 'them'}.
+                    {m.choice('splicewire-beam-ux::messages.config_provider_written_keys', providers.length)}
                 </Notice>
             )}
         </div>
@@ -343,8 +349,9 @@ function Notice({ children }: { children: ReactNode }) {
 }
 
 function FilterChips({ section, filter, setFilter }: { section: ConfigSectionData; filter: KeyFilter; setFilter: (f: KeyFilter) => void }) {
+    const m = useBeamUxMessages();
     return (
-        <div role="tablist" aria-label="Filter keys" className="-mx-1 flex gap-1 overflow-x-auto px-1 pb-1">
+        <div role="tablist" aria-label={m.t('splicewire-beam-ux::messages.config_filter_keys')} className="-mx-1 flex gap-1 overflow-x-auto px-1 pb-1">
             {KEY_FILTERS.map((f) => {
                 const n = section.keys.filter((k) => matchesFilter(k, f)).length;
                 return (
@@ -360,7 +367,7 @@ function FilterChips({ section, filter, setFilter }: { section: ConfigSectionDat
                             filter === f && 'border-foreground/20 bg-card text-foreground shadow-xs',
                         )}
                     >
-                        {KEY_FILTER_LABEL[f]}
+                        {m.t(KEY_FILTER_LABEL[f])}
                         <span className="font-mono text-[10.5px] tabular-nums">{n}</span>
                     </button>
                 );
@@ -384,11 +391,12 @@ function KeyTable({
     onSelect: (pointer: string) => void;
     filter: KeyFilter;
 }) {
+    const m = useBeamUxMessages();
     const schema = section.schema as SchemaNode;
     if (keys.length === 0) {
         return (
             <p className="rounded-lg border bg-card px-4 py-8 text-center text-sm text-muted-foreground">
-                {filter === 'all' ? 'This section declares no keys.' : 'No keys match this filter.'}
+                {filter === 'all' ? m.t('splicewire-beam-ux::messages.config_no_keys') : m.t('splicewire-beam-ux::messages.config_no_keys_match')}
             </p>
         );
     }
@@ -404,11 +412,11 @@ function KeyTable({
                 </colgroup>
                 <thead className="border-b bg-muted/40 text-left text-[11px] font-medium text-muted-foreground">
                     <tr>
-                        <th scope="col" className="py-2 pl-4 pr-3 font-medium">Key</th>
-                        <th scope="col" className="py-2 pr-3 font-medium">Value</th>
-                        <th scope="col" className="py-2 pr-3 font-medium">Set by</th>
-                        <th scope="col" className="py-2 pr-3 font-medium">Fed by</th>
-                        <th scope="col" className="py-2 pr-3 font-medium">Applies</th>
+                        <th scope="col" className="py-2 pl-4 pr-3 font-medium">{m.t('splicewire-beam-ux::messages.config_column_key')}</th>
+                        <th scope="col" className="py-2 pr-3 font-medium">{m.t('splicewire-beam-ux::messages.config_column_value')}</th>
+                        <th scope="col" className="py-2 pr-3 font-medium">{m.t('splicewire-beam-ux::messages.config_column_set_by')}</th>
+                        <th scope="col" className="py-2 pr-3 font-medium">{m.t('splicewire-beam-ux::messages.config_column_fed_by')}</th>
+                        <th scope="col" className="py-2 pr-3 font-medium">{m.t('splicewire-beam-ux::messages.config_column_applies')}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -437,7 +445,7 @@ function KeyTable({
                                     <button
                                         type="button"
                                         onClick={() => onSelect(k.pointer)}
-                                        aria-label={`Where ${label} comes from`}
+                                        aria-label={m.t('splicewire-beam-ux::messages.config_where_from', { label })}
                                         className="rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                                     >
                                         <TierPill tier={k.tier} />
@@ -466,12 +474,13 @@ const STANDING_NOTE = {
 } as const;
 
 export function CascadeInspector({ section, keyData, onClose }: { section: ConfigSectionData; keyData: ConfigKeyData; onClose?: () => void }) {
+    const m = useBeamUxMessages();
     const schema = section.schema as SchemaNode;
     const label = keyLabel(schema, keyData.pointer);
     const description = keyDescription(schema, keyData.pointer);
     const layers = cascade(keyData);
     return (
-        <aside aria-label={`Cascade for ${label}`} data-config-inspector={keyData.pointer} className="space-y-3 rounded-lg border bg-card p-4">
+        <aside aria-label={m.t('splicewire-beam-ux::messages.config_cascade_for', { label })} data-config-inspector={keyData.pointer} className="space-y-3 rounded-lg border bg-card p-4">
             <header className="space-y-1">
                 <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
@@ -482,7 +491,7 @@ export function CascadeInspector({ section, keyData, onClose }: { section: Confi
                         <h2 className="text-[15px] font-semibold tracking-tight">{label}</h2>
                     </div>
                     {onClose && (
-                        <Button size="sm" variant="ghost" className="h-7 px-2" onClick={onClose} aria-label="Close the inspector">
+                        <Button size="sm" variant="ghost" className="h-7 px-2" onClick={onClose} aria-label={m.t('splicewire-beam-ux::messages.config_close_inspector')}>
                             <X className="size-3.5" />
                         </Button>
                     )}
@@ -491,14 +500,14 @@ export function CascadeInspector({ section, keyData, onClose }: { section: Confi
                 <div className="flex flex-wrap items-center gap-3 pt-1">
                     <EffectTag effect={keyData.effect} />
                     <span className="font-mono text-[10.5px] text-muted-foreground">
-                        {keyData.overridable ? `overridable up to ${TIER_WORD[keyData.ceiling]}` : 'not overridable'}
+                        {keyData.overridable ? m.t('splicewire-beam-ux::messages.config_overridable_up_to', { tier: m.t(TIER_WORD[keyData.ceiling]) }) : m.t('splicewire-beam-ux::messages.config_not_overridable')}
                     </span>
                 </div>
             </header>
 
             <ChangeNote section={section} keyData={keyData} />
 
-            <ol className="space-y-2" aria-label="Layers, highest tier first">
+            <ol className="space-y-2" aria-label={m.t('splicewire-beam-ux::messages.config_layers')}>
                 {layers.map(({ layer, standing }, i) => (
                     <li
                         key={`${layer.tier}-${i}`}
@@ -514,7 +523,7 @@ export function CascadeInspector({ section, keyData, onClose }: { section: Confi
                         </header>
                         <div className="space-y-0.5 px-3 py-2">
                             {keyData.secret ? (
-                                standing === 'wins' ? <SecretValue set={keyData.set} /> : <span className="font-mono text-xs text-muted-foreground">withheld</span>
+                                standing === 'wins' ? <SecretValue set={keyData.set} /> : <span className="font-mono text-xs text-muted-foreground">{m.t('splicewire-beam-ux::messages.config_withheld')}</span>
                             ) : (
                                 <PlainValue value={layer.value} struck={standing !== 'wins'} />
                             )}
@@ -537,10 +546,11 @@ export function CascadeInspector({ section, keyData, onClose }: { section: Confi
 
 /** What changing the key takes, by its effect: the deploy-only source it names, or when a change applies. */
 function ChangeNote({ section, keyData }: { section: ConfigSectionData; keyData: ConfigKeyData }) {
+    const m = useBeamUxMessages();
     if (keyData.effect !== 'deploy') {
         return (
             <p data-config-change={keyData.effect} className="text-xs text-muted-foreground">
-                {EFFECT_COPY[keyData.effect].long}
+                {m.t(EFFECT_COPY[keyData.effect].longKey)}
             </p>
         );
     }
@@ -549,13 +559,13 @@ function ChangeNote({ section, keyData }: { section: ConfigSectionData; keyData:
         <p data-config-change="deploy" className="text-xs text-muted-foreground">
             {source.kind === 'env' ? (
                 <>
-                    Deploy-only. Set <code className="font-mono text-foreground">{source.name}</code> in the server environment, then deploy.
+                    {richMessage(m, 'splicewire-beam-ux::messages.config_deploy_env', { name: <code className="font-mono text-foreground">{source.name}</code> })}
                 </>
             ) : source.kind === 'provider' ? (
-                <>Deploy-only. A service provider writes it at boot; change the provider and deploy.</>
+                <>{m.t('splicewire-beam-ux::messages.config_deploy_provider')}</>
             ) : (
                 <>
-                    Deploy-only. Edit <code className="font-mono text-foreground">{source.name}</code>, then deploy.
+                    {richMessage(m, 'splicewire-beam-ux::messages.config_deploy_file', { name: <code className="font-mono text-foreground">{source.name}</code> })}
                 </>
             )}
         </p>

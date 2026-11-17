@@ -4,6 +4,7 @@
  * does not carry. What a row will gain later (sparse overrides, drafts, pins, locks, the tenant realm) is ticket 10b's.
  */
 import type { SchemaNode } from '@schemastud/seam';
+import type { BeamUxMessageKey } from '../messages.js';
 import type {
     ConfigEffect,
     ConfigKeyData,
@@ -17,41 +18,41 @@ export type { ConfigEffect, ConfigKeyData, ConfigLayerData, ConfigSectionData, C
 /** The ladder, bottom-up, in the order laravel-beam's `ConfigTier` declares it. */
 export const TIER_ORDER: readonly ConfigTier[] = ['package', 'host', 'provider', 'operator', 'tenant'];
 
-/** A tier as a pill names it. */
-export const TIER_LABEL: Record<ConfigTier, string> = {
-    package: 'package',
-    host: 'host file',
-    provider: 'provider',
-    operator: 'operator',
-    tenant: 'workspace',
+/** A tier as a pill names it (catalog keys; render with the reader's messages). */
+export const TIER_LABEL: Record<ConfigTier, BeamUxMessageKey> = {
+    package: 'splicewire-beam-ux::messages.config_tier_package',
+    host: 'splicewire-beam-ux::messages.config_tier_host',
+    provider: 'splicewire-beam-ux::messages.config_tier_provider',
+    operator: 'splicewire-beam-ux::messages.config_tier_operator',
+    tenant: 'splicewire-beam-ux::messages.config_tier_tenant',
 };
 
 /** A tier in a sentence ("set by the host file"). */
-export const TIER_WORD: Record<ConfigTier, string> = {
-    package: 'the package default',
-    host: 'the host file',
-    provider: 'a service provider',
-    operator: 'the operator',
-    tenant: 'the workspace',
+export const TIER_WORD: Record<ConfigTier, BeamUxMessageKey> = {
+    package: 'splicewire-beam-ux::messages.config_tier_word_package',
+    host: 'splicewire-beam-ux::messages.config_tier_word_host',
+    provider: 'splicewire-beam-ux::messages.config_tier_word_provider',
+    operator: 'splicewire-beam-ux::messages.config_tier_word_operator',
+    tenant: 'splicewire-beam-ux::messages.config_tier_word_tenant',
 };
 
 /** When a change applies, as the Applies column and the inspector say it. */
-export const EFFECT_COPY: Record<ConfigEffect, { label: string; long: string }> = {
-    live: { label: 'live', long: 'Applies on the next request, job and command.' },
-    reload: { label: 'on reload', long: 'Applies after long-lived workers reload.' },
-    deploy: { label: 'deploy', long: 'Read at boot. Change it at its source and deploy.' },
+export const EFFECT_COPY: Record<ConfigEffect, { labelKey: BeamUxMessageKey; longKey: BeamUxMessageKey }> = {
+    live: { labelKey: 'splicewire-beam-ux::messages.config_effect_live', longKey: 'splicewire-beam-ux::messages.config_effect_live_long' },
+    reload: { labelKey: 'splicewire-beam-ux::messages.config_effect_reload', longKey: 'splicewire-beam-ux::messages.config_effect_reload_long' },
+    deploy: { labelKey: 'splicewire-beam-ux::messages.config_effect_deploy', longKey: 'splicewire-beam-ux::messages.config_effect_deploy_long' },
 };
 
 /** The key-table filters: each reads only what the row carries. */
 export const KEY_FILTERS = ['all', 'changeable', 'deploy', 'env', 'secrets'] as const;
 export type KeyFilter = (typeof KEY_FILTERS)[number];
 
-export const KEY_FILTER_LABEL: Record<KeyFilter, string> = {
-    all: 'All',
-    changeable: 'Changeable',
-    deploy: 'Deploy-only',
-    env: 'Env-fed',
-    secrets: 'Secrets',
+export const KEY_FILTER_LABEL: Record<KeyFilter, BeamUxMessageKey> = {
+    all: 'splicewire-beam-ux::messages.config_filter_all',
+    changeable: 'splicewire-beam-ux::messages.config_filter_changeable',
+    deploy: 'splicewire-beam-ux::messages.config_filter_deploy',
+    env: 'splicewire-beam-ux::messages.config_filter_env',
+    secrets: 'splicewire-beam-ux::messages.config_filter_secrets',
 };
 
 export function matchesFilter(key: ConfigKeyData, filter: KeyFilter): boolean {
@@ -159,7 +160,8 @@ export function cascade(key: ConfigKeyData): CascadeLayer[] {
 
 /** A non-secret value as plain text, for the fallback read and a layer line. */
 export function formatValue(value: unknown): string {
-    if (value === null) return 'null';
+    // A JSON null renders as its JSON token, like every other JSON value here: a value, not copy.
+    if (value === null) return JSON.stringify(null);
     if (value === undefined) return '—';
     if (typeof value === 'string') return value === '' ? '""' : value;
     if (typeof value === 'number' || typeof value === 'boolean') return String(value);

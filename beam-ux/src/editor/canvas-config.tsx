@@ -5,6 +5,7 @@
 import type { JsonBlock } from '../blockdoc/json';
 import type { BlockTemplate, CanvasConfig } from '../canvas';
 import { defaultComponents } from './registry';
+import { englishBeamUxMessages } from '../messages.js';
 
 const str = (name: string, value: string) => ({
     name,
@@ -27,35 +28,39 @@ const el = (
 // The insert palette — host content, authored as JsonBlocks (NEUTRAL styling).
 const BLOCK_TEMPLATES: BlockTemplate[] = [
     {
-        label: 'Section',
-        make: () =>
+        label: englishBeamUxMessages.t('splicewire-beam-ux::messages.canvas_template_section'),
+        labelKey: 'splicewire-beam-ux::messages.canvas_template_section',
+        make: (m = englishBeamUxMessages) =>
             el(
                 'section',
                 [str('style', 'padding:40px 0')],
-                [el('p', [], [{ kind: 'text', value: 'New section' }])],
+                [el('p', [], [{ kind: 'text', value: m.t('splicewire-beam-ux::messages.canvas_template_new_section') }])],
             ),
     },
     {
-        label: 'Heading',
-        make: () =>
+        label: englishBeamUxMessages.t('splicewire-beam-ux::messages.canvas_template_heading'),
+        labelKey: 'splicewire-beam-ux::messages.canvas_template_heading',
+        make: (m = englishBeamUxMessages) =>
             el(
                 'h2',
                 [str('style', 'font-size:28px;font-weight:700;color:var(--st-fg,#0f172a)')],
-                [{ kind: 'text', value: 'New heading' }],
+                [{ kind: 'text', value: m.t('splicewire-beam-ux::messages.canvas_template_new_heading') }],
             ),
     },
     {
-        label: 'Text',
-        make: () =>
+        label: englishBeamUxMessages.t('splicewire-beam-ux::messages.canvas_template_text'),
+        labelKey: 'splicewire-beam-ux::messages.canvas_template_text',
+        make: (m = englishBeamUxMessages) =>
             el(
                 'p',
                 [str('style', 'color:var(--st-muted,#475569);line-height:1.6')],
-                [{ kind: 'text', value: 'New paragraph.' }],
+                [{ kind: 'text', value: m.t('splicewire-beam-ux::messages.canvas_template_new_paragraph') }],
             ),
     },
     {
-        label: 'Button',
-        make: () =>
+        label: englishBeamUxMessages.t('splicewire-beam-ux::messages.canvas_template_button'),
+        labelKey: 'splicewire-beam-ux::messages.canvas_template_button',
+        make: (m = englishBeamUxMessages) =>
             el(
                 'button',
                 [
@@ -64,15 +69,17 @@ const BLOCK_TEMPLATES: BlockTemplate[] = [
                         'background:var(--st-accent,#0f172a);color:var(--st-accent-fg,#fff);border:none;border-radius:10px;padding:11px 18px;cursor:pointer',
                     ),
                 ],
-                [{ kind: 'text', value: 'Button' }],
+                [{ kind: 'text', value: m.t('splicewire-beam-ux::messages.canvas_template_new_button') }],
             ),
     },
     {
-        label: 'Row',
+        label: englishBeamUxMessages.t('splicewire-beam-ux::messages.canvas_template_row'),
+        labelKey: 'splicewire-beam-ux::messages.canvas_template_row',
         make: () => el('div', [str('style', 'display:flex;gap:12px')]),
     },
     {
-        label: 'Divider',
+        label: englishBeamUxMessages.t('splicewire-beam-ux::messages.canvas_template_divider'),
+        labelKey: 'splicewire-beam-ux::messages.canvas_template_divider',
         make: () =>
             el('hr', [
                 str(

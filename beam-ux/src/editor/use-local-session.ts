@@ -1,12 +1,14 @@
 import { useEffect, useRef, useState } from 'react';
 import type { SessionPageSettings } from './local-session';
 import { IndexedDbSessions, LocalSession, type SessionSnapshot } from './local-session';
+import { notice, type Notice } from '../message-descriptor.js';
 
 /** Persistence errors are visible: a session is never silently advertised as reload-safe. */
 export function useLocalSession(entry: string, user: string | undefined, base: string | null | undefined, body: unknown[], enabled: boolean, pageSettings: SessionPageSettings | null = null) {
   const [session, setSession] = useState<LocalSession | null>(null);
   const [pending, setPending] = useState<SessionSnapshot | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  // A catalog line (translated where it renders) or a raw failure string.
+  const [error, setError] = useState<Notice | null>(null);
   const [, render] = useState(0);
   const store = useRef<IndexedDbSessions | null>(null);
   const serial = useRef<Promise<void>>(Promise.resolve());
@@ -15,7 +17,7 @@ export function useLocalSession(entry: string, user: string | undefined, base: s
   server.current = { body, base, pageSettings };
   useEffect(() => {
     if (!enabled || base === undefined) return;
-    if (!user) { setError('The editor requires an authenticated user identity for its Local Session.'); return; }
+    if (!user) { setError(notice('splicewire-beam-ux::messages.editor_session_requires_user')); return; }
     let live = true;
     const identity = { entry, user, base };
     const database = new IndexedDbSessions();

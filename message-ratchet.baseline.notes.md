@@ -16,6 +16,11 @@ Part D (the root files: releases, FilesComparisonPanel, use-region-publication, 
 
 Part B (canvas/ BlockInspector, PageEditor, BindingInspector, templates, block-style, attrsSchema) moves all 167 of its nodes onto the catalog, so its --write lowers 555 to 388. No raw node remains in its files.
 
+Part F (editor/ and config/) moves 145 of its 147 nodes onto the catalog, so its --write lowers 388 to 243. config/ reads zero: config-sections 10a's 61 are erased (60 moved; the generated server-manifest dump became ConfigArea.manifest.fixtures.ts, a test fixture by name, as 28a did for resource-filters.fixtures.ts). Its two remaining nodes are machine text, kept raw:
+
+- beam-ux/src/editor/ComponentSessionHost.tsx — the scoped `.component-session{…}` CSS (FirstTemplateToken).
+- beam-ux/src/editor/PageSettings.tsx — `string`, the JSON Schema type a field defaults to (StringLiteral).
+
 ## @splicewire/beam-inertia — localization 28a
 
 Root qitem-20261114193919-4a20610b (2026-11-14 19:39Z) accepts exactly these 13 non-copy brand/machine AST nodes. This supersedes the count-12 ruling 73e93872. The complete styled wordmark is one raw rich :brand parameter, preserving raw beam· followed by bold raw os. Every listed literal stays raw; no technical catalog line or reshaping hides it.

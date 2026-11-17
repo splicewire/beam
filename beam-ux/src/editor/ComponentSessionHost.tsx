@@ -17,6 +17,8 @@ import type {
 import { DEFAULT_CANVAS_THEME } from "../canvas/css";
 import type { EditorKitInputs } from "./context";
 import { EditorKitProvider } from "./context";
+import { useBeamUxMessages } from "../messages.js";
+import { notice, say, type Notice } from "../message-descriptor.js";
 const ComponentEditor = lazy(() => import("./mount"));
 type Open = (
   entry: ComponentCanvasData,
@@ -34,6 +36,7 @@ export function ComponentSessionHost({
   kit: Required<EditorKitInputs>;
   children: ReactNode;
 }) {
+  const m = useBeamUxMessages();
   const [active, setActive] = useState<{
     entry: ComponentCanvasData;
     props: Record<string, unknown>;
@@ -41,7 +44,7 @@ export function ComponentSessionHost({
     target: HTMLElement;
   } | null>(null);
   const sequence = useRef(0);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<Notice | null>(null);
   useEffect(() => {
     sequence.current++;
     setActive(null);
@@ -59,7 +62,7 @@ export function ComponentSessionHost({
       (admission) => {
         if (request !== sequence.current) return;
         if (!admission.canEdit || admission.id !== entry.id) {
-          setError("Editing this component is unavailable.");
+          setError(notice('splicewire-beam-ux::messages.editor_component_unavailable'));
           return;
         }
         setError(null);
@@ -72,7 +75,7 @@ export function ComponentSessionHost({
       },
       () => {
         if (request === sequence.current)
-          setError("Editing this component was refused.");
+          setError(notice('splicewire-beam-ux::messages.editor_component_refused'));
       }
     );
   };
@@ -90,7 +93,7 @@ export function ComponentSessionHost({
   const colors = { ...DEFAULT_CANVAS_THEME, ...kit.theme };
   return (
     <Context.Provider value={open}>
-      {error && <p role="alert">{error}</p>}
+      {error && <p role="alert">{say(m, error)}</p>}
       <div
         inert={active ? true : undefined}
         style={active ? { opacity: 0.25, pointerEvents: "none" } : undefined}
@@ -101,7 +104,7 @@ export function ComponentSessionHost({
         <section
           className="component-session"
           role="dialog"
-          aria-label={`Edit component ${active.entry.definition.name}`}
+          aria-label={m.t('splicewire-beam-ux::messages.editor_edit_component', { name: active.entry.definition.name })}
           aria-modal="true"
           style={{
             "--component-panel": colors.panelBg,
@@ -125,18 +128,15 @@ export function ComponentSessionHost({
           <header className="component-session-heading">
             <strong>{active.entry.definition.name}</strong> —{" "}
             {active.admission.reachEntries === null
-              ? `direct reach unavailable (over ${active.admission.reachLimit} entries)`
-              : `used directly by ${active.admission.reachEntries} ${
-                  active.admission.reachEntries === 1 ? "entry" : "entries"
-                }`}
+              ? m.t('splicewire-beam-ux::messages.editor_reach_unavailable', { limit: active.admission.reachLimit })
+              : m.choice('splicewire-beam-ux::messages.editor_reach_entries', active.admission.reachEntries)}
             <button type="button" autoFocus onClick={close}>
-              Back to parent
+              {m.t('splicewire-beam-ux::messages.editor_back_to_parent')}
             </button>
           </header>
-          <p>Transitive page reach is not included.</p>
+          <p>{m.t('splicewire-beam-ux::messages.editor_transitive_reach')}</p>
           <p>
-            Undo and Save belong to this component. The parent’s unsaved work
-            waits unchanged. Closing retains this component’s Local Session.
+            {m.t('splicewire-beam-ux::messages.editor_component_session_scope')}
           </p>
           <div className="component-session-editor">
             <EditorKitProvider
@@ -146,7 +146,7 @@ export function ComponentSessionHost({
                 componentProps: { ...defaults, ...active.props },
               }}
             >
-              <Suspense fallback={<p role="status">Loading component editor…</p>}>
+              <Suspense fallback={<p role="status">{m.t('splicewire-beam-ux::messages.editor_loading_component_editor')}</p>}>
                 <ComponentEditor
                   entryRef={{
                     id: active.entry.id,

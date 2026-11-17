@@ -3,7 +3,10 @@
 // drill-in) instead of an intrinsic element. A fresh host swaps these for its own designed sections; they
 // exist only to prove the island seam renders in place. Their tones read the site layout's `--st-*`
 // variables (light fallbacks inline), so they flip with the site's dark scheme like the chrome does.
+import { useBeamUxMessages } from '../messages.js';
+
 export function DemoHero() {
+    const m = useBeamUxMessages();
     return (
         <section
             style={{
@@ -22,7 +25,7 @@ export function DemoHero() {
                     color: 'var(--st-fg, #0f172a)',
                 }}
             >
-                An editable hero, in place.
+                {m.t('splicewire-beam-ux::messages.islands_hero_title')}
             </h1>
             <p
                 style={{
@@ -33,26 +36,29 @@ export function DemoHero() {
                     margin: '0 auto',
                 }}
             >
-                This hero is a ready-made block. Move it, remove it, or add your
-                own blocks around it, then save.
+                {m.t('splicewire-beam-ux::messages.islands_hero_body')}
             </p>
         </section>
     );
 }
 
 export function DemoFeatureRow() {
+    const m = useBeamUxMessages();
     const cells = [
         {
-            title: 'Edit in place',
-            body: 'Change text and layout right on the page.',
+            key: 'edit',
+            title: m.t('splicewire-beam-ux::messages.islands_feature_edit_title'),
+            body: m.t('splicewire-beam-ux::messages.islands_feature_edit_body'),
         },
         {
-            title: 'Draft, then publish',
-            body: 'Visitors see the page when you publish it.',
+            key: 'publish',
+            title: m.t('splicewire-beam-ux::messages.islands_feature_publish_title'),
+            body: m.t('splicewire-beam-ux::messages.islands_feature_publish_body'),
         },
         {
-            title: 'Your look, your colours',
-            body: 'Set the look in your theme; every block follows it.',
+            key: 'theme',
+            title: m.t('splicewire-beam-ux::messages.islands_feature_theme_title'),
+            body: m.t('splicewire-beam-ux::messages.islands_feature_theme_body'),
         },
     ];
 
@@ -67,7 +73,7 @@ export function DemoFeatureRow() {
         >
             {cells.map((c) => (
                 <div
-                    key={c.title}
+                    key={c.key}
                     style={{
                         padding: 20,
                         border: '1px solid var(--st-card-border, #e2e8f0)',

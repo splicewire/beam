@@ -11,12 +11,14 @@ import { useEditMode } from '../canvas';
 import type { EntryPayload } from '../docs';
 import { lazy, Suspense, type ReactNode } from 'react';
 import { CanvasOrRefusal } from './format';
+import { useBeamUxMessages } from '../messages.js';
 
 // Author-only and heavy (canvas + frame inspector): loaded on the first edit, never for a reader.
 const PageEditor = lazy(() => import('./page-editor'));
 
 export function EditableEntryBody({ entry, children }: { entry: EntryPayload; children: ReactNode }) {
     // True only after the MainframeHost entered window mode, which it does only for an author.
+    const m = useBeamUxMessages();
     const editing = useEditMode();
 
     if (!editing) {
@@ -33,7 +35,7 @@ export function EditableEntryBody({ entry, children }: { entry: EntryPayload; ch
             <CanvasOrRefusal entry={ref}>
                 <Suspense
                     fallback={
-                        <div style={{ padding: 24, color: '#64748b', fontSize: 13 }}>Loading editor…</div>
+                        <div style={{ padding: 24, color: '#64748b', fontSize: 13 }}>{m.t('splicewire-beam-ux::messages.editor_loading_editor')}</div>
                     }
                 >
                     <PageEditor slug={entry.slug} body={null} entryId={entry.id} />

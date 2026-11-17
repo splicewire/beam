@@ -1,6 +1,7 @@
 import {useState, type ReactNode} from 'react';
 import type {JsonDoc} from '../blockdoc/json';
 import type {useLocalSession} from './use-local-session';
+import {useBeamUxMessages} from '../messages.js';
 
 export interface SourceConversion {
  print(body: JsonDoc): Promise<{source:string}>;
@@ -12,12 +13,13 @@ export interface SourceConversion {
  * page in its File Language (beam JS ADR-0006 d4): `language` names it, `tsx` unless the entry says otherwise.
  */
 export function SourceMode({local,conversion,allowed,language='tsx',children}:{local:ReturnType<typeof useLocalSession>;conversion?:SourceConversion;allowed:boolean;language?:string;children:ReactNode}) {
+ const m=useBeamUxMessages();
  const [busy,setBusy]=useState(false);
  const [error,setError]=useState<string|null>(null);
  const run=async(fn:()=>Promise<void>)=>{setBusy(true);setError(null);try{await fn();}catch(e){setError(e instanceof Error?e.message:String(e));}finally{setBusy(false);}};
  const source=local.session?.source;
  if (!allowed || !conversion) {
-  if(source) return <div role="alert">Source Mode is unavailable for this entry. Your pending text is retained.<button onClick={local.discardSource}>Discard pending source</button></div>;
+  if(source) return <div role="alert">{m.t('splicewire-beam-ux::messages.editor_source_unavailable')}<button onClick={local.discardSource}>{m.t('splicewire-beam-ux::messages.editor_discard_pending_source')}</button></div>;
   return <>{children}</>;
  }
  return <>
@@ -30,11 +32,11 @@ export function SourceMode({local,conversion,allowed,language='tsx',children}:{l
    const body=local.session!.body as JsonDoc;
    const printed=await conversion.print(body);
    local.beginSource(printed.source,body);
-  })}>Source Mode</button>{children}</> :
-   <section aria-label="Source Mode">
-    <textarea aria-label={`${language.toUpperCase()} source`} value={source.text} disabled={busy} onChange={event=>local.editSource(event.target.value)}/>
-    <button disabled={busy} onClick={()=>void run(async()=>{const parsed=await conversion.read(source.text,source.body as JsonDoc);local.applySource(parsed.body);})}>Apply source</button>
-    <button disabled={busy} onClick={local.discardSource}>Discard source</button>
+  })}>{m.t('splicewire-beam-ux::messages.editor_source_mode')}</button>{children}</> :
+   <section aria-label={m.t('splicewire-beam-ux::messages.editor_source_mode')}>
+    <textarea aria-label={m.t('splicewire-beam-ux::messages.editor_language_source', {language:language.toUpperCase()})} value={source.text} disabled={busy} onChange={event=>local.editSource(event.target.value)}/>
+    <button disabled={busy} onClick={()=>void run(async()=>{const parsed=await conversion.read(source.text,source.body as JsonDoc);local.applySource(parsed.body);})}>{m.t('splicewire-beam-ux::messages.editor_apply_source')}</button>
+    <button disabled={busy} onClick={local.discardSource}>{m.t('splicewire-beam-ux::messages.editor_discard_source')}</button>
    </section>}
  </>;
 }
