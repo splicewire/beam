@@ -35,3 +35,17 @@ it('re-renders a command failure already showing in the new locale',async()=>{
 
  expect(screen.getByRole('alert').textContent).toBe('El portapapeles no está disponible en este navegador');
 });
+
+it('re-renders a canvas command module failure (an invalid paste) in the new locale',async()=>{
+ Object.defineProperty(navigator,'clipboard',{configurable:true,value:{readText:vi.fn().mockResolvedValue('{"format":"other"}')}});
+ const withPaste:ClientCatalog={...spanish,messages:{...spanish.messages,
+  'splicewire-beam-ux::messages.canvas_cmd_not_block_clipboard':{text:'No es un portapapeles de bloques de Beam',sourceLocale:'es'}}};
+ const tree=(catalog:ClientCatalog)=><MessageProvider value={catalog}><Harness/></MessageProvider>;
+ const view=render(tree(english));
+ await act(async()=>fireEvent.click(screen.getByText('Paste into document')));
+ expect(screen.getByRole('alert').textContent).toBe('Not a Beam block clipboard');
+
+ view.rerender(tree(withPaste));
+
+ expect(screen.getByRole('alert').textContent).toBe('No es un portapapeles de bloques de Beam');
+});

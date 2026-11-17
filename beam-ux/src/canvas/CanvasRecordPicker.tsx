@@ -1,5 +1,6 @@
 import type {CanvasBindingsPreview} from './use-canvas-bindings';
 import { useBeamUxMessages } from '../messages.js';
+import {say} from '../message-descriptor.js';
 /** The picked Record is preview state only; it never changes the Local Session document. */
 export function CanvasRecordPicker({preview}:{preview:CanvasBindingsPreview}){
  const m = useBeamUxMessages();
@@ -7,7 +8,7 @@ export function CanvasRecordPicker({preview}:{preview:CanvasBindingsPreview}){
  return <section aria-label={m.t('splicewire-beam-ux::messages.canvas_live_record_preview')}>
   {preview.unavailable?<p role="status">{m.t('splicewire-beam-ux::messages.canvas_live_preview_unavailable')}</p>
    :preview.loading?<p role="status">{m.t('splicewire-beam-ux::messages.canvas_reading_live_records')}</p>
-   :preview.error?<p role="alert">{preview.error}</p>
+   :preview.error?<p role="alert">{say(m,preview.error)}</p>
    :data?.recordPage?<>
     <label>{m.t('splicewire-beam-ux::messages.canvas_preview_record')}<select aria-label={m.t('splicewire-beam-ux::messages.canvas_preview_record')} value={data.selectedValue??''} onChange={event=>preview.select(event.target.value)}>
      {!data.choices.length&&<option value="">{m.t('splicewire-beam-ux::messages.canvas_no_readable_records')}</option>}

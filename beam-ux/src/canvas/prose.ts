@@ -1,4 +1,5 @@
 import type {JsonBlock,JsonDoc,JsonNode} from '../blockdoc/json';
+import {NoticeError,notice as line} from '../message-descriptor.js';
 
 /** ADR-0228 EP-14: editing metadata on the same profile; never a second admission vocabulary. */
 export type ProseRole = 'block'|'container'|'mark'|'inline'|'cell';
@@ -37,19 +38,19 @@ export function toProse(doc:JsonDoc,profile:ProseProfile):ProseNode {
    const textMark={type:'beamTextBoundary',attrs:{key:++boundary}};
    return node.value?[{type:'text',text:node.value,marks:[...marks,textMark]}]:[{type:'beamEmpty',attrs:{text:true},marks}];
   }
-  if(node.kind!=='block')throw new Error('Opaque content cannot be edited as prose.');
+  if(node.kind!=='block')throw new NoticeError(line('splicewire-beam-ux::messages.prose_opaque_content_cannot_be_edited_as_prose'));
   const role=proseRole(node.name,profile);
   if(role==='mark') {
    const nested=[...marks,{type:node.name!,attrs:{beam:shell(node),depth:marks.length}}];
    return node.children.length?inline(node.children,nested):[{type:'beamEmpty',attrs:{text:false},marks:nested}];
   }
   if(role==='inline'&&!node.children.length)return [{type:node.name!,attrs:{beam:shell(node)},marks}];
-  throw new Error(`Node ${node.name} is not declared inline prose.`);
+  throw new NoticeError(line('splicewire-beam-ux::messages.prose_not_inline',{name:String(node.name)}));
  });
  const blocks=(nodes:JsonNode[]):ProseNode[]=>nodes.map(node=>{
-  if(node.kind!=='block')throw new Error('A prose run requires declared blocks.');
+  if(node.kind!=='block')throw new NoticeError(line('splicewire-beam-ux::messages.prose_a_prose_run_requires_declared_blocks'));
   const role=proseRole(node.name,profile);
-  if(role!=='block'&&role!=='container'&&role!=='cell')throw new Error(`Node ${node.name} is not declared block prose.`);
+  if(role!=='block'&&role!=='container'&&role!=='cell')throw new NoticeError(line('splicewire-beam-ux::messages.prose_not_block',{name:String(node.name)}));
   if(role==='block')return {type:node.name!,attrs:{beam:shell(node),id:(node as JsonBlock & {id?:string}).id??null},content:inline(node.children)};
   const content:ProseNode[]=[];
   let pending:JsonNode[]=[];
@@ -87,7 +88,7 @@ export function fromProse(doc:ProseNode,profile:ProseProfile):JsonDoc {
    active=active.slice(0,shared);
    for(let i=shared;i<marks.length;i++){
     const mark=marks[i];
-    if(proseRole(mark.type,profile)!=='mark')throw new Error(`Undeclared prose mark ${mark.type}`);
+    if(proseRole(mark.type,profile)!=='mark')throw new NoticeError(line('splicewire-beam-ux::messages.prose_undeclared_mark',{type:String(mark.type)}));
     const block=restore(mark.type,mark.attrs);
     (active.length?active[active.length-1].block.children:roots).push(block);
     active.push({key:JSON.stringify(mark),block});
@@ -101,7 +102,7 @@ export function fromProse(doc:ProseNode,profile:ProseProfile):JsonDoc {
    } else if(node.type==='beamEmpty') {
     if(node.attrs?.text)target.push({kind:'text',value:''});
    } else {
-    if(proseRole(node.type,profile)!=='inline')throw new Error(`Undeclared inline prose ${node.type}`);
+    if(proseRole(node.type,profile)!=='inline')throw new NoticeError(line('splicewire-beam-ux::messages.prose_undeclared_inline',{type:String(node.type)}));
     target.push(restore(node.type,node.attrs));
    }
    previousTextKey=textKey;
@@ -111,12 +112,12 @@ export function fromProse(doc:ProseNode,profile:ProseProfile):JsonDoc {
  const blocks=(nodes:ProseNode[]):JsonDoc=>nodes.flatMap(node=>{
   if(node.type==='beamInlineRun')return inline(node.content??[]);
   const role=proseRole(node.type,profile);
-  if(role!=='block'&&role!=='container'&&role!=='cell')throw new Error(`Undeclared prose block ${node.type}`);
+  if(role!=='block'&&role!=='container'&&role!=='cell')throw new NoticeError(line('splicewire-beam-ux::messages.prose_undeclared_block',{type:String(node.type)}));
   const block=restore(node.type,node.attrs);
   block.children=role==='block'?inline(node.content??[]):blocks(node.content??[]);
   return [block];
  });
- if(doc.type!=='doc')throw new Error('A prose document must have a doc root.');
+ if(doc.type!=='doc')throw new NoticeError(line('splicewire-beam-ux::messages.prose_a_prose_document_must_have_a_doc_root'));
  return blocks(doc.content??[]);
 }
 

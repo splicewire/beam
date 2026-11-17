@@ -1,5 +1,6 @@
 import {assertCondition,assertRepeat,type DataCondition} from '../blockdoc/bindings.js';
 import {getAt,isJsonBlock,type JsonBlock,type JsonDoc} from '../blockdoc/json.js';
+import {NoticeError,notice as line} from '../message-descriptor.js';
 
 export interface CollectionOffer {name:string;schema:Record<string,unknown>;publicRead:boolean|null;hasRecordPage:boolean}
 export interface EventOffer {name:string;source:'package'|'host';parameters:string[]}
@@ -64,9 +65,9 @@ export function bindText(node:JsonBlock,field:string):JsonBlock{
  })};
 }
 export function scalarValue(value:string,field?:BindingField):string|number|boolean{
- if(field?.type==='boolean'){if(!['true','false'].includes(value))throw Error('Enter true or false');return value==='true';}
+ if(field?.type==='boolean'){if(!['true','false'].includes(value))throw new NoticeError(line('splicewire-beam-ux::messages.binding_edit_enter_true_or_false'));return value==='true';}
  if(field?.type==='number'||field?.type==='integer'){
-  const number=Number(value);if(!Number.isFinite(number)||(field.type==='integer'&&!Number.isInteger(number)))throw Error('Enter a finite '+field.type);
+  const number=Number(value);if(!Number.isFinite(number)||(field.type==='integer'&&!Number.isInteger(number)))throw new NoticeError(line('splicewire-beam-ux::messages.binding_edit_enter_finite',{type:field.type}));
   return number;
  }
  return value;

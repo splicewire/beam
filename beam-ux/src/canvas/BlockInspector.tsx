@@ -15,7 +15,7 @@ import {blockStyleFields} from './block-style';
 import {authoredEntry} from './authored-components';
 import {ComponentProps} from './ComponentProps';
 import {useBeamUxMessages,type BeamUxMessageKey} from '../messages.js';
-import {notice,say,type Notice} from '../message-descriptor.js';
+import {notice,noticeOf,say,type Notice} from '../message-descriptor.js';
 
 const PANELS:Record<string,string[]>={
  Size:['width','height','min-width','max-width','min-height','max-height','aspect-ratio','object-fit'],
@@ -68,7 +68,7 @@ export function BlockInspector(){
    else {const next=validatedEdit(style,selection,property,value,registry);mount.setNodeAttrs(id,{...attrs,bdStyle:next});}
    setError(null);
   }
-  catch(e){setError(e instanceof Error?e.message:String(e));}
+  catch(e){setError(noticeOf(e,String(e)));}
  };
  const own=(property:string)=>{
   if(styles.length>1&&new Set(styles.map(s=>effectiveDeclaration(s,property,selection,registry)?.value??'')).size>1)return '';

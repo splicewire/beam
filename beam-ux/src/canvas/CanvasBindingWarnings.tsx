@@ -7,7 +7,7 @@ import { useBeamUxMessages } from '../messages.js';
 /** Audience intent and declared Public Read are warnings, never grants or Record reads. */
 export function CanvasBindingWarnings({doc,profile,pagePublic,recordCollection}:{doc:JsonDoc;profile:unknown;pagePublic?:boolean|null;recordCollection?:string|null}){
  const m = useBeamUxMessages();
- const unavailable=unavailableBindings(doc,profile,recordCollection);
+ const unavailable=unavailableBindings(doc,profile,recordCollection,m);
  const missing=Object.entries(unavailable).length?<section aria-label={m.t('splicewire-beam-ux::messages.canvas_unavailable_bindings')}>{Object.entries(unavailable).map(([path,messages])=><p role="status" data-binding-unavailable={path} key={path}>{m.t('splicewire-beam-ux::messages.canvas_binding_unavailable_node',{path:path||m.t('splicewire-beam-ux::messages.canvas_binding_document'),messages:messages.join('; ')})}</p>)}</section>:null;
  const referenced=new Set<string>(recordCollection?[recordCollection]:[]);
  const stack=[...doc];

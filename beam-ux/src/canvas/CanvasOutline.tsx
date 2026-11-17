@@ -13,7 +13,7 @@ export function CanvasOutline({doc,onSelect,onHide}:{doc:JsonDoc;onSelect:(path:
  const m=useBeamUxMessages();
  const [collapsed,setCollapsed]=useState<Set<string>>(new Set());
  const selection=useCanvasSelection();const {selection:layer}=useStyleSelection();
- const config=useCanvas();const unavailable=unavailableBindings(doc,config.profile,config.bindingPreview?.recordCollection);const registry=config.styleRegistry??DEFAULT_STYLE_REGISTRY;
+ const config=useCanvas();const unavailable=unavailableBindings(doc,config.profile,config.bindingPreview?.recordCollection,m);const registry=config.styleRegistry??DEFAULT_STYLE_REGISTRY;
  const toggle=(path:string)=>setCollapsed(previous=>{const next=new Set(previous);next.has(path)?next.delete(path):next.add(path);return next;});
  const rows:{path:string;depth:number;name:string;hasChildren:boolean;hidden:boolean;own:boolean}[]=[];
  const walk=(nodes:JsonDoc,parent:string,depth:number)=>nodes.forEach((node,i)=>{

@@ -9,6 +9,7 @@ import { useCanvas } from "./context";
 import { useCanvasSelection } from "./CanvasSelection";
 import { bindingFields, collectionOffers, recordOffer } from "./binding-edit";
 import { useBeamUxMessages } from "../messages.js";
+import { NoticeError, notice as line, noticeOf, say, type Notice } from "../message-descriptor.js";
 
 /** Only the declared interface edits an instance; the component's internal nodes stay sealed. */
 export function ComponentProps({
@@ -21,7 +22,7 @@ export function ComponentProps({
   const m = useBeamUxMessages();
   const config = useCanvas();
   const { commands } = useCanvasSelection();
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<Notice | null>(null);
   const node = commands ? getAt(commands.doc, path) : null;
   if (!node || !isJsonBlock(node) || !commands?.editBinding) return null;
   const offer = recordOffer(
@@ -35,9 +36,7 @@ export function ComponentProps({
     if (commands.readOnly) return;
     try {
       if (!value && prop.required && prop.default === null)
-        throw Error(
-          `The required prop ${prop.name} needs a literal value or a bound field.`
-        );
+        throw new NoticeError(line('splicewire-beam-ux::messages.canvas_prop_required_value', { name: prop.name }));
       commands.editBinding!(path, (block: JsonBlock) => ({
         ...block,
         props: [
@@ -47,12 +46,12 @@ export function ComponentProps({
       }));
       setError(null);
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : String(reason));
+      setError(noticeOf(reason, String(reason)));
     }
   };
   const literal = (prop: ComponentPropData, value: string | boolean) => {
     if (prop.type === "choice" && !prop.choices.includes(String(value))) {
-      setError(`${prop.name} needs one of its declared choices.`);
+      setError(line('splicewire-beam-ux::messages.canvas_prop_needs_choice', { name: prop.name }));
       return;
     }
     let next: string | number | boolean = value;
@@ -62,7 +61,7 @@ export function ComponentProps({
         !value.trim() ||
         !Number.isFinite(Number(value))
       ) {
-        setError(`${prop.name} needs a finite number.`);
+        setError(line('splicewire-beam-ux::messages.canvas_prop_needs_number', { name: prop.name }));
         return;
       }
       next = Number(value);
@@ -81,7 +80,7 @@ export function ComponentProps({
   return (
     <section aria-label={m.t('splicewire-beam-ux::messages.canvas_props')}>
       <h3>{m.t('splicewire-beam-ux::messages.canvas_props')}</h3>
-      {error && <p role="alert">{error}</p>}
+      {error && <p role="alert">{say(m, error)}</p>}
       {entry.definition.props.map((prop) => {
         const current = node.props.find((value) => value.name === prop.name);
         const value =

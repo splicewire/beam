@@ -2,9 +2,10 @@ import {useEffect,useState} from 'react';
 import type {CanvasConfig} from './context';
 import type {JsonDoc} from '../blockdoc/json';
 import type {EntryCanvasBindingsOutputData} from '@splicewire/beam-resources/types/beam-ux';
+import {notice as line,type Notice} from '../message-descriptor.js';
 
 type Port=CanvasConfig['bindingPreview'];
-interface Result {port:Port;body:string;selection:string|null;data?:EntryCanvasBindingsOutputData;error?:string}
+interface Result {port:Port;body:string;selection:string|null;data?:EntryCanvasBindingsOutputData;error?:Notice}
 /** Each effect owns one response. A retired entry/body/selection can never repaint the new canvas. */
 export function useCanvasBindings(port:Port,doc:JsonDoc){
  const body=JSON.stringify(doc);
@@ -19,7 +20,7 @@ export function useCanvasBindings(port:Port,doc:JsonDoc){
   const timer=setTimeout(()=>{
    void port.resolve!(port.entryId,JSON.parse(body) as JsonDoc,selection,{signal:controller.signal}).then(
     data=>{if(live)setResult({port,body,selection,data});},
-    ()=>{if(live)setResult({port,body,selection,error:'Live binding preview was refused or failed. Check this entry’s author access and binding declarations.'});},
+    ()=>{if(live)setResult({port,body,selection,error:line('splicewire-beam-ux::messages.canvas_live_preview_failed')});},
    );
   },150);
   return()=>{live=false;clearTimeout(timer);controller.abort();};

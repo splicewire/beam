@@ -14,15 +14,16 @@ import {
 } from "../blockdoc/json.js";
 import { freshBlockIds } from "../blockdoc/identity.js";
 import { readComponentDefinition } from "../blockdoc/component-interface.js";
+import {NoticeError,notice as line} from '../message-descriptor.js';
 
 const GATES = new Set(["data-view-gate", "data-edit-gate"]);
 function literal(value: JsonProp): string | number | boolean | null {
   if (["expression", "field", "prop"].includes(value.kind))
-    throw Error("A literal value is required");
+    throw new NoticeError(line('splicewire-beam-ux::messages.authoring_a_literal_value_is_required'));
   if (value.value == null) return null;
   if (["string", "number", "boolean"].includes(typeof value.value))
     return value.value as string | number | boolean;
-  throw Error("A scalar literal value is required");
+  throw new NoticeError(line('splicewire-beam-ux::messages.authoring_a_scalar_literal_value_is_required'));
 }
 function scalar(
   name: string,
@@ -66,39 +67,35 @@ export function detachComponent(
   instance: JsonBlock,
   entry: ComponentCanvasData | undefined
 ): JsonBlock {
-  if (!entry) throw Error("Detach is available only for an Authored Component");
+  if (!entry) throw new NoticeError(line('splicewire-beam-ux::messages.authoring_detach_is_available_only_for_an_authored_compone'));
   if (instance.name !== entry.definition.name)
-    throw Error("The instance must match the component name");
+    throw new NoticeError(line('splicewire-beam-ux::messages.authoring_the_instance_must_match_the_component_name'));
   if (entry.body.length !== 1 || !isJsonBlock(entry.body[0]))
-    throw Error("An Authored Component must have one root");
+    throw new NoticeError(line('splicewire-beam-ux::messages.authoring_an_authored_component_must_have_one_root'));
   if (entry.body[0].repeat && instance.repeat)
-    throw Error(
-      "Detach cannot combine the instance Repeat and the component root Repeat. Keep the instance or remove one Repeat before detaching."
-    );
+    throw new NoticeError(line('splicewire-beam-ux::messages.authoring_detach_cannot_combine_the_instance_repeat_and_th'));
   const values = new Map<string, JsonProp>();
   for (const prop of entry.definition.props) {
     const supplied = instance.props.find((value) => value.name === prop.name);
     if (supplied?.kind === "expression")
-      throw Error("Detach cannot substitute an executable expression");
+      throw new NoticeError(line('splicewire-beam-ux::messages.authoring_detach_cannot_substitute_an_executable_expressio'));
     if (supplied) values.set(prop.name, supplied);
     else if (prop.default != null)
       values.set(prop.name, scalar(prop.name, prop.default));
     else if (prop.required)
-      throw Error(`The required prop ${prop.name} is missing`);
+      throw new NoticeError(line('splicewire-beam-ux::messages.authoring_required_prop_missing',{name:prop.name}));
   }
   const substitute = (nodes: JsonDoc, repeatScope = false): JsonDoc =>
     nodes.flatMap((node): JsonDoc => {
       if (node.kind === "opaque")
-        throw Error("Detach cannot copy executable source");
+        throw new NoticeError(line('splicewire-beam-ux::messages.authoring_detach_cannot_copy_executable_source'));
       if (node.kind === "text") {
         if (!node.prop) return [structuredClone(node)];
         const value = values.get(node.prop);
         const { prop: _, field: __, ...text } = node;
         if (value?.kind === "field") {
           if (repeatScope)
-            throw Error(
-              "Detach would move a caller field into a component Repeat. Use a literal prop value or keep the component instance."
-            );
+            throw new NoticeError(line('splicewire-beam-ux::messages.authoring_detach_would_move_a_caller_field_into_a_componen'));
           return [{ ...text, field: String(value.value) }];
         }
         if (value?.kind === "prop")
@@ -117,9 +114,7 @@ export function detachComponent(
               : undefined
             : instance.slots?.[String(name)];
         if (scoped && supplied?.length)
-          throw Error(
-            "Detach would move caller Slot content into a component Repeat. Move the Slot outside that Repeat or keep the component instance."
-          );
+          throw new NoticeError(line('splicewire-beam-ux::messages.authoring_detach_would_move_caller_slot_content_into_a_com'));
         return supplied === undefined
           ? substitute(node.children, scoped)
           : structuredClone(supplied);
@@ -131,9 +126,7 @@ export function detachComponent(
             if (prop.kind !== "prop") return structuredClone(prop);
             const value = values.get(String(prop.value));
             if (scoped && value?.kind === "field")
-              throw Error(
-                "Detach would move a caller field into a component Repeat. Use a literal prop value or keep the component instance."
-              );
+              throw new NoticeError(line('splicewire-beam-ux::messages.authoring_detach_would_move_a_caller_field_into_a_componen'));
             return value
               ? { ...structuredClone(value), name: prop.name }
               : scalar(prop.name, null);
@@ -162,7 +155,7 @@ export function detachComponent(
       ];
     });
   const [root] = substitute(entry.body);
-  if (!root || !isJsonBlock(root)) throw Error("Detach requires a block root");
+  if (!root || !isJsonBlock(root)) throw new NoticeError(line('splicewire-beam-ux::messages.authoring_detach_requires_a_block_root'));
   delete root.component;
   root.style = mergeStyles(root.style, instance.style);
   root.repeat = structuredClone(instance.repeat ?? root.repeat);
@@ -190,9 +183,7 @@ export function extractComponent(
     if (old) return old;
     const type = fieldTypes[field];
     if (!type)
-      throw Error(
-        `Choose a declared type for ${field} before making a component`
-      );
+      throw new NoticeError(line('splicewire-beam-ux::messages.authoring_choose_declared_type',{field}));
     const name = `value${fields.size + 1}`;
     fields.set(field, name);
     definition.props.push({
@@ -207,21 +198,17 @@ export function extractComponent(
   };
   const visit = (node: JsonNode, callerScope: boolean): JsonNode => {
     if (node.kind === "opaque")
-      throw Error("An Authored Component cannot capture executable source");
+      throw new NoticeError(line('splicewire-beam-ux::messages.authoring_an_authored_component_cannot_capture_executable_'));
     if (node.kind === "text") {
       if (!node.field || !callerScope) return structuredClone(node);
       if (["number", "toggle"].includes(fieldTypes[node.field]))
-        throw Error(
-          "A component text reference needs a string prop. Keep this numeric or boolean text outside the component, or replace it with literal text."
-        );
+        throw new NoticeError(line('splicewire-beam-ux::messages.authoring_a_component_text_reference_needs_a_string_prop_k'));
       const { field, ...text } = node;
       return { ...text, prop: reference(field) };
     }
     // A condition reading the caller cannot become a component Record read. No undeclared prop-condition syntax.
     if (callerScope && node.when)
-      throw Error(
-        "Move this caller Record condition to the selected root before making a component"
-      );
+      throw new NoticeError(line('splicewire-beam-ux::messages.authoring_move_this_caller_record_condition_to_the_selecte'));
     const childScope = callerScope && !node.repeat;
     return {
       ...structuredClone(node),
@@ -282,22 +269,22 @@ export function makeComponentProp(
   prop: ComponentPropData
 ): JsonBlock {
   if (!root.component)
-    throw Error("Open an Authored Component to declare a prop");
+    throw new NoticeError(line('splicewire-beam-ux::messages.authoring_open_an_authored_component_to_declare_a_prop'));
   if (root.component.props.some((old) => old.name === prop.name))
-    throw Error("This prop name is already declared");
+    throw new NoticeError(line('splicewire-beam-ux::messages.authoring_this_prop_name_is_already_declared'));
   const target = getAt([root], path);
-  if (!target) throw Error("Select a literal value");
+  if (!target) throw new NoticeError(line('splicewire-beam-ux::messages.authoring_select_a_literal_value'));
   let fallback: string | number | boolean | null;
   let replacement: JsonNode;
   if (attribute === null) {
     if (target.kind !== "text" || target.field || target.prop)
-      throw Error("Select literal text");
+      throw new NoticeError(line('splicewire-beam-ux::messages.authoring_select_literal_text'));
     fallback = target.value;
     replacement = { ...target, prop: prop.name };
   } else {
-    if (!isJsonBlock(target)) throw Error("Select a literal property");
+    if (!isJsonBlock(target)) throw new NoticeError(line('splicewire-beam-ux::messages.authoring_select_a_literal_property'));
     const value = target.props.find((value) => value.name === attribute);
-    if (!value) throw Error("Select a literal property");
+    if (!value) throw new NoticeError(line('splicewire-beam-ux::messages.authoring_select_a_literal_property'));
     fallback = literal(value);
     replacement = {
       ...target,
@@ -313,6 +300,6 @@ export function makeComponentProp(
     props: [...root.component.props, { ...prop, default: fallback }],
   });
   const [next] = updateAt([root], path, () => replacement);
-  if (!isJsonBlock(next)) throw Error("A component requires a block root");
+  if (!isJsonBlock(next)) throw new NoticeError(line('splicewire-beam-ux::messages.authoring_a_component_requires_a_block_root'));
   return { ...next, component: definition };
 }

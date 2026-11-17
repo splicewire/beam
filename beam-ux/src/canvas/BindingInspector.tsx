@@ -8,6 +8,7 @@ import {useCanvasSelection} from './CanvasSelection.js';
 import {bindingFields,collectionOffers,eventOffers,recordOffer,repeatCollection,bindText,scalarValue,condition,type BindingField} from './binding-edit.js';
 import {RepeatRecordSelection} from './RepeatRecordSelection';
 import {useBeamUxMessages,type BeamUxMessageKey} from '../messages.js';
+import {noticeOf,say,type Notice} from '../message-descriptor.js';
 const OPERATORS:ConditionOperator[]=['is set','is empty','equals','does not equal','greater than','less than','contains'];
 /** Operators are stored vocabulary (the option value); only their label is translated. */
 const OPERATOR_LABEL:Record<ConditionOperator,BeamUxMessageKey>={'is set':'splicewire-beam-ux::messages.binding_operator_is_set','is empty':'splicewire-beam-ux::messages.binding_operator_is_empty','equals':'splicewire-beam-ux::messages.binding_operator_equals','does not equal':'splicewire-beam-ux::messages.binding_operator_does_not_equal','greater than':'splicewire-beam-ux::messages.binding_operator_greater_than','less than':'splicewire-beam-ux::messages.binding_operator_less_than','contains':'splicewire-beam-ux::messages.binding_operator_contains'};
@@ -15,7 +16,7 @@ const OPERATOR_LABEL:Record<ConditionOperator,BeamUxMessageKey>={'is set':'splic
 /** Every edit uses the canvas's existing Local Session command/undo path. Choice reads use the addressed author port. */
 export function BindingInspector({path}:{path:string}){
  const m=useBeamUxMessages();
- const config=useCanvas();const {commands}=useCanvasSelection();const [error,setError]=useState<string|null>(null);const [mode,setMode]=useState<'all'|'any'>('all');
+ const config=useCanvas();const {commands}=useCanvasSelection();const [error,setError]=useState<Notice|null>(null);const [mode,setMode]=useState<'all'|'any'>('all');
  const node=commands?getAt(commands.doc,path):null;
  if(!node||!isJsonBlock(node)||!commands?.editBinding)return null;
  const offers=collectionOffers(config.profile);
@@ -26,7 +27,7 @@ export function BindingInspector({path}:{path:string}){
  const plainFields=fields.filter(field=>!rich(field));
  const repeatOffer=offers.find(item=>item.name===node.repeat?.collection);
  const disabled=commands.readOnly;
- const edit=(change:(node:JsonBlock)=>JsonBlock)=>{try{commands.editBinding?.(path,change);setError(null);}catch(e){setError(e instanceof Error?e.message:String(e));}};
+ const edit=(change:(node:JsonBlock)=>JsonBlock)=>{try{commands.editBinding?.(path,change);setError(null);}catch(e){setError(noticeOf(e,String(e)));}};
  const rules=node.when?.all??node.when?.any??[];
  const join=node.when?.any?'any':node.when?.all?'all':mode;
  const setRules=(next:ConditionRule[],mode:'all'|'any'=join)=>edit(block=>condition(block,next.length?{[mode]:next}:undefined));
@@ -52,7 +53,7 @@ export function BindingInspector({path}:{path:string}){
  const fieldSelect=(label:string,value:string,change:(field:string)=>void,list=fields)=><label>{label}<select aria-label={label} value={value} disabled={disabled||!list.length} onChange={event=>change(event.target.value)}>
   <option value="">{m.t('splicewire-beam-ux::messages.binding_none')}</option>{list.map(field=><option key={field.path} value={field.path}>{field.label} ({field.path})</option>)}</select></label>;
  const properties=config.profile?.nodes.find(item=>item.name===node.name)?.attrsSchema?.properties??{};
- return <section aria-label={m.t('splicewire-beam-ux::messages.binding_data_binding')}><h3>{m.t('splicewire-beam-ux::messages.binding_data_binding')}</h3>{error&&<p role="alert">{error}</p>}
+ return <section aria-label={m.t('splicewire-beam-ux::messages.binding_data_binding')}><h3>{m.t('splicewire-beam-ux::messages.binding_data_binding')}</h3>{error&&<p role="alert">{say(m,error)}</p>}
  <fieldset disabled={disabled}><legend>{m.t('splicewire-beam-ux::messages.binding_repeat_records')}</legend>
    <label>{m.t('splicewire-beam-ux::messages.binding_collection')}<select aria-label={m.t('splicewire-beam-ux::messages.binding_collection')} value={node.repeat?.collection??''} onChange={event=>edit(block=>repeatCollection(block,event.target.value))}>
     <option value="">{m.t('splicewire-beam-ux::messages.binding_no_repeat')}</option>{offers.map(item=><option key={item.name} value={item.name}>{item.name}</option>)}</select></label>
@@ -63,7 +64,7 @@ export function BindingInspector({path}:{path:string}){
     {fieldSelect(m.t('splicewire-beam-ux::messages.binding_sort_field'),sort.replace(/^-/,'')?sortFields.find(field=>field.sortName===sort.replace(/^-/,''))?.path??'':'',field=>queryChange({...query,sort:field?`${sort.startsWith('-')?'-':''}${sortName(field)}`:null}),sortFields)}
     <label>{m.t('splicewire-beam-ux::messages.binding_sort_order')}<select aria-label={m.t('splicewire-beam-ux::messages.binding_sort_order')} value={sort.startsWith('-')?'descending':'ascending'} onChange={event=>queryChange({...query,sort:sort?`${event.target.value==='descending'?'-':''}${sort.replace(/^-/,'')}`:null})}><option value="ascending">{m.t('splicewire-beam-ux::messages.binding_ascending')}</option><option value="descending">{m.t('splicewire-beam-ux::messages.binding_descending')}</option></select></label>
     {fieldSelect(m.t('splicewire-beam-ux::messages.binding_filter_field'),filter?filterFields.find(field=>field.filterName===filter[0])?.path??'':'',field=>queryChange({...query,filter:field?{[filterName(field)]:scalarValue(repeatFields.find(item=>item.path===field)?.type==='boolean'?'false':repeatFields.find(item=>item.path===field)?.type==='number'||repeatFields.find(item=>item.path===field)?.type==='integer'?'0':'',repeatFields.find(item=>item.path===field))}:null}),filterFields)}
-    {filter&&<label>{m.t('splicewire-beam-ux::messages.binding_filter_value')}<input aria-label={m.t('splicewire-beam-ux::messages.binding_filter_value')} key={filter[0]} defaultValue={String(filter[1]??'')} onBlur={event=>{try{queryChange({...query,filter:{[filter[0]]:scalarValue(event.target.value,filterFields.find(field=>field.filterName===filter[0]))}});}catch(e){setError(e instanceof Error?e.message:String(e));}}}/></label>}
+    {filter&&<label>{m.t('splicewire-beam-ux::messages.binding_filter_value')}<input aria-label={m.t('splicewire-beam-ux::messages.binding_filter_value')} key={filter[0]} defaultValue={String(filter[1]??'')} onBlur={event=>{try{queryChange({...query,filter:{[filter[0]]:scalarValue(event.target.value,filterFields.find(field=>field.filterName===filter[0]))}});}catch(e){setError(noticeOf(e,String(e)));}}}/></label>}
    </>}
   </fieldset>
   <fieldset disabled={disabled}><legend>{m.t('splicewire-beam-ux::messages.binding_click_event_legend')}</legend>
@@ -82,7 +83,7 @@ export function BindingInspector({path}:{path:string}){
    {rules.map((rule,index)=><div key={index}>
     {fieldSelect(m.t('splicewire-beam-ux::messages.binding_rule_field',{number:index+1}),rule.field,field=>modifyRule(index,{field,operator:'is set'}))}
     <label>{m.t('splicewire-beam-ux::messages.binding_rule_operator',{number:index+1})}<select aria-label={m.t('splicewire-beam-ux::messages.binding_rule_operator',{number:index+1})} value={rule.operator} onChange={event=>{const operator=OPERATORS.find(op=>op===event.target.value);if(operator)modifyRule(index,{...rule,operator});}}>{OPERATORS.filter(op=>operatorAllowed(op,fields.find(field=>field.path===rule.field))).map(operator=><option key={operator} value={operator}>{m.t(OPERATOR_LABEL[operator])}</option>)}</select></label>
-    {!['is set','is empty'].includes(rule.operator)&&<label>{m.t('splicewire-beam-ux::messages.binding_rule_value',{number:index+1})}<input aria-label={m.t('splicewire-beam-ux::messages.binding_rule_value',{number:index+1})} key={`${rule.field}:${rule.operator}`} defaultValue={String(rule.value??'')} onBlur={event=>{try{modifyRule(index,{...rule,value:scalarValue(event.target.value,fields.find(field=>field.path===rule.field))});}catch(e){setError(e instanceof Error?e.message:String(e));}}}/></label>}
+    {!['is set','is empty'].includes(rule.operator)&&<label>{m.t('splicewire-beam-ux::messages.binding_rule_value',{number:index+1})}<input aria-label={m.t('splicewire-beam-ux::messages.binding_rule_value',{number:index+1})} key={`${rule.field}:${rule.operator}`} defaultValue={String(rule.value??'')} onBlur={event=>{try{modifyRule(index,{...rule,value:scalarValue(event.target.value,fields.find(field=>field.path===rule.field))});}catch(e){setError(noticeOf(e,String(e)));}}}/></label>}
     <button type="button" onClick={()=>setRules(rules.filter((_,i)=>i!==index))}>{m.t('splicewire-beam-ux::messages.binding_remove_rule',{number:index+1})}</button>
    </div>)}
    <button type="button" onClick={()=>fields[0]&&setRules([...rules,{field:fields[0].path,operator:'is set'}])}>{m.t('splicewire-beam-ux::messages.binding_add_rule')}</button>

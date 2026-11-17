@@ -2,6 +2,7 @@ import type {JsonDoc} from '../blockdoc/json.js';
 import {isJsonBlock} from '../blockdoc/json.js';
 import {assertFieldPath} from '../blockdoc/bindings.js';
 import {collectionOffers, type CollectionOffer} from './binding-edit.js';
+import {englishBeamUxMessages,type BeamUxMessages} from '../messages.js';
 
 const object=(value:unknown):value is Record<string,unknown>=>!!value&&typeof value==='object'&&!Array.isArray(value);
 /** Undefined means the declaration cannot be resolved, not proof that a property is absent. */
@@ -40,7 +41,8 @@ function queryVocabulary(schema:Record<string,unknown>):{filter:Set<string>;sort
 }
 
 /** Current declarations only: marks unavailability, never guesses whether an unknown field once existed. */
-export function unavailableBindings(doc:JsonDoc,profile:unknown,recordCollection?:string|null):Record<string,string[]> {
+/** `messages` is the reader's catalog when called in a render; English otherwise. */
+export function unavailableBindings(doc:JsonDoc,profile:unknown,recordCollection?:string|null,messages:BeamUxMessages=englishBeamUxMessages):Record<string,string[]> {
  if(!object(profile)||!Array.isArray(profile['x-collections']))return {};
  const offers=collectionOffers(profile);const out:Record<string,string[]>={};
  const add=(path:string,message:string)=>{(out[path]??=[]).push(message);};
@@ -49,7 +51,7 @@ export function unavailableBindings(doc:JsonDoc,profile:unknown,recordCollection
   if(isJsonBlock(node)&&node.repeat){
    if(node.repeat.collection){
     current=offers.find(offer=>offer.name===node.repeat?.collection);
-    if(!current)add(path,`Collection ${node.repeat.collection} is unavailable`);
+    if(!current)add(path,messages.t('splicewire-beam-ux::messages.bindings_collection_unavailable',{name:node.repeat.collection}));
    }else if(node.repeat.relation){
     const field=scope?declaration(scope.schema,`fields.${node.repeat.relation}`):undefined;
     const edge=field&&object(field['x-beam-relation'])?field['x-beam-relation']:undefined;
@@ -58,14 +60,14 @@ export function unavailableBindings(doc:JsonDoc,profile:unknown,recordCollection
      const fields=declaration(offer.schema,'fields');
      return fields&&typeof fields.$id==='string'&&fields.$id.slice(0,fields.$id.lastIndexOf('/'))===stem;
     }):undefined;
-    if(!current)add(path,`Relation ${node.repeat.relation} schema is unavailable`);
+    if(!current)add(path,messages.t('splicewire-beam-ux::messages.bindings_relation_unavailable',{name:node.repeat.relation}));
    }
    const query=node.repeat.query;
    const vocabulary=current&&!query?.filterVariant?queryVocabulary(current.schema):undefined;
    if(query&&vocabulary){
-    for(const name of Object.keys(query.filter??{}))if(!vocabulary.filter.has(name))add(path,`Filter ${name} is unavailable`);
+    for(const name of Object.keys(query.filter??{}))if(!vocabulary.filter.has(name))add(path,messages.t('splicewire-beam-ux::messages.bindings_filter_unavailable',{name}));
     for(const raw of query.sort?.split(',')??[]){
-     const name=raw.trim().replace(/^-/, '');if(name&&!vocabulary.sort.has(name))add(path,`Sort ${name} is unavailable`);
+     const name=raw.trim().replace(/^-/, '');if(name&&!vocabulary.sort.has(name))add(path,messages.t('splicewire-beam-ux::messages.bindings_sort_unavailable',{name}));
     }
    }
    walk(node.repeat.empty??[],`${path}.repeat.empty`,scope);
@@ -76,9 +78,9 @@ export function unavailableBindings(doc:JsonDoc,profile:unknown,recordCollection
    for(const rule of node.when?.all??node.when?.any??[])paths.push(rule.field);
   }
   for(const field of new Set(paths)){
-   try{assertFieldPath(field);}catch{add(path,`Field ${field} is unavailable`);continue;}
-   if(current&&field==='url'){if(!current.hasRecordPage)add(path,'Field url is unavailable');}
-   else if(current&&declaration(current.schema,field)===false)add(path,`Field ${field} is unavailable`);
+   try{assertFieldPath(field);}catch{add(path,messages.t('splicewire-beam-ux::messages.bindings_field_unavailable',{name:field}));continue;}
+   if(current&&field==='url'){if(!current.hasRecordPage)add(path,messages.t('splicewire-beam-ux::messages.bindings_field_unavailable',{name:field}));}
+   else if(current&&declaration(current.schema,field)===false)add(path,messages.t('splicewire-beam-ux::messages.bindings_field_unavailable',{name:field}));
   }
   if(isJsonBlock(node)){
    walk(node.children,path,current);
@@ -86,6 +88,6 @@ export function unavailableBindings(doc:JsonDoc,profile:unknown,recordCollection
   }
  });
  const root=offers.find(offer=>offer.name===recordCollection);
- if(recordCollection&&!root)add('',`Record Page Collection ${recordCollection} is unavailable`);
+ if(recordCollection&&!root)add('',messages.t('splicewire-beam-ux::messages.bindings_record_page_unavailable',{name:recordCollection}));
  walk(doc,'',root);return out;
 }
