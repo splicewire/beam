@@ -135,3 +135,12 @@ Part S3 (the seam, and the RunnerTransform editor) moves 43 of its 45 pinned nod
 - beam-transforms/src/runner-transform-editor.tsx — `net:open` and `platform` (JsxText): a grant and a visibility value, shown as code inside the translated note.
 
 Not catalogued, by rule: the provider guard, the wire values the selects submit and the runtime id on a row's badge, a transform's name, a run's outcome, error and stderr, and the story harness's fixture data.
+
+## @splicewire/beam-embed — localization 30-S
+
+Part S4 (the seam, and PrivacyRetentionPage) moves 76 of its 80 pinned nodes onto beam-embed's catalog, so its --write lowers 80 to 4. The census sized it "under 30" (2026-11-12); re-taken at 80 on beam main 3fcff8d0. The text scan added the page title's string default (now `title ?? m.t(...)`; a host's heading still wins), the read and action failure fallbacks (`apiErrorMessage`'s; the server's message still wins), and the subject-kind labels a map held (now catalog keys, with the receipt's and confirm's kind words beside them). The hand-rolled plurals (`session{n === 1 ? '' : 's'}`, `published chat{…}`) move onto `m.choice`; the day counts, which English never made singular ("1 days", "1-day"), keep their English in both forms. Sentences with bold words or a code subject are one line each through `richMessage` (W1's helper, copied per package, here with an optional count that routes through `m.choice`). The nodes left:
+
+- beam-embed/src/PrivacyRetentionPage.tsx — `vis_…` and `sess_…` (StringLiteral): the id formats the subject input's placeholder shows.
+- beam-embed/src/PrivacyRetentionPage.tsx — `ERASE` (JsxText and the confirm input's placeholder): the literal token the destructive gate compares (`confirmText.trim().toUpperCase() === 'ERASE'`), shown inside the translated "Type :token to confirm".
+
+Not catalogued, by rule: a chat's title, retention days and consent flag, a subject's id, the counts the server returns, and the host's `policyDescription` (rendered as given when supplied).

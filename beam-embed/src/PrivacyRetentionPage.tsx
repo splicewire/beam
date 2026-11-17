@@ -27,6 +27,8 @@ import {
     useRetentionPosture,
     useRetentionServices,
 } from './api';
+import { useBeamEmbedMessages, type BeamEmbedMessageKey } from './messages';
+import { richMessage } from './rich-message';
 
 /**
  * Privacy & retention (admin-redesign ticket 10, graduated from prototype `ar10`). The tenant's
@@ -53,16 +55,18 @@ const DEFAULT_RETENTION_DAYS = 90;
 
 // ── Governance note (friendly one-liner — no code identifiers) ─────────────────────────────────
 function GovernanceBanner() {
+    const m = useBeamEmbedMessages();
     return (
         <div className="mx-auto flex max-w-3xl items-start gap-2 rounded-md border border-border bg-muted/40 px-4 py-2.5 text-sm text-muted-foreground">
             <Shield className="mt-0.5 size-4 flex-none" />
-            <span>Only workspace admins can prune or erase retained data.</span>
+            <span>{m.t('splicewire-beam-embed::messages.banner')}</span>
         </div>
     );
 }
 
 // ── Card 1: Retention posture (real per-Published-Chat windows via embed.posture) ──────────────
 function PostureCard() {
+    const m = useBeamEmbedMessages();
     const { policyDescription } = useRetentionServices();
     const posture = useRetentionPosture();
     const defaultDays = posture.data?.default_days ?? DEFAULT_RETENTION_DAYS;
@@ -71,9 +75,9 @@ function PostureCard() {
     return (
         <Card>
             <CardHeader>
-                <h2 className="font-semibold leading-none tracking-tight">Retention posture</h2>
+                <h2 className="font-semibold leading-none tracking-tight">{m.t('splicewire-beam-embed::messages.posture_title')}</h2>
                 <CardDescription>
-                    {policyDescription ?? <>Retention is a per-Published-Chat window that is snapshotted onto each session when it starts.</>}
+                    {policyDescription ?? m.t('splicewire-beam-embed::messages.posture_description')}
                 </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -81,26 +85,29 @@ function PostureCard() {
                 <div className="flex gap-3 rounded-md border border-warning/40 bg-warning/10 p-3 text-sm text-warning-foreground">
                     <Info className="mt-0.5 size-4 flex-none" />
                     <p className="leading-relaxed">
-                        Retention is <b>not auto-enforced</b> — nothing sweeps on a schedule. Sessions
-                        past their window persist until you <b>prune</b> below. Default window is{' '}
-                        <b>{defaultDays} days</b>.
+                        {richMessage(m, 'splicewire-beam-embed::messages.not_enforced', {
+                            not_enforced: <b>{m.t('splicewire-beam-embed::messages.not_enforced_bold')}</b>,
+                            prune: <b>{m.t('splicewire-beam-embed::messages.prune_bold')}</b>,
+                            window: <b>{m.choice('splicewire-beam-embed::messages.days', defaultDays)}</b>,
+                        })}
                     </p>
                 </div>
 
                 <div className="space-y-2">
-                    <Label>Per-Published-Chat windows</Label>
+                    <Label>{m.t('splicewire-beam-embed::messages.windows_label')}</Label>
                     {posture.isPending ? (
                         <div className="flex items-center justify-center gap-2 rounded-md border border-dashed px-3 py-6 text-sm text-muted-foreground">
-                            <Loader2 className="size-4 animate-spin" /> Loading windows…
+                            <Loader2 className="size-4 animate-spin" /> {m.t('splicewire-beam-embed::messages.windows_loading')}
                         </div>
                     ) : posture.isError ? (
                         <div className="rounded-md border border-destructive/30 bg-destructive/5 px-3 py-4 text-center text-sm text-destructive">
-                            {apiErrorMessage(posture.error, 'Could not load retention windows.')}
+                            {apiErrorMessage(posture.error, m.t('splicewire-beam-embed::messages.windows_failed'))}
                         </div>
                     ) : chats.length === 0 ? (
                         <div className="rounded-md border border-dashed px-3 py-6 text-center text-sm text-muted-foreground">
-                            No published chats yet. New chats default to a{' '}
-                            <b>{defaultDays}-day</b> window.
+                            {richMessage(m, 'splicewire-beam-embed::messages.windows_empty', {
+                                window: <b>{m.choice('splicewire-beam-embed::messages.day_adjective', defaultDays)}</b>,
+                            })}
                         </div>
                     ) : (
                         <div className="divide-y rounded-md border">
@@ -111,11 +118,11 @@ function PostureCard() {
                                 >
                                     <span className="truncate">
                                         {chat.title || (
-                                            <span className="text-muted-foreground">Untitled chat</span>
+                                            <span className="text-muted-foreground">{m.t('splicewire-beam-embed::messages.untitled')}</span>
                                         )}
                                     </span>
                                     <Badge variant="outline" className="flex-none tabular-nums">
-                                        {chat.retention_days} days
+                                        {m.choice('splicewire-beam-embed::messages.days', chat.retention_days)}
                                     </Badge>
                                 </div>
                             ))}
@@ -129,6 +136,7 @@ function PostureCard() {
 
 // ── Card 2: Prune by policy (dry-run preview + primary action; result receipt) ─────────────────
 function PruneCard({ disabled }: { disabled: boolean }) {
+    const m = useBeamEmbedMessages();
     const queryClient = useQueryClient();
     const prune = usePruneSessions();
     const preview = usePrunePreview();
@@ -151,11 +159,10 @@ function PruneCard({ disabled }: { disabled: boolean }) {
         <Card>
             <CardHeader>
                 <h2 className="flex items-center gap-2 font-semibold leading-none tracking-tight">
-                    <Trash2 className="size-4 text-muted-foreground" /> Prune by policy
+                    <Trash2 className="size-4 text-muted-foreground" /> {m.t('splicewire-beam-embed::messages.prune_title')}
                 </h2>
                 <CardDescription>
-                    Delete every embed session (and its messages) past its retention window. A
-                    visitor's personal data drops once their last session is gone.
+                    {m.t('splicewire-beam-embed::messages.prune_description')}
                 </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -164,33 +171,33 @@ function PruneCard({ disabled }: { disabled: boolean }) {
                     <Info className="size-4 flex-none text-muted-foreground" />
                     {preview.isPending ? (
                         <span className="flex items-center gap-2 text-muted-foreground">
-                            <Loader2 className="size-3.5 animate-spin" /> Checking what would be
-                            removed…
+                            <Loader2 className="size-3.5 animate-spin" /> {m.t('splicewire-beam-embed::messages.prune_checking')}
                         </span>
                     ) : preview.isError ? (
                         <span className="text-muted-foreground">
-                            {apiErrorMessage(preview.error, 'Could not preview the prune.')}
+                            {apiErrorMessage(preview.error, m.t('splicewire-beam-embed::messages.prune_preview_failed'))}
                         </span>
                     ) : (
                         <span className="leading-tight text-muted-foreground">
-                            <b className="text-foreground">{wouldPrune}</b> session
-                            {wouldPrune === 1 ? '' : 's'} past their window would be removed by a prune
-                            right now.
+                            {richMessage(m, 'splicewire-beam-embed::messages.prune_preview', {
+                                n: <b className="text-foreground">{wouldPrune}</b>,
+                            }, wouldPrune)}
                         </span>
                     )}
                 </div>
 
                 {prune.isError && (
                     <p role="alert" className="text-sm text-destructive">
-                        {apiErrorMessage(prune.error, 'Could not prune sessions.')}
+                        {apiErrorMessage(prune.error, m.t('splicewire-beam-embed::messages.prune_failed'))}
                     </p>
                 )}
 
                 {result ? (
                     <div className="flex items-center gap-2 rounded-md border border-primary/25 bg-primary/5 px-3 py-2.5 text-sm">
                         <span className="size-2 rounded-full bg-primary" />
-                        Pruned <b>{result.pruned}</b> session{result.pruned === 1 ? '' : 's'} past
-                        their retention window.
+                        {richMessage(m, 'splicewire-beam-embed::messages.pruned', {
+                            n: <b>{result.pruned}</b>,
+                        }, result.pruned)}
                     </div>
                 ) : null}
 
@@ -201,12 +208,12 @@ function PruneCard({ disabled }: { disabled: boolean }) {
                         variant="secondary"
                     >
                         <Trash2 className="size-4" />{' '}
-                        {prune.isPending ? 'Pruning…' : 'Prune expired sessions'}
+                        {prune.isPending ? m.t('splicewire-beam-embed::messages.pruning') : m.t('splicewire-beam-embed::messages.prune_action')}
                     </Button>
                     {disabled ? (
-                        <span className="text-xs text-muted-foreground">Admin required.</span>
+                        <span className="text-xs text-muted-foreground">{m.t('splicewire-beam-embed::messages.admin_required')}</span>
                     ) : preview.isSuccess && wouldPrune === 0 ? (
-                        <span className="text-xs text-muted-foreground">Nothing to prune.</span>
+                        <span className="text-xs text-muted-foreground">{m.t('splicewire-beam-embed::messages.nothing_to_prune')}</span>
                     ) : null}
                 </div>
             </CardContent>
@@ -217,12 +224,19 @@ function PruneCard({ disabled }: { disabled: boolean }) {
 // ── Card 3: Erase a subject (destructive — typed-ERASE confirm Dialog) ─────────────────────────
 // The erase subject selector shows human labels; the exact DTO key (visitorId/sessionId) still drives
 // state, the request and the receipt (W6-09 / C32).
-const SUBJECT_KIND_LABELS: Record<EraseSubjectKind, string> = {
-    visitorId: 'Visitor ID',
-    sessionId: 'Session ID',
+const SUBJECT_KIND_LABELS: Record<EraseSubjectKind, BeamEmbedMessageKey> = {
+    visitorId: 'splicewire-beam-embed::messages.kind_visitor',
+    sessionId: 'splicewire-beam-embed::messages.kind_session',
+};
+
+// The subject's kind as the receipt and the confirm name it (shown in code beside the id).
+const SUBJECT_KIND_WORDS: Record<EraseSubjectKind, BeamEmbedMessageKey> = {
+    visitorId: 'splicewire-beam-embed::messages.subject_visitor',
+    sessionId: 'splicewire-beam-embed::messages.subject_session',
 };
 
 export function EraseCard({ disabled }: { disabled: boolean }) {
+    const m = useBeamEmbedMessages();
     const erase = useEraseSubject();
     const [kind, setKind] = useState<EraseSubjectKind>('visitorId');
     const [subjectId, setSubjectId] = useState('');
@@ -254,12 +268,13 @@ export function EraseCard({ disabled }: { disabled: boolean }) {
         <Card className="border-destructive/40 bg-destructive/[0.03]">
             <CardHeader>
                 <h2 className="flex items-center gap-2 text-destructive font-semibold leading-none tracking-tight">
-                    <Eraser className="size-4" /> Erase a subject
+                    <Eraser className="size-4" /> {m.t('splicewire-beam-embed::messages.erase_title')}
                 </h2>
                 <CardDescription>
-                    A subject-access erasure request. Provide exactly one of a visitor ID or session
-                    ID. This erases the <b>person, not just their chats</b> — the visitor's personal
-                    data drops when their last session goes. <b>Irreversible.</b>
+                    {richMessage(m, 'splicewire-beam-embed::messages.erase_description', {
+                        person: <b>{m.t('splicewire-beam-embed::messages.erase_person_bold')}</b>,
+                        irreversible: <b>{m.t('splicewire-beam-embed::messages.irreversible_bold')}</b>,
+                    })}
                 </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -285,14 +300,14 @@ export function EraseCard({ disabled }: { disabled: boolean }) {
                                         kind === k ? 'bg-destructive' : 'bg-muted-foreground/30',
                                     )}
                                 />
-                                {SUBJECT_KIND_LABELS[k]}
+                                {m.t(SUBJECT_KIND_LABELS[k])}
                             </span>
                         </button>
                     ))}
                 </div>
 
                 <div className="grid gap-1.5">
-                    <Label htmlFor="subject-id">{SUBJECT_KIND_LABELS[kind]}</Label>
+                    <Label htmlFor="subject-id">{m.t(SUBJECT_KIND_LABELS[kind])}</Label>
                     <Input
                         id="subject-id"
                         value={subjectId}
@@ -303,14 +318,14 @@ export function EraseCard({ disabled }: { disabled: boolean }) {
                     />
                     {!canOpen ? (
                         <p className="text-[11px] text-muted-foreground">
-                            Provide exactly one of a visitor ID or session ID.
+                            {m.t('splicewire-beam-embed::messages.provide_one')}
                         </p>
                     ) : null}
                 </div>
 
                 {erase.isError && !open && (
                     <p role="alert" className="text-sm text-destructive">
-                        {apiErrorMessage(erase.error, 'Could not erase the subject.')}
+                        {apiErrorMessage(erase.error, m.t('splicewire-beam-embed::messages.erase_failed'))}
                     </p>
                 )}
 
@@ -319,11 +334,14 @@ export function EraseCard({ disabled }: { disabled: boolean }) {
                     <div className="flex items-start gap-2 rounded-md border border-destructive/30 bg-destructive/5 px-3 py-2.5 text-sm">
                         <Eraser className="mt-0.5 size-4 flex-none text-destructive" />
                         <div>
-                            Erased <b>{receipt.erased}</b> session{receipt.erased === 1 ? '' : 's'} for{' '}
-                            <code className="font-mono text-xs">
-                                {receipt.kind === 'visitorId' ? 'visitor' : 'session'} {receipt.id}
-                            </code>
-                            . This cannot be undone.
+                            {richMessage(m, 'splicewire-beam-embed::messages.erased', {
+                                n: <b>{receipt.erased}</b>,
+                                subject: (
+                                    <code className="font-mono text-xs">
+                                        {m.t(SUBJECT_KIND_WORDS[receipt.kind])} {receipt.id}
+                                    </code>
+                                ),
+                            }, receipt.erased)}
                         </div>
                     </div>
                 ) : null}
@@ -334,10 +352,10 @@ export function EraseCard({ disabled }: { disabled: boolean }) {
                         disabled={disabled || !canOpen}
                         onClick={() => { setConfirmText(''); setOpen(true); }}
                     >
-                        <Eraser className="size-4" /> Erase subject…
+                        <Eraser className="size-4" /> {m.t('splicewire-beam-embed::messages.erase_action')}
                     </Button>
                     {disabled ? (
-                        <span className="text-xs text-muted-foreground">Admin required.</span>
+                        <span className="text-xs text-muted-foreground">{m.t('splicewire-beam-embed::messages.admin_required')}</span>
                     ) : null}
                 </div>
             </CardContent>
@@ -348,23 +366,23 @@ export function EraseCard({ disabled }: { disabled: boolean }) {
                     <DialogHeader>
                         <DialogTitle className="flex items-center gap-2 text-destructive">
                             <AlertTriangle className="size-5" />{' '}
-                            Erase this {kind === 'visitorId' ? 'visitor' : 'session'}?
+                            {kind === 'visitorId' ? m.t('splicewire-beam-embed::messages.confirm_title_visitor') : m.t('splicewire-beam-embed::messages.confirm_title_session')}
                         </DialogTitle>
                         <DialogDescription asChild>
                             <div className="space-y-2">
                                 <p>
-                                    You are about to erase{' '}
-                                    <code className="font-mono text-xs text-foreground">
-                                        {kind === 'visitorId' ? 'visitor' : 'session'}{' '}
-                                        {subjectId || '—'}
-                                    </code>
-                                    . You are erasing the <b className="text-foreground">person</b>, not
-                                    just their chats — every matching session and its messages are
-                                    deleted, and the visitor's personal data drops when their last
-                                    session goes.
+                                    {richMessage(m, 'splicewire-beam-embed::messages.confirm_body', {
+                                        subject: (
+                                            <code className="font-mono text-xs text-foreground">
+                                                {m.t(SUBJECT_KIND_WORDS[kind])}{' '}
+                                                {subjectId || '—'}
+                                            </code>
+                                        ),
+                                        person: <b className="text-foreground">{m.t('splicewire-beam-embed::messages.person_bold')}</b>,
+                                    })}
                                 </p>
                                 <p className="font-medium text-destructive">
-                                    This is irreversible. There is no undo and no recovery.
+                                    {m.t('splicewire-beam-embed::messages.irreversible')}
                                 </p>
                             </div>
                         </DialogDescription>
@@ -372,7 +390,9 @@ export function EraseCard({ disabled }: { disabled: boolean }) {
 
                     <div className="grid gap-1.5">
                         <Label htmlFor="erase-confirm">
-                            Type <span className="font-mono font-semibold">ERASE</span> to confirm
+                            {richMessage(m, 'splicewire-beam-embed::messages.type_to_confirm', {
+                                token: <span className="font-mono font-semibold">ERASE</span>,
+                            })}
                         </Label>
                         <Input
                             id="erase-confirm"
@@ -384,10 +404,10 @@ export function EraseCard({ disabled }: { disabled: boolean }) {
                         />
                     </div>
 
-                    {erase.isError && <p role="alert" className="text-sm text-destructive">{apiErrorMessage(erase.error, 'Could not erase the subject.')}</p>}
+                    {erase.isError && <p role="alert" className="text-sm text-destructive">{apiErrorMessage(erase.error, m.t('splicewire-beam-embed::messages.erase_failed'))}</p>}
                     <DialogFooter>
                         <Button variant="outline" onClick={() => setOpen(false)}>
-                            Cancel
+                            {m.t('splicewire-beam-embed::messages.cancel')}
                         </Button>
                         <Button
                             variant="destructive"
@@ -395,7 +415,7 @@ export function EraseCard({ disabled }: { disabled: boolean }) {
                             onClick={runErase}
                         >
                             <Eraser className="size-4" />{' '}
-                            {erase.isPending ? 'Erasing…' : 'Erase permanently'}
+                            {erase.isPending ? m.t('splicewire-beam-embed::messages.erasing') : m.t('splicewire-beam-embed::messages.erase_permanently')}
                         </Button>
                     </DialogFooter>
                 </DialogContent>
@@ -408,6 +428,7 @@ export function EraseCard({ disabled }: { disabled: boolean }) {
 // Nothing writes `corpus_optin` yet (owner review 2026-11-02, 23-d; the write path is slice 23-3), so the
 // copy says so instead of naming a surface that does not exist.
 export function CorpusConsentCard() {
+    const m = useBeamEmbedMessages();
     const posture = useRetentionPosture();
     const chats: RetentionPostureChat[] = posture.data?.chats ?? [];
     const optedIn = chats.filter((c) => c.corpus_optin).length;
@@ -417,35 +438,37 @@ export function CorpusConsentCard() {
             <CardHeader>
                 <div className="flex items-center gap-2">
                     <Badge variant="outline" className="font-mono text-[10px] uppercase">
-                        read-only
+                        {m.t('splicewire-beam-embed::messages.read_only')}
                     </Badge>
-                    <h2 className="font-semibold leading-none tracking-tight">Corpus / training consent</h2>
+                    <h2 className="font-semibold leading-none tracking-tight">{m.t('splicewire-beam-embed::messages.consent_title')}</h2>
                 </div>
                 <CardDescription>
-                    Whether each Published Chat lets its transcripts be used for corpus or training.{' '}
-                    <b>Default: no.</b> There’s no setting for this yet, so new chats are opted out and
-                    can’t be opted in.
+                    {richMessage(m, 'splicewire-beam-embed::messages.consent_description', {
+                        default: <b>{m.t('splicewire-beam-embed::messages.consent_default_bold')}</b>,
+                    })}
                 </CardDescription>
             </CardHeader>
             <CardContent>
                 {posture.isPending ? (
                     <div className="flex items-center justify-center gap-2 rounded-md border border-dashed px-3 py-6 text-sm text-muted-foreground">
-                        <Loader2 className="size-4 animate-spin" /> Loading consent…
+                        <Loader2 className="size-4 animate-spin" /> {m.t('splicewire-beam-embed::messages.consent_loading')}
                     </div>
                 ) : posture.isError ? (
                     <div className="rounded-md border border-destructive/30 bg-destructive/5 px-3 py-4 text-center text-sm text-destructive">
-                        {apiErrorMessage(posture.error, 'Could not load training consent.')}
+                        {apiErrorMessage(posture.error, m.t('splicewire-beam-embed::messages.consent_failed'))}
                     </div>
                 ) : chats.length === 0 ? (
                     <div className="rounded-md border border-dashed px-3 py-6 text-center text-sm text-muted-foreground">
-                        No published chats yet. New chats default to <b>opted out</b>.
+                        {richMessage(m, 'splicewire-beam-embed::messages.consent_empty', {
+                            opted_out: <b>{m.t('splicewire-beam-embed::messages.opted_out')}</b>,
+                        })}
                     </div>
                 ) : (
                     <div className="space-y-2">
                         <p className="text-xs text-muted-foreground">
                             {optedIn === 0
-                                ? 'No published chats have opted into corpus/training.'
-                                : `${optedIn} of ${chats.length} published chat${chats.length === 1 ? '' : 's'} opted into corpus/training.`}
+                                ? m.t('splicewire-beam-embed::messages.consent_none')
+                                : m.choice('splicewire-beam-embed::messages.consent_summary', chats.length, { opted: optedIn, total: chats.length })}
                         </p>
                         <div className="divide-y rounded-md border">
                             {chats.map((chat) => (
@@ -455,16 +478,16 @@ export function CorpusConsentCard() {
                                 >
                                     <span className="truncate">
                                         {chat.title || (
-                                            <span className="text-muted-foreground">Untitled chat</span>
+                                            <span className="text-muted-foreground">{m.t('splicewire-beam-embed::messages.untitled')}</span>
                                         )}
                                     </span>
                                     {chat.corpus_optin ? (
                                         <span className="flex flex-none items-center gap-1 text-xs font-medium text-warning-foreground">
-                                            <Check className="size-3.5" /> opted in
+                                            <Check className="size-3.5" /> {m.t('splicewire-beam-embed::messages.opted_in')}
                                         </span>
                                     ) : (
                                         <span className="flex flex-none items-center gap-1 text-xs text-muted-foreground">
-                                            <X className="size-3.5" /> opted out
+                                            <X className="size-3.5" /> {m.t('splicewire-beam-embed::messages.opted_out')}
                                         </span>
                                     )}
                                 </div>
@@ -481,11 +504,12 @@ export function CorpusConsentCard() {
  * The single-pane privacy governance console. Renders inside the Settings meta-area (SectionBar sub-tab
  * strip owns nav) — no prototype chrome.
  */
-export function PrivacyRetentionPage({ canManage, title = 'Privacy & retention' }: { canManage: boolean; /** Host-supplied page heading (UX03/C39); the package renders exactly one h1 from it. */ title?: string }) {
+export function PrivacyRetentionPage({ canManage, title }: { canManage: boolean; /** Host-supplied page heading (UX03/C39); the package renders exactly one h1 from it. */ title?: string }) {
+    const m = useBeamEmbedMessages();
     const actionsDisabled = !canManage;
     return (
         <div className="space-y-6 py-2">
-            <h1 className="mx-auto max-w-3xl text-lg font-semibold tracking-tight">{title}</h1>
+            <h1 className="mx-auto max-w-3xl text-lg font-semibold tracking-tight">{title ?? m.t('splicewire-beam-embed::messages.page_title')}</h1>
             <GovernanceBanner />
 
             <div className="mx-auto max-w-3xl space-y-6">
@@ -496,9 +520,7 @@ export function PrivacyRetentionPage({ canManage, title = 'Privacy & retention' 
             </div>
 
             <p className="mx-auto max-w-3xl pt-2 text-[11px] leading-relaxed text-muted-foreground">
-                Prune previews its blast radius, then runs immediately; erase runs immediately. Both
-                report how many sessions were affected. A browsable per-session list is coming in a
-                future update.
+                {m.t('splicewire-beam-embed::messages.footer')}
             </p>
         </div>
     );
