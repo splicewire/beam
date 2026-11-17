@@ -936,7 +936,7 @@ function CreateTokenDialog() {
 
             {createToken.isError && (
               <p className="text-sm text-destructive">
-                {errorMessage(createToken.error, m.t('splicewire-beam-accounts::messages.tokens_page_create_failed'))}
+                {errorMessage(createToken.error, m.t('splicewire-beam-accounts::messages.tokens_page_create_failed'), m)}
               </p>
             )}
             <DialogFooter>

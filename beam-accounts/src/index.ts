@@ -96,6 +96,12 @@ export {
   type RosterStatus,
 } from "./team-roster";
 
+// ── Messages: a host's onError receives a NoticeError for a package-thrown catalog line; render it with
+// errorMessage(error, fallback, useBeamAccountsMessages()) so it reads in the reader's locale.
+export { useBeamAccountsMessages, englishBeamAccountsMessages, type BeamAccountsMessages, type BeamAccountsMessageKey } from "./messages";
+export { NoticeError, type Notice } from "./message-descriptor";
+export { errorMessage } from "./utils";
+
 // ── Getting onto a team (team onboarding) ───────────────────────────────────
 export { CreateTeamForm, type CreateTeamFormProps } from "./create-team-form";
 export {

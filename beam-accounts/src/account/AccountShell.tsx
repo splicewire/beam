@@ -108,7 +108,7 @@ export function AccountShell({
     linkComponent,
     brand,
     brandHref,
-    navLabel = 'Account',
+    navLabel,
     isActive,
     navItemIcon,
     action,
@@ -168,7 +168,7 @@ export function AccountShell({
 
                     <AccountNav
                         nav={nav}
-                        label={navLabel}
+                        label={navLabel ?? m.t('splicewire-beam-accounts::messages.account_account')}
                         linkComponent={linkComponent}
                         isActive={isActive}
                         itemIcon={navItemIcon}
@@ -220,7 +220,7 @@ export function AccountShell({
                     {mobileBar && (
                         <header className="beam-ux-account-mobilebar" data-account-mobilebar="">
                             <SidebarTrigger aria-label={menuLabel ?? m.t('splicewire-beam-accounts::messages.account_open_navigation')} />
-                            {brandHeader ?? <span>{navLabel}</span>}
+                            {brandHeader ?? <span>{navLabel ?? m.t('splicewire-beam-accounts::messages.account_account')}</span>}
                         </header>
                     )}
                     {children}
