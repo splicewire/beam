@@ -1019,5 +1019,6 @@
   "splicewire-beam-ux::messages.theme_save_draft": "Save draft",
   "splicewire-beam-ux::messages.theme_submitted_for_review": "Theme Release submitted for review.",
   "splicewire-beam-ux::messages.theme_token_breakpoint": "Token breakpoint",
-  "splicewire-beam-ux::messages.theme_tokens": "Theme tokens"
+  "splicewire-beam-ux::messages.theme_tokens": "Theme tokens",
+  "splicewire-beam-ux::messages.visual_editor_brand": "visual editor"
 }

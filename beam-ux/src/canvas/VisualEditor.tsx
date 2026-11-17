@@ -57,7 +57,7 @@ export function VisualEditor({
     onChange,
     onSave,
     theme,
-    brand = 'visual editor',
+    brand,
     onUndo,
     onRedo,
     canUndo = false,
@@ -121,7 +121,8 @@ function TopBarExtras({
     canUndo,
     canRedo,
 }: {
-    brand: string;
+    /** The host's name for the editor; without one, the catalog's (localization 31 follow-up). */
+    brand?: string;
     onSave?: () => void | Promise<void>;
     onUndo?: () => void;
     onRedo?: () => void;
@@ -130,6 +131,7 @@ function TopBarExtras({
 }) {
     const m = useBeamUxMessages();
     const mount = useEditShellMount();
+    const label = brand ?? m.t('splicewire-beam-ux::messages.visual_editor_brand');
 
     const save = async () => {
         if (!onSave) return;
@@ -146,8 +148,8 @@ function TopBarExtras({
     return (
         <>
             <span className="ve-brand">
-                {monogram(brand) && <span className="ve-mark" aria-hidden="true">{monogram(brand)}</span>}
-                {brand}
+                {monogram(label) && <span className="ve-mark" aria-hidden="true">{monogram(label)}</span>}
+                {label}
             </span>
             <span className="ve-hint">
                 {m.t('splicewire-beam-ux::messages.canvas_editor_hint')}
