@@ -20,6 +20,7 @@ import type { CanvasTheme } from './css.js';
 import { monogram } from './monogram.js';
 import { CANVAS_WIDGET_NAME, createCanvasWidgetRegistry } from './widgetRegistry.js';
 import type { JsonDoc } from '../blockdoc/json.js';
+import { useBeamUxMessages } from '../messages.js';
 
 export interface VisualEditorProps {
     /** The body — a single-root JsonDoc. */
@@ -127,6 +128,7 @@ function TopBarExtras({
     canUndo: boolean;
     canRedo: boolean;
 }) {
+    const m = useBeamUxMessages();
     const mount = useEditShellMount();
 
     const save = async () => {
@@ -148,22 +150,22 @@ function TopBarExtras({
                 {brand}
             </span>
             <span className="ve-hint">
-                click = select · double-click text = edit · drag = reorder · right-click = actions
+                {m.t('splicewire-beam-ux::messages.canvas_editor_hint')}
             </span>
             <span className="ve-spacer" />
             {(onUndo || onRedo) && (
                 <>
-                    <button type="button" className="ve-toggle" onClick={onUndo} disabled={!canUndo} title="Undo">
-                        ↶ Undo
+                    <button type="button" className="ve-toggle" onClick={onUndo} disabled={!canUndo} title={m.t('splicewire-beam-ux::messages.canvas_undo')}>
+                        ↶ {m.t('splicewire-beam-ux::messages.canvas_undo')}
                     </button>
-                    <button type="button" className="ve-toggle" onClick={onRedo} disabled={!canRedo} title="Redo">
-                        ↷ Redo
+                    <button type="button" className="ve-toggle" onClick={onRedo} disabled={!canRedo} title={m.t('splicewire-beam-ux::messages.canvas_redo')}>
+                        ↷ {m.t('splicewire-beam-ux::messages.canvas_redo')}
                     </button>
                 </>
             )}
             {onSave && (
                 <button type="button" className="ve-toggle ve-save" onClick={save}>
-                    Save
+                    {m.t('splicewire-beam-ux::messages.canvas_save')}
                 </button>
             )}
         </>

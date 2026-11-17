@@ -47,6 +47,8 @@ import { insertRelativeTo } from './insert.js';
 import { freshBlockIds } from '../blockdoc/identity.js';
 import { DEFAULT_BLOCK_TEMPLATES } from './templates.js';
 import { assertDocRegistry, profileAttrs, profileTemplates, profileTemplatesAtParent, setProfileAttrs } from './profile';
+import { useBeamUxMessages } from '../messages.js';
+import { NoticeError, notice as line, noticeOf, say, type Notice } from '../message-descriptor.js';
 
 /** The `DataTransfer` key a palette drag stashes its template's `nodeType` under — the bridge for a
  * drag that starts in the shell's palette region (a REACT SIBLING of this widget, not an ancestor/
@@ -114,9 +116,10 @@ export function CanvasWidget({
     theme,
     hideBreadcrumb = false,
 }: CanvasWidgetProps) {
+    const m = useBeamUxMessages();
     const config = useCanvas();
     const selection = useCanvasSelection();
-    const [commandError,setCommandError] = useState<string|null>(null);
+    const [commandError,setCommandError] = useState<Notice|null>(null);
     const { selection: styleSelection } = useStyleSelection();
     const doc: JsonDoc = value ?? formData ?? EMPTY_DOC;
     const preview = useCanvasBindings(config.bindingPreview, doc);
@@ -208,37 +211,37 @@ export function CanvasWidget({
     const command=(run:()=>JsonDoc)=>{
         if(readOnlyRef.current)return;
         try{emitFromRef(run());setSel(null);setCommandError(null);}
-        catch(error){setCommandError(error instanceof Error?error.message:String(error));}
+        catch(error){setCommandError(noticeOf(error,String(error)));}
     };
     const copy=async(cut=false)=>{
         if(cut&&readOnly)return;
         try{
-            if(!navigator.clipboard?.writeText)throw Error('Clipboard is unavailable in this browser');
+            if(!navigator.clipboard?.writeText)throw new NoticeError(line('splicewire-beam-ux::messages.canvas_clipboard_unavailable'));
             const snapshot=docRef.current,paths=[...selection.paths];
             await navigator.clipboard.writeText(clipboardText(snapshot,paths));
             if(!alive.current)return;
             if(cut){
-                if(readOnlyRef.current)throw Error('Editor became read-only; copied blocks were not cut');
+                if(readOnlyRef.current)throw new NoticeError(line('splicewire-beam-ux::messages.canvas_cut_read_only'));
                 // A slow clipboard prompt must never delete paths from a newer document.
-                if(docRef.current!==snapshot)throw Error('Document changed while copying; copied blocks were not cut');
+                if(docRef.current!==snapshot)throw new NoticeError(line('splicewire-beam-ux::messages.canvas_cut_doc_changed'));
                 command(()=>removeBlocks(docRef.current,paths));
             }
             setCommandError(null);
-        }catch(error){setCommandError(error instanceof Error?error.message:String(error));}
+        }catch(error){setCommandError(noticeOf(error,String(error)));}
     };
     const paste=async()=>{
         if(readOnly)return;
         try{
-            if(!navigator.clipboard?.readText)throw Error('Clipboard is unavailable in this browser');
+            if(!navigator.clipboard?.readText)throw new NoticeError(line('splicewire-beam-ux::messages.canvas_clipboard_unavailable'));
             const snapshot=docRef.current,target=sel??'';
             const nodes=parseClipboard(await navigator.clipboard.readText());
             if(!alive.current)return;
-            if(readOnlyRef.current)throw Error('Editor is read-only');
-            if(docRef.current!==snapshot)throw Error('Document changed while reading clipboard; choose the destination again');
+            if(readOnlyRef.current)throw new NoticeError(line('splicewire-beam-ux::messages.canvas_editor_read_only'));
+            if(docRef.current!==snapshot)throw new NoticeError(line('splicewire-beam-ux::messages.canvas_paste_doc_changed'));
             const parent=target?getAt(docRef.current,target):null;
-            if(parent&&isJsonBlock(parent)&&(isEditGated(config,parent)||isIsland(config,parent.name)))throw Error('Paste into an editable container');
+            if(parent&&isJsonBlock(parent)&&(isEditGated(config,parent)||isIsland(config,parent.name)))throw new NoticeError(line('splicewire-beam-ux::messages.canvas_paste_editable_container'));
             command(()=>pasteBlocks(docRef.current,target,nodes,config.profile,config.styleRegistry));
-        }catch(error){setCommandError(error instanceof Error?error.message:String(error));}
+        }catch(error){setCommandError(noticeOf(error,String(error)));}
     };
 
     // Node access: the shell's generic Inspector calls getNode(selectedNodeId)/setNodeAttrs(...) —
@@ -250,7 +253,7 @@ export function CanvasWidget({
             getNode: (nodeId) => {
                 const node = getAt(docRef.current, nodeId);
                 if (!node || !isJsonBlock(node)) return null;
-                const { schema, attrs } = blockStyleFields(node, config.profile ? profileAttrs(node, config.profile) : attrsSchemaFor(node, config.entitlementKeys ?? []), config.styleRegistry);
+                const { schema, attrs } = blockStyleFields(node, config.profile ? profileAttrs(node, config.profile) : attrsSchemaFor(node, config.entitlementKeys ?? [], m), config.styleRegistry, m);
                 return { type: node.name ?? 'fragment', attrsSchema: schema, attrs };
             },
             setNodeAttrs: (nodeId, attrs) => {
@@ -288,7 +291,8 @@ export function CanvasWidget({
     // selection, mirroring the old in-canvas addBlock().
     useEffect(() => {
         if (!mount) return;
-        mount.publishCandidates(templates.map((t) => ({ nodeType: t.label, label: t.label })));
+        // nodeType stays the template's stable English label; only what the reader sees is translated.
+        mount.publishCandidates(templates.map((t) => ({ nodeType: t.label, label: t.labelKey ? m.t(t.labelKey) : t.label })));
         return mount.registerInsertHandler((candidate) => {
             const nodeType = (candidate as { nodeType?: string } | null)?.nodeType;
             const template = templates.find((t) => t.label === nodeType);
@@ -369,7 +373,7 @@ export function CanvasWidget({
                 const template = offered.find((t) => t.label === templateNodeType);
                 if (template) {
                     const index = indexOf(dropTarget.path) + (dropTarget.edge === 'after' ? 1 : 0);
-                    emit(insertInto(doc, parentOf(dropTarget.path), index, freshBlockIds(template.make())));
+                    emit(insertInto(doc, parentOf(dropTarget.path), index, freshBlockIds(template.make(m))));
                 }
             } else if (dropTarget && dragPath) {
                 const move = dropTarget.edge === 'before' ? moveBefore : moveAfter;
@@ -388,35 +392,35 @@ export function CanvasWidget({
         const prev = siblingPath(path, -1);
         const next = siblingPath(path, 1);
         return [
-            { label: 'Duplicate', onSelect: () => command(()=>{
+            { label: m.t('splicewire-beam-ux::messages.canvas_menu_duplicate'), onSelect: () => command(()=>{
                 const node=getAt(docRef.current,path),parent=parentOf(path)?getAt(docRef.current,parentOf(path)):null;
-                if(!node)throw Error('Selection no longer exists');
+                if(!node)throw new NoticeError(line('splicewire-beam-ux::messages.canvas_selection_gone'));
                 assertPasteProfile([node],config.profile,parent as JsonBlock|null,config.styleRegistry);
                 return duplicateAt(docRef.current,path);
             }) },
             {
-                label: 'Move up',
+                label: m.t('splicewire-beam-ux::messages.canvas_menu_move_up'),
                 disabled: !prev || !getAt(doc, prev),
                 onSelect: () => {
                     if (prev) emit(moveBefore(doc, path, prev));
                 },
             },
             {
-                label: 'Move down',
+                label: m.t('splicewire-beam-ux::messages.canvas_menu_move_down'),
                 disabled: !next || !getAt(doc, next),
                 onSelect: () => {
                     if (next) emit(moveAfter(doc, path, next));
                 },
             },
             {
-                label: 'Insert',
+                label: m.t('splicewire-beam-ux::messages.canvas_menu_insert'),
                 children: (config.profile ? profileTemplates(allTemplates, config.profile, doc, path, config.registry) : allTemplates).map((t) => ({
-                    label: t.label,
-                    onSelect: () => emit(insertRelativeTo(doc, path, t.make)),
+                    label: t.labelKey ? m.t(t.labelKey) : t.label,
+                    onSelect: () => emit(insertRelativeTo(doc, path, () => t.make(m))),
                 })),
             },
             {
-                label: 'Delete',
+                label: m.t('splicewire-beam-ux::messages.canvas_menu_delete'),
                 danger: true,
                 disabled: path === '0',
                 onSelect: () => {
@@ -440,22 +444,22 @@ export function CanvasWidget({
                 author's viewport: breakpoints answer to this `beam-canvas` container, the selected state applies
                 as if active. Same class names as the published artifact, which keeps @media and real states. */}
             <style data-beam-block-style="" data-beam-canvas-preview="">{compileEntryStyles(stylesIn(doc), config.styleRegistry, {container: 'beam-canvas', state: styleSelection.state}).css}</style>
-            <div className="ve-command-bar" role="toolbar" aria-label="Block commands">
-                <button className="ve-command-button" type="button" disabled={!selection.paths.length} onClick={()=>void copy()}>Copy blocks</button>
-                <button className="ve-command-button" type="button" disabled={readOnly||!selection.paths.length} onClick={()=>void copy(true)}>Cut blocks</button>
-                <button className="ve-command-button" type="button" disabled={readOnly} onClick={()=>void paste()}>Paste into {sel??'document'}</button>
-                <button className="ve-command-button" type="button" disabled={readOnly||!selection.paths.length} onClick={()=>command(()=>wrapBlocks(docRef.current,selection.paths,'flex',config.profile))}>Wrap in flex</button>
-                <button className="ve-command-button" type="button" disabled={readOnly||!selection.paths.length} onClick={()=>command(()=>wrapBlocks(docRef.current,selection.paths,'grid',config.profile))}>Wrap in grid</button>
-                <button className="ve-command-button" type="button" disabled={readOnly||selection.paths.length!==1} onClick={()=>command(()=>unwrapBlock(docRef.current,selection.paths[0],config.profile))}>Unwrap</button>
-                <span>{selection.paths.length} blocks selected</span>
+            <div className="ve-command-bar" role="toolbar" aria-label={m.t('splicewire-beam-ux::messages.canvas_block_commands')}>
+                <button className="ve-command-button" type="button" disabled={!selection.paths.length} onClick={()=>void copy()}>{m.t('splicewire-beam-ux::messages.canvas_copy_blocks')}</button>
+                <button className="ve-command-button" type="button" disabled={readOnly||!selection.paths.length} onClick={()=>void copy(true)}>{m.t('splicewire-beam-ux::messages.canvas_cut_blocks')}</button>
+                <button className="ve-command-button" type="button" disabled={readOnly} onClick={()=>void paste()}>{m.t('splicewire-beam-ux::messages.canvas_paste_into',{target:sel??m.t('splicewire-beam-ux::messages.canvas_binding_document')})}</button>
+                <button className="ve-command-button" type="button" disabled={readOnly||!selection.paths.length} onClick={()=>command(()=>wrapBlocks(docRef.current,selection.paths,'flex',config.profile))}>{m.t('splicewire-beam-ux::messages.canvas_wrap_flex')}</button>
+                <button className="ve-command-button" type="button" disabled={readOnly||!selection.paths.length} onClick={()=>command(()=>wrapBlocks(docRef.current,selection.paths,'grid',config.profile))}>{m.t('splicewire-beam-ux::messages.canvas_wrap_grid')}</button>
+                <button className="ve-command-button" type="button" disabled={readOnly||selection.paths.length!==1} onClick={()=>command(()=>unwrapBlock(docRef.current,selection.paths[0],config.profile))}>{m.t('splicewire-beam-ux::messages.canvas_unwrap')}</button>
+                <span>{m.t('splicewire-beam-ux::messages.canvas_blocks_selected_bar',{count:selection.paths.length})}</span>
             </div>
             <ComponentTools doc={doc} paths={selection.paths} readOnly={readOnly} onChange={(next,expected)=>{
-                if(readOnlyRef.current||docRef.current!==expected)throw Error('The Local Session changed while the component operation was running.');
+                if(readOnlyRef.current||docRef.current!==expected)throw new NoticeError(line('splicewire-beam-ux::messages.canvas_session_changed_component_op'));
                 emitFromRef(next);setSel(null);
             }}/>
             {config.bindingPreview && <CanvasRecordPicker preview={preview}/> }
             <CanvasBindingWarnings doc={doc} profile={config.profile} pagePublic={preview.data?.pagePublic ?? config.bindingPreview?.pagePublic} recordCollection={config.bindingPreview?.recordCollection}/>
-            {commandError&&<p role="alert">{commandError}</p>}
+            {commandError&&<p role="alert">{say(m,commandError)}</p>}
             <div className="ve-canvas-layout">
             <CanvasOutline doc={doc} onSelect={setSel} onHide={(path,hidden)=>command(()=>editStyles(docRef.current,[path],{breakpoint:styleSelection.breakpoint,state:null},'display',hidden?'none':null,config.styleRegistry??DEFAULT_STYLE_REGISTRY))}/>
             <div style={{minWidth:0}}>

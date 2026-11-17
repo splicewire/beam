@@ -7,6 +7,7 @@ import { islandProps } from "./props";
 import { bindingRuntime, type BindingPayload } from "../bindings/runtime";
 import { renderNode } from "./TreeRender";
 import { componentValue, authoredEntry } from "./authored-components";
+import { useBeamUxMessages } from "../messages.js";
 
 /** Component markup stays sealed; caller-owned Slot regions carry their original editable paths. */
 export function CanvasInstance({
@@ -14,6 +15,7 @@ export function CanvasInstance({
   path,
   ...rest
 }: Omit<CanvasNodeProps, "node"> & { node: JsonBlock }) {
+  const m = useBeamUxMessages();
   const config = useCanvas();
   if (block.repeat)
     return (
@@ -48,7 +50,7 @@ export function CanvasInstance({
     );
   if (block.when && !bindingRuntime.when(block.when, config.record))
     return (
-      <div data-bd-path={path}>Component hidden by its display condition</div>
+      <div data-bd-path={path}>{m.t('splicewire-beam-ux::messages.canvas_component_hidden')}</div>
     );
   return <RenderedInstance {...rest} path={path} block={block} />;
 }
@@ -57,6 +59,7 @@ function RenderedInstance({
   path,
   ...rest
 }: Omit<CanvasNodeProps, "node"> & { block: JsonBlock }) {
+  const m = useBeamUxMessages();
   const config = useCanvas();
   const Comp = config.registry[block.name!];
   const element = useRef<HTMLDivElement>(null);
@@ -218,7 +221,7 @@ function RenderedInstance({
             open();
           }}
         >
-          Edit component
+          {m.t('splicewire-beam-ux::messages.canvas_edit_component')}
         </button>
       )}
       <div style={{ pointerEvents: "none" }}>

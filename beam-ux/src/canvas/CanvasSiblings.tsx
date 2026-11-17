@@ -4,6 +4,7 @@ import {CanvasNode,type CanvasNodeProps} from './CanvasNode';
 import {useCanvas,isEditGated} from './context';
 import {proseRole,proseRuns,toProse} from './prose';
 import {blockToProps} from './props';
+import { useBeamUxMessages } from '../messages.js';
 const ProseRun=lazy(()=>import('./ProseRun'));
 export type ProseChange=(parent:string,start:number,end:number,body:JsonDoc)=>void;
 export function CanvasSiblings({
@@ -17,6 +18,7 @@ export function CanvasSiblings({
     parent: string;
     onEditProse?: ProseChange;
 } & Omit<CanvasNodeProps, 'node' | 'path' | 'onEditProse'>) {
+ const m = useBeamUxMessages();
  const config=useCanvas();
  const path=(index:number)=>parent?`${parent}.${index}`:String(index);
  const profile=config.profile;
@@ -35,7 +37,7 @@ export function CanvasSiblings({
    const {start,end}=run;
    const cell=node.kind==='block'&&proseRole(node.name,profile!)==='cell';
    const tag=cell&&node.name?node.name:'div';
-   return createElement(tag,{key:path(index),'data-bd-path':path(index),...(cell?blockToProps(node,config.styleRegistry):{})},<Suspense fallback={<span role="status">Loading text editor…</span>}>
+   return createElement(tag,{key:path(index),'data-bd-path':path(index),...(cell?blockToProps(node,config.styleRegistry):{})},<Suspense fallback={<span role="status">{m.t('splicewire-beam-ux::messages.canvas_loading_text_editor')}</span>}>
     <ProseRun value={nodes.slice(start,end)} profile={profile!} onChange={body=>onEditProse!(parent,start,end,body)}/>
    </Suspense>);
   }

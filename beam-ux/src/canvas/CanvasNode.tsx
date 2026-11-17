@@ -18,6 +18,7 @@ import { blockToProps, editGateOf, islandProps } from './props.js';
 import { renderNode } from './TreeRender.js';
 import { bindingRuntime } from '../bindings/runtime.js';
 import { RetiredMdxIsland } from './mdx-island.js';
+import { useBeamUxMessages } from '../messages.js';
 
 /** Which half of a hovered block's box a drag is over — the mount inserts on that edge. */
 export type DropEdge = 'before' | 'after';
@@ -59,6 +60,7 @@ export function edgeAt(el: HTMLElement, clientY: number): DropEdge {
 }
 
 export function CanvasNode({ node, path, editing, onEditMd, onEditProse, dnd }: CanvasNodeProps) {
+    const m = useBeamUxMessages();
     const config = useCanvas();
     const { MdxEdit, registry } = config;
     const isEditingThis = editing === path;
@@ -89,7 +91,7 @@ export function CanvasNode({ node, path, editing, onEditMd, onEditProse, dnd }: 
                     dnd.onDrop(e.dataTransfer);
                 }}
                 onDragEnd={dnd.onDragEnd}
-                title={`Sealed ${node.reason} island`}
+                title={m.t('splicewire-beam-ux::messages.canvas_sealed_island',{ reason: node.reason })}
             >
                 <pre className="ve-opaque-src" style={{ pointerEvents: 'none' }}>
                     {node.source}
@@ -126,9 +128,9 @@ export function CanvasNode({ node, path, editing, onEditMd, onEditProse, dnd }: 
                         dnd.onDrop(e.dataTransfer);
                     }}
                     onDragEnd={dnd.onDragEnd}
-                    title="Select this content block"
+                    title={m.t('splicewire-beam-ux::messages.canvas_select_content_block')}
                 >
-                    ◆ content{file ? ` · ${String(file)}` : ''}
+                    ◆ {m.t('splicewire-beam-ux::messages.canvas_content_tag')}{file ? ` · ${String(file)}` : ''}
                 </div>
                 {/* ux-0233: without an island (it retires per host, EP-42) the node is read-only and its clicks select it. */}
                 {MdxEdit ? (
@@ -179,7 +181,7 @@ export function CanvasNode({ node, path, editing, onEditMd, onEditProse, dnd }: 
                     dnd.onDrop(e.dataTransfer);
                 }}
                 onDragEnd={dnd.onDragEnd}
-                title={isEditGated(config, block) ? `Sealed — editing requires "${editGateOf(block)}"` : block.repeat ? 'Repeat — Records from your current read' : 'Bound content — preview from your current read'}
+                title={isEditGated(config, block) ? m.t('splicewire-beam-ux::messages.canvas_sealed_gate',{ gate: editGateOf(block) }) : block.repeat ? m.t('splicewire-beam-ux::messages.canvas_repeat_preview') : m.t('splicewire-beam-ux::messages.canvas_bound_preview')}
             >
                 <div style={{ pointerEvents: 'none' }}>{renderNode(block, path, config)}</div>
             </div>

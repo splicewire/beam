@@ -15,7 +15,7 @@ export function CanvasOrRefusal({ entry, children }: { entry: EntryRef; children
             className="m-4 rounded-md border border-amber-300 bg-amber-50 p-6 text-sm text-amber-900"
         >
             <p className="font-medium">{m.t('splicewire-beam-ux::messages.editor_cannot_edit_here')}</p>
-            <p className="mt-2">{canvasRefusalFor(entry.format)}</p>
+            <p className="mt-2">{canvasRefusalFor(entry.format, m)}</p>
         </div>
     );
 }

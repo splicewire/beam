@@ -3,6 +3,7 @@
 // + path, not just the selected block, and it drives selection rather than editing it.
 import { getAt, isJsonBlock } from '../blockdoc/json.js';
 import type { JsonDoc } from '../blockdoc/json.js';
+import { useBeamUxMessages } from '../messages.js';
 
 export interface BreadcrumbProps {
     doc: JsonDoc;
@@ -20,10 +21,11 @@ function labelFor(doc: JsonDoc, path: string): string {
 }
 
 export function Breadcrumb({ doc, path, onSelect }: BreadcrumbProps) {
+    const m = useBeamUxMessages();
     const segments = path.split('.').map((_, i, arr) => arr.slice(0, i + 1).join('.'));
 
     return (
-        <nav className="ve-crumbs" aria-label="Selection path">
+        <nav className="ve-crumbs" aria-label={m.t('splicewire-beam-ux::messages.canvas_selection_path')}>
             {segments.map((p, i) => (
                 <span key={p} className="ve-crumb-seg">
                     {i > 0 && <span className="ve-crumb-sep">/</span>}
@@ -31,7 +33,7 @@ export function Breadcrumb({ doc, path, onSelect }: BreadcrumbProps) {
                         className="ve-crumb"
                         disabled={p === path}
                         onClick={() => onSelect(p)}
-                        title={p === path ? undefined : `Select ${labelFor(doc, p)}`}
+                        title={p === path ? undefined : m.t('splicewire-beam-ux::messages.canvas_select_node',{ label: labelFor(doc, p) })}
                     >
                         {labelFor(doc, p)}
                     </button>

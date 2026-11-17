@@ -8,6 +8,7 @@ import { useState } from 'react';
 import { joinStyle, styleRows } from '../blockdoc/json.js';
 import { useCanvas } from './context.js';
 import { DEFAULT_CLASS_SUGGESTIONS, DEFAULT_VAR_SUGGESTIONS } from './templates.js';
+import { useBeamUxMessages } from '../messages.js';
 
 /** The RJSF custom-widget contract (mirrors seam's own StarRatingWidget). */
 interface RjsfWidgetProps {
@@ -19,6 +20,7 @@ interface RjsfWidgetProps {
 }
 
 export function ClassChipsWidget({ id, value, disabled, readonly, onChange }: RjsfWidgetProps) {
+    const m = useBeamUxMessages();
     const config = useCanvas();
     const suggestions = config.classSuggestions ?? DEFAULT_CLASS_SUGGESTIONS;
     const classes = String(value ?? '').split(/\s+/).filter(Boolean);
@@ -45,7 +47,7 @@ export function ClassChipsWidget({ id, value, disabled, readonly, onChange }: Rj
                     className="ve-chip-in"
                     list={`${id}-suggest`}
                     value={draft}
-                    placeholder="+ class"
+                    placeholder={m.t('splicewire-beam-ux::messages.canvas_add_class')}
                     onChange={(e) => setDraft(e.target.value)}
                     onKeyDown={(e) => {
                         if (e.key === 'Enter' && draft.trim()) {
@@ -66,6 +68,7 @@ export function ClassChipsWidget({ id, value, disabled, readonly, onChange }: Rj
 }
 
 export function StyleRowsWidget({ id, value, disabled, readonly, onChange }: RjsfWidgetProps) {
+    const m = useBeamUxMessages();
     const config = useCanvas();
     const suggestions = config.varSuggestions ?? DEFAULT_VAR_SUGGESTIONS;
     const rows = styleRows(String(value ?? ''));
@@ -81,7 +84,7 @@ export function StyleRowsWidget({ id, value, disabled, readonly, onChange }: Rjs
                         onChange={(e) =>
                             onChange(joinStyle(rows.map((x, j) => (j === i ? { ...x, k: e.target.value } : x))))
                         }
-                        placeholder="prop"
+                        placeholder={m.t('splicewire-beam-ux::messages.canvas_style_prop')}
                     />
                     <input
                         list={`${id}-suggest`}
@@ -90,7 +93,7 @@ export function StyleRowsWidget({ id, value, disabled, readonly, onChange }: Rjs
                         onChange={(e) =>
                             onChange(joinStyle(rows.map((x, j) => (j === i ? { ...x, v: e.target.value } : x))))
                         }
-                        placeholder="value / var(--…)"
+                        placeholder={m.t('splicewire-beam-ux::messages.canvas_style_value')}
                     />
                     {!locked && (
                         <button type="button" onClick={() => onChange(joinStyle(rows.filter((_, j) => j !== i)))}>
@@ -110,7 +113,7 @@ export function StyleRowsWidget({ id, value, disabled, readonly, onChange }: Rjs
                     className="ve-add"
                     onClick={() => onChange(joinStyle([...rows, { k: 'color', v: 'var(--fg)' }]))}
                 >
-                    + declaration
+                    {m.t('splicewire-beam-ux::messages.canvas_add_declaration')}
                 </button>
             )}
         </div>

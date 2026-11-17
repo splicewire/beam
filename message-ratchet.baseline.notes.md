@@ -21,6 +21,10 @@ Part F (editor/ and config/) moves 145 of its 147 nodes onto the catalog, so its
 - beam-ux/src/editor/ComponentSessionHost.tsx — the scoped `.component-session{…}` CSS (FirstTemplateToken).
 - beam-ux/src/editor/PageSettings.tsx — `string`, the JSON Schema type a field defaults to (StringLiteral).
 
+Part C (the rest of canvas/) moves 113 of its 114 nodes onto the catalog, so its --write lowers 243 to 130. Its one remaining node is machine text, kept raw:
+
+- beam-ux/src/canvas/Breadcrumb.tsx — `fragment`, the JSON node kind a breadcrumb names beside raw tag names such as `div` (StringLiteral).
+
 ## @splicewire/beam-inertia — localization 28a
 
 Root qitem-20261114193919-4a20610b (2026-11-14 19:39Z) accepts exactly these 13 non-copy brand/machine AST nodes. This supersedes the count-12 ruling 73e93872. The complete styled wordmark is one raw rich :brand parameter, preserving raw beam· followed by bold raw os. Every listed literal stays raw; no technical catalog line or reshaping hides it.

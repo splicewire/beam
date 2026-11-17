@@ -15,6 +15,18 @@ import {
   extractComponent,
   makeComponentProp,
 } from "./component-authoring";
+import { useBeamUxMessages, type BeamUxMessageKey } from "../messages.js";
+import { NoticeError, notice as line, noticeOf, say, type Notice } from "../message-descriptor.js";
+
+/** Prop types are stored values; only their label is translated. */
+const PROP_TYPE_LABEL = Object.fromEntries([
+  ["text", 'splicewire-beam-ux::messages.canvas_prop_type_text'],
+  ["number", 'splicewire-beam-ux::messages.canvas_prop_type_number'],
+  ["toggle", 'splicewire-beam-ux::messages.canvas_prop_type_toggle'],
+  ["choice", 'splicewire-beam-ux::messages.canvas_prop_type_choice'],
+  ["link", 'splicewire-beam-ux::messages.canvas_prop_type_link'],
+  ["image", 'splicewire-beam-ux::messages.canvas_prop_type_image'],
+] as const) as Record<ComponentPropType, BeamUxMessageKey>;
 
 /** Server creation precedes the one local page edit; failures never guess a successful swap. */
 export function ComponentTools({
@@ -28,6 +40,7 @@ export function ComponentTools({
   readOnly: boolean;
   onChange: (next: JsonDoc, expected: JsonDoc) => void;
 }) {
+  const m = useBeamUxMessages();
   const config = useCanvas();
   const port = config.componentAuthoring;
   const path = paths.length === 1 ? paths[0] : null;
@@ -41,7 +54,8 @@ export function ComponentTools({
   const [property, setProperty] = useState("");
   const [type, setType] = useState<ComponentPropType>("text");
   const [choices, setChoices] = useState("");
-  const [error, setError] = useState<string | null>(null);
+  /** Parts joined at render: raw failure text or catalog lines (translated in the reader's current locale). */
+  const [error, setError] = useState<readonly Notice[] | null>(null);
   const [busy, setBusy] = useState(false);
   const check = port?.client.componentCapabilities;
   const [admission, setAdmission] = useState<{
@@ -74,7 +88,7 @@ export function ComponentTools({
       operation();
       setError(null);
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : String(reason));
+      setError([noticeOf(reason, String(reason))]);
     }
   };
   const make = async () => {
@@ -96,7 +110,7 @@ export function ComponentTools({
       }
       const node = getAt(snapshot, selectedPath);
       if (!node || !isJsonBlock(node))
-        throw Error("Select a block or sibling blocks");
+        throw new NoticeError(line('splicewire-beam-ux::messages.canvas_select_blocks'));
       const offers = collectionOffers(config.profile);
       const offer = recordOffer(
         doc,
@@ -127,13 +141,10 @@ export function ComponentTools({
       );
       setName("");
     } catch (reason) {
-      setError(
-        `${reason instanceof Error ? reason.message : String(reason)}${
-          created
-            ? ` Component entry ${created} was retained. The page swap was not applied; no deletion was attempted.`
-            : ""
-        }`
-      );
+      setError([
+        noticeOf(reason, String(reason)),
+        ...(created ? [" ", line('splicewire-beam-ux::messages.canvas_component_retained', { id: created })] : []),
+      ]);
     } finally {
       setBusy(false);
     }
@@ -145,11 +156,9 @@ export function ComponentTools({
     try {
       const result = await port.client.duplicateComponent(entry.id);
       await port.refresh();
-      setError(
-        `Component copy ${result.id} created. Existing instances still use the original.`
-      );
+      setError([line('splicewire-beam-ux::messages.canvas_component_copy_created', { id: result.id })]);
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : String(reason));
+      setError([noticeOf(reason, String(reason))]);
     } finally {
       setBusy(false);
     }
@@ -157,14 +166,14 @@ export function ComponentTools({
   const root =
     doc.length === 1 && isJsonBlock(doc[0]) && doc[0].component ? doc[0] : null;
   return (
-    <section aria-label="Component authoring">
-      {error && <p role="status">{error}</p>}
+    <section aria-label={m.t('splicewire-beam-ux::messages.canvas_component_authoring')}>
+      {error && <p role="status">{error.map((part) => say(m, part)).join("")}</p>}
       {port?.client.createComponent && paths.length > 0 && (
         <>
           <label>
-            Component name
+            {m.t('splicewire-beam-ux::messages.canvas_component_name')}
             <input
-              aria-label="Component name"
+              aria-label={m.t('splicewire-beam-ux::messages.canvas_component_name')}
               value={name}
               disabled={readOnly || busy}
               onChange={(event) => setName(event.target.value)}
@@ -175,7 +184,7 @@ export function ComponentTools({
             disabled={readOnly || busy || !name}
             onClick={() => void make()}
           >
-            Make component
+            {m.t('splicewire-beam-ux::messages.canvas_make_component')}
           </button>
         </>
       )}
@@ -193,7 +202,7 @@ export function ComponentTools({
               )
             }
           >
-            Detach component
+            {m.t('splicewire-beam-ux::messages.canvas_detach_component')}
           </button>
           {canEdit && port?.client.duplicateComponent && (
             <button
@@ -201,56 +210,56 @@ export function ComponentTools({
               disabled={readOnly || busy}
               onClick={() => void duplicate(entry)}
             >
-              Duplicate component
+              {m.t('splicewire-beam-ux::messages.canvas_duplicate_component')}
             </button>
           )}
         </>
       )}
       {root && path && selected && isJsonBlock(selected) && (
         <fieldset disabled={readOnly || busy}>
-          <legend>Make a prop</legend>
+          <legend>{m.t('splicewire-beam-ux::messages.canvas_make_prop_legend')}</legend>
           <label>
-            Prop name
+            {m.t('splicewire-beam-ux::messages.canvas_prop_name')}
             <input
-              aria-label="Prop name"
+              aria-label={m.t('splicewire-beam-ux::messages.canvas_prop_name')}
               value={propName}
               onChange={(event) => setPropName(event.target.value)}
             />
           </label>
           <label>
-            Prop type
+            {m.t('splicewire-beam-ux::messages.canvas_prop_type')}
             <select
-              aria-label="Prop type"
+              aria-label={m.t('splicewire-beam-ux::messages.canvas_prop_type')}
               value={type}
               onChange={(event) =>
                 setType(event.target.value as ComponentPropType)
               }
             >
-              {["text", "number", "toggle", "choice", "link", "image"].map(
+              {(["text", "number", "toggle", "choice", "link", "image"] as const).map(
                 (value) => (
-                  <option key={value}>{value}</option>
+                  <option key={value} value={value}>{m.t(PROP_TYPE_LABEL[value])}</option>
                 )
               )}
             </select>
           </label>
           {type === "choice" && (
             <label>
-              Choices
+              {m.t('splicewire-beam-ux::messages.canvas_choices')}
               <input
-                aria-label="Choices"
+                aria-label={m.t('splicewire-beam-ux::messages.canvas_choices')}
                 value={choices}
                 onChange={(event) => setChoices(event.target.value)}
               />
             </label>
           )}
           <label>
-            Literal value
+            {m.t('splicewire-beam-ux::messages.canvas_literal_value')}
             <select
-              aria-label="Literal value"
+              aria-label={m.t('splicewire-beam-ux::messages.canvas_literal_value')}
               value={property}
               onChange={(event) => setProperty(event.target.value)}
             >
-              <option value="">First literal text</option>
+              <option value="">{m.t('splicewire-beam-ux::messages.canvas_first_literal_text')}</option>
               {selected.props
                 .filter((prop) =>
                   ["string", "number", "boolean"].includes(prop.kind)
@@ -271,9 +280,7 @@ export function ComponentTools({
                   (node) => node.kind === "text" && !node.field && !node.prop
                 );
                 if (!property && text < 0)
-                  throw Error(
-                    "Select a block with literal text or a literal property"
-                  );
+                  throw new NoticeError(line('splicewire-beam-ux::messages.canvas_select_literal'));
                 onChange(
                   [
                     makeComponentProp(
@@ -300,7 +307,7 @@ export function ComponentTools({
               })
             }
           >
-            Make prop
+            {m.t('splicewire-beam-ux::messages.canvas_make_prop')}
           </button>
         </fieldset>
       )}

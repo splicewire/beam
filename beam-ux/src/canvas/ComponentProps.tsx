@@ -8,6 +8,7 @@ import { getAt, isJsonBlock } from "../blockdoc/json";
 import { useCanvas } from "./context";
 import { useCanvasSelection } from "./CanvasSelection";
 import { bindingFields, collectionOffers, recordOffer } from "./binding-edit";
+import { useBeamUxMessages } from "../messages.js";
 
 /** Only the declared interface edits an instance; the component's internal nodes stay sealed. */
 export function ComponentProps({
@@ -17,6 +18,7 @@ export function ComponentProps({
   path: string;
   entry: ComponentCanvasData;
 }) {
+  const m = useBeamUxMessages();
   const config = useCanvas();
   const { commands } = useCanvasSelection();
   const [error, setError] = useState<string | null>(null);
@@ -77,8 +79,8 @@ export function ComponentProps({
     });
   };
   return (
-    <section aria-label="Props">
-      <h3>Props</h3>
+    <section aria-label={m.t('splicewire-beam-ux::messages.canvas_props')}>
+      <h3>{m.t('splicewire-beam-ux::messages.canvas_props')}</h3>
       {error && <p role="alert">{error}</p>}
       {entry.definition.props.map((prop) => {
         const current = node.props.find((value) => value.name === prop.name);
@@ -96,19 +98,18 @@ export function ComponentProps({
           <fieldset key={prop.name} disabled={commands.readOnly}>
             <legend>
               {prop.name}
-              {prop.required ? " (required)" : ""}
+              {prop.required ? ` ${m.t('splicewire-beam-ux::messages.canvas_prop_required_tag')}` : ""}
             </legend>
             {missing && (
               <p role="alert">
-                {prop.name} is required. Supply a literal value or bind a field
-                before saving.
+                {m.t('splicewire-beam-ux::messages.canvas_prop_required',{ name: prop.name })}
               </p>
             )}
             {prop.type === "toggle" ? (
               <label>
                 {prop.name}
                 <input
-                  aria-label={`Prop ${prop.name}`}
+                  aria-label={m.t('splicewire-beam-ux::messages.canvas_prop_label',{ name: prop.name })}
                   type="checkbox"
                   checked={value === true}
                   onChange={(event) => literal(prop, event.target.checked)}
@@ -118,11 +119,11 @@ export function ComponentProps({
               <label>
                 {prop.name}
                 <select
-                  aria-label={`Prop ${prop.name}`}
+                  aria-label={m.t('splicewire-beam-ux::messages.canvas_prop_label',{ name: prop.name })}
                   value={String(value)}
                   onChange={(event) => literal(prop, event.target.value)}
                 >
-                  <option value="">Choose a value</option>
+                  <option value="">{m.t('splicewire-beam-ux::messages.canvas_choose_value')}</option>
                   {prop.choices.map((choice) => (
                     <option key={choice}>{choice}</option>
                   ))}
@@ -132,7 +133,7 @@ export function ComponentProps({
               <label>
                 {prop.name}
                 <input
-                  aria-label={`Prop ${prop.name}`}
+                  aria-label={m.t('splicewire-beam-ux::messages.canvas_prop_label',{ name: prop.name })}
                   key={`${path}:${prop.name}:${current?.kind}:${String(
                     current?.value
                   )}`}
@@ -146,9 +147,9 @@ export function ComponentProps({
               </label>
             )}
             <label>
-              Bind {prop.name}
+              {m.t('splicewire-beam-ux::messages.canvas_bind_prop',{ name: prop.name })}
               <select
-                aria-label={`Bind prop ${prop.name}`}
+                aria-label={m.t('splicewire-beam-ux::messages.canvas_bind_prop_label',{ name: prop.name })}
                 value={current?.kind === "field" ? String(current.value) : ""}
                 onChange={(event) =>
                   edit(
@@ -163,7 +164,7 @@ export function ComponentProps({
                   )
                 }
               >
-                <option value="">Literal / default</option>
+                <option value="">{m.t('splicewire-beam-ux::messages.canvas_literal_default')}</option>
                 {compatible.map((field) => (
                   <option key={field.path} value={field.path}>
                     {field.label} ({field.path})
@@ -173,18 +174,17 @@ export function ComponentProps({
             </label>
             {current?.kind === "prop" && (
               <p>
-                This value comes from the enclosing component prop{" "}
-                {String(current.value)}.
+                {m.t('splicewire-beam-ux::messages.canvas_from_enclosing_prop',{ name: String(current.value) })}
               </p>
             )}
             <button type="button" onClick={() => edit(prop, undefined)}>
-              Unset prop {prop.name}
+              {m.t('splicewire-beam-ux::messages.canvas_unset_prop',{ name: prop.name })}
             </button>
           </fieldset>
         );
       })}
       {!entry.definition.props.length && (
-        <p>This component declares no props.</p>
+        <p>{m.t('splicewire-beam-ux::messages.canvas_no_props')}</p>
       )}
     </section>
   );

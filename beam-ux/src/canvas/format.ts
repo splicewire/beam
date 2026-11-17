@@ -14,6 +14,8 @@
 // gate — it is what keeps an author from being shown an editor whose every Save will be refused. Where
 // they disagree, the server wins and the client is the thing to fix.
 
+import { englishBeamUxMessages, type BeamUxMessages } from '../messages.js';
+
 /**
  * The entry formats whose codec can carry a JsonDoc wherever the host runs — the LEGACY answer, used only when the
  * server did not say the entry's body kind. Extend only alongside a PHP `AcceptsJsonDoc`.
@@ -53,8 +55,8 @@ export function canvasAcceptsFormat(format: string | null | undefined): boolean 
 }
 
 /** Why the canvas declined — a sentence for the author, naming the format and what to do instead. */
-export function canvasRefusalFor(format: string | null | undefined): string {
+export function canvasRefusalFor(format: string | null | undefined, messages: BeamUxMessages = englishBeamUxMessages): string {
     return typeof format === 'string' && format !== ''
-        ? `This page is authored as ${format} source, which the visual editor cannot open — it edits a block document, and saving one here would replace the ${format} source with an empty file. Edit its source file instead.`
-        : 'This page does not say what it is authored as, so the visual editor will not open it — opening the wrong editor is how a page loses its source. Bind the entry (its id and format) to the page first.';
+        ? messages.t('splicewire-beam-ux::messages.canvas_refusal_format', { format })
+        : messages.t('splicewire-beam-ux::messages.canvas_refusal_unknown_format');
 }

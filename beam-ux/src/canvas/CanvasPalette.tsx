@@ -6,6 +6,7 @@
 // use instead, so CanvasWidget's onDrop reads it straight off the browser event.
 import { useEditShellMount } from '@schemastud/frame/editor';
 import { TEMPLATE_DATA_KEY } from './CanvasWidget.js';
+import { useBeamUxMessages } from '../messages.js';
 
 interface Candidate {
     nodeType: string;
@@ -13,16 +14,17 @@ interface Candidate {
 }
 
 export function CanvasPalette() {
+    const m = useBeamUxMessages();
     const mount = useEditShellMount();
     const candidates = mount.candidates as Candidate[];
 
     if (candidates.length === 0) {
-        return <div className="ve-pal-note">Nothing insertable here</div>;
+        return <div className="ve-pal-note">{m.t('splicewire-beam-ux::messages.canvas_nothing_insertable')}</div>;
     }
 
     return (
         <>
-            <div className="ve-insp-h">Insert block</div>
+            <div className="ve-insp-h">{m.t('splicewire-beam-ux::messages.canvas_insert_block')}</div>
             {candidates.map((c) => (
                 <button
                     key={c.nodeType}
@@ -36,7 +38,7 @@ export function CanvasPalette() {
                 </button>
             ))}
             <div className="ve-pal-note">
-                click inserts into / after the selection · drag to drop at a specific position
+                {m.t('splicewire-beam-ux::messages.canvas_palette_hint')}
             </div>
         </>
     );

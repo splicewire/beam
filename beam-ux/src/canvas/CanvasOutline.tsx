@@ -7,8 +7,10 @@ import {DEFAULT_STYLE_REGISTRY} from '../blockdoc/style-runtime';
 import {blockStyleFields} from './block-style';
 import {useCanvasSelection} from './CanvasSelection';
 import {unavailableBindings} from './unavailable-bindings';
+import {useBeamUxMessages} from '../messages.js';
 
 export function CanvasOutline({doc,onSelect,onHide}:{doc:JsonDoc;onSelect:(path:string,add:boolean)=>void;onHide:(path:string,hidden:boolean)=>void}){
+ const m=useBeamUxMessages();
  const [collapsed,setCollapsed]=useState<Set<string>>(new Set());
  const selection=useCanvasSelection();const {selection:layer}=useStyleSelection();
  const config=useCanvas();const unavailable=unavailableBindings(doc,config.profile,config.bindingPreview?.recordCollection);const registry=config.styleRegistry??DEFAULT_STYLE_REGISTRY;
@@ -24,8 +26,8 @@ export function CanvasOutline({doc,onSelect,onHide}:{doc:JsonDoc;onSelect:(path:
   if(!sealed&&!collapsed.has(path)){walk(node.children,path,depth+1);for(const [name,children] of Object.entries(node.slots??{}))walk(children,`${path}.slots.${name}`,depth+1);}
  });walk(doc,'',1);
  const focus=(index:number,root:HTMLElement)=>root.querySelectorAll<HTMLButtonElement>('[data-outline-select]')[index]?.focus();
- return <section className="ve-outline" aria-label="Block outline"><h3>Outline</h3><p>Hide changes visitor styles after publish ({layer.breakpoint?`${layer.breakpoint}+`:'all widths'}).</p>
- <div role="tree" aria-label="Page blocks" aria-multiselectable="true">{rows.map((row,index)=><div className="ve-outline-row" role="treeitem" aria-level={row.depth} aria-selected={selection.paths.includes(row.path)} aria-expanded={row.hasChildren?!collapsed.has(row.path):undefined} key={row.path} style={{paddingInlineStart:(row.depth-1)*12}}
+ return <section className="ve-outline" aria-label={m.t('splicewire-beam-ux::messages.canvas_block_outline')}><h3>{m.t('splicewire-beam-ux::messages.canvas_outline')}</h3><p>{m.t('splicewire-beam-ux::messages.canvas_outline_hide_hint',{width:layer.breakpoint?`${layer.breakpoint}+`:m.t('splicewire-beam-ux::messages.canvas_all_widths')})}</p>
+ <div role="tree" aria-label={m.t('splicewire-beam-ux::messages.canvas_page_blocks')} aria-multiselectable="true">{rows.map((row,index)=><div className="ve-outline-row" role="treeitem" aria-level={row.depth} aria-selected={selection.paths.includes(row.path)} aria-expanded={row.hasChildren?!collapsed.has(row.path):undefined} key={row.path} style={{paddingInlineStart:(row.depth-1)*12}}
  onKeyDown={event=>{
   const root=event.currentTarget.parentElement!;
   if(event.key==='ArrowDown'){event.preventDefault();focus(Math.min(rows.length-1,index+1),root);}
@@ -34,10 +36,10 @@ export function CanvasOutline({doc,onSelect,onHide}:{doc:JsonDoc;onSelect:(path:
   if(event.key==='ArrowRight'){event.preventDefault();if(row.hasChildren&&collapsed.has(row.path))toggle(row.path);else if(row.hasChildren)focus(index+1,root);}
   if(event.key==='Home'){event.preventDefault();focus(0,root);}if(event.key==='End'){event.preventDefault();focus(rows.length-1,root);}
  }}>
- {row.hasChildren&&<button type="button" aria-label={`${collapsed.has(row.path)?'Expand':'Collapse'} ${row.name} ${row.path}`} onClick={()=>toggle(row.path)}>{collapsed.has(row.path)?'▸':'▾'}</button>}
+ {row.hasChildren&&<button type="button" aria-label={m.t(collapsed.has(row.path)?'splicewire-beam-ux::messages.canvas_outline_expand':'splicewire-beam-ux::messages.canvas_outline_collapse',{name:row.name,path:row.path})} onClick={()=>toggle(row.path)}>{collapsed.has(row.path)?'▸':'▾'}</button>}
  <button type="button" data-outline-select="" onClick={event=>onSelect(row.path,event.ctrlKey||event.metaKey||event.shiftKey)}>{row.name} {row.path}</button>
- <button type="button" disabled={selection.commands?.readOnly} onClick={()=>onHide(row.path,!row.own)}>{row.own?'Show':'Hide'} {row.name} {row.path}</button>
- {Object.entries(unavailable).filter(([path])=>path===row.path||path.slice(0,path.lastIndexOf('.'))===row.path).map(([path,messages])=><small role="status" data-binding-unavailable={path} key={path}>{messages.join('; ')}. Rebind or remove this node.</small>)}
- {row.hidden&&<small>Hidden for visitors at {layer.breakpoint?`${layer.breakpoint}+`:'all widths'} after publish{!row.own?' (inherited; edit the earlier layer)':''}</small>}
+ <button type="button" disabled={selection.commands?.readOnly} onClick={()=>onHide(row.path,!row.own)}>{m.t(row.own?'splicewire-beam-ux::messages.canvas_outline_show':'splicewire-beam-ux::messages.canvas_outline_hide',{name:row.name,path:row.path})}</button>
+ {Object.entries(unavailable).filter(([path])=>path===row.path||path.slice(0,path.lastIndexOf('.'))===row.path).map(([path,messages])=><small role="status" data-binding-unavailable={path} key={path}>{m.t('splicewire-beam-ux::messages.canvas_binding_unavailable',{messages:messages.join('; ')})}</small>)}
+ {row.hidden&&<small>{m.t('splicewire-beam-ux::messages.canvas_outline_hidden_at',{width:layer.breakpoint?`${layer.breakpoint}+`:m.t('splicewire-beam-ux::messages.canvas_all_widths')})}{!row.own?` ${m.t('splicewire-beam-ux::messages.canvas_outline_inherited')}`:''}</small>}
  </div>)}</div></section>;
 }
