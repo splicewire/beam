@@ -9,6 +9,9 @@ import type {
     WorkflowReactionSubjectData,
 } from '@splicewire/beam-resources/types/workflow-reactions';
 import { humanizeWorkflowKey } from './humanizeWorkflowKey';
+import { notice, say, type Notice } from './message-descriptor';
+import { useBeamWorkflowsMessages } from './messages';
+import { richMessage } from './rich-message';
 
 export interface WorkflowReactionHistoryProps {
     reactions: WorkflowReactionRecordData[];
@@ -22,12 +25,13 @@ export interface WorkflowReactionHistoryProps {
 
 /** Configuration and delivery are separate outcomes; scheduled never claims downstream success. */
 export function WorkflowReactionHistory(props: WorkflowReactionHistoryProps) {
+    const m = useBeamWorkflowsMessages();
     return (
-        <section aria-label="Workflow follow-up history" className="space-y-4">
-            <h3 className="text-base font-semibold">Configured follow-ups</h3>
+        <section aria-label={m.t('splicewire-beam-workflows::messages.history_label')} className="space-y-4">
+            <h3 className="text-base font-semibold">{m.t('splicewire-beam-workflows::messages.history_heading')}</h3>
             {!props.reactions.length ? (
                 <p className="text-sm text-muted-foreground">
-                    No follow-ups are configured for this subject.
+                    {m.t('splicewire-beam-workflows::messages.history_none')}
                 </p>
             ) : null}
             {props.reactions.map((reaction) => (
@@ -46,8 +50,9 @@ function ReactionHistory({
     renderDelivery,
     describeAction,
 }: WorkflowReactionHistoryProps & { reaction: WorkflowReactionRecordData }) {
+    const m = useBeamWorkflowsMessages();
     const [pending, setPending] = useState(false);
-    const [error, setError] = useState<string | null>(null);
+    const [error, setError] = useState<Notice | null>(null);
     const busy = useRef(false);
     async function run(callback: () => Promise<void>) {
         if (busy.current) return;
@@ -60,7 +65,7 @@ function ReactionHistory({
             setError(
                 failure instanceof Error
                     ? failure.message
-                    : 'The follow-up could not be updated. Refresh and try again.',
+                    : notice('splicewire-beam-workflows::messages.history_update_failed'),
             );
         } finally {
             busy.current = false;
@@ -74,7 +79,7 @@ function ReactionHistory({
             : null;
     const actionLabel =
         describeAction?.(configuration) ??
-        (transition ? humanizeWorkflowKey(transition) : 'Configured action');
+        (transition ? humanizeWorkflowKey(transition) : m.t('splicewire-beam-workflows::messages.history_configured_action'));
     function anchorLabel(value: string) {
         try {
             return new Intl.DateTimeFormat(undefined, {
@@ -90,14 +95,19 @@ function ReactionHistory({
         <article className="space-y-3 rounded-lg border border-border p-4" aria-busy={pending}>
             <div className="flex flex-wrap items-center justify-between gap-2">
                 <h4 className="text-sm font-semibold">
-                    After {humanizeWorkflowKey(configuration.transition)} → {actionLabel}
+                    {/* The action can be a host-rendered node (describeAction), so the sentence goes through richMessage. */}
+                    {richMessage(m, 'splicewire-beam-workflows::messages.history_after', {
+                        transition: humanizeWorkflowKey(configuration.transition),
+                        action: actionLabel,
+                    })}
                 </h4>
-                <Badge variant="outline">{reaction.enabled ? 'Enabled' : 'Disabled'}</Badge>
+                <Badge variant="outline">{m.t(reaction.enabled ? 'splicewire-beam-workflows::messages.history_enabled' : 'splicewire-beam-workflows::messages.history_disabled')}</Badge>
             </div>
             <p className="text-sm text-muted-foreground">
+                {/* "calendar days" was never singular: both plural forms keep the English. */}
                 {configuration.calendar_days === 0
-                    ? 'After the transition commits'
-                    : `${configuration.calendar_days} calendar days later`}{' '}
+                    ? m.t('splicewire-beam-workflows::messages.history_on_commit')
+                    : m.choice('splicewire-beam-workflows::messages.history_days_later', configuration.calendar_days)}{' '}
                 · {configuration.timezone}
             </p>
             {reaction.enabled && onDisable ? (
@@ -113,39 +123,38 @@ function ReactionHistory({
                         )
                     }
                 >
-                    Disable follow-up
+                    {m.t('splicewire-beam-workflows::messages.history_disable')}
                 </Button>
             ) : null}
             <p className="text-sm text-muted-foreground">
-                Disabling stops future captures. Existing deliveries and action history remain.
+                {m.t('splicewire-beam-workflows::messages.history_disable_note')}
             </p>
             {!reaction.deliveries.length ? (
                 <p className="text-sm text-muted-foreground">
-                    {reaction.enabled
-                        ? 'Waiting for a successful transition.'
-                        : 'No deliveries were captured.'}
+                    {m.t(reaction.enabled
+                        ? 'splicewire-beam-workflows::messages.history_waiting'
+                        : 'splicewire-beam-workflows::messages.history_no_deliveries')}
                 </p>
             ) : null}
             <ol className="divide-y divide-border">
                 {reaction.deliveries.map((delivery) => (
                     <li key={delivery.id} className="space-y-2 py-3 text-sm">
                         <p className="font-medium">
-                            Delivery: {humanizeWorkflowKey(delivery.status)}
+                            {m.t('splicewire-beam-workflows::messages.history_delivery', { status: humanizeWorkflowKey(delivery.status) })}
                         </p>
                         <p>
-                            Anchored to{' '}
-                            <time dateTime={delivery.anchored_at}>
-                                {anchorLabel(delivery.anchored_at)}
-                            </time>
+                            {richMessage(m, 'splicewire-beam-workflows::messages.history_anchored_to', {
+                                time: <time dateTime={delivery.anchored_at}>{anchorLabel(delivery.anchored_at)}</time>,
+                            })}
                         </p>
                         {delivery.status === 'scheduled' ? (
                             <p className="text-muted-foreground">
-                                The action is scheduled. Open its outcome to inspect execution.
+                                {m.t('splicewire-beam-workflows::messages.history_scheduled')}
                             </p>
                         ) : null}
                         {delivery.status === 'superseded' ? (
                             <p className="text-muted-foreground">
-                                A newer transition replaced this pending follow-up.
+                                {m.t('splicewire-beam-workflows::messages.history_superseded')}
                             </p>
                         ) : null}
                         {delivery.blockers.length ? (
@@ -175,7 +184,7 @@ function ReactionHistory({
                                     )
                                 }
                             >
-                                Retry delivery
+                                {m.t('splicewire-beam-workflows::messages.history_retry_delivery')}
                             </Button>
                         ) : null}
                     </li>
@@ -183,7 +192,7 @@ function ReactionHistory({
             </ol>
             {error ? (
                 <p role="alert" className="text-sm text-destructive">
-                    {error}
+                    {say(m, error)}
                 </p>
             ) : null}
         </article>

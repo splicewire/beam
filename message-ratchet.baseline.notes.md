@@ -92,3 +92,9 @@ Part W1 (the seam, WorkflowEditor, WorkflowGraph, WorkflowStepper, WorkflowDiff,
 - beam-workflows/src/WorkflowMigrate.tsx — `$ref` (JsxText): a JSON Schema keyword, shown as code inside the translated explainer.
 
 Parts W2 (action/reaction forms, action detail, reaction history, recipient picker) and W3 (WorkflowsAdminPage) take the rest.
+
+Part W2 (WorkflowActionForm, WorkflowActionDetail, WorkflowReactionForm, WorkflowReactionHistory, RecipientPicker) moves 77 of its 78 nodes onto the catalog, so its --write lowers 115 to 38. Beyond the ratchet: the forms' and detail's stored error text (now Notices: our fallback line, or the error's own message as it arrived), the action form's timing memo (it now keeps a catalog KEY, so it needs no m in its deps) and its string default `submitLabel = 'Schedule transition'` (now `submitLabel ?? m.t(...)`: the prop stays optional, so ./action-form's API and beam-ux's import are unchanged). "N calendar days later" was never singular: both plural forms keep the English. The node left:
+
+- beam-workflows/src/WorkflowActionForm.tsx — `America/New_York` (StringLiteral): an IANA zone id, the timezone input's example value.
+
+The zone/date formatters (Intl.DateTimeFormat(undefined, …)) keep the runtime's locale, as D1 ruled for toLocaleString. Part W3 (WorkflowsAdminPage) takes the remaining 37.

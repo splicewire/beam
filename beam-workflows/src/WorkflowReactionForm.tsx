@@ -6,6 +6,8 @@ import type {
     WorkflowReactionSubjectData,
 } from '@splicewire/beam-resources/types/workflow-reactions';
 import { humanizeWorkflowKey } from './humanizeWorkflowKey';
+import { notice, say, type Notice } from './message-descriptor';
+import { useBeamWorkflowsMessages } from './messages';
 
 /** Host-owned destination vocabulary: the workflow package does not construct Circuit requests. */
 export type WorkflowReactionDestination = Pick<
@@ -44,7 +46,8 @@ export function WorkflowReactionForm({
     const [timezone, setTimezone] = useState(initialTimezone);
     const [pending, setPending] = useState(false);
     const busy = useRef(false);
-    const [error, setError] = useState<string | null>(null);
+    const [error, setError] = useState<Notice | null>(null);
+    const m = useBeamWorkflowsMessages();
     let validTimezone = true;
     try {
         new Intl.DateTimeFormat('en', { timeZone: timezone });
@@ -97,7 +100,7 @@ export function WorkflowReactionForm({
             setError(
                 failure instanceof Error
                     ? failure.message
-                    : 'The follow-up could not be saved. Try again.',
+                    : notice('splicewire-beam-workflows::messages.reaction_save_failed'),
             );
         } finally {
             busy.current = false;
@@ -107,7 +110,7 @@ export function WorkflowReactionForm({
 
     return (
         <form
-            aria-label="Configure workflow follow-up"
+            aria-label={m.t('splicewire-beam-workflows::messages.reaction_form_label')}
             aria-busy={pending}
             onSubmit={submit}
             className="space-y-4"
@@ -117,7 +120,7 @@ export function WorkflowReactionForm({
                 {subjectLabel ? <p className="text-sm font-medium">{subjectLabel}</p> : null}
                 <div className="space-y-1.5">
                     <label htmlFor={`${id}-source`} className="text-sm font-medium">
-                        After transition
+                        {m.t('splicewire-beam-workflows::messages.reaction_after_transition')}
                     </label>
                     <select
                         id={`${id}-source`}
@@ -126,7 +129,7 @@ export function WorkflowReactionForm({
                         value={source}
                         onChange={(event) => setSource(event.target.value)}
                     >
-                        <option value="">Choose a transition…</option>
+                        <option value="">{m.t('splicewire-beam-workflows::messages.choose_transition')}</option>
                         {names.map((name) => (
                             <option key={name} value={name}>
                                 {humanizeWorkflowKey(name)}
@@ -135,13 +138,13 @@ export function WorkflowReactionForm({
                     </select>
                     {!projection ? (
                         <p className="text-sm text-muted-foreground">
-                            Choose a subject with a workflow to configure a follow-up.
+                            {m.t('splicewire-beam-workflows::messages.reaction_no_subject')}
                         </p>
                     ) : null}
                 </div>
                 <div className="space-y-1.5">
                     <label htmlFor={`${id}-destination`} className="text-sm font-medium">
-                        Follow-up action
+                        {m.t('splicewire-beam-workflows::messages.reaction_follow_up_action')}
                     </label>
                     <select
                         id={`${id}-destination`}
@@ -153,15 +156,15 @@ export function WorkflowReactionForm({
                             )
                         }
                     >
-                        <option value="transition">Schedule another transition</option>
-                        {circuitAction ? <option value="circuit">Run a Circuit</option> : null}
+                        <option value="transition">{m.t('splicewire-beam-workflows::messages.reaction_destination_transition')}</option>
+                        {circuitAction ? <option value="circuit">{m.t('splicewire-beam-workflows::messages.reaction_destination_circuit')}</option> : null}
                     </select>
                 </div>
                 {destination === 'transition' ? (
                     <div className="grid gap-4 sm:grid-cols-2">
                         <div className="space-y-1.5">
                             <label htmlFor={`${id}-target`} className="text-sm font-medium">
-                                Then transition
+                                {m.t('splicewire-beam-workflows::messages.reaction_then_transition')}
                             </label>
                             <select
                                 id={`${id}-target`}
@@ -170,7 +173,7 @@ export function WorkflowReactionForm({
                                 value={target}
                                 onChange={(event) => setTarget(event.target.value)}
                             >
-                                <option value="">Choose a transition…</option>
+                                <option value="">{m.t('splicewire-beam-workflows::messages.choose_transition')}</option>
                                 {names.map((name) => (
                                     <option key={name} value={name}>
                                         {humanizeWorkflowKey(name)}
@@ -180,7 +183,7 @@ export function WorkflowReactionForm({
                         </div>
                         <div className="space-y-1.5">
                             <label htmlFor={`${id}-days`} className="text-sm font-medium">
-                                Calendar days later
+                                {m.t('splicewire-beam-workflows::messages.reaction_days_label')}
                             </label>
                             <Input
                                 id={`${id}-days`}
@@ -195,7 +198,7 @@ export function WorkflowReactionForm({
                             />
                             {!validDays ? (
                                 <p role="alert" className="text-sm text-destructive">
-                                    Enter a whole number from 0 to 36500.
+                                    {m.t('splicewire-beam-workflows::messages.reaction_days_invalid')}
                                 </p>
                             ) : null}
                         </div>
@@ -203,7 +206,7 @@ export function WorkflowReactionForm({
                 ) : (
                     <div className="space-y-1.5">
                         <label htmlFor={`${id}-circuit`} className="text-sm font-medium">
-                            Circuit
+                            {m.t('splicewire-beam-workflows::messages.reaction_circuit')}
                         </label>
                         <select
                             id={`${id}-circuit`}
@@ -212,7 +215,7 @@ export function WorkflowReactionForm({
                             value={circuitId}
                             onChange={(event) => setCircuitId(event.target.value)}
                         >
-                            <option value="">Choose a Circuit…</option>
+                            <option value="">{m.t('splicewire-beam-workflows::messages.reaction_choose_circuit')}</option>
                             {circuitChoices.map((choice) => (
                                 <option key={choice.id} value={choice.id}>
                                     {choice.label}
@@ -221,15 +224,14 @@ export function WorkflowReactionForm({
                         </select>
                         {!circuitChoices.length ? (
                             <p className="text-sm text-muted-foreground">
-                                No Circuits are available. Create a Circuit or choose another
-                                follow-up action.
+                                {m.t('splicewire-beam-workflows::messages.reaction_no_circuits')}
                             </p>
                         ) : null}
                     </div>
                 )}
                 <div className="space-y-1.5">
                     <label htmlFor={`${id}-timezone`} className="text-sm font-medium">
-                        Follow-up timezone
+                        {m.t('splicewire-beam-workflows::messages.reaction_timezone')}
                     </label>
                     <Input
                         id={`${id}-timezone`}
@@ -240,33 +242,29 @@ export function WorkflowReactionForm({
                     />
                     {!validTimezone ? (
                         <p role="alert" className="text-sm text-destructive">
-                            Enter an IANA timezone, such as America/New_York.
+                            {m.t('splicewire-beam-workflows::messages.reaction_timezone_invalid')}
                         </p>
                     ) : null}
                 </div>
                 <p className="text-sm text-muted-foreground">
-                    Timing starts from the actual successful transition. A delayed or refused
-                    transition never creates an early follow-up.
+                    {m.t('splicewire-beam-workflows::messages.reaction_timing_note')}
                 </p>
                 {destination === 'transition' ? (
                     <p className="text-sm text-muted-foreground">
-                        Calendar days preserve local time. A missing hour moves forward; a repeated
-                        hour uses its first occurrence. A newer matching transition replaces a
-                        pending follow-up unless you have manually changed it.
+                        {m.t('splicewire-beam-workflows::messages.reaction_calendar_note')}
                     </p>
                 ) : (
                     <p className="text-sm text-muted-foreground">
-                        The Circuit is requested after the transition commits. Its execution
-                        permission and outcome are checked separately.
+                        {m.t('splicewire-beam-workflows::messages.reaction_circuit_note')}
                     </p>
                 )}
                 {error ? (
                     <p role="alert" className="text-sm text-destructive">
-                        {error}
+                        {say(m, error)}
                     </p>
                 ) : null}
                 <Button type="submit" disabled={!valid || pending}>
-                    {pending ? 'Saving…' : 'Add follow-up'}
+                    {m.t(pending ? 'splicewire-beam-workflows::messages.saving' : 'splicewire-beam-workflows::messages.reaction_submit')}
                 </Button>
             </fieldset>
         </form>

@@ -2,6 +2,7 @@ import { Check, Plus, TriangleAlert, X } from 'lucide-react';
 import { useState } from 'react';
 import { Input, Popover, PopoverContent, PopoverTrigger } from '@schemastud/ui';
 import { type PrincipalKind, principalRows, toChips, toggleToken } from './principals';
+import { useBeamWorkflowsMessages } from './messages';
 
 /**
  * The recipient picker (beam-workflows-ux tickets 08/17) — the first non-primitive effect param, the
@@ -25,6 +26,7 @@ export function RecipientPicker({
     kinds: PrincipalKind[];
 }) {
     const [raw, setRaw] = useState('');
+    const m = useBeamWorkflowsMessages();
     const rows = principalRows(kinds);
     const chips = toChips(value, rows);
     const flatRows = rows.filter((r) => r.group === 'flat');
@@ -56,7 +58,7 @@ export function RecipientPicker({
                             className="flex min-h-9 w-full cursor-pointer flex-wrap items-center gap-1.5 rounded-md border border-input bg-transparent px-2 py-1.5 text-left text-sm shadow-sm focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none"
                         >
                             {chips.length === 0 ? (
-                                <span className="text-[var(--beam-ink-45)]">Choose recipients…</span>
+                                <span className="text-[var(--beam-ink-45)]">{m.t('splicewire-beam-workflows::messages.recipients_choose')}</span>
                             ) : (
                                 chips.map((chip) => (
                                     <span
@@ -70,7 +72,7 @@ export function RecipientPicker({
                                         {!chip.known && (
                                             <TriangleAlert
                                                 className="size-3 text-destructive"
-                                                aria-label="Undeclared token"
+                                                aria-label={m.t('splicewire-beam-workflows::messages.recipients_undeclared')}
                                             />
                                         )}
                                         <span
@@ -88,7 +90,7 @@ export function RecipientPicker({
                                         <span
                                             role="button"
                                             tabIndex={-1}
-                                            aria-label={`Remove ${chip.label}`}
+                                            aria-label={m.t('splicewire-beam-workflows::messages.recipients_remove', { label: chip.label })}
                                             onClick={(e) => {
                                                 e.stopPropagation();
                                                 toggle(chip.token);
@@ -116,7 +118,7 @@ export function RecipientPicker({
                         {roleRows.length > 0 && (
                             <>
                                 <div className="px-2 pt-2 pb-1 font-mono text-[9px] tracking-[0.1em] text-[var(--beam-ink-45)] uppercase">
-                                    By role
+                                    {m.t('splicewire-beam-workflows::messages.recipients_by_role')}
                                 </div>
                                 {roleRows.map((row) => (
                                     <ChecklistRow
@@ -130,7 +132,7 @@ export function RecipientPicker({
                         )}
 
                         <div className="px-2 pt-2 pb-1 font-mono text-[9px] tracking-[0.1em] text-[var(--beam-ink-45)] uppercase">
-                            Advanced
+                            {m.t('splicewire-beam-workflows::messages.recipients_advanced')}
                         </div>
                         <div className="flex gap-1 px-1 pb-1">
                             <Input
@@ -142,9 +144,9 @@ export function RecipientPicker({
                                         addRaw();
                                     }
                                 }}
-                                placeholder="kind:selector — e.g. team:eng"
+                                placeholder={m.t('splicewire-beam-workflows::messages.recipients_raw_placeholder')}
                                 className="h-7 text-xs"
-                                aria-label="Raw principal token"
+                                aria-label={m.t('splicewire-beam-workflows::messages.recipients_raw_label')}
                             />
                         </div>
                     </PopoverContent>
