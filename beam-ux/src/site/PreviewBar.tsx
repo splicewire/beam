@@ -66,8 +66,6 @@ const row: CSSProperties = { alignItems: 'center', display: 'flex', flexWrap: 'w
 const link: CSSProperties = { color: 'white' };
 const panel: CSSProperties = { margin: '8px auto 0', maxWidth: 960 };
 const list: CSSProperties = { margin: '4px 0 8px', paddingLeft: 20 };
-/** `toLocaleString()`'s default fields (numeric date and time), now in the reader's catalog locale. */
-const DUE_FORMAT: Intl.DateTimeFormatOptions = { year: 'numeric', month: 'numeric', day: 'numeric', hour: 'numeric', minute: 'numeric', second: 'numeric' };
 
 /**
  * **The Preview bar** (ADR-0232 d9–d13): what is previewed, the switch between the Preview and the live site at the
@@ -195,7 +193,7 @@ function Readiness({ preview, open }: { preview: PreviewBarData; open: (path: st
                     {readiness.blockers.map((item, index) => (
                         <li key={`${item.code}-${item.entryId ?? ''}-${index}`}>
                             {item.message}
-                            {item.fixes.length > 0 ? <span> {m.t('splicewire-beam-ux::messages.site_publish_fix', { fixes: m.list(item.fixes, { type: 'disjunction' }) })}</span> : null}
+                            {item.fixes.length > 0 ? <span> {m.t('splicewire-beam-ux::messages.site_publish_fix', { fixes: item.fixes.join(m.t('splicewire-beam-ux::messages.site_publish_fix_joiner')) })}</span> : null}
                             {item.fixes.includes('open') && item.entryId && paths.has(item.entryId) ? (
                                 <> <a href={open(paths.get(item.entryId)!)} style={link}>{m.t('splicewire-beam-ux::messages.site_publish_open_page')}</a></>
                             ) : null}
@@ -217,7 +215,7 @@ function Readiness({ preview, open }: { preview: PreviewBarData; open: (path: st
                     {readiness.notes.map((item, index) => (
                         <li key={`${item.code}-${item.entryId ?? ''}-${index}`}>
                             {item.message}
-                            {item.releaseDueAt ? ` ${m.t('splicewire-beam-ux::messages.site_publish_due', { when: m.date(new Date(item.releaseDueAt), DUE_FORMAT) })}` : null}
+                            {item.releaseDueAt ? ` ${m.t('splicewire-beam-ux::messages.site_publish_due', { when: new Date(item.releaseDueAt).toLocaleString() })}` : null}
                         </li>
                     ))}
                 </ul>

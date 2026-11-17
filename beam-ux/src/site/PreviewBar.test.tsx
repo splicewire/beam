@@ -63,6 +63,19 @@ describe('PreviewBar (Release)', () => {
         expect(screen.getByText('Nothing stops Publish')).toBeTruthy();
     });
 
+    it('joins three or more fixes exactly as before: every pair with " or "', () => {
+        render(<PreviewBar preview={{
+            ...base,
+            readiness: {
+                ready: false,
+                blockers: [{ code: 'stale', entryId: 'about', message: 'A publication pin moved.', fixes: ['rebase', 'drop', 'open'] }],
+                notes: [],
+            },
+        }} />);
+
+        expect(within(screen.getByRole('region', { name: 'Publish' })).getByText('Fix: rebase or drop or open')).toBeTruthy();
+    });
+
     it('links each fix to where it is pressed: the Release\'s page, or the page itself', () => {
         render(<PreviewBar preview={{
             ...base,

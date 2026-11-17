@@ -85,6 +85,7 @@
     "splicewire-beam-ux::messages.site_publish_due": "Publishes :when.",
     "splicewire-beam-ux::messages.site_publish_fix": "Fix: :fixes",
     "splicewire-beam-ux::messages.site_publish_fix_in_release": "Fix in the Release",
+    "splicewire-beam-ux::messages.site_publish_fix_joiner": " or ",
     "splicewire-beam-ux::messages.site_publish_fix_on_page": "Fix on the page",
     "splicewire-beam-ux::messages.site_publish_nothing_stops": "Nothing stops Publish",
     "splicewire-beam-ux::messages.site_publish_open_page": "Open the page",
