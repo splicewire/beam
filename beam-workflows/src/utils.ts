@@ -3,7 +3,8 @@
  * The injected client adapter is expected to throw an `Error` whose `message` is the server's, so
  * this reads it without knowing the transport. Twin of the helper in @splicewire/beam-accounts.
  */
-export function errorMessage(error: unknown, fallback = 'Something went wrong.'): string {
+// The fallback is required: callers pass a catalog line (no English default here; localization 30, REVIEW-30W3).
+export function errorMessage(error: unknown, fallback: string): string {
     if (error && typeof error === 'object' && 'message' in error) {
         const message = (error as { message?: unknown }).message;
         if (typeof message === 'string' && message) return message;

@@ -25,5 +25,10 @@ export default defineConfig({
         '@schemastud/ui',
         '@xyflow/react',
         'lucide-react',
+        // The messages runtime is the host's one instance; the package catalog is imported through its own exported
+        // ./messages subpath and kept external, so neither entry inlines it (localization 30 W3).
+        '@schemastud/messages',
+        '@schemastud/messages/react',
+        '@splicewire/beam-workflows/messages.js',
     ],
 });

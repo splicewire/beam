@@ -1,6 +1,10 @@
 import { createMessages } from '@schemastud/messages';
 import { useMessages } from '@schemastud/messages/react';
-import catalog from '../messages.default.json';
+// The package's own English defaults through its exported `./messages.js` subpath (a self-reference to the GENERATED ES
+// module of the catalog), which every build keeps EXTERNAL: the catalog is not inlined into dist (root's condition for
+// ./action-form, localization 30 W3), and a JS module needs no import attribute, so Node/SSR loads it where a bare JSON
+// import fails (REVIEW-30W3; scripts/node-smoke.mjs pins it). Tests alias it to the local file (vitest.config.ts).
+import catalog from '@splicewire/beam-workflows/messages.js';
 
 /** English defaults for module-level copy that is read outside a render (static helpers, manifests). */
 export const englishBeamWorkflowsMessages = createMessages(catalog.messages);

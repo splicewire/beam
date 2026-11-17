@@ -195,7 +195,8 @@ export function WorkflowMigrate({
                                 </li>
                             ))}
                             {report.unmappable.length > 8 && (
-                                <li>{m.t('splicewire-beam-workflows::messages.migrate_and_more', { count: report.unmappable.length - 8 })}</li>
+                                // A count the catalog can pluralise; English keeps one form for every count, as before.
+                                <li>{m.choice('splicewire-beam-workflows::messages.migrate_and_more', report.unmappable.length - 8)}</li>
                             )}
                         </ul>
                     </div>

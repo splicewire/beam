@@ -15,14 +15,20 @@
             "types": "./dist/action-form.d.ts",
             "import": "./dist/action-form.js"
         },
-        "./messages": "./messages.default.json"
+        "./messages": "./messages.default.json",
+        "./messages.js": {
+            "types": "./messages.default.d.ts",
+            "default": "./messages.default.js"
+        }
     },
     "sideEffects": false,
     "files": [
         "dist",
         "src",
         "README.md",
-        "messages.default.json"
+        "messages.default.json",
+        "messages.default.js",
+        "messages.default.d.ts"
     ],
     "publishConfig": {
         "registry": "https://registry.npmjs.org",
@@ -34,9 +40,10 @@
         "directory": "beam-workflows"
     },
     "scripts": {
-        "build": "tsup",
+        "build": "tsup && pnpm run test:node",
         "dev": "tsup --watch",
         "test": "vitest run",
+        "test:node": "node scripts/node-smoke.mjs",
         "typecheck": "tsc --noEmit",
         "lint:imports": "node scripts/check-imports.mjs",
         "prepublishOnly": "pnpm run build",

@@ -18,6 +18,9 @@ const entry = (id: string) => fileURLToPath(import.meta.resolve(id));
 export default defineConfig({
     resolve: {
         alias: {
+            // The package's own catalog subpath (src/messages.ts imports it as an external self-reference): tests read
+            // the local file.
+            '@splicewire/beam-workflows/messages.js': fileURLToPath(new URL('./messages.default.js', import.meta.url)),
             'react/jsx-runtime': join(react, 'jsx-runtime.js'),
             'react/jsx-dev-runtime': join(react, 'jsx-dev-runtime.js'),
             'react-dom/client': join(reactDom, 'client.js'),

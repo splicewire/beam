@@ -27,6 +27,14 @@ import { errorMessage } from './utils';
 import { WorkflowDiff } from './WorkflowDiff';
 import { WorkflowEditor } from './WorkflowEditor';
 import { WorkflowMigrate } from './WorkflowMigrate';
+import { useBeamWorkflowsMessages, type BeamWorkflowsMessageKey } from './messages';
+
+// The lineage filter's scopes are keys; their labels are catalog lines, translated where they render (localization 30).
+const SCOPE_LABEL: Record<'all' | 'system' | 'custom', BeamWorkflowsMessageKey> = {
+    all: 'splicewire-beam-workflows::messages.admin_scope_all',
+    system: 'splicewire-beam-workflows::messages.admin_scope_system',
+    custom: 'splicewire-beam-workflows::messages.admin_scope_custom',
+};
 
 /**
  * The Workflows admin home (beam-workflows v2 ticket 09) + the `<WorkflowEditor>` host (ticket 08).
@@ -67,6 +75,7 @@ export function WorkflowsAdminPage() {
     const qc = useQueryClient();
     const { client, onError, onSelectLineage } = useWorkflowsServices();
     const notify = useNotify();
+    const m = useBeamWorkflowsMessages();
     const [selectedKey, setSelectedKey] = useState<string | null>(null);
     const [showMigrate, setShowMigrate] = useState(false);
     // Lineage-index filter (admin-redesign ticket 08) — a router-agnostic filter over the already-
@@ -139,11 +148,12 @@ export function WorkflowsAdminPage() {
         mutationFn: (blueprint: BlueprintDraft) =>
             client.saveVersion(selectedKey as string, blueprint, activateOnSave),
         onSuccess: () => {
-            notify({ type: 'success', message: 'Saved a new version' });
+            // Toasts are events handed to the host as they fire, so they are translated now.
+            notify({ type: 'success', message: m.t('splicewire-beam-workflows::messages.admin_saved') });
             invalidateLineages();
         },
         onError: (error) => {
-            notify({ type: 'error', message: errorMessage(error, 'Could not save the workflow') });
+            notify({ type: 'error', message: errorMessage(error, m.t('splicewire-beam-workflows::messages.admin_save_failed')) });
             onError?.(error);
         },
     });
@@ -152,11 +162,11 @@ export function WorkflowsAdminPage() {
         mutationFn: (vars: { typeKey: string; lineageRef: string; params: Record<string, unknown> }) =>
             client.bind(vars),
         onSuccess: () => {
-            notify({ type: 'success', message: 'Binding updated' });
+            notify({ type: 'success', message: m.t('splicewire-beam-workflows::messages.admin_binding_updated') });
             invalidateLineages();
         },
         onError: (error) => {
-            notify({ type: 'error', message: errorMessage(error, 'Could not update the binding') });
+            notify({ type: 'error', message: errorMessage(error, m.t('splicewire-beam-workflows::messages.admin_binding_failed')) });
             onError?.(error);
         },
     });
@@ -164,11 +174,11 @@ export function WorkflowsAdminPage() {
     const unbind = useMutation({
         mutationFn: (typeKey: string) => client.unbind(typeKey),
         onSuccess: () => {
-            notify({ type: 'success', message: 'Type unbound — now unmanaged' });
+            notify({ type: 'success', message: m.t('splicewire-beam-workflows::messages.admin_unbound') });
             invalidateLineages();
         },
         onError: (error) => {
-            notify({ type: 'error', message: errorMessage(error, 'Could not unbind the type') });
+            notify({ type: 'error', message: errorMessage(error, m.t('splicewire-beam-workflows::messages.admin_unbind_failed')) });
             onError?.(error);
         },
     });
@@ -177,10 +187,9 @@ export function WorkflowsAdminPage() {
         // Full-bleed (admin-redesign ticket 08): the desk shell owns the outer gutter, so the surface
         // drops its own `mx-auto max-w-5xl px-6 py-8` and spans the framed main.
         <div>
-            <h1 className="mb-1 text-xl font-semibold">Workflows</h1>
+            <h1 className="mb-1 text-xl font-semibold">{m.t('splicewire-beam-workflows::messages.admin_title')}</h1>
             <p className="mb-6 text-sm text-[var(--beam-ink-55)]">
-                Definition lineages, their immutable versions, and the types they govern. Editing
-                forks a new version — objects already running stay on the version they started on.
+                {m.t('splicewire-beam-workflows::messages.admin_lead')}
             </p>
 
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-[260px_1fr]">
@@ -191,8 +200,8 @@ export function WorkflowsAdminPage() {
                         <Input
                             value={query}
                             onChange={(e) => setQuery(e.target.value)}
-                            placeholder="Filter workflows…"
-                            aria-label="Filter workflows"
+                            placeholder={m.t('splicewire-beam-workflows::messages.admin_filter_placeholder')}
+                            aria-label={m.t('splicewire-beam-workflows::messages.admin_filter_label')}
                             className="h-8 text-sm"
                         />
                         <div className="flex gap-1">
@@ -209,17 +218,17 @@ export function WorkflowsAdminPage() {
                                             : 'border-[var(--beam-ink-12)] text-[var(--beam-ink-45)] hover:bg-[var(--beam-ink-03)]',
                                     )}
                                 >
-                                    {s}
+                                    {m.t(SCOPE_LABEL[s])}
                                 </button>
                             ))}
                         </div>
                     </div>
                     {lineages.isPending && (
-                        <p className="text-sm text-muted-foreground">Loading…</p>
+                        <p className="text-sm text-muted-foreground">{m.t('splicewire-beam-workflows::messages.admin_loading')}</p>
                     )}
                     {lineages.isError && (
                         <div role="alert" className="space-y-2 text-sm text-destructive">
-                            <p>{forbidden ? "You don't have access to workflows." : 'Could not load workflows.'}</p>
+                            <p>{m.t(forbidden ? 'splicewire-beam-workflows::messages.admin_forbidden' : 'splicewire-beam-workflows::messages.admin_load_failed')}</p>
                             {!forbidden && retryable && (
                                 <Button
                                     type="button"
@@ -228,13 +237,13 @@ export function WorkflowsAdminPage() {
                                     disabled={lineages.isFetching}
                                     onClick={() => { void lineages.refetch(); }}
                                 >
-                                    {lineages.isFetching ? 'Retrying…' : 'Retry'}
+                                    {m.t(lineages.isFetching ? 'splicewire-beam-workflows::messages.admin_retrying' : 'splicewire-beam-workflows::messages.admin_retry')}
                                 </Button>
                             )}
                         </div>
                     )}
                     {lineages.isSuccess && filteredLineages.length === 0 && (
-                        <p className="text-sm text-muted-foreground">No workflows match.</p>
+                        <p className="text-sm text-muted-foreground">{m.t('splicewire-beam-workflows::messages.admin_no_match')}</p>
                     )}
                     {filteredLineages.map((lineage) => (
                         <button
@@ -255,11 +264,11 @@ export function WorkflowsAdminPage() {
                             <div className="mt-1 flex flex-wrap gap-1 text-[10px]">
                                 {lineage.isSystem && (
                                     <span className="rounded bg-[var(--beam-ink-08)] px-1.5 py-0.5 uppercase">
-                                        system
+                                        {m.t('splicewire-beam-workflows::messages.admin_system_badge')}
                                     </span>
                                 )}
                                 <span className="rounded bg-[var(--beam-ink-08)] px-1.5 py-0.5">
-                                    v{lineage.versions.length}
+                                    {m.t('splicewire-beam-workflows::messages.version_label', { version: lineage.versions.length })}
                                 </span>
                                 {lineage.boundTypes.map((type) => (
                                     <span
@@ -278,7 +287,7 @@ export function WorkflowsAdminPage() {
                 <main>
                     {!selected ? (
                         <p className="text-sm text-muted-foreground">
-                            Select a workflow to view its versions and edit it.
+                            {m.t('splicewire-beam-workflows::messages.admin_select_prompt')}
                         </p>
                     ) : (
                         <>
@@ -308,9 +317,10 @@ export function WorkflowsAdminPage() {
                                                         : 'border-[var(--beam-ink-15)] text-[var(--beam-ink-45)]',
                                                 )}
                                             >
-                                                v{v.version}
-                                                {v.isActive ? ' · active' : ''}
-                                                {count > 0 ? ` · ${count} rec` : ''}
+                                                {m.t('splicewire-beam-workflows::messages.version_label', { version: v.version })}
+                                                {/* The " · " separators stay outside the catalog lines. "rec" was never pluralised. */}
+                                                {v.isActive ? <> · {m.t('splicewire-beam-workflows::messages.admin_version_active')}</> : ''}
+                                                {count > 0 ? <> · {m.choice('splicewire-beam-workflows::messages.admin_version_records', count)}</> : ''}
                                             </span>
                                         );
                                     })}
@@ -318,10 +328,10 @@ export function WorkflowsAdminPage() {
                                 {/* The "is it active" evidence: live records pinned to this workflow. */}
                                 <p className="text-xs text-[var(--beam-ink-50)]">
                                     {coverage.isPending
-                                        ? 'Checking coverage…'
+                                        ? m.t('splicewire-beam-workflows::messages.admin_coverage_checking')
                                         : (coverage.data?.total ?? 0) === 0
-                                          ? 'No records are running under this workflow yet.'
-                                          : `Governing ${coverage.data?.total} record${coverage.data?.total === 1 ? '' : 's'} (pinned on first transition).`}
+                                          ? m.t('splicewire-beam-workflows::messages.admin_coverage_none')
+                                          : m.choice('splicewire-beam-workflows::messages.admin_coverage_governing', coverage.data?.total ?? 0)}
                                 </p>
                             </div>
                             {/* Version diff / compare (ticket 19) — read-only structural delta. */}
@@ -337,9 +347,9 @@ export function WorkflowsAdminPage() {
                                         aria-expanded={showMigrate}
                                         className="text-xs text-[var(--beam-amber)] hover:underline"
                                     >
-                                        {showMigrate
-                                            ? 'Hide'
-                                            : 'Migrate records to another version…'}
+                                        {m.t(showMigrate
+                                            ? 'splicewire-beam-workflows::messages.admin_hide'
+                                            : 'splicewire-beam-workflows::messages.admin_show_migrate')}
                                     </button>
                                     {showMigrate && (
                                         <div className="mt-2">
@@ -359,13 +369,13 @@ export function WorkflowsAdminPage() {
                                             <Switch
                                                 checked={activateOnSave}
                                                 onCheckedChange={setActivateOnSave}
-                                                aria-label="Activate the new version on save"
+                                                aria-label={m.t('splicewire-beam-workflows::messages.admin_activate_label')}
                                             />
-                                            Activate on save
+                                            {m.t('splicewire-beam-workflows::messages.admin_activate')}
                                             <span className="text-[var(--beam-ink-45)]">
-                                                {activateOnSave
-                                                    ? '— new subjects pin to this version'
-                                                    : '— fork inert; the active version is unchanged'}
+                                                {m.t(activateOnSave
+                                                    ? 'splicewire-beam-workflows::messages.admin_activate_on'
+                                                    : 'splicewire-beam-workflows::messages.admin_activate_off')}
                                             </span>
                                         </label>
                                     )}
@@ -382,7 +392,7 @@ export function WorkflowsAdminPage() {
                                         canSave={canAuthor}
                                         error={
                                             save.isError
-                                                ? errorMessage(save.error, 'Save failed')
+                                                ? errorMessage(save.error, m.t('splicewire-beam-workflows::messages.admin_save_error'))
                                                 : null
                                         }
                                         onSave={(blueprint) => save.mutate(blueprint)}
@@ -425,6 +435,7 @@ function BindingPanel({
 }) {
     const [typeKey, setTypeKey] = useState('');
     const [params, setParams] = useState<Record<string, unknown>>({});
+    const m = useBeamWorkflowsMessages();
 
     // The param knobs the bound guards accept — collected from the active version's guard refs.
     const paramFields = (() => {
@@ -449,7 +460,7 @@ function BindingPanel({
         <Card className="mb-5">
             <CardHeader className="pb-3">
                 <CardTitle className="font-mono text-[11px] font-medium tracking-[0.12em] text-[var(--beam-ink-45)] uppercase">
-                    Governed types
+                    {m.t('splicewire-beam-workflows::messages.admin_governed_types')}
                 </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
@@ -457,7 +468,7 @@ function BindingPanel({
                 <div className="space-y-1.5">
                     {lineage.boundTypes.length === 0 && (
                         <p className="text-sm text-[var(--beam-ink-50)]">
-                            No type is governed by this workflow yet.
+                            {m.t('splicewire-beam-workflows::messages.admin_no_governed_type')}
                         </p>
                     )}
                     {lineage.boundTypes.map((type) => (
@@ -479,7 +490,7 @@ function BindingPanel({
                                 className="h-auto py-1 text-xs text-destructive hover:bg-destructive/10 hover:text-destructive"
                                 onClick={() => onUnbind(type)}
                             >
-                                <Trash2 className="size-3" /> Unbind (→ unmanaged)
+                                <Trash2 className="size-3" /> {m.t('splicewire-beam-workflows::messages.admin_unbind')}
                             </Button>
                         </div>
                     ))}
@@ -489,15 +500,15 @@ function BindingPanel({
                 <div className="flex flex-wrap items-end gap-4 border-t border-[var(--beam-ink-08)] pt-3">
                     <div className="space-y-1">
                         <Label htmlFor="bind-type-key" className="text-xs text-[var(--beam-ink-50)]">
-                            Type
+                            {m.t('splicewire-beam-workflows::messages.admin_type')}
                         </Label>
                         <Select value={typeKey || undefined} onValueChange={setTypeKey}>
                             <SelectTrigger
                                 id="bind-type-key"
                                 className="w-64"
-                                aria-label="Type to govern"
+                                aria-label={m.t('splicewire-beam-workflows::messages.admin_type_to_govern')}
                             >
-                                <SelectValue placeholder="Select a type…" />
+                                <SelectValue placeholder={m.t('splicewire-beam-workflows::messages.admin_select_type')} />
                             </SelectTrigger>
                             <SelectContent>
                                 {types
@@ -558,7 +569,7 @@ function BindingPanel({
                         disabled={binding || typeKey.trim() === '' || !canAuthor}
                         onClick={() => onBind(typeKey.trim(), params)}
                     >
-                        Bind type
+                        {m.t('splicewire-beam-workflows::messages.admin_bind_type')}
                     </Button>
                 </div>
             </CardContent>

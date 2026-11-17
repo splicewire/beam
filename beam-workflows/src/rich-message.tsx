@@ -1,7 +1,5 @@
 import { Fragment, type ReactNode } from 'react';
-import type { useBeamWorkflowsMessages } from './messages.js';
-
-type BeamWorkflowsMessages = ReturnType<typeof useBeamWorkflowsMessages>;
+import type { BeamWorkflowsMessages } from './messages';
 
 /**
  * Render one complete translated sentence whose parameters are React nodes (`<b>`, `<code>`, links), so a translator

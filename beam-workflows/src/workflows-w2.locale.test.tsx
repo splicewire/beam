@@ -4,8 +4,11 @@ import type { WorkflowProjectionData } from '@splicewire/beam-resources/types/wo
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import type { ComponentType, ReactNode } from 'react';
 import { afterEach, describe, expect, it } from 'vitest';
+import { RecipientPicker } from './RecipientPicker';
 import { WorkflowActionDetail } from './WorkflowActionDetail';
 import { WorkflowActionForm } from './WorkflowActionForm';
+import { WorkflowReactionForm } from './WorkflowReactionForm';
+import { WorkflowReactionHistory } from './WorkflowReactionHistory';
 
 // Localization 30 part W2: beam-workflows' action and reaction surfaces read the reader's catalog through the seam, and
 // are the pre-30 English, byte for byte, without one. The provider module is loaded lazily, so at the parent these
@@ -20,6 +23,11 @@ const spanish: ClientCatalog = {
         'splicewire-beam-workflows::messages.action_submit': { text: 'Programar transición', sourceLocale: 'es' },
         'splicewire-beam-workflows::messages.detail_cancel_schedule': { text: 'Cancelar programación', sourceLocale: 'es' },
         'splicewire-beam-workflows::messages.detail_update_failed': { text: 'No se pudo actualizar esta acción.', sourceLocale: 'es' },
+        'splicewire-beam-workflows::messages.reaction_submit': { text: 'Añadir seguimiento', sourceLocale: 'es' },
+        'splicewire-beam-workflows::messages.reaction_after_transition': { text: 'Tras la transición', sourceLocale: 'es' },
+        'splicewire-beam-workflows::messages.history_days_later': { text: ':count día después|:count días después', sourceLocale: 'es' },
+        'splicewire-beam-workflows::messages.history_disable': { text: 'Desactivar seguimiento', sourceLocale: 'es' },
+        'splicewire-beam-workflows::messages.recipients_remove': { text: 'Quitar :label', sourceLocale: 'es' },
     },
 };
 const english: ClientCatalog = { version: 1, locale: 'en', realm: null, direction: 'ltr', messages: {} };
@@ -67,6 +75,52 @@ describe('beam-workflows W2 copy reads the seam', () => {
 
         view.rerender(await inLocale(english, form()));
         expect(screen.queryByRole('button', { name: 'Schedule transition' })).not.toBeNull();
+    });
+
+    it("labels the follow-up form in the reader's locale and re-renders it on a live switch", async () => {
+        const form = (
+            <WorkflowReactionForm projection={projection} subject={{ subject_kind: 'article', subject_id: '1' }}
+                calendarId="calendar:1" initialTimezone="America/New_York" onConfigure={async () => {}} />
+        );
+        const view = render(await inLocale(spanish, form));
+        expect(screen.queryByText('Tras la transición')).not.toBeNull();
+        expect(screen.queryByRole('button', { name: 'Añadir seguimiento' })).not.toBeNull();
+
+        view.rerender(await inLocale(english, form));
+        expect(screen.queryByRole('button', { name: 'Add follow-up' })).not.toBeNull();
+    });
+
+    it('counts follow-up days through the catalog plural; the server\'s blockers render as given', async () => {
+        const history = (
+            <WorkflowReactionHistory
+                onDisable={async () => {}}
+                reactions={[{
+                    id: 'binding:1', revision: 2, enabled: true,
+                    configuration: {
+                        subject_kind: 'article', subject_id: '1', transition: 'publish',
+                        action_kind: 'kind.workflow-transition', action_payload: { transition: 'unpublish' },
+                        calendar_days: 30, timezone: 'America/New_York', calendar_id: 'calendar:1',
+                    },
+                    deliveries: [{
+                        id: 'delivery:1', status: 'blocked', transition_id: 'fact:1', action_id: null,
+                        anchored_at: '2026-03-01T14:00:00Z', attempts: 1, blockers: ['Permission unavailable.'],
+                    }],
+                }] as never}
+            />
+        );
+        const view = render(await inLocale(spanish, history));
+        expect(screen.queryByText(/^30 días después/)).not.toBeNull();
+        expect(screen.queryByRole('button', { name: 'Desactivar seguimiento' })).not.toBeNull();
+        expect(screen.queryByText('Permission unavailable.')).not.toBeNull();
+
+        view.rerender(await inLocale(english, history));
+        expect(screen.queryByText(/^30 calendar days later/)).not.toBeNull();
+    });
+
+    it("names the recipient chips' controls in the reader's locale; the chip label stays the server's", async () => {
+        const kinds = [{ kind: 'owner', label: 'Owner', options: null }];
+        render(await inLocale(spanish, <RecipientPicker label="Recipients" value={['owner:']} kinds={kinds} onChange={() => {}} />));
+        expect(screen.queryByRole('button', { name: 'Quitar Owner' })).not.toBeNull();
     });
 
     it('keeps a failed update as a key, so a live locale switch re-renders it', async () => {
