@@ -3,6 +3,7 @@ import { Button, Label } from '@schemastud/ui';
 import { useResetPassword } from './auth-hooks';
 import { AuthError, PasswordInput } from './auth-fields';
 import { errorMessage } from './utils';
+import { useBeamAccountsMessages } from './messages';
 
 export interface ResetPasswordFormProps {
     /** The token + email carried in the reset link URL. */
@@ -20,6 +21,7 @@ export interface ResetPasswordFormProps {
  * expired") off the backend's rejection.
  */
 export function ResetPasswordForm({ token, email, brand, onSuccess }: ResetPasswordFormProps) {
+    const m = useBeamAccountsMessages();
     const [password, setPassword] = useState('');
     const [confirmation, setConfirmation] = useState('');
     const [mismatch, setMismatch] = useState(false);
@@ -51,13 +53,13 @@ export function ResetPasswordForm({ token, email, brand, onSuccess }: ResetPassw
             {brand}
             <div className="w-full space-y-4">
                 <div className="space-y-1">
-                    <h1 className="text-lg font-semibold">Set a new password</h1>
-                    <p className="text-sm text-muted-foreground">Resetting the password for {email}.</p>
+                    <h1 className="text-lg font-semibold">{m.t('splicewire-beam-accounts::messages.reset_heading')}</h1>
+                    <p className="text-sm text-muted-foreground">{m.t('splicewire-beam-accounts::messages.reset_for', { email })}</p>
                 </div>
 
                 <form className="space-y-4" onSubmit={submit}>
                     <div className="space-y-2">
-                        <Label htmlFor="reset-password">New password</Label>
+                        <Label htmlFor="reset-password">{m.t('splicewire-beam-accounts::messages.reset_new_password')}</Label>
                         <PasswordInput
                             id="reset-password"
                             autoComplete="new-password"
@@ -68,7 +70,7 @@ export function ResetPasswordForm({ token, email, brand, onSuccess }: ResetPassw
                     </div>
 
                     <div className="space-y-2">
-                        <Label htmlFor="reset-password-confirm">Confirm new password</Label>
+                        <Label htmlFor="reset-password-confirm">{m.t('splicewire-beam-accounts::messages.reset_confirm_password')}</Label>
                         <PasswordInput
                             id="reset-password-confirm"
                             autoComplete="new-password"
@@ -81,15 +83,15 @@ export function ResetPasswordForm({ token, email, brand, onSuccess }: ResetPassw
                     <AuthError
                         message={
                             mismatch
-                                ? 'The passwords do not match.'
+                                ? m.t('splicewire-beam-accounts::messages.reset_mismatch')
                                 : reset.isError
-                                  ? errorMessage(reset.error, 'This reset link is invalid or has expired.')
+                                  ? errorMessage(reset.error, m.t('splicewire-beam-accounts::messages.reset_invalid_link'), m)
                                   : null
                         }
                     />
 
                     <Button type="submit" className="w-full" disabled={reset.isPending}>
-                        {reset.isPending ? 'Resetting…' : 'Reset password'}
+                        {reset.isPending ? m.t('splicewire-beam-accounts::messages.reset_resetting') : m.t('splicewire-beam-accounts::messages.reset_submit')}
                     </Button>
                 </form>
             </div>

@@ -3,6 +3,7 @@ import { Button, Label } from '@schemastud/ui';
 import { useRequestPasswordReset } from './auth-hooks';
 import { AuthError } from './auth-fields';
 import { errorMessage } from './utils';
+import { useBeamAccountsMessages } from './messages';
 
 export interface ForgotPasswordFormProps {
     /** The host brand lockup, injected. */
@@ -17,6 +18,7 @@ export interface ForgotPasswordFormProps {
  * can't be used to discover which emails have accounts.
  */
 export function ForgotPasswordForm({ brand, onBack }: ForgotPasswordFormProps) {
+    const m = useBeamAccountsMessages();
     const [email, setEmail] = useState('');
     const [sent, setSent] = useState(false);
     const request = useRequestPasswordReset();
@@ -37,21 +39,20 @@ export function ForgotPasswordForm({ brand, onBack }: ForgotPasswordFormProps) {
             {brand}
             <div className="w-full space-y-4">
                 <div className="space-y-1">
-                    <h1 className="text-lg font-semibold">Forgot your password?</h1>
+                    <h1 className="text-lg font-semibold">{m.t('splicewire-beam-accounts::messages.auth_forgot_password')}</h1>
                     <p className="text-sm text-muted-foreground">
-                        Enter your email and we'll send you a link to reset it.
+                        {m.t('splicewire-beam-accounts::messages.forgot_description')}
                     </p>
                 </div>
 
                 {sent ? (
                     <p role="status" className="text-sm">
-                        If an account exists for that email, a reset link is on its way. Check your
-                        inbox.
+                        {m.t('splicewire-beam-accounts::messages.forgot_sent')}
                     </p>
                 ) : (
                     <form className="space-y-4" onSubmit={submit}>
                         <div className="space-y-2">
-                            <Label htmlFor="forgot-email">Email</Label>
+                            <Label htmlFor="forgot-email">{m.t('splicewire-beam-accounts::messages.auth_email')}</Label>
                             <input
                                 id="forgot-email"
                                 type="email"
@@ -64,11 +65,11 @@ export function ForgotPasswordForm({ brand, onBack }: ForgotPasswordFormProps) {
                         </div>
 
                         <AuthError
-                            message={request.isError ? errorMessage(request.error, 'Could not send the reset link.') : null}
+                            message={request.isError ? errorMessage(request.error, m.t('splicewire-beam-accounts::messages.forgot_failed'), m) : null}
                         />
 
                         <Button type="submit" className="w-full" disabled={request.isPending}>
-                            {request.isPending ? 'Sending…' : 'Email a reset link'}
+                            {request.isPending ? m.t('splicewire-beam-accounts::messages.forgot_sending') : m.t('splicewire-beam-accounts::messages.forgot_submit')}
                         </Button>
                     </form>
                 )}
@@ -79,7 +80,7 @@ export function ForgotPasswordForm({ brand, onBack }: ForgotPasswordFormProps) {
                         onClick={onBack}
                         className="text-sm font-medium text-primary underline-offset-4 hover:underline"
                     >
-                        Back to sign in
+                        {m.t('splicewire-beam-accounts::messages.forgot_back')}
                     </button>
                 )}
             </div>

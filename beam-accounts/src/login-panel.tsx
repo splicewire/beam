@@ -3,6 +3,7 @@ import { Button, Card, CardContent, CardDescription, CardHeader, Label } from '@
 import { useLogin } from './auth-hooks';
 import { AuthError, PasswordInput } from './auth-fields';
 import { errorMessage } from './utils';
+import { useBeamAccountsMessages } from './messages';
 
 export interface LoginPanelProps<TResult = unknown> {
     /** The host brand lockup, injected (ADR-0092: brand stays in the app). Rendered above the card. */
@@ -44,7 +45,7 @@ export interface LoginPanelProps<TResult = unknown> {
 export function LoginPanel<TResult = unknown>({
     brand,
     onSuccess,
-    title = 'Sign in to Splicewire',
+    title,
     titleAs: TitleTag = 'h1',
     description,
     showPasskeySlot = false,
@@ -54,6 +55,7 @@ export function LoginPanel<TResult = unknown>({
     onForgot,
     footer,
 }: LoginPanelProps<TResult>) {
+    const m = useBeamAccountsMessages();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [remember, setRemember] = useState(false);
@@ -80,7 +82,7 @@ export function LoginPanel<TResult = unknown>({
             <Card className="w-full">
                 <CardHeader>
                     {/* UX01/C37: a real page heading, with the CardTitle visual styling retained. */}
-                    <TitleTag className="font-semibold leading-none tracking-tight">{title}</TitleTag>
+                    <TitleTag className="font-semibold leading-none tracking-tight">{title ?? m.t('splicewire-beam-accounts::messages.login_title')}</TitleTag>
                     {description && <CardDescription>{description}</CardDescription>}
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -90,7 +92,7 @@ export function LoginPanel<TResult = unknown>({
                             <div className="flex items-center gap-3" aria-hidden>
                                 <span className="h-px flex-1 bg-border" />
                                 <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                                    Or continue with email
+                                    {m.t('splicewire-beam-accounts::messages.login_or_email')}
                                 </span>
                                 <span className="h-px flex-1 bg-border" />
                             </div>
@@ -99,7 +101,7 @@ export function LoginPanel<TResult = unknown>({
 
                     <form className="space-y-4" onSubmit={submit}>
                         <div className="space-y-2">
-                            <Label htmlFor="login-email">Email</Label>
+                            <Label htmlFor="login-email">{m.t('splicewire-beam-accounts::messages.auth_email')}</Label>
                             <input
                                 id="login-email"
                                 type="email"
@@ -115,14 +117,14 @@ export function LoginPanel<TResult = unknown>({
                             {/* The link never breaks mid-phrase: on a phone-width card it drops whole
                                 onto its own line under the label instead (VR pass 2, 320px). */}
                             <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
-                                <Label htmlFor="login-password">Password</Label>
+                                <Label htmlFor="login-password">{m.t('splicewire-beam-accounts::messages.login_password')}</Label>
                                 {showForgotLink && (
                                     <button
                                         type="button"
                                         onClick={onForgot}
                                         className="whitespace-nowrap text-sm font-medium text-primary underline-offset-4 hover:underline"
                                     >
-                                        Forgot your password?
+                                        {m.t('splicewire-beam-accounts::messages.auth_forgot_password')}
                                     </button>
                                 )}
                             </div>
@@ -144,14 +146,14 @@ export function LoginPanel<TResult = unknown>({
                                     onChange={(e) => setRemember(e.target.checked)}
                                     className="size-4 rounded border-input"
                                 />
-                                Remember me
+                                {m.t('splicewire-beam-accounts::messages.login_remember_me')}
                             </label>
                         )}
 
-                        <AuthError message={login.isError ? errorMessage(login.error, 'Invalid email or password.') : null} />
+                        <AuthError message={login.isError ? errorMessage(login.error, m.t('splicewire-beam-accounts::messages.login_invalid'), m) : null} />
 
                         <Button type="submit" className="w-full" disabled={login.isPending}>
-                            {login.isPending ? 'Signing in…' : 'Sign in'}
+                            {login.isPending ? m.t('splicewire-beam-accounts::messages.login_signing_in') : m.t('splicewire-beam-accounts::messages.login_sign_in')}
                         </Button>
                     </form>
 

@@ -3,6 +3,7 @@
 // ArrayBuffer marshalling ourselves: the server (web-auth/webauthn-lib) speaks base64url JSON,
 // the browser API speaks ArrayBuffers. This module is the single place that touches
 // `navigator.credentials`, so a test mocks IT and the hook/button stay pure.
+import { NoticeError, notice as line } from './message-descriptor';
 
 function base64urlToBuffer(value: string): ArrayBuffer {
     const padded = value.replace(/-/g, '+').replace(/_/g, '/').padEnd(Math.ceil(value.length / 4) * 4, '=');
@@ -96,7 +97,7 @@ export async function runAssertionCeremony(
         publicKey: toRequestOptions(options),
     })) as PublicKeyCredential | null;
 
-    if (!credential) throw new Error('Passkey verification was cancelled.');
+    if (!credential) throw new NoticeError(line('splicewire-beam-accounts::messages.auth_passkey_verification_cancelled'));
 
     return assertionToJson(credential);
 }
@@ -109,7 +110,7 @@ export async function runAttestationCeremony(
         publicKey: toCreationOptions(options),
     })) as PublicKeyCredential | null;
 
-    if (!credential) throw new Error('Passkey registration was cancelled.');
+    if (!credential) throw new NoticeError(line('splicewire-beam-accounts::messages.auth_passkey_registration_cancelled'));
 
     return attestationToJson(credential);
 }

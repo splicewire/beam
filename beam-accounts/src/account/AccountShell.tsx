@@ -32,6 +32,7 @@ import {
 import { AccountNav, type AccountNavProps } from './AccountNav.js';
 import type { AccountNavItem, AccountShellData, AccountShellPlan, LinkComponent } from './types.js';
 import { ACCOUNT_SHELL_CSS } from './css.js';
+import { useBeamAccountsMessages } from '../messages';
 
 /** Which OPT-IN sidebar sections to render below the nav (all default off — nav-only sidebar). */
 export type AccountShellSections = {
@@ -118,7 +119,7 @@ export function AccountShell({
     variant = 'inset',
     defaultOpen = true,
     mobileBar = true,
-    menuLabel = 'Open navigation',
+    menuLabel,
     className,
     style,
     insetClassName,
@@ -126,6 +127,7 @@ export function AccountShell({
     sectionClassName,
     sectionStyle,
 }: AccountShellProps) {
+    const m = useBeamAccountsMessages();
     const Link: LinkComponent = linkComponent ?? (({ href, ...rest }) => <a href={href} {...rest} />);
 
     const brandHeader =
@@ -174,21 +176,21 @@ export function AccountShell({
 
                     {sections?.plan && shell?.plan && (
                         <SidebarGroup className={sectionClassName} style={sectionStyle}>
-                            <SidebarGroupLabel>{sectionLabels?.plan ?? 'Plan'}</SidebarGroupLabel>
+                            <SidebarGroupLabel>{sectionLabels?.plan ?? m.t('splicewire-beam-accounts::messages.account_plan')}</SidebarGroupLabel>
                             <PlanMeter plan={shell.plan} />
                         </SidebarGroup>
                     )}
 
                     {sections?.profile && shell?.profile && (
                         <SidebarGroup className={sectionClassName} style={sectionStyle}>
-                            <SidebarGroupLabel>{sectionLabels?.profile ?? 'Profile'}</SidebarGroupLabel>
+                            <SidebarGroupLabel>{sectionLabels?.profile ?? m.t('splicewire-beam-accounts::messages.account_profile')}</SidebarGroupLabel>
                             <ProfileBlock shell={shell} />
                         </SidebarGroup>
                     )}
 
                     {sections?.upsells && shell?.upsells && shell.upsells.length > 0 && (
                         <SidebarGroup className={sectionClassName} style={sectionStyle}>
-                            <SidebarGroupLabel>{sectionLabels?.upsells ?? 'Upgrade'}</SidebarGroupLabel>
+                            <SidebarGroupLabel>{sectionLabels?.upsells ?? m.t('splicewire-beam-accounts::messages.account_upgrade')}</SidebarGroupLabel>
                             <SidebarMenu>
                                 {shell.upsells.map((upsell) => (
                                     <SidebarMenuItem key={upsell.key}>
@@ -205,7 +207,7 @@ export function AccountShell({
 
                     {sections?.account && shell?.account && (
                         <SidebarGroup className={sectionClassName} style={sectionStyle}>
-                            <SidebarGroupLabel>{sectionLabels?.account ?? 'Account'}</SidebarGroupLabel>
+                            <SidebarGroupLabel>{sectionLabels?.account ?? m.t('splicewire-beam-accounts::messages.account_account')}</SidebarGroupLabel>
                             <AccountBlock shell={shell} />
                         </SidebarGroup>
                     )}
@@ -217,7 +219,7 @@ export function AccountShell({
                 <SidebarInset className={insetClassName} style={insetStyle}>
                     {mobileBar && (
                         <header className="beam-ux-account-mobilebar" data-account-mobilebar="">
-                            <SidebarTrigger aria-label={menuLabel} />
+                            <SidebarTrigger aria-label={menuLabel ?? m.t('splicewire-beam-accounts::messages.account_open_navigation')} />
                             {brandHeader ?? <span>{navLabel}</span>}
                         </header>
                     )}
@@ -264,12 +266,13 @@ function ProfileBlock({ shell }: { shell: AccountShellData }) {
 }
 
 function AccountBlock({ shell }: { shell: AccountShellData }) {
+    const m = useBeamAccountsMessages();
     const { email, paymentMethodLabel } = shell.account;
 
     return (
         <div data-account-section="account" className="px-2 py-1.5 text-xs">
             <div className="truncate">{email}</div>
-            <div className="beam-ux-account-secondary mt-0.5">{paymentMethodLabel ?? 'None on file'}</div>
+            <div className="beam-ux-account-secondary mt-0.5">{paymentMethodLabel ?? m.t('splicewire-beam-accounts::messages.account_no_payment_method')}</div>
         </div>
     );
 }

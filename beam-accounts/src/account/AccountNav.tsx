@@ -15,6 +15,7 @@ import {
     SidebarMenuItem,
 } from '@schemastud/ui';
 import type { AccountNavData, AccountNavItem, LinkComponent } from './types.js';
+import { useBeamAccountsMessages } from '../messages';
 
 export type AccountNavProps = {
     /** The projected `account` sitemap. Its top-level `items` render as the nav rows. */
@@ -29,7 +30,9 @@ export type AccountNavProps = {
     itemIcon?: (item: AccountNavItem) => ReactNode;
 };
 
-export function AccountNav({ nav, label = 'Account', linkComponent, isActive, itemIcon }: AccountNavProps) {
+export function AccountNav({ nav, label: labelOverride, linkComponent, isActive, itemIcon }: AccountNavProps) {
+    const m = useBeamAccountsMessages();
+    const label = labelOverride ?? m.t('splicewire-beam-accounts::messages.account_account');
     const items = (nav?.items ?? []).filter((item): item is AccountNavItem & { href: string } => !!item.href);
     const Link: LinkComponent = linkComponent ?? (({ href, ...rest }) => <a href={href} {...rest} />);
 

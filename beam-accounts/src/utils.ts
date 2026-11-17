@@ -1,5 +1,6 @@
 import type { ApiTokenData, TokenProvenance } from "./types";
-import type { BeamAccountsMessageKey } from "./messages";
+import { englishBeamAccountsMessages, type BeamAccountsMessageKey, type BeamAccountsMessages } from "./messages";
+import { NoticeError, say } from "./message-descriptor";
 
 // The facet vocabulary + how each type reads as a chip. `api` is the type this surface exists
 // to give a stable list of, so it leads and is the default filter; sessions/dev/broker are churn.
@@ -73,8 +74,11 @@ export function formatDate(value: string | null | undefined): string {
 export function errorMessage(
   error: unknown,
   /** The caller's catalog line for a failure without a message of its own. */
-  fallback: string
+  fallback: string,
+  /** The reader's catalog: a thrown catalog line (NoticeError) renders in it. */
+  messages: BeamAccountsMessages = englishBeamAccountsMessages
 ): string {
+  if (error instanceof NoticeError) return say(messages, error.notice);
   if (error && typeof error === "object" && "message" in error) {
     const message = (error as { message?: unknown }).message;
     if (typeof message === "string" && message) return message;

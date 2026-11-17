@@ -1,6 +1,7 @@
 import { Eye, EyeOff } from 'lucide-react';
 import { useState, type ComponentProps } from 'react';
 import { cn, Input } from '@schemastud/ui';
+import { useBeamAccountsMessages } from './messages';
 
 /**
  * A password `Input` with a show/hide eye toggle, so a user can catch typos before
@@ -8,6 +9,7 @@ import { cn, Input } from '@schemastud/ui';
  * reflects state; the field itself keeps all the usual Input props.
  */
 export function PasswordInput({ className, ...props }: ComponentProps<typeof Input>) {
+    const m = useBeamAccountsMessages();
     const [visible, setVisible] = useState(false);
 
     return (
@@ -21,7 +23,7 @@ export function PasswordInput({ className, ...props }: ComponentProps<typeof Inp
                 type="button"
                 onClick={() => setVisible((v) => !v)}
                 className="absolute inset-y-0 right-0 flex items-center px-3 text-muted-foreground hover:text-foreground"
-                aria-label={visible ? 'Hide password' : 'Show password'}
+                aria-label={visible ? m.t('splicewire-beam-accounts::messages.auth_hide_password') : m.t('splicewire-beam-accounts::messages.auth_show_password')}
                 aria-pressed={visible}
                 tabIndex={0}
             >

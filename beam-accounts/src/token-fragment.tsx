@@ -1,5 +1,6 @@
 import { cn } from "@schemastud/ui";
 import type { ApiTokenData } from "./types";
+import { englishBeamAccountsMessages, useBeamAccountsMessages, type BeamAccountsMessages } from "./messages";
 
 /**
  * What tells two same-named tokens apart (owner-review-20261102 K-28): "can we show a last 4 or
@@ -23,13 +24,14 @@ export interface TokenFragment {
 }
 
 export function tokenFragment(
-  token: Pick<ApiTokenData, "id" | "lastFour">
+  token: Pick<ApiTokenData, "id" | "lastFour">,
+  messages: BeamAccountsMessages = englishBeamAccountsMessages
 ): TokenFragment {
   if (token.lastFour) {
     return {
       kind: "secret",
       text: `…${token.lastFour}`,
-      label: `Token ends in ${token.lastFour}`,
+      label: messages.t('splicewire-beam-accounts::messages.fragment_secret', { last: token.lastFour }),
     };
   }
 
@@ -39,8 +41,8 @@ export function tokenFragment(
 
   return {
     kind: "id",
-    text: id.length > 4 ? `id …${tail}` : `id ${tail}`,
-    label: `Token id ends in ${tail}`,
+    text: messages.t(id.length > 4 ? 'splicewire-beam-accounts::messages.fragment_id_short' : 'splicewire-beam-accounts::messages.fragment_id', { tail }),
+    label: messages.t('splicewire-beam-accounts::messages.fragment_id_label', { tail }),
   };
 }
 
@@ -52,7 +54,8 @@ export function TokenFragmentText({
   token: Pick<ApiTokenData, "id" | "lastFour">;
   className?: string;
 }) {
-  const fragment = tokenFragment(token);
+  const m = useBeamAccountsMessages();
+  const fragment = tokenFragment(token, m);
 
   return (
     <span

@@ -3,6 +3,7 @@ import { ChevronsUpDown, UserRound, UserSearch } from 'lucide-react';
 import { Combobox, type ComboboxOption, type ComboboxPrimitives } from '@schemastud/combobox';
 import { Button, Input, Popover, PopoverContent, PopoverTrigger } from '@schemastud/ui';
 import type { DemoAccountLinkData, DemoUserLinkData } from '@splicewire/beam-resources/types/accounts-pages';
+import { useBeamAccountsMessages } from './messages';
 
 /** One demo subject's one-click sign-in, as the server publishes it (`AuthEntryPageData.demoAccounts`). */
 export type DemoLoginAccount = DemoAccountLinkData;
@@ -90,6 +91,7 @@ export function DemoLogin({
     primitives = DEFAULT_PRIMITIVES,
     className,
 }: DemoLoginProps) {
+    const m = useBeamAccountsMessages();
     // Unique per mount, so two panels on one page never share a labelling id (impeccable audit, a11y).
     const headingId = useId();
     const transport = useMemo(() => search ?? (searchUrl ? fetchDemoUsers(searchUrl) : null), [search, searchUrl]);
@@ -122,20 +124,20 @@ export function DemoLogin({
             <div className="flex items-center gap-3">
                 <span className="h-px flex-1 bg-border" aria-hidden />
                 <h2 id={headingId} className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                    Demo sign-in
+                    {m.t('splicewire-beam-accounts::messages.demo_heading')}
                 </h2>
                 <span className="h-px flex-1 bg-border" aria-hidden />
             </div>
 
             {accounts.length > 0 && (
-                <ul className="grid gap-2 sm:grid-cols-2" aria-label="Demo accounts">
+                <ul className="grid gap-2 sm:grid-cols-2" aria-label={m.t('splicewire-beam-accounts::messages.demo_accounts')}>
                     {accounts.map((account) => (
                         <li key={account.key}>
                             <Button
                                 type="button"
                                 variant="outline"
                                 className="w-full justify-start"
-                                aria-label={`Sign in as ${account.label}`}
+                                aria-label={m.t('splicewire-beam-accounts::messages.demo_sign_in_as', { name: account.label })}
                                 onClick={() => onSelect({ kind: 'account', ...account })}
                             >
                                 <UserRound className="size-4 shrink-0" aria-hidden />
@@ -151,14 +153,14 @@ export function DemoLogin({
                     primitives={primitives}
                     search={searchOptions}
                     onSelect={chooseUser}
-                    placeholder="Search by name or email"
-                    emptyText="No user matches"
-                    loadingText="Searching users…"
+                    placeholder={m.t('splicewire-beam-accounts::messages.demo_search')}
+                    emptyText={m.t('splicewire-beam-accounts::messages.demo_no_match')}
+                    loadingText={m.t('splicewire-beam-accounts::messages.demo_searching')}
                     trigger={
                         <Button type="button" variant="outline" className="w-full justify-between font-normal">
                             <span className="flex min-w-0 items-center gap-2">
                                 <UserSearch className="size-4 shrink-0" aria-hidden />
-                                <span className="truncate">Sign in as any user…</span>
+                                <span className="truncate">{m.t('splicewire-beam-accounts::messages.demo_any_user')}</span>
                             </span>
                             <ChevronsUpDown className="size-4 shrink-0 text-muted-foreground" aria-hidden />
                         </Button>
@@ -167,7 +169,7 @@ export function DemoLogin({
             )}
 
             <p className="text-center text-xs text-muted-foreground">
-                {transport ? 'Local development only. Never shown in production.' : 'Demo accounts. Never shown in production.'}
+                {transport ? m.t('splicewire-beam-accounts::messages.demo_local_only') : m.t('splicewire-beam-accounts::messages.demo_never_production')}
             </p>
         </section>
     );

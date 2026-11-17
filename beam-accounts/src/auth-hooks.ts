@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuthServices } from './auth-provider';
 import { runAssertionCeremony, runAttestationCeremony } from './webauthn';
 import type { ForgotPasswordInput, LoginInput, ResetPasswordInput } from './types';
+import { NoticeError, notice as line } from './message-descriptor';
 
 const PASSKEYS_KEY = ['beam-accounts', 'passkeys'] as const;
 
@@ -54,7 +55,7 @@ export function usePasskey<TResult = unknown>() {
     const { client, onError } = useAuthServices();
     return useMutation({
         mutationFn: async (): Promise<TResult> => {
-            if (!client.passkey) throw new Error('Passkey sign-in is not available.');
+            if (!client.passkey) throw new NoticeError(line('splicewire-beam-accounts::messages.auth_passkey_signin_unavailable'));
             const { handle, options } = await client.passkey.loginOptions();
             const credential = await runAssertionCeremony(options);
             return (await client.passkey.login({ handle, credential })) as TResult;
@@ -80,7 +81,7 @@ export function useRegisterPasskey() {
     const queryClient = useQueryClient();
     return useMutation({
         mutationFn: async (name: string) => {
-            if (!client.passkey) throw new Error('Passkey registration is not available.');
+            if (!client.passkey) throw new NoticeError(line('splicewire-beam-accounts::messages.auth_passkey_registration_unavailable'));
             const { handle, options } = await client.passkey.registrationOptions();
             const credential = await runAttestationCeremony(options);
             return client.passkey.register({ handle, name, credential });
@@ -95,7 +96,7 @@ export function useRenamePasskey() {
     const queryClient = useQueryClient();
     return useMutation({
         mutationFn: ({ id, name }: { id: number; name: string }) => {
-            if (!client.passkey?.rename) throw new Error('Passkey rename is not available.');
+            if (!client.passkey?.rename) throw new NoticeError(line('splicewire-beam-accounts::messages.auth_passkey_rename_unavailable'));
             return client.passkey.rename(id, name);
         },
         onSuccess: () => queryClient.invalidateQueries({ queryKey: PASSKEYS_KEY }),

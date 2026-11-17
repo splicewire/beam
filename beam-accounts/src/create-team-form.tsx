@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { Button, Input, Label } from '@schemastud/ui';
 import { AuthError } from './auth-fields';
+import { useBeamAccountsMessages } from './messages';
 
 export interface CreateTeamFormProps {
     /** Submit the new team's name. The host posts it to the `teams.store` operation. */
@@ -24,6 +25,7 @@ export interface CreateTeamFormProps {
  * back as `errors`).
  */
 export function CreateTeamForm({ onSubmit, processing = false, errors, cancelHref, defaultName = '' }: CreateTeamFormProps) {
+    const m = useBeamAccountsMessages();
     const [name, setName] = useState(defaultName);
     const valid = name.trim().length > 0;
 
@@ -37,23 +39,22 @@ export function CreateTeamForm({ onSubmit, processing = false, errors, cancelHre
         <form className="w-full max-w-lg space-y-6" onSubmit={submit} aria-labelledby="create-team-heading">
             <div className="space-y-1">
                 <h1 id="create-team-heading" className="text-lg font-semibold">
-                    Create a team
+                    {m.t('splicewire-beam-accounts::messages.create_team_heading')}
                 </h1>
                 <p className="text-sm text-muted-foreground">
-                    A team is where you and your teammates share work. You'll be its owner, and you can invite
-                    people once it exists.
+                    {m.t('splicewire-beam-accounts::messages.create_team_description')}
                 </p>
             </div>
 
             <div className="grid gap-2">
-                <Label htmlFor="team-name">Team name</Label>
+                <Label htmlFor="team-name">{m.t('splicewire-beam-accounts::messages.create_team_name')}</Label>
                 <Input
                     id="team-name"
                     name="name"
                     autoFocus
                     autoComplete="organization"
                     maxLength={255}
-                    placeholder="e.g. Acme Design"
+                    placeholder={m.t('splicewire-beam-accounts::messages.create_team_placeholder')}
                     value={name}
                     aria-invalid={errors?.name ? true : undefined}
                     aria-describedby={errors?.name ? 'team-name-error' : undefined}
@@ -66,11 +67,11 @@ export function CreateTeamForm({ onSubmit, processing = false, errors, cancelHre
 
             <div className="flex items-center gap-3">
                 <Button type="submit" disabled={!valid || processing}>
-                    {processing ? 'Creating…' : 'Create team'}
+                    {processing ? m.t('splicewire-beam-accounts::messages.create_team_creating') : m.t('splicewire-beam-accounts::messages.create_team_submit')}
                 </Button>
                 {cancelHref ? (
                     <a href={cancelHref} className="text-sm text-muted-foreground underline-offset-4 hover:underline">
-                        Cancel
+                        {m.t('splicewire-beam-accounts::messages.create_team_cancel')}
                     </a>
                 ) : null}
             </div>

@@ -6,6 +6,8 @@ Part A1 (the seam, and tokens-roster.tsx) moves all 68 of tokens-roster's pinned
 
 Part A2 (tokens-page.tsx, team-page.tsx, and utils.ts' type/expiry maps) moves all 131 of their pinned nodes (134 widened) onto the catalog, so its --write lowers 228 to 97. None remains in those files.
 
+Part A3 (the auth forms, accept-invitation, passkeys, account shell/nav, token-fragment, auth-fields, passkey-button, demo-login; plus the text scan's auth-hooks/webauthn errors) moves the remaining 97 pinned nodes (98 widened) onto the catalog, so its --write lowers 97 to 0. beam-accounts reads zero under both scanners. Raw by classification and uncounted: the three provider-misuse developer errors (auth-provider, provider, team-provider).
+
 ## @splicewire/beam-ux — localization 31 (start 861)
 
 Coord-lead@calcucrypt ruling 2026-11-17 03:15Z: the true start is 861. config-sections 10a (2b1b5d90..2d8562a2) added beam-ux/src/config/ copy (61 findings) without a baseline update; ratchet red on main since; CAUSE-800-861.md 62d3556c. The pinned scanner (@schemastud/messages 47810c9e, TypeScript 5.9.3) reads 800 on the 413b67b3 tree that wrote 800 and 861 on ec532e21, so the delta is that copy, not the scanner. This entry raises the stored count to the measured one so the ratchet is green before the sweep lowers it; localization 31 part F owns the 61 and must show them gone.

@@ -11,6 +11,7 @@ import { useAuthServices } from "./auth-provider";
 import { AuthError } from "./auth-fields";
 import { isWebAuthnSupported } from "./webauthn";
 import { errorMessage, formatDate } from "./utils";
+import { useBeamAccountsMessages } from "./messages";
 
 /**
  * The settings "Passkeys" surface (ticket 11; rename + registered-date added in admin-redesign
@@ -25,6 +26,7 @@ export function PasskeysSection({
   /** False when the host frames the section under its own heading and copy (TOWER-05: no duplicate "Passkeys"). */
   showHeader?: boolean;
 } = {}) {
+  const m = useBeamAccountsMessages();
   const [supported] = useState(() => isWebAuthnSupported());
   const [name, setName] = useState("");
   const [editingId, setEditingId] = useState<number | null>(null);
@@ -62,10 +64,9 @@ export function PasskeysSection({
     <div className="space-y-6">
       {showHeader && (
         <div className="space-y-1">
-          <h2 className="text-base font-semibold">Passkeys</h2>
+          <h2 className="text-base font-semibold">{m.t('splicewire-beam-accounts::messages.passkeys_heading')}</h2>
           <p className="text-sm text-muted-foreground">
-            Sign in without a password using a passkey saved on a trusted
-            device.
+            {m.t('splicewire-beam-accounts::messages.passkeys_description')}
           </p>
         </div>
       )}
@@ -73,47 +74,47 @@ export function PasskeysSection({
       {supported ? (
         <form className="flex items-end gap-2" onSubmit={submit}>
           <div className="flex-1 space-y-2">
-            <Label htmlFor="passkey-name">Add a passkey</Label>
+            <Label htmlFor="passkey-name">{m.t('splicewire-beam-accounts::messages.passkeys_add')}</Label>
             <Input
               id="passkey-name"
-              placeholder="e.g. My laptop"
+              placeholder={m.t('splicewire-beam-accounts::messages.passkeys_placeholder')}
               value={name}
               onChange={(e) => setName(e.target.value)}
             />
           </div>
           <Button type="submit" disabled={register.isPending || !name.trim()}>
             <KeyRound className="size-4" aria-hidden />
-            {register.isPending ? "Waiting…" : "Register"}
+            {register.isPending ? m.t('splicewire-beam-accounts::messages.passkeys_waiting') : m.t('splicewire-beam-accounts::messages.passkeys_register')}
           </Button>
         </form>
       ) : (
         <p className="text-sm text-muted-foreground">
-          This browser or device doesn't support passkeys.
+          {m.t('splicewire-beam-accounts::messages.passkeys_unsupported')}
         </p>
       )}
 
       <AuthError
         message={
           register.isError
-            ? errorMessage(register.error, "Could not register the passkey.")
+            ? errorMessage(register.error, m.t('splicewire-beam-accounts::messages.passkeys_register_failed'), m)
             : null
         }
       />
       <AuthError
         message={
           rename.isError
-            ? errorMessage(rename.error, "Could not rename the passkey.")
+            ? errorMessage(rename.error, m.t('splicewire-beam-accounts::messages.passkeys_rename_failed'), m)
             : null
         }
       />
 
       <ul className="divide-y rounded-md border">
         {passkeys.isPending && (
-          <li className="p-3 text-sm text-muted-foreground">Loading…</li>
+          <li className="p-3 text-sm text-muted-foreground">{m.t('splicewire-beam-accounts::messages.passkeys_loading')}</li>
         )}
         {passkeys.data?.length === 0 && !passkeys.isPending && (
           <li className="p-3 text-sm text-muted-foreground">
-            No passkeys registered yet.
+            {m.t('splicewire-beam-accounts::messages.passkeys_empty')}
           </li>
         )}
         {passkeys.data?.map((passkey) => {
@@ -132,7 +133,7 @@ export function PasskeysSection({
                   }}
                 >
                   <Input
-                    aria-label={`Rename ${passkey.name}`}
+                    aria-label={m.t('splicewire-beam-accounts::messages.passkeys_rename_named', { name: passkey.name })}
                     autoFocus
                     value={draftName}
                     onChange={(e) => setDraftName(e.target.value)}
@@ -144,7 +145,7 @@ export function PasskeysSection({
                     type="submit"
                     variant="ghost"
                     size="icon"
-                    aria-label="Save name"
+                    aria-label={m.t('splicewire-beam-accounts::messages.passkeys_save_name')}
                     disabled={rename.isPending || !draftName.trim()}
                   >
                     <Check className="size-4" aria-hidden />
@@ -153,7 +154,7 @@ export function PasskeysSection({
                     type="button"
                     variant="ghost"
                     size="icon"
-                    aria-label="Cancel rename"
+                    aria-label={m.t('splicewire-beam-accounts::messages.passkeys_cancel_rename')}
                     disabled={rename.isPending}
                     onClick={cancelEditing}
                   >
@@ -167,8 +168,7 @@ export function PasskeysSection({
                       {passkey.name}
                     </div>
                     <div className="text-xs text-muted-foreground">
-                      Added {formatDate(passkey.createdAt)} · Last used{" "}
-                      {formatDate(passkey.lastUsedAt)}
+                      {m.t('splicewire-beam-accounts::messages.passkeys_dates', { added: formatDate(passkey.createdAt), used: formatDate(passkey.lastUsedAt) })}
                     </div>
                   </div>
                   <div className="flex items-center gap-1">
@@ -177,7 +177,7 @@ export function PasskeysSection({
                         type="button"
                         variant="ghost"
                         size="icon"
-                        aria-label={`Rename ${passkey.name}`}
+                        aria-label={m.t('splicewire-beam-accounts::messages.passkeys_rename_named', { name: passkey.name })}
                         disabled={remove.isPending}
                         onClick={() => startEditing(passkey.id, passkey.name)}
                       >
@@ -188,7 +188,7 @@ export function PasskeysSection({
                       type="button"
                       variant="ghost"
                       size="icon"
-                      aria-label={`Delete ${passkey.name}`}
+                      aria-label={m.t('splicewire-beam-accounts::messages.passkeys_delete_named', { name: passkey.name })}
                       disabled={remove.isPending}
                       onClick={() => remove.mutate(passkey.id)}
                     >
