@@ -1,4 +1,5 @@
 import { useRef, useState, type ReactNode } from 'react';
+import { useBeamUxMessages } from '../messages.js';
 import type { HostRealms, LinkComponent, RealmSwitcherItemIcon } from './types.js';
 
 export type RealmSwitcherProps = {
@@ -56,6 +57,7 @@ export function RealmSwitcher({
     className,
     triggerClassName,
 }: RealmSwitcherProps) {
+    const m = useBeamUxMessages();
     const here = current ?? realms.current;
     const [open, setOpen] = useState(defaultOpen);
     const trigger = useRef<HTMLButtonElement>(null);
@@ -98,12 +100,12 @@ export function RealmSwitcher({
                     {site && (
                         <Link href={site.href} className={item} {...{ 'data-realm-switcher-item': 'site', role: 'menuitem' }}>
                             {itemIcon?.({ kind: 'site', realm: site }, iconContext)}
-                            View site
+                            {m.t('splicewire-beam-ux::messages.nav_view_site')}
                         </Link>
                     )}
                     <a href={signOutHref} className={item} {...{ 'data-realm-switcher-item': 'sign-out', role: 'menuitem' }}>
                         {itemIcon?.({ kind: 'sign-out' }, iconContext)}
-                        Sign out
+                        {m.t('splicewire-beam-ux::messages.nav_sign_out')}
                     </a>
                 </div>
             )}

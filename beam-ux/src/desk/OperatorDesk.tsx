@@ -39,6 +39,7 @@ import type { ReactNode } from 'react';
 import { OperatorOverlay } from '@schemastud/mainframe/os';
 import type { OverlayWindow, WindowManager } from '@schemastud/mainframe/os';
 import { OPERATOR_DESK_CSS, OPERATOR_DESK_TASKBAR_CENTER_CSS } from './css';
+import { useBeamUxMessages } from '../messages.js';
 
 /**
  * A launchable operator tool: a start-menu item that opens as a float rendering a real component.
@@ -203,6 +204,7 @@ function StartMenu({
     onOpenTool: (tool: OperatorTool) => void;
     onClose: () => void;
 }) {
+    const m = useBeamUxMessages();
     const link = inControlPanel ? links?.frontend : links?.control;
     const hasFooter = !!link || !!links?.signOut;
 
@@ -216,7 +218,7 @@ function StartMenu({
                         {brand.label}
                     </div>
                 ) : null}
-                <div className="head">Operator</div>
+                <div className="head">{m.t('splicewire-beam-ux::messages.desk_operator')}</div>
                 <button
                     type="button"
                     className={editing ? 'active' : undefined}
@@ -231,10 +233,10 @@ function StartMenu({
                     }}
                 >
                     <span className="ico">{editing ? '✕' : '✎'}</span>
-                    {editing ? 'Exit editing' : 'Edit this page'}
+                    {editing ? m.t('splicewire-beam-ux::messages.desk_exit_editing') : m.t('splicewire-beam-ux::messages.desk_edit_this_page')}
                     {!editing && !pageEditable ? (
                         <span className="muted" style={{ marginLeft: 'auto', fontSize: 11 }}>
-                            n/a
+                            {m.t('splicewire-beam-ux::messages.desk_not_available')}
                         </span>
                     ) : null}
                 </button>
@@ -253,7 +255,7 @@ function StartMenu({
                         {t.title}
                         {openKeys.includes(t.key) ? (
                             <span className="muted" style={{ marginLeft: 'auto', fontSize: 11 }}>
-                                open
+                                {m.t('splicewire-beam-ux::messages.desk_open')}
                             </span>
                         ) : null}
                     </button>
@@ -262,12 +264,12 @@ function StartMenu({
                 {link ? (
                     <a href={link.href}>
                         <span className="ico">{inControlPanel ? '◱' : '▤'}</span>{' '}
-                        {link.label ?? (inControlPanel ? 'Front-end' : 'Control Panel')}
+                        {link.label ?? (inControlPanel ? m.t('splicewire-beam-ux::messages.desk_front_end') : m.t('splicewire-beam-ux::messages.desk_control_panel'))}
                     </a>
                 ) : null}
                 {links?.signOut ? (
                     <button type="button" onClick={links.signOut}>
-                        <span className="ico">⏻</span> Sign out
+                        <span className="ico">⏻</span> {m.t('splicewire-beam-ux::messages.desk_sign_out')}
                     </button>
                 ) : null}
             </div>
@@ -281,13 +283,14 @@ export function OperatorDesk({
     inControlPanel = false,
     links,
     brand,
-    orbLabel = 'Operator',
+    orbLabel,
     orbIcon,
     renderPageProperties,
     pageWindow,
     resolveWindow: hostResolveWindow,
     taskbarPlacement = 'start',
 }: OperatorDeskProps) {
+    const m = useBeamUxMessages();
     const { editing, editable: pageEditable, slug: currentSlug } = useDeskMode();
     const ordered = orderTools(tools);
 
@@ -324,7 +327,7 @@ export function OperatorDesk({
             const slug = key.slice(PAGE_PREFIX.length);
 
             return {
-                title: `Page · ${slug}`,
+                title: m.t('splicewire-beam-ux::messages.desk_page_window_title', { slug }),
                 accent: pageWindow?.accent ?? DEFAULT_PAGE_ACCENT,
                 // `editable`/`editing` close over the CURRENT broadcast — resolveWindow is called
                 // fresh on every render, so the body never reads a stale mode.
@@ -387,7 +390,7 @@ export function OperatorDesk({
             <OperatorOverlay
                 stableKeys={stableKeys}
                 resolveWindow={resolveWindow}
-                orbLabel={orbLabel}
+                orbLabel={orbLabel ?? m.t('splicewire-beam-ux::messages.desk_operator')}
                 orbIcon={orbIcon}
                 onWindowBodyClickCapture={armSuppress}
                 onWindowManager={() => navGuard?.(guardApi.current)}

@@ -5,6 +5,7 @@ import { UxBuilderProvider } from "../provider";
 import { ThemeEditor } from "../ThemeEditor";
 import type { UxBuilderClient } from "../types";
 import { EntryWorkflow, type EntryWorkflowBinding } from "./EntryWorkflow";
+import { useBeamUxMessages } from "../messages.js";
 
 /** The entry resource every host's Entries seat lists: pages, components and the theme row alike. */
 export const ENTRY_RESOURCE = "beam-ux-entry";
@@ -81,6 +82,7 @@ export function EntriesSeat({
   index,
   onEditorClose,
 }: EntriesSeatProps) {
+  const m = useBeamUxMessages();
   const can = manifest?.can;
   const [editing, setEditing] = useState<Editing>(null);
   const Panel = chrome?.Panel ?? InlinePanel;
@@ -95,7 +97,12 @@ export function EntriesSeat({
     );
   const shellSlots = { ...editSlots, Container: PassthroughContainer };
 
-  const title = editing?.mode === "new" ? "New entry" : editing?.mode === "theme" ? `Theme — ${editing.slug}` : "Edit entry";
+  const title =
+    editing?.mode === "new"
+      ? m.t('splicewire-beam-ux::messages.entries_new_entry')
+      : editing?.mode === "theme"
+        ? m.t('splicewire-beam-ux::messages.entries_theme_title', { slug: editing.slug })
+        : m.t('splicewire-beam-ux::messages.entries_edit_entry');
 
   const content = (id: string) => (
     <EditShell
@@ -114,12 +121,12 @@ export function EntriesSeat({
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold">Entries</h1>
-          <p className="mt-1 text-sm text-muted-foreground">Every page, component and theme of this site.</p>
+          <h1 className="text-2xl font-semibold">{m.t('splicewire-beam-ux::messages.entries_heading')}</h1>
+          <p className="mt-1 text-sm text-muted-foreground">{m.t('splicewire-beam-ux::messages.entries_description')}</p>
         </div>
         {can?.create && (
           <Button type="button" onClick={() => setEditing({ mode: "new" })}>
-            New entry
+            {m.t('splicewire-beam-ux::messages.entries_new_entry')}
           </Button>
         )}
       </div>
@@ -169,8 +176,8 @@ export function EntriesSeat({
           (workflow ? (
             <Tabs
               tabs={[
-                { value: "content", label: "Content", content: content(editing.id) },
-                { value: "workflow", label: "Workflow", content: <EntryWorkflow entryId={editing.id} binding={workflow} /> },
+                { value: "content", label: m.t('splicewire-beam-ux::messages.entries_tab_content'), content: content(editing.id) },
+                { value: "workflow", label: m.t('splicewire-beam-ux::messages.entries_tab_workflow'), content: <EntryWorkflow entryId={editing.id} binding={workflow} /> },
               ]}
             />
           ) : (
@@ -182,6 +189,7 @@ export function EntriesSeat({
 }
 
 function InlinePanel({ open, onOpenChange, title, children }: EntriesPanelProps) {
+  const m = useBeamUxMessages();
   if (!open) {
     return null;
   }
@@ -191,7 +199,7 @@ function InlinePanel({ open, onOpenChange, title, children }: EntriesPanelProps)
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-semibold">{title}</h2>
         <Button type="button" variant="ghost" size="sm" onClick={() => onOpenChange(false)}>
-          Close
+          {m.t('splicewire-beam-ux::messages.entries_close')}
         </Button>
       </div>
       {children}

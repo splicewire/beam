@@ -1,4 +1,5 @@
 import { Button } from '@schemastud/ui';
+import { useBeamUxMessages } from '../messages.js';
 import type { EntryRowActionsRecord, EntryRowActionsProps } from './types.js';
 
 /**
@@ -15,15 +16,17 @@ export function EntryRowActions({
     onDuplicate,
     onDelete,
     onPromoteToCentral,
-    confirmDelete = defaultConfirmDelete,
+    confirmDelete,
 }: EntryRowActionsProps) {
+    const m = useBeamUxMessages();
+    const confirmed = confirmDelete ?? ((entry: EntryRowActionsRecord) => window.confirm(m.t('splicewire-beam-ux::messages.admin_delete_confirm', { label: entry.title ?? entry.slug })));
     return (
-        <div className="flex items-center justify-end gap-1" role="group" aria-label="Entry actions">
+        <div className="flex items-center justify-end gap-1" role="group" aria-label={m.t('splicewire-beam-ux::messages.admin_entry_actions')}>
             <Button type="button" variant="ghost" size="sm" onClick={() => onEdit(record)}>
-                Edit
+                {m.t('splicewire-beam-ux::messages.admin_edit')}
             </Button>
             <Button type="button" variant="ghost" size="sm" onClick={() => onDuplicate(record)}>
-                Duplicate
+                {m.t('splicewire-beam-ux::messages.admin_duplicate')}
             </Button>
             {record.canPromoteToCentral ? (
                 <Button
@@ -32,7 +35,7 @@ export function EntryRowActions({
                     size="sm"
                     onClick={() => onPromoteToCentral?.(record)}
                 >
-                    Promote to central
+                    {m.t('splicewire-beam-ux::messages.admin_promote_to_central')}
                 </Button>
             ) : null}
             <Button
@@ -40,19 +43,13 @@ export function EntryRowActions({
                 variant="ghost"
                 size="sm"
                 onClick={() => {
-                    if (confirmDelete(record)) {
+                    if (confirmed(record)) {
                         onDelete(record);
                     }
                 }}
             >
-                Delete
+                {m.t('splicewire-beam-ux::messages.admin_delete')}
             </Button>
         </div>
     );
-}
-
-function defaultConfirmDelete(record: EntryRowActionsRecord): boolean {
-    const label = record.title ?? record.slug;
-
-    return window.confirm(`Delete "${label}"? This can be restored later.`);
 }

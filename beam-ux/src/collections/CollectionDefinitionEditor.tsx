@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { statusOf, messageOf } from "../state/page-state";
 import { SchemaForm, type SchemaNode } from "@schemastud/seam";
+import { englishBeamUxMessages, useBeamUxMessages } from "../messages.js";
 import type {
   CollectionDefinitionInputData,
   SchemaRegistrationConfirmationData,
@@ -10,11 +11,14 @@ import type {
 
 /** An existing registry 409 supplies the exact proposal and publication pins requiring review. */
 export class CollectionRegistrationImpact extends Error {
+  /** True when no caller message was given: the editor then renders the reader's localized line. */
+  readonly defaultMessage: boolean;
   constructor(
     public readonly impact: SchemaVersionImpactData,
-    message = "Review the affected published pages before saving this version.",
+    message?: string,
   ) {
-    super(message);
+    super(message ?? englishBeamUxMessages.t('splicewire-beam-ux::messages.collections_review_impact'));
+    this.defaultMessage = message === undefined;
   }
 }
 
@@ -67,6 +71,7 @@ export function CollectionDefinitionEditor({
   onSave(value: CollectionDefinitionInputData): Promise<void>;
   onCancel(): void;
 }) {
+  const m = useBeamUxMessages();
   const [draft, setDraft] = useState(initial);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -113,24 +118,26 @@ export function CollectionDefinitionEditor({
       }
       setError(
         messageOf(failure) ??
-          (failure instanceof Error
-            ? failure.message
-            : "The Collection could not be saved."),
+          (failure instanceof CollectionRegistrationImpact && failure.defaultMessage
+            ? m.t('splicewire-beam-ux::messages.collections_review_impact')
+            : failure instanceof Error
+              ? failure.message
+              : m.t('splicewire-beam-ux::messages.collections_save_failed')),
       );
     } finally {
       setSaving(false);
     }
   };
   return (
-    <section aria-label="Collection fields" className="space-y-4">
-      <h2 className="text-lg font-semibold">Collection fields</h2>
+    <section aria-label={m.t('splicewire-beam-ux::messages.collections_fields')} className="space-y-4">
+      <h2 className="text-lg font-semibold">{m.t('splicewire-beam-ux::messages.collections_fields')}</h2>
       <p>
-        Save registers a new version. Existing Records use the latest schema.
+        {m.t('splicewire-beam-ux::messages.collections_save_registers_version')}
       </p>
       {error && <p role="alert">{error}</p>}
       {pending && (
-        <section aria-label="Published pages affected" className="space-y-3">
-          <h3>Published pages affected</h3>
+        <section aria-label={m.t('splicewire-beam-ux::messages.collections_pages_affected')} className="space-y-3">
+          <h3>{m.t('splicewire-beam-ux::messages.collections_pages_affected')}</h3>
           <ul>
             {pending.impact.pages.map((page) => (
               <li key={page.id}>
@@ -145,7 +152,7 @@ export function CollectionDefinitionEditor({
               void submit(pending.value, confirmationOf(pending.impact))
             }
           >
-            Confirm and save version
+            {m.t('splicewire-beam-ux::messages.collections_confirm_and_save')}
           </button>
         </section>
       )}
@@ -166,10 +173,10 @@ export function CollectionDefinitionEditor({
       >
         <div className="flex gap-2">
           <button type="submit" disabled={saving}>
-            {saving ? "Saving…" : "Save version"}
+            {saving ? m.t('splicewire-beam-ux::messages.collections_saving') : m.t('splicewire-beam-ux::messages.collections_save_version')}
           </button>
           <button type="button" onClick={onCancel} disabled={saving}>
-            Cancel
+            {m.t('splicewire-beam-ux::messages.collections_cancel')}
           </button>
         </div>
       </SchemaForm>

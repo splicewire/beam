@@ -1,4 +1,5 @@
 import type { CSSProperties, ReactNode } from 'react';
+import { useBeamUxMessages } from '../messages.js';
 
 /** A page a Release changes (ADR-0232 d10). A Record Page's path keeps its `{field}` piece. */
 export type PreviewReachPage = { entryId: string; title: string | null; path: string | null; recordPage: boolean };
@@ -65,6 +66,8 @@ const row: CSSProperties = { alignItems: 'center', display: 'flex', flexWrap: 'w
 const link: CSSProperties = { color: 'white' };
 const panel: CSSProperties = { margin: '8px auto 0', maxWidth: 960 };
 const list: CSSProperties = { margin: '4px 0 8px', paddingLeft: 20 };
+/** `toLocaleString()`'s default fields (numeric date and time), now in the reader's catalog locale. */
+const DUE_FORMAT: Intl.DateTimeFormatOptions = { year: 'numeric', month: 'numeric', day: 'numeric', hour: 'numeric', minute: 'numeric', second: 'numeric' };
 
 /**
  * **The Preview bar** (ADR-0232 d9–d13): what is previewed, the switch between the Preview and the live site at the
@@ -72,27 +75,28 @@ const list: CSSProperties = { margin: '4px 0 8px', paddingLeft: 20 };
  * Preview renders it: the packaged entry page and a host's own pages (a starter's home).
  */
 export function PreviewBar({ preview }: { preview: PreviewBarData }) {
+    const m = useBeamUxMessages();
     const live = preview.mode === 'live';
     // From the live site, a changed page opens back in the Preview; in the Preview, it is just its path.
     const open = (path: string) =>
         live && preview.previewUrl ? `${preview.previewUrl}&path=${encodeURIComponent(path)}` : path;
 
     return (
-        <aside aria-label="Preview mode" data-beam-preview-bar style={bar}>
+        <aside aria-label={m.t('splicewire-beam-ux::messages.site_preview_mode')} data-beam-preview-bar style={bar}>
             <div style={row}>
                 <span>
-                    {live ? `You are seeing the live site, outside the Preview of ${preview.label}.` : `Previewing ${preview.label}`}
+                    {live ? m.t('splicewire-beam-ux::messages.site_preview_live_outside', { label: preview.label }) : m.t('splicewire-beam-ux::messages.site_previewing', { label: preview.label })}
                 </span>
                 {preview.switchUrl ? (
                     <a href={preview.switchUrl} style={link}>
-                        {live ? 'Back to the Preview' : 'Live site'}
+                        {live ? m.t('splicewire-beam-ux::messages.site_preview_back') : m.t('splicewire-beam-ux::messages.site_preview_live_site')}
                     </a>
                 ) : preview.switchUrl === null ? (
-                    <span>New in this Release</span>
+                    <span>{m.t('splicewire-beam-ux::messages.site_preview_new_in_release')}</span>
                 ) : null}
-                {live ? null : <span>Forms validate but do not submit in Preview.</span>}
-                {preview.viewAsMeUrl ? <a href={preview.viewAsMeUrl} style={link}>View as me</a> : null}
-                <a href={preview.exitUrl} style={link}>Exit preview</a>
+                {live ? null : <span>{m.t('splicewire-beam-ux::messages.site_preview_forms_do_not_submit')}</span>}
+                {preview.viewAsMeUrl ? <a href={preview.viewAsMeUrl} style={link}>{m.t('splicewire-beam-ux::messages.site_preview_view_as_me')}</a> : null}
+                <a href={preview.exitUrl} style={link}>{m.t('splicewire-beam-ux::messages.site_preview_exit')}</a>
             </div>
             {preview.changes ? <ChangedPages preview={preview} open={open} /> : null}
             {preview.redirects && preview.redirects.length > 0 ? <Redirects redirects={preview.redirects} /> : null}
@@ -102,18 +106,19 @@ export function PreviewBar({ preview }: { preview: PreviewBarData }) {
 }
 
 function ChangedPages({ preview, open }: { preview: PreviewBarData; open: (path: string) => string }) {
+    const m = useBeamUxMessages();
     const changes = preview.changes!;
     const total = changes.pages.length + changes.reach.reduce((sum, reach) => sum + (reach.everyPage ? 0 : reach.count), 0);
     const page = (p: PreviewReachPage) => <PageLink key={p.entryId} page={p} open={open} choices={preview.recordChoices?.[p.entryId]} />;
 
     return (
         <details style={panel}>
-            <summary>Changed pages ({total})</summary>
-            <section aria-label="Changed pages">
+            <summary>{m.t('splicewire-beam-ux::messages.site_changed_pages_count', { count: total })}</summary>
+            <section aria-label={m.t('splicewire-beam-ux::messages.site_changed_pages')}>
                 {changes.pages.length > 0 ? <ul style={list}>{changes.pages.map(page)}</ul> : null}
                 {changes.reach.map((reach) => (
                     <div key={reach.entryId}>
-                        <span>{reach.name} — {reach.everyPage ? 'every page' : `${reach.count} ${reach.count === 1 ? 'page' : 'pages'}`}</span>
+                        <span>{m.t('splicewire-beam-ux::messages.site_changed_reach', { name: reach.name, reach: reach.everyPage ? m.t('splicewire-beam-ux::messages.site_changed_every_page') : m.choice('splicewire-beam-ux::messages.site_changed_page_count', reach.count) })}</span>
                         {reach.pages.length > 0 ? <ul style={list}>{reach.pages.map(page)}</ul> : null}
                     </div>
                 ))}
@@ -125,15 +130,19 @@ function ChangedPages({ preview, open }: { preview: PreviewBarData; open: (path:
 /** A page to open in the Preview. A Record Page opens on a Record the viewer may read, so each one is its own link. */
 /** ux-0236 d12: what a reviewer's old links will do once the Release publishes. */
 function Redirects({ redirects }: { redirects: PreviewRedirect[] }) {
+    const m = useBeamUxMessages();
     return (
         <details style={panel}>
-            <summary>Redirects this Release leaves ({redirects.length})</summary>
-            <section aria-label="Redirects this Release leaves">
+            <summary>{m.t('splicewire-beam-ux::messages.site_redirects_count', { count: redirects.length })}</summary>
+            <section aria-label={m.t('splicewire-beam-ux::messages.site_redirects')}>
                 <ul style={list}>
                     {redirects.map((redirect) => (
                         <li key={`${redirect.from} ${redirect.match ?? 'exact'}`}>
-                            {redirect.from}
-                            {redirect.match === 'prefix' ? ' and below' : ''} → {redirect.to ?? 'not found'} ({redirect.reason === 'moved' ? 'moved' : 'taken down'})
+                            {m.t(redirect.match === 'prefix' ? 'splicewire-beam-ux::messages.site_redirect_prefix' : 'splicewire-beam-ux::messages.site_redirect_exact', {
+                                from: redirect.from,
+                                to: redirect.to ?? m.t('splicewire-beam-ux::messages.site_redirect_not_found'),
+                                reason: redirect.reason === 'moved' ? m.t('splicewire-beam-ux::messages.site_redirect_moved') : m.t('splicewire-beam-ux::messages.site_redirect_taken_down'),
+                            })}
                         </li>
                     ))}
                 </ul>
@@ -143,6 +152,7 @@ function Redirects({ redirects }: { redirects: PreviewRedirect[] }) {
 }
 
 function PageLink({ page, open, choices }: { page: PreviewReachPage; open: (path: string) => string; choices?: { label: string; path: string }[] }) {
+    const m = useBeamUxMessages();
     const title = page.title ?? page.path ?? page.entryId;
     if (page.path === null) {
         return <li>{title}</li>;
@@ -157,7 +167,7 @@ function PageLink({ page, open, choices }: { page: PreviewReachPage; open: (path
                             <a href={open(choice.path)} style={link}>{`${title}: ${choice.label}`}</a>
                         </span>
                     ))
-                    : `${title}: no record you can read`}
+                    : m.t('splicewire-beam-ux::messages.site_page_no_readable_record', { title })}
             </li>
         );
     }
@@ -171,30 +181,31 @@ function PageLink({ page, open, choices }: { page: PreviewReachPage; open: (path
 
 /** Every reason Publish would refuse (ADR-0232 d11), each linked to where its fix is pressed. */
 function Readiness({ preview, open }: { preview: PreviewBarData; open: (path: string) => string }) {
+    const m = useBeamUxMessages();
     const readiness = preview.readiness!;
     const count = readiness.blockers.length;
     // A page the Release changes opens in the Preview, where its author edits it; a Record Page has no one path.
     const paths = new Map((preview.changes?.pages ?? []).filter((p) => p.path && !p.recordPage).map((p) => [p.entryId, p.path!]));
 
     return (
-        <section aria-label="Publish" style={panel}>
-            <strong>{readiness.ready ? 'Nothing stops Publish' : `${count} ${count === 1 ? 'thing stops' : 'things stop'} Publish`}</strong>
+        <section aria-label={m.t('splicewire-beam-ux::messages.site_publish')} style={panel}>
+            <strong>{readiness.ready ? m.t('splicewire-beam-ux::messages.site_publish_nothing_stops') : m.choice('splicewire-beam-ux::messages.site_publish_things_stop', count)}</strong>
             {count > 0 ? (
                 <ul style={list}>
                     {readiness.blockers.map((item, index) => (
                         <li key={`${item.code}-${item.entryId ?? ''}-${index}`}>
                             {item.message}
-                            {item.fixes.length > 0 ? <span> {`Fix: ${item.fixes.join(' or ')}`}</span> : null}
+                            {item.fixes.length > 0 ? <span> {m.t('splicewire-beam-ux::messages.site_publish_fix', { fixes: m.list(item.fixes, { type: 'disjunction' }) })}</span> : null}
                             {item.fixes.includes('open') && item.entryId && paths.has(item.entryId) ? (
-                                <> <a href={open(paths.get(item.entryId)!)} style={link}>Open the page</a></>
+                                <> <a href={open(paths.get(item.entryId)!)} style={link}>{m.t('splicewire-beam-ux::messages.site_publish_open_page')}</a></>
                             ) : null}
                             {item.fixes.some((fix) => fix !== 'open') ? (
                                 preview.releaseHref ? (
-                                    <> <a href={preview.releaseHref} style={link}>Fix in the Release</a></>
+                                    <> <a href={preview.releaseHref} style={link}>{m.t('splicewire-beam-ux::messages.site_publish_fix_in_release')}</a></>
                                 ) : item.entryId && paths.has(item.entryId) ? (
                                     // No Release page on this host (a starter): the member's page, where the editor's
                                     // Release panel offers rebase and drop (orch-lead ruling A, EP-18).
-                                    <> <a href={open(paths.get(item.entryId)!)} style={link}>Fix on the page</a></>
+                                    <> <a href={open(paths.get(item.entryId)!)} style={link}>{m.t('splicewire-beam-ux::messages.site_publish_fix_on_page')}</a></>
                                 ) : null
                             ) : null}
                         </li>
@@ -206,7 +217,7 @@ function Readiness({ preview, open }: { preview: PreviewBarData; open: (path: st
                     {readiness.notes.map((item, index) => (
                         <li key={`${item.code}-${item.entryId ?? ''}-${index}`}>
                             {item.message}
-                            {item.releaseDueAt ? ` Publishes ${new Date(item.releaseDueAt).toLocaleString()}.` : null}
+                            {item.releaseDueAt ? ` ${m.t('splicewire-beam-ux::messages.site_publish_due', { when: m.date(new Date(item.releaseDueAt), DUE_FORMAT) })}` : null}
                         </li>
                     ))}
                 </ul>

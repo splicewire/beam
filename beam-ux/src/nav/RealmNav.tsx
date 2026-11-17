@@ -16,6 +16,7 @@
 // active styling forwards `data-active` (the server-stamped flag) or matches in its own `<Link>`.
 import { useState, type ReactNode } from 'react';
 import { REALM_NAV_CSS } from './css.js';
+import { useBeamUxMessages } from '../messages.js';
 import type {
     LinkComponent,
     RealmNavClassNames,
@@ -230,19 +231,20 @@ function UpsellPopover({
     cta?: (node: RealmNavNode, ctx: { upsell: string | null }) => ReactNode;
     onClose: () => void;
 }) {
+    const m = useBeamUxMessages();
     const upsell = node.locked?.upsell ?? null;
 
     return (
         <>
             <div className="beam-nav-upsell-scrim" onClick={onClose} />
-            <div className="beam-nav-upsell" role="dialog" aria-label={`Unlock ${node.title}`}>
+            <div className="beam-nav-upsell" role="dialog" aria-label={m.t('splicewire-beam-ux::messages.nav_unlock', { title: node.title })}>
                 <div className="beam-nav-upsell-title">{node.title}</div>
                 <p className="beam-nav-upsell-copy">{node.locked?.reason}</p>
                 {cta ? (
                     cta(node, { upsell })
                 ) : (
                     <button type="button" className="beam-nav-upsell-cta" onClick={onClose}>
-                        Upgrade
+                        {m.t('splicewire-beam-ux::messages.nav_upgrade')}
                     </button>
                 )}
             </div>
@@ -267,6 +269,7 @@ function RailItem({
     kinds?: RealmNavKinds;
     currentHref?: string;
 }) {
+    const m = useBeamUxMessages();
     const Kind = isKind(node, kinds) ? kinds![node.kind!] : undefined;
     if (Kind) {
         return (
@@ -296,7 +299,7 @@ function RailItem({
             >
                 {icon ? icon(node, { className: iconClass, active: false }) : null}
                 <span className={classNames?.itemLabel ?? DEFAULTS.itemLabel}>{node.title}</span>
-                <span className="beam-nav-lock" aria-label="locked">
+                <span className="beam-nav-lock" aria-label={m.t('splicewire-beam-ux::messages.nav_locked')}>
                     🔒
                 </span>
             </button>

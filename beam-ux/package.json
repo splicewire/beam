@@ -93,7 +93,8 @@
         "./sitemap": {
             "types": "./dist/sitemap.d.ts",
             "import": "./dist/sitemap.js"
-        }
+        },
+        "./messages": "./messages.default.json"
     },
     "sideEffects": false,
     "bin": {
@@ -104,7 +105,8 @@
         "dist",
         "src",
         "bin",
-        "README.md"
+        "README.md",
+        "messages.default.json"
     ],
     "publishConfig": {
         "registry": "https://registry.npmjs.org",
@@ -122,7 +124,15 @@
         "test:artifact-contract": "vitest run --config vitest.artifact-contract.config.ts",
         "typecheck": "tsc --noEmit",
         "lint:imports": "node scripts/check-imports.mjs",
-        "prepublishOnly": "pnpm run build"
+        "prepublishOnly": "pnpm run build",
+        "messages:catalog": "node scripts/messages-catalog.mjs",
+        "messages:catalog:write": "node scripts/messages-catalog.mjs --write"
+    },
+    "schemastud": {
+        "messages": {
+            "version": 1,
+            "catalog": "./messages"
+        }
     },
     "dependencies": {
         "@babel/parser": "^7.29.7",
@@ -142,6 +152,7 @@
         "@schemastud/chat": "*",
         "@schemastud/frame": "*",
         "@schemastud/mainframe": "*",
+        "@schemastud/messages": "^0.1.0",
         "@schemastud/seam": "*",
         "@schemastud/ui": "*",
         "@tanstack/react-query": ">=5",
@@ -164,6 +175,7 @@
         "@schemastud/chat": "github:schemastud/js#5211ec4ece570d07b947c1bce4839cb5a6acf78f&path:/chat",
         "@schemastud/frame": "github:schemastud/js#9503dcf4d839c269ee6053a6a421800bbbb7f974&path:/frame",
         "@schemastud/mainframe": "github:schemastud/js#436d9db67d77d35d64e5db946ea2341a81e2d988&path:/mainframe",
+        "@schemastud/messages": "github:schemastud/js#47810c9e78aca3eb452f7b34a1eaaed909f4102c&path:/messages",
         "@schemastud/nav": "github:schemastud/js#ea1bb1a06d83de66164e19f9b6798342ed2a8c51&path:/nav",
         "@schemastud/seam": "github:schemastud/js#aae63180fd740d3a9497fa2a12e7fbc7c206bc92&path:/seam",
         "@schemastud/ui": "github:schemastud/js#abef468b39df9b1e81fd9a2081e69f8094c60e4e&path:/ui",

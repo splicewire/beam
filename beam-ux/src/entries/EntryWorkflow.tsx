@@ -8,6 +8,7 @@ import {
   type WorkflowsServices,
 } from "@splicewire/beam-workflows";
 import { useCallback, useEffect, useState, type ReactNode } from "react";
+import { useBeamUxMessages } from "../messages.js";
 
 /**
  * The Entries seat's declared workflow seam (editor-parity ticket 10, HC-05; EP-38): the host binds the workflow services
@@ -34,7 +35,8 @@ function EntryWorkflowState({ entryId, kind, queue }: { entryId: string; kind: s
   const { client } = useWorkflowsServices();
   const [projection, setProjection] = useState<WorkflowProjection | null | undefined>(undefined);
   const [pending, setPending] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const m = useBeamUxMessages();
+  const [error, setError] = useState<WorkflowFailure | null>(null);
   const [retry, setRetry] = useState(0);
 
   useEffect(() => {
@@ -44,7 +46,7 @@ function EntryWorkflowState({ entryId, kind, queue }: { entryId: string; kind: s
     client
       .projection(kind, entryId)
       .then((p) => !cancelled && setProjection(p))
-      .catch((e: unknown) => !cancelled && setError(message(e, "load")));
+      .catch((e: unknown) => !cancelled && setError(failure(e, "load")));
 
     return () => {
       cancelled = true;
@@ -58,7 +60,7 @@ function EntryWorkflowState({ entryId, kind, queue }: { entryId: string; kind: s
       try {
         setProjection(await client.transition(kind, entryId, name));
       } catch (e: unknown) {
-        setError(message(e, "transition"));
+        setError(failure(e, "transition"));
       } finally {
         setPending(false);
       }
@@ -69,13 +71,13 @@ function EntryWorkflowState({ entryId, kind, queue }: { entryId: string; kind: s
   if (projection === undefined && !error) {
     return (
       <p role="status" aria-busy="true" className="text-sm text-muted-foreground">
-        Loading workflow state…
+        {m.t('splicewire-beam-ux::messages.entries_loading_workflow')}
       </p>
     );
   }
 
   if (projection === null) {
-    return <p className="text-sm text-muted-foreground">This entry has no publish workflow.</p>;
+    return <p className="text-sm text-muted-foreground">{m.t('splicewire-beam-ux::messages.entries_no_workflow')}</p>;
   }
 
   return (
@@ -84,10 +86,14 @@ function EntryWorkflowState({ entryId, kind, queue }: { entryId: string; kind: s
 
       {error && (
         <div role="alert" className="space-y-3 text-sm">
-          <p className="text-destructive">{error}</p>
+          <p className="text-destructive">
+            {error.what === "load"
+              ? m.t('splicewire-beam-ux::messages.entries_workflow_load_failed', { detail: error.detail })
+              : m.t('splicewire-beam-ux::messages.entries_transition_failed', { detail: error.detail })}
+          </p>
           {projection === undefined && (
             <Button type="button" variant="outline" size="sm" onClick={() => setRetry((value) => value + 1)}>
-              Try again
+              {m.t('splicewire-beam-ux::messages.entries_try_again')}
             </Button>
           )}
         </div>
@@ -108,8 +114,9 @@ function EntryWorkflowState({ entryId, kind, queue }: { entryId: string; kind: s
   );
 }
 
-function message(e: unknown, what: "load" | "transition"): string {
-  const detail = e instanceof Error ? e.message : String(e);
+/** The failure's raw detail stays a diagnostic parameter; the sentence around it is formatted at render. */
+type WorkflowFailure = { what: "load" | "transition"; detail: string };
 
-  return what === "load" ? `Could not load the workflow state (${detail}).` : `The transition did not apply: ${detail}`;
+function failure(e: unknown, what: WorkflowFailure["what"]): WorkflowFailure {
+  return { what, detail: e instanceof Error ? e.message : String(e) };
 }

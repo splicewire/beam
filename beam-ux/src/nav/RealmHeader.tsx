@@ -1,3 +1,4 @@
+import { useBeamUxMessages } from '../messages.js';
 import type { HostRealm, LinkComponent } from './types.js';
 
 const PlainLink: LinkComponent = ({ href, className, children, ...rest }) => (
@@ -22,6 +23,7 @@ export function RealmHeader({
     linkComponent?: LinkComponent;
     className?: string;
 }) {
+    const m = useBeamUxMessages();
     if (!realm || !back) {
         return null;
     }
@@ -33,7 +35,7 @@ export function RealmHeader({
                 {realm.label}
             </div>
             <Link href={back.href} className="text-xs opacity-70 hover:underline hover:opacity-100" {...{ 'data-realm-back': '' }}>
-                ← Back to {back.label}
+                {m.t('splicewire-beam-ux::messages.nav_back_to', { label: back.label })}
             </Link>
         </div>
     );

@@ -22,6 +22,7 @@
 // payload already in hand, uses {@link ManifestTableView} — the pure renderer this wraps.
 import { useQuery } from '@tanstack/react-query';
 import type { CSSProperties, ReactNode } from 'react';
+import { useBeamUxMessages } from '../messages.js';
 import type {
     ManifestAvailability,
     ManifestEntry,
@@ -93,10 +94,11 @@ export function ManifestTableView({
     classNames,
     style,
 }: ManifestTableViewProps) {
+    const m = useBeamUxMessages();
     if (absent) {
         return (
             <div className={classNames?.message} style={style} data-beam-ux-manifest="not-installed">
-                {notInstalled ?? 'This surface is not installed on this site.'}
+                {notInstalled ?? m.t('splicewire-beam-ux::messages.site_manifest_not_installed')}
             </div>
         );
     }
@@ -104,7 +106,7 @@ export function ManifestTableView({
     if (items.length === 0) {
         return (
             <div className={classNames?.message} style={style} data-beam-ux-manifest="empty">
-                {empty ?? 'Nothing is advertised here yet.'}
+                {empty ?? m.t('splicewire-beam-ux::messages.site_manifest_empty')}
             </div>
         );
     }
@@ -125,9 +127,9 @@ export function ManifestTableView({
                                     <span
                                         className={classNames?.mark}
                                         data-available={mark.available}
-                                        title={mark.available ? 'Available to you' : 'Not available to you'}
+                                        title={mark.available ? m.t('splicewire-beam-ux::messages.site_manifest_available_to_you') : m.t('splicewire-beam-ux::messages.site_manifest_not_available_to_you')}
                                     >
-                                        {mark.label ?? (mark.available ? 'available' : 'unavailable')}
+                                        {mark.label ?? (mark.available ? m.t('splicewire-beam-ux::messages.site_manifest_available') : m.t('splicewire-beam-ux::messages.site_manifest_unavailable'))}
                                     </span>
                                 )}
                             </td>
@@ -163,6 +165,7 @@ export function ManifestTable({
     error,
     ...view
 }: ManifestTableProps) {
+    const m = useBeamUxMessages();
     // Namespaced `['beam-ux', …]` like the `/` shelf's keys, so a host's cache never collides.
     const query = useQuery<ManifestFetchResult>({
         queryKey: ['beam-ux', 'site', 'manifest', endpoint],
@@ -172,7 +175,7 @@ export function ManifestTable({
     if (query.isPending) {
         return (
             <div className={view.classNames?.message} data-beam-ux-manifest="loading">
-                {loading ?? 'Loading…'}
+                {loading ?? m.t('splicewire-beam-ux::messages.site_manifest_loading')}
             </div>
         );
     }
@@ -180,7 +183,7 @@ export function ManifestTable({
     if (query.isError) {
         return (
             <div className={view.classNames?.message} data-beam-ux-manifest="error">
-                {typeof error === 'function' ? error(query.error) : (error ?? 'Could not load this list.')}
+                {typeof error === 'function' ? error(query.error) : (error ?? m.t('splicewire-beam-ux::messages.site_manifest_load_failed'))}
             </div>
         );
     }

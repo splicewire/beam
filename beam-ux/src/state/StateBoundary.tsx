@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { messageOf, pageStateOf, transportOf, type QueryLike } from './page-state.js';
+import { useBeamUxMessages } from '../messages.js';
 
 /**
  * An optional escape from a refusal (APP-9 "with a way back"): a labeled link to somewhere the reader can
@@ -36,10 +37,11 @@ function WayBackLink({ wayBack }: { wayBack: WayBack }) {
  * renders the refusal directly instead of faking a 403 query. `StateBoundary` renders it for a 401/403 read.
  */
 export function ForbiddenState({ label, wayBack }: { label: string; wayBack?: WayBack }) {
+    const m = useBeamUxMessages();
     return (
         <div role="alert" data-page-state="forbidden" className="p-6 text-sm">
-            <p className="font-medium">You don't have access to {label}.</p>
-            <p className="text-muted-foreground">An owner or admin of this workspace can grant it.</p>
+            <p className="font-medium">{m.t('splicewire-beam-ux::messages.state_forbidden', { label })}</p>
+            <p className="text-muted-foreground">{m.t('splicewire-beam-ux::messages.state_forbidden_grant')}</p>
             {wayBack && <WayBackLink wayBack={wayBack} />}
         </div>
     );
@@ -68,6 +70,7 @@ type Props = {
  * supplies a `wayBack`, every refusal/failure state offers it so the reader is never stranded (APP-9).
  */
 export function StateBoundary({ query, label, filtered, onRetry, upsell, wayBack, children }: Props) {
+    const m = useBeamUxMessages();
     const { state, retry } = pageStateOf(transportOf(query, filtered === undefined ? {} : { filtered }));
 
     // The forbidden node owns its own `data-page-state`, so it is the whole region (not wrapped again).
@@ -82,12 +85,12 @@ export function StateBoundary({ query, label, filtered, onRetry, upsell, wayBack
             body = children;
             break;
         case 'loading':
-            body = <p aria-busy="true" className="p-6 text-sm text-muted-foreground">Loading {label}…</p>;
+            body = <p aria-busy="true" className="p-6 text-sm text-muted-foreground">{m.t('splicewire-beam-ux::messages.state_loading', { label })}</p>;
             break;
         case 'not-found':
             body = (
                 <div role="alert" className="p-6 text-sm">
-                    <p>We couldn't find {label}.</p>
+                    <p>{m.t('splicewire-beam-ux::messages.state_not_found', { label })}</p>
                     {wayBack && <WayBackLink wayBack={wayBack} />}
                 </div>
             );
@@ -97,7 +100,7 @@ export function StateBoundary({ query, label, filtered, onRetry, upsell, wayBack
             // carries the way back when the page supplies one.
             body = upsell ?? (
                 <div role="alert" className="p-6 text-sm">
-                    <p>{label} isn't included in this plan.</p>
+                    <p>{m.t('splicewire-beam-ux::messages.state_upsell', { label })}</p>
                     {wayBack && <WayBackLink wayBack={wayBack} />}
                 </div>
             );
@@ -105,10 +108,10 @@ export function StateBoundary({ query, label, filtered, onRetry, upsell, wayBack
         default:
             body = (
                 <div role="alert" className="p-6 text-sm">
-                    <p>{messageOf(query.error) ?? `${label[0]?.toUpperCase() ?? ''}${label.slice(1)} couldn't load.`}</p>
+                    <p>{messageOf(query.error) ?? m.t('splicewire-beam-ux::messages.state_load_failed', { label })}</p>
                     {retry === 'bounded' && onRetry && (
                         <button type="button" className="mt-2 underline" onClick={onRetry}>
-                            Try again
+                            {m.t('splicewire-beam-ux::messages.state_try_again')}
                         </button>
                     )}
                     {wayBack && <WayBackLink wayBack={wayBack} />}

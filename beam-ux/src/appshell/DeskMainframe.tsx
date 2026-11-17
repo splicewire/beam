@@ -9,6 +9,7 @@ import {
 } from '@schemastud/ui';
 import { PanelLeft } from 'lucide-react';
 import { cn } from '@schemastud/ui';
+import { useBeamUxMessages } from '../messages.js';
 
 export interface DeskNavigation {
     mobile: boolean;
@@ -20,6 +21,7 @@ export function DeskMainframe({
     slots,
     ctx,
 }: MainframeProps & { ctx: { navigation?: DeskNavigation } }) {
+    const m = useBeamUxMessages();
     const canvas = ctx.canvas === 'flat' ? 'bg-background' : 'dotted-bg';
     const navigation = ctx.navigation;
     const mobile = navigation?.mobile ?? false;
@@ -53,7 +55,7 @@ export function DeskMainframe({
                                     variant="ghost"
                                     size="icon"
                                     className="size-11 flex-none"
-                                    aria-label="Open navigation"
+                                    aria-label={m.t('splicewire-beam-ux::messages.appshell_open_navigation')}
                                 >
                                     <PanelLeft />
                                 </Button>
@@ -84,7 +86,7 @@ export function DeskMainframe({
                         aria-describedby={undefined}
                         className="w-[min(20rem,calc(100vw-2rem))] gap-0 overflow-y-auto bg-sidebar-deep p-0 py-[18px] text-sidebar-foreground"
                     >
-                        <SheetTitle className="sr-only">Navigation</SheetTitle>
+                        <SheetTitle className="sr-only">{m.t('splicewire-beam-ux::messages.appshell_navigation')}</SheetTitle>
                         {rail}
                     </SheetContent>
                 )}

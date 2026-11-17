@@ -1,5 +1,6 @@
 import { Fragment, type ComponentType, type ComponentProps, type ReactNode } from 'react';
 import { cn } from '@schemastud/ui';
+import { useBeamUxMessages } from '../messages.js';
 
 export interface AppRailItem {
     id: string;
@@ -27,10 +28,11 @@ export interface AppRailProps {
 const Anchor = (props: ComponentProps<'a'>) => <a {...props} />;
 
 /** Render only the host's admitted navigation roster; no routes or authorization are inferred. */
-export function AppRail({ groups, Link = Anchor, isActive, label = 'Navigation',
+export function AppRail({ groups, Link = Anchor, isActive, label,
     className = 'min-w-0 space-y-4 px-3', renderItem, renderGroup }: AppRailProps) {
+    const m = useBeamUxMessages();
     return (
-        <nav aria-label={label} className={className}>
+        <nav aria-label={label ?? m.t('splicewire-beam-ux::messages.appshell_navigation')} className={className}>
             {groups.filter(group => group.items.length > 0).map(group => {
                 const items = group.items.map(item => {
                     const active = isActive?.(item.href) ?? false;

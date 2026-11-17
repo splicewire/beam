@@ -2,6 +2,8 @@ import { Fragment, createElement, useEffect, useMemo, useState, type ComponentTy
 import type { ComponentArtifactData } from '@splicewire/beam-resources/types/beam-ux';
 import { jsx, jsxs } from 'react/jsx-runtime';
 import { bindingRuntime } from '../bindings/runtime.js';
+import { useBeamUxMessages } from '../messages.js';
+import { richMessage } from '../rich-message.js';
 import { richFieldComponents } from '../bindings/rich-field.js';
 import { compileEntryStyles } from '../blockdoc/style-runtime.js';
 
@@ -211,32 +213,36 @@ export type EntryBodyProps = {
 // inside whatever realm the host mounts (a light site chrome under a dark app, a dark shell). It reads
 // `--beam-fg-muted`, the prose text token, never `--beam-muted`, which is a SURFACE tone in the beam tier
 // (the mdx kit fills with it), so reading it as text came out pale-on-pale.
-const DEFAULT_EMPTY = (
-    <p data-beam-entry-unauthored="" style={{ fontSize: '0.875rem', color: 'var(--beam-fg-muted, color-mix(in oklab, currentColor 62%, transparent))' }}>
-        This page doesn&rsquo;t have any content yet.
-    </p>
-);
+function DefaultEmpty() {
+    const m = useBeamUxMessages();
+    return (
+        <p data-beam-entry-unauthored="" style={{ fontSize: '0.875rem', color: 'var(--beam-fg-muted, color-mix(in oklab, currentColor 62%, transparent))' }}>
+            {m.t('splicewire-beam-ux::messages.site_page_empty')}
+        </p>
+    );
+}
 
-const DEFAULT_FALLBACK = (
-    <p data-beam-entry-uncompiled="" style={{ fontSize: '0.875rem', color: 'var(--beam-fg-muted, color-mix(in oklab, currentColor 62%, transparent))' }}>
-        This page&rsquo;s content has not been compiled yet. Run{' '}
-        <code style={{ fontFamily: 'var(--beam-font-mono, ui-monospace, monospace)' }}>
-            php artisan splicewire:beam:ux:compile
-        </code>
-        .
-    </p>
-);
+function DefaultFallback() {
+    const m = useBeamUxMessages();
+    return (
+        <p data-beam-entry-uncompiled="" style={{ fontSize: '0.875rem', color: 'var(--beam-fg-muted, color-mix(in oklab, currentColor 62%, transparent))' }}>
+            {richMessage(m, 'splicewire-beam-ux::messages.site_page_uncompiled', {
+                command: <code style={{ fontFamily: 'var(--beam-font-mono, ui-monospace, monospace)' }}>{'php artisan splicewire:beam:ux:compile'}</code>,
+            })}
+        </p>
+    );
+}
 
 export function EntryBody({ artifact, components, fallback, empty, loading = null, bodyProps }: EntryBodyProps) {
     const { Body, status } = useEntryArtifact(artifact.url, artifact.version);
     const resolvedComponents = useAuthoredArtifacts(artifact.components, components, artifact.styleRegistry);
 
     if (status === 'unauthored') {
-        return <>{empty ?? DEFAULT_EMPTY}</>;
+        return <>{empty ?? <DefaultEmpty />}</>;
     }
 
     if (status === 'failed') {
-        return <>{fallback ?? DEFAULT_FALLBACK}</>;
+        return <>{fallback ?? <DefaultFallback />}</>;
     }
 
     if (Body === null) {
