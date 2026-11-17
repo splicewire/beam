@@ -7,6 +7,7 @@
 import { createContext, useContext } from 'react';
 import type { ComponentType, ReactNode } from 'react';
 import type { JsonBlock } from '../blockdoc/json.js';
+import type { BeamUxMessageKey, BeamUxMessages } from '../messages.js';
 import type { BlockdocManifest } from '@schemastud/blockdoc';
 import { editGateOf } from './props.js';
 import { StyleSelectionProvider } from './StyleSelection';
@@ -35,7 +36,10 @@ export type MdxEditComponent = ComponentType<{
 /** An insert-palette entry: a label + a factory producing a fresh JsonBlock to insert. */
 export interface BlockTemplate {
     label: string;
-    make: () => JsonBlock;
+    /** beam-ux's own templates name their catalog line; the palette renders it in the reader's locale. */
+    labelKey?: BeamUxMessageKey;
+    /** `messages` seeds the block's starting text in the reader's locale; from then on it is authored content. */
+    make: (messages?: BeamUxMessages) => JsonBlock;
 }
 
 /** Everything the canvas recursion needs, injected by the host. */

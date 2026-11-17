@@ -14,6 +14,7 @@ import {BindingInspector} from './BindingInspector';
 import {blockStyleFields} from './block-style';
 import {authoredEntry} from './authored-components';
 import {ComponentProps} from './ComponentProps';
+import {useBeamUxMessages,type BeamUxMessageKey} from '../messages.js';
 
 const PANELS:Record<string,string[]>={
  Size:['width','height','min-width','max-width','min-height','max-height','aspect-ratio','object-fit'],
@@ -22,10 +23,13 @@ const PANELS:Record<string,string[]>={
  Appearance:['background-color','background-image','border','border-color','border-radius','opacity'],
  Effects:['box-shadow','text-shadow','filter','transform','transition'],
 };
+/** The panel names are keys; the reader sees their catalog line. */
+const PANEL_LABEL:Record<string,BeamUxMessageKey>={Size:'splicewire-beam-ux::messages.inspect_panel_size',Layout:'splicewire-beam-ux::messages.inspect_panel_layout',Text:'splicewire-beam-ux::messages.inspect_panel_text',Appearance:'splicewire-beam-ux::messages.inspect_panel_appearance',Effects:'splicewire-beam-ux::messages.inspect_panel_effects'};
 interface Node {type:string;attrsSchema?:SchemaNode;attrs?:Record<string,unknown>}
 
 /** One NodeAccess write path, shared by the in-page and standalone editors. */
 export function BlockInspector(){
+ const m=useBeamUxMessages();
  const mount=useEditShellMount();
  const config=useCanvas();
  const canvasSelection=useCanvasSelection();
@@ -56,7 +60,7 @@ export function BlockInspector(){
   const properties=[...Object.values(PANELS).flat(),...tokens.map(token=>/^var\((--[^,)]+)/.exec(token)?.[1]).filter((v):v is string=>!!v)];
   setRendered(Object.fromEntries(properties.map(property=>[property,computed.getPropertyValue(property).trim()])));
  },[id,JSON.stringify(attrs),tokens.join('|')]);
- if(!node||id===null)return <div data-frame-region="inspector" data-frame-inspector-empty="">Select a block to edit</div>;
+ if(!node||id===null)return <div data-frame-region="inspector" data-frame-inspector-empty="">{m.t('splicewire-beam-ux::messages.inspect_select_block')}</div>;
  const write=(property:string,value:string|null)=>{
   try{
    if(canvasSelection.commands)canvasSelection.commands.editStyle(selected,selection,property,value);
@@ -88,70 +92,71 @@ export function BlockInspector(){
   const value=own(property);
   const mixed=styles.length>1&&new Set(styles.map(s=>effectiveDeclaration(s,property,selection,registry)?.value??'')).size>1;
   return <div key={property} style={{marginBlock:8}}>
-   <label>{property} token<select aria-label={`${property} token`} value={tokens.includes(value)?value:''} onChange={event=>{if(event.target.value)write(property,event.target.value);}}>
-    <option value="">Custom value</option>{tokens.map(token=><option key={token} value={token}>{token} {resolve(token)!==token?`(${resolve(token)})`:''}</option>)}</select></label>
+   <label>{m.t('splicewire-beam-ux::messages.inspect_property_token',{property})}<select aria-label={m.t('splicewire-beam-ux::messages.inspect_property_token',{property})} value={tokens.includes(value)?value:''} onChange={event=>{if(event.target.value)write(property,event.target.value);}}>
+    <option value="">{m.t('splicewire-beam-ux::messages.inspect_custom_value')}</option>{tokens.map(token=><option key={token} value={token}>{token} {resolve(token)!==token?`(${resolve(token)})`:''}</option>)}</select></label>
    <label>{property}<input aria-label={property} list={tokenId} key={`${id}:${selection.breakpoint}:${selection.state}:${property}:${value}`} defaultValue={value}
-    placeholder={mixed?'Mixed values':inherited?.value||rendered[property]||'Unset'} onBlur={event=>{if(event.target.value!==value)write(property,event.target.value||null);}}/></label>
-   {mixed&&<small>{property}: Mixed values</small>}
-   <small>{inherited?`${inherited.layer}: ${resolve(inherited.value)}`:rendered[property]?`Rendered / inherited: ${rendered[property]}`:'No value'}</small>
+    placeholder={mixed?m.t('splicewire-beam-ux::messages.inspect_mixed_values'):inherited?.value||rendered[property]||m.t('splicewire-beam-ux::messages.inspect_unset')} onBlur={event=>{if(event.target.value!==value)write(property,event.target.value||null);}}/></label>
+   {mixed&&<small>{m.t('splicewire-beam-ux::messages.inspect_property_mixed',{property})}</small>}
+   <small>{inherited?`${inherited.layer}: ${resolve(inherited.value)}`:rendered[property]?m.t('splicewire-beam-ux::messages.inspect_rendered_inherited',{value:rendered[property]}):m.t('splicewire-beam-ux::messages.inspect_no_value')}</small>
    {(property==='color'||property.endsWith('-color'))&&<ColourControls property={property} value={value||inherited?.value||rendered[property]||'#000000'} onChange={value=>write(property,value)} onError={setError}/>}
-   <div><button type="button" onClick={()=>write(property,null)}>Unset {property}</button>
-    <button type="button" onClick={event=>{const input=event.currentTarget.closest('div')?.parentElement?.querySelector('input');input?.focus();}}>Edit {property} as text</button>
-    <button type="button" onClick={()=>{void navigator.clipboard?.writeText(`${property}: ${value||inherited?.value||rendered[property]||''};`).catch(()=>setError('Could not copy declaration'));}}>Copy {property}</button></div>
+   <div><button type="button" onClick={()=>write(property,null)}>{m.t('splicewire-beam-ux::messages.inspect_unset_property',{property})}</button>
+    <button type="button" onClick={event=>{const input=event.currentTarget.closest('div')?.parentElement?.querySelector('input');input?.focus();}}>{m.t('splicewire-beam-ux::messages.inspect_edit_as_text',{property})}</button>
+    <button type="button" onClick={()=>{void navigator.clipboard?.writeText(`${property}: ${value||inherited?.value||rendered[property]||''};`).catch(()=>setError(m.t('splicewire-beam-ux::messages.inspect_copy_failed')));}}>{m.t('splicewire-beam-ux::messages.inspect_copy_property',{property})}</button></div>
   </div>;
  };
  return <div data-frame-region="inspector" data-node-type={node.type} style={{padding:12,overflow:'auto'}}>
   {error&&<p role="alert">{error}</p>}
   {selected.length<=1&&<BindingInspector key={id} path={id}/>}
-  {selected.length>1&&<p>{selected.length} blocks selected — Block Style edits apply together.</p>}
-  {effectiveDeclaration(style,'display',{breakpoint:selection.breakpoint,state:null},registry)?.value==='none'&&<p>Hidden for visitors at {selection.breakpoint?`${selection.breakpoint}+`:'all widths'} after publish. An earlier layer may still hide this block when this override is cleared.</p>}
+  {selected.length>1&&<p>{m.choice('splicewire-beam-ux::messages.inspect_blocks_selected',selected.length)}</p>}
+  {effectiveDeclaration(style,'display',{breakpoint:selection.breakpoint,state:null},registry)?.value==='none'&&<p>{m.t('splicewire-beam-ux::messages.inspect_hidden_at',{width:selection.breakpoint?`${selection.breakpoint}+`:m.t('splicewire-beam-ux::messages.inspect_all_widths')})}</p>}
   {selected.length<=1&&component&&<ComponentProps key={id} path={id} entry={component}/>}
-  {selected.length<=1&&!component&&<section aria-label="Element properties"><h3>{node.type} properties</h3><SchemaForm key={id} schema={{...node.attrsSchema,properties}} formData={props}
+  {selected.length<=1&&!component&&<section aria-label={m.t('splicewire-beam-ux::messages.inspect_element_properties')}><h3>{m.t('splicewire-beam-ux::messages.inspect_type_properties',{type:node.type})}</h3><SchemaForm key={id} schema={{...node.attrsSchema,properties}} formData={props}
    uiSchema={{'ui:submitButtonOptions':{norender:true}}} onChange={(event:{formData?:unknown})=>mount.setNodeAttrs(id,{...(event.formData as Record<string,unknown>),...(Object.hasOwn(attrs,'className')?{className:attrs.className}:{}),bdStyle:style})}/></section>}
   {selected.length<=1&&config.mediaLibrary&&Object.entries(properties).filter(([name,schema])=>
     (node.type==='img'&&name==='src')||(schema as Record<string,unknown>)?.['x-component-prop-type']==='image'
   ).map(([name])=><MediaPicker key={`${id}:${name}`} label={name} library={config.mediaLibrary!}
     onChoose={url=>{const current=mount.getNode(id) as Node|null;if(current)mount.setNodeAttrs(id,{...current.attrs,[name]:url});}}/>)}
-  {!rootStyles?<p>Style panels are unavailable: this component does not declare root-style forwarding.</p>:<>
-   <label>Breakpoint<select aria-label="Breakpoint" value={selection.breakpoint??''} onChange={event=>select({...selection,breakpoint:event.target.value||null})}>
-    <option value="">Base</option>{Object.entries(registry.breakpoints).map(([name,width])=><option key={name} value={name}>{name} ({width})</option>)}</select></label>
-   <label>State<select aria-label="State" value={selection.state??''} onChange={event=>select({...selection,state:event.target.value||null})}>
-    <option value="">Default</option>{Object.keys(registry.states).map(name=><option key={name}>{name}</option>)}</select></label>
-   <p>The canvas previews this breakpoint at its width (capped by available space) and shows the selected state as if active. Published pages answer to the visitor's viewport and real interaction.</p>
+  {!rootStyles?<p>{m.t('splicewire-beam-ux::messages.inspect_no_root_style')}</p>:<>
+   <label>{m.t('splicewire-beam-ux::messages.inspect_breakpoint')}<select aria-label={m.t('splicewire-beam-ux::messages.inspect_breakpoint')} value={selection.breakpoint??''} onChange={event=>select({...selection,breakpoint:event.target.value||null})}>
+    <option value="">{m.t('splicewire-beam-ux::messages.inspect_base')}</option>{Object.entries(registry.breakpoints).map(([name,width])=><option key={name} value={name}>{name} ({width})</option>)}</select></label>
+   <label>{m.t('splicewire-beam-ux::messages.inspect_state')}<select aria-label={m.t('splicewire-beam-ux::messages.inspect_state')} value={selection.state??''} onChange={event=>select({...selection,state:event.target.value||null})}>
+    <option value="">{m.t('splicewire-beam-ux::messages.inspect_default')}</option>{Object.keys(registry.states).map(name=><option key={name}>{name}</option>)}</select></label>
+   <p>{m.t('splicewire-beam-ux::messages.inspect_preview_explainer')}</p>
    <datalist id={tokenId}>{tokens.map(token=><option key={token} value={token}>{resolve(token)}</option>)}</datalist>
-   {Object.entries(PANELS).map(([name,fields])=><details key={name}><summary>{name}</summary>{fields.map(field)}</details>)}
-   <details><summary>Gradient stops</summary>
-    <label>Start colour token<select aria-label="Start colour token" value={tokens.includes(gradientStart)?gradientStart:''} onChange={event=>{if(event.target.value)setGradientStart(event.target.value);}}>
-     <option value="">Custom colour</option>{tokens.map(token=><option key={token} value={token}>{token}</option>)}</select></label>
-    <label>Start colour<input type={tokens.includes(gradientStart)?'text':'color'} value={gradientStart} onChange={event=>setGradientStart(event.target.value)}/></label>
-    <label>End colour token<select aria-label="End colour token" value={tokens.includes(gradientEnd)?gradientEnd:''} onChange={event=>{if(event.target.value)setGradientEnd(event.target.value);}}>
-     <option value="">Custom colour</option>{tokens.map(token=><option key={token} value={token}>{token}</option>)}</select></label>
-    <label>End colour<input type={tokens.includes(gradientEnd)?'text':'color'} value={gradientEnd} onChange={event=>setGradientEnd(event.target.value)}/></label>
-    <button type="button" onClick={()=>write('background-image',`linear-gradient(${gradientStart}, ${gradientEnd})`)}>Apply gradient</button>
+   {Object.entries(PANELS).map(([name,fields])=><details key={name}><summary>{PANEL_LABEL[name]?m.t(PANEL_LABEL[name]):name}</summary>{fields.map(field)}</details>)}
+   <details><summary>{m.t('splicewire-beam-ux::messages.inspect_gradient_stops')}</summary>
+    <label>{m.t('splicewire-beam-ux::messages.inspect_start_colour_token')}<select aria-label={m.t('splicewire-beam-ux::messages.inspect_start_colour_token')} value={tokens.includes(gradientStart)?gradientStart:''} onChange={event=>{if(event.target.value)setGradientStart(event.target.value);}}>
+     <option value="">{m.t('splicewire-beam-ux::messages.inspect_custom_colour')}</option>{tokens.map(token=><option key={token} value={token}>{token}</option>)}</select></label>
+    <label>{m.t('splicewire-beam-ux::messages.inspect_start_colour')}<input type={tokens.includes(gradientStart)?'text':'color'} value={gradientStart} onChange={event=>setGradientStart(event.target.value)}/></label>
+    <label>{m.t('splicewire-beam-ux::messages.inspect_end_colour_token')}<select aria-label={m.t('splicewire-beam-ux::messages.inspect_end_colour_token')} value={tokens.includes(gradientEnd)?gradientEnd:''} onChange={event=>{if(event.target.value)setGradientEnd(event.target.value);}}>
+     <option value="">{m.t('splicewire-beam-ux::messages.inspect_custom_colour')}</option>{tokens.map(token=><option key={token} value={token}>{token}</option>)}</select></label>
+    <label>{m.t('splicewire-beam-ux::messages.inspect_end_colour')}<input type={tokens.includes(gradientEnd)?'text':'color'} value={gradientEnd} onChange={event=>setGradientEnd(event.target.value)}/></label>
+    <button type="button" onClick={()=>write('background-image',`linear-gradient(${gradientStart}, ${gradientEnd})`)}>{m.t('splicewire-beam-ux::messages.inspect_apply_gradient')}</button>
    </details>
-   <details><summary>Advanced</summary>{[...new Set(style.layers.flatMap(layer=>Object.keys(layer.declarations)))].filter(property=>!Object.values(PANELS).flat().includes(property)).map(field)}
-    <label>CSS property<input value={rawProperty} onChange={event=>setRawProperty(event.target.value)}/></label>
-    <label>CSS value token<select aria-label="CSS value token" value={tokens.includes(rawValue)?rawValue:''} onChange={event=>{if(event.target.value)setRawValue(event.target.value);}}>
-     <option value="">Custom value</option>{tokens.map(token=><option key={token} value={token}>{token}</option>)}</select></label>
-    <label>CSS value<input list={tokenId} value={rawValue} onChange={event=>setRawValue(event.target.value)}/></label><button type="button" onClick={()=>write(rawProperty,rawValue)}>Set declaration</button>
+   <details><summary>{m.t('splicewire-beam-ux::messages.inspect_advanced')}</summary>{[...new Set(style.layers.flatMap(layer=>Object.keys(layer.declarations)))].filter(property=>!Object.values(PANELS).flat().includes(property)).map(field)}
+    <label>{m.t('splicewire-beam-ux::messages.inspect_css_property')}<input value={rawProperty} onChange={event=>setRawProperty(event.target.value)}/></label>
+    <label>{m.t('splicewire-beam-ux::messages.inspect_css_value_token')}<select aria-label={m.t('splicewire-beam-ux::messages.inspect_css_value_token')} value={tokens.includes(rawValue)?rawValue:''} onChange={event=>{if(event.target.value)setRawValue(event.target.value);}}>
+     <option value="">{m.t('splicewire-beam-ux::messages.inspect_custom_value')}</option>{tokens.map(token=><option key={token} value={token}>{token}</option>)}</select></label>
+    <label>{m.t('splicewire-beam-ux::messages.inspect_css_value')}<input list={tokenId} value={rawValue} onChange={event=>setRawValue(event.target.value)}/></label><button type="button" onClick={()=>write(rawProperty,rawValue)}>{m.t('splicewire-beam-ux::messages.inspect_set_declaration')}</button>
    </details>
-   <section aria-label="Text contrast"><h3>Text contrast</h3><p>{ratio===null?'Contrast unknown: use opaque resolved colours.':`${ratio.toFixed(2)}:1 — ${ratio>=4.5?'meets':'below'} normal-text AA`}</p>
-    {shade&&ratio!==null&&ratio<4.5&&<button type="button" onClick={()=>write('color',shade)}>Use readable shade ({shade})</button>}</section>
+   <section aria-label={m.t('splicewire-beam-ux::messages.inspect_text_contrast')}><h3>{m.t('splicewire-beam-ux::messages.inspect_text_contrast')}</h3><p>{ratio===null?m.t('splicewire-beam-ux::messages.inspect_contrast_unknown'):m.t(ratio>=4.5?'splicewire-beam-ux::messages.inspect_contrast_meets':'splicewire-beam-ux::messages.inspect_contrast_below',{ratio:ratio.toFixed(2)})}</p>
+    {shade&&ratio!==null&&ratio<4.5&&<button type="button" onClick={()=>write('color',shade)}>{m.t('splicewire-beam-ux::messages.inspect_use_readable_shade',{shade})}</button>}</section>
   </>}
  </div>;
 }
 
 function ColourControls({property,value,onChange,onError}:{property:string;value:string;onChange:(value:string)=>void;onError:(error:string)=>void}){
+ const m=useBeamUxMessages();
  const parsed=colourInput(value);
  const alpha=parsed?.alpha??1;
  const hex=parsed?.hex??'#000000';
  const change=(colour:string,opacity:number)=>onChange(opacity===1?colour:`rgb(${[1,3,5].map(i=>parseInt(colour.slice(i,i+2),16)).join(' ')} / ${opacity})`);
  const EyeDropper=(globalThis as unknown as {EyeDropper?:new()=>{open:()=>Promise<{sRGBHex:string}>}}).EyeDropper;
  return <div>
-  {!parsed&&<small>Use the text or token field for this colour format.</small>}
-  <label>{property} colour<input type="color" aria-label={`${property} colour`} value={hex} disabled={!parsed} onChange={event=>change(event.target.value,alpha)}/></label>
-  <label>{property} alpha<input type="number" aria-label={`${property} alpha`} min="0" max="1" step="0.05" value={alpha} disabled={!parsed} onChange={event=>{const next=Number(event.target.value);if(Number.isFinite(next)&&next>=0&&next<=1){change(hex,next);}}}/></label>
-  {EyeDropper?<button type="button" onClick={()=>{void new EyeDropper().open().then(result=>change(result.sRGBHex,alpha)).catch(error=>{if(error?.name!=='AbortError')onError('Could not sample colour');});}}>Pick {property} from screen</button>:<small>Screen eyedropper unavailable in this browser.</small>}
+  {!parsed&&<small>{m.t('splicewire-beam-ux::messages.inspect_colour_format_unsupported')}</small>}
+  <label>{m.t('splicewire-beam-ux::messages.inspect_property_colour',{property})}<input type="color" aria-label={m.t('splicewire-beam-ux::messages.inspect_property_colour',{property})} value={hex} disabled={!parsed} onChange={event=>change(event.target.value,alpha)}/></label>
+  <label>{m.t('splicewire-beam-ux::messages.inspect_property_alpha',{property})}<input type="number" aria-label={m.t('splicewire-beam-ux::messages.inspect_property_alpha',{property})} min="0" max="1" step="0.05" value={alpha} disabled={!parsed} onChange={event=>{const next=Number(event.target.value);if(Number.isFinite(next)&&next>=0&&next<=1){change(hex,next);}}}/></label>
+  {EyeDropper?<button type="button" onClick={()=>{void new EyeDropper().open().then(result=>change(result.sRGBHex,alpha)).catch(error=>{if(error?.name!=='AbortError')onError(m.t('splicewire-beam-ux::messages.inspect_sample_failed'));});}}>{m.t('splicewire-beam-ux::messages.inspect_pick_from_screen',{property})}</button>:<small>{m.t('splicewire-beam-ux::messages.inspect_eyedropper_unavailable')}</small>}
  </div>;
 }
 

@@ -7,3 +7,9 @@ export const useBeamUxMessages = (): ReturnType<typeof useMessages<typeof catalo
 
 /** English defaults for module-level copy that is read outside a render (static helpers, manifests). */
 export const englishBeamUxMessages = createMessages(catalog.messages);
+
+/** The messages object a schema builder or other non-hook helper takes; callers in a render pass the reader's. */
+export type BeamUxMessages = ReturnType<typeof useBeamUxMessages>;
+
+/** One of beam-ux's catalog keys. */
+export type BeamUxMessageKey = Parameters<BeamUxMessages['t']>[0];

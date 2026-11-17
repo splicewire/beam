@@ -59,6 +59,7 @@ import type { CanvasTheme } from "./css.js";
 import { monogram } from "./monogram.js";
 import { TreeRender } from "./TreeRender.js";
 import { createCanvasWidgetRegistry } from "./widgetRegistry.js";
+import { useBeamUxMessages } from "../messages.js";
 
 /**
  * The persistence seam — the host injects load/save (audiostud routes them through puckClient).
@@ -268,6 +269,7 @@ export function PageEditor({
   userId,
   reloadToken,
 }: PageEditorProps) {
+  const m = useBeamUxMessages();
   const editing = useEditMode();
   const initial: JsonDoc = isDoc(body)
     ? body
@@ -380,7 +382,7 @@ export function PageEditor({
         if (!live) return;
         if (!canMountPublication(state)) {
           setPublicationError(
-            "This entry has no Publication Pin. Publish its baseline before mounting the editor.",
+            m.t('splicewire-beam-ux::messages.page_no_publication_pin'),
           );
         } else setPublication(state);
       })
@@ -390,7 +392,7 @@ export function PageEditor({
         () =>
           live &&
           setPublicationError(
-            "Could not load publication history. Verify the versions and publication-pin migrations.",
+            m.t('splicewire-beam-ux::messages.page_history_load_failed'),
           ),
       );
 
@@ -414,7 +416,7 @@ export function PageEditor({
    */
   const saveDraft = async () => {
     if (local.session?.source) {
-      notify?.error("Apply or discard Source Mode before saving.");
+      notify?.error(m.t('splicewire-beam-ux::messages.page_source_mode_before_save'));
       return;
     }
     if (!transport.saveDraft || !local.session) return;
@@ -436,11 +438,11 @@ export function PageEditor({
       local.saved(next.headVersion, sent, sentSettings);
       mount.markDirty(false);
       editedRef.current = false;
-      notify?.success("Draft saved");
+      notify?.success(m.t('splicewire-beam-ux::messages.page_draft_saved'));
       return next;
     } catch (error) {
       if ((error as { status?: number })?.status === 409) setConflict(true);
-      else notify?.error("Draft save failed");
+      else notify?.error(m.t('splicewire-beam-ux::messages.page_draft_save_failed'));
     } finally {
       setBusy(false);
     }
@@ -470,11 +472,11 @@ export function PageEditor({
       else
         notify?.success(
           next.release && next.release.status !== "published"
-            ? "Release submitted for review"
-            : "Published",
+            ? m.t('splicewire-beam-ux::messages.page_release_submitted')
+            : m.t('splicewire-beam-ux::messages.page_published'),
         );
     } catch {
-      notify?.error("Publish failed");
+      notify?.error(m.t('splicewire-beam-ux::messages.page_publish_failed'));
     } finally {
       setBusy(false);
     }
@@ -493,7 +495,7 @@ export function PageEditor({
       (local.session?.dirty || editedRef.current) &&
       !(publication && isUnauthored(publication))
     ) {
-      notify?.error("Save your draft before publishing it.");
+      notify?.error(m.t('splicewire-beam-ux::messages.page_save_before_publish'));
       return;
     }
     return publish();
@@ -526,7 +528,7 @@ export function PageEditor({
           ["draft", "in_review", "approved", "scheduled"].includes(release.status),
         );
       } catch {
-        notify?.error("Could not load the open Releases");
+        notify?.error(m.t('splicewire-beam-ux::messages.page_releases_load_failed'));
       }
     }
     setPublishChoice({ releases, releaseId: releases[0]?.id ?? "" });
@@ -546,9 +548,9 @@ export function PageEditor({
           releases: current.releases.map((release) => (release.id === updated.id ? updated : release)),
         },
       );
-      notify?.success(`Added to ${updated.title}`);
+      notify?.success(m.t('splicewire-beam-ux::messages.page_added_to_release', { title: updated.title }));
     } catch (failure) {
-      notify?.error(failure instanceof Error ? failure.message : "Could not add it to the Release");
+      notify?.error(failure instanceof Error ? failure.message : m.t('splicewire-beam-ux::messages.page_add_to_release_failed'));
     } finally {
       setBusy(false);
     }
@@ -568,7 +570,7 @@ export function PageEditor({
       if (transport.listVersions)
         setPublication(await transport.listVersions(slug));
     } catch {
-      notify?.error("Could not load the version history");
+      notify?.error(m.t('splicewire-beam-ux::messages.page_versions_load_failed'));
     } finally {
       setBusy(false);
     }
@@ -587,7 +589,7 @@ export function PageEditor({
     await mount.flush();
     if (local.session?.dirty || editedRef.current) {
       notify?.error(
-        "Save or discard unsaved changes before restoring History.",
+        m.t('splicewire-beam-ux::messages.page_save_before_restore'),
       );
       return;
     }
@@ -606,12 +608,12 @@ export function PageEditor({
           setDoc(restored.body as JsonDoc);
         }
         mount.markDirty(false);
-        notify?.success(`Restored ${version.readable}`);
+        notify?.success(m.t('splicewire-beam-ux::messages.page_restored', { version: version.readable }));
       } else {
-        notify?.success(`Restored ${version.readable} — reload to edit it`);
+        notify?.success(m.t('splicewire-beam-ux::messages.page_restored_reload', { version: version.readable }));
       }
     } catch {
-      notify?.error(`Could not restore ${version.readable}`);
+      notify?.error(m.t('splicewire-beam-ux::messages.page_restore_failed', { version: version.readable }));
     } finally {
       setBusy(false);
     }
@@ -621,7 +623,7 @@ export function PageEditor({
     if (!transport.previewVersion) return;
     const popup = window.open("about:blank", "_blank");
     if (!popup) {
-      notify?.error("Allow popups to open a version preview");
+      notify?.error(m.t('splicewire-beam-ux::messages.page_allow_popups'));
       return;
     }
     popup.opener = null;
@@ -634,7 +636,7 @@ export function PageEditor({
       popup.location.href = target.href;
     } catch {
       popup.close();
-      notify?.error(`Could not open ${version.readable}`);
+      notify?.error(m.t('splicewire-beam-ux::messages.page_open_failed', { version: version.readable }));
     }
   };
 
@@ -648,7 +650,7 @@ export function PageEditor({
    */
   const clearContent = async () => {
     if (local.session?.source) {
-      notify?.error("Apply or discard Source Mode before clearing.");
+      notify?.error(m.t('splicewire-beam-ux::messages.page_source_mode_before_clear'));
       return;
     }
     if (!transport.clearBody) return;
@@ -663,9 +665,9 @@ export function PageEditor({
       setDoc([]);
       mount.markDirty(false);
       setConfirmClear(false);
-      notify?.success("Content removed");
+      notify?.success(m.t('splicewire-beam-ux::messages.page_content_removed'));
     } catch {
-      notify?.error("Could not remove the content");
+      notify?.error(m.t('splicewire-beam-ux::messages.page_remove_failed'));
     } finally {
       setBusy(false);
     }
@@ -674,26 +676,24 @@ export function PageEditor({
   if (!publishable || !entryId || !userId)
     return (
       <div role="alert">
-        The editor requires an entry, authenticated user, and publication
-        transport.
+        {m.t('splicewire-beam-ux::messages.page_requires_transport')}
       </div>
     );
   if (publicationError || local.error)
     return <div role="alert">{publicationError ?? local.error}</div>;
   if (local.pending)
     return (
-      <div role="alertdialog" aria-label="Unsaved session base moved">
+      <div role="alertdialog" aria-label={m.t('splicewire-beam-ux::messages.page_session_base_moved')}>
         <p>
-          The server version changed. Restore unsaved changes from{" "}
-          {local.pending.identity.base} or discard them?
+          {m.t('splicewire-beam-ux::messages.page_session_base_moved_prompt', { base: local.pending.identity.base })}
         </p>
         <button onClick={() => void local.recover(true)}>
-          Restore unsaved changes
+          {m.t('splicewire-beam-ux::messages.page_restore_unsaved')}
         </button>
-        <button onClick={() => void local.recover(false)}>Discard</button>
+        <button onClick={() => void local.recover(false)}>{m.t('splicewire-beam-ux::messages.page_discard')}</button>
       </div>
     );
-  if (!local.session) return <div role="status">Loading Local Session…</div>;
+  if (!local.session) return <div role="status">{m.t('splicewire-beam-ux::messages.page_loading_session')}</div>;
   const resolveConflict = async (keepOurs: boolean) => {
     if (local.session?.source) {
       notify?.error(
@@ -745,13 +745,13 @@ export function PageEditor({
         />
 
         {conflict && (
-          <ModalAlert label="Save conflict">
-            <p>The server draft changed. Choose which work to keep.</p>
+          <ModalAlert label={m.t('splicewire-beam-ux::messages.page_save_conflict')}>
+            <p>{m.t('splicewire-beam-ux::messages.page_save_conflict_prompt')}</p>
             <button onClick={() => void resolveConflict(false)}>
-              Reload theirs
+              {m.t('splicewire-beam-ux::messages.page_reload_theirs')}
             </button>
             <button onClick={() => void resolveConflict(true)}>
-              Save ours as a new version
+              {m.t('splicewire-beam-ux::messages.page_save_ours')}
             </button>
           </ModalAlert>
         )}
@@ -791,7 +791,7 @@ export function PageEditor({
         <div className="pe-bar">
           <span className="pe-brand">
             {brand && monogram(brand) && <span className="pe-mark" aria-hidden="true">{monogram(brand)}</span>}
-            {brand || `editing · ${slug}`}
+            {brand || m.t('splicewire-beam-ux::messages.page_editing_slug', { slug })}
           </span>
           {!local.session.source && local.session.pageSettings && (
             <PageSettings
@@ -811,25 +811,25 @@ export function PageEditor({
                 className="pe-btn"
                 onClick={onUndo}
                 disabled={!canUndo}
-                title="Undo"
+                title={m.t('splicewire-beam-ux::messages.page_undo')}
               >
-                ↶ Undo
+                ↶ {m.t('splicewire-beam-ux::messages.page_undo')}
               </button>
               <button
                 className="pe-btn"
                 onClick={onRedo}
                 disabled={!canRedo}
-                title="Redo"
+                title={m.t('splicewire-beam-ux::messages.page_redo')}
               >
-                ↷ Redo
+                ↷ {m.t('splicewire-beam-ux::messages.page_redo')}
               </button>
             </>
           }
           <button className="pe-btn" onClick={() => setLeftOpen((v) => !v)}>
-            Insert
+            {m.t('splicewire-beam-ux::messages.page_insert')}
           </button>
           <button className="pe-btn" onClick={() => setRightOpen((v) => !v)}>
-            Inspector
+            {m.t('splicewire-beam-ux::messages.page_inspector')}
           </button>
           {publishable && (
             <>
@@ -839,9 +839,9 @@ export function PageEditor({
                                 saying what is live is the half of the sentence that matters. */}
               {publication?.draftPending && (
                 <span className="pe-draft">
-                  Draft pending
+                  {m.t('splicewire-beam-ux::messages.page_draft_pending')}
                   {publication.publishedReadable
-                    ? ` · readers see ${publication.publishedReadable}`
+                    ? ` ${m.t('splicewire-beam-ux::messages.page_readers_see', { version: publication.publishedReadable })}`
                     : ""}
                 </span>
               )}
@@ -849,16 +849,16 @@ export function PageEditor({
                 className="pe-btn"
                 onClick={saveDraft}
                 disabled={busy}
-                title="Save a version that readers do not see yet"
+                title={m.t('splicewire-beam-ux::messages.page_save_draft_title')}
               >
-                Save draft
+                {m.t('splicewire-beam-ux::messages.page_save_draft')}
               </button>
               <button
                 className="pe-btn"
                 onClick={toggleVersions}
                 disabled={busy}
               >
-                Versions
+                {m.t('splicewire-beam-ux::messages.page_versions')}
               </button>
             </>
           )}
@@ -868,7 +868,7 @@ export function PageEditor({
               onClick={() => setConfirmClear(true)}
               disabled={busy}
             >
-              Remove content
+              {m.t('splicewire-beam-ux::messages.page_remove_content')}
             </button>
           )}
           {/* Publish replaces plain Save (ruling 3): see publishNow. Primary, because it is the act readers see. */}
@@ -876,21 +876,20 @@ export function PageEditor({
             className="pe-btn primary"
             onClick={() => void openPublish()}
             disabled={busy}
-            title="Publish what is on the canvas: readers see it now"
+            title={m.t('splicewire-beam-ux::messages.page_publish_title')}
           >
-            Publish
+            {m.t('splicewire-beam-ux::messages.page_publish')}
           </button>
           <button className="pe-btn" onClick={exit}>
-            Exit
+            {m.t('splicewire-beam-ux::messages.page_exit')}
           </button>
         </div>
 
         {publishChoice && (
-          <ModalAlert label="Publish">
+          <ModalAlert label={m.t('splicewire-beam-ux::messages.page_publish')}>
             <div className="pe-confirm">
               <span>
-                Publish this page now, as a Release of its own, or add it to an open Release to publish it with the
-                rest.
+                {m.t('splicewire-beam-ux::messages.page_publish_choice')}
               </span>
               <div className="pe-confirm-actions">
                 <button
@@ -901,18 +900,18 @@ export function PageEditor({
                     void publishNow();
                   }}
                 >
-                  Publish now
+                  {m.t('splicewire-beam-ux::messages.page_publish_now')}
                 </button>
                 {transport.previewVersion && savedRef && (
-                  <button className="pe-btn" onClick={() => void openPreview({ id: savedRef, readable: "this version" })}>
-                    Preview
+                  <button className="pe-btn" onClick={() => void openPreview({ id: savedRef, readable: m.t('splicewire-beam-ux::messages.page_this_version') })}>
+                    {m.t('splicewire-beam-ux::messages.page_preview')}
                   </button>
                 )}
               </div>
               {publishChoice.releases.length > 0 && (
                 <div className="pe-confirm-actions">
                   <label>
-                    Open Release{" "}
+                    {m.t('splicewire-beam-ux::messages.page_open_release')}{" "}
                     <select
                       value={publishChoice.releaseId}
                       onChange={(event) =>
@@ -927,21 +926,21 @@ export function PageEditor({
                     </select>
                   </label>
                   <button className="pe-btn" disabled={busy || !publishChoice.releaseId} onClick={() => void addToRelease()}>
-                    Add to the Release
+                    {m.t('splicewire-beam-ux::messages.page_add_to_release')}
                   </button>
                   {chosenRelease?.previewHref && (
                     <button
                       className="pe-btn"
                       onClick={() => window.open(chosenRelease.previewHref!, "_blank", "noopener")}
                     >
-                      Preview the Release
+                      {m.t('splicewire-beam-ux::messages.page_preview_release')}
                     </button>
                   )}
                 </div>
               )}
               <div className="pe-confirm-actions">
                 <button className="pe-btn" onClick={() => setPublishChoice(null)}>
-                  Cancel
+                  {m.t('splicewire-beam-ux::messages.page_cancel')}
                 </button>
               </div>
             </div>
@@ -951,11 +950,10 @@ export function PageEditor({
         {/* Removing content is CONFIRMED, never one click, for the same reason restore is:
                     it changes what every reader of the page is served. */}
         {confirmClear && (
-          <ModalAlert label="Confirm remove content">
+          <ModalAlert label={m.t('splicewire-beam-ux::messages.page_confirm_remove_content')}>
             <div className="pe-confirm">
               <span>
-                Clear this draft? The published page stays unchanged until
-                Publish. Earlier bodies remain in History.
+                {m.t('splicewire-beam-ux::messages.page_clear_prompt')}
               </span>
               <div className="pe-confirm-actions">
                 <button
@@ -963,13 +961,13 @@ export function PageEditor({
                   onClick={clearContent}
                   disabled={busy}
                 >
-                  Confirm remove
+                  {m.t('splicewire-beam-ux::messages.page_confirm_remove')}
                 </button>
                 <button
                   className="pe-btn"
                   onClick={() => setConfirmClear(false)}
                 >
-                  Cancel
+                  {m.t('splicewire-beam-ux::messages.page_cancel')}
                 </button>
               </div>
             </div>
@@ -1033,18 +1031,17 @@ export function PageEditor({
             />
           )}
         {versionsOpen && (
-          <aside className="pe-panel pe-versions" aria-label="Versions">
-            <h3>Versions</h3>
+          <aside className="pe-panel pe-versions" aria-label={m.t('splicewire-beam-ux::messages.page_versions')}>
+            <h3>{m.t('splicewire-beam-ux::messages.page_versions')}</h3>
 
             {pendingRestore && (
               <div
                 className="pe-confirm"
                 role="alertdialog"
-                aria-label="Confirm restore"
+                aria-label={m.t('splicewire-beam-ux::messages.page_confirm_restore')}
               >
                 <span>
-                  Restore {pendingRestore.readable} into a new draft? Publish
-                  remains separate.
+                  {m.t('splicewire-beam-ux::messages.page_restore_prompt', { version: pendingRestore.readable })}
                 </span>
                 <div className="pe-confirm-actions">
                   <button
@@ -1052,23 +1049,22 @@ export function PageEditor({
                     onClick={() => restore(pendingRestore)}
                     disabled={busy}
                   >
-                    Confirm restore
+                    {m.t('splicewire-beam-ux::messages.page_confirm_restore')}
                   </button>
                   <button
                     className="pe-btn"
                     onClick={() => setPendingRestore(null)}
                   >
-                    Cancel
+                    {m.t('splicewire-beam-ux::messages.page_cancel')}
                   </button>
                 </div>
               </div>
             )}
 
-            {publication === null && <div className="pe-version">Loading…</div>}
+            {publication === null && <div className="pe-version">{m.t('splicewire-beam-ux::messages.page_loading')}</div>}
             {publication !== null && publication.versions.length === 0 && (
               <div className="pe-version">
-                Nothing recorded yet — a draft, a publish or a save records the
-                first version.
+                {m.t('splicewire-beam-ux::messages.page_no_versions')}
               </div>
             )}
 
@@ -1090,29 +1086,29 @@ export function PageEditor({
                   )}
                 </span>
                 {version.isPublished && (
-                  <span className="pe-version-tag published">published</span>
+                  <span className="pe-version-tag published">{m.t('splicewire-beam-ux::messages.page_tag_published')}</span>
                 )}
                 {version.isHead && !version.isPublished && (
-                  <span className="pe-version-tag head">draft</span>
+                  <span className="pe-version-tag head">{m.t('splicewire-beam-ux::messages.page_tag_draft')}</span>
                 )}
                 {transport.previewVersion && (
                   <button
                     className="pe-btn"
-                    aria-label={`Open ${version.readable}`}
+                    aria-label={m.t('splicewire-beam-ux::messages.page_open_version', { version: version.readable })}
                     onClick={() => void openPreview(version)}
                     disabled={busy}
                   >
-                    Open
+                    {m.t('splicewire-beam-ux::messages.page_open')}
                   </button>
                 )}
                 {!version.isPublished && (
                   <button
                     className="pe-btn"
-                    aria-label={`Restore ${version.readable}`}
+                    aria-label={m.t('splicewire-beam-ux::messages.page_restore_version', { version: version.readable })}
                     onClick={() => setPendingRestore(version)}
                     disabled={busy}
                   >
-                    Restore
+                    {m.t('splicewire-beam-ux::messages.page_restore')}
                   </button>
                 )}
               </div>
@@ -1130,7 +1126,7 @@ export function PageEditor({
                   onSelect={mount.selectNode}
                 />
                 {isSelectedNodeComponent(doc, mount.selectedNodeId) && (
-                  <div className="pe-comp-badge">◆ component</div>
+                  <div className="pe-comp-badge">◆ {m.t('splicewire-beam-ux::messages.page_component_badge')}</div>
                 )}
               </>
             )}

@@ -4,12 +4,15 @@ import {
   DEFAULT_STYLE_REGISTRY,
   type StyleRegistry,
 } from "../blockdoc/style-runtime.js";
+import { englishBeamUxMessages, type BeamUxMessages } from "../messages.js";
 
 /** Inspector uses the same block field and registry as the renderer; no class rewriting. */
 export function blockStyleFields(
   block: JsonBlock,
   input: { schema: Record<string, unknown>; attrs: Record<string, unknown> },
-  registry: StyleRegistry = DEFAULT_STYLE_REGISTRY
+  registry: StyleRegistry = DEFAULT_STYLE_REGISTRY,
+  /** The reader's catalog when called in a render; English otherwise. */
+  messages: BeamUxMessages = englishBeamUxMessages
 ) {
   const properties = {
     ...(input.schema.properties as Record<string, unknown>),
@@ -22,14 +25,14 @@ export function blockStyleFields(
   );
   properties.bdStyle = {
     type: "object",
-    title: "Block style",
-    "x-tab": "Style",
+    title: messages.t("splicewire-beam-ux::messages.canvas_block_style"),
+    "x-tab": messages.t("splicewire-beam-ux::messages.canvas_tab_style"),
     additionalProperties: false,
     required: ["layers"],
     properties: {
       layers: {
         type: "array",
-        title: "Layers",
+        title: messages.t("splicewire-beam-ux::messages.canvas_layers"),
         items: {
           type: "object",
           additionalProperties: false,
@@ -37,17 +40,17 @@ export function blockStyleFields(
           properties: {
             breakpoint: {
               type: ["string", "null"],
-              title: "Breakpoint",
+              title: messages.t("splicewire-beam-ux::messages.canvas_breakpoint"),
               enum: [null, ...Object.keys(registry.breakpoints)],
             },
             state: {
               type: ["string", "null"],
-              title: "State",
+              title: messages.t("splicewire-beam-ux::messages.canvas_state"),
               enum: [null, ...Object.keys(registry.states)],
             },
             declarations: {
               type: "object",
-              title: "Properties",
+              title: messages.t("splicewire-beam-ux::messages.canvas_properties"),
               additionalProperties: { type: "string" },
             },
           },

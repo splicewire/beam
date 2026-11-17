@@ -13,6 +13,7 @@
 // flat dump of every attribute at once.
 import type { JsonBlock } from '../blockdoc/json.js';
 import { attrsView, EDIT_GATE_ATTR, RESERVED_ATTRS, VIEW_GATE_ATTR } from './props.js';
+import { englishBeamUxMessages, type BeamUxMessages } from '../messages.js';
 
 /** A minimal JSON Schema node — kept loose, mirroring @schemastud/seam's own `SchemaNode`. */
 export type SchemaNode = Record<string, unknown>;
@@ -36,43 +37,44 @@ function gateEnum(entitlementKeys: string[], current: string | undefined): strin
  * host's known-key pool (same source the old Inspector's `<datalist>` suggestions used) — passed
  * through so the gate fields render a real `<select>`, not a guess-a-string input.
  */
-export function attrsSchemaFor(block: JsonBlock, entitlementKeys: string[] = []): AttrsSchemaResult {
+/** `messages` is the reader's catalog when called in a render; English otherwise. */
+export function attrsSchemaFor(block: JsonBlock, entitlementKeys: string[] = [], messages: BeamUxMessages = englishBeamUxMessages): AttrsSchemaResult {
     const view = attrsView(block);
     const otherKeys = Object.keys(view).filter((k) => !RESERVED_ATTRS.has(k));
 
     const properties: Record<string, SchemaNode> = {
         className: {
             type: 'string',
-            title: 'Classes',
+            title: messages.t('splicewire-beam-ux::messages.canvas_classes'),
             'x-widget': 'class-chips',
-            'x-group': 'Classes',
-            'x-tab': 'Style',
+            'x-group': messages.t('splicewire-beam-ux::messages.canvas_classes'),
+            'x-tab': messages.t('splicewire-beam-ux::messages.canvas_tab_style'),
             // The "Classes" x-group fieldset legend already labels this — a single-property
             // group repeating its own title as the field label too was pure duplication.
             'x-widget-options': { label: false },
         },
         style: {
             type: 'string',
-            title: 'Style · CSS + vars',
+            title: messages.t('splicewire-beam-ux::messages.canvas_style_css_vars'),
             'x-widget': 'style-rows',
-            'x-group': 'Style',
-            'x-tab': 'Style',
+            'x-group': messages.t('splicewire-beam-ux::messages.canvas_group_style'),
+            'x-tab': messages.t('splicewire-beam-ux::messages.canvas_tab_style'),
             'x-widget-options': { label: false },
         },
         [VIEW_GATE_ATTR]: {
             type: 'string',
-            title: 'View gate',
+            title: messages.t('splicewire-beam-ux::messages.canvas_view_gate'),
             'x-widget': 'select',
-            'x-group': 'Access',
-            'x-tab': 'Advanced',
+            'x-group': messages.t('splicewire-beam-ux::messages.canvas_group_access'),
+            'x-tab': messages.t('splicewire-beam-ux::messages.canvas_tab_advanced'),
             enum: gateEnum(entitlementKeys, view[VIEW_GATE_ATTR]),
         },
         [EDIT_GATE_ATTR]: {
             type: 'string',
-            title: 'Edit gate',
+            title: messages.t('splicewire-beam-ux::messages.canvas_edit_gate'),
             'x-widget': 'select',
-            'x-group': 'Access',
-            'x-tab': 'Advanced',
+            'x-group': messages.t('splicewire-beam-ux::messages.canvas_group_access'),
+            'x-tab': messages.t('splicewire-beam-ux::messages.canvas_tab_advanced'),
             enum: gateEnum(entitlementKeys, view[EDIT_GATE_ATTR]),
         },
     };
@@ -80,7 +82,7 @@ export function attrsSchemaFor(block: JsonBlock, entitlementKeys: string[] = [])
     // Existing arbitrary attrs get a named property (so they show with their real key as the
     // label); additionalProperties covers adding a BRAND NEW key not yet on the block.
     for (const k of otherKeys) {
-        properties[k] = { type: 'string', title: k, 'x-group': 'Attributes', 'x-tab': 'Advanced' };
+        properties[k] = { type: 'string', title: k, 'x-group': messages.t('splicewire-beam-ux::messages.canvas_group_attributes'), 'x-tab': messages.t('splicewire-beam-ux::messages.canvas_tab_advanced') };
     }
 
     const attrs: Record<string, string> = {
@@ -95,7 +97,7 @@ export function attrsSchemaFor(block: JsonBlock, entitlementKeys: string[] = [])
         schema: {
             type: 'object',
             properties,
-            additionalProperties: { type: 'string', 'x-group': 'Attributes', 'x-tab': 'Advanced' },
+            additionalProperties: { type: 'string', 'x-group': messages.t('splicewire-beam-ux::messages.canvas_group_attributes'), 'x-tab': messages.t('splicewire-beam-ux::messages.canvas_tab_advanced') },
         },
         attrs,
     };
