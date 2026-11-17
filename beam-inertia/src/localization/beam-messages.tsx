@@ -21,14 +21,7 @@ import type { ClientCatalogData, ClientLocalizationData } from '../types/localiz
  */
 export function BeamMessages({ children }: { children: ReactNode }) {
     const localization = (usePage().props as { localization?: ClientLocalizationData | null }).localization ?? null;
-    const last = useRef<{ hash: string; catalog: ClientCatalogData } | null>(null);
-
-    const served = localization?.initial ?? null;
-    const hash = localization?.address?.hash ?? null;
-    if (served !== null && hash !== null) {
-        last.current = { hash, catalog: served };
-    }
-    const catalog = served ?? (last.current !== null && last.current.hash === hash ? last.current.catalog : null);
+    const catalog = useServedCatalog(localization);
 
     if (catalog === null) {
         return <>{children}</>;
@@ -39,6 +32,23 @@ export function BeamMessages({ children }: { children: ReactNode }) {
             {children}
         </MessageProvider>
     );
+}
+
+/**
+ * The ONE catalog-selection rule, shared by <BeamMessages> (inside the page) and <ChromeMessages> (beside it, for app-level
+ * chrome such as the toaster), so the two can never drift: the served `initial` catalog when present; for a response that
+ * omits the once-prop, the last catalog kept for the SAME `address.hash`; otherwise null (a passthrough).
+ */
+export function useServedCatalog(localization: ClientLocalizationData | null): ClientCatalogData | null {
+    const last = useRef<{ hash: string; catalog: ClientCatalogData } | null>(null);
+
+    const served = localization?.initial ?? null;
+    const hash = localization?.address?.hash ?? null;
+    if (served !== null && hash !== null) {
+        last.current = { hash, catalog: served };
+    }
+
+    return served ?? (last.current !== null && last.current.hash === hash ? last.current.catalog : null);
 }
 
 /** One page's chrome, outermost first: a layout, a list of them, or `null` for a self-chromed page. */

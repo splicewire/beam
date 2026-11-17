@@ -36,4 +36,8 @@ it("lets a caller's shortcut and label win", () => {
     cleanup();
     render(<Toaster customAriaLabel="Alerts" />);
     expect(regionLabel()).toBe('Alerts');
+    cleanup();
+    // sonner's own containerAriaLabel: the caller's name plus the shortcut, as sonner documents (review of c9e5967d, LOW)
+    render(<MessageProvider value={englishXa} pseudo><Toaster containerAriaLabel="Hinweise" /></MessageProvider>);
+    expect(regionLabel()).toBe('Hinweise alt+T');
 });

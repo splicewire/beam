@@ -16,7 +16,7 @@ function Toaster({ ...props }: ToasterProps) {
     useFlashToast();
 
     // The region's accessible name is ONE catalog sentence with the shortcut as a parameter; sonner's English default
-    // ("Notifications alt+T") otherwise reaches every page untranslated. A caller's `customAriaLabel` still wins.
+    // ("Notifications alt+T") otherwise reaches every page untranslated. A caller's `customAriaLabel` (spread below) or `containerAriaLabel` still wins.
     const label = messages.t('splicewire-beam-inertia::messages.chrome_notifications_region', { hotkey: hotkeyLabel(props.hotkey ?? DEFAULT_HOTKEY) });
 
     return (
@@ -24,7 +24,8 @@ function Toaster({ ...props }: ToasterProps) {
             theme={appearance}
             className="toaster group"
             position="bottom-right"
-            customAriaLabel={label}
+            // a caller's containerAriaLabel is honoured as sonner documents it (its own name + the shortcut), so ours yields
+            customAriaLabel={props.containerAriaLabel !== undefined ? undefined : label}
             style={
                 {
                     '--normal-bg': 'var(--popover)',

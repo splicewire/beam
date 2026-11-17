@@ -22,6 +22,7 @@ import SettingsLayout from "./layouts/settings/layout";
 import SiteLayout from "./layouts/site-layout";
 import { IntakeFormsFromPage } from "./editor/intake";
 import { BeamMessages, withBeamMessages, type ChromeLayout } from "./localization/beam-messages";
+import { ChromeMessages } from "./localization/chrome-messages";
 
 /**
  * One client for the whole app. Any `@splicewire/beam-ux` surface that owns its own data logic uses
@@ -163,12 +164,16 @@ export function beamInertiaOptions(config: BeamInertiaConfig = {}) {
       }
     })()),
     strictMode: true,
-    withApp(app: React.ReactNode) {
+    // localization 28b: the toaster sits BESIDE the page (one mount, never remounted), so <ChromeMessages> gives it the served
+    // catalog from the initial page and every navigate event; without it the region's name was provider-free English.
+    withApp(app: React.ReactNode, options?: { ssr?: boolean; page?: Page }) {
       return (
         <QueryClientProvider client={queryClient}>
           <TooltipProvider delayDuration={0}>
             {app}
-            <Toaster />
+            <ChromeMessages initialPage={options?.page}>
+              <Toaster />
+            </ChromeMessages>
           </TooltipProvider>
         </QueryClientProvider>
       );
