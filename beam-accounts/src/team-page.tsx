@@ -48,6 +48,8 @@ import {
 import type { RoleOption } from "./team-types";
 import { mergeRoster, ownerCount, type RosterRow } from "./team-roster";
 import { RoleBadge } from "./RoleBadge";
+import { useBeamAccountsMessages, type BeamAccountsMessageKey } from "./messages";
+import { richMessage } from "./rich-message";
 
 function formatDate(value: string | null | undefined): string {
   return value ? new Date(value).toLocaleDateString() : "—";
@@ -58,6 +60,9 @@ function apiErrorMessage(error: unknown, fallback: string): string {
 
 const FACETS = ["All", "Members", "Pending"] as const;
 type Facet = (typeof FACETS)[number];
+/** Facets and roster statuses are values; the reader sees their catalog lines. */
+const FACET_LABEL: Record<Facet, BeamAccountsMessageKey> = { All: 'splicewire-beam-accounts::messages.team_facet_all', Members: 'splicewire-beam-accounts::messages.team_facet_members', Pending: 'splicewire-beam-accounts::messages.team_facet_pending' };
+const STATUS_LABEL: Record<RosterRow["status"], BeamAccountsMessageKey> = { Active: 'splicewire-beam-accounts::messages.team_status_active', Pending: 'splicewire-beam-accounts::messages.team_status_pending' };
 
 export function TeamPage({
   currentUserId,
@@ -81,6 +86,7 @@ function TeamInner({
   currentUserId: string | null;
   createTeamHref?: string | null;
 }) {
+  const m = useBeamAccountsMessages();
   // Generated SDK reads (client-sdk-codegen 05). The role vocabulary is server-derived from the
   // beam-accounts Role enum and never changes within a session, so `staleTime: Infinity` rides the
   // generated hook's options passthrough exactly as the hand-written hook set it.
@@ -170,7 +176,7 @@ function TeamInner({
     () => [
       {
         id: "identity",
-        header: "Name / email",
+        header: m.t('splicewire-beam-accounts::messages.team_col_identity'),
         cell: ({ row }) => {
           const r = row.original;
           return (
@@ -179,7 +185,7 @@ function TeamInner({
                 {r.name ?? r.email}
                 {r.isSelf && (
                   <span className="ml-1.5 text-xs text-muted-foreground">
-                    (you)
+                    {m.t('splicewire-beam-accounts::messages.team_you')}
                   </span>
                 )}
               </div>
@@ -192,15 +198,15 @@ function TeamInner({
       },
       {
         id: "role",
-        meta: { label: "Team role" },
+        meta: { label: m.t('splicewire-beam-accounts::messages.team_col_role') },
         header: () => (
           <span className="inline-flex items-center gap-1">
-            Team role
+            {m.t('splicewire-beam-accounts::messages.team_col_role')}
             <Popover>
               <PopoverTrigger asChild>
                 <button
                   type="button"
-                  aria-label="About team roles"
+                  aria-label={m.t('splicewire-beam-accounts::messages.team_about_roles')}
                   className="text-muted-foreground hover:text-foreground"
                 >
                   <Info className="size-3.5" />
@@ -208,9 +214,7 @@ function TeamInner({
               </PopoverTrigger>
               <PopoverContent className="w-72 text-sm font-normal">
                 <p className="leading-relaxed text-muted-foreground">
-                  <b className="text-foreground">Membership tier</b> (owner /
-                  admin / member) — governs who manages the team. Separate from
-                  what you can access inside the team.
+                  {richMessage(m, 'splicewire-beam-accounts::messages.team_roles_explainer', { tier: <b className="text-foreground">{m.t('splicewire-beam-accounts::messages.team_membership_tier')}</b> })}
                 </p>
               </PopoverContent>
             </Popover>
@@ -244,7 +248,7 @@ function TeamInner({
               />
               {disabledSelf && (
                 <span
-                  title="You're the last owner, so you can't change your own role"
+                  title={m.t('splicewire-beam-accounts::messages.team_last_owner_role')}
                   className="text-muted-foreground"
                 >
                   <ShieldAlert className="size-3.5" />
@@ -256,19 +260,19 @@ function TeamInner({
       },
       {
         id: "status",
-        header: "Status",
+        header: m.t('splicewire-beam-accounts::messages.team_col_status'),
         cell: ({ row }) => <StatusPill status={row.original.status} />,
       },
       {
         id: "since",
-        header: "Joined / invited",
+        header: m.t('splicewire-beam-accounts::messages.team_col_since'),
         cell: ({ row }) => {
           const r = row.original;
           return (
             <span className="text-muted-foreground">
               {r.kind === "member"
                 ? formatDate(r.since)
-                : `Invited ${formatDate(r.since)}`}
+                : m.t('splicewire-beam-accounts::messages.team_invited_on', { date: formatDate(r.since) })}
             </span>
           );
         },
@@ -288,7 +292,7 @@ function TeamInner({
                   variant="ghost"
                   size="icon"
                   className="size-7 text-destructive hover:text-destructive"
-                  aria-label={`Revoke invitation for ${r.email}`}
+                  aria-label={m.t('splicewire-beam-accounts::messages.team_revoke_invitation_for', { email: r.email })}
                   disabled={revokeInvitation.isPending}
                   onClick={(event) => {
                     confirmTrigger.current = event.currentTarget;
@@ -308,11 +312,11 @@ function TeamInner({
               variant="ghost"
               size="icon"
               className="size-7 text-destructive hover:text-destructive disabled:opacity-40"
-              aria-label={`Remove ${r.email}`}
+              aria-label={m.t('splicewire-beam-accounts::messages.team_remove_email', { email: r.email })}
               disabled={lockRemove || removeMember.isPending}
               title={
                 lockRemove
-                  ? "A team always keeps at least one owner, so the last owner can’t be removed"
+                  ? m.t('splicewire-beam-accounts::messages.team_last_owner_remove')
                   : undefined
               }
               onClick={(event) => {
@@ -336,6 +340,7 @@ function TeamInner({
       updateRole.isPending,
       removeMember.isPending,
       revokeInvitation.isPending,
+      m,
     ]
   );
 
@@ -343,21 +348,21 @@ function TeamInner({
   if (readError) {
     return (
       <p role="alert" className="py-8 text-sm text-destructive">
-        {apiErrorMessage(readError, "Could not load the team.")}
+        {apiErrorMessage(readError, m.t('splicewire-beam-accounts::messages.team_load_failed'))}
       </p>
     );
   }
   if (membersQuery.isPending || invitationsQuery.isPending || roles.isPending) {
-    return <p className="py-8 text-sm text-muted-foreground">Loading team…</p>;
+    return <p className="py-8 text-sm text-muted-foreground">{m.t('splicewire-beam-accounts::messages.team_loading')}</p>;
   }
 
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h2 className="font-semibold">Team</h2>
+          <h2 className="font-semibold">{m.t('splicewire-beam-accounts::messages.team_heading')}</h2>
           <p className="text-sm text-muted-foreground">
-            People and pending invitations for this team.
+            {m.t('splicewire-beam-accounts::messages.team_description')}
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -366,12 +371,12 @@ function TeamInner({
               href={createTeamHref}
               className={buttonVariants({ variant: "outline" })}
             >
-              <Plus className="size-4" /> New team
+              <Plus className="size-4" /> {m.t('splicewire-beam-accounts::messages.team_new_team')}
             </a>
           ) : null}
           {canInvite && (
             <Button onClick={() => setInviting(true)}>
-              <UserPlus className="size-4" /> Invite member
+              <UserPlus className="size-4" /> {m.t('splicewire-beam-accounts::messages.team_invite_member')}
             </Button>
           )}
         </div>
@@ -381,8 +386,7 @@ function TeamInner({
         <FacetsBar active={facet} counts={counts} onSelect={setFacet} />
         <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
           <ShieldAlert className="size-3.5" />
-          {owners} owner{owners === 1 ? "" : "s"} · a team always keeps at least
-          one owner
+          {m.choice('splicewire-beam-accounts::messages.team_owners_count', owners)}
         </span>
       </div>
 
@@ -392,7 +396,7 @@ function TeamInner({
           className="h-auto w-full min-w-0 whitespace-normal break-words py-2"
           onClick={() => setFacet("Pending")}
         >
-          View pending invitations ({counts.Pending})
+          {m.t('splicewire-beam-accounts::messages.team_view_pending', { count: counts.Pending })}
         </Button>
       )}
 
@@ -400,7 +404,7 @@ function TeamInner({
         stackOnMobile
         columns={columns}
         data={rows}
-        emptyMessage="No one in this segment yet."
+        emptyMessage={m.t('splicewire-beam-accounts::messages.team_empty')}
       />
 
       {/* Invite composer — a hand-built email + role form posting the invitations endpoint. */}
@@ -408,10 +412,10 @@ function TeamInner({
         <SheetContent className="flex flex-col gap-0 sm:max-w-md">
           <SheetHeader>
             <SheetTitle className="flex items-center gap-2">
-              <Mail className="size-4" /> Invite member
+              <Mail className="size-4" /> {m.t('splicewire-beam-accounts::messages.team_invite_member')}
             </SheetTitle>
             <SheetDescription>
-              Invite someone by email — they join with the role you pick.
+              {m.t('splicewire-beam-accounts::messages.team_invite_description')}
             </SheetDescription>
           </SheetHeader>
           <div className="flex-1 overflow-y-auto p-4">
@@ -445,37 +449,30 @@ function TeamInner({
                 <DialogTitle className="flex items-center gap-2">
                   {confirm.kind === "transfer" ? (
                     <>
-                      <ShieldAlert className="size-4 text-warning" /> Transfer
-                      ownership
+                      <ShieldAlert className="size-4 text-warning" /> {m.t('splicewire-beam-accounts::messages.team_transfer_ownership')}
                     </>
                   ) : confirm.kind === "remove" ? (
                     <>
-                      <UserMinus className="size-4 text-destructive" /> Remove
-                      member
+                      <UserMinus className="size-4 text-destructive" /> {m.t('splicewire-beam-accounts::messages.team_remove_member')}
                     </>
                   ) : (
                     <>
-                      <X className="size-4 text-destructive" /> Revoke
-                      invitation
+                      <X className="size-4 text-destructive" /> {m.t('splicewire-beam-accounts::messages.team_revoke_invitation')}
                     </>
                   )}
                 </DialogTitle>
                 <DialogDescription>
                   {confirm.kind === "transfer" ? (
                     <>
-                      Assign <b>Owner</b> to{" "}
-                      <b>{confirm.row.name ?? confirm.row.email}</b>? This is a
-                      high-stakes change — they gain full control of the team.
+                      {richMessage(m, 'splicewire-beam-accounts::messages.team_transfer_confirm', { owner: <b>{m.t('splicewire-beam-accounts::messages.team_owner')}</b>, who: <b>{confirm.row.name ?? confirm.row.email}</b> })}
                     </>
                   ) : confirm.kind === "remove" ? (
                     <>
-                      Remove <b>{confirm.row.name ?? confirm.row.email}</b> from
-                      this team?
+                      {richMessage(m, 'splicewire-beam-accounts::messages.team_remove_confirm', { who: <b>{confirm.row.name ?? confirm.row.email}</b> })}
                     </>
                   ) : (
                     <>
-                      Revoke the pending invitation for{" "}
-                      <b>{confirm.row.email}</b>?
+                      {richMessage(m, 'splicewire-beam-accounts::messages.team_revoke_confirm', { email: <b>{confirm.row.email}</b> })}
                     </>
                   )}
                 </DialogDescription>
@@ -486,7 +483,7 @@ function TeamInner({
                   size="sm"
                   onClick={() => setConfirm(null)}
                 >
-                  Cancel
+                  {m.t('splicewire-beam-accounts::messages.team_cancel')}
                 </Button>
                 <Button
                   size="sm"
@@ -496,10 +493,10 @@ function TeamInner({
                   onClick={runConfirm}
                 >
                   {confirm.kind === "transfer"
-                    ? "Transfer ownership"
+                    ? m.t('splicewire-beam-accounts::messages.team_transfer_ownership')
                     : confirm.kind === "remove"
-                    ? "Remove member"
-                    : "Revoke invitation"}
+                    ? m.t('splicewire-beam-accounts::messages.team_remove_member')
+                    : m.t('splicewire-beam-accounts::messages.team_revoke_invitation')}
                 </Button>
               </DialogFooter>
             </>
@@ -520,6 +517,7 @@ function InviteForm({
   onSent: () => void;
   onCancel: () => void;
 }) {
+  const m = useBeamAccountsMessages();
   const send = useSendInvitation();
   const [email, setEmail] = useState("");
   const [role, setRole] = useState(() => roles[0]?.value ?? "member");
@@ -543,42 +541,42 @@ function InviteForm({
   return (
     <form className="space-y-4" onSubmit={submit}>
       <div className="grid gap-1.5">
-        <Label htmlFor="invite-email">Email</Label>
+        <Label htmlFor="invite-email">{m.t('splicewire-beam-accounts::messages.team_email')}</Label>
         <Input
           id="invite-email"
           type="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          placeholder="teammate@example.com"
+          placeholder={m.t('splicewire-beam-accounts::messages.team_email_placeholder')}
           autoComplete="off"
           autoFocus
         />
       </div>
 
       <div className="grid gap-1.5">
-        <Label htmlFor="invite-role">Team role</Label>
+        <Label htmlFor="invite-role">{m.t('splicewire-beam-accounts::messages.team_col_role')}</Label>
         <SimpleSelect
           id="invite-role"
           className="capitalize"
           value={role}
           onValueChange={setRole}
           options={roles}
-          placeholder="Select a role"
+          placeholder={m.t('splicewire-beam-accounts::messages.team_select_role')}
         />
       </div>
 
       {send.isError && (
         <p role="alert" className="text-sm text-destructive">
-          {apiErrorMessage(send.error, "Could not send the invitation.")}
+          {apiErrorMessage(send.error, m.t('splicewire-beam-accounts::messages.team_invite_failed'))}
         </p>
       )}
 
       <div className="flex justify-end gap-2 pt-2">
         <Button type="button" variant="ghost" onClick={onCancel}>
-          Cancel
+          {m.t('splicewire-beam-accounts::messages.team_cancel')}
         </Button>
         <Button type="submit" disabled={!valid || send.isPending}>
-          {send.isPending ? "Sending…" : "Send invitation"}
+          {send.isPending ? m.t('splicewire-beam-accounts::messages.team_sending') : m.t('splicewire-beam-accounts::messages.team_send_invitation')}
         </Button>
       </div>
     </form>
@@ -587,6 +585,7 @@ function InviteForm({
 
 /** Status = dot + label on a tinted ground (never colour-alone). */
 function StatusPill({ status }: { status: RosterRow["status"] }) {
+  const m = useBeamAccountsMessages();
   const pending = status === "Pending";
   return (
     <span
@@ -603,7 +602,7 @@ function StatusPill({ status }: { status: RosterRow["status"] }) {
           pending ? "bg-warning" : "bg-primary"
         )}
       />
-      {status}
+      {m.t(STATUS_LABEL[status])}
     </span>
   );
 }
@@ -618,6 +617,7 @@ function FacetsBar({
   counts: Record<Facet, number>;
   onSelect: (f: Facet) => void;
 }) {
+  const m = useBeamAccountsMessages();
   return (
     <div className="inline-flex items-center gap-1 rounded-md border bg-muted/40 p-0.5 text-sm">
       {FACETS.map((f) => (
@@ -632,7 +632,7 @@ function FacetsBar({
               : "text-muted-foreground hover:text-foreground"
           )}
         >
-          {f}
+          {m.t(FACET_LABEL[f])}
           <span className="ml-1.5 text-xs text-muted-foreground">
             {counts[f]}
           </span>
@@ -644,6 +644,7 @@ function FacetsBar({
 
 /** Re-send a pending invite's email — low-stakes (no confirm); shows a transient "Sent". */
 function ResendInvitationAction({ row }: { row: RosterRow }) {
+  const m = useBeamAccountsMessages();
   // A resend does not mutate the roster (same bearer token, same mail), so there is nothing
   // host-side to compose and the generated hook is consumed directly.
   const resend = useResendInvitation();
@@ -652,9 +653,9 @@ function ResendInvitationAction({ row }: { row: RosterRow }) {
       variant="ghost"
       size="icon"
       className="size-7"
-      aria-label={`Resend invitation for ${row.email}`}
+      aria-label={m.t('splicewire-beam-accounts::messages.team_resend_for', { email: row.email })}
       disabled={resend.isPending}
-      title={resend.isSuccess ? "Sent" : "Resend invitation"}
+      title={resend.isSuccess ? m.t('splicewire-beam-accounts::messages.team_sent') : m.t('splicewire-beam-accounts::messages.team_resend')}
       onClick={() => resend.mutate(row.id)}
     >
       {resend.isSuccess ? <Check className="text-primary" /> : <RotateCcw />}
