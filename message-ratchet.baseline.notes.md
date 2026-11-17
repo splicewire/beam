@@ -25,6 +25,10 @@ Part C (the rest of canvas/) moves 113 of its 114 nodes onto the catalog, so its
 
 - beam-ux/src/canvas/Breadcrumb.tsx — `fragment`, the JSON node kind a breadcrumb names beside raw tag names such as `div` (StringLiteral).
 
+Part E (sitemap/) moves all 114 of its counted nodes onto the catalog, and ruling (c) renames the test/story fixture sitemap/fixture.ts to sitemap/fixtures.ts (its 6 nodes leave by the scanner's fixture convention, as 28a did), so its --write lowers 130 to 10. sitemap/ reads zero.
+
+The 10 nodes left in @splicewire/beam-ux are the raw nodes recorded above (A 3, D 4, F 2, C 1). Each is machine text: code tokens, CSS, a shell command, a JSON type, or dev-only chrome. Taking the count to zero needs a ruling that accepts them, as root did for beam-inertia's 13 in 28a.
+
 ## @splicewire/beam-inertia — localization 28a
 
 Root qitem-20261114193919-4a20610b (2026-11-14 19:39Z) accepts exactly these 13 non-copy brand/machine AST nodes. This supersedes the count-12 ruling 73e93872. The complete styled wordmark is one raw rich :brand parameter, preserving raw beam· followed by bold raw os. Every listed literal stays raw; no technical catalog line or reshaping hides it.

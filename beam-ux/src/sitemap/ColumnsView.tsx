@@ -10,11 +10,13 @@ import { cn } from '@schemastud/ui';
 import { ancestry, findNode, issuesFor, pageTitle, type Issue, type TreeNode } from './model';
 import { FileStatus, IssueIcon, issueLabel, PublicationStatus, SearchStatus } from './parts';
 import type { SiteMapViewProps } from './views';
+import { useBeamUxMessages } from '../messages.js';
 
 function Column({ nodes, selected, onSelect, onOpen, label, crumbs }: {
     nodes: TreeNode[]; selected?: string; onSelect: (id: string) => void; onOpen: (id: string) => void; label: string;
     crumbs?: (id: string) => string | null;
 }) {
+    const m = useBeamUxMessages();
     return (
         <ul aria-label={label} className="h-full w-full shrink-0 overflow-y-auto border-r border-border md:w-72">
             {nodes.map(({ page, children }) => {
@@ -48,7 +50,7 @@ function Column({ nodes, selected, onSelect, onOpen, label, crumbs }: {
                     </li>
                 );
             })}
-            {nodes.length === 0 && <li className="px-4 py-8 text-center text-[13px] text-foreground/70">No page matches.</li>}
+            {nodes.length === 0 && <li className="px-4 py-8 text-center text-[13px] text-foreground/70">{m.t('splicewire-beam-ux::messages.sitemap_no_match')}</li>}
         </ul>
     );
 }
@@ -56,13 +58,14 @@ function Column({ nodes, selected, onSelect, onOpen, label, crumbs }: {
 function AttentionStrip({ issues, byId, traceTitle, onPick }: {
     issues: Issue[]; byId: SiteMapViewProps['byId']; traceTitle: (id: string) => string; onPick: (issue: Issue) => void;
 }) {
+    const m = useBeamUxMessages();
     if (issues.length === 0) return null;
     const pagesHit = new Set(issues.map((i) => i.pageId).filter(Boolean)).size;
     const loose = issues.filter((i) => !i.pageId).length;
     return (
-        <section aria-label="Needs attention" className="border-b border-border bg-background px-4 py-3 md:px-6">
-            <h2 className="mb-2 text-[13px] font-semibold">Needs attention <span className="font-normal text-foreground/70">
-                · {pagesHit} page{pagesHit === 1 ? '' : 's'}{loose ? `, ${loose} redirect${loose === 1 ? '' : 's'} reaching no page` : ''}</span></h2>
+        <section aria-label={m.t('splicewire-beam-ux::messages.sitemap_needs_attention')} className="border-b border-border bg-background px-4 py-3 md:px-6">
+            <h2 className="mb-2 text-[13px] font-semibold">{m.t('splicewire-beam-ux::messages.sitemap_needs_attention')} <span className="font-normal text-foreground/70">
+                · {m.choice('splicewire-beam-ux::messages.sitemap_pages_count', pagesHit)}{loose ? `, ${m.choice('splicewire-beam-ux::messages.sitemap_loose_count', loose)}` : ''}</span></h2>
             <ul className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
                 {issues.map((issue, i) => (
                     <li key={`${issue.kind}-${issue.pageId ?? issue.redirectId}-${i}`} className="shrink-0">
@@ -70,7 +73,7 @@ function AttentionStrip({ issues, byId, traceTitle, onPick }: {
                             className="flex h-full w-56 items-start gap-2 rounded-lg border border-border bg-card px-3 py-2 text-left hover:border-foreground/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
                             <IssueIcon kind={issue.kind} className="mt-0.5" announce={false} />
                             <span className="min-w-0">
-                                <span className="block text-[13px] font-medium">{issueLabel(issue)}</span>
+                                <span className="block text-[13px] font-medium">{issueLabel(issue, m)}</span>
                                 <span className={cn('block truncate text-xs text-foreground/70', !issue.pageId && 'font-mono')}>
                                     {issue.pageId ? pageTitle(byId.get(issue.pageId)!) : traceTitle(issue.redirectId!)}
                                 </span>
@@ -84,6 +87,7 @@ function AttentionStrip({ issues, byId, traceTitle, onPick }: {
 }
 
 export function ColumnsView({ roots, pages, byId, summary, traces, filtering, matched, selected, onSelect, onOpenPage, footer }: SiteMapViewProps) {
+    const m = useBeamUxMessages();
     const [path, setPath] = useState<string[]>(() => (selected ? ancestry(byId, selected) : roots[0] ? [roots[0].page.id] : []));
     const [showLoose, setShowLoose] = useState(false);
     // The shared selection drives the columns: a page chosen in another view opens its path here.
@@ -100,8 +104,8 @@ export function ColumnsView({ roots, pages, byId, summary, traces, filtering, ma
     const traceTitle = (id: string) => { const t = traces.find((x) => x.id === id); return t ? [...t.steps, t.steps[0]].join(' → ') : id; };
     const hits = pages.filter((p) => matched.has(p.id)).map((p) => findNode(roots, p.id)).filter((n): n is TreeNode => !!n);
     const columns: { label: string; nodes: TreeNode[]; selected?: string }[] = filtering
-        ? [{ label: 'Matching pages', nodes: hits, selected: selected ?? undefined }]
-        : [{ label: 'Site', nodes: roots, selected: path[0] },
+        ? [{ label: m.t('splicewire-beam-ux::messages.sitemap_matching_pages'), nodes: hits, selected: selected ?? undefined }]
+        : [{ label: m.t('splicewire-beam-ux::messages.sitemap_site'), nodes: roots, selected: path[0] },
             ...path.map((id, i) => ({ label: pageTitle(byId.get(id)!), nodes: findNode(roots, id)?.children ?? [], selected: path[i + 1] }))
                 .filter((c) => c.nodes.length > 0)];
     const pick = (depth: number, id: string) => {

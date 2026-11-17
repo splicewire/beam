@@ -18,6 +18,7 @@ import { CanvasView } from './CanvasView';
 import { ColumnsView } from './ColumnsView';
 import type { RedirectTrace, SiteMapActions, SiteMapPage, SiteMapView, SitePart } from './types';
 import type { SiteMapViewProps } from './views';
+import { useBeamUxMessages } from '../messages.js';
 
 export interface SiteMapProps extends SiteMapActions {
     pages: SiteMapPage[];
@@ -44,6 +45,7 @@ export function SiteMap({
     selectedId, onSelectedChange, defaultSelectedId = null, defaultFilter = 'all', actions, className,
     onOpen, onPageSettings, onAddRedirect, onOpenRedirect, onFileAction,
 }: SiteMapProps) {
+    const m = useBeamUxMessages();
     const store = useMemo(() => (viewStore === undefined ? browserViewStore() : viewStore), [viewStore]);
     const [ownView, setOwnView] = useState<SiteMapView>(() => store?.get() ?? defaultView);
     // A different viewer (a different store) brings that viewer's remembered view.
@@ -88,8 +90,8 @@ export function SiteMap({
         <>
             {(filter === 'all' || filter === 'attention') && !query && loose.length > 0 && (
                 <section aria-labelledby="site-map-loose" data-loose className="mt-6 border-t border-border">
-                    <h2 id="site-map-loose" className="px-4 pb-1 pt-4 text-[13px] font-semibold md:px-6">Redirects that reach no page</h2>
-                    <p className="px-4 pb-2 text-xs text-foreground/70 md:px-6">Loops and addresses that leave the site. Every other redirect sits on the page it reaches.</p>
+                    <h2 id="site-map-loose" className="px-4 pb-1 pt-4 text-[13px] font-semibold md:px-6">{m.t('splicewire-beam-ux::messages.sitemap_loose_redirects')}</h2>
+                    <p className="px-4 pb-2 text-xs text-foreground/70 md:px-6">{m.t('splicewire-beam-ux::messages.sitemap_loose_hint')}</p>
                     <LooseRedirects traces={loose} onOpen={onOpenRedirect} />
                 </section>
             )}

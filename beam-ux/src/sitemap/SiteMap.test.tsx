@@ -2,7 +2,7 @@ import { cleanup, fireEvent, render, screen, within } from '@testing-library/rea
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { SiteMap, type SiteMapProps } from './SiteMap';
-import { FIXTURE_PAGES, FIXTURE_PARTS, FIXTURE_TENANT_PAGES, FIXTURE_TRACES } from './fixture';
+import { FIXTURE_PAGES, FIXTURE_PARTS, FIXTURE_TENANT_PAGES, FIXTURE_TRACES } from './fixtures';
 import { allIssues, buildTree, issuesFor } from './model';
 import type { SiteMapView, SiteMapViewStore } from './index';
 

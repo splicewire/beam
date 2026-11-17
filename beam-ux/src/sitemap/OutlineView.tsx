@@ -10,6 +10,7 @@ import { cn } from '@schemastud/ui';
 import { countDescendants, flatten, issuesFor, pageTitle, type TreeNode } from './model';
 import { FileStatus, IssueIcon, PublicationStatus, RedirectCount, SearchStatus } from './parts';
 import type { SiteMapViewProps } from './views';
+import { useBeamUxMessages } from '../messages.js';
 
 const cols = (files: boolean) => files
     ? 'md:grid-cols-[minmax(0,1fr)_9.5rem_11.5rem_9rem_5.5rem]'
@@ -19,6 +20,7 @@ function Row({ node, open, toggle, selected, onSelect, onOpen, context, focusabl
     node: TreeNode; open: boolean; toggle: () => void; selected: boolean; onSelect: () => void; onOpen: () => void;
     context: boolean; focusable: boolean; files: boolean;
 }) {
+    const m = useBeamUxMessages();
     const { page, depth } = node;
     const issues = issuesFor(page);
     const hasKids = node.children.length > 0;
@@ -29,7 +31,7 @@ function Row({ node, open, toggle, selected, onSelect, onOpen, context, focusabl
                 selected ? 'bg-accent text-accent-foreground' : 'hover:bg-muted/50')}>
             <div className="flex min-w-0 items-center py-2 pr-2 md:py-0" style={{ paddingLeft: 8 + depth * 18 }}>
                 {hasKids ? (
-                    <button type="button" tabIndex={-1} onClick={toggle} aria-label={open ? `Collapse ${title}` : `Expand ${title}`}
+                    <button type="button" tabIndex={-1} onClick={toggle} aria-label={open ? m.t('splicewire-beam-ux::messages.sitemap_collapse', { title }) : m.t('splicewire-beam-ux::messages.sitemap_expand', { title })}
                         className="grid size-11 shrink-0 place-items-center rounded text-foreground/70 hover:bg-muted hover:text-foreground md:size-6">
                         <ChevronRight aria-hidden className={cn('size-3.5 transition-transform duration-150 motion-reduce:transition-none', open && 'rotate-90')} />
                     </button>
@@ -57,8 +59,8 @@ function Row({ node, open, toggle, selected, onSelect, onOpen, context, focusabl
             {context ? <div className={cn('hidden md:block', files ? 'md:col-span-4' : 'md:col-span-3')} /> : <>
                 <div className="hidden md:block"><PublicationStatus page={page} compact /></div>
                 {/* Healthy states draw as a quiet icon; only exceptions spell themselves out. */}
-                <div className="hidden md:block">{page.search.listed ? <span className="sr-only">Listed in the sitemap</span> : <SearchStatus page={page} />}</div>
-                {files && <div className="hidden md:block">{page.file && (page.file.state === 'clean' ? <span className="sr-only">File in sync</span> : <FileStatus page={page} />)}</div>}
+                <div className="hidden md:block">{page.search.listed ? <span className="sr-only">{m.t('splicewire-beam-ux::messages.sitemap_listed_in_sitemap')}</span> : <SearchStatus page={page} />}</div>
+                {files && <div className="hidden md:block">{page.file && (page.file.state === 'clean' ? <span className="sr-only">{m.t('splicewire-beam-ux::messages.sitemap_file_in_sync')}</span> : <FileStatus page={page} />)}</div>}
                 <div className="hidden pr-3 text-right md:block"><RedirectCount page={page} /></div>
             </>}
         </div>
@@ -66,6 +68,7 @@ function Row({ node, open, toggle, selected, onSelect, onOpen, context, focusabl
 }
 
 export function OutlineView({ roots, summary, filtering, keep, matched, selected, onSelect, onOpenPage, footer }: SiteMapViewProps) {
+    const m = useBeamUxMessages();
     const [closed, setClosed] = useState<Set<string>>(new Set());
     const treeRef = useRef<HTMLDivElement>(null);
     const rows = flatten(roots, (id) => filtering || !closed.has(id)).filter((n) => keep.has(n.page.id));
@@ -105,16 +108,16 @@ export function OutlineView({ roots, summary, filtering, keep, matched, selected
     return (
         <div className="min-h-0 min-w-0 overflow-y-auto" data-view="outline">
             <div className={cn('sticky top-0 z-10 hidden h-8 items-center border-b border-border bg-background text-xs text-foreground/70 md:grid', cols(files))}>
-                <span className="pl-10">Page</span><span>Publication</span><span>Sitemap</span>{files && <span>File</span>}
-                <span className="pr-3 text-right" title="Old addresses that lead here">Redirects</span>
+                <span className="pl-10">{m.t('splicewire-beam-ux::messages.sitemap_col_page')}</span><span>{m.t('splicewire-beam-ux::messages.sitemap_publication')}</span><span>{m.t('splicewire-beam-ux::messages.sitemap_col_sitemap')}</span>{files && <span>{m.t('splicewire-beam-ux::messages.sitemap_file')}</span>}
+                <span className="pr-3 text-right" title={m.t('splicewire-beam-ux::messages.sitemap_old_addresses_lead_here')}>{m.t('splicewire-beam-ux::messages.sitemap_col_redirects')}</span>
             </div>
-            <div role="tree" aria-label="Pages" ref={treeRef} onKeyDown={onKey}>
+            <div role="tree" aria-label={m.t('splicewire-beam-ux::messages.sitemap_pages')} ref={treeRef} onKeyDown={onKey}>
                 {rows.map((n) => (
                     <Row key={n.page.id} node={n} open={filtering || !closed.has(n.page.id)} toggle={() => toggle(n.page.id)}
                         selected={selected === n.page.id} onSelect={() => onSelect(n.page.id)} onOpen={() => onOpenPage(n.page.id)}
                         context={filtering && !matched.has(n.page.id)} focusable={focusId === n.page.id} files={files} />
                 ))}
-                {rows.length === 0 && <p className="px-6 py-10 text-center text-[13px] text-foreground/70">No page matches. Clear the filter to see the whole site.</p>}
+                {rows.length === 0 && <p className="px-6 py-10 text-center text-[13px] text-foreground/70">{m.t('splicewire-beam-ux::messages.sitemap_no_match_clear')}</p>}
             </div>
             {footer}
         </div>

@@ -4,11 +4,12 @@ import { Columns3, ListTree, Network, Search } from 'lucide-react';
 import { cn } from '@schemastud/ui';
 import type { MapFilter, SiteMapSummary } from './model';
 import type { SiteMapView } from './types';
+import { useBeamUxMessages, type BeamUxMessageKey } from '../messages.js';
 
-export const VIEWS: { key: SiteMapView; label: string; Icon: typeof ListTree }[] = [
-    { key: 'outline', label: 'Outline', Icon: ListTree },
-    { key: 'canvas', label: 'Canvas', Icon: Network },
-    { key: 'columns', label: 'Columns', Icon: Columns3 },
+export const VIEWS: { key: SiteMapView; labelKey: BeamUxMessageKey; Icon: typeof ListTree }[] = [
+    { key: 'outline', labelKey: 'splicewire-beam-ux::messages.sitemap_view_outline', Icon: ListTree },
+    { key: 'canvas', labelKey: 'splicewire-beam-ux::messages.sitemap_view_canvas', Icon: Network },
+    { key: 'columns', labelKey: 'splicewire-beam-ux::messages.sitemap_view_columns', Icon: Columns3 },
 ];
 
 /** Radio-group keyboard: arrows move and choose, as the WAI-ARIA radio pattern does. */
@@ -24,15 +25,16 @@ function useRadioKeys<T extends string>(keys: T[], value: T, onChange: (v: T) =>
 }
 
 export function ViewToggle({ view, onView }: { view: SiteMapView; onView: (v: SiteMapView) => void }) {
+    const m = useBeamUxMessages();
     const onKey = useRadioKeys(VIEWS.map((v) => v.key), view, onView);
     return (
-        <div role="radiogroup" aria-label="View" onKeyDown={onKey} className="inline-flex shrink-0 rounded-md border border-border p-0.5">
-            {VIEWS.map(({ key, label, Icon }) => (
+        <div role="radiogroup" aria-label={m.t('splicewire-beam-ux::messages.sitemap_view')} onKeyDown={onKey} className="inline-flex shrink-0 rounded-md border border-border p-0.5">
+            {VIEWS.map(({ key, labelKey, Icon }) => (
                 <button key={key} type="button" role="radio" data-key={key} aria-checked={view === key} tabIndex={view === key ? 0 : -1}
                     onClick={() => onView(key)}
                     className={cn('inline-flex h-11 items-center gap-1.5 rounded px-2.5 md:h-8 text-[13px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
                         view === key ? 'bg-foreground text-background' : 'text-foreground/75 hover:bg-muted hover:text-foreground')}>
-                    <Icon aria-hidden className="size-3.5" />{label}
+                    <Icon aria-hidden className="size-3.5" />{m.t(labelKey)}
                 </button>
             ))}
         </div>
@@ -50,26 +52,27 @@ export function SiteMapHeader({ siteName, summary, filter, onFilter, query, onQu
     onView: (v: SiteMapView) => void;
     actions?: React.ReactNode;
 }) {
+    const m = useBeamUxMessages();
     const filters: { key: MapFilter; label: string; count: number }[] = [
-        { key: 'all', label: 'All pages', count: summary.pages },
-        { key: 'attention', label: 'Needs attention', count: summary.attentionPages },
-        { key: 'drafts', label: 'Drafts', count: summary.drafts },
-        { key: 'hidden', label: 'Not in sitemap', count: summary.pages - summary.inSearch },
+        { key: 'all', label: m.t('splicewire-beam-ux::messages.sitemap_filter_all'), count: summary.pages },
+        { key: 'attention', label: m.t('splicewire-beam-ux::messages.sitemap_needs_attention'), count: summary.attentionPages },
+        { key: 'drafts', label: m.t('splicewire-beam-ux::messages.sitemap_filter_drafts'), count: summary.drafts },
+        { key: 'hidden', label: m.t('splicewire-beam-ux::messages.sitemap_filter_hidden'), count: summary.pages - summary.inSearch },
     ];
     const onFilterKey = useRadioKeys(filters.map((f) => f.key), filter, onFilter);
     return (
         <header className="border-b border-border bg-background px-4 pb-3 pt-4 md:px-6">
             <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
                 <div className="min-w-0">
-                    <h1 className="text-xl font-semibold tracking-[-0.02em]">Site map</h1>
+                    <h1 className="text-xl font-semibold tracking-[-0.02em]">{m.t('splicewire-beam-ux::messages.sitemap_heading')}</h1>
                     <p className="text-[13px] text-foreground/70">
-                        {siteName && <>{siteName} · </>}{summary.pages} pages · {summary.inSearch} in the sitemap · {summary.redirects} redirects
+                        {siteName && <>{siteName} · </>}{m.t('splicewire-beam-ux::messages.sitemap_summary', { pages: summary.pages, search: summary.inSearch, redirects: summary.redirects })}
                     </p>
                 </div>
                 <div className="flex items-center gap-2">{actions}<ViewToggle view={view} onView={onView} /></div>
             </div>
             <div className="mt-3 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-                <div role="radiogroup" aria-label="Show" onKeyDown={onFilterKey} className="-mx-1 flex gap-1 overflow-x-auto px-1">
+                <div role="radiogroup" aria-label={m.t('splicewire-beam-ux::messages.sitemap_show')} onKeyDown={onFilterKey} className="-mx-1 flex gap-1 overflow-x-auto px-1">
                     {filters.map((f) => (
                         <button key={f.key} type="button" role="radio" data-key={f.key} aria-checked={filter === f.key} tabIndex={filter === f.key ? 0 : -1}
                             onClick={() => onFilter(f.key)}
@@ -81,9 +84,9 @@ export function SiteMapHeader({ siteName, summary, filter, onFilter, query, onQu
                     ))}
                 </div>
                 <label className="relative block md:w-64">
-                    <span className="sr-only">Find a page or address</span>
+                    <span className="sr-only">{m.t('splicewire-beam-ux::messages.sitemap_find')}</span>
                     <Search aria-hidden className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-foreground/60" />
-                    <input type="search" value={query} onChange={(e) => onQuery(e.target.value)} placeholder="Find a page or address"
+                    <input type="search" value={query} onChange={(e) => onQuery(e.target.value)} placeholder={m.t('splicewire-beam-ux::messages.sitemap_find')}
                         className="h-11 w-full rounded-md border border-input bg-transparent pl-8 pr-2 text-[13px] placeholder:text-foreground/75 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring md:h-8" />
                 </label>
             </div>

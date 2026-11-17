@@ -11,6 +11,7 @@ import { issuesFor, isSevere, looseRows, pageTitle, publicationState, type TreeN
 import { FileStatus, IssueIcon, PublicationStatus, SearchStatus } from './parts';
 import type { SiteMapInbound } from './types';
 import type { SiteMapViewProps } from './views';
+import { useBeamUxMessages } from '../messages.js';
 
 const CARD_W = 208;
 const CARD_H = 78;
@@ -46,6 +47,7 @@ function layout(roots: TreeNode[], open: (id: string) => boolean, keep: Set<stri
 function Card({ p, selected, open, focusable, onSelect, onOpen, onToggle }: {
     p: Placed; selected: boolean; open: boolean; focusable: boolean; onSelect: () => void; onOpen: () => void; onToggle: () => void;
 }) {
+    const m = useBeamUxMessages();
     const { page } = p.node;
     const issues = issuesFor(page);
     const hasKids = p.node.children.length > 0;
@@ -68,7 +70,7 @@ function Card({ p, selected, open, focusable, onSelect, onOpen, onToggle }: {
                 </span>
             </button>
             {hasKids && (
-                <button type="button" tabIndex={-1} onClick={onToggle} aria-label={open ? `Collapse ${title}` : `Expand ${title}`}
+                <button type="button" tabIndex={-1} onClick={onToggle} aria-label={open ? m.t('splicewire-beam-ux::messages.sitemap_collapse', { title }) : m.t('splicewire-beam-ux::messages.sitemap_expand', { title })}
                     className="absolute -right-3 top-1/2 grid size-6 -translate-y-1/2 place-items-center rounded-full border border-border bg-background text-foreground/70 hover:text-foreground">
                     {open ? <ChevronRight aria-hidden className="size-3.5 rotate-180" /> : <span className="text-[10px] font-medium tabular-nums">{p.node.children.length}</span>}
                 </button>
@@ -78,6 +80,7 @@ function Card({ p, selected, open, focusable, onSelect, onOpen, onToggle }: {
 }
 
 export function CanvasView({ roots, pages, traces, filtering, keep, selected, onSelect, onOpenPage, footer }: SiteMapViewProps) {
+    const m = useBeamUxMessages();
     const [closed, setClosed] = useState<Set<string>>(new Set());
     const [scale, setScale] = useState(0.85);
     const isOpen = (id: string) => filtering || !closed.has(id);
@@ -158,12 +161,12 @@ export function CanvasView({ roots, pages, traces, filtering, keep, selected, on
 
     return (
         <div className="relative flex min-h-0 min-w-0 flex-col" data-view="canvas">
-            <div role="group" aria-label="Zoom" className="flex items-center justify-end gap-0.5 border-b border-border bg-background px-3 py-1">
-                <Button variant="ghost" size="icon" className="size-11 md:size-8" aria-label="Back to the top" onClick={home}><Home /></Button>
-                <Button variant="ghost" size="icon" className="size-11 md:size-8" aria-label="Zoom out" onClick={() => setScale((s) => Math.max(0.4, +(s - 0.15).toFixed(2)))}><ZoomOut /></Button>
+            <div role="group" aria-label={m.t('splicewire-beam-ux::messages.sitemap_zoom')} className="flex items-center justify-end gap-0.5 border-b border-border bg-background px-3 py-1">
+                <Button variant="ghost" size="icon" className="size-11 md:size-8" aria-label={m.t('splicewire-beam-ux::messages.sitemap_back_to_top')} onClick={home}><Home /></Button>
+                <Button variant="ghost" size="icon" className="size-11 md:size-8" aria-label={m.t('splicewire-beam-ux::messages.sitemap_zoom_out')} onClick={() => setScale((s) => Math.max(0.4, +(s - 0.15).toFixed(2)))}><ZoomOut /></Button>
                 <span className="w-10 text-center text-xs tabular-nums text-foreground/70" aria-live="polite">{Math.round(scale * 100)}%</span>
-                <Button variant="ghost" size="icon" className="size-11 md:size-8" aria-label="Zoom in" onClick={() => setScale((s) => Math.min(1.4, +(s + 0.15).toFixed(2)))}><ZoomIn /></Button>
-                <Button variant="ghost" size="icon" className="size-11 md:size-8" aria-label="Fit to screen" onClick={fit}><Maximize2 /></Button>
+                <Button variant="ghost" size="icon" className="size-11 md:size-8" aria-label={m.t('splicewire-beam-ux::messages.sitemap_zoom_in')} onClick={() => setScale((s) => Math.min(1.4, +(s + 0.15).toFixed(2)))}><ZoomIn /></Button>
+                <Button variant="ghost" size="icon" className="size-11 md:size-8" aria-label={m.t('splicewire-beam-ux::messages.sitemap_fit_to_screen')} onClick={fit}><Maximize2 /></Button>
             </div>
             <div ref={scroller} onKeyDown={onKeys} className="min-h-0 flex-1 overflow-auto bg-muted/30">
                 <div style={{ width: width * scale + PAD * 2, height: totalH * scale + PAD * 2 }} className="relative">
@@ -178,23 +181,23 @@ export function CanvasView({ roots, pages, traces, filtering, keep, selected, on
                                     strokeDasharray="4 3" opacity={hot ? 1 : 0.35} className={r.attention ? 'stroke-destructive' : 'stroke-foreground/50'} />;
                             })}
                         </svg>
-                        {lane.length > 0 && <p className="absolute text-xs font-medium text-foreground/70" style={{ left: laneX, top: -22 }}>Old addresses</p>}
+                        {lane.length > 0 && <p className="absolute text-xs font-medium text-foreground/70" style={{ left: laneX, top: -22 }}>{m.t('splicewire-beam-ux::messages.sitemap_old_addresses')}</p>}
                         {lane.map(({ r, y, target }) => (
                             <button key={r.id} type="button" tabIndex={-1} onClick={() => onSelect(target.node.page.id)}
                                 title={`${r.path} → ${target.node.page.url ?? pageTitle(target.node.page)}`}
                                 className={cn('absolute flex items-center gap-1.5 truncate rounded-md border border-dashed bg-background px-2 font-mono text-[11px]', ghostTone(r))}
                                 style={{ left: laneX, top: y, width: GHOST_W, height: GHOST_H }}>
                                 <span className="truncate">{r.path}{r.match === 'prefix' ? '/…' : ''}</span>
-                                {r.hops > 1 && r.end === 'answered' && <span className="ml-auto shrink-0 font-sans tabular-nums text-foreground/70">{r.hops} hops</span>}
-                                {r.attention && <span className="sr-only">fails a guest</span>}
+                                {r.hops > 1 && r.end === 'answered' && <span className="ml-auto shrink-0 font-sans tabular-nums text-foreground/70">{m.t('splicewire-beam-ux::messages.sitemap_hops', { count: r.hops })}</span>}
+                                {r.attention && <span className="sr-only">{m.t('splicewire-beam-ux::messages.sitemap_fails_a_guest')}</span>}
                             </button>
                         ))}
-                        {loose.length > 0 && <p className="absolute text-xs font-medium text-foreground/70" style={{ left: laneX, top: loopTop - 22 }}>Redirects that reach no page</p>}
+                        {loose.length > 0 && <p className="absolute text-xs font-medium text-foreground/70" style={{ left: laneX, top: loopTop - 22 }}>{m.t('splicewire-beam-ux::messages.sitemap_loose_redirects')}</p>}
                         {loose.map((t, i) => (
                             <div key={t.id} className={cn('absolute flex items-center gap-1.5 rounded-md border border-dashed bg-background px-2 font-mono text-[11px]', t.attention ? 'border-destructive/60 text-destructive' : 'border-border text-foreground/75')}
                                 style={{ left: laneX, top: loopTop + i * (GHOST_H + 10), width: GHOST_W, height: GHOST_H }}>
                                 <span className="truncate">{t.path} → {(t.to ?? t.steps[1] ?? '').replace(/^https?:\/\//, '')}</span>
-                                {t.end === 'loop' && <span className="ml-auto font-sans">loop</span>}
+                                {t.end === 'loop' && <span className="ml-auto font-sans">{m.t('splicewire-beam-ux::messages.sitemap_loop')}</span>}
                             </div>
                         ))}
                         {placed.map((p) => (
@@ -203,7 +206,7 @@ export function CanvasView({ roots, pages, traces, filtering, keep, selected, on
                         ))}
                     </div>
                 </div>
-                {placed.length === 0 && <p className="px-6 py-10 text-center text-[13px] text-foreground/70">No page matches. Clear the filter to see the whole site.</p>}
+                {placed.length === 0 && <p className="px-6 py-10 text-center text-[13px] text-foreground/70">{m.t('splicewire-beam-ux::messages.sitemap_no_match_clear')}</p>}
                 {footer}
             </div>
         </div>
