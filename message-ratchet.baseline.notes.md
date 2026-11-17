@@ -58,3 +58,11 @@ Root qitem-20261114193919-4a20610b (2026-11-14 19:39Z) accepts exactly these 13 
 Nine brand-wordmark nodes, one package name, one raw manifest field mounts:, and the two SURFACE_MAP entity-source nodes are not translatable copy. The real public runRatchet --write lowered the committed baseline from 315 to 13; every other Beam package count is unchanged. Any additional finding needs a new ruling.
 
 resource-filters.fixture.ts became resource-filters.fixtures.ts with 100% similarity under coord18:21: only a test/story fixture and its two imports, matching the scanner convention. Its 11 hits leave by classification, not content rewriting.
+
+## @splicewire/beam-calendar — localization 30
+
+Part C (the seam, CalendarCellForm.tsx and chrome.tsx) moves 45 of its 46 pinned nodes onto beam-calendar's catalog, so its --write lowers 46 to 1. The census sized it at 39 (2026-11-12); re-taken at 46 on beam main bcd7c872. The text scan added what the ratchet cannot see: the form's four validation errors and its save-failure fallback (now stored as keys and translated where they render), the frequency units, and the status labels a helper returned. The one node left:
+
+- beam-calendar/src/CalendarCellForm.tsx — `renderContentPicker` (StringLiteral): a prop name, passed into the translated sentence as a code parameter.
+
+Not catalogued, by rule: the developer guards `CompositionCalendar single mount requires…`, `CalendarCellForm must be rendered inside…` and the client's `Aggregate create must target a calendar…` (thrown errors; a client failure renders as it arrived), and a status the server projects that the package does not declare (humanized, rendered as given).

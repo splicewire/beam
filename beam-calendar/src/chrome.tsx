@@ -1,6 +1,7 @@
 import type { FoundationCalendarEvent, LaneAxis } from '@schemastud/big-calendar';
 import { Repeat } from 'lucide-react';
 import { readMeta } from './mapEvent';
+import { englishBeamCalendarMessages, useBeamCalendarMessages, type BeamCalendarMessageKey, type BeamCalendarMessages } from './messages';
 
 /**
  * The vocab-aware `renderX` chrome the satellite injects into the source-blind foundation
@@ -25,19 +26,23 @@ export const STATUS_TONE: Record<string, string> = {
 
 /**
  * The words for each editorial status (app-walkthrough APP-09b, APP-21; owner-07): a facet chip and the event dot name a
- * status, never its backing value. This package owns the vocabulary (see STATUS_TONE), so it owns the labels.
+ * status, never its backing value. This package owns the vocabulary (see STATUS_TONE), so it owns the labels: catalog
+ * keys, translated where they render (localization 30).
  */
-export const STATUS_LABEL: Record<string, string> = {
-    approved: 'Approved',
-    generated: 'Generated',
-    needs_review: 'Needs review',
-    stale: 'Stale',
-    upcoming: 'Upcoming',
+export const STATUS_LABEL: Record<string, BeamCalendarMessageKey> = {
+    approved: 'splicewire-beam-calendar::messages.status_approved',
+    generated: 'splicewire-beam-calendar::messages.status_generated',
+    needs_review: 'splicewire-beam-calendar::messages.status_needs_review',
+    stale: 'splicewire-beam-calendar::messages.status_stale',
+    upcoming: 'splicewire-beam-calendar::messages.status_upcoming',
 };
 
-/** A status in words: the declared label, else the value humanized (`awaiting_payment` → "Awaiting payment"). */
-export function statusLabel(status: string): string {
-    if (Object.hasOwn(STATUS_LABEL, status)) return STATUS_LABEL[status];
+/**
+ * A status in words: the declared label in the reader's locale (English without one), else the server's value humanized
+ * (`awaiting_payment` → "Awaiting payment"), which is projected data and renders as given rather than as a catalog key.
+ */
+export function statusLabel(status: string, m: BeamCalendarMessages = englishBeamCalendarMessages): string {
+    if (Object.hasOwn(STATUS_LABEL, status)) return m.t(STATUS_LABEL[status]);
     // The same rule as seam's humanizeKey (this package does not depend on seam): a trailing `id` is dropped.
     const words = status.split(/[\s_\-.]+/).filter(Boolean).map((w) => w.toLowerCase());
     if (words.length > 1 && words[words.length - 1] === 'id') words.pop();
@@ -47,6 +52,7 @@ export function statusLabel(status: string): string {
 
 /** renderEventBadge (PRD §4.2): series Repeat badge, Kind chrome (title), status dot. */
 export function EventBadge({ event }: { event: FoundationCalendarEvent }) {
+    const m = useBeamCalendarMessages();
     const meta = readMeta(event);
     const isSeries = Boolean(meta.seriesRef);
     return (
@@ -57,11 +63,11 @@ export function EventBadge({ event }: { event: FoundationCalendarEvent }) {
                 className={`rbc-event-glyph inline-block size-1.5 shrink-0 rounded-full ${STATUS_TONE[meta.status] ?? 'bg-slate-400'}`}
                 data-status={meta.status}
                 role="img"
-                aria-label={statusLabel(meta.status)}
-                title={statusLabel(meta.status)}
+                aria-label={statusLabel(meta.status, m)}
+                title={statusLabel(meta.status, m)}
             />
             {isSeries ? (
-                <Repeat className="rbc-event-glyph size-3 shrink-0 opacity-70" aria-label="series occurrence" />
+                <Repeat className="rbc-event-glyph size-3 shrink-0 opacity-70" aria-label={m.t('splicewire-beam-calendar::messages.chrome_series_occurrence')} />
             ) : null}
             <span className="rbc-event-title min-w-0 truncate">{event.title}</span>
         </span>
@@ -109,10 +115,11 @@ export function Filters({
     onToggleCalendar: (id: string) => void;
     onToggleStatus: (status: string) => void;
 }) {
+    const m = useBeamCalendarMessages();
     return (
-        <div className="mb-3 flex flex-wrap items-center gap-3" role="group" aria-label="Calendar filters">
+        <div className="mb-3 flex flex-wrap items-center gap-3" role="group" aria-label={m.t('splicewire-beam-calendar::messages.chrome_calendar_filters')}>
             {calendars.length > 1 ? (
-                <div className="flex flex-wrap gap-1.5" aria-label="Calendars">
+                <div className="flex flex-wrap gap-1.5" aria-label={m.t('splicewire-beam-calendar::messages.chrome_calendars')}>
                     {calendars.map((calendar) => (
                         <button
                             key={calendar.id}
@@ -126,7 +133,7 @@ export function Filters({
                     ))}
                 </div>
             ) : null}
-            <div className="flex flex-wrap gap-1.5" aria-label="Status">
+            <div className="flex flex-wrap gap-1.5" aria-label={m.t('splicewire-beam-calendar::messages.chrome_status')}>
                 {statuses.map((status) => (
                     <button
                         key={status}
@@ -135,7 +142,7 @@ export function Filters({
                         aria-pressed={active.statuses.size === 0 || active.statuses.has(status)}
                         onClick={() => onToggleStatus(status)}
                     >
-                        {statusLabel(status)}
+                        {statusLabel(status, m)}
                     </button>
                 ))}
             </div>

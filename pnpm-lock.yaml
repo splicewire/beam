@@ -261,6 +261,9 @@ importers:
       '@schemastud/frame':
         specifier: github:schemastud/js#9503dcf4d839c269ee6053a6a421800bbbb7f974&path:/frame
         version: https://codeload.github.com/schemastud/js/tar.gz/9503dcf4d839c269ee6053a6a421800bbbb7f974#path:/frame(zushqzocay55ikuxkos7aavrdq)
+      '@schemastud/messages':
+        specifier: github:schemastud/js#47810c9e78aca3eb452f7b34a1eaaed909f4102c&path:/messages
+        version: https://codeload.github.com/schemastud/js/tar.gz/47810c9e78aca3eb452f7b34a1eaaed909f4102c#path:/messages(react@19.2.7)(typescript@5.9.3)
       '@schemastud/ui':
         specifier: github:schemastud/js#abef468b39df9b1e81fd9a2081e69f8094c60e4e&path:/ui
         version: https://codeload.github.com/schemastud/js/tar.gz/abef468b39df9b1e81fd9a2081e69f8094c60e4e#path:/ui(@radix-ui/react-dialog@1.1.23(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-select@2.3.7(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-separator@1.1.15(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-slot@1.5.0(@types/react@19.2.17)(react@19.2.7))(@radix-ui/react-switch@1.4.1(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-tooltip@1.2.16(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@tanstack/react-table@8.21.3(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(lucide-react@0.468.0(react@19.2.7))(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
