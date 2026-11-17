@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "package": "@splicewire/beam-intake",
+  "sourceLocale": "en",
+  "namespace": "splicewire-beam-intake",
+  "sharesWith": null,
+  "messages": {
+    "splicewire-beam-intake::messages.network_failed": "Your submission could not be sent. Check your connection and try again.",
+    "splicewire-beam-intake::messages.preview_label": "Intake form · :key",
+    "splicewire-beam-intake::messages.rate_limited": "Too many submissions. Please wait a minute and try again.",
+    "splicewire-beam-intake::messages.section_failed": "Unable to submit this section.",
+    "splicewire-beam-intake::messages.section_received": "Section received. Reference: :reference",
+    "splicewire-beam-intake::messages.section_submitting": "Submitting section…",
+    "splicewire-beam-intake::messages.send": "Send",
+    "splicewire-beam-intake::messages.success": "Thank you. Your submission was received.",
+    "splicewire-beam-intake::messages.unavailable": "This form is not available."
+  }
+}

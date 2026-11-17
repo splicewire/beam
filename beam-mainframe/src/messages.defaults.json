@@ -1,0 +1,8 @@
+{
+  "splicewire-beam-mainframe::messages.edit_page": "Edit page",
+  "splicewire-beam-mainframe::messages.entry_bound": "entry bound ✓",
+  "splicewire-beam-mainframe::messages.entry_pending": "entry …",
+  "splicewire-beam-mainframe::messages.exit": "Exit",
+  "splicewire-beam-mainframe::messages.mode_editing": "editing",
+  "splicewire-beam-mainframe::messages.mode_page": "page"
+}

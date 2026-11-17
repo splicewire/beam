@@ -8,6 +8,7 @@ import type {
     IntakeFields,
     IntakeFormRenderProps,
 } from './types';
+import { useBeamIntakeMessages } from './messages';
 
 /** Mount with a new key when the selected entity or section changes. */
 export function IntakeSectionForm({
@@ -17,6 +18,7 @@ export function IntakeSectionForm({
     section: EntityIntakeFormSectionData;
     disabled?: boolean;
 }) {
+    const m = useBeamIntakeMessages();
     const [fields, setFields] = useState<IntakeFields>(
         Array.isArray(section.fields) ? {} : section.fields,
     );
@@ -77,19 +79,19 @@ export function IntakeSectionForm({
                 {/* Status lines sit in the form's text size, not the 16px body default. */}
                 {submit.isPending && (
                     <p role="status" className="mt-3 text-sm text-muted-foreground">
-                        Submitting section…
+                        {m.t('splicewire-beam-intake::messages.section_submitting')}
                     </p>
                 )}
                 {submit.isError && (
                     <p role="alert" className="mt-3 text-sm text-destructive">
                         {submit.error instanceof Error && submit.error.message
                             ? submit.error.message
-                            : 'Unable to submit this section.'}
+                            : m.t('splicewire-beam-intake::messages.section_failed')}
                     </p>
                 )}
                 {submit.isSuccess && (
                     <p role="status" className="mt-3 text-sm">
-                        Section received. Reference: {submit.data.submissionId}
+                        {m.t('splicewire-beam-intake::messages.section_received', { reference: submit.data.submissionId })}
                     </p>
                 )}
             </CardContent>

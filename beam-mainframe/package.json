@@ -10,13 +10,15 @@
         ".": {
             "types": "./dist/index.d.ts",
             "import": "./dist/index.js"
-        }
+        },
+        "./messages": "./messages.default.json"
     },
     "sideEffects": false,
     "files": [
         "dist",
         "src",
-        "README.md"
+        "README.md",
+        "messages.default.json"
     ],
     "publishConfig": {
         "registry": "https://registry.npmjs.org",
@@ -32,15 +34,25 @@
         "dev": "tsup --watch",
         "test": "vitest run --passWithNoTests",
         "typecheck": "tsc --noEmit",
-        "prepublishOnly": "pnpm run build"
+        "prepublishOnly": "pnpm run build",
+        "messages:catalog": "node scripts/messages-catalog.mjs",
+        "messages:catalog:write": "node scripts/messages-catalog.mjs --write"
+    },
+    "schemastud": {
+        "messages": {
+            "version": 1,
+            "catalog": "./messages"
+        }
     },
     "peerDependencies": {
+        "@schemastud/messages": "^0.1.0",
         "react": ">=18"
     },
     "dependencies": {
         "@schemastud/mainframe": "github:schemastud/js#436d9db67d77d35d64e5db946ea2341a81e2d988&path:/mainframe"
     },
     "devDependencies": {
+        "@schemastud/messages": "github:schemastud/js#47810c9e78aca3eb452f7b34a1eaaed909f4102c&path:/messages",
         "@schemastud/mainframe": "github:schemastud/js#436d9db67d77d35d64e5db946ea2341a81e2d988&path:/mainframe",
         "@testing-library/react": "^16.1.0",
         "@types/node": "^22.20.1",

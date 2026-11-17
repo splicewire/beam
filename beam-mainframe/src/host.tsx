@@ -35,6 +35,7 @@ import {
     type MainframeInjection,
     type MainframeCan,
 } from '@schemastud/mainframe';
+import { useBeamMainframeMessages } from './messages';
 
 // --- Kind test ---------------------------------------------------------------------------------
 
@@ -335,26 +336,31 @@ const DEFAULT_BTN: React.CSSProperties = {
  * The OOTB frame ribbon a host gets when it injects no `ribbon`. A bottom status bar with the mode +
  * entry + the read↔author toggle. A host with a design system passes its own render-prop to override.
  */
-export const defaultRibbon: RibbonRender = ({ mode, entryRef, entryBound, onEdit, onExit }) => (
-    <div data-beam-ux-frame={entryRefLabel(entryRef)} data-beam-ux-mode={mode} style={DEFAULT_BAR}>
-        <span style={{ color: '#FF5B3A' }}>beam-ux</span>
-        <span style={{ opacity: 0.6 }}>{mode === 'window' ? 'editing' : 'page'} · {entryRefLabel(entryRef)}</span>
-        {mode === 'domain' ? (
-            <>
-                <span style={{ opacity: 0.8 }}>entry {entryBound ? 'bound ✓' : '…'}</span>
-                {entryBound && (
-                    <button type="button" style={DEFAULT_BTN} onClick={onEdit} data-beam-ux-edit>
-                        Edit page
-                    </button>
-                )}
-            </>
-        ) : (
-            <button type="button" style={DEFAULT_BTN} onClick={onExit} data-beam-ux-exit>
-                Exit
-            </button>
-        )}
-    </div>
-);
+export const defaultRibbon: RibbonRender = (props) => <DefaultRibbon {...props} />;
+
+function DefaultRibbon({ mode, entryRef, entryBound, onEdit, onExit }: RibbonProps) {
+    const m = useBeamMainframeMessages();
+    return (
+        <div data-beam-ux-frame={entryRefLabel(entryRef)} data-beam-ux-mode={mode} style={DEFAULT_BAR}>
+            <span style={{ color: '#FF5B3A' }}>beam-ux</span>
+            <span style={{ opacity: 0.6 }}>{mode === 'window' ? m.t('splicewire-beam-mainframe::messages.mode_editing') : m.t('splicewire-beam-mainframe::messages.mode_page')} · {entryRefLabel(entryRef)}</span>
+            {mode === 'domain' ? (
+                <>
+                    <span style={{ opacity: 0.8 }}>{entryBound ? m.t('splicewire-beam-mainframe::messages.entry_bound') : m.t('splicewire-beam-mainframe::messages.entry_pending')}</span>
+                    {entryBound && (
+                        <button type="button" style={DEFAULT_BTN} onClick={onEdit} data-beam-ux-edit>
+                            {m.t('splicewire-beam-mainframe::messages.edit_page')}
+                        </button>
+                    )}
+                </>
+            ) : (
+                <button type="button" style={DEFAULT_BTN} onClick={onExit} data-beam-ux-exit>
+                    {m.t('splicewire-beam-mainframe::messages.exit')}
+                </button>
+            )}
+        </div>
+    );
+}
 
 // --- OOTB mode components ----------------------------------------------------------------------
 

@@ -3,6 +3,8 @@ import { createContext, useContext, useRef, useState, type ReactNode } from 'rea
 import { SchemaForm } from '@schemastud/seam';
 import { useOptionalIntakeServices } from './provider';
 import type { IntakeFields, IntakeFormRenderProps } from './types';
+import { notice, say, type Notice } from './message-descriptor';
+import { useBeamIntakeMessages } from './messages';
 
 /** The JSON Schema a public intake capture key validates against, resolved by the server for the page (EP-07d). */
 export type PublicIntakeSchema = Record<string, unknown>;
@@ -101,19 +103,20 @@ export interface IntakeFormProps {
  * empty optional fields out. The honeypot is the form's own off-screen input, so it reaches the door whichever
  * renderer draws the fields.
  */
-export function IntakeForm({ captureKey, submitLabel = 'Send', successMessage = 'Thank you. Your submission was received.', preview = false }: IntakeFormProps) {
+export function IntakeForm({ captureKey, submitLabel, successMessage, preview = false }: IntakeFormProps) {
+    const m = useBeamIntakeMessages();
     const { schemas, honeypotField = 'website', submit = submitToIntakeDoor, onSent } = useContext(PublicIntakeContext);
     const services = useOptionalIntakeServices();
     const honeypot = useRef<HTMLInputElement>(null);
     const [formData, setFormData] = useState<IntakeFields>({});
-    const [state, setState] = useState<{ status: 'idle' | 'sending' | 'sent'; message?: string; errors: Record<string, string[]> }>({ status: 'idle', errors: {} });
+    const [state, setState] = useState<{ status: 'idle' | 'sending' | 'sent'; message?: Notice; errors: Record<string, string[]> }>({ status: 'idle', errors: {} });
     const schema = schemas[captureKey];
 
     if (!schema) {
-        return <div role="note" data-beam-intake-form={captureKey}>{preview ? `Intake form · ${captureKey}` : 'This form is not available.'}</div>;
+        return <div role="note" data-beam-intake-form={captureKey}>{preview ? m.t('splicewire-beam-intake::messages.preview_label', { key: captureKey }) : m.t('splicewire-beam-intake::messages.unavailable')}</div>;
     }
     if (state.status === 'sent') {
-        return <div role="status" data-beam-intake-form={captureKey}>{successMessage}</div>;
+        return <div role="status" data-beam-intake-form={captureKey}>{successMessage ?? m.t('splicewire-beam-intake::messages.success')}</div>;
     }
     const send = async (fields: IntakeFields) => {
         if (preview || state.status === 'sending') return;
@@ -132,11 +135,11 @@ export function IntakeForm({ captureKey, submitLabel = 'Send', successMessage = 
                     }
                 }
             } else {
-                setState({ status: 'idle', errors: result.errors, message: result.status === 429 ? 'Too many submissions. Please wait a minute and try again.' : result.message });
+                setState({ status: 'idle', errors: result.errors, message: result.status === 429 ? notice('splicewire-beam-intake::messages.rate_limited') : result.message });
             }
         } catch {
             // A network failure never strands the form: it is usable again, the author's entries kept, to retry.
-            setState({ status: 'idle', errors: {}, message: 'Your submission could not be sent. Check your connection and try again.' });
+            setState({ status: 'idle', errors: {}, message: notice('splicewire-beam-intake::messages.network_failed') });
         }
     };
     const form: IntakeFormRenderProps = {
@@ -146,11 +149,11 @@ export function IntakeForm({ captureKey, submitLabel = 'Send', successMessage = 
         onChange: setFormData,
         onSubmit: fields => void send(fields),
         errors: state.errors,
-        submitLabel,
+        submitLabel: submitLabel ?? m.t('splicewire-beam-intake::messages.send'),
     };
 
     return <div data-beam-intake-form={captureKey} aria-busy={state.status === 'sending' || undefined}>
-        {state.message && <p role="alert">{state.message}</p>}
+        {state.message && <p role="alert">{say(m, state.message)}</p>}
         {services?.renderForm ? services.renderForm(form) : (
             <SchemaForm
                 schema={schema}
@@ -160,7 +163,7 @@ export function IntakeForm({ captureKey, submitLabel = 'Send', successMessage = 
                 onChange={({ formData: next }) => setFormData(next ?? {})}
                 onSubmit={({ formData: next }) => form.onSubmit(next ?? {})}
             >
-                <button type="submit" disabled={form.disabled}>{submitLabel}</button>
+                <button type="submit" disabled={form.disabled}>{form.submitLabel}</button>
             </SchemaForm>
         )}
         {/* The honeypot the door's middleware watches: off-screen and unannounced, filled only by bots. */}

@@ -1,0 +1,12 @@
+{
+  "splicewire-beam-ingest::messages.checking": "Checking…",
+  "splicewire-beam-ingest::messages.completed": "Import completed.",
+  "splicewire-beam-ingest::messages.failed": "Import failed.",
+  "splicewire-beam-ingest::messages.may_still_run": "The import may still be running.",
+  "splicewire-beam-ingest::messages.progress_failed": "Could not check import progress.",
+  "splicewire-beam-ingest::messages.retry": "Retry",
+  "splicewire-beam-ingest::messages.rows": ":current of :total rows.|:current of :total rows.",
+  "splicewire-beam-ingest::messages.status": "Import :status.",
+  "splicewire-beam-ingest::messages.status_pending": "Import pending.",
+  "splicewire-beam-ingest::messages.status_running": "Import running."
+}

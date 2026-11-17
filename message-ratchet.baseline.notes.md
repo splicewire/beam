@@ -116,3 +116,14 @@ Part S1 (the seam in each package). Re-taken on beam main 3b3bc826 (the same cou
 Not catalogued, by rule: beam-mdx's developer warnings (`<Ref to="…"> — no such reference key…`, `<Content name="…"> — no such content file`), the runtime's thrown `Failed to load MDX (…)`, the MDX Lens's parse diagnostics, and the story harness's fixture data; content titles, excerpts, topics, slugs and a version's `readable` handle and label are authored or server data, rendered as given.
 
 Ruled generated data for now: beam-mdx's kit-manifest property titles that SchemaFormPropertyEditor (editor/schema-form.tsx) renders come from the PHP export-kit's schemas, not this package; they localize where that export is produced. Out of scope and English: MDXEditor's own toolbar and dialogs (its `translation` prop is not wired) and the form library's (RJSF) built-in strings.
+
+## @splicewire/beam-intake, @splicewire/beam-ingest, @splicewire/beam-mainframe — localization 30-S
+
+Part S2 (the seam in each package). Re-taken on beam main 3fcff8d0; the census sized each "under 30" (2026-11-12).
+
+- beam-intake: all 7 pinned nodes (IntakeForm, IntakeSectionForm) move onto its catalog, so its --write lowers 7 to 0. The text scan added IntakeForm's `submitLabel` and `successMessage` string defaults (now `?? m.t(...)`; a caller's label still wins). The rate-limit and network failures are kept in state as notices and translated where they render; the door's own `message` stays a raw string, rendered as it arrived.
+- beam-ingest: all 9 pinned nodes (IngestProgress) move onto its catalog, so its --write lowers 9 to 0. The run statuses the server declares (IngestRunStatus) each read their own line (`Import pending.`, `Import running.`, `Import completed.`; `failed` shows the run's error), as beam-calendar's status labels do; only a value outside that set reads `Import :status.`, the value as given. The row count is a plural on `m.choice` keyed by the total; English never had a singular, so both forms keep ":current of :total rows.".
+- beam-mainframe: 6 of its 7 pinned nodes (the default ribbon) move onto its catalog, so its --write lowers 7 to 1. `defaultRibbon` keeps its `RibbonRender` signature (the host calls it as a function) and renders a `DefaultRibbon` component that reads the seam. The node left:
+  - beam-mainframe/src/host.tsx — `beam-ux` (JsxText): the product's wordmark on the ribbon, a fixed product mark rather than a host-configurable brand (so not R3's brand copy), left as root 4a20610b reasoned for the wordmark under R8.
+
+Not catalogued, by rule: the developer guards `IntakeSectionForm requires an IntakeProvider.` and `IngestProgress requires an IngestProvider.`, the door's and a failed run's server messages, a section submission's reference id, an entry's slug or id, and the story harnesses' fixture data.
