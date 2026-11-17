@@ -9,6 +9,7 @@ import { RegionInspector } from "./RegionInspector";
 import type { Region } from "./types";
 import { ReleasePanel, type ReleaseRecord } from "./releases";
 import { VersionRecordingReferences } from "./recording";
+import { useBeamUxMessages } from "./messages.js";
 
 /**
  * The THEME ENTRY's editor seat — the one surface that lets an author change a theme token through a
@@ -62,14 +63,17 @@ import { VersionRecordingReferences } from "./recording";
  */
 export function ThemeEditor({
   entryId,
-  label = "Theme tokens",
-  note = "Save creates a theme draft. Publish releases the saved version, or submits it for review when required.",
+  label: labelOverride,
+  note: noteOverride,
 }: {
   /** The `namespace=theme, slug=default` entry's id, resolved server-side and shared as a prop. */
   entryId: string;
   label?: string;
   note?: string;
 }) {
+  const m = useBeamUxMessages();
+  const label = labelOverride ?? m.t('splicewire-beam-ux::messages.theme_tokens');
+  const note = noteOverride ?? m.t('splicewire-beam-ux::messages.theme_note');
   const [breakpoint, setBreakpoint] = useState("");
   const [releaseId, setReleaseId] = useState("");
   const { client } = useUxBuilderServices();
@@ -152,7 +156,7 @@ export function ThemeEditor({
         role="status"
         className="rounded-lg border bg-card p-4 text-sm text-muted-foreground"
       >
-        Loading the theme…
+        {m.t('splicewire-beam-ux::messages.theme_loading')}
       </p>
     );
   }
@@ -163,7 +167,7 @@ export function ThemeEditor({
         role="alert"
         className="rounded-lg border bg-card p-4 text-sm text-destructive"
       >
-        The theme entry could not be loaded.
+        {m.t('splicewire-beam-ux::messages.theme_load_failed')}
       </p>
     );
   }
@@ -200,12 +204,12 @@ export function ThemeEditor({
   return (
     <>
       <label>
-        Token breakpoint{" "}
+        {m.t('splicewire-beam-ux::messages.theme_token_breakpoint')}{" "}
         <select
           value={breakpoint}
           onChange={(e) => setBreakpoint(e.target.value)}
         >
-          <option value="">Base</option>
+          <option value="">{m.t('splicewire-beam-ux::messages.theme_base')}</option>
           {Object.keys(styleRegistry({ responsive }).breakpoints).map(
             (name) => (
               <option key={name} value={name}>
@@ -230,20 +234,20 @@ export function ThemeEditor({
         onDiscard={draft === null ? undefined : () => setDraft(null)}
         saving={save.isPending || publish.isPending}
         saveDisabled={!versions.isSuccess || !versions.data}
-        saveLabel="Save draft"
+        saveLabel={m.t('splicewire-beam-ux::messages.theme_save_draft')}
       />
       {save.isError && <p role="alert">{save.error.message}</p>}
       {versions.isError && (
         <p role="alert">
-          History could not be loaded.{" "}
+          {m.t('splicewire-beam-ux::messages.theme_history_load_failed')}{" "}
           <button type="button" onClick={() => void versions.refetch()}>
-            Retry history
+            {m.t('splicewire-beam-ux::messages.theme_retry_history')}
           </button>
         </p>
       )}
       {save.isSuccess && (
         <p role="status">
-          Theme draft saved. Readers still receive the published theme.
+          {m.t('splicewire-beam-ux::messages.theme_draft_saved')}
         </p>
       )}
       {client.publish && (
@@ -255,31 +259,31 @@ export function ThemeEditor({
           }
           onClick={() => publish.mutate()}
         >
-          Publish
+          {m.t('splicewire-beam-ux::messages.theme_publish')}
         </Button>
       )}
       {publish.isError && <p role="alert">{publish.error.message}</p>}
       {publish.isSuccess && (
         <p role="status">
           {publication?.status === "published"
-            ? "Theme published."
-            : "Theme Release submitted for review."}
+            ? m.t('splicewire-beam-ux::messages.theme_published')
+            : m.t('splicewire-beam-ux::messages.theme_submitted_for_review')}
         </p>
       )}
       {versions.data && (
         <section
-          aria-label="Theme history"
+          aria-label={m.t('splicewire-beam-ux::messages.theme_history_label')}
           className="mt-4 space-y-2 rounded-lg border bg-card p-4 text-sm"
         >
-          <h2 className="font-semibold">History</h2>
-          <p>Published: {versions.data.publishedReadable ?? "None"}</p>
+          <h2 className="font-semibold">{m.t('splicewire-beam-ux::messages.theme_history')}</h2>
+          <p>{m.t('splicewire-beam-ux::messages.theme_published_version', { version: versions.data.publishedReadable ?? m.t('splicewire-beam-ux::messages.theme_none') })}</p>
           <ul>
             {versions.data.versions.map((version) => (
               <li key={version.id}>
                 {version.readable}
-                {version.id === versions.data?.headVersion ? " · Head" : ""}
+                {version.id === versions.data?.headVersion ? ` ${m.t('splicewire-beam-ux::messages.theme_head_marker')}` : ""}
                 {version.id === versions.data?.publishedVersion
-                  ? " · Published"
+                  ? ` ${m.t('splicewire-beam-ux::messages.theme_published_marker')}`
                   : ""}
                 <VersionRecordingReferences recordings={version.recordings} />
               </li>
@@ -314,12 +318,12 @@ export function ThemeEditor({
       {client.listReleases && client.releaseCommand && (
         <div>
           <label>
-            Release{" "}
+            {m.t('splicewire-beam-ux::messages.theme_release')}{" "}
             <select
               value={releaseId}
               onChange={(event) => setReleaseId(event.target.value)}
             >
-              <option value="">Choose a Release</option>
+              <option value="">{m.t('splicewire-beam-ux::messages.theme_choose_release')}</option>
               {releases.data
                 ?.filter((release) => release.status !== "published")
                 .map((release) => (
@@ -335,11 +339,11 @@ export function ThemeEditor({
             }
             onClick={() => join.mutate()}
           >
-            Add saved theme to Release
+            {m.t('splicewire-beam-ux::messages.theme_add_to_release')}
           </Button>
           {join.isError && <p role="alert">{join.error.message}</p>}
           {join.isSuccess && (
-            <p role="status">Saved theme version added to the Release.</p>
+            <p role="status">{m.t('splicewire-beam-ux::messages.theme_added_to_release')}</p>
           )}
         </div>
       )}

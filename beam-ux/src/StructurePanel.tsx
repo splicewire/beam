@@ -3,6 +3,7 @@ import { cn } from '@schemastud/ui';
 import { KIND_ICON } from './kindIcon';
 import type { PaletteItem, Region, TreeNode } from './types';
 import { UX_BUILDER_CSS } from './css';
+import { useBeamUxMessages } from './messages.js';
 
 function TreeRow({
     node,
@@ -82,6 +83,7 @@ export function StructurePanel({
     onSelect: (regionId: string) => void;
     renderEditor: (region: Region) => ReactNode;
 }) {
+    const m = useBeamUxMessages();
     return (
         <div className="beam-ux-structure-grid grid grid-cols-1 gap-6">
             <style>{UX_BUILDER_CSS}</style>
@@ -89,7 +91,7 @@ export function StructurePanel({
                 {/* the composition tree */}
                 <section className="rounded-lg border bg-card">
                     <div className="border-b px-4 py-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                        Composition tree &mdash; {treeKindPath(pageTree)}
+                        {m.t('splicewire-beam-ux::messages.structure_composition_tree', { path: treeKindPath(pageTree) })}
                     </div>
                     <div className="p-2">
                         <TreeRow node={pageTree} depth={0} selected={selected} onSelect={onSelect} />
@@ -101,7 +103,7 @@ export function StructurePanel({
                     <section>
                         <div className="mb-2 flex items-center gap-2">
                             <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                                Placement config
+                                {m.t('splicewire-beam-ux::messages.structure_placement_config')}
                             </span>
                         </div>
                         {renderEditor(selectedRegion)}
@@ -112,7 +114,7 @@ export function StructurePanel({
             {/* palette — drop a component into a placement (the page-composition structural layer) */}
             <aside className="space-y-3">
                 <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                    Component palette
+                    {m.t('splicewire-beam-ux::messages.structure_component_palette')}
                 </div>
                 {palette.map((p) => {
                     const Icon = KIND_ICON[p.kind];
@@ -131,8 +133,7 @@ export function StructurePanel({
                     );
                 })}
                 <p className="px-1 text-[11px] leading-relaxed text-muted-foreground">
-                    Structure = the page-composition layer, kept separate from overlay editing. Drag a
-                    component into a placement; overlay mode then edits it in situ.
+                    {m.t('splicewire-beam-ux::messages.structure_explainer')}
                 </p>
             </aside>
         </div>

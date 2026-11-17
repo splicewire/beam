@@ -10,6 +10,10 @@ Part A (the seam plus site/, entries/, shell/, collections/, desk/, state/, admi
 - beam-ux/src/shell/default-desktop.tsx:37 — `surfaceMap` (JsxText): a prop name, passed into the translated sentence as a code parameter.
 - beam-ux/src/site/EntryBody.tsx:230 — `php artisan splicewire:beam:ux:compile` (StringLiteral): a command, passed into the translated sentence as a code parameter.
 
+Part D (the root files: releases, FilesComparisonPanel, use-region-publication, RegionEditorBody, ThemeEditor, RegionCanvas, recording, RegionInspector, StructurePanel, hooks, RegionOverlay, UxBuilder) moves 200 of its 204 nodes onto the catalog, so its --write lowers 755 to 555. Its four remaining nodes are code tokens shown in monospace in the frame and list editor previews, kept raw:
+
+- beam-ux/src/RegionEditorBody.tsx — `frame:enrollment` (a frame key, passed into the translated sentence as a code parameter), `route` (a manifest field name), `/programs/` (a route prefix) and `{slug}` (a route parameter, passed into the translated sentence as a code parameter).
+
 ## @splicewire/beam-inertia — localization 28a
 
 Root qitem-20261114193919-4a20610b (2026-11-14 19:39Z) accepts exactly these 13 non-copy brand/machine AST nodes. This supersedes the count-12 ruling 73e93872. The complete styled wordmark is one raw rich :brand parameter, preserving raw beam· followed by bold raw os. Every listed literal stays raw; no technical catalog line or reshaping hides it.

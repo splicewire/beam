@@ -5,6 +5,7 @@ import { KIND_ICON } from './kindIcon';
 import { RegionEditorBody } from './RegionEditorBody';
 import type { Region } from './types';
 import type { EntryBody } from './types';
+import { useBeamUxMessages } from './messages.js';
 
 export interface RegionPreview {
     id: string;
@@ -55,6 +56,7 @@ export function RegionInspector({
     previews = [],
     previewState = 'unavailable',
 }: RegionEditorProps) {
+    const m = useBeamUxMessages();
     const Icon = KIND_ICON[region.kind];
     return (
         <div className="rounded-lg border bg-card">
@@ -74,17 +76,17 @@ export function RegionInspector({
                 <div className="flex flex-wrap gap-2 text-xs">
                     {region.url ? (
                         <a href={region.url} target="_blank" rel="noopener noreferrer">
-                            View
+                            {m.t('splicewire-beam-ux::messages.inspector_view')}
                         </a>
                     ) : (
-                        <span className="text-muted-foreground">View unavailable</span>
+                        <span className="text-muted-foreground">{m.t('splicewire-beam-ux::messages.inspector_view_unavailable')}</span>
                     )}
                     {previewState === 'loading' ? (
-                        <span>Loading Preview…</span>
+                        <span>{m.t('splicewire-beam-ux::messages.inspector_preview_loading')}</span>
                     ) : previewState === 'unavailable' ? (
-                        <span>Preview unavailable</span>
+                        <span>{m.t('splicewire-beam-ux::messages.inspector_preview_unavailable')}</span>
                     ) : previews.length === 0 ? (
-                        <span>No open Release</span>
+                        <span>{m.t('splicewire-beam-ux::messages.inspector_no_open_release')}</span>
                     ) : (
                         previews.map((preview) =>
                             preview.href ? (
@@ -94,10 +96,10 @@ export function RegionInspector({
                                     target="_blank"
                                     rel="noopener noreferrer"
                                 >
-                                    Preview {preview.title}
+                                    {m.t('splicewire-beam-ux::messages.inspector_preview_release', { title: preview.title })}
                                 </a>
                             ) : (
-                                <span key={preview.id}>Preview {preview.title} unavailable</span>
+                                <span key={preview.id}>{m.t('splicewire-beam-ux::messages.inspector_preview_release_unavailable', { title: preview.title })}</span>
                             )
                         )
                     )}

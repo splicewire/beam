@@ -4,6 +4,7 @@ import { KIND_ICON } from './kindIcon';
 import { RegionEditorBody } from './RegionEditorBody';
 import type { RegionEditorProps } from './RegionInspector';
 import { UX_BUILDER_CSS } from './css';
+import { useBeamUxMessages } from './messages.js';
 
 /**
  * The floating in-context region editor — the OVERLAY-placement variant of {@link RegionInspector}. A
@@ -24,6 +25,7 @@ export function RegionOverlay({
     publicationControls,
     onClose,
 }: RegionEditorProps & { onClose: () => void }) {
+    const m = useBeamUxMessages();
     const Icon = KIND_ICON[region.kind];
     return (
         <div className={cn('beam-ux-overlay rounded-lg border bg-card ring-1 ring-primary/20')}>
@@ -37,8 +39,8 @@ export function RegionOverlay({
                             type="button"
                             onClick={onClose}
                             className="ml-auto rounded p-0.5 text-muted-foreground hover:bg-muted"
-                            title="Dismiss overlay"
-                            aria-label="Dismiss overlay"
+                            title={m.t('splicewire-beam-ux::messages.overlay_dismiss')}
+                            aria-label={m.t('splicewire-beam-ux::messages.overlay_dismiss')}
                         >
                             <X className="size-4" />
                         </button>

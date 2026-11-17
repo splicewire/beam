@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNotify, useUxBuilderServices } from './provider';
 import type { BeamUxEntryBodyData, EntryBody } from './types';
+import { useBeamUxMessages } from './messages.js';
 
 // The react-query data layer, INSIDE the package (rehome-ui: the surface owns its data logic). The
 // transport is the injected `client`; these hooks add caching, invalidation, and feedback. Keys are
@@ -32,6 +33,7 @@ export function useSaveEntryBody() {
     const { client } = useUxBuilderServices();
     const notify = useNotify();
     const qc = useQueryClient();
+    const m = useBeamUxMessages();
     const savesDraft = Boolean(client.saveDraft && client.listVersions);
     const mutation = useMutation({
         mutationFn: async ({ id, body }: { id: string; body: EntryBody }) => {
@@ -51,17 +53,17 @@ export function useSaveEntryBody() {
             qc.invalidateQueries({ queryKey: entryBodyKey(id) });
             notify({
                 type: 'success',
-                message: savesDraft ? 'Draft saved.' : 'Saved.',
+                message: savesDraft ? m.t('splicewire-beam-ux::messages.save_draft_saved') : m.t('splicewire-beam-ux::messages.save_saved'),
             });
         },
         onError: () => {
-            notify({ type: 'error', message: 'Save failed.' });
+            notify({ type: 'error', message: m.t('splicewire-beam-ux::messages.save_failed') });
         },
     });
 
     return {
         ...mutation,
-        saveLabel: savesDraft ? 'Save draft' : undefined,
+        saveLabel: savesDraft ? m.t('splicewire-beam-ux::messages.save_draft') : undefined,
     };
 }
 

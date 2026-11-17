@@ -3,12 +3,14 @@ import { KIND_ICON } from './kindIcon';
 import type { EntryBody, Region } from './types';
 import type { JsonNode } from './blockdoc/json';
 import { UX_BUILDER_CSS } from './css';
+import { useBeamUxMessages } from './messages.js';
 
+/** The list kind's illustrative preview rows (product sample copy, not authored records). */
 const LIST_ROWS = [
-    { slug: 'frontend-foundations', title: 'Frontend Foundations' },
-    { slug: 'data-modeling', title: 'Data Modeling' },
-    { slug: 'live-systems-design', title: 'Live Systems Design' },
-];
+    { slug: 'frontend-foundations', titleKey: 'splicewire-beam-ux::messages.region_sample_frontend_foundations' },
+    { slug: 'data-modeling', titleKey: 'splicewire-beam-ux::messages.region_sample_data_modeling' },
+    { slug: 'live-systems-design', titleKey: 'splicewire-beam-ux::messages.region_sample_live_systems_design' },
+] as const;
 
 /** A bounded plain-text excerpt, never HTML execution or record/component hydration. */
 function bodyExcerpt(body: EntryBody | undefined): string {
@@ -48,6 +50,7 @@ export function RegionBlock({
     bodyLoading?: boolean;
     bodyError?: boolean;
 }) {
+    const m = useBeamUxMessages();
     const Icon = KIND_ICON[region.kind];
     return (
         <div
@@ -68,31 +71,31 @@ export function RegionBlock({
                 {region.kind === 'richtext' && (
                     <p className="whitespace-pre-wrap break-words text-sm text-muted-foreground">
                         {!engaged
-                            ? 'Engage to preview the saved body.'
+                            ? m.t('splicewire-beam-ux::messages.region_engage_to_preview')
                             : bodyError
-                            ? 'Body unavailable.'
+                            ? m.t('splicewire-beam-ux::messages.region_body_unavailable')
                             : bodyLoading
-                            ? 'Loading saved body…'
-                            : bodyExcerpt(body) || 'No text in this body.'}
+                            ? m.t('splicewire-beam-ux::messages.region_body_loading')
+                            : bodyExcerpt(body) || m.t('splicewire-beam-ux::messages.region_body_no_text')}
                     </p>
                 )}
                 {region.kind === 'form' && (
                     <div className="flex items-center gap-4">
                         <div className="flex-1">
                             <div className="text-[11px] font-medium uppercase tracking-wide text-primary">
-                                New cohort
+                                {m.t('splicewire-beam-ux::messages.region_sample_new_cohort')}
                             </div>
-                            <div className="text-lg font-semibold">Frontend Foundations</div>
+                            <div className="text-lg font-semibold">{m.t('splicewire-beam-ux::messages.region_sample_frontend_foundations')}</div>
                             <div className="text-xs text-muted-foreground">
-                                cohort &middot; 8 seats left
+                                {m.t('splicewire-beam-ux::messages.region_sample_cohort_seats')}
                             </div>
                         </div>
-                        <Button size="sm">Enroll</Button>
+                        <Button size="sm">{m.t('splicewire-beam-ux::messages.region_sample_enroll')}</Button>
                     </div>
                 )}
                 {region.kind === 'frame' && (
                     <div className="text-sm text-muted-foreground">
-                        Enrollment roster &middot; 3 enrolled
+                        {m.t('splicewire-beam-ux::messages.region_sample_enrollment_roster')}
                     </div>
                 )}
                 {region.kind === 'list' && (
@@ -102,7 +105,7 @@ export function RegionBlock({
                                 key={r.slug}
                                 className="rounded border bg-background px-2 py-1 text-xs"
                             >
-                                {r.title}
+                                {m.t(r.titleKey)}
                             </span>
                         ))}
                     </div>

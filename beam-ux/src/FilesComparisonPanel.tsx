@@ -1,6 +1,7 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import type { FileBatchReconcileInput, FileBatchReconcileResult, FileInspection, FileReconcileInput, FileReconcileResult } from './files';
 import type { UxBuilderClient } from './types';
+import { useBeamUxMessages } from './messages.js';
 
 const buttonClassName = 'inline-flex items-center justify-center rounded-md border bg-background px-3 py-2 text-sm font-medium shadow-sm hover:bg-muted focus-visible:outline focus-visible:outline-2 disabled:cursor-not-allowed disabled:opacity-50';
 type FileConfirmation =
@@ -13,6 +14,7 @@ type FileConfirmation =
 export function FilesComparisonPanel({memberId, client, editorHref}: {
     memberId: string; client: UxBuilderClient; editorHref?: (entryId: string) => string | undefined;
 }) {
+    const m = useBeamUxMessages();
     const [inspection, setInspection] = useState<FileInspection | null>(null);
     const [confirmation, setConfirmation] = useState<FileConfirmation | null>(null);
     const [busy, setBusy] = useState(false);
@@ -102,7 +104,7 @@ export function FilesComparisonPanel({memberId, client, editorHref}: {
         } catch (failure) {
             if (epoch !== requestEpoch.current) return;
             setInspection(null);
-            setError(failure instanceof Error ? failure.message : 'Nothing could be confirmed. Reload comparison.');
+            setError(failure instanceof Error ? failure.message : m.t('splicewire-beam-ux::messages.files_nothing_confirmed'));
         } finally { if (epoch === requestEpoch.current) setBusy(false); }
     };
     const drafted = result?.status === 'drafted' || result?.status === 'drafted-with-compile-error';
@@ -112,50 +114,50 @@ export function FilesComparisonPanel({memberId, client, editorHref}: {
     const mdxLinkRefused = resultFormat === 'mdx' || inspection?.format === 'mdx' || inspection?.path?.toLowerCase().endsWith('.mdx');
     const href = inspection && result && !mdxLinkRefused && editorHref?.(result.entryId);
     return <section aria-labelledby={headingId} aria-busy={busy} className="space-y-4 rounded-lg border bg-card p-4 text-card-foreground">
-        <h2 id={headingId} className="text-lg font-semibold">Current published file</h2>
-        <p>Compare the local file with the entry’s current published pin. The historical Release member above stays fixed.</p>
-        <button className={buttonClassName} ref={reloadButton} type="button" disabled={busy} onClick={() => void load()}>Reload comparison</button>
-        {error && <p role="alert">{error} The captured inspection is retained. Reload explicitly before a new attempt.</p>}
+        <h2 id={headingId} className="text-lg font-semibold">{m.t('splicewire-beam-ux::messages.files_heading')}</h2>
+        <p>{m.t('splicewire-beam-ux::messages.files_intro')}</p>
+        <button className={buttonClassName} ref={reloadButton} type="button" disabled={busy} onClick={() => void load()}>{m.t('splicewire-beam-ux::messages.files_reload')}</button>
+        {error && <p role="alert">{m.t('splicewire-beam-ux::messages.files_error_retained', { error })}</p>}
         {result && <div className="space-y-2 rounded border bg-muted p-3 text-foreground">
             {compileFailed
-                ? <p role="alert">Draft retained; compilation failed. Published content is unchanged. Review the draft before publication.</p>
+                ? <p role="alert">{m.t('splicewire-beam-ux::messages.files_compile_failed')}</p>
                 : <p role="status">{result.message}</p>}
-            <p className="break-all text-sm">Returned working head: {result.headVersion ?? 'Unavailable'}. Published pin: {result.publishedVersion ?? 'Unavailable'}.</p>
-            {compileFailed && <p className="text-sm">This warning describes the save response; later comparison reads do not provide stored compilation history.</p>}
+            <p className="break-all text-sm">{m.t('splicewire-beam-ux::messages.files_returned_versions', { head: result.headVersion ?? m.t('splicewire-beam-ux::messages.files_unavailable'), pin: result.publishedVersion ?? m.t('splicewire-beam-ux::messages.files_unavailable') })}</p>
+            {compileFailed && <p className="text-sm">{m.t('splicewire-beam-ux::messages.files_compile_warning_scope')}</p>}
         </div>}
-        {batchResult && <p role="status">{batchResult.count} files were taken as drafts. Published pins and local files are unchanged.</p>}
-        {drafted && href && <a href={href}>Open entry</a>}
+        {batchResult && <p role="status">{m.t('splicewire-beam-ux::messages.files_taken_as_drafts', { count: batchResult.count })}</p>}
+        {drafted && href && <a href={href}>{m.t('splicewire-beam-ux::messages.files_open_entry')}</a>}
         {inspection && <>
             <p><strong>{inspection.state}</strong> — {inspection.message}</p>
-            <dl><dt>File</dt><dd>{inspection.path ?? 'Unavailable'}</dd>
-                <dt>Working head</dt><dd className="break-all">{inspection.workingHeadVersion}</dd>
-                <dt>Current published pin</dt><dd className="break-all">{inspection.publishedVersion}</dd></dl>
-            {inspection.sourceTruncated && <p>Source previews are truncated. Validation uses the complete bounded file.</p>}
+            <dl><dt>{m.t('splicewire-beam-ux::messages.files_file')}</dt><dd>{inspection.path ?? m.t('splicewire-beam-ux::messages.files_unavailable')}</dd>
+                <dt>{m.t('splicewire-beam-ux::messages.files_working_head')}</dt><dd className="break-all">{inspection.workingHeadVersion}</dd>
+                <dt>{m.t('splicewire-beam-ux::messages.files_current_published_pin')}</dt><dd className="break-all">{inspection.publishedVersion}</dd></dl>
+            {inspection.sourceTruncated && <p>{m.t('splicewire-beam-ux::messages.files_source_truncated')}</p>}
             <div className="grid gap-4 md:grid-cols-2">
-                <div><h3>Current published bytes</h3><pre className="max-h-80 overflow-auto whitespace-pre-wrap text-xs">{inspection.publishedSource ?? 'Unavailable'}</pre></div>
-                <div><h3>Local bytes</h3><pre className="max-h-80 overflow-auto whitespace-pre-wrap text-xs">{inspection.localSource ?? (inspection.fileExists ? 'Unavailable' : 'Missing')}</pre></div>
+                <div><h3>{m.t('splicewire-beam-ux::messages.files_published_bytes')}</h3><pre className="max-h-80 overflow-auto whitespace-pre-wrap text-xs">{inspection.publishedSource ?? m.t('splicewire-beam-ux::messages.files_unavailable')}</pre></div>
+                <div><h3>{m.t('splicewire-beam-ux::messages.files_local_bytes')}</h3><pre className="max-h-80 overflow-auto whitespace-pre-wrap text-xs">{inspection.localSource ?? (inspection.fileExists ? m.t('splicewire-beam-ux::messages.files_unavailable') : m.t('splicewire-beam-ux::messages.files_missing'))}</pre></div>
             </div>
             {!confirmation && <div className="flex gap-4">
-                {inspection.canTake && client.takeReleaseFile && <button className={buttonClassName} ref={takeButton} type="button" disabled={busy} onClick={() => capture('take')}>Take file as draft</button>}
-                {inspection.canRestore && client.restoreMissingReleaseFile && <button className={buttonClassName} ref={restoreButton} type="button" disabled={busy} onClick={() => capture('restore')}>Restore missing published file</button>}
-                {inspection.state === 'differs' && inspection.canRemirror && client.remirrorReleaseFile && <button className={buttonClassName} ref={remirrorButton} type="button" disabled={busy} onClick={() => capture('remirror')}>Re-mirror published file</button>}
-                {inspection.canTakeAll && client.takeAllReleaseFiles && <button className={buttonClassName} ref={takeAllButton} type="button" disabled={busy} onClick={captureAll}>Take all as drafts</button>}
+                {inspection.canTake && client.takeReleaseFile && <button className={buttonClassName} ref={takeButton} type="button" disabled={busy} onClick={() => capture('take')}>{m.t('splicewire-beam-ux::messages.files_take')}</button>}
+                {inspection.canRestore && client.restoreMissingReleaseFile && <button className={buttonClassName} ref={restoreButton} type="button" disabled={busy} onClick={() => capture('restore')}>{m.t('splicewire-beam-ux::messages.files_restore')}</button>}
+                {inspection.state === 'differs' && inspection.canRemirror && client.remirrorReleaseFile && <button className={buttonClassName} ref={remirrorButton} type="button" disabled={busy} onClick={() => capture('remirror')}>{m.t('splicewire-beam-ux::messages.files_remirror')}</button>}
+                {inspection.canTakeAll && client.takeAllReleaseFiles && <button className={buttonClassName} ref={takeAllButton} type="button" disabled={busy} onClick={captureAll}>{m.t('splicewire-beam-ux::messages.files_take_all')}</button>}
             </div>}
-            {inspection.fileExists && inspection.state !== 'unchanged' && <p>Restore never overwrites an existing file. Preserve or move it before restoring a missing published file.</p>}
+            {inspection.fileExists && inspection.state !== 'unchanged' && <p>{m.t('splicewire-beam-ux::messages.files_restore_never_overwrites')}</p>}
         </>}
-        {confirmation && <div role="group" aria-label="Confirm file reconciliation" className="flex flex-wrap items-center gap-3 rounded border p-3">
+        {confirmation && <div role="group" aria-label={m.t('splicewire-beam-ux::messages.files_confirm_group')} className="flex flex-wrap items-center gap-3 rounded border p-3">
             <p>{confirmation.action === 'take'
-                ? 'Replace the inspected working draft with this admitted local file body? Prior versions remain in history. The published pin, local file and Git stay unchanged. Publish separately through ordinary review.'
+                ? m.t('splicewire-beam-ux::messages.files_confirm_take_body')
                 : confirmation.action === 'restore'
-                    ? 'Create the missing file from the current published pin? Draft, history and Git stay unchanged. Any appearing file blocks creation. An incomplete file is preserved for explicit inspection or moving before retry.'
+                    ? m.t('splicewire-beam-ux::messages.files_confirm_restore_body')
                     : confirmation.action === 'remirror'
-                        ? 'Replace this exact local file with the current published version? Draft and history stay unchanged. If the file changes after inspection, the server refuses and preserves it.'
-                        : `Take all ${confirmation.input.items.length} changed files as drafts? Published pins and local files remain unchanged; any stale member blocks the entire batch.`}</p>
+                        ? m.t('splicewire-beam-ux::messages.files_confirm_remirror_body')
+                        : m.t('splicewire-beam-ux::messages.files_confirm_take_all_body', { count: confirmation.input.items.length })}</p>
             {confirmation.action === 'takeAll'
-                ? <><p className="break-all text-xs">Captured {confirmation.input.items.length} member file states for this batch:</p><ul className="list-disc pl-5">{inspection?.takeAllItems?.map(item => <li className="break-all" key={item.memberId}>{item.path}</li>)}</ul></>
-                : <p className="break-all text-xs">Captured head {confirmation.input.expectedHeadVersion}; published {confirmation.input.expectedPublishedVersion}; file {confirmation.input.expectedFileSha256 ?? 'absent'}.</p>}
-            <button className={buttonClassName} ref={confirmButton} type="button" disabled={busy || !!error} onClick={() => void submit()}>{confirmation.action === 'take' ? 'Confirm take file as draft' : confirmation.action === 'restore' ? 'Confirm restore missing file' : confirmation.action === 'remirror' ? 'Confirm Re-mirror' : 'Confirm take all as drafts'}</button>
-            <button className={buttonClassName} type="button" disabled={busy} onClick={cancel}>Cancel</button>
+                ? <><p className="break-all text-xs">{m.t('splicewire-beam-ux::messages.files_captured_states', { count: confirmation.input.items.length })}</p><ul className="list-disc pl-5">{inspection?.takeAllItems?.map(item => <li className="break-all" key={item.memberId}>{item.path}</li>)}</ul></>
+                : <p className="break-all text-xs">{m.t('splicewire-beam-ux::messages.files_captured_versions', { head: confirmation.input.expectedHeadVersion, pin: confirmation.input.expectedPublishedVersion, file: confirmation.input.expectedFileSha256 ?? m.t('splicewire-beam-ux::messages.files_absent') })}</p>}
+            <button className={buttonClassName} ref={confirmButton} type="button" disabled={busy || !!error} onClick={() => void submit()}>{confirmation.action === 'take' ? m.t('splicewire-beam-ux::messages.files_confirm_take') : confirmation.action === 'restore' ? m.t('splicewire-beam-ux::messages.files_confirm_restore') : confirmation.action === 'remirror' ? m.t('splicewire-beam-ux::messages.files_confirm_remirror') : m.t('splicewire-beam-ux::messages.files_confirm_take_all')}</button>
+            <button className={buttonClassName} type="button" disabled={busy} onClick={cancel}>{m.t('splicewire-beam-ux::messages.files_cancel')}</button>
         </div>}
     </section>;
 }

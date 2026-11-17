@@ -6,6 +6,8 @@ import type { Region } from './types';
 import type { EntryBody } from './types';
 import type { JsonDoc, JsonNode } from './blockdoc/json';
 import { UX_BUILDER_CSS } from './css';
+import { useBeamUxMessages } from './messages.js';
+import { richMessage } from './rich-message.js';
 
 /**
  * The kind-driven editor body — the concrete thing mounted for an engaged region. `form` renders the
@@ -101,13 +103,14 @@ function EditorActions({
     saveLabel?: string;
     saveDisabled?: boolean;
 }) {
+    const m = useBeamUxMessages();
     return (
         <div className="mt-4 flex items-center gap-2 border-t pt-4">
             <Button size="sm" onClick={onSave} disabled={saving || saveDisabled}>
-                {saving ? 'Saving…' : (saveLabel ?? 'Save')}
+                {saving ? m.t('splicewire-beam-ux::messages.region_saving') : (saveLabel ?? m.t('splicewire-beam-ux::messages.region_save'))}
             </Button>
             <Button size="sm" variant="ghost" onClick={onDiscard} disabled={saving || !onDiscard}>
-                Discard
+                {m.t('splicewire-beam-ux::messages.region_discard')}
             </Button>
         </div>
     );
@@ -122,10 +125,11 @@ function FormEditor({
     body: Record<string, unknown>;
     onChange: (body: Record<string, unknown>) => void;
 }) {
+    const m = useBeamUxMessages();
     if (!schema) {
         return (
             <div className="rounded-md border border-dashed bg-muted/30 p-4 text-center text-xs text-muted-foreground">
-                This region has no schema.
+                {m.t('splicewire-beam-ux::messages.region_no_schema')}
             </div>
         );
     }
@@ -173,6 +177,7 @@ function RichtextEditor({
     body: EntryBody;
     onChange: (body: EntryBody) => void;
 }) {
+    const m = useBeamUxMessages();
     const isDocument = Array.isArray(body);
     const content = isDocument
         ? firstTextValue(body)
@@ -193,14 +198,14 @@ function RichtextEditor({
                     : { ...body, [CONTENT_KEY]: e.target.value })}
                 rows={18}
                 spellCheck={false}
-                aria-label="MDX source"
-                placeholder={'# Heading\n\nThis region has no content yet. Write MDX here, then Save.'}
+                aria-label={m.t('splicewire-beam-ux::messages.region_mdx_source_label')}
+                placeholder={m.t('splicewire-beam-ux::messages.region_mdx_placeholder')}
                 className="font-mono text-xs"
             />
             <div className="flex flex-wrap items-center gap-1.5 rounded-md border border-dashed px-3 py-2 text-xs text-muted-foreground">
                 {fields.length > 0 ? (
                     <>
-                        <span className="font-mono text-[10px]">preserved</span>
+                        <span className="font-mono text-[10px]">{m.t('splicewire-beam-ux::messages.region_preserved')}</span>
                         {fields.map((key) => (
                             <span
                                 key={key}
@@ -211,9 +216,9 @@ function RichtextEditor({
                         ))}
                     </>
                 ) : (
-                    <span className="font-mono text-[10px]">no frontmatter on this body</span>
+                    <span className="font-mono text-[10px]">{m.t('splicewire-beam-ux::messages.region_no_frontmatter')}</span>
                 )}
-                <span className="ml-auto font-mono text-[10px]">mdx source</span>
+                <span className="ml-auto font-mono text-[10px]">{m.t('splicewire-beam-ux::messages.region_mdx_source_tag')}</span>
             </div>
         </div>
     );
@@ -267,18 +272,19 @@ function replaceFirstTextValue(nodes: JsonDoc, value: string): JsonDoc {
 }
 
 function FrameEditor() {
+    const m = useBeamUxMessages();
     return (
         <div className="relative overflow-hidden rounded-md border">
             <style>{UX_BUILDER_CSS}</style>
             <div className="border-b bg-muted/40 px-3 py-2 text-xs">
-                <span className="font-mono">frame:enrollment</span> &mdash; self-loading
+                {richMessage(m, 'splicewire-beam-ux::messages.region_frame_self_loading', { frame: <span className="font-mono">{'frame:enrollment'}</span> })}
             </div>
             <div className="divide-y">
                 {['A. Mensah', 'R. Okafor', 'J. Park'].map((n) => (
                     <div key={n} className="flex items-center gap-3 px-3 py-2 text-sm">
                         <span className="flex-1">{n}</span>
                         <Badge variant="secondary" className="text-[10px]">
-                            enrolled
+                            {m.t('splicewire-beam-ux::messages.region_sample_enrolled')}
                         </Badge>
                     </div>
                 ))}
@@ -287,27 +293,28 @@ function FrameEditor() {
                 the caption sits in flow beneath them so it never covers a row. */}
             <div className="beam-ux-scrim pointer-events-none absolute inset-0" />
             <div className="relative border-t bg-muted/40 px-3 py-1.5 text-center font-mono text-[10px] text-muted-foreground">
-                opaque EditShell island &middot; self-loads/saves via FrameProvider
+                {m.t('splicewire-beam-ux::messages.region_frame_island_caption')}
             </div>
         </div>
     );
 }
 
 const LIST_ROWS = [
-    { slug: 'frontend-foundations', title: 'Frontend Foundations', format: 'cohort', seats: 8 },
-    { slug: 'data-modeling', title: 'Data Modeling', format: 'self-paced', seats: 0 },
-    { slug: 'live-systems-design', title: 'Live Systems Design', format: 'live', seats: 3 },
-];
+    { slug: 'frontend-foundations', titleKey: 'splicewire-beam-ux::messages.region_sample_frontend_foundations', format: 'cohort', seats: 8 },
+    { slug: 'data-modeling', titleKey: 'splicewire-beam-ux::messages.region_sample_data_modeling', format: 'self-paced', seats: 0 },
+    { slug: 'live-systems-design', titleKey: 'splicewire-beam-ux::messages.region_sample_live_systems_design', format: 'live', seats: 3 },
+] as const;
 
 function ListEditor() {
-    const [slug, setSlug] = useState(LIST_ROWS[0].slug);
+    const m = useBeamUxMessages();
+    const [slug, setSlug] = useState<string>(LIST_ROWS[0].slug);
     return (
         <div className="space-y-3">
             <div className="rounded-md border bg-background p-3">
                 <div className="flex items-center gap-2 text-xs">
                     <Link2 className="size-3.5 text-muted-foreground" />
-                    <span className="font-mono">route</span>
-                    <span className="font-mono text-muted-foreground">/programs/</span>
+                    <span className="font-mono">{'route'}</span>
+                    <span className="font-mono text-muted-foreground">{'/programs/'}</span>
                     <Input
                         value={slug}
                         onChange={(e) => setSlug(e.target.value)}
@@ -315,9 +322,7 @@ function ListEditor() {
                     />
                 </div>
                 <p className="mt-2 text-xs text-muted-foreground">
-                    The list component reads <span className="font-mono">{'{slug}'}</span> from the
-                    route and resolves its collection &mdash; dropped into a template placement, it is
-                    the page&rsquo;s data spine.
+                    {richMessage(m, 'splicewire-beam-ux::messages.region_list_explainer', { slug: <span className="font-mono">{'{slug}'}</span> })}
                 </p>
             </div>
             <div className="divide-y rounded-md border">
@@ -329,12 +334,12 @@ function ListEditor() {
                             r.slug === slug && 'bg-primary/5',
                         )}
                     >
-                        <span className="flex-1 font-medium">{r.title}</span>
+                        <span className="flex-1 font-medium">{m.t(r.titleKey)}</span>
                         <Badge variant="outline" className="text-[10px]">
                             {r.format}
                         </Badge>
                         <span className="w-16 text-right font-mono text-xs text-muted-foreground">
-                            {r.seats > 0 ? `${r.seats} seats` : 'full'}
+                            {r.seats > 0 ? m.t('splicewire-beam-ux::messages.region_sample_seats', { count: r.seats }) : m.t('splicewire-beam-ux::messages.region_sample_full')}
                         </span>
                     </div>
                 ))}

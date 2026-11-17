@@ -9,6 +9,7 @@ import { StructurePanel } from './StructurePanel';
 import type { PaletteItem, Region, RegionKind, TreeNode } from './types';
 import { useRegionPublication } from './use-region-publication';
 import { UX_BUILDER_CSS } from './css';
+import { useBeamUxMessages } from './messages.js';
 
 export type BuilderMode = 'overlay' | 'structure';
 /** WHERE the editor materializes in overlay mode when a region is dock-placed. */
@@ -95,6 +96,7 @@ export function UxBuilder({
     /** The region id engaged on first mount (defaults to the first region). */
     initialEngaged?: string;
 }) {
+    const m = useBeamUxMessages();
     const [mode, setMode] = useState<BuilderMode>(initialMode);
     const [engaged, setEngaged] = useState<string | null>(initialEngaged ?? regions[0]?.id ?? null);
     const [selected, setSelected] = useState<string | null>(regions[0]?.id ?? null);
@@ -114,7 +116,7 @@ export function UxBuilder({
             <style>{UX_BUILDER_CSS}</style>
             <div className="flex items-center justify-between gap-3">
                 <span className="beam-ux-mode-hint font-mono text-[11px] text-muted-foreground">
-                    editing the app&rsquo;s own front-end
+                    {m.t('splicewire-beam-ux::messages.builder_mode_hint')}
                 </span>
                 <ModeToggle mode={mode} onChange={setMode} />
             </div>
@@ -146,7 +148,7 @@ export function UxBuilder({
                             <RegionInspectorConnected key={active.recordId} region={active} readOnly={readOnly} />
                         ) : (
                             <div className="rounded-lg border border-dashed bg-card/50 p-8 text-center text-sm text-muted-foreground">
-                                Engage a region on the left to edit it here.
+                                {m.t('splicewire-beam-ux::messages.builder_engage_hint')}
                             </div>
                         )}
                     </aside>

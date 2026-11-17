@@ -3,6 +3,7 @@ import { Button } from "@schemastud/ui";
 import { WorkflowActionForm } from "@splicewire/beam-workflows/action-form";
 import type { WorkflowProjectionData } from "@splicewire/beam-workflows/action-form";
 import { ReleaseRecordingSummary } from "./recording";
+import { useBeamUxMessages } from "./messages.js";
 
 export interface ReleaseRecording {
   releaseId: string;
@@ -99,6 +100,7 @@ export function ReleasePanel({
   /** Removes a Redirect the Release left, through the Redirect resource; absent, none is offered. */
   onRemoveRedirect?: (id: string) => Promise<unknown>;
 }) {
+  const m = useBeamUxMessages();
   const [entryId, setEntryId] = useState(initialEntryId);
   const [ref, setRef] = useState("");
   const [redirect, setRedirect] = useState("");
@@ -116,7 +118,7 @@ export function ReleasePanel({
       setError(
         failure instanceof Error
           ? failure.message
-          : "The Release could not be updated.",
+          : m.t('splicewire-beam-ux::messages.releases_update_failed'),
       );
     } finally {
       setPending(false);
@@ -130,12 +132,12 @@ export function ReleasePanel({
   };
   return (
     <section
-      aria-label="Release"
+      aria-label={m.t('splicewire-beam-ux::messages.releases_label')}
       aria-busy={pending}
       className="mt-4 space-y-3 rounded-lg border bg-card p-4 text-sm"
     >
       <h2 className="font-semibold">{release.title}</h2>
-      <p>Status: {release.status.replace("_", " ")}</p>
+      <p>{m.t('splicewire-beam-ux::messages.releases_status', { status: release.status.replace("_", " ") })}</p>
       {!immutable && onPreviewOpen && (
         <button
           type="button"
@@ -153,22 +155,21 @@ export function ReleasePanel({
             });
           }}
         >
-          Preview
+          {m.t('splicewire-beam-ux::messages.releases_preview')}
         </button>
       )}
-      {previewError && <p role="alert">Could not open this Release Preview.</p>}
+      {previewError && <p role="alert">{m.t('splicewire-beam-ux::messages.releases_preview_failed')}</p>}
       {!immutable && !onPreviewOpen && release.previewHref && (
         // ADR-0232 d15: the Release page's Preview, signed in; a new tab, so the panel stays open.
         <a href={release.previewHref} target="_blank" rel="noopener noreferrer" className="underline">
-          Preview
+          {m.t('splicewire-beam-ux::messages.releases_preview')}
         </a>
       )}
-      {!immutable && release.previewLinksEnabled && !release.canManagePreviewLinks && <p>Preview Links are on.</p>}
+      {!immutable && release.previewLinksEnabled && !release.canManagePreviewLinks && <p>{m.t('splicewire-beam-ux::messages.releases_preview_links_on')}</p>}
       {!immutable && release.previewLinksEnabled !== undefined && release.canManagePreviewLinks && (
-        <div role="group" aria-label="Preview Links" className="space-y-2 rounded border p-3">
+        <div role="group" aria-label={m.t('splicewire-beam-ux::messages.releases_preview_links')} className="space-y-2 rounded border p-3">
           <p>
-            A Preview Link lets anyone who has it preview this Release, signed in or not, for 7 days. Rotating ends
-            every link at once.
+            {m.t('splicewire-beam-ux::messages.releases_preview_links_explainer')}
           </p>
           {release.previewLinksEnabled ? (
             <div className="flex flex-wrap items-center gap-2">
@@ -176,7 +177,7 @@ export function ReleasePanel({
                 <>
                   <input
                     readOnly
-                    aria-label="Preview Link"
+                    aria-label={m.t('splicewire-beam-ux::messages.releases_preview_link')}
                     className="min-w-0 flex-1 rounded border bg-background px-2 py-1"
                     value={release.previewLink}
                   />
@@ -185,20 +186,20 @@ export function ReleasePanel({
                     variant="secondary"
                     onClick={() => void navigator.clipboard?.writeText(release.previewLink!)}
                   >
-                    Copy link
+                    {m.t('splicewire-beam-ux::messages.releases_copy_link')}
                   </Button>
                 </>
               )}
               <Button size="sm" variant="secondary" disabled={pending} onClick={() => void act({ action: "rotate-links" })}>
-                Rotate links
+                {m.t('splicewire-beam-ux::messages.releases_rotate_links')}
               </Button>
               <Button size="sm" variant="secondary" disabled={pending} onClick={() => void act({ action: "links-off" })}>
-                Turn links off
+                {m.t('splicewire-beam-ux::messages.releases_links_off')}
               </Button>
             </div>
           ) : (
             <Button size="sm" variant="secondary" disabled={pending} onClick={() => void act({ action: "links-on" })}>
-              Turn on Preview Links
+              {m.t('splicewire-beam-ux::messages.releases_links_on')}
             </Button>
           )}
         </div>
@@ -211,8 +212,7 @@ export function ReleasePanel({
       )}
       {release.reviewRequired && (
         <p>
-          Review is required before publication. The server checks every
-          member’s permissions again at publish time.
+          {m.t('splicewire-beam-ux::messages.releases_review_required')}
         </p>
       )}
       {error && <p role="alert">{error}</p>}
@@ -224,15 +224,15 @@ export function ReleasePanel({
                 member.entryId}
               :{" "}
               {member.versionId === null
-                ? "Take-down"
-                : `Saved version ${member.versionId}`}
+                ? m.t('splicewire-beam-ux::messages.releases_take_down')
+                : m.t('splicewire-beam-ux::messages.releases_saved_version_member', { version: member.versionId })}
             </span>
             {member.redirectTarget && (
-              <span> — Redirect target: {member.redirectTarget}</span>
+              <span> {m.t('splicewire-beam-ux::messages.releases_redirect_target', { target: member.redirectTarget })}</span>
             )}
             {member.stale && (
               <p role="status">
-                The published version changed. Rebase onto theirs or drop the entry.
+                {m.t('splicewire-beam-ux::messages.releases_stale')}
               </p>
             )}
             {!immutable && (
@@ -245,7 +245,7 @@ export function ReleasePanel({
                     void act({ action: "rebase", entryId: member.entryId })
                   }
                 >
-                  Rebase onto theirs
+                  {m.t('splicewire-beam-ux::messages.releases_rebase')}
                 </Button>
                 {member.versionId !== null && (
                   <Button
@@ -259,7 +259,7 @@ export function ReleasePanel({
                       })
                     }
                   >
-                    Use latest saved version
+                    {m.t('splicewire-beam-ux::messages.releases_use_latest')}
                   </Button>
                 )}
                 <Button
@@ -270,7 +270,7 @@ export function ReleasePanel({
                     void act({ action: "drop", entryId: member.entryId })
                   }
                 >
-                  Drop the entry
+                  {m.t('splicewire-beam-ux::messages.releases_drop')}
                 </Button>
               </span>
             )}
@@ -279,9 +279,9 @@ export function ReleasePanel({
       </ul>
       {!immutable && (
         <fieldset disabled={pending} className="space-y-2 rounded border p-3">
-          <legend>Add a saved version or Take-down</legend>
+          <legend>{m.t('splicewire-beam-ux::messages.releases_add_member_legend')}</legend>
           <label>
-            Entry{" "}
+            {m.t('splicewire-beam-ux::messages.releases_entry')}{" "}
             <select
               className="mx-2 rounded border bg-background px-2 py-1"
               value={entryId}
@@ -290,7 +290,7 @@ export function ReleasePanel({
                 setRef("");
               }}
             >
-              <option value="">Choose an entry</option>
+              <option value="">{m.t('splicewire-beam-ux::messages.releases_choose_entry')}</option>
               {entries.map((item) => (
                 <option key={item.id} value={item.id}>
                   {item.title}
@@ -299,26 +299,26 @@ export function ReleasePanel({
             </select>
           </label>
           <label>
-            Saved version{" "}
+            {m.t('splicewire-beam-ux::messages.releases_saved_version')}{" "}
             <select
               className="mx-2 rounded border bg-background px-2 py-1"
               value={ref}
               onChange={(event) => setRef(event.target.value)}
             >
-              <option value="">Choose a saved version</option>
+              <option value="">{m.t('splicewire-beam-ux::messages.releases_choose_saved_version')}</option>
               {entry?.versions.map((version) => (
                 <option key={version.id} value={version.id}>
                   {version.label}
                 </option>
               ))}
               {entry?.canTakeDown && (
-                <option value="take-down">Take-down</option>
+                <option value="take-down">{m.t('splicewire-beam-ux::messages.releases_take_down')}</option>
               )}
             </select>
           </label>
           {ref === "take-down" && (
             <label>
-              Redirect to a published page (optional){" "}
+              {m.t('splicewire-beam-ux::messages.releases_redirect_to')}{" "}
               <input
                 value={redirect}
                 onChange={(event) => setRedirect(event.target.value)}
@@ -338,7 +338,7 @@ export function ReleasePanel({
               })
             }
           >
-            Add to Release
+            {m.t('splicewire-beam-ux::messages.releases_add_to_release')}
           </Button>
         </fieldset>
       )}
@@ -364,10 +364,10 @@ export function ReleasePanel({
               onClick={() => void act({ action })}
             >
               {action === "submit"
-                ? "Request review"
+                ? m.t('splicewire-beam-ux::messages.releases_request_review')
                 : action === "approve"
-                  ? "Approve"
-                  : "Publish now"}
+                  ? m.t('splicewire-beam-ux::messages.releases_approve')
+                  : m.t('splicewire-beam-ux::messages.releases_publish_now')}
             </Button>
           ))}
       </div>
@@ -378,7 +378,7 @@ export function ReleasePanel({
           disabled={pending}
           onClick={() => void act({ action: "rollback" })}
         >
-          Create rollback Release
+          {m.t('splicewire-beam-ux::messages.releases_rollback')}
         </Button>
       )}
       {!immutable && release.canSchedule && release.status === "approved" && (
@@ -397,8 +397,7 @@ export function ReleasePanel({
       )}
       {!immutable && !release.canSchedule && (
         <p>
-          Scheduling is unavailable on this host. Reviewed Releases can still
-          publish now.
+          {m.t('splicewire-beam-ux::messages.releases_scheduling_unavailable')}
         </p>
       )}
       {release.redirects && release.redirects.length > 0 && (
@@ -419,6 +418,7 @@ function ReleaseRedirects({
   redirects: ReleaseRedirect[];
   onRemove?: (id: string) => Promise<unknown>;
 }) {
+  const m = useBeamUxMessages();
   const [removed, setRemoved] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
   const remove = async (id: string) => {
@@ -427,30 +427,32 @@ function ReleaseRedirects({
       await onRemove!(id);
       setRemoved((current) => [...current, id]);
     } catch (failure) {
-      setError(failure instanceof Error ? failure.message : "The Redirect could not be removed.");
+      setError(failure instanceof Error ? failure.message : m.t('splicewire-beam-ux::messages.releases_redirect_remove_failed'));
     }
   };
   return (
-    <section aria-label="Redirects this Release leaves">
-      <h3 className="font-semibold">Redirects this Release leaves</h3>
+    <section aria-label={m.t('splicewire-beam-ux::messages.releases_redirects')}>
+      <h3 className="font-semibold">{m.t('splicewire-beam-ux::messages.releases_redirects')}</h3>
       <ul>
         {redirects
           .filter((redirect) => redirect.id === null || !removed.includes(redirect.id))
           .map((redirect) => (
             <li key={`${redirect.path} ${redirect.match}`}>
               <span>
-                {redirect.path}
-                {redirect.match === "prefix" ? " and below" : ""} → {redirect.to ?? "not found"}
-                {redirect.origin === "takedown" ? " (taken down)" : ""}
+                {m.t(redirect.match === "prefix" ? 'splicewire-beam-ux::messages.releases_redirect_prefix' : 'splicewire-beam-ux::messages.releases_redirect_exact', {
+                  path: redirect.path,
+                  to: redirect.to ?? m.t('splicewire-beam-ux::messages.releases_redirect_not_found'),
+                })}
+                {redirect.origin === "takedown" ? ` ${m.t('splicewire-beam-ux::messages.releases_redirect_taken_down')}` : ""}
               </span>
               {redirect.id !== null && onRemove && (
                 <Button
                   size="sm"
                   variant="secondary"
-                  aria-label={`Remove the Redirect from ${redirect.path}`}
+                  aria-label={m.t('splicewire-beam-ux::messages.releases_redirect_remove_label', { path: redirect.path })}
                   onClick={() => void remove(redirect.id!)}
                 >
-                  Remove
+                  {m.t('splicewire-beam-ux::messages.releases_redirect_remove')}
                 </Button>
               )}
             </li>
@@ -486,6 +488,7 @@ export function BuiltReleaseAssembly({
   ) => Promise<ReleaseRecord>;
   removeRedirect?: (id: string) => Promise<unknown>;
 }) {
+  const m = useBeamUxMessages();
   const [releases, setReleases] = useState<ReleaseRecord[]>([]);
   const [releaseId, setReleaseId] = useState("");
   const [title, setTitle] = useState("");
@@ -511,7 +514,7 @@ export function BuiltReleaseAssembly({
           setError(
             reason instanceof Error
               ? reason.message
-              : "Could not load Releases.",
+              : m.t('splicewire-beam-ux::messages.releases_load_failed'),
           );
         }
       });
@@ -539,7 +542,7 @@ export function BuiltReleaseAssembly({
       setError(
         reason instanceof Error
           ? reason.message
-          : "Could not create the Release.",
+          : m.t('splicewire-beam-ux::messages.releases_create_failed'),
       );
     } finally {
       setPending(false);
@@ -555,11 +558,11 @@ export function BuiltReleaseAssembly({
   };
 
   return (
-    <section aria-label="Build a Release" className="mt-4 space-y-3">
+    <section aria-label={m.t('splicewire-beam-ux::messages.releases_build')} className="mt-4 space-y-3">
       <fieldset disabled={pending} className="space-y-2 rounded border p-3">
-        <legend>Create a built Release</legend>
+        <legend>{m.t('splicewire-beam-ux::messages.releases_create_built_legend')}</legend>
         <label>
-          Release title{" "}
+          {m.t('splicewire-beam-ux::messages.releases_title')}{" "}
           <input
             value={title}
             onChange={(event) => setTitle(event.target.value)}
@@ -571,17 +574,17 @@ export function BuiltReleaseAssembly({
           disabled={!title.trim()}
           onClick={() => void create()}
         >
-          Create built Release
+          {m.t('splicewire-beam-ux::messages.releases_create_built')}
         </Button>
       </fieldset>
       {releases.length > 0 && (
         <label>
-          Release to assemble{" "}
+          {m.t('splicewire-beam-ux::messages.releases_to_assemble')}{" "}
           <select
             value={releaseId}
             onChange={(event) => setReleaseId(event.target.value)}
           >
-            <option value="">Choose a Release</option>
+            <option value="">{m.t('splicewire-beam-ux::messages.releases_choose_release')}</option>
             {releases.map((release) => (
               <option key={release.id} value={release.id}>
                 {release.title}
