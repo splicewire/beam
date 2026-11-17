@@ -15,6 +15,7 @@ import { humanizeWorkflowKey } from './humanizeWorkflowKey';
 import type { PrincipalKind } from './principals';
 import { RecipientPicker } from './RecipientPicker';
 import { WorkflowGraph } from './WorkflowGraph';
+import { useBeamWorkflowsMessages } from './messages';
 
 /**
  * The `<WorkflowEditor>` (beam-workflows v2 ticket 08): a SCHEMA-FORM over the WorkflowBlueprint
@@ -65,6 +66,7 @@ export function WorkflowEditor({
 }) {
     const [draft, setDraft] = useState<BlueprintDraft>(initial);
     const [view, setView] = useState<'edit' | 'graph'>('edit');
+    const m = useBeamWorkflowsMessages();
     const guardByName = useMemo(() => Object.fromEntries(guards.map((g) => [g.name, g])), [guards]);
 
     function patch(next: Partial<BlueprintDraft>) {
@@ -136,7 +138,7 @@ export function WorkflowEditor({
                                 : 'border-transparent text-[var(--beam-ink-45)] hover:text-[var(--beam-ink-60)]'
                         }`}
                     >
-                        {tab === 'graph' ? 'Graph' : 'Edit'}
+                        {m.t(tab === 'graph' ? 'splicewire-beam-workflows::messages.editor_tab_graph' : 'splicewire-beam-workflows::messages.editor_tab_edit')}
                     </button>
                 ))}
             </div>
@@ -149,10 +151,10 @@ export function WorkflowEditor({
                     <section className="space-y-2">
                         <div className="flex items-center justify-between">
                             <h3 className="font-mono text-[11px] font-medium tracking-[0.12em] text-[var(--beam-ink-45)] uppercase">
-                                Places
+                                {m.t('splicewire-beam-workflows::messages.places')}
                             </h3>
                             <Button size="sm" variant="ghost" onClick={addPlace}>
-                                <Plus className="size-3" /> Add place
+                                <Plus className="size-3" /> {m.t('splicewire-beam-workflows::messages.editor_add_place')}
                             </Button>
                         </div>
                         {draft.places.map((place, index) => (
@@ -160,7 +162,7 @@ export function WorkflowEditor({
                                 <Input
                                     className="flex-1"
                                     value={place}
-                                    aria-label={`Place ${index + 1} name`}
+                                    aria-label={m.t('splicewire-beam-workflows::messages.editor_place_name', { number: index + 1 })}
                                     onChange={(e) => renamePlace(index, e.target.value)}
                                 />
                                 <label className="flex items-center gap-1.5 text-xs text-[var(--beam-ink-50)]">
@@ -171,12 +173,12 @@ export function WorkflowEditor({
                                         checked={draft.initial.includes(place)}
                                         onChange={() => patch({ initial: [place] })}
                                     />
-                                    initial
+                                    {m.t('splicewire-beam-workflows::messages.editor_initial')}
                                 </label>
                                 <Button
                                     size="sm"
                                     variant="ghost"
-                                    aria-label={`Remove place ${place}`}
+                                    aria-label={m.t('splicewire-beam-workflows::messages.editor_remove_place', { place })}
                                     onClick={() => removePlace(index)}
                                 >
                                     <Trash2 className="size-3" />
@@ -189,10 +191,10 @@ export function WorkflowEditor({
                     <section className="space-y-3">
                         <div className="flex items-center justify-between">
                             <h3 className="font-mono text-[11px] font-medium tracking-[0.12em] text-[var(--beam-ink-45)] uppercase">
-                                Transitions
+                                {m.t('splicewire-beam-workflows::messages.transitions')}
                             </h3>
                             <Button size="sm" variant="ghost" onClick={addTransition}>
-                                <Plus className="size-3" /> Add transition
+                                <Plus className="size-3" /> {m.t('splicewire-beam-workflows::messages.editor_add_transition')}
                             </Button>
                         </div>
                         {draft.transitions.map((transition, index) => {
@@ -206,7 +208,7 @@ export function WorkflowEditor({
                                             <Input
                                                 className="flex-1"
                                                 value={transition.name}
-                                                aria-label={`Transition ${index + 1} name`}
+                                                aria-label={m.t('splicewire-beam-workflows::messages.editor_transition_name', { number: index + 1 })}
                                                 onChange={(e) =>
                                                     patchTransition(index, { name: e.target.value })
                                                 }
@@ -214,7 +216,7 @@ export function WorkflowEditor({
                                             <Button
                                                 size="sm"
                                                 variant="ghost"
-                                                aria-label={`Remove transition ${transition.name}`}
+                                                aria-label={m.t('splicewire-beam-workflows::messages.editor_remove_transition', { name: transition.name })}
                                                 onClick={() =>
                                                     patch({
                                                         transitions: draft.transitions.filter(
@@ -228,7 +230,7 @@ export function WorkflowEditor({
                                         </div>
                                         <div className="grid grid-cols-2 gap-3">
                                             <PlaceSelect
-                                                label="From"
+                                                label={m.t('splicewire-beam-workflows::messages.from')}
                                                 places={draft.places}
                                                 value={transition.from}
                                                 onChange={(from) =>
@@ -236,7 +238,7 @@ export function WorkflowEditor({
                                                 }
                                             />
                                             <PlaceSelect
-                                                label="To"
+                                                label={m.t('splicewire-beam-workflows::messages.to')}
                                                 places={draft.places}
                                                 value={transition.to}
                                                 onChange={(to) => patchTransition(index, { to })}
@@ -245,17 +247,17 @@ export function WorkflowEditor({
                                         {/* Guard picker — a SELECT over the catalog (never typed code). */}
                                         <div className="flex items-center gap-2">
                                             <Label className="text-[var(--beam-ink-50)]">
-                                                Guard
+                                                {m.t('splicewire-beam-workflows::messages.editor_guard')}
                                             </Label>
                                             <SimpleSelect
                                                 className="w-64"
-                                                aria-label={`Guard for transition ${transition.name}`}
+                                                aria-label={m.t('splicewire-beam-workflows::messages.editor_guard_for', { name: transition.name })}
                                                 value={transition.guard ?? ''}
                                                 onValueChange={(value) =>
                                                     patchTransition(index, { guard: value || null })
                                                 }
                                                 options={[
-                                                    { value: '', label: '— none —' },
+                                                    { value: '', label: m.t('splicewire-beam-workflows::messages.editor_guard_none') },
                                                     ...guards.map((g) => ({
                                                         value: g.name,
                                                         label: g.label,
@@ -289,7 +291,7 @@ export function WorkflowEditor({
                                         {effects.length > 0 && (
                                             <div className="space-y-1.5 border-t border-[var(--beam-ink-08)] pt-2">
                                                 <Label className="text-[var(--beam-ink-50)]">
-                                                    When it fires
+                                                    {m.t('splicewire-beam-workflows::messages.editor_when_it_fires')}
                                                 </Label>
                                                 <div className="flex flex-col gap-1.5">
                                                     {effects.map((e) => (
@@ -342,11 +344,11 @@ export function WorkflowEditor({
             <div className="flex items-center justify-end gap-3">
                 {!canSave && (
                     <span className="text-xs text-[var(--beam-ink-45)]">
-                        Read-only — you lack the workflow-author permission.
+                        {m.t('splicewire-beam-workflows::messages.editor_read_only')}
                     </span>
                 )}
                 <Button disabled={saving || !canSave} onClick={() => onSave(draft)}>
-                    {saving ? 'Saving…' : 'Save as new version'}
+                    {m.t(saving ? 'splicewire-beam-workflows::messages.editor_saving' : 'splicewire-beam-workflows::messages.editor_save_version')}
                 </Button>
             </div>
         </div>
@@ -396,13 +398,14 @@ function GuardParams({
     value: Record<string, unknown>;
     onChange: (value: Record<string, unknown>) => void;
 }) {
+    const m = useBeamWorkflowsMessages();
     const properties = (guard.paramsSchema?.properties ?? {}) as ParamProperties;
     if (Object.keys(properties).length === 0) return null;
 
     return (
         <div className="space-y-2 rounded-md bg-[var(--beam-ink-05)] p-3">
             <div className="font-mono text-[10px] tracking-[0.1em] text-[var(--beam-ink-45)] uppercase">
-                {humanizeWorkflowKey(guard.name)} params
+                {m.t('splicewire-beam-workflows::messages.editor_params_of', { name: humanizeWorkflowKey(guard.name) })}
             </div>
             <PrimitiveParamFields properties={properties} value={value} onChange={onChange} />
         </div>
@@ -426,13 +429,14 @@ function EffectParams({
     onChange: (value: ParamBag) => void;
     principals: PrincipalKind[];
 }) {
+    const m = useBeamWorkflowsMessages();
     const properties = (effect.paramsSchema?.properties ?? {}) as ParamProperties;
     const arrayProps = Object.entries(properties).filter(([, s]) => s.type === 'array');
 
     return (
         <div className="space-y-2 rounded-md border-l-2 border-[var(--beam-green)] bg-[var(--beam-ink-05)] p-3">
             <div className="font-mono text-[10px] tracking-[0.1em] text-[var(--beam-ink-45)] uppercase">
-                {humanizeWorkflowKey(effect.name)} params
+                {m.t('splicewire-beam-workflows::messages.editor_params_of', { name: humanizeWorkflowKey(effect.name) })}
             </div>
             {arrayProps.map(([key, schema]) => (
                 <RecipientPicker
@@ -469,6 +473,7 @@ function EffectRow({
     onParamsChange: (params: ParamBag) => void;
     principals: PrincipalKind[];
 }) {
+    const m = useBeamWorkflowsMessages();
     const hasParams = effectHasParams(effect);
     const [expanded, setExpanded] = useState(false);
     // Auto-expand on FIRST attach (an off→on flip this session), collapse on detach. An
@@ -488,7 +493,7 @@ function EffectRow({
                 <Switch
                     checked={on}
                     onCheckedChange={onToggle}
-                    aria-label={`Attach ${effect.label}`}
+                    aria-label={m.t('splicewire-beam-workflows::messages.editor_attach', { label: effect.label })}
                 />
                 <span className="text-[var(--beam-ink-60)]">{effect.label}</span>
                 {on && hasParams && (
@@ -501,13 +506,13 @@ function EffectRow({
                         <ChevronDown
                             className={`size-3 transition-transform ${expanded ? '' : '-rotate-90'}`}
                         />
-                        params
+                        {m.t('splicewire-beam-workflows::messages.editor_params')}
                     </button>
                 )}
                 {needsSetup && (
                     <span
-                        title="A required param is still empty"
-                        aria-label="Needs setup"
+                        title={m.t('splicewire-beam-workflows::messages.editor_param_empty')}
+                        aria-label={m.t('splicewire-beam-workflows::messages.editor_needs_setup')}
                         className="size-1.5 rounded-full bg-destructive"
                     />
                 )}

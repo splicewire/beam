@@ -5,6 +5,8 @@
  * `MarkingMigrator` over HTTP — the actual re-pin is all-or-nothing on the server.
  */
 
+import { englishBeamWorkflowsMessages, type BeamWorkflowsMessages } from './messages';
+
 /** The server's `MigrationReport` shape (mirrors `MigrationReport::toArray()`). */
 export type MigrationReport = {
     lineageKey: string;
@@ -47,12 +49,16 @@ export function resolvedMap(map: PlaceMap): PlaceMap {
 
 /**
  * The all-or-nothing headline (a hard UI constraint — "3 blocked all 142" must read unmistakably). Null
- * when nothing is blocked.
+ * when nothing is blocked. In the reader's locale when a render passes its messages; English otherwise
+ * (localization 30: the plural reads the catalog through `choice`).
  */
-export function blockedHeadline(report: MigrationReport): string | null {
+export function blockedHeadline(
+    report: MigrationReport,
+    messages: BeamWorkflowsMessages = englishBeamWorkflowsMessages,
+): string | null {
     if (report.unmappable.length === 0) return null;
 
-    const n = report.unmappable.length;
-
-    return `${n} record${n === 1 ? '' : 's'} blocked all ${report.total} — nothing was migrated.`;
+    return messages.choice('splicewire-beam-workflows::messages.migrate_blocked', report.unmappable.length, {
+        total: report.total,
+    });
 }

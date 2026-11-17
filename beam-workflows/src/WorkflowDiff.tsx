@@ -8,6 +8,7 @@ import {
     isEmptyDiff,
     type TransitionDelta,
 } from './workflowDelta';
+import { useBeamWorkflowsMessages } from './messages';
 
 type Version = WorkflowVersionData;
 
@@ -28,6 +29,7 @@ export function WorkflowDiff({
     const ordered = useMemo(() => [...versions].sort((a, b) => a.version - b.version), [versions]);
     const [fromId, setFromId] = useState(() => ordered.at(-2)?.id ?? ordered[0]?.id ?? '');
     const [toId, setToId] = useState(() => ordered.at(-1)?.id ?? '');
+    const m = useBeamWorkflowsMessages();
 
     const diff = useMemo<BlueprintDiff | null>(() => {
         const from = ordered.find((v) => v.id === fromId);
@@ -42,17 +44,17 @@ export function WorkflowDiff({
 
     if (ordered.length < 2) return null;
 
-    const options = ordered.map((v) => ({ value: v.id, label: `v${v.version}` }));
+    const options = ordered.map((v) => ({ value: v.id, label: m.t('splicewire-beam-workflows::messages.version_label', { version: v.version }) }));
 
     return (
         <div className="mb-4 space-y-3 rounded-md border border-[var(--beam-ink-08)] p-3">
             <div className="flex items-center gap-2 text-sm">
                 <span className="font-mono text-[11px] tracking-[0.12em] text-[var(--beam-ink-45)] uppercase">
-                    Compare
+                    {m.t('splicewire-beam-workflows::messages.diff_compare')}
                 </span>
                 <SimpleSelect
                     className="w-24"
-                    aria-label="Diff from version"
+                    aria-label={m.t('splicewire-beam-workflows::messages.diff_from')}
                     value={fromId}
                     onValueChange={setFromId}
                     options={options}
@@ -60,7 +62,7 @@ export function WorkflowDiff({
                 <span className="text-[var(--beam-ink-45)]">→</span>
                 <SimpleSelect
                     className="w-24"
-                    aria-label="Diff to version"
+                    aria-label={m.t('splicewire-beam-workflows::messages.diff_to')}
                     value={toId}
                     onValueChange={setToId}
                     options={options}
@@ -69,7 +71,7 @@ export function WorkflowDiff({
 
             {diff && isEmptyDiff(diff) ? (
                 <p className="text-xs text-[var(--beam-ink-50)]">
-                    No structural changes between these versions.
+                    {m.t('splicewire-beam-workflows::messages.diff_none')}
                 </p>
             ) : (
                 diff && (
@@ -77,7 +79,7 @@ export function WorkflowDiff({
                         {(diff.places.added.length > 0 || diff.places.removed.length > 0) && (
                             <section className="space-y-0.5">
                                 <div className="text-[10px] tracking-[0.12em] text-[var(--beam-ink-45)] uppercase">
-                                    Places
+                                    {m.t('splicewire-beam-workflows::messages.places')}
                                 </div>
                                 {diff.places.added.map((p) => (
                                     <Line key={`+${p}`} kind="added">
@@ -95,7 +97,7 @@ export function WorkflowDiff({
                         {diff.transitions.length > 0 && (
                             <section className="space-y-1">
                                 <div className="text-[10px] tracking-[0.12em] text-[var(--beam-ink-45)] uppercase">
-                                    Transitions
+                                    {m.t('splicewire-beam-workflows::messages.transitions')}
                                 </div>
                                 {diff.transitions.map((d) => (
                                     <TransitionRow key={d.key} delta={d} />
@@ -108,13 +110,13 @@ export function WorkflowDiff({
 
             <div className="flex gap-3 text-[10px] text-[var(--beam-ink-45)]">
                 <span>
-                    <Mark kind="added">+</Mark> added
+                    <Mark kind="added">+</Mark> {m.t('splicewire-beam-workflows::messages.diff_added')}
                 </span>
                 <span>
-                    <Mark kind="removed">-</Mark> removed
+                    <Mark kind="removed">-</Mark> {m.t('splicewire-beam-workflows::messages.diff_removed')}
                 </span>
                 <span>
-                    <Mark kind="changed">~</Mark> changed
+                    <Mark kind="changed">~</Mark> {m.t('splicewire-beam-workflows::messages.diff_changed')}
                 </span>
             </div>
         </div>
@@ -122,6 +124,7 @@ export function WorkflowDiff({
 }
 
 function TransitionRow({ delta }: { delta: TransitionDelta }) {
+    const m = useBeamWorkflowsMessages();
     const route = `${delta.from.join(',') || '∅'} → ${delta.to.join(',') || '∅'}`;
     const sign = delta.status === 'added' ? '+' : delta.status === 'removed' ? '-' : '~';
     const kind = delta.status;
@@ -133,19 +136,19 @@ function TransitionRow({ delta }: { delta: TransitionDelta }) {
             </Line>
             {delta.guard && (
                 <div className="pl-4 text-[var(--beam-ink-60)]">
-                    guard {delta.guard.from ?? '∅'} → {delta.guard.to ?? '∅'}
+                    {m.t('splicewire-beam-workflows::messages.diff_guard')} {delta.guard.from ?? '∅'} → {delta.guard.to ?? '∅'}
                 </div>
             )}
             {delta.effects &&
                 delta.effects.added.map((e) => (
                     <div key={`+${e}`} className="pl-4">
-                        <Mark kind="added">effect +</Mark> {e}
+                        <Mark kind="added">{m.t('splicewire-beam-workflows::messages.diff_effect_added')}</Mark> {e}
                     </div>
                 ))}
             {delta.effects &&
                 delta.effects.removed.map((e) => (
                     <div key={`-${e}`} className="pl-4">
-                        <Mark kind="removed">effect -</Mark> {e}
+                        <Mark kind="removed">{m.t('splicewire-beam-workflows::messages.diff_effect_removed')}</Mark> {e}
                     </div>
                 ))}
         </div>

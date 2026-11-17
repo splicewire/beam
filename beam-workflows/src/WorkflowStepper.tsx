@@ -14,6 +14,7 @@ import {
 import type { WorkflowProjectionData } from '@splicewire/beam-resources/types/workflows';
 import { humanizeWorkflowKey } from './humanizeWorkflowKey';
 import { useSubscribe } from './provider';
+import { useBeamWorkflowsMessages } from './messages';
 
 /**
  * The MODEL-BLIND workflow runtime UI (beam-workflows v2 ticket 07). Extracted from
@@ -54,6 +55,7 @@ export function WorkflowStepperTrack({
     badgeClassName?: string;
     trailing?: ReactNode;
 }) {
+    const m = useBeamWorkflowsMessages();
     // When the current marking is a badge place, show it as a distinct badge, not on the track.
     if (badgePlaces.includes(current)) {
         return (
@@ -76,7 +78,7 @@ export function WorkflowStepperTrack({
 
     return (
         <div className="flex items-center gap-2.5">
-            <div className="flex items-center gap-1.5" aria-label={`Lifecycle: ${current}`}>
+            <div className="flex items-center gap-1.5" aria-label={m.t('splicewire-beam-workflows::messages.stepper_lifecycle', { place: current })}>
                 {steps.map((step, index) => {
                     const isActive = index === activeIndex;
                     const isPast = index < activeIndex;
@@ -160,6 +162,7 @@ export function WorkflowActions({
     // is INJECTED (the 4th injection kind): a Laravel host wires Echo, a non-Laravel host wires
     // SSE/WS, a bare host gets the no-op default and simply doesn't auto-refresh.
     const subscribe = useSubscribe();
+    const m = useBeamWorkflowsMessages();
     const emittedRef = useRef(onStatusEmitted);
     emittedRef.current = onStatusEmitted;
     useEffect(() => {
@@ -211,7 +214,7 @@ export function WorkflowActions({
                                     disabled={pending}
                                     onClick={() => cfg.onOpenChange?.(false)}
                                 >
-                                    Cancel
+                                    {m.t('splicewire-beam-workflows::messages.cancel')}
                                 </Button>
                                 <Button disabled={pending} onClick={() => onTransition(name)}>
                                     {pending && <Loader2 className="animate-spin" />}

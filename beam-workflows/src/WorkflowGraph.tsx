@@ -9,6 +9,7 @@ import {
 import '@xyflow/react/dist/style.css';
 import { useLayoutEffect, useMemo, useRef, useState } from 'react';
 import type { BlueprintDraft } from './blueprint';
+import { useBeamWorkflowsMessages } from './messages';
 import { GRAPH_PADDING, GRAPH_ZOOM, graphCanvasSize, layoutBlueprint, NODE_WIDTH } from './workflowLayout';
 
 /**
@@ -66,6 +67,7 @@ export function WorkflowGraph({ blueprint }: { blueprint: BlueprintDraft }) {
     // hide the scrollbar, so a clipped graph needs a visible cue that the rest is a scroll away.
     const pane = useRef<HTMLDivElement>(null);
     const [overflowing, setOverflowing] = useState(false);
+    const m = useBeamWorkflowsMessages();
     useLayoutEffect(() => {
         const el = pane.current;
         if (!el) return;
@@ -81,9 +83,9 @@ export function WorkflowGraph({ blueprint }: { blueprint: BlueprintDraft }) {
     if (nodes.length === 0) {
         return (
             <div className="flex h-[420px] w-full flex-col items-center justify-center gap-1 rounded-md border border-dashed border-[var(--beam-ink-08)] p-6 text-center">
-                <p className="text-sm font-medium">No places yet</p>
+                <p className="text-sm font-medium">{m.t('splicewire-beam-workflows::messages.graph_empty')}</p>
                 <p className="text-xs text-muted-foreground">
-                    Add a place to the workflow and its graph will draw here.
+                    {m.t('splicewire-beam-workflows::messages.graph_empty_hint')}
                 </p>
             </div>
         );
@@ -128,7 +130,8 @@ export function WorkflowGraph({ blueprint }: { blueprint: BlueprintDraft }) {
                     className="mt-1 text-right text-[11px] text-muted-foreground"
                     data-testid="workflow-graph-scroll-hint"
                 >
-                    Scroll sideways to see all {nodes.length} places →
+                    {/* A plural the catalog can vary; English keeps "places" for every count, as before. */}
+                    {m.choice('splicewire-beam-workflows::messages.graph_scroll_hint', nodes.length)}
                 </p>
             )}
         </div>

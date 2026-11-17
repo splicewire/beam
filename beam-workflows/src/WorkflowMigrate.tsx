@@ -14,6 +14,8 @@ import { toDraft } from './blueprint';
 import { useNotify, useWorkflowsServices } from './provider';
 import { errorMessage } from './utils';
 import { WorkflowGraph } from './WorkflowGraph';
+import { useBeamWorkflowsMessages } from './messages';
+import { richMessage } from './rich-message';
 
 type Version = WorkflowVersionData;
 
@@ -38,6 +40,7 @@ export function WorkflowMigrate({
     const [fromId, setFromId] = useState(() => ordered[0]?.id ?? '');
     const [toId, setToId] = useState(() => ordered.at(-1)?.id ?? '');
     const [map, setMap] = useState<PlaceMap>({});
+    const m = useBeamWorkflowsMessages();
     const [report, setReport] = useState<MigrationReport | null>(null);
     const [running, setRunning] = useState(false);
 
@@ -69,7 +72,7 @@ export function WorkflowMigrate({
 
     const sameVersion = fromId === toId;
     const complete = mapComplete(map);
-    const blocked = report ? blockedHeadline(report) : null;
+    const blocked = report ? blockedHeadline(report, m) : null;
 
     async function run(dryRun: boolean) {
         setRunning(true);
@@ -81,19 +84,22 @@ export function WorkflowMigrate({
                 dryRun,
             });
             setReport(data);
+            // Toasts are events handed to the host as they fire, so they are translated now. "record(s)" was never
+            // pluralised; both plural forms keep it in English, and a translator gets both slots.
             if (data.applied) {
                 notify({
                     type: 'success',
-                    message: `Migrated ${data.migrated} record(s) onto the target version.`,
+                    message: m.choice('splicewire-beam-workflows::messages.migrate_applied_toast', data.migrated),
                 });
             } else if (dryRun && data.unmappable.length === 0) {
                 notify({
                     type: 'success',
-                    message: `Dry run: ${data.migrated} record(s) would migrate.`,
+                    message: m.choice('splicewire-beam-workflows::messages.migrate_dry_run_toast', data.migrated),
                 });
             }
         } catch (error) {
-            notify({ type: 'error', message: errorMessage(error, 'Migration failed') });
+            // The server's message renders as it arrived; our line only when it sent none.
+            notify({ type: 'error', message: errorMessage(error, m.t('splicewire-beam-workflows::messages.migrate_failed')) });
             onError?.(error);
         } finally {
             setRunning(false);
@@ -104,29 +110,32 @@ export function WorkflowMigrate({
         <div className="mb-4 space-y-3 rounded-md border border-[var(--beam-amber)]/30 bg-[var(--beam-amber)]/5 p-3">
             <div className="flex items-center gap-2 text-sm">
                 <span className="font-mono text-[11px] tracking-[0.12em] text-[var(--beam-ink-45)] uppercase">
-                    Migrate records
+                    {m.t('splicewire-beam-workflows::messages.migrate_records')}
                 </span>
                 <SimpleSelect
                     className="w-24"
-                    aria-label="Migrate from version"
+                    aria-label={m.t('splicewire-beam-workflows::messages.migrate_from_version')}
                     value={fromId}
                     onValueChange={setFromId}
-                    options={ordered.map((v) => ({ value: v.id, label: `v${v.version}` }))}
+                    options={ordered.map((v) => ({ value: v.id, label: m.t('splicewire-beam-workflows::messages.version_label', { version: v.version }) }))}
                 />
                 <span className="text-[var(--beam-ink-45)]">→</span>
                 <SimpleSelect
                     className="w-24"
-                    aria-label="Migrate to version"
+                    aria-label={m.t('splicewire-beam-workflows::messages.migrate_to_version')}
                     value={toId}
                     onValueChange={setToId}
-                    options={ordered.map((v) => ({ value: v.id, label: `v${v.version}` }))}
+                    options={ordered.map((v) => ({ value: v.id, label: m.t('splicewire-beam-workflows::messages.version_label', { version: v.version }) }))}
                 />
             </div>
 
+            {/* One sentence (JSX whitespace collapsed); the bold words are copy, `$ref` is code. */}
             <p className="text-xs text-[var(--beam-ink-50)]">
-                Re-pins records currently on the <b>from</b> version onto the <b>to</b> version.
-                This touches only records directly on this workflow — not any <code>$ref</code>'d
-                children (those are a separate cohort). The whole run is all-or-nothing.
+                {richMessage(m, 'splicewire-beam-workflows::messages.migrate_explainer', {
+                    from: <b>{m.t('splicewire-beam-workflows::messages.migrate_word_from')}</b>,
+                    to: <b>{m.t('splicewire-beam-workflows::messages.migrate_word_to')}</b>,
+                    ref: <code>$ref</code>,
+                })}
             </p>
 
             {/* Before / after — the read-only graph reused as the migration render. Stacked, not side by
@@ -135,13 +144,13 @@ export function WorkflowMigrate({
             <div className="grid gap-3">
                 <div className="min-w-0">
                     <div className="mb-1 font-mono text-[10px] text-[var(--beam-ink-45)] uppercase">
-                        From
+                        {m.t('splicewire-beam-workflows::messages.from')}
                     </div>
                     <WorkflowGraph blueprint={fromDraft} />
                 </div>
                 <div className="min-w-0">
                     <div className="mb-1 font-mono text-[10px] text-[var(--beam-ink-45)] uppercase">
-                        To
+                        {m.t('splicewire-beam-workflows::messages.to')}
                     </div>
                     <WorkflowGraph blueprint={toDraftBp} />
                 </div>
@@ -150,7 +159,7 @@ export function WorkflowMigrate({
             {/* Explicit old→new place mapping — each a reviewable author choice. */}
             <div className="space-y-1.5">
                 <div className="font-mono text-[10px] tracking-[0.12em] text-[var(--beam-ink-45)] uppercase">
-                    Place mapping
+                    {m.t('splicewire-beam-workflows::messages.migrate_place_mapping')}
                 </div>
                 {fromDraft.places.map((place) => (
                     <div key={place} className="flex items-center gap-2 text-sm">
@@ -158,14 +167,14 @@ export function WorkflowMigrate({
                         <span className="text-[var(--beam-ink-45)]">→</span>
                         <SimpleSelect
                             className="w-48"
-                            aria-label={`Map ${place} to`}
+                            aria-label={m.t('splicewire-beam-workflows::messages.migrate_map_place', { place })}
                             value={map[place] ?? ''}
                             onValueChange={(value) => {
-                                setMap((m) => ({ ...m, [place]: value }));
+                                setMap((current) => ({ ...current, [place]: value }));
                                 setReport(null);
                             }}
                             options={[
-                                { value: '', label: '— choose —' },
+                                { value: '', label: m.t('splicewire-beam-workflows::messages.migrate_choose') },
                                 ...toDraftBp.places.map((p) => ({ value: p, label: p })),
                             ]}
                         />
@@ -182,11 +191,11 @@ export function WorkflowMigrate({
                         <ul className="mt-1 font-mono text-xs">
                             {report.unmappable.slice(0, 8).map((u) => (
                                 <li key={u.id}>
-                                    {u.id} — unmapped place “{u.place}”
+                                    {m.t('splicewire-beam-workflows::messages.migrate_unmapped', { id: u.id, place: u.place })}
                                 </li>
                             ))}
                             {report.unmappable.length > 8 && (
-                                <li>…and {report.unmappable.length - 8} more</li>
+                                <li>{m.t('splicewire-beam-workflows::messages.migrate_and_more', { count: report.unmappable.length - 8 })}</li>
                             )}
                         </ul>
                     </div>
@@ -195,8 +204,8 @@ export function WorkflowMigrate({
             {report && !blocked && (
                 <div className="rounded-md border border-[var(--beam-green)]/30 bg-[var(--beam-green)]/5 p-2 text-sm text-[var(--beam-ink-70)]">
                     {report.applied
-                        ? `Migrated ${report.migrated} of ${report.total} record(s).`
-                        : `Dry run: all ${report.total} record(s) map cleanly and would migrate.`}
+                        ? m.choice('splicewire-beam-workflows::messages.migrate_applied_summary', report.total, { migrated: report.migrated })
+                        : m.choice('splicewire-beam-workflows::messages.migrate_dry_run_summary', report.total)}
                 </div>
             )}
 
@@ -207,7 +216,7 @@ export function WorkflowMigrate({
                     disabled={running || sameVersion || !complete}
                     onClick={() => run(true)}
                 >
-                    {running ? 'Checking…' : 'Preview (dry run)'}
+                    {m.t(running ? 'splicewire-beam-workflows::messages.migrate_checking' : 'splicewire-beam-workflows::messages.migrate_preview')}
                 </Button>
                 <Button
                     size="sm"
@@ -221,7 +230,7 @@ export function WorkflowMigrate({
                     }
                     onClick={() => run(false)}
                 >
-                    Migrate records
+                    {m.t('splicewire-beam-workflows::messages.migrate_records')}
                 </Button>
             </div>
         </div>

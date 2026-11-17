@@ -14,13 +14,15 @@
         "./action-form": {
             "types": "./dist/action-form.d.ts",
             "import": "./dist/action-form.js"
-        }
+        },
+        "./messages": "./messages.default.json"
     },
     "sideEffects": false,
     "files": [
         "dist",
         "src",
-        "README.md"
+        "README.md",
+        "messages.default.json"
     ],
     "publishConfig": {
         "registry": "https://registry.npmjs.org",
@@ -38,9 +40,18 @@
         "typecheck": "tsc --noEmit",
         "lint:imports": "node scripts/check-imports.mjs",
         "prepublishOnly": "pnpm run build",
-        "build:action-form": "tsup --config tsup.action-form.config.ts"
+        "build:action-form": "tsup --config tsup.action-form.config.ts",
+        "messages:catalog": "node scripts/messages-catalog.mjs",
+        "messages:catalog:write": "node scripts/messages-catalog.mjs --write"
+    },
+    "schemastud": {
+        "messages": {
+            "version": 1,
+            "catalog": "./messages"
+        }
     },
     "peerDependencies": {
+        "@schemastud/messages": "^0.1.0",
         "@schemastud/ui": "*",
         "@tanstack/react-query": ">=5",
         "@xyflow/react": ">=12",
@@ -48,6 +59,7 @@
         "react": ">=18"
     },
     "devDependencies": {
+        "@schemastud/messages": "github:schemastud/js#47810c9e78aca3eb452f7b34a1eaaed909f4102c&path:/messages",
         "@schemastud/ui": "github:schemastud/js#abef468b39df9b1e81fd9a2081e69f8094c60e4e&path:/ui",
         "@tanstack/react-query": "^5.62.0",
         "@testing-library/react": "^16.1.0",

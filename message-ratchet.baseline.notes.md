@@ -84,3 +84,11 @@ Part D2 (PhpApiReference, RegistryRegistrants, RegistryIndexNav, DataExample; Ph
 - PhpApiReference `of …` (TemplateExpression): PHPDoc template syntax (`@template T of Bound`).
 
 One deliberate exception, beyond the ratchet (REVIEW-30D2): PhpApiReference's `(global)`, the rail heading for symbols in PHP's global namespace, stays English. ExpandableNav (@schemastud/nav) draws a group's KEY as its heading and derives the group's ids and persisted collapse-state keys from it, with no separate group label, so translating it would re-key a reader's saved rail state per locale. A `groupLabel` on ExpandableNav would lift it.
+
+## @splicewire/beam-workflows — localization 30
+
+Part W1 (the seam, WorkflowEditor, WorkflowGraph, WorkflowStepper, WorkflowDiff, WorkflowMigrate, and migratePlan's blockedHeadline) moves 71 of its 72 nodes onto beam-workflows' catalog, so its --write lowers 186 to 115. The census sized beam-workflows at 120 (2026-11-12); re-taken at 186 on 3fb6c655. Beyond the ratchet: blockedHeadline's hand-rolled plural (a public export; it now takes the reader's messages, English by default) and the migration toasts' and summaries' "record(s)" lines, which were never pluralised, so both of their plural forms keep "record(s)" in English (likewise the graph's "Scroll sideways to see all :count places →"). The migrate explainer is one sentence around three nodes (bold "from" and "to", which are copy, and `$ref`, which is code), so it goes through richMessage. The one W1 node left:
+
+- beam-workflows/src/WorkflowMigrate.tsx — `$ref` (JsxText): a JSON Schema keyword, shown as code inside the translated explainer.
+
+Parts W2 (action/reaction forms, action detail, reaction history, recipient picker) and W3 (WorkflowsAdminPage) take the rest.
