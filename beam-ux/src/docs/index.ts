@@ -16,6 +16,11 @@ export {
     resolveTemplate,
     registeredChromeNames,
     clearChromeRegistry,
+    layoutRegistrant,
+    templateRegistrant,
+    chromeRegistries,
+    CHROME_LAYOUTS_ROOT,
+    CHROME_TEMPLATES_ROOT,
 } from './registry.js';
 export { configureEntryPage, entryPageConfig, resetEntryPageConfig, type EntryPageConfig } from './config.js';
 export { BUILTIN_LAYOUTS, BUILTIN_TEMPLATES } from './builtins.js';

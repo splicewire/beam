@@ -21,6 +21,52 @@ CSS-vars).
 
 Account chrome now belongs to `@splicewire/beam-accounts/account`. Upgrade its Inertia consumer together; the former `./account` export is removed, without an alias.
 
+## `@splicewire/beam-ux/docs` — the chrome registry
+
+An entry's `layout` and `template` columns hold names. `registerLayout(name, component)`,
+`registerTemplate(name, component)` and `registerChrome({ layouts, templates })` register a component for a
+name before the first render; `resolveLayout(name)` and `resolveTemplate(name)` answer with the registered
+component, then the packaged builtin (`ProseTemplate`, `SpreadTemplate`), then `null`.
+
+Layouts and templates are two `@schemastud/registry` registries, rooted at `beam.ux.chrome.layouts` and
+`beam.ux.chrome.templates`. A chrome name is carried as one segment under its root, so the layout
+`DocsLayout` has the address `beam.ux.chrome.layouts.DocsLayout` and is a different key from a template of
+the same name. Names are not folded or trimmed.
+
+**Duplicate policy: Supersede, declared.** Registering a taken name replaces the component. The name keeps
+its place in `registeredChromeNames()`, and the displaced component is recorded with who registered it and
+who displaced it (`chromeRegistries().layouts.superseded(key)`). This is what the registry did before it
+was declared (a `Map.set`), so no caller changes. The callers that rely on a later registration winning:
+
+- `configureDocs({ layout })` in `@splicewire/beam-docs` (`beam-docs/src/configure.ts`) registers
+  `DocsLayout` again when the host passes a layout, over whatever is registered. Without `layout` it
+  registers only when nothing resolves, so a host that registered its own `DocsLayout` first keeps it.
+- A host that registers over a packaged builtin name. That is not a duplicate in the registry: builtins are
+  a fallback read after a miss, and a registration under `ProseTemplate` wins by the resolution order.
+
+Searched 2026-11-18 for `registerLayout`, `registerTemplate` and `registerChrome` with `grep -rn` and
+`git grep -n -F`: every `beam-*/src` in this workspace, and `resources/js` and `ui/src` of
+`splicewire/splicewire-app`. Outside this package and its tests the only caller is `configureDocs`. The
+flagship has none (its `app.tsx` says so in a comment), so a zero there means no host in the family
+registers chrome by hand today; it says nothing about hosts outside those two trees.
+
+**Registrants.** The three register functions take an optional last argument naming who is registering,
+`registerLayout('DocsLayout', DocsLayout, '@splicewire/beam-docs')`. `layoutRegistrant(name)` and
+`templateRegistrant(name)` read it back. Both answer `null` for an unregistered name, for a name that
+resolves to a builtin, and for a registration that named nobody.
+
+`chromeRegistries()` returns the two registries as they are now, for describing them in a registry index
+or reading keys and registrants. `clearChromeRegistry()` is a test seam that replaces both, so call
+`chromeRegistries()` again after it. `CHROME_LAYOUTS_ROOT` and `CHROME_TEMPLATES_ROOT` are the two roots.
+
+Two names do not round-trip through `registeredChromeNames()`, because a name that is a legal registry key
+beginning with the registry's own root is read as already absolute: the layout name
+`beam.ux.chrome.layouts.x` is the same key as `x` and is listed as `x`, and the name
+`beam.ux.chrome.layouts` is listed as `''`. The same holds for templates under their root.
+
+The PHP side cannot see these registries. `config('beam.ux.chrome.registered')` is a hand-kept list of the
+same names, and `BeamUxChromeAudit` checks entries against it.
+
 ## `@splicewire/beam-ux/theme.css` — the opt-in token layer
 
 Beam chrome reads the beam tier's raw keys (`--beam-paper`, `--beam-ink-45`, `--beam-warn-deep`, …) and

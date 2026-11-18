@@ -77,5 +77,8 @@ export default defineConfig({
         // readSse() — the generic SSE frame parser the /streaming entry builds on. Only that
         // entry touches it; a consumer using other subpaths never needs it installed.
         '@schemastud/chat',
+        // The registry kernel under the `/docs` chrome registry. One copy in the host, so a registry
+        // index the host builds and the registries this package creates share the kernel's classes.
+        '@schemastud/registry',
     ],
 });
