@@ -4,7 +4,8 @@ import type { StripLabels, StripTake } from './types.js';
 
 /**
  * "just now", "3m ago", "2h ago", then a short date: the wording Studio's takes list uses, from beam-ux's catalog.
- * A render passes the reader's messages; without them the words are English.
+ * A render passes the reader's messages; without them the words are English. The date is the reader's locale too
+ * (the messages' formatter, never the browser's).
  */
 export function relativeWhen(iso: string | null, now: number = Date.now(), m: BeamUxMessages = englishBeamUxMessages): string {
     if (!iso) return '';
@@ -15,7 +16,7 @@ export function relativeWhen(iso: string | null, now: number = Date.now(), m: Be
     if (minutes < 60) return m.t('splicewire-beam-ux::messages.takes_minutes_ago', { minutes });
     const hours = Math.round(minutes / 60);
     if (hours < 24) return m.t('splicewire-beam-ux::messages.takes_hours_ago', { hours });
-    return new Date(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+    return m.date(new Date(iso), { month: 'short', day: 'numeric' });
 }
 
 export interface TakesStripProps {
