@@ -18,7 +18,6 @@ export {
     clearChromeRegistry,
     layoutRegistrant,
     templateRegistrant,
-    chromeRegistries,
     CHROME_LAYOUTS_ROOT,
     CHROME_TEMPLATES_ROOT,
 } from './registry.js';

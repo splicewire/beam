@@ -35,8 +35,8 @@ the same name. Names are not folded or trimmed.
 
 **Duplicate policy: Supersede, declared.** Registering a taken name replaces the component. The name keeps
 its place in `registeredChromeNames()`, and the displaced component is recorded with who registered it and
-who displaced it (`chromeRegistries().layouts.superseded(key)`). This is what the registry did before it
-was declared (a `Map.set`), so no caller changes. The callers that rely on a later registration winning:
+who displaced it. This is what the registry did before it was declared (a `Map.set`), so no caller
+changes. The callers that rely on a later registration winning:
 
 - `configureDocs({ layout })` in `@splicewire/beam-docs` (`beam-docs/src/configure.ts`) registers
   `DocsLayout` again when the host passes a layout, over whatever is registered. Without `layout` it
@@ -46,8 +46,10 @@ was declared (a `Map.set`), so no caller changes. The callers that rely on a lat
 
 Searched 2026-11-18 for `registerLayout`, `registerTemplate` and `registerChrome` with `grep -rn` and
 `git grep -n -F`: every `beam-*/src` in this workspace, and `resources/js` and `ui/src` of
-`splicewire/splicewire-app`. Outside this package and its tests the only caller is `configureDocs`. The
-flagship has none (its `app.tsx` says so in a comment), so a zero there means no host in the family
+`splicewire/splicewire-app`. Outside this package and its tests there are two callers, both in
+`@splicewire/beam-docs`: `configureDocs`, above, and `beam-docs/src/DocsLayout.test.tsx:33`, which registers
+a host `DocsLayout` before calling `configureDocs()` and checks that it is kept. That one is a first
+registration, not an overwrite. The flagship has none (its `app.tsx` says so in a comment), so a zero there means no host in the family
 registers chrome by hand today; it says nothing about hosts outside those two trees.
 
 **Registrants.** The three register functions take an optional last argument naming who is registering,
@@ -55,14 +57,15 @@ registers chrome by hand today; it says nothing about hosts outside those two tr
 `templateRegistrant(name)` read it back. Both answer `null` for an unregistered name, for a name that
 resolves to a builtin, and for a registration that named nobody.
 
-`chromeRegistries()` returns the two registries as they are now, for describing them in a registry index
-or reading keys and registrants. `clearChromeRegistry()` is a test seam that replaces both, so call
-`chromeRegistries()` again after it. `CHROME_LAYOUTS_ROOT` and `CHROME_TEMPLATES_ROOT` are the two roots.
+`CHROME_LAYOUTS_ROOT` and `CHROME_TEMPLATES_ROOT` are the two roots. The registries themselves are not
+exported. `clearChromeRegistry()` is a test seam that replaces both with empty ones.
 
-Two names do not round-trip through `registeredChromeNames()`, because a name that is a legal registry key
-beginning with the registry's own root is read as already absolute: the layout name
-`beam.ux.chrome.layouts.x` is the same key as `x` and is listed as `x`, and the name
-`beam.ux.chrome.layouts` is listed as `''`. The same holds for templates under their root.
+Every string is a name and comes back from `registeredChromeNames()` as it was written, as it did from the
+map. A name that spells a registry's own root is no exception: the layout names `beam.ux.chrome.layouts.x`
+and `x` are two names.
+
+`@schemastud/registry` is a peer dependency, loaded at runtime by `@splicewire/beam-ux/docs` and by
+`@splicewire/beam-ux/pages` (the entry page resolves its chrome through this registry).
 
 The PHP side cannot see these registries. `config('beam.ux.chrome.registered')` is a hand-kept list of the
 same names, and `BeamUxChromeAudit` checks entries against it.

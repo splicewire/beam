@@ -15,6 +15,7 @@ import {
     resolveTemplate,
     templateRegistrant,
 } from './registry.js';
+import { BUILTIN_LAYOUTS, BUILTIN_TEMPLATES } from './builtins.js';
 import { ProseTemplate } from './templates.js';
 import type { ChromeComponent } from './types.js';
 
@@ -68,6 +69,108 @@ describe('a chrome name', () => {
     });
 });
 
+describe('a name that spells the registry root', () => {
+    it('is its own name, distinct from the short one', () => {
+        const Long = component();
+        const Short = component();
+        registerLayout(`${CHROME_LAYOUTS_ROOT}.x`, Long, 'pkg/long');
+        registerLayout('x', Short, 'pkg/short');
+
+        expect(resolveLayout(`${CHROME_LAYOUTS_ROOT}.x`)).toBe(Long);
+        expect(resolveLayout('x')).toBe(Short);
+        expect(layoutRegistrant(`${CHROME_LAYOUTS_ROOT}.x`)).toBe('pkg/long');
+        expect(layoutRegistrant('x')).toBe('pkg/short');
+        expect(registeredChromeNames().layouts).toEqual([`${CHROME_LAYOUTS_ROOT}.x`, 'x']);
+    });
+
+    it('does not answer for the short name when only the long one is registered, or the reverse', () => {
+        registerLayout(`${CHROME_LAYOUTS_ROOT}.x`, component());
+        registerTemplate('y', component());
+
+        expect(resolveLayout('x')).toBeNull();
+        expect(resolveTemplate(`${CHROME_TEMPLATES_ROOT}.y`)).toBeNull();
+    });
+
+    it('holds the root itself as a name distinct from the empty string', () => {
+        const Root = component();
+        const Empty = component();
+        registerLayout(CHROME_LAYOUTS_ROOT, Root, 'pkg/root');
+        registerLayout('', Empty, 'pkg/empty');
+
+        expect(resolveLayout(CHROME_LAYOUTS_ROOT)).toBe(Root);
+        expect(layoutRegistrant(CHROME_LAYOUTS_ROOT)).toBe('pkg/root');
+        expect(layoutRegistrant('')).toBe('pkg/empty');
+        expect(registeredChromeNames().layouts).toEqual([CHROME_LAYOUTS_ROOT, '']);
+    });
+});
+
+describe('against the two maps it replaced', () => {
+    // The module as it was before the kernel: two Maps, a bare set, builtins read after a miss.
+    function maps() {
+        const layouts = new Map<string, ChromeComponent>();
+        const templates = new Map<string, ChromeComponent>();
+
+        return {
+            registerLayout: (name: string, c: ChromeComponent) => void layouts.set(name, c),
+            registerTemplate: (name: string, c: ChromeComponent) => void templates.set(name, c),
+            resolveLayout: (name: string) => (name ? (layouts.get(name) ?? BUILTIN_LAYOUTS[name] ?? null) : null),
+            resolveTemplate: (name: string) => (name ? (templates.get(name) ?? BUILTIN_TEMPLATES[name] ?? null) : null),
+            names: () => ({
+                layouts: [...new Set([...Object.keys(BUILTIN_LAYOUTS), ...layouts.keys()])],
+                templates: [...new Set([...Object.keys(BUILTIN_TEMPLATES), ...templates.keys()])],
+            }),
+        };
+    }
+
+    const NAMES = [
+        'DocsLayout', 'docslayout', 'ProseTemplate', 'SpreadTemplate', 'x', 'home', 'docs', 'docs.wide', 'docs.wide.deep',
+        'Admin/Users', 'two words', ' padded ', 'kebab-case', 'snake_case', 'a:b', 'Dotted.Name', '.lead', 'trail.', 'a..b',
+        '', '.', 'beam', 'beam.ux', 'beam.ux.chrome', 'layouts', 'templates', 'layouts.x', 'templates.x',
+        CHROME_LAYOUTS_ROOT, `${CHROME_LAYOUTS_ROOT}.x`, `${CHROME_LAYOUTS_ROOT}.x.y`, `${CHROME_LAYOUTS_ROOT}.DocsLayout`,
+        `${CHROME_LAYOUTS_ROOT}.`, `${CHROME_LAYOUTS_ROOT}.${CHROME_LAYOUTS_ROOT}`,
+        CHROME_TEMPLATES_ROOT, `${CHROME_TEMPLATES_ROOT}.x`, `${CHROME_TEMPLATES_ROOT}.x.y`, `${CHROME_TEMPLATES_ROOT}.ProseTemplate`,
+        'toString', 'constructor', '__proto__', 'hasOwnProperty',
+    ];
+
+    it('answers every read as the maps did, after every registration, for every name', () => {
+        const model = maps();
+        const differences: string[] = [];
+        const compare = (step: string) => {
+            for (const name of NAMES) {
+                if (resolveLayout(name) !== model.resolveLayout(name)) differences.push(`${step}: resolveLayout(${JSON.stringify(name)})`);
+                if (resolveTemplate(name) !== model.resolveTemplate(name)) differences.push(`${step}: resolveTemplate(${JSON.stringify(name)})`);
+            }
+            if (JSON.stringify(registeredChromeNames()) !== JSON.stringify(model.names())) differences.push(`${step}: registeredChromeNames()`);
+        };
+
+        compare('empty');
+        // Each name into layouts, then each into templates in reverse, then every third again (an override).
+        for (const name of NAMES) {
+            const c = component();
+            registerLayout(name, c);
+            model.registerLayout(name, c);
+            compare(`layout ${JSON.stringify(name)}`);
+        }
+        for (const name of [...NAMES].reverse()) {
+            const c = component();
+            registerTemplate(name, c);
+            model.registerTemplate(name, c);
+            compare(`template ${JSON.stringify(name)}`);
+        }
+        for (const name of NAMES.filter((_, i) => i % 3 === 0)) {
+            const c = component();
+            registerLayout(name, c);
+            model.registerLayout(name, c);
+            registerTemplate(name, c);
+            model.registerTemplate(name, c);
+            compare(`override ${JSON.stringify(name)}`);
+        }
+
+        expect(differences).toEqual([]);
+        expect(registeredChromeNames().layouts).toHaveLength(NAMES.length);
+    });
+});
+
 describe('layouts and templates', () => {
     it('miss in each other, whichever side the name is registered on', () => {
         const Shared = component();
@@ -116,6 +219,12 @@ describe('a registrant', () => {
         expect(layoutRegistrant('A')).toBe('app/host');
         expect(layoutRegistrant('B')).toBe('app/host');
         expect(templateRegistrant('T')).toBe('app/host');
+    });
+
+    it('is null when the registrant given is not a string', () => {
+        registerLayout('Odd', component(), 42 as never);
+
+        expect(layoutRegistrant('Odd')).toBeNull();
     });
 
     it('is null when nobody was named, when the name is unregistered and for a packaged builtin', () => {

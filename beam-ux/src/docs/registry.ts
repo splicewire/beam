@@ -79,12 +79,12 @@ function registered(registry: Registry<ChromeComponent>, name: string): ChromeCo
  * name such as `@splicewire/beam-docs`; it is read back with `layoutRegistrant(name)`.
  */
 export function registerLayout(name: string, component: ChromeComponent, by?: string | null): void {
-    layouts.register(layouts.keyFor(name), component, by ?? null);
+    layouts.register(layouts.keyFor(name), component, typeof by === 'string' ? by : null);
 }
 
 /** Register a template. The same rules as `registerLayout`; read the registrant back with `templateRegistrant(name)`. */
 export function registerTemplate(name: string, component: ChromeComponent, by?: string | null): void {
-    templates.register(templates.keyFor(name), component, by ?? null);
+    templates.register(templates.keyFor(name), component, typeof by === 'string' ? by : null);
 }
 
 /** Register several at once — the shape a host's `app.tsx` reaches for. `by` is recorded on every one. */
@@ -142,9 +142,9 @@ export function registeredChromeNames(): { layouts: string[]; templates: string[
 }
 
 /**
- * The two registries as they are now, for a caller that describes them in a registry index or reads
- * keys, registrants and superseded entries. Call it each time: `clearChromeRegistry()` replaces both,
- * so a held reference goes stale. Register through `registerLayout`/`registerTemplate`, not on these.
+ * The two registries as they are now. Not exported from the package (`./index.ts` leaves it out): it is
+ * the seam this package's own tests read keys, registrants and superseded entries through. Call it each
+ * time: `clearChromeRegistry()` replaces both, so a held reference goes stale.
  */
 export function chromeRegistries(): { layouts: Registry<ChromeComponent>; templates: Registry<ChromeComponent> } {
     return { layouts, templates };
