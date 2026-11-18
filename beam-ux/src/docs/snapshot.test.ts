@@ -1,7 +1,9 @@
 // @vitest-environment node
-import { existsSync, mkdtempSync, readFileSync, readdirSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
+import { existsSync, mkdtempSync, readFileSync, readdirSync, realpathSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 import type { Registry } from '@schemastud/registry';
 import { beforeEach, describe, expect, it } from 'vitest';
@@ -159,7 +161,7 @@ describe('beam-ux-chrome-snapshot', () => {
     it('writes to --out', async () => {
         const cwd = mkdtempSync(join(tmpdir(), 'beam-chrome-snapshot-'));
 
-        await run(['--out', 'build/chrome.json', '--write'], cwd, () => {});
+        await run(['--register', 'chrome.js', '--out', 'build/chrome.json', '--write'], cwd, () => {});
 
         expect(existsSync(join(cwd, 'build/chrome.json'))).toBe(true);
         expect(existsSync(join(cwd, DEFAULT_OUT))).toBe(false);
@@ -177,5 +179,59 @@ describe('beam-ux-chrome-snapshot', () => {
         expect(result.code).toBe(1);
         expect(result.err).toContain('unknown argument [--force]');
         expect(readdirSync(cwd)).toEqual([]);
+    });
+
+    it('refuses --write without a --register, and writes nothing; printing without one is allowed', async () => {
+        const cwd = mkdtempSync(join(tmpdir(), 'beam-chrome-snapshot-'));
+        const refusal = '--write needs at least one --register module; a snapshot of the builtins alone would fail every name the host registers.';
+
+        expect(parseArgs(['--write'])).toEqual({ error: refusal });
+
+        const refused = await run(['--write'], cwd);
+
+        expect(refused.code).toBe(1);
+        expect(refused.err).toBe(`beam-ux-chrome-snapshot: ${refusal}\n`);
+        expect(refused.imported).toEqual([]);
+        expect(readdirSync(cwd)).toEqual([]);
+
+        const printed = await run([], cwd, () => {});
+
+        expect(printed.code).toBe(0);
+        expect(JSON.parse(printed.out).registries.map(({ keys }: { keys: unknown[] }) => keys)).toEqual([[], []]);
+        expect(readdirSync(cwd)).toEqual([]);
+    });
+});
+
+/**
+ * A module the bin cannot load, run through real Node rather than vitest's transform (which would load a `.tsx`
+ * that Node refuses). The bin fails before it reads its build, so these need no `dist`.
+ */
+describe('beam-ux-chrome-snapshot under Node, with a module it cannot load', () => {
+    const bin = fileURLToPath(new URL('../../bin/chrome-snapshot.mjs', import.meta.url));
+    const node = (cwd: string, args: string[]) => spawnSync(process.execPath, [bin, ...args], { cwd, encoding: 'utf8' });
+    // The child's working directory is the real path (`/var` is `/private/var` on macOS), and the bin resolves against it.
+    const scratch = () => realpathSync(mkdtempSync(join(tmpdir(), 'beam-chrome-snapshot-')));
+
+    it('exits 2 for a missing module, says which, and writes nothing', () => {
+        const cwd = scratch();
+
+        const result = node(cwd, ['--register', 'resources/js/missing.js', '--write']);
+
+        expect(result.status).toBe(2);
+        expect(result.stderr.startsWith(`beam-ux-chrome-snapshot: cannot load [${join(cwd, 'resources/js/missing.js')}]: `)).toBe(true);
+        expect(result.stderr.split('\n').filter(Boolean)).toHaveLength(1);
+        expect(readdirSync(cwd)).toEqual([]);
+    });
+
+    it('exits 2 for a module Node cannot load without a loader (.tsx), and writes nothing', () => {
+        const cwd = scratch();
+        writeFileSync(join(cwd, 'chrome.tsx'), 'export const Layout = () => <div />;\n');
+
+        const result = node(cwd, ['--register', 'chrome.tsx', '--write']);
+
+        expect(result.status).toBe(2);
+        expect(result.stderr).toBe(`beam-ux-chrome-snapshot: cannot load [${join(cwd, 'chrome.tsx')}]: Unknown file extension ".tsx" for ${join(cwd, 'chrome.tsx')}\n`);
+        expect(result.stderr.split('\n').filter(Boolean)).toHaveLength(1);
+        expect(readdirSync(cwd)).toEqual(['chrome.tsx']);
     });
 });

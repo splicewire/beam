@@ -15,9 +15,15 @@
  *                        Node imports it, so it must be JavaScript Node can load, or run this under a loader.
  *   --out <path>         where `--write` writes. Default `storage/app/beam-chrome-registry.json`, the path
  *                        `beam.ux.chrome.snapshot` defaults to.
- *   --write              write the file. Without it the snapshot is printed and nothing is written.
+ *   --write              write the file. Without it the snapshot is printed and nothing is written. Refused
+ *                        without a --register: a snapshot of the builtins alone would fail every name the host
+ *                        registers.
  *
- * Exit codes: 0 ok · 1 usage error.
+ * The registry is a module singleton, so a registration module must resolve the same `@splicewire/beam-ux` copy
+ * as this bin (the host's own `node_modules/@splicewire/beam-ux`), or it registers into a registry this bin
+ * never reads.
+ *
+ * Exit codes: 0 ok · 1 usage error (nothing written) · 2 a --register module could not be loaded (nothing written).
  */
 
 import { mkdirSync, realpathSync, writeFileSync } from 'node:fs';
@@ -57,6 +63,10 @@ export function parseArgs(argv) {
         }
     }
 
+    if (options.write && options.register.length === 0) {
+        return { error: '--write needs at least one --register module; a snapshot of the builtins alone would fail every name the host registers.' };
+    }
+
     return options;
 }
 
@@ -81,7 +91,15 @@ export async function main(argv, io = {}) {
     }
 
     for (const module of options.register) {
-        await importModule(pathToFileURL(resolve(cwd, module)).href);
+        const path = resolve(cwd, module);
+
+        try {
+            await importModule(pathToFileURL(path).href);
+        } catch (error) {
+            stderr(`beam-ux-chrome-snapshot: cannot load [${path}]: ${error instanceof Error ? error.message : String(error)}\n`);
+
+            return 2;
+        }
     }
 
     const text = snapshotText(await snapshot());

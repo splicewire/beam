@@ -79,8 +79,28 @@ npx beam-ux-chrome-snapshot --register resources/js/chrome.js --write
 ```
 
 A registration module is the code that calls `registerChrome` or `configureDocs`, kept in its own module so the
-host's `app.tsx` and the bin both import it. Node imports it, so it must be JavaScript Node can load, or the bin
-runs under a loader. `--out <path>` writes elsewhere. Without the file the audit reads the hand-kept
+host's `app.tsx` and the bin both import it.
+
+- **Node imports it.** A `.js` or `.mjs` module loads as it is. Node 22.18 and later strip types from a `.ts`
+  module with no JSX (checked on Node 22.23), but no Node version loads `.tsx` or JSX by itself. For that, run
+  the bin under a loader, such as `tsx`:
+
+  ```sh
+  node --import tsx ./node_modules/@splicewire/beam-ux/bin/chrome-snapshot.mjs --register resources/js/chrome.tsx --write
+  ```
+
+  Point `node` at the bin's file, not at `node_modules/.bin/beam-ux-chrome-snapshot`, which some package managers
+  install as a shell script that Node cannot run. The `tsx` form above is not verified here, because no loader
+  is installed in this workspace. A module the bin cannot load exits 2 with
+  `beam-ux-chrome-snapshot: cannot load [<path>]: <reason>` and writes nothing.
+- **It must resolve the same `@splicewire/beam-ux` copy as the bin.** The registries are module singletons. A
+  registration module that imports a second copy (a different install, or a path into another checkout)
+  registers into registries the bin never reads, and the snapshot comes out without those names. Import
+  `@splicewire/beam-ux/docs` by its package name from the host, and run the host's own installed bin.
+- **`--write` needs a `--register`.** A snapshot of the builtins alone would fail every name the host registers,
+  so the bin refuses it (exit 1) and writes nothing. Printing with no `--register` is allowed.
+
+`--out <path>` writes elsewhere. Without the file the audit reads the hand-kept
 `config('beam.ux.chrome.registered')` list as before, and its report says which one it used.
 `src/docs/snapshot.test.ts` checks that the snapshot equals what the registries hold; it never writes a
 committed file, and no flag or environment variable makes it.
