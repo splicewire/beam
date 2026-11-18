@@ -2,6 +2,8 @@ import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, 
 import type { HeavyweightWidgetProps } from '@schemastud/frame/editor';
 import { layoutTimeline, OtioTimeError, type LaidClip, type LaidSection, type OtioTimeline, type TimelineLayout } from './otio.js';
 import { useTimelinePorts, type ClipTimeChange, type TimelineAction, type TimelineNode, type TimelineVersion } from './ports.js';
+import { useBeamUxMessages, type BeamUxMessages } from '../messages.js';
+import { say, type Notice } from '../message-descriptor.js';
 
 /**
  * The timeline widget (node-actions-and-takes 08), registered as `otio-timeline`. It draws one OTIO document: a
@@ -25,7 +27,9 @@ type Drag = { clipId: string; mode: 'move' | 'trim'; originX: number; start: num
 type Times = { start: number; duration: number };
 
 const round = (value: number) => Math.round(value * 10000) / 10000;
-const formatSeconds = (value: number) => `${round(value)}s`;
+const formatSeconds = (m: BeamUxMessages, value: number) => m.t('splicewire-beam-ux::messages.timeline_seconds', { seconds: round(value) });
+/** A start and an end, each formatted, as the parameters a span line takes. */
+const spanOf = (m: BeamUxMessages, start: number, length: number) => ({ start: formatSeconds(m, start), end: formatSeconds(m, start + length) });
 
 // Paint is INLINE, from beam's own tokens with their light-theme values as fallbacks, because a host's CSS reset
 // (Tailwind preflight) makes a bare <button> transparent and borderless, and a clip then draws as nothing. Longhand
@@ -67,24 +71,25 @@ function sectionPaint(color: string | null, index: number, isSelected: boolean):
 
 export function TimelineWidget({ value, formData, editShellMount: mount, readonly = false, scale = 48 }: TimelineWidgetProps) {
     const ports = useTimelinePorts();
+    const m = useBeamUxMessages();
     const given = value ?? formData ?? null;
     const [loaded, setLoaded] = useState<OtioTimeline | null>(null);
     const doc = loaded ?? given;
     const [overrides, setOverrides] = useState<Record<string, Times>>({});
     const [localSelection, setLocalSelection] = useState<string | null>(null);
-    const [error, setError] = useState<string | null>(null);
+    const [error, setError] = useState<Notice | null>(null);
     const [notice, setNotice] = useState<string | null>(null);
     const selected = mount ? mount.selectedNodeId : localSelection;
 
     // A new document from the host replaces whatever the widget last loaded.
     useEffect(() => setLoaded(null), [given]);
 
-    const layout = useMemo<{ value: TimelineLayout | null; error: string | null }>(() => {
+    const layout = useMemo<{ value: TimelineLayout | null; error: Notice | null }>(() => {
         if (!doc) return { value: null, error: null };
         try {
             return { value: layoutTimeline(doc, ports), error: null };
         } catch (failure) {
-            if (failure instanceof OtioTimeError) return { value: null, error: failure.message };
+            if (failure instanceof OtioTimeError) return { value: null, error: failure.notice };
             throw failure;
         }
     }, [doc, ports]);
@@ -98,6 +103,9 @@ export function TimelineWidget({ value, formData, editShellMount: mount, readonl
     readonlyRef.current = readonly;
     const mountRef = useRef(mount);
     mountRef.current = mount;
+    // The inspector reads a node's words when it asks for them, so it gets the reader's current messages.
+    const messagesRef = useRef(m);
+    messagesRef.current = m;
     const docRef = useRef(doc);
     docRef.current = doc;
     const dragRef = useRef<Drag | null>(null);
@@ -215,12 +223,18 @@ export function TimelineWidget({ value, formData, editShellMount: mount, readonl
                 if (clip) {
                     const times = overridesRef.current[clip.id] ?? { start: clip.start, duration: clip.duration };
                     const take = laneOf(clip)?.take === true;
-                    const span = `From ${formatSeconds(times.start)} to ${formatSeconds(times.start + times.duration)}.`;
+                    const words = messagesRef.current;
+                    const span = spanOf(words, times.start, times.duration);
                     // A node that cannot change gets no fields at all, only its times as words: nothing to type into.
                     if (!canEdit(clip)) {
                         return {
                             type: take ? 'take' : 'clip',
-                            attrsSchema: { type: 'object', title: clip.name, description: take ? `${span} A finished recording; it is not edited here.` : span, properties: {} },
+                            attrsSchema: {
+                                type: 'object',
+                                title: clip.name,
+                                description: take ? words.t('splicewire-beam-ux::messages.timeline_take_description', span) : words.t('splicewire-beam-ux::messages.timeline_span', span),
+                                properties: {},
+                            },
                             attrs: {},
                         };
                     }
@@ -230,8 +244,8 @@ export function TimelineWidget({ value, formData, editShellMount: mount, readonl
                             type: 'object',
                             title: clip.name,
                             properties: {
-                                startSeconds: { type: 'number', title: 'Start (seconds)', minimum: 0 },
-                                durationSeconds: { type: 'number', title: 'Length (seconds)', exclusiveMinimum: 0 },
+                                startSeconds: { type: 'number', title: words.t('splicewire-beam-ux::messages.timeline_start_seconds'), minimum: 0 },
+                                durationSeconds: { type: 'number', title: words.t('splicewire-beam-ux::messages.timeline_length_seconds'), exclusiveMinimum: 0 },
                             },
                         },
                         attrs: { startSeconds: round(times.start), durationSeconds: round(times.duration) },
@@ -244,7 +258,7 @@ export function TimelineWidget({ value, formData, editShellMount: mount, readonl
                     attrsSchema: {
                         type: 'object',
                         title: section.name,
-                        description: `From ${formatSeconds(section.start)} to ${formatSeconds(section.start + section.duration)}. A section is the song's structure; it is not moved here.`,
+                        description: messagesRef.current.t('splicewire-beam-ux::messages.timeline_section_description', spanOf(messagesRef.current, section.start, section.duration)),
                         properties: {},
                     },
                     attrs: {},
@@ -287,11 +301,11 @@ export function TimelineWidget({ value, formData, editShellMount: mount, readonl
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [finishDrag]);
 
-    if (!doc) return <div data-otio-timeline="empty">No timeline.</div>;
+    if (!doc) return <div data-otio-timeline="empty">{m.t('splicewire-beam-ux::messages.timeline_empty')}</div>;
     if (layout.error || !layout.value) {
         return (
             <div data-otio-timeline="error" role="alert">
-                {layout.error}
+                {layout.error ? say(m, layout.error) : null}
             </div>
         );
     }
@@ -314,14 +328,14 @@ export function TimelineWidget({ value, formData, editShellMount: mount, readonl
             <div style={{ overflowX: 'auto' }}>
                 <div style={{ width, minWidth: '100%' }}>
                     {sections.length > 0 ? (
-                        <div role="group" aria-label="Sections" data-timeline-ruler="" style={{ position: 'relative', height: 28 }}>
+                        <div role="group" aria-label={m.t('splicewire-beam-ux::messages.timeline_sections')} data-timeline-ruler="" style={{ position: 'relative', height: 28 }}>
                             {sections.map((section, index) => (
                                 <button
                                     key={section.id}
                                     type="button"
                                     data-timeline-section={section.id}
                                     aria-pressed={selected === section.id}
-                                    aria-label={`Section ${section.name}, ${formatSeconds(section.start)} to ${formatSeconds(section.start + section.duration)}`}
+                                    aria-label={m.t('splicewire-beam-ux::messages.timeline_section_button', { name: section.name, ...spanOf(m, section.start, section.duration) })}
                                     onClick={() => select(section.id)}
                                     style={{ ...box(section.start, section.duration), ...sectionPaint(section.color, index, selected === section.id) }}
                                 >
@@ -356,7 +370,7 @@ export function TimelineWidget({ value, formData, editShellMount: mount, readonl
                                             <button
                                                 type="button"
                                                 aria-pressed={selected === clip.id}
-                                                aria-label={`${lane.label}: ${clip.name}, ${formatSeconds(times.start)} to ${formatSeconds(times.start + times.duration)}`}
+                                                aria-label={m.t('splicewire-beam-ux::messages.timeline_clip_button', { lane: lane.label, name: clip.name, ...spanOf(m, times.start, times.duration) })}
                                                 onClick={() => select(clip.id)}
                                                 onMouseDown={editable ? startDrag(clip, 'move') : undefined}
                                                 style={{ width: '100%', height: '100%', cursor: editable ? 'grab' : 'default', overflow: 'hidden', ...clipPaint(selected === clip.id) }}
@@ -367,7 +381,7 @@ export function TimelineWidget({ value, formData, editShellMount: mount, readonl
                                                 <span
                                                     role="separator"
                                                     aria-orientation="vertical"
-                                                    aria-label={`Trim ${clip.name}`}
+                                                    aria-label={m.t('splicewire-beam-ux::messages.timeline_trim', { name: clip.name })}
                                                     data-timeline-trim=""
                                                     onMouseDown={startDrag(clip, 'trim')}
                                                     style={{ position: 'absolute', right: 0, top: 0, bottom: 0, width: 6, cursor: 'ew-resize' }}
@@ -383,7 +397,7 @@ export function TimelineWidget({ value, formData, editShellMount: mount, readonl
             </div>
             {error ? (
                 <p role="alert" data-timeline-refusal="">
-                    {error}
+                    {say(m, error)}
                 </p>
             ) : null}
             {notice ? (
@@ -450,8 +464,9 @@ function Actions({
     onDone: (message: string) => Promise<void>;
     onRefused: (message: string) => void;
 }) {
+    const m = useBeamUxMessages();
     return (
-        <div role="group" aria-label="Actions" data-timeline-actions="">
+        <div role="group" aria-label={m.t('splicewire-beam-ux::messages.timeline_actions')} data-timeline-actions="">
             {actions.map((action) => (
                 <ActionControl key={action.key} action={action} onDone={onDone} onRefused={onRefused} />
             ))}
@@ -460,13 +475,14 @@ function Actions({
 }
 
 function ActionControl({ action, onDone, onRefused }: { action: TimelineAction; onDone: (message: string) => Promise<void>; onRefused: (message: string) => void }) {
+    const m = useBeamUxMessages();
     const [choice, setChoice] = useState<string | undefined>(action.choices?.[0]?.value);
     const [busy, setBusy] = useState(false);
 
     if (action.unavailable) {
         return (
             <p data-timeline-action-unavailable={action.key}>
-                {action.label}: {action.unavailable}
+                {m.t('splicewire-beam-ux::messages.timeline_action_unavailable', { label: action.label, reason: action.unavailable })}
             </p>
         );
     }
@@ -475,7 +491,7 @@ function ActionControl({ action, onDone, onRefused }: { action: TimelineAction; 
         <div data-timeline-action={action.key}>
             {action.choices ? (
                 <label>
-                    {action.choiceLabel ?? 'From'}{' '}
+                    {action.choiceLabel ?? m.t('splicewire-beam-ux::messages.timeline_choice_from')}{' '}
                     <select value={choice} onChange={(event) => setChoice(event.target.value)}>
                         {action.choices.map((option) => (
                             <option key={option.value} value={option.value}>
@@ -508,6 +524,7 @@ function ActionControl({ action, onDone, onRefused }: { action: TimelineAction; 
 
 function Versions({ readonly, onRestored, onRefused }: { readonly: boolean; onRestored: () => Promise<void>; onRefused: (message: string) => void }) {
     const ports = useTimelinePorts();
+    const m = useBeamUxMessages();
     const port = ports.versions!;
     const [versions, setVersions] = useState<TimelineVersion[]>([]);
     const [label, setLabel] = useState('');
@@ -539,15 +556,15 @@ function Versions({ readonly, onRestored, onRefused }: { readonly: boolean; onRe
     };
 
     return (
-        <section aria-label="Versions" data-timeline-versions="">
+        <section aria-label={m.t('splicewire-beam-ux::messages.timeline_versions')} data-timeline-versions="">
             <ul>
                 {versions.map((version) => (
                     <li key={version.ref} data-timeline-version={version.ref}>
                         {version.label || version.ref}
-                        {version.head ? ' (current)' : null}
+                        {version.head ? ` ${m.t('splicewire-beam-ux::messages.timeline_version_current')}` : null}
                         {!readonly && !version.head ? (
                             <button type="button" disabled={busy} onClick={() => run(() => port.restore(version.ref), onRestored)}>
-                                Restore {version.label || version.ref}
+                                {m.t('splicewire-beam-ux::messages.timeline_restore', { label: version.label || version.ref })}
                             </button>
                         ) : null}
                     </li>
@@ -563,10 +580,10 @@ function Versions({ readonly, onRestored, onRefused }: { readonly: boolean; onRe
                     }}
                 >
                     <label>
-                        Version label <input value={label} onChange={(event) => setLabel(event.target.value)} />
+                        {m.t('splicewire-beam-ux::messages.timeline_version_label')} <input value={label} onChange={(event) => setLabel(event.target.value)} />
                     </label>
                     <button type="submit" disabled={busy || label.trim() === ''}>
-                        Snapshot
+                        {m.t('splicewire-beam-ux::messages.timeline_snapshot')}
                     </button>
                 </form>
             ) : null}

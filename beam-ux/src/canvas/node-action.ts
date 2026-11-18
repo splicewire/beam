@@ -1,4 +1,5 @@
 import type { JsonDoc, JsonNode } from '../blockdoc/json.js';
+import { notice, type Notice } from '../message-descriptor.js';
 
 /**
  * The page canvas's side of the node-action contract (node-actions-and-takes 04). The wire answer is the composition
@@ -114,9 +115,12 @@ export function pathOfId(doc: JsonDoc, id: string): string | null {
     return walk(doc, '');
 }
 
-/** Why a decision offers nothing, in the server's own words where it gave any. */
-export function refusalOf(decision: NodeActionDecision): string | null {
+/**
+ * Why a decision offers nothing: the server's own words where it gave any (shown as they are), else the catalog's
+ * refusal line, which the control renders in the reader's locale (`say`).
+ */
+export function refusalOf(decision: NodeActionDecision): Notice | null {
     if (candidateOf(decision)) return null;
     const reasons = decision.verdict?.reasons ?? [];
-    return reasons.length > 0 ? reasons.join(' ') : 'The candidate was refused.';
+    return reasons.length > 0 ? reasons.join(' ') : notice('splicewire-beam-ux::messages.node_action_refused');
 }

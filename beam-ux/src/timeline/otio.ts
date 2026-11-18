@@ -9,6 +9,8 @@
  * assumption for music (research 05 §6).
  */
 
+import { NoticeError, notice } from '../message-descriptor.js';
+
 export interface OtioRationalTime {
     OTIO_SCHEMA?: string;
     value: number;
@@ -63,15 +65,34 @@ export function itemKind(item: OtioItem): 'clip' | 'gap' | null {
     return schema === 'Clip' ? 'clip' : schema === 'Gap' ? 'gap' : null;
 }
 
-export class OtioTimeError extends Error {}
+/**
+ * An unreadable time, as a catalog line: the widget renders its `notice` in the reader's locale; its `message` stays
+ * English for logs.
+ */
+export class OtioTimeError extends NoticeError {}
+
+/** Where an unreadable time sits, for the error that names it. */
+export type OtioTimePlace = { kind: 'section'; name: string } | { kind: 'clip'; name: string; track: string } | { kind: 'gap'; track: string };
+
+const NO_TIME = {
+    section: 'splicewire-beam-ux::messages.timeline_section_no_time',
+    clip: 'splicewire-beam-ux::messages.timeline_clip_no_time',
+    gap: 'splicewire-beam-ux::messages.timeline_gap_no_time',
+} as const;
+const NO_RATE = {
+    section: 'splicewire-beam-ux::messages.timeline_section_no_rate',
+    clip: 'splicewire-beam-ux::messages.timeline_clip_no_rate',
+    gap: 'splicewire-beam-ux::messages.timeline_gap_no_rate',
+} as const;
 
 /** Seconds of one OTIO time: `value / rate`, read from the value itself. */
-export function seconds(time: OtioRationalTime | undefined, where: string): number {
+export function seconds(time: OtioRationalTime | undefined, where: OtioTimePlace): number {
+    const { kind, ...parameters } = where;
     if (!time || typeof time.value !== 'number' || !Number.isFinite(time.value)) {
-        throw new OtioTimeError(`${where} has no time value.`);
+        throw new OtioTimeError(notice(NO_TIME[kind], parameters));
     }
     if (typeof time.rate !== 'number' || !Number.isFinite(time.rate) || time.rate <= 0) {
-        throw new OtioTimeError(`${where} has no rate, so its time cannot be read.`);
+        throw new OtioTimeError(notice(NO_RATE[kind], parameters));
     }
     return time.value / time.rate;
 }
@@ -161,8 +182,9 @@ export function layoutTimeline(doc: OtioTimeline, options: LayoutOptions = {}): 
 
         if (form) {
             for (const marker of track.markers ?? []) {
-                const start = seconds(marker.marked_range?.start_time, `Section "${marker.name}"`);
-                const length = seconds(marker.marked_range?.duration, `Section "${marker.name}"`);
+                const place = { kind: 'section', name: marker.name } as const;
+                const start = seconds(marker.marked_range?.start_time, place);
+                const length = seconds(marker.marked_range?.duration, place);
                 sections.push({ id: sectionId(marker, sections.length), name: marker.name, start, duration: length, color: marker.color ?? null, marker });
                 duration = Math.max(duration, start + length);
             }
@@ -174,7 +196,7 @@ export function layoutTimeline(doc: OtioTimeline, options: LayoutOptions = {}): 
         track.children.forEach((item, itemIndex) => {
             const kind = itemKind(item);
             if (kind === null) return;
-            const length = seconds(item.source_range?.duration, `${kind === 'gap' ? 'A gap' : `Clip "${item.name}"`} on "${track.name}"`);
+            const length = seconds(item.source_range?.duration, kind === 'gap' ? { kind, track: track.name } : { kind, name: item.name, track: track.name });
             if (kind === 'clip') {
                 clips.push({ id: clipId(item, index, itemIndex, track), kind, name: item.name, start: cursor, duration: length, laneIndex: index, itemIndex, item });
             }

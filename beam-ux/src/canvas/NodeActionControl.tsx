@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from 'react';
 import { useEditShellMount } from '@schemastud/frame/editor';
 import { getAt, updateAt, isJsonBlock, isJsonText, type JsonDoc, type JsonNode } from '../blockdoc/json.js';
 import { candidateOf, idOf, pathOfId, pathSegments, refusalOf, type RefineNodePort } from './node-action.js';
+import { useBeamUxMessages } from '../messages.js';
+import { notice, say, type Notice } from '../message-descriptor.js';
 
 /**
  * One control for the selected node: refine it with an instruction, or regenerate it (node-actions-and-takes 04).
@@ -36,19 +38,21 @@ function textOf(node: JsonNode): string {
 type Offer = { entry: string; path: string; id?: string; node: JsonNode; reference: string; sent: JsonNode };
 
 export function NodeActionControl({ slug, entry: entryId, doc, path, refine, onApply }: NodeActionControlProps) {
+    const m = useBeamUxMessages();
     const entry = entryId ?? slug;
     const [instruction, setInstruction] = useState('');
     const [busy, setBusy] = useState(false);
     const [offer, setOffer] = useState<Offer | null>(null);
-    const [refusal, setRefusal] = useState<string | null>(null);
+    const [refusal, setRefusal] = useState<Notice | null>(null);
     // The selection generation: bumped whenever the entry (`entry`, else `slug`) or the selected path changes (and on unmount). A response
     // that comes back under an older generation answers a node the inspector no longer shows, so it changes nothing:
     // no offer, no refusal and no busy state for the newer selection. Credit: review-r1 (advisory review of 9908b70e).
     const generation = useRef(0);
 
-    // A new entry or selection drops what was offered or pending for the previous one.
+    // A new entry or selection drops what was offered or pending for the previous one, and the instruction typed for it.
     useEffect(() => {
         generation.current += 1;
+        setInstruction('');
         setOffer(null);
         setRefusal(null);
         setBusy(false);
@@ -86,7 +90,7 @@ export function NodeActionControl({ slug, entry: entryId, doc, path, refine, onA
             if (!candidate) setRefusal(refusalOf(decision));
             // A block keeps its stable id through a refine; a candidate that drops or changes it would orphan
             // whatever addresses the block, so it is not offered.
-            else if (id && idOf(candidate) !== id) setRefusal('The candidate did not keep this block’s id, so it was not offered.');
+            else if (id && idOf(candidate) !== id) setRefusal(notice('splicewire-beam-ux::messages.node_action_id_dropped'));
             else setOffer({ entry, path, id, node: candidate, reference: decision.revision.reference, sent: current });
         } catch (failure) {
             if (live()) setRefusal(failure instanceof Error ? failure.message : String(failure));
@@ -104,7 +108,7 @@ export function NodeActionControl({ slug, entry: entryId, doc, path, refine, onA
         const now = target ? getAt(doc, target) : null;
         if (!target || !now || JSON.stringify(now) !== JSON.stringify(offer.sent)) {
             setOffer(null);
-            setRefusal('The node changed while the candidate was being made. Ask again.');
+            setRefusal(notice('splicewire-beam-ux::messages.node_action_changed'));
             return;
         }
         onApply(updateAt(doc, target, () => offer.node));
@@ -113,33 +117,33 @@ export function NodeActionControl({ slug, entry: entryId, doc, path, refine, onA
     };
 
     return (
-        <section aria-label="Refine this block" data-node-action="">
+        <section aria-label={m.t('splicewire-beam-ux::messages.node_action_region')} data-node-action="">
             <label>
-                Instruction
+                {m.t('splicewire-beam-ux::messages.node_action_instruction')}
                 <textarea value={instruction} onChange={(event) => setInstruction(event.target.value)} rows={2} disabled={busy} />
             </label>
             <div>
                 <button type="button" disabled={busy || instruction.trim() === ''} onClick={() => void ask('refine')}>
-                    Refine
+                    {m.t('splicewire-beam-ux::messages.node_action_refine')}
                 </button>
                 <button type="button" disabled={busy} onClick={() => void ask('regenerate')}>
-                    Regenerate
+                    {m.t('splicewire-beam-ux::messages.node_action_regenerate')}
                 </button>
             </div>
-            {busy ? <p role="status">Making a candidate…</p> : null}
+            {busy ? <p role="status">{m.t('splicewire-beam-ux::messages.node_action_making')}</p> : null}
             {refusal ? (
                 <p role="alert" data-node-action-refusal="">
-                    {refusal}
+                    {say(m, refusal)}
                 </p>
             ) : null}
             {shown ? (
-                <div role="group" aria-label="Candidate" data-node-action-candidate={shown.reference}>
+                <div role="group" aria-label={m.t('splicewire-beam-ux::messages.node_action_candidate')} data-node-action-candidate={shown.reference}>
                     <p data-node-action-preview="">{textOf(shown.node)}</p>
                     <button type="button" onClick={accept}>
-                        Accept
+                        {m.t('splicewire-beam-ux::messages.node_action_accept')}
                     </button>
                     <button type="button" onClick={() => setOffer(null)}>
-                        Discard
+                        {m.t('splicewire-beam-ux::messages.node_action_discard')}
                     </button>
                 </div>
             ) : null}

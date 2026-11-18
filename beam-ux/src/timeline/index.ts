@@ -28,6 +28,7 @@ export type {
     OtioMarker,
     OtioRationalTime,
     OtioTimeline,
+    OtioTimePlace,
     OtioTimeRange,
     OtioTrack,
     TimelineLayout,

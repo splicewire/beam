@@ -287,6 +287,21 @@ describe('a late answer belongs to the selection and entry it was asked for', ()
         expect(docText()).toContain('Fixture paragraph.');
     });
 
+    it('an instruction typed for A is not carried to B: a selection or entry change empties the field', () => {
+        render(<Host refine={deferred().refine} />);
+        const field = () => screen.getByRole('textbox', { name: 'Instruction' }) as HTMLTextAreaElement;
+        fireEvent.change(field(), { target: { value: 'Make it sharper' } });
+        expect(field().value).toBe('Make it sharper');
+
+        fireEvent.click(screen.getByRole('button', { name: 'Select heading' }));
+        expect(field().value).toBe('');
+        expect((screen.getByRole('button', { name: 'Refine' }) as HTMLButtonElement).disabled).toBe(true);
+
+        fireEvent.change(field(), { target: { value: 'Shorter' } });
+        fireEvent.click(screen.getByRole('button', { name: 'Open other entry' }));
+        expect(field().value).toBe('');
+    });
+
     it('a late refusal or failure for A says nothing in B’s inspector', async () => {
         const failing: RefineNodePort[] = [];
         let fail!: (reason: Error) => void;
