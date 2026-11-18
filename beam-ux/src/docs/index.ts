@@ -21,6 +21,7 @@ export {
     CHROME_LAYOUTS_ROOT,
     CHROME_TEMPLATES_ROOT,
 } from './registry.js';
+export { chromeRegistrySnapshot, type ChromeRegistrySnapshot, type ChromeSnapshotKey } from './snapshot.js';
 export { configureEntryPage, entryPageConfig, resetEntryPageConfig, type EntryPageConfig } from './config.js';
 export { BUILTIN_LAYOUTS, BUILTIN_TEMPLATES } from './builtins.js';
 export { DOCS_TEMPLATE_CSS } from './css.js';

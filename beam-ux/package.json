@@ -107,7 +107,8 @@
     "sideEffects": false,
     "bin": {
         "beam-ux-sdk-hook-migration": "bin/sdk-hook-migration.mjs",
-        "beam-ux-namespace-rename": "bin/namespace-rename.mjs"
+        "beam-ux-namespace-rename": "bin/namespace-rename.mjs",
+        "beam-ux-chrome-snapshot": "bin/chrome-snapshot.mjs"
     },
     "files": [
         "dist",

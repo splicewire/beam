@@ -67,8 +67,23 @@ and `x` are two names.
 `@schemastud/registry` is a peer dependency, loaded at runtime by `@splicewire/beam-ux/docs` and by
 `@splicewire/beam-ux/pages` (the entry page resolves its chrome through this registry).
 
-The PHP side cannot see these registries. `config('beam.ux.chrome.registered')` is a hand-kept list of the
-same names, and `BeamUxChromeAudit` checks entries against it.
+The PHP side cannot see these registries, so a host writes what they hold to a file that `BeamUxChromeAudit`
+(`splicewire/laravel-beam-ux`) reads. `chromeRegistrySnapshot()` returns it as plain data: the registry kernel's
+snapshot of the two registries (each root, declaration, key and registrant, in order; never a component), and
+the packaged builtin names per root. The `beam-ux-chrome-snapshot` bin imports the host's registration modules
+and prints it, or writes it with `--write`:
+
+```sh
+npx beam-ux-chrome-snapshot --register resources/js/chrome.js --write
+# wrote storage/app/beam-chrome-registry.json, the path `beam.ux.chrome.snapshot` defaults to
+```
+
+A registration module is the code that calls `registerChrome` or `configureDocs`, kept in its own module so the
+host's `app.tsx` and the bin both import it. Node imports it, so it must be JavaScript Node can load, or the bin
+runs under a loader. `--out <path>` writes elsewhere. Without the file the audit reads the hand-kept
+`config('beam.ux.chrome.registered')` list as before, and its report says which one it used.
+`src/docs/snapshot.test.ts` checks that the snapshot equals what the registries hold; it never writes a
+committed file, and no flag or environment variable makes it.
 
 ## `@splicewire/beam-ux/theme.css` — the opt-in token layer
 
