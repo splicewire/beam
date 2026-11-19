@@ -63,6 +63,9 @@ export const RELEASE_KIND_CONFIG = 'config-override';
  */
 export interface ConfigReleaseTarget {
     id: string;
+    /** The Release's title: the draft bar names the Release a section will join, and confirms it once joined. */
+    title: string;
+    /** Runs the Release's `command` op. A refusal rejects with an Error carrying the server's message (and `errors`). */
     command: (command: ReleaseCommand) => Promise<unknown>;
 }
 
@@ -393,6 +396,8 @@ export function DraftBar<K extends ResourceKey = ResourceKey>({
     const discard = useConfigOp(resource, 'discard-draft');
     const [adding, setAdding] = useState(false);
     const [releaseError, setReleaseError] = useState<Error | null>(null);
+    // the Release this section last joined (by id), so the confirmation names it and follows a change of target
+    const [joined, setJoined] = useState<string | null>(null);
     if (!hasPendingDraft(section) && section.overrides.length === 0) return null;
     const schema = section.schema as SchemaNode;
     const lines = keyDiff(section);
@@ -400,8 +405,10 @@ export function DraftBar<K extends ResourceKey = ResourceKey>({
     const addToRelease = async (target: ConfigReleaseTarget) => {
         setAdding(true);
         setReleaseError(null);
+        setJoined(null);
         try {
             await target.command({ action: 'member', kind: RELEASE_KIND_CONFIG, ref: section.root });
+            setJoined(target.id);
         } catch (reason) {
             setReleaseError(reason instanceof Error ? reason : new Error(String(reason)));
         } finally {
@@ -432,6 +439,17 @@ export function DraftBar<K extends ResourceKey = ResourceKey>({
                     </Button>
                 </div>
             </header>
+            {release && (
+                <p data-config-release-target={release.id} className="text-xs text-muted-foreground">
+                    {joined === release.id ? (
+                        <span role="status" className="text-foreground">
+                            {m.t('splicewire-beam-ux::messages.config_added_to_release', { title: release.title })}
+                        </span>
+                    ) : (
+                        m.t('splicewire-beam-ux::messages.config_release_target', { title: release.title })
+                    )}
+                </p>
+            )}
             <ol data-config-diff className="space-y-1">
                 {lines.map((line) => (
                     <li key={line.pointer} data-config-diff-line={line.pointer} className="grid grid-cols-[minmax(0,12rem)_minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2 text-xs">

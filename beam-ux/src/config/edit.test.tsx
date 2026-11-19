@@ -154,24 +154,30 @@ describe('DraftBar', () => {
         expect(invoke.mock.calls[1]![0].key).toBe('discard-draft');
     });
 
-    it("adds the section to the open Release as a config-override member, through the host's Release command", async () => {
+    it("names the Release it joins, adds the section as a config-override member through the host's command, and confirms", async () => {
         const { Provider, invoke } = kit([SECTION]);
         const command = vi.fn(async () => ({ id: 'rel-1' }));
-        render(<Provider><DraftBar resource="beam-config" section={SECTION} release={{ id: 'rel-1', command }} /></Provider>);
+        render(<Provider><DraftBar resource="beam-config" section={SECTION} release={{ id: 'rel-1', title: 'Spring launch', command }} /></Provider>);
+        expect(screen.getByText('Joins “Spring launch”, the first open draft Release.')).toBeTruthy();
+        expect(screen.queryByRole('status')).toBeNull();
         fireEvent.click(await enabled('Add to the Release'));
         await waitFor(() => expect(command).toHaveBeenCalledTimes(1));
         expect(command).toHaveBeenCalledWith({ action: 'member', kind: RELEASE_KIND_CONFIG, ref: 'beam.ux' });
+        expect((await screen.findByRole('status')).textContent).toBe('Added to “Spring launch”.');
         expect(invoke).not.toHaveBeenCalled();
     });
 
-    it("shows the Release command's refusal beside the bar", async () => {
+    it("shows the Release command's refusal (message and field errors) beside the bar, and confirms nothing", async () => {
         const { Provider } = kit([SECTION]);
         const command = vi.fn(async () => {
-            throw new Error('This Release is not a draft.');
+            // the shape the host's command rejects with: the server's message, and its field errors
+            throw Object.assign(new Error('The section has no pending draft to add.'), { errors: { member: ['beam.ux has no pending draft.'] } });
         });
-        render(<Provider><DraftBar resource="beam-config" section={SECTION} release={{ id: 'rel-1', command }} /></Provider>);
+        render(<Provider><DraftBar resource="beam-config" section={SECTION} release={{ id: 'rel-1', title: 'Spring launch', command }} /></Provider>);
         fireEvent.click(await enabled('Add to the Release'));
-        expect(await screen.findByText('This Release is not a draft.')).toBeTruthy();
+        expect(await screen.findByText('beam.ux has no pending draft.')).toBeTruthy();
+        expect(screen.queryByRole('status')).toBeNull();
+        expect(screen.getByText('Joins “Spring launch”, the first open draft Release.')).toBeTruthy();
     });
 
     it('offers no Release control without an open Release', async () => {
