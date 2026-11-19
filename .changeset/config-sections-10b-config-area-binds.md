@@ -19,6 +19,6 @@ The Config area binds to the Override Ladder (config-sections 10b).
 
 `ConfigArea` takes `realm` (`'operator' | 'tenant'`; the tenant realm shows no env name, file or layer source) and `release`.
 
-`ConfigReleaseTarget` is `{ id, title, command }`. The host resolves the open Release and supplies the runner for its `command` op (beam-ux's Release command is not a frame action). The draft bar names the Release a section will join and confirms once joined; a refusal shows the server's message.
+`ConfigReleaseTarget` is `{ id, title, command }`. The host resolves the open Release and supplies the runner for its `command` op (beam-ux's Release command is not a frame action). The draft bar names the Release a section will join and confirms once joined, for that section and draft only: after a later Save draft it says the Release holds an earlier draft and offers to add it again (which re-pins the member). A refusal shows the server's message.
 
 `ReleaseCommand` gains `kind`, matching ticket 08's `ReleaseCommandData`.

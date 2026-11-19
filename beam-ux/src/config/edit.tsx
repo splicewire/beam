@@ -379,6 +379,26 @@ function DiffValue({ value, secret, inherit, struck }: { value: unknown; secret:
 }
 
 /**
+ * Which Release the draft bar adds to, and what happened. The live region is ALWAYS mounted (empty until something
+ * happens), so a screen reader announces the confirmation or the stale notice when it appears:
+ * - `target`: not added yet. Names the Release it would join (the host's first open draft).
+ * - `added`: the Release holds this section at its current draft.
+ * - `stale`: the Release holds an EARLIER draft of this section (a Save draft since); adding again re-pins it.
+ */
+function ReleaseNote({ release, state }: { release: ConfigReleaseTarget; state: 'target' | 'added' | 'stale' }) {
+    const m = useBeamUxMessages();
+    return (
+        <div data-config-release-target={release.id} data-config-release-state={state} className="text-xs text-muted-foreground">
+            {state === 'target' && <p>{m.t('splicewire-beam-ux::messages.config_release_target', { title: release.title })}</p>}
+            <p role="status" aria-live="polite" className="text-foreground">
+                {state === 'added' && m.t('splicewire-beam-ux::messages.config_added_to_release', { title: release.title })}
+                {state === 'stale' && m.t('splicewire-beam-ux::messages.config_release_stale', { title: release.title })}
+            </p>
+        </div>
+    );
+}
+
+/**
  * The sticky draft bar: what the row tier's draft changes, key by key, and the ways out of it: publish now, discard,
  * or add the section to the open Release (ticket 08: the Release publishes the override's pin with its page edits).
  */
@@ -396,8 +416,11 @@ export function DraftBar<K extends ResourceKey = ResourceKey>({
     const discard = useConfigOp(resource, 'discard-draft');
     const [adding, setAdding] = useState(false);
     const [releaseError, setReleaseError] = useState<Error | null>(null);
-    // the Release this section last joined (by id), so the confirmation names it and follows a change of target
-    const [joined, setJoined] = useState<string | null>(null);
+    // What this bar last added: the Release, the section, and the draft version the member then pinned (08's member pins
+    // the section's head draft). A later Save draft moves `pins.draft`, so the Release holds an EARLIER draft until the
+    // section is added again (08's `member` command re-pins an existing member to the head draft). Keyed by section, so
+    // another section in the same area never shows this one's confirmation.
+    const [joined, setJoined] = useState<{ release: string; root: string; draft: number | null } | null>(null);
     if (!hasPendingDraft(section) && section.overrides.length === 0) return null;
     const schema = section.schema as SchemaNode;
     const lines = keyDiff(section);
@@ -406,9 +429,10 @@ export function DraftBar<K extends ResourceKey = ResourceKey>({
         setAdding(true);
         setReleaseError(null);
         setJoined(null);
+        const draft = section.pins.draft;
         try {
             await target.command({ action: 'member', kind: RELEASE_KIND_CONFIG, ref: section.root });
-            setJoined(target.id);
+            setJoined({ release: target.id, root: section.root, draft });
         } catch (reason) {
             setReleaseError(reason instanceof Error ? reason : new Error(String(reason)));
         } finally {
@@ -440,15 +464,16 @@ export function DraftBar<K extends ResourceKey = ResourceKey>({
                 </div>
             </header>
             {release && (
-                <p data-config-release-target={release.id} className="text-xs text-muted-foreground">
-                    {joined === release.id ? (
-                        <span role="status" className="text-foreground">
-                            {m.t('splicewire-beam-ux::messages.config_added_to_release', { title: release.title })}
-                        </span>
-                    ) : (
-                        m.t('splicewire-beam-ux::messages.config_release_target', { title: release.title })
-                    )}
-                </p>
+                <ReleaseNote
+                    release={release}
+                    state={
+                        joined && joined.release === release.id && joined.root === section.root
+                            ? joined.draft === section.pins.draft
+                                ? 'added'
+                                : 'stale'
+                            : 'target'
+                    }
+                />
             )}
             <ol data-config-diff className="space-y-1">
                 {lines.map((line) => (

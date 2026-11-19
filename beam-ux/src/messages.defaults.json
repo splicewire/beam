@@ -328,6 +328,7 @@
   "splicewire-beam-ux::messages.config_overridable_up_to": "overridable up to :tier",
   "splicewire-beam-ux::messages.config_provider_written_keys": ":count key is written by a service provider at boot, so no file sets it.|:count keys are written by a service provider at boot, so no file sets them.",
   "splicewire-beam-ux::messages.config_publish": "Publish",
+  "splicewire-beam-ux::messages.config_release_stale": "“:title” holds an earlier draft of this section. Add it again to take this draft.",
   "splicewire-beam-ux::messages.config_release_target": "Joins “:title”, the first open draft Release.",
   "splicewire-beam-ux::messages.config_restore_as_draft": "Restore as draft",
   "splicewire-beam-ux::messages.config_save_draft": "Save draft",

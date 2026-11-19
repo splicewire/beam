@@ -159,12 +159,45 @@ describe('DraftBar', () => {
         const command = vi.fn(async () => ({ id: 'rel-1' }));
         render(<Provider><DraftBar resource="beam-config" section={SECTION} release={{ id: 'rel-1', title: 'Spring launch', command }} /></Provider>);
         expect(screen.getByText('Joins “Spring launch”, the first open draft Release.')).toBeTruthy();
-        expect(screen.queryByRole('status')).toBeNull();
+        // the live region is mounted EMPTY, so the confirmation is announced when it appears
+        expect(screen.getByRole('status').textContent).toBe('');
         fireEvent.click(await enabled('Add to the Release'));
         await waitFor(() => expect(command).toHaveBeenCalledTimes(1));
         expect(command).toHaveBeenCalledWith({ action: 'member', kind: RELEASE_KIND_CONFIG, ref: 'beam.ux' });
-        expect((await screen.findByRole('status')).textContent).toBe('Added to “Spring launch”.');
+        await waitFor(() => expect(screen.getByRole('status').textContent).toBe('Added to “Spring launch”.'));
         expect(invoke).not.toHaveBeenCalled();
+    });
+
+    it('says the Release holds an earlier draft after a Save draft since joining, and re-adding re-pins it', async () => {
+        const { Provider } = kit([SECTION]);
+        const command = vi.fn(async () => ({ id: 'rel-1' }));
+        const release = { id: 'rel-1', title: 'Spring launch', command };
+        const { rerender } = render(<Provider><DraftBar resource="beam-config" section={SECTION} release={release} /></Provider>);
+        fireEvent.click(await enabled('Add to the Release'));
+        await waitFor(() => expect(screen.getByRole('status').textContent).toBe('Added to “Spring launch”.'));
+
+        // a later Save draft moves the section's draft pin (2 -> 3): the Release still pins draft 2
+        const resaved = { ...SECTION, pins: { ...SECTION.pins, draft: 3 } };
+        rerender(<Provider><DraftBar resource="beam-config" section={resaved} release={release} /></Provider>);
+        expect(screen.getByRole('status').textContent).toBe('“Spring launch” holds an earlier draft of this section. Add it again to take this draft.');
+        expect(screen.queryByText('Added to “Spring launch”.')).toBeNull();
+
+        fireEvent.click(await enabled('Add to the Release'));
+        await waitFor(() => expect(command).toHaveBeenCalledTimes(2));
+        await waitFor(() => expect(screen.getByRole('status').textContent).toBe('Added to “Spring launch”.'));
+    });
+
+    it("never shows one section's confirmation on another section", async () => {
+        const { Provider } = kit([SECTION]);
+        const release = { id: 'rel-1', title: 'Spring launch', command: vi.fn(async () => ({ id: 'rel-1' })) };
+        const { rerender } = render(<Provider><DraftBar resource="beam-config" section={SECTION} release={release} /></Provider>);
+        fireEvent.click(await enabled('Add to the Release'));
+        await waitFor(() => expect(screen.getByRole('status').textContent).toBe('Added to “Spring launch”.'));
+
+        const other = { ...SECTION, id: 'beam.other', root: 'beam.other' };
+        rerender(<Provider><DraftBar resource="beam-config" section={other} release={release} /></Provider>);
+        expect(screen.getByRole('status').textContent).toBe('');
+        expect(screen.getByText('Joins “Spring launch”, the first open draft Release.')).toBeTruthy();
     });
 
     it("shows the Release command's refusal (message and field errors) beside the bar, and confirms nothing", async () => {
@@ -176,7 +209,7 @@ describe('DraftBar', () => {
         render(<Provider><DraftBar resource="beam-config" section={SECTION} release={{ id: 'rel-1', title: 'Spring launch', command }} /></Provider>);
         fireEvent.click(await enabled('Add to the Release'));
         expect(await screen.findByText('beam.ux has no pending draft.')).toBeTruthy();
-        expect(screen.queryByRole('status')).toBeNull();
+        expect(screen.getByRole('status').textContent).toBe('');
         expect(screen.getByText('Joins “Spring launch”, the first open draft Release.')).toBeTruthy();
     });
 
