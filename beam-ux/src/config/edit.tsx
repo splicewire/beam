@@ -8,7 +8,8 @@
  * - versions, and restoring one as the draft.
  *
  * Every write goes through frame's `useResourceAction`, which refetches the section after it succeeds, so the row is the
- * single source of what is pending. The server refuses what this UI does not offer (above the ceiling, a schema-invalid
+ * single source of what is pending. A control stays disabled until its op is declared for this realm in frame's
+ * manifest (the host mounts it), so nothing offers a write the server would not route. The server refuses what this UI does not offer (above the ceiling, a schema-invalid
  * value, a tenant lock); a refusal's message and field errors render beside the control.
  */
 import { useContext, useId, useState, type ReactNode } from 'react';
@@ -259,15 +260,15 @@ export function EditSlot<K extends ResourceKey = ResourceKey>({
             {!valid && <p className="text-xs text-destructive">{m.t('splicewire-beam-ux::messages.config_value_invalid')}</p>}
             <RefusalNote error={save.error} />
             <div className="flex flex-wrap gap-2">
-                <Button size="sm" disabled={!valid || save.pending} onClick={() => send('set')}>
+                <Button size="sm" disabled={!save.available || !valid || save.pending} onClick={() => send('set')}>
                     {m.t('splicewire-beam-ux::messages.config_save_draft')}
                 </Button>
                 {allowsNull(schema, keyData.pointer) && (
-                    <Button size="sm" variant="outline" disabled={save.pending} onClick={() => send('null')}>
+                    <Button size="sm" variant="outline" disabled={!save.available || save.pending} onClick={() => send('null')}>
                         {m.t('splicewire-beam-ux::messages.config_set_null')}
                     </Button>
                 )}
-                <Button size="sm" variant="ghost" disabled={save.pending} onClick={() => send('unset')}>
+                <Button size="sm" variant="ghost" disabled={!save.available || save.pending} onClick={() => send('unset')}>
                     <Undo2 className="mr-1 size-3.5" aria-hidden />
                     {m.t('splicewire-beam-ux::messages.config_inherit')}
                 </Button>
@@ -305,7 +306,7 @@ export function LockControl<K extends ResourceKey = ResourceKey>({
                         <Lock className="size-3" aria-hidden />
                         {m.t('splicewire-beam-ux::messages.config_locked_for_tenants', { reason: keyData.lock?.reason ?? '' })}
                     </p>
-                    <Button size="sm" variant="outline" disabled={lock.pending} onClick={() => lock.run({ root: section.root, pointer: keyData.pointer, locked: false })}>
+                    <Button size="sm" variant="outline" disabled={!lock.available || lock.pending} onClick={() => lock.run({ root: section.root, pointer: keyData.pointer, locked: false })}>
                         <LockOpen className="mr-1 size-3.5" aria-hidden />
                         {m.t('splicewire-beam-ux::messages.config_unlock')}
                     </Button>
@@ -319,7 +320,7 @@ export function LockControl<K extends ResourceKey = ResourceKey>({
                         onChange={(e) => setReason(e.target.value)}
                         className="h-8 min-w-0 flex-1"
                     />
-                    <Button size="sm" variant="outline" disabled={lock.pending || reason.trim() === ''} onClick={() => lock.run({ root: section.root, pointer: keyData.pointer, locked: true, reason })}>
+                    <Button size="sm" variant="outline" disabled={!lock.available || lock.pending || reason.trim() === ''} onClick={() => lock.run({ root: section.root, pointer: keyData.pointer, locked: true, reason })}>
                         <Lock className="mr-1 size-3.5" aria-hidden />
                         {m.t('splicewire-beam-ux::messages.config_lock_for_tenants')}
                     </Button>
@@ -370,16 +371,16 @@ export function DraftBar<K extends ResourceKey = ResourceKey>({
                         <Button
                             size="sm"
                             variant="outline"
-                            disabled={busy}
+                            disabled={busy || !releaseCommand.available}
                             onClick={() => releaseCommand.invoke({ id: release.id, data: { action: 'member', kind: RELEASE_KIND_CONFIG, ref: section.root } as never })}
                         >
                             {m.t('splicewire-beam-ux::messages.config_add_to_release')}
                         </Button>
                     )}
-                    <Button size="sm" variant="ghost" disabled={busy} onClick={() => discard.run({ root: section.root })}>
+                    <Button size="sm" variant="ghost" disabled={busy || !discard.available} onClick={() => discard.run({ root: section.root })}>
                         {m.t('splicewire-beam-ux::messages.config_discard_draft')}
                     </Button>
-                    <Button size="sm" disabled={busy} onClick={() => publish.run({ root: section.root })}>
+                    <Button size="sm" disabled={busy || !publish.available} onClick={() => publish.run({ root: section.root })}>
                         <Rocket className="mr-1 size-3.5" aria-hidden />
                         {m.t('splicewire-beam-ux::messages.config_publish')}
                     </Button>
@@ -420,7 +421,7 @@ export function VersionsPanel<K extends ResourceKey = ResourceKey>({ resource, s
                     <History className="size-3.5" aria-hidden />
                     {m.t('splicewire-beam-ux::messages.config_versions')}
                 </h3>
-                <Button size="sm" variant="ghost" disabled={versions.pending} onClick={() => versions.run({ root: section.root })}>
+                <Button size="sm" variant="ghost" disabled={!versions.available || versions.pending} onClick={() => versions.run({ root: section.root })}>
                     {m.t('splicewire-beam-ux::messages.config_show_versions')}
                 </Button>
             </header>
@@ -437,7 +438,7 @@ export function VersionsPanel<K extends ResourceKey = ResourceKey>({ resource, s
                                 {v.draft && ` · ${m.t('splicewire-beam-ux::messages.config_version_draft')}`}
                             </span>
                             {!v.draft && (
-                                <Button size="sm" variant="outline" className="h-7" disabled={restore.pending} onClick={() => restore.run({ root: section.root, version: v.version })}>
+                                <Button size="sm" variant="outline" className="h-7" disabled={!restore.available || restore.pending} onClick={() => restore.run({ root: section.root, version: v.version })}>
                                     {m.t('splicewire-beam-ux::messages.config_restore_as_draft')}
                                 </Button>
                             )}
