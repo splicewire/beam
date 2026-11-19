@@ -379,6 +379,24 @@ function DiffValue({ value, secret, inherit, struck }: { value: unknown; secret:
 }
 
 /**
+ * What the Release holds of this section, from what this bar last added and the section's pins now:
+ * - `added` or `stale` are only claimed while the section HAS a pending draft. After Discard draft or a direct
+ *   Publish nothing is pending, so neither is claimed: the bar shows only which Release it would join, with Add
+ *   disabled, since 08 refuses a member with no draft.
+ * - `added`: the pending draft is the one added.
+ * - `stale`: a newer pending draft than the one added (a Save draft since). Adding again re-pins the member.
+ */
+function releaseState(
+    joined: { release: string; root: string; draft: number | null } | null,
+    release: ConfigReleaseTarget,
+    section: ConfigSectionData,
+): 'target' | 'added' | 'stale' {
+    if (!joined || joined.release !== release.id || joined.root !== section.root || !hasPendingDraft(section)) return 'target';
+    if (section.pins.draft === joined.draft) return 'added';
+    return section.pins.draft !== null && joined.draft !== null && section.pins.draft > joined.draft ? 'stale' : 'target';
+}
+
+/**
  * Which Release the draft bar adds to, and what happened. The live region is ALWAYS mounted (empty until something
  * happens), so a screen reader announces the confirmation or the stale notice when it appears:
  * - `target`: not added yet. Names the Release it would join (the host's first open draft).
@@ -448,7 +466,8 @@ export function DraftBar<K extends ResourceKey = ResourceKey>({
                         <Button
                             size="sm"
                             variant="outline"
-                            disabled={busy}
+                            // 08 admits a config member only while the section has a pending draft (MemberNoDraft)
+                            disabled={busy || !hasPendingDraft(section)}
                             onClick={() => void addToRelease(release)}
                         >
                             {m.t('splicewire-beam-ux::messages.config_add_to_release')}
@@ -463,18 +482,7 @@ export function DraftBar<K extends ResourceKey = ResourceKey>({
                     </Button>
                 </div>
             </header>
-            {release && (
-                <ReleaseNote
-                    release={release}
-                    state={
-                        joined && joined.release === release.id && joined.root === section.root
-                            ? joined.draft === section.pins.draft
-                                ? 'added'
-                                : 'stale'
-                            : 'target'
-                    }
-                />
-            )}
+            {release && <ReleaseNote release={release} state={releaseState(joined, release, section)} />}
             <ol data-config-diff className="space-y-1">
                 {lines.map((line) => (
                     <li key={line.pointer} data-config-diff-line={line.pointer} className="grid grid-cols-[minmax(0,12rem)_minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2 text-xs">

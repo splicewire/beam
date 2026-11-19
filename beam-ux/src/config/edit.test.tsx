@@ -187,6 +187,34 @@ describe('DraftBar', () => {
         await waitFor(() => expect(screen.getByRole('status').textContent).toBe('Added to “Spring launch”.'));
     });
 
+    it.each([
+        // Discard draft: the draft is restored to the published version, so nothing is pending
+        ['Discard draft', { draft: 1, published: 1, draftPending: false }],
+        // a direct Publish: the pending draft became the published version, so nothing is pending
+        ['a direct Publish', { draft: 2, published: 2, draftPending: false }],
+    ] as const)('claims neither added nor an earlier draft after %s, and disables Add while nothing is pending', async (_what, pins) => {
+        const { Provider } = kit([SECTION]);
+        const release = { id: 'rel-1', title: 'Spring launch', command: vi.fn(async () => ({ id: 'rel-1' })) };
+        const { rerender } = render(<Provider><DraftBar resource="beam-config" section={SECTION} release={release} /></Provider>);
+        fireEvent.click(await enabled('Add to the Release'));
+        await waitFor(() => expect(screen.getByRole('status').textContent).toBe('Added to “Spring launch”.'));
+
+        const after = { ...SECTION, pins };
+        rerender(<Provider><DraftBar resource="beam-config" section={after} release={release} /></Provider>);
+        expect(screen.getByRole('status').textContent).toBe('');
+        expect(screen.queryByText(/holds an earlier draft/)).toBeNull();
+        expect(screen.getByText('Joins “Spring launch”, the first open draft Release.')).toBeTruthy();
+        expect((screen.getByRole('button', { name: 'Add to the Release' }) as HTMLButtonElement).disabled).toBe(true);
+    });
+
+    it('disables Add when the section has overrides but no pending draft', async () => {
+        const { Provider } = kit([SECTION]);
+        const idle = { ...SECTION, pins: { draft: 1, published: 1, draftPending: false } };
+        render(<Provider><DraftBar resource="beam-config" section={idle} release={{ id: 'rel-1', title: 'Spring launch', command: vi.fn() }} /></Provider>);
+        await enabled('Publish');
+        expect((screen.getByRole('button', { name: 'Add to the Release' }) as HTMLButtonElement).disabled).toBe(true);
+    });
+
     it("never shows one section's confirmation on another section", async () => {
         const { Provider } = kit([SECTION]);
         const release = { id: 'rel-1', title: 'Spring launch', command: vi.fn(async () => ({ id: 'rel-1' })) };
