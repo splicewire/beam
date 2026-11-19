@@ -237,8 +237,25 @@ function EditValue({
 /**
  * The inspector's edit slot for the row's tier: the key's pending draft, a value editor, and save / set null / inherit.
  * A key this realm may not edit renders no slot, except a tenant-locked key, which says why.
+ *
+ * The slot starts over whenever the section's pins move (config-sections 10b, flagship browser proof finding, lead
+ * ruling 21:21Z). Its editor is uncontrolled and its value, validity and dirty flag are seeded once from the draft or
+ * the live value. So without this a Discard left the DISCARDED draft in "Your value" as if it were the user's, and the
+ * next Save draft or Publish could ship a value nobody meant (the flagship run published one). Discard clears the draft
+ * pin, Publish moves the published pin, Restore and Save draft move the draft pin; each remounts the fields from the
+ * section as it now stands.
  */
-export function EditSlot<K extends ResourceKey = ResourceKey>({
+export function EditSlot<K extends ResourceKey = ResourceKey>(props: {
+    resource: K;
+    section: ConfigSectionData;
+    keyData: ConfigKeyData;
+    realm: ConfigRealm;
+}) {
+    const { pins } = props.section;
+    return <EditSlotFields key={`${pins.draft ?? '-'}:${pins.published ?? '-'}:${pins.draftPending ? 1 : 0}`} {...props} />;
+}
+
+function EditSlotFields<K extends ResourceKey = ResourceKey>({
     resource,
     section,
     keyData,

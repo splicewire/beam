@@ -126,6 +126,52 @@ describe('EditSlot', () => {
     });
 });
 
+// config-sections 10b (flagship browser proof finding, lead ruling 21:21Z): "Your value" must follow the section's pins.
+// The /mode editor is an uncontrolled enum <select> whose option values are the JSON-encoded choices (as the 'saves an
+// edited value' test above notes), so values read back JSON-quoted; live value 'strict'.| lenient; live value 'strict').
+describe('EditSlot after the pins move', () => {
+    const fieldValue = (container: HTMLElement) =>
+        (container.querySelector('[data-config-edit-slot] select, [data-config-edit-slot] textarea, [data-config-edit-slot] input') as HTMLSelectElement | null)?.value;
+    const withDraft = (value: string, draft: number): ConfigSectionData => ({
+        ...SECTION,
+        overrides: [{ pointer: '/mode', op: 'set', value, secret: false, set: true, setAt: null, revision: `r${draft}` }],
+        pins: { draft, published: 1, draftPending: true },
+    });
+    const live = (value: string, published: number): { section: ConfigSectionData; key: ConfigKeyData } => {
+        const key = { ...editable, value };
+        return { key, section: { ...SECTION, keys: SECTION.keys.map((k) => (k.pointer === '/mode' ? key : k)), overrides: [], pins: { draft: null, published, draftPending: false } } };
+    };
+
+    it('shows the LIVE value again after a Discard, not the discarded draft', () => {
+        const { Provider } = kit([SECTION]);
+        const { container, rerender } = render(<Provider><EditSlot resource="beam-config" section={withDraft('lenient', 2)} keyData={editable} realm="operator" /></Provider>);
+        expect(fieldValue(container)).toBe('"lenient"');
+        const discarded = live('strict', 1);
+        rerender(<Provider><EditSlot resource="beam-config" section={discarded.section} keyData={discarded.key} realm="operator" /></Provider>);
+        expect(fieldValue(container)).toBe('"strict"');
+    });
+
+    it('starts clean after a Publish: an edit typed before it is not left armed for the next Save draft', async () => {
+        const { Provider } = kit([SECTION]);
+        const before = live('strict', 1);
+        const { container, rerender } = render(<Provider><EditSlot resource="beam-config" section={before.section} keyData={before.key} realm="operator" /></Provider>);
+        fireEvent.change(screen.getByLabelText('Validation mode'), { target: { value: JSON.stringify('lenient') } });
+        expect(((await enabled('Save draft')) as HTMLButtonElement).disabled).toBe(false);
+        const published = live('lenient', 2);
+        rerender(<Provider><EditSlot resource="beam-config" section={published.section} keyData={published.key} realm="operator" /></Provider>);
+        expect(fieldValue(container)).toBe('"lenient"');
+        expect((screen.getByRole('button', { name: 'Save draft' }) as HTMLButtonElement).disabled).toBe(true);
+    });
+
+    it('shows a Restored draft, not the value it replaced', () => {
+        const { Provider } = kit([SECTION]);
+        const { container, rerender } = render(<Provider><EditSlot resource="beam-config" section={withDraft('lenient', 2)} keyData={editable} realm="operator" /></Provider>);
+        expect(fieldValue(container)).toBe('"lenient"');
+        rerender(<Provider><EditSlot resource="beam-config" section={withDraft('strict', 3)} keyData={editable} realm="operator" /></Provider>);
+        expect(fieldValue(container)).toBe('"strict"');
+    });
+});
+
 describe('LockControl', () => {
     it('unlocks with the lock op and locked:false, in the operator realm only', async () => {
         const locked = { ...editable, lock: { pointer: '/mode', reason: 'Policy', lockedAt: null } };
