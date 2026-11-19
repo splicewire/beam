@@ -128,7 +128,7 @@ describe('EditSlot', () => {
 
 // config-sections 10b (flagship browser proof finding, lead ruling 21:21Z): "Your value" must follow the section's pins.
 // The /mode editor is an uncontrolled enum <select> whose option values are the JSON-encoded choices (as the 'saves an
-// edited value' test above notes), so values read back JSON-quoted; live value 'strict'.| lenient; live value 'strict').
+// edited value' test above notes), so values read back JSON-quoted. The live value is 'strict'.
 describe('EditSlot after the pins move', () => {
     const fieldValue = (container: HTMLElement) =>
         (container.querySelector('[data-config-edit-slot] select, [data-config-edit-slot] textarea, [data-config-edit-slot] input') as HTMLSelectElement | null)?.value;
@@ -137,9 +137,11 @@ describe('EditSlot after the pins move', () => {
         overrides: [{ pointer: '/mode', op: 'set', value, secret: false, set: true, setAt: null, revision: `r${draft}` }],
         pins: { draft, published: 1, draftPending: true },
     });
-    const live = (value: string, published: number): { section: ConfigSectionData; key: ConfigKeyData } => {
+    // Wire-faithful pins (r10 NIT-1): after a Discard or a Publish the draft pin EQUALS the published one
+    // (laravel-beam ConfigOverrideStore::discardDraft / publish), e.g. {1,1,false} and {2,2,false}.
+    const live = (value: string, published: number, root = SECTION.root): { section: ConfigSectionData; key: ConfigKeyData } => {
         const key = { ...editable, value };
-        return { key, section: { ...SECTION, keys: SECTION.keys.map((k) => (k.pointer === '/mode' ? key : k)), overrides: [], pins: { draft: null, published, draftPending: false } } };
+        return { key, section: { ...SECTION, root, keys: SECTION.keys.map((k) => (k.pointer === '/mode' ? key : k)), overrides: [], pins: { draft: published, published, draftPending: false } } };
     };
 
     it('shows the LIVE value again after a Discard, not the discarded draft', () => {
@@ -160,6 +162,23 @@ describe('EditSlot after the pins move', () => {
         const published = live('lenient', 2);
         rerender(<Provider><EditSlot resource="beam-config" section={published.section} keyData={published.key} realm="operator" /></Provider>);
         expect(fieldValue(container)).toBe('"lenient"');
+        // r10 SHOULD-2: wait for the ops to be available first, so "disabled" can only mean "not dirty".
+        await enabled('Inherit');
+        expect((screen.getByRole('button', { name: 'Save draft' }) as HTMLButtonElement).disabled).toBe(true);
+    });
+
+    // r10 SHOULD-1: switching to ANOTHER section whose pins happen to be equal and which has a key at the same pointer
+    // must not carry the old field (and its dirty edit) over: Save draft would write it to the NEW section's root.
+    it('starts over when the section changes, even with equal pins and a shared pointer', async () => {
+        const { Provider } = kit([SECTION]);
+        const first = live('strict', 1, 'beam.ux');
+        const { container, rerender } = render(<Provider><EditSlot resource="beam-config" section={first.section} keyData={first.key} realm="operator" /></Provider>);
+        fireEvent.change(screen.getByLabelText('Validation mode'), { target: { value: JSON.stringify('lenient') } });
+        expect(((await enabled('Save draft')) as HTMLButtonElement).disabled).toBe(false);
+        const other = live('strict', 1, 'beam.other');
+        rerender(<Provider><EditSlot resource="beam-config" section={other.section} keyData={other.key} realm="operator" /></Provider>);
+        expect(fieldValue(container)).toBe('"strict"');
+        await enabled('Inherit');
         expect((screen.getByRole('button', { name: 'Save draft' }) as HTMLButtonElement).disabled).toBe(true);
     });
 

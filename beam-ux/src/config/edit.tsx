@@ -243,7 +243,9 @@ function EditValue({
  * the live value. So without this a Discard left the DISCARDED draft in "Your value" as if it were the user's, and the
  * next Save draft or Publish could ship a value nobody meant (the flagship run published one). Discard clears the draft
  * pin, Publish moves the published pin, Restore and Save draft move the draft pin; each remounts the fields from the
- * section as it now stands.
+ * section as it now stands. The key also carries the section's root and the realm (review r10 SHOULD-1): switching to
+ * another section whose pins happen to be equal and which has a key at the same pointer must start over too, or a dirty
+ * edit would Save into the NEW section's root.
  */
 export function EditSlot<K extends ResourceKey = ResourceKey>(props: {
     resource: K;
@@ -251,8 +253,8 @@ export function EditSlot<K extends ResourceKey = ResourceKey>(props: {
     keyData: ConfigKeyData;
     realm: ConfigRealm;
 }) {
-    const { pins } = props.section;
-    return <EditSlotFields key={`${pins.draft ?? '-'}:${pins.published ?? '-'}:${pins.draftPending ? 1 : 0}`} {...props} />;
+    const { root, pins } = props.section;
+    return <EditSlotFields key={`${root}:${props.realm}:${pins.draft ?? '-'}:${pins.published ?? '-'}:${pins.draftPending ? 1 : 0}`} {...props} />;
 }
 
 function EditSlotFields<K extends ResourceKey = ResourceKey>({
