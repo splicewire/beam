@@ -8,6 +8,7 @@ import { createMemoryTransport } from '@schemastud/frame/testing';
 import { ConfigFields, useConfigValue } from './bind';
 import { admitsTenant, keyFor, resolveConfigValue, sectionForRealm, valueAt } from './model';
 import { APP_CHAT, BEAM_UX, SECRET_CANARY } from './ConfigArea.fixtures';
+import type { ConfigSectionData } from './model';
 
 afterEach(cleanup);
 
@@ -51,7 +52,7 @@ describe('resolving a pointer', () => {
     });
 });
 
-function kit(rows: unknown[]) {
+function kit(rows: ConfigSectionData[]) {
     const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     return createFrameKit({ queryClient, transport: createMemoryTransport({ rows: { 'beam-config': rows } }), urlState: 'memory' });
 }

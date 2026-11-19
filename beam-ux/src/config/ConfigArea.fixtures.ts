@@ -53,6 +53,7 @@ export const BEAM_UX: ConfigSectionData = {
             secret: false,
             set: true,
             merge: 'replace',
+            lock: null,
         },
         {
             pointer: '/mode',
@@ -67,6 +68,7 @@ export const BEAM_UX: ConfigSectionData = {
             secret: false,
             set: true,
             merge: 'replace',
+            lock: null,
         },
         {
             pointer: '/theme',
@@ -81,6 +83,7 @@ export const BEAM_UX: ConfigSectionData = {
             secret: false,
             set: true,
             merge: 'replace',
+            lock: null,
         },
         {
             pointer: '/legacy_blocks',
@@ -98,6 +101,7 @@ export const BEAM_UX: ConfigSectionData = {
             secret: false,
             set: true,
             merge: 'replace',
+            lock: null,
         },
         {
             pointer: '/site/artifact_root',
@@ -115,6 +119,7 @@ export const BEAM_UX: ConfigSectionData = {
             secret: false,
             set: true,
             merge: 'replace',
+            lock: null,
         },
         {
             pointer: '/site/reserved_prefixes',
@@ -133,10 +138,15 @@ export const BEAM_UX: ConfigSectionData = {
             secret: false,
             set: true,
             merge: 'extend',
+            lock: null,
         },
     ],
     shadowedPackageKeys: ['/site/artifact_root'],
     counts: { keys: 6, overridable: 2, deploy: 4, secrets: 0, envBound: 1 },
+    overrides: [],
+    pins: { draft: null, published: null, draftPending: false },
+    notice: null,
+    tier: 'operator',
 };
 
 const CHAT_HOST = 'config/app/chat.php';
@@ -173,6 +183,7 @@ export const APP_CHAT: ConfigSectionData = {
             secret: true,
             set: true,
             merge: 'replace',
+            lock: null,
         },
         {
             pointer: '/default_model',
@@ -187,6 +198,7 @@ export const APP_CHAT: ConfigSectionData = {
             secret: false,
             set: true,
             merge: 'replace',
+            lock: null,
         },
         {
             pointer: '/google.cse.query/limit',
@@ -201,10 +213,15 @@ export const APP_CHAT: ConfigSectionData = {
             secret: false,
             set: true,
             merge: 'replace',
+            lock: null,
         },
     ],
     shadowedPackageKeys: [],
     counts: { keys: 3, overridable: 1, deploy: 2, secrets: 1, envBound: 2 },
+    overrides: [],
+    pins: { draft: null, published: null, draftPending: false },
+    notice: null,
+    tier: 'operator',
 };
 
 export const BEAM_TENANCY: ConfigSectionData = {
@@ -230,10 +247,15 @@ export const BEAM_TENANCY: ConfigSectionData = {
             secret: false,
             set: true,
             merge: 'replace',
+            lock: null,
         },
     ],
     shadowedPackageKeys: [],
     counts: { keys: 1, overridable: 0, deploy: 1, secrets: 0, envBound: 0 },
+    overrides: [],
+    pins: { draft: null, published: null, draftPending: false },
+    notice: null,
+    tier: 'operator',
 };
 
 export const CONFIG_SECTIONS: ConfigSectionData[] = [APP_CHAT, BEAM_UX, BEAM_TENANCY];

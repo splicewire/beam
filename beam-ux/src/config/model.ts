@@ -10,11 +10,29 @@ import type {
     ConfigEffect,
     ConfigKeyData,
     ConfigLayerData,
+    ConfigLockData,
+    ConfigOverrideData,
+    ConfigOverrideOp,
+    ConfigPinsData,
     ConfigSectionData,
     ConfigTier,
+    ConfigVersionData,
+    ConfigVersionsData,
 } from '@splicewire/beam-resources/types/config';
 
-export type { ConfigEffect, ConfigKeyData, ConfigLayerData, ConfigSectionData, ConfigTier };
+export type {
+    ConfigEffect,
+    ConfigKeyData,
+    ConfigLayerData,
+    ConfigLockData,
+    ConfigOverrideData,
+    ConfigOverrideOp,
+    ConfigPinsData,
+    ConfigSectionData,
+    ConfigTier,
+    ConfigVersionData,
+    ConfigVersionsData,
+};
 
 /** The ladder, bottom-up, in the order laravel-beam's `ConfigTier` declares it. */
 export const TIER_ORDER: readonly ConfigTier[] = ['package', 'host', 'provider', 'operator', 'tenant'];
@@ -255,6 +273,75 @@ export function resolveConfigValue(section: ConfigSectionData, pointer: string):
     if (key?.secret) return { value: undefined, key, secret: true, set: key.set };
     const value = valueAt(section, pointer);
     return { value, key, secret: false, set: value !== undefined };
+}
+
+/* ─────────────── binding: drafts, the diff, locks (config-sections 10b, over 05/07's row) ─────────────── */
+
+/** The row tier's pending draft op on a pointer, if it has one (the row's `overrides` are that tier's sparse draft). */
+export function draftFor(section: ConfigSectionData, pointer: string): ConfigOverrideData | undefined {
+    return section.overrides.find((o) => o.pointer === pointer);
+}
+
+/** Whether the row tier holds a draft that publishing would promote. */
+export function hasPendingDraft(section: ConfigSectionData): boolean {
+    return section.pins.draftPending;
+}
+
+/** A key is locked for the tier below the operator: an operator lock with its reason (ticket 07). */
+export function isLocked(key: ConfigKeyData): boolean {
+    return key.lock !== null;
+}
+
+/**
+ * Whether this realm may edit the key: it is overridable, not deploy-only, its ceiling admits the row's tier, and in the
+ * tenant realm no operator lock holds it. The server refuses the same writes; this only decides what the UI offers.
+ */
+export function canEdit(section: ConfigSectionData, key: ConfigKeyData, realm: ConfigRealm): boolean {
+    if (!key.overridable || key.effect === 'deploy') return false;
+    if (TIER_ORDER.indexOf(key.ceiling) < TIER_ORDER.indexOf(section.tier)) return false;
+    if (realm === 'tenant' && isLocked(key)) return false;
+    return true;
+}
+
+/** Whether the section schema lets the key hold an explicit null (`type` lists `null`, or `nullable: true`). */
+export function allowsNull(schema: SchemaNode, pointer: string): boolean {
+    const node = nodeAt(schema, pointer);
+    if (!node) return false;
+    const type = node.type;
+    return node.nullable === true || type === 'null' || (Array.isArray(type) && type.includes('null'));
+}
+
+/** One line of the key-level diff: what the draft does to a pointer, against the effective value now. */
+export interface KeyDiffLine {
+    pointer: string;
+    op: ConfigOverrideOp;
+    /** The effective value now; undefined for a secret. */
+    from: unknown;
+    /** The value the draft sets (`set`), null (`null`); undefined for `unset`, which falls back to the tier below. */
+    to: unknown;
+    secret: boolean;
+}
+
+/** The draft as a key-level diff, in the order the row lists its overrides. A secret's values never appear. */
+export function keyDiff(section: ConfigSectionData): KeyDiffLine[] {
+    return section.overrides.map((o) => {
+        const secret = o.secret || keyFor(section, o.pointer)?.secret === true;
+        return {
+            pointer: o.pointer,
+            op: o.op,
+            from: secret ? undefined : valueAt(section, o.pointer),
+            to: secret || o.op === 'unset' ? undefined : o.op === 'null' ? null : o.value,
+            secret,
+        };
+    });
+}
+
+/**
+ * The JSON text `save-draft` takes for a `set` (laravel-beam `ConfigSaveDraftInputData::$value` is JSON, so one form
+ * writes any type the section schema declares).
+ */
+export function toDraftValue(value: unknown): string {
+    return JSON.stringify(value === undefined ? null : value);
 }
 
 /** What to change, and where, for a key no override can reach: its env var, its host file, or the provider. */
