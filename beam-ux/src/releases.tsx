@@ -72,6 +72,8 @@ export interface ReleaseCommand {
     | "rotate-links";
   entryId?: string;
   ref?: string | null;
+  /** Ticket 08: a non-entry member's kind (e.g. `config-override`, with `ref` the config root); see `ReleaseCommandData`. */
+  kind?: string | null;
   redirectTarget?: string | null;
   dueAt?: string;
   timezone?: string;

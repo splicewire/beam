@@ -7,9 +7,11 @@
  * - the sticky draft bar: the key-level diff, publish, discard, and "add to Release" when a Release is open;
  * - versions, and restoring one as the draft.
  *
- * Every write goes through frame's `useResourceAction`, which refetches the section after it succeeds, so the row is the
- * single source of what is pending. A control stays disabled until its op is declared for this realm in frame's
- * manifest (the host mounts it), so nothing offers a write the server would not route. The server refuses what this UI does not offer (above the ceiling, a schema-invalid
+ * Every `beam-config` write goes through frame's `useResourceAction`, which refetches the section after it succeeds, so the
+ * row is the single source of what is pending. A control stays disabled until its op is declared for this realm in frame's
+ * manifest (the host mounts it), so nothing offers a write the server would not route. Each op's payload is typed by its
+ * generated input (`ConfigOpInputs`). The Release command is not a frame action (beam-ux's `ReleaseCommandOp` declares no
+ * affordance), so the host hands the draft bar a callback that runs it, as its Release pages already do. The server refuses what this UI does not offer (above the ceiling, a schema-invalid
  * value, a tenant lock); a refusal's message and field errors render beside the control.
  */
 import { useContext, useId, useState, type ReactNode } from 'react';
@@ -41,24 +43,51 @@ import {
     type ConfigVersionData,
     type ConfigVersionsData,
 } from './model';
+import type {
+    ConfigLockInputData,
+    ConfigRestoreInputData,
+    ConfigSaveDraftInputData,
+    ConfigSectionRefInputData,
+} from '@splicewire/beam-resources/types/config';
 import { PlainValue, SecretValue } from './parts';
 import { useBeamUxMessages } from '../messages.js';
+import type { ReleaseCommand } from '../releases.js';
 
 /** beam-ux's Release member kind for a config override (laravel-beam-ux `BeamUxReleaseMember::KIND_CONFIG`). */
 export const RELEASE_KIND_CONFIG = 'config-override';
 
-/** An open Release the draft bar can add the section to: its resource as mounted, and its id. */
+/**
+ * An open Release the draft bar can add the section to. The host resolves which Release is open (a `draft` one in this
+ * realm) and runs its `command` op through its own route, as its Release pages do: beam-ux's `ReleaseCommandOp` is not a
+ * frame action, so there is no manifest entry for `useResourceAction` to find.
+ */
 export interface ConfigReleaseTarget {
-    resource: ResourceKey;
     id: string;
+    command: (command: ReleaseCommand) => Promise<unknown>;
 }
 
-/** A `beam-config` op as a typed call. The op names are laravel-beam's (`src/Particle/Ops/Config`). */
-function useConfigOp<K extends ResourceKey>(resource: K, name: string) {
-    const call = useResourceAction(resource, name as ActionKeyOf<K>);
+/**
+ * Each `beam-config` op's input, from the generated `beam-config` slice (laravel-beam's `src/Particle/Ops/Config`), so
+ * a renamed or retyped field fails to compile here rather than as a 422 at runtime.
+ */
+export interface ConfigOpInputs {
+    'save-draft': ConfigSaveDraftInputData;
+    publish: ConfigSectionRefInputData;
+    'discard-draft': ConfigSectionRefInputData;
+    versions: ConfigSectionRefInputData;
+    restore: ConfigRestoreInputData;
+    lock: ConfigLockInputData;
+}
+
+/**
+ * A `beam-config` op as a typed call. The caller is checked against the generated input above. The one remaining cast
+ * is into frame's own key/input types, which a component generic over `K` cannot name for a concrete op.
+ */
+function useConfigOp<K extends ResourceKey, N extends keyof ConfigOpInputs>(resource: K, name: N) {
+    const call = useResourceAction(resource, name as unknown as ActionKeyOf<K>);
     return {
         ...call,
-        run: (data: Record<string, unknown>) => call.invoke({ data: data as ActionInputOf<K, ActionKeyOf<K>> }),
+        run: (data: ConfigOpInputs[N]) => call.invoke({ data: data as unknown as ActionInputOf<K, ActionKeyOf<K>> }),
     };
 }
 
@@ -224,6 +253,10 @@ export function EditSlot<K extends ResourceKey = ResourceKey>({
     const start = draft?.op === 'set' && !draft.secret ? draft.value : keyData.secret ? undefined : keyData.value;
     const [value, setValue] = useState<unknown>(start);
     const [valid, setValid] = useState(true);
+    // Save writes only an edited value. A secret is never prefilled, so an untouched Save would post `null` and, once
+    // published, wipe the credential; for any other key it would append a no-op revision. Clearing a secret on purpose
+    // is not offered here (out of scope for 10b): `null` is "Set to null" where the schema allows it.
+    const [dirty, setDirty] = useState(false);
     if (!canEdit(section, keyData, realm)) {
         if (realm === 'tenant' && keyData.lock) {
             return (
@@ -255,12 +288,13 @@ export function EditSlot<K extends ResourceKey = ResourceKey>({
                 onChange={(next, ok) => {
                     setValue(next);
                     setValid(ok);
+                    setDirty(true);
                 }}
             />
             {!valid && <p className="text-xs text-destructive">{m.t('splicewire-beam-ux::messages.config_value_invalid')}</p>}
             <RefusalNote error={save.error} />
             <div className="flex flex-wrap gap-2">
-                <Button size="sm" disabled={!save.available || !valid || save.pending} onClick={() => send('set')}>
+                <Button size="sm" disabled={!save.available || !dirty || !valid || save.pending} onClick={() => send('set')}>
                     {m.t('splicewire-beam-ux::messages.config_save_draft')}
                 </Button>
                 {allowsNull(schema, keyData.pointer) && (
@@ -306,7 +340,7 @@ export function LockControl<K extends ResourceKey = ResourceKey>({
                         <Lock className="size-3" aria-hidden />
                         {m.t('splicewire-beam-ux::messages.config_locked_for_tenants', { reason: keyData.lock?.reason ?? '' })}
                     </p>
-                    <Button size="sm" variant="outline" disabled={!lock.available || lock.pending} onClick={() => lock.run({ root: section.root, pointer: keyData.pointer, locked: false })}>
+                    <Button size="sm" variant="outline" disabled={!lock.available || lock.pending} onClick={() => lock.run({ root: section.root, pointer: keyData.pointer, locked: false, reason: null })}>
                         <LockOpen className="mr-1 size-3.5" aria-hidden />
                         {m.t('splicewire-beam-ux::messages.config_unlock')}
                     </Button>
@@ -357,11 +391,23 @@ export function DraftBar<K extends ResourceKey = ResourceKey>({
     const m = useBeamUxMessages();
     const publish = useConfigOp(resource, 'publish');
     const discard = useConfigOp(resource, 'discard-draft');
-    const releaseCommand = useResourceAction(release?.resource ?? resource, 'command' as ActionKeyOf<ResourceKey>);
+    const [adding, setAdding] = useState(false);
+    const [releaseError, setReleaseError] = useState<Error | null>(null);
     if (!hasPendingDraft(section) && section.overrides.length === 0) return null;
     const schema = section.schema as SchemaNode;
     const lines = keyDiff(section);
-    const busy = publish.pending || discard.pending || releaseCommand.pending;
+    const busy = publish.pending || discard.pending || adding;
+    const addToRelease = async (target: ConfigReleaseTarget) => {
+        setAdding(true);
+        setReleaseError(null);
+        try {
+            await target.command({ action: 'member', kind: RELEASE_KIND_CONFIG, ref: section.root });
+        } catch (reason) {
+            setReleaseError(reason instanceof Error ? reason : new Error(String(reason)));
+        } finally {
+            setAdding(false);
+        }
+    };
     return (
         <section data-config-draft-bar aria-label={m.t('splicewire-beam-ux::messages.config_draft_bar')} className="sticky top-0 z-10 space-y-2 rounded-lg border bg-card p-3 shadow-sm">
             <header className="flex flex-wrap items-center justify-between gap-2">
@@ -371,8 +417,8 @@ export function DraftBar<K extends ResourceKey = ResourceKey>({
                         <Button
                             size="sm"
                             variant="outline"
-                            disabled={busy || !releaseCommand.available}
-                            onClick={() => releaseCommand.invoke({ id: release.id, data: { action: 'member', kind: RELEASE_KIND_CONFIG, ref: section.root } as never })}
+                            disabled={busy}
+                            onClick={() => void addToRelease(release)}
                         >
                             {m.t('splicewire-beam-ux::messages.config_add_to_release')}
                         </Button>
@@ -396,7 +442,7 @@ export function DraftBar<K extends ResourceKey = ResourceKey>({
                     </li>
                 ))}
             </ol>
-            <RefusalNote error={publish.error ?? discard.error ?? releaseCommand.error} />
+            <RefusalNote error={publish.error ?? discard.error ?? releaseError} />
         </section>
     );
 }

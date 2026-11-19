@@ -5,7 +5,7 @@ import { QueryClient } from '@tanstack/react-query';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createFrameKit, type FrameManifest } from '@schemastud/frame';
 import { createMemoryTransport } from '@schemastud/frame/testing';
-import { DraftBar, EditSlot, LockControl, RELEASE_KIND_CONFIG } from './edit';
+import { DraftBar, EditSlot, LockControl, RELEASE_KIND_CONFIG, VersionsPanel } from './edit';
 import { APP_CHAT, BEAM_UX, SECRET_CANARY } from './ConfigArea.fixtures';
 import { BEAM_CONFIG_MANIFEST } from './ConfigArea.manifest.fixtures';
 import type { ConfigKeyData, ConfigSectionData } from './model';
@@ -19,7 +19,7 @@ async function enabled(name: string): Promise<HTMLElement> {
     return button;
 }
 
-const OPS = ['save-draft', 'publish', 'discard-draft', 'restore', 'lock'];
+const OPS = ['save-draft', 'publish', 'discard-draft', 'versions', 'restore', 'lock'];
 
 /**
  * The beam-config manifest with the ops declared as actions on its CONTEXT entry (what frame's `manifestFor` returns), each
@@ -31,12 +31,19 @@ function manifestWithOps(): FrameManifest {
     const config = m.contexts['beam-config']!;
     config.actions = OPS.map((key) => action(key, 'resource', `/beam-config/${key}`));
     config.can = { actions: Object.fromEntries(OPS.map((key) => [key, true])) };
-    m.contexts['beam-ux-release'] = { ...config, actions: [action('command', 'record', '/beam-ux-release/{id}/command')], can: { actions: { command: true } } };
+    // No `beam-ux-release` context: the Release command is not a frame action on the server, so the test does not
+    // pretend it is. The draft bar takes the host's callback instead.
     return m as unknown as FrameManifest;
 }
 
 function kit(rows: ConfigSectionData[]) {
-    const invoke = vi.fn(async (action: { key: string }, target: { id?: string | null; data: unknown }) => ({ message: `${action.key} done`, data: null, _target: target }));
+    const invoke = vi.fn(
+        async (action: { key: string }, target: { id?: string | null; data: unknown }): Promise<{ message: string; data: unknown; _target: unknown }> => ({
+            message: `${action.key} done`,
+            data: null,
+            _target: target,
+        }),
+    );
     const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     const transport = createMemoryTransport({ rows: { 'beam-config': rows }, manifest: manifestWithOps() }, { invoke });
     return { invoke, ...createFrameKit({ queryClient, transport, urlState: 'memory' }) };
@@ -52,14 +59,42 @@ const SECTION: ConfigSectionData = {
 };
 
 describe('EditSlot', () => {
-    it("saves a draft 'set' as the JSON text save-draft takes", async () => {
+    it("saves an edited value as a draft 'set', as the JSON text save-draft takes", async () => {
         const { Provider, invoke } = kit([SECTION]);
         render(<Provider><EditSlot resource="beam-config" section={SECTION} keyData={editable} realm="operator" /></Provider>);
+        // the enum control's option values are the JSON-encoded choices
+        fireEvent.change(screen.getByLabelText('Validation mode'), { target: { value: JSON.stringify('lenient') } });
         fireEvent.click(await enabled('Save draft'));
         await waitFor(() => expect(invoke).toHaveBeenCalled());
         const [action, target] = invoke.mock.calls[0]!;
         expect(action.key).toBe('save-draft');
-        expect(target.data).toEqual({ root: 'beam.ux', pointer: '/mode', op: 'set', value: JSON.stringify('review') });
+        expect(target.data).toEqual({ root: 'beam.ux', pointer: '/mode', op: 'set', value: JSON.stringify('lenient') });
+    });
+
+    it('keeps Save disabled until the value is edited, so an untouched Save writes nothing', async () => {
+        const { Provider, invoke } = kit([SECTION]);
+        render(<Provider><EditSlot resource="beam-config" section={SECTION} keyData={editable} realm="operator" /></Provider>);
+        await enabled('Inherit'); // the manifest has loaded: every declared op is available now
+        const save = screen.getByRole('button', { name: 'Save draft' }) as HTMLButtonElement;
+        expect(save.disabled).toBe(true);
+        fireEvent.click(save);
+        expect(invoke).not.toHaveBeenCalled();
+    });
+
+    it("never saves an untouched secret (which would draft it to null and wipe it on publish), and saves what is typed", async () => {
+        const secret = { ...APP_CHAT.keys.find((k) => k.secret)!, overridable: true, effect: 'live' as const, ceiling: 'operator' as const };
+        const section = { ...APP_CHAT, keys: [secret] };
+        const { Provider, invoke } = kit([section]);
+        const { container } = render(<Provider><EditSlot resource="beam-config" section={section} keyData={secret} realm="operator" /></Provider>);
+        await enabled('Inherit');
+        const save = screen.getByRole('button', { name: 'Save draft' }) as HTMLButtonElement;
+        expect(save.disabled).toBe(true);
+        fireEvent.click(save);
+        expect(invoke).not.toHaveBeenCalled();
+        fireEvent.change(container.querySelector('input[type="password"]')!, { target: { value: 'sk-new' } });
+        fireEvent.click(await enabled('Save draft'));
+        await waitFor(() => expect(invoke).toHaveBeenCalledTimes(1));
+        expect(invoke.mock.calls[0]![1].data).toEqual({ root: section.root, pointer: secret.pointer, op: 'set', value: JSON.stringify('sk-new') });
     });
 
     it("inherits with an 'unset' and no value", async () => {
@@ -99,7 +134,7 @@ describe('LockControl', () => {
         fireEvent.click(await enabled('Unlock'));
         await waitFor(() => expect(invoke).toHaveBeenCalled());
         expect(invoke.mock.calls[0]![0].key).toBe('lock');
-        expect(invoke.mock.calls[0]![1].data).toEqual({ root: 'beam.ux', pointer: '/mode', locked: false });
+        expect(invoke.mock.calls[0]![1].data).toEqual({ root: 'beam.ux', pointer: '/mode', locked: false, reason: null });
         rerender(<Provider><LockControl resource="beam-config" section={SECTION} keyData={locked} realm="tenant" /></Provider>);
         expect(container.querySelector('[data-config-lock]')).toBeNull();
     });
@@ -119,19 +154,60 @@ describe('DraftBar', () => {
         expect(invoke.mock.calls[1]![0].key).toBe('discard-draft');
     });
 
-    it('adds the section to the open Release as a config-override member', async () => {
+    it("adds the section to the open Release as a config-override member, through the host's Release command", async () => {
         const { Provider, invoke } = kit([SECTION]);
-        render(<Provider><DraftBar resource="beam-config" section={SECTION} release={{ resource: 'beam-ux-release', id: 'rel-1' }} /></Provider>);
+        const command = vi.fn(async () => ({ id: 'rel-1' }));
+        render(<Provider><DraftBar resource="beam-config" section={SECTION} release={{ id: 'rel-1', command }} /></Provider>);
         fireEvent.click(await enabled('Add to the Release'));
-        await waitFor(() => expect(invoke).toHaveBeenCalled());
-        const [action, target] = invoke.mock.calls[0]!;
-        expect(action.key).toBe('command');
-        expect(target).toMatchObject({ id: 'rel-1', data: { action: 'member', kind: RELEASE_KIND_CONFIG, ref: 'beam.ux' } });
+        await waitFor(() => expect(command).toHaveBeenCalledTimes(1));
+        expect(command).toHaveBeenCalledWith({ action: 'member', kind: RELEASE_KIND_CONFIG, ref: 'beam.ux' });
+        expect(invoke).not.toHaveBeenCalled();
+    });
+
+    it("shows the Release command's refusal beside the bar", async () => {
+        const { Provider } = kit([SECTION]);
+        const command = vi.fn(async () => {
+            throw new Error('This Release is not a draft.');
+        });
+        render(<Provider><DraftBar resource="beam-config" section={SECTION} release={{ id: 'rel-1', command }} /></Provider>);
+        fireEvent.click(await enabled('Add to the Release'));
+        expect(await screen.findByText('This Release is not a draft.')).toBeTruthy();
+    });
+
+    it('offers no Release control without an open Release', async () => {
+        const { Provider } = kit([SECTION]);
+        render(<Provider><DraftBar resource="beam-config" section={SECTION} /></Provider>);
+        await enabled('Publish');
+        expect(screen.queryByRole('button', { name: 'Add to the Release' })).toBeNull();
     });
 
     it('renders nothing with no draft', () => {
         const { Provider } = kit([BEAM_UX]);
         const { container } = render(<Provider><DraftBar resource="beam-config" section={BEAM_UX} /></Provider>);
         expect(container.querySelector('[data-config-draft-bar]')).toBeNull();
+    });
+});
+
+describe('VersionsPanel', () => {
+    it("lists versions with the versions op and restores one with {root, version}", async () => {
+        const { Provider, invoke } = kit([SECTION]);
+        invoke.mockImplementation(async (action: { key: string }, target: { id?: string | null; data: unknown }) =>
+            action.key === 'versions'
+                ? { message: 'ok', data: { versions: [
+                    { id: 'v2', version: 2, label: null, published: true, draft: false },
+                    { id: 'v3', version: 3, label: null, published: false, draft: true },
+                ] }, _target: target }
+                : { message: `${action.key} done`, data: null, _target: target });
+        const { container } = render(<Provider><VersionsPanel resource="beam-config" section={SECTION} /></Provider>);
+        fireEvent.click(await enabled('Show versions'));
+        await waitFor(() => expect(container.querySelector('[data-config-version="2"]')).not.toBeNull());
+        expect(invoke.mock.calls[0]![0].key).toBe('versions');
+        expect(invoke.mock.calls[0]![1].data).toEqual({ root: 'beam.ux' });
+        // the draft version offers no restore; the published one does
+        expect(container.querySelector('[data-config-version="3"] button')).toBeNull();
+        fireEvent.click(await enabled('Restore as draft'));
+        await waitFor(() => expect(invoke).toHaveBeenCalledTimes(2));
+        expect(invoke.mock.calls[1]![0].key).toBe('restore');
+        expect(invoke.mock.calls[1]![1].data).toEqual({ root: 'beam.ux', version: 2 });
     });
 });

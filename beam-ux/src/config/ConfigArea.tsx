@@ -67,7 +67,10 @@ export interface ConfigAreaProps<K extends ResourceKey = ResourceKey> {
     onSectionChange?: (id: string | null) => void;
     /** The realm the host mounts this area in: the operator realm (central tier) or a tenant's (ticket 07). */
     realm?: ConfigRealm;
-    /** An open Release the draft bar can add a section's draft to (ticket 08), when beam-ux's Releases are mounted. */
+    /**
+     * An open Release the draft bar can add a section's draft to (ticket 08), when beam-ux's Releases are mounted: its id
+     * and the host's runner for that Release's `command` op. Without it the draft bar offers no Release control.
+     */
     release?: ConfigReleaseTarget;
     className?: string;
 }
