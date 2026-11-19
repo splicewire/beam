@@ -1047,6 +1047,9 @@ importers:
       '@schemastud/nav':
         specifier: github:schemastud/js#ea1bb1a06d83de66164e19f9b6798342ed2a8c51&path:/nav
         version: https://codeload.github.com/schemastud/js/tar.gz/ea1bb1a06d83de66164e19f9b6798342ed2a8c51#path:/nav(react@19.2.7)
+      '@schemastud/registry':
+        specifier: github:schemastud/js#a50cd2805f696b59cbe4882e22df40c7149666e2&path:/registry
+        version: https://codeload.github.com/schemastud/js/tar.gz/a50cd2805f696b59cbe4882e22df40c7149666e2#path:/registry
       '@schemastud/seam':
         specifier: github:schemastud/js#aae63180fd740d3a9497fa2a12e7fbc7c206bc92&path:/seam
         version: https://codeload.github.com/schemastud/js/tar.gz/aae63180fd740d3a9497fa2a12e7fbc7c206bc92#path:/seam(@rjsf/core@6.7.1(@rjsf/utils@6.7.1(react@19.2.7))(react@19.2.7))(@rjsf/shadcn@6.7.1(@rjsf/core@6.7.1(@rjsf/utils@6.7.1(react@19.2.7))(react@19.2.7))(@rjsf/utils@6.7.1(react@19.2.7))(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(tailwindcss@4.3.3))(@rjsf/utils@6.7.1(react@19.2.7))(@rjsf/validator-ajv8@6.7.1(@rjsf/utils@6.7.1(react@19.2.7)))(ajv@8.20.0)(react@19.2.7)(vite@8.1.5(@types/node@22.20.1)(esbuild@0.27.7)(jiti@2.7.0)(yaml@2.9.0))
@@ -3487,6 +3490,10 @@ packages:
     version: 0.1.0
     peerDependencies:
       react: '>=18'
+
+  '@schemastud/registry@https://codeload.github.com/schemastud/js/tar.gz/a50cd2805f696b59cbe4882e22df40c7149666e2#path:/registry':
+    resolution: {path: /registry, tarball: https://codeload.github.com/schemastud/js/tar.gz/a50cd2805f696b59cbe4882e22df40c7149666e2}
+    version: 0.1.0
 
   '@schemastud/seam@https://codeload.github.com/schemastud/js/tar.gz/aae63180fd740d3a9497fa2a12e7fbc7c206bc92#path:/seam':
     resolution: {path: /seam, tarball: https://codeload.github.com/schemastud/js/tar.gz/aae63180fd740d3a9497fa2a12e7fbc7c206bc92}
@@ -10301,6 +10308,8 @@ snapshots:
   '@schemastud/nav@https://codeload.github.com/schemastud/js/tar.gz/ea1bb1a06d83de66164e19f9b6798342ed2a8c51#path:/nav(react@19.2.7)':
     dependencies:
       react: 19.2.7
+
+  '@schemastud/registry@https://codeload.github.com/schemastud/js/tar.gz/a50cd2805f696b59cbe4882e22df40c7149666e2#path:/registry': {}
 
   '@schemastud/seam@https://codeload.github.com/schemastud/js/tar.gz/aae63180fd740d3a9497fa2a12e7fbc7c206bc92#path:/seam(@rjsf/core@6.7.1(@rjsf/utils@6.7.1(react@19.2.7))(react@19.2.7))(@rjsf/shadcn@6.7.1(@rjsf/core@6.7.1(@rjsf/utils@6.7.1(react@19.2.7))(react@19.2.7))(@rjsf/utils@6.7.1(react@19.2.7))(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(tailwindcss@4.3.3))(@rjsf/utils@6.7.1(react@19.2.7))(@rjsf/validator-ajv8@6.7.1(@rjsf/utils@6.7.1(react@19.2.7)))(ajv@8.20.0)(react@19.2.7)(vite@8.1.5(@types/node@22.20.1)(esbuild@0.27.7)(jiti@2.7.0)(yaml@2.9.0))':
     dependencies:
