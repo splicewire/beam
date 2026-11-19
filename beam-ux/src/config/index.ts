@@ -6,9 +6,17 @@
  */
 export { ConfigArea, SectionRail, SectionsIndex, SectionView, CascadeInspector, type ConfigAreaProps } from './ConfigArea';
 export { TierPill, EffectTag, FedBy, KeyValue, ReadValue, SecretValue } from './parts';
+export { useConfigValue, ConfigFields, type UseConfigValueResult, type ConfigFieldsProps } from './bind';
 export {
     TIER_ORDER,
     TIER_LABEL,
+    admitsTenant,
+    keyFor,
+    resolveConfigValue,
+    sectionForRealm,
+    valueAt,
+    type ConfigRealm,
+    type ConfigValue,
     EFFECT_COPY,
     KEY_FILTERS,
     cascade,

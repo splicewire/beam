@@ -183,6 +183,80 @@ export function asConfigSection(row: unknown): ConfigSectionData | null {
         : null;
 }
 
+/**
+ * The realm a Config area is mounted in (config-sections ticket 07): the operator realm reads the central tier, the tenant
+ * realm (while a tenant is initialized) the tenant tier. The host mounts one area per realm and says which.
+ */
+export type ConfigRealm = 'operator' | 'tenant';
+
+/** Whether a key's declared ceiling admits the tenant tier: only such keys exist in the tenant realm. */
+export function admitsTenant(key: ConfigKeyData): boolean {
+    return TIER_ORDER.indexOf(key.ceiling) >= TIER_ORDER.indexOf('tenant');
+}
+
+/**
+ * The section as a realm may see it (ticket 10's AC; 10b). The operator realm sees the row as served. The tenant realm
+ * sees only the keys whose ceiling admits the tenant tier, and never an env var name or an install path: each key's
+ * `env` and the section's `files` are dropped, whatever the server sent. The server already filters the keys in the
+ * tenant realm (laravel-beam `ConfigSectionData`); this is the UI's own guarantee, not a second source of truth.
+ */
+export function sectionForRealm(section: ConfigSectionData, realm: ConfigRealm): ConfigSectionData {
+    if (realm === 'operator') return section;
+    return {
+        ...section,
+        // A layer's `source` names a file or env reference, so it goes too.
+        files: { package: null, host: null },
+        keys: section.keys
+            .filter(admitsTenant)
+            .map((key) => ({ ...key, env: null, layers: key.layers.map((layer) => ({ ...layer, source: null })) })),
+    };
+}
+
+/** The key whose pointer is `pointer`, or the nearest declared key above it (a pointer into a map or list value). */
+export function keyFor(section: ConfigSectionData, pointer: string): ConfigKeyData | undefined {
+    const exact = section.keys.find((k) => k.pointer === pointer);
+    if (exact) return exact;
+    const tokens = pointerTokens(pointer);
+    let owner: ConfigKeyData | undefined;
+    for (const key of section.keys) {
+        const own = pointerTokens(key.pointer);
+        if (own.length < tokens.length && own.every((t, i) => t === tokens[i]) && (!owner || own.length > pointerTokens(owner.pointer).length)) {
+            owner = key;
+        }
+    }
+    return owner;
+}
+
+/** A pointer's value in the section's effective `values`, or undefined when the values do not reach it. */
+export function valueAt(section: ConfigSectionData, pointer: string): unknown {
+    let node: unknown = section.values;
+    for (const token of pointerTokens(pointer)) {
+        if (Array.isArray(node) && /^\d+$/.test(token)) node = node[Number(token)];
+        else if (typeof node === 'object' && node !== null && token in node) node = (node as Record<string, unknown>)[token];
+        else return undefined;
+    }
+    return node;
+}
+
+/** What `useConfigValue` answers for one pointer: the effective value, never a secret's, plus how it was set. */
+export interface ConfigValue {
+    /** The effective value; always `undefined` for a secret (only `set` says whether it has one). */
+    value: unknown;
+    /** The declared key that owns the pointer, when the section declares one. */
+    key: ConfigKeyData | undefined;
+    secret: boolean;
+    /** For a secret, whether it holds a value; otherwise whether the pointer resolves. */
+    set: boolean;
+}
+
+/** Resolve one pointer of a section to a `ConfigValue`. A secret's value never leaves this function. */
+export function resolveConfigValue(section: ConfigSectionData, pointer: string): ConfigValue {
+    const key = keyFor(section, pointer);
+    if (key?.secret) return { value: undefined, key, secret: true, set: key.set };
+    const value = valueAt(section, pointer);
+    return { value, key, secret: false, set: value !== undefined };
+}
+
 /** What to change, and where, for a key no override can reach: its env var, its host file, or the provider. */
 /** `name` is the env var or file as written, or a catalog line when there is none (render with say). */
 export function deploySource(section: ConfigSectionData, key: ConfigKeyData): { kind: 'env' | 'file' | 'provider'; name: Notice } {
