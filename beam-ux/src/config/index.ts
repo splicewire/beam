@@ -7,10 +7,19 @@
 export { ConfigArea, SectionRail, SectionsIndex, SectionView, CascadeInspector, type ConfigAreaProps } from './ConfigArea';
 export { TierPill, EffectTag, FedBy, KeyValue, ReadValue, SecretValue } from './parts';
 export { useConfigValue, ConfigFields, type UseConfigValueResult, type ConfigFieldsProps } from './bind';
+export { EditSlot, LockControl, DraftBar, VersionsPanel, RELEASE_KIND_CONFIG, type ConfigReleaseTarget } from './edit';
 export {
     TIER_ORDER,
     TIER_LABEL,
     admitsTenant,
+    allowsNull,
+    canEdit,
+    draftFor,
+    hasPendingDraft,
+    isLocked,
+    keyDiff,
+    toDraftValue,
+    type KeyDiffLine,
     keyFor,
     resolveConfigValue,
     sectionForRealm,

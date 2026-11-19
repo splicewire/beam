@@ -10,8 +10,10 @@
  * - the deploy-only state naming its env var or file, the reload and live states, and the secret state (set or not
  *   set, never a value).
  *
- * Not here (ticket 10b): drafts, the edit slot, diff, publish, versions, restore, validation errors, locks, the tenant
- * realm, the Release link, `ConfigFields` and `useConfigValue`. Each reads a field the row does not carry yet.
+ * Ticket 10b binds it to the ladder: the realm view (the tenant realm sees only tenant-reachable keys, with no env name
+ * or path), the inspector's edit slot and the operator's lock, the sticky draft bar (key-level diff, publish, discard,
+ * add to the open Release) and versions with restore ({@link ./edit}). `ConfigFields` and `useConfigValue` let other
+ * pages bind ({@link ./bind}).
  *
  * Mount it inside a frame kit's `Provider` (`createFrameKit`), which supplies the transport, the widget registry and
  * the shells' slots.
@@ -36,6 +38,8 @@ import { AlertTriangle, Search, X } from 'lucide-react';
 import {
     asConfigSection,
     cascade,
+    sectionForRealm,
+    type ConfigRealm,
     deploySource,
     EFFECT_COPY,
     family,
@@ -50,6 +54,7 @@ import {
     type KeyFilter,
 } from './model';
 import { EffectTag, envState, FedBy, KeyValue, PlainValue, SecretValue, TierPill } from './parts';
+import { DraftBar, EditSlot, LockControl, VersionsPanel, type ConfigReleaseTarget } from './edit';
 import { englishBeamUxMessages, useBeamUxMessages, type BeamUxMessages } from '../messages.js';
 import { say } from '../message-descriptor.js';
 import { richMessage } from '../rich-message.js';
@@ -60,10 +65,14 @@ export interface ConfigAreaProps<K extends ResourceKey = ResourceKey> {
     /** The open section's id; `null` shows the all-sections index. Uncontrolled when omitted. */
     section?: string | null;
     onSectionChange?: (id: string | null) => void;
+    /** The realm the host mounts this area in: the operator realm (central tier) or a tenant's (ticket 07). */
+    realm?: ConfigRealm;
+    /** An open Release the draft bar can add a section's draft to (ticket 08), when beam-ux's Releases are mounted. */
+    release?: ConfigReleaseTarget;
     className?: string;
 }
 
-export function ConfigArea<K extends ResourceKey = ResourceKey>({ resource, section, onSectionChange, className }: ConfigAreaProps<K>) {
+export function ConfigArea<K extends ResourceKey = ResourceKey>({ resource, section, onSectionChange, realm = 'operator', release, className }: ConfigAreaProps<K>) {
     const [own, setOwn] = useState<string | null>(null);
     const active = section === undefined ? own : section;
     const pick = (id: string | null) => {
@@ -76,7 +85,7 @@ export function ConfigArea<K extends ResourceKey = ResourceKey>({ resource, sect
                 <SectionRail resource={resource} active={active} onPick={pick} />
             </aside>
             <div className="min-w-0 flex-1 space-y-4 p-4 md:p-6">
-                {active === null ? <SectionsIndex resource={resource} onPick={pick} /> : <SectionView resource={resource} id={active} onBack={() => pick(null)} />}
+                {active === null ? <SectionsIndex resource={resource} onPick={pick} /> : <SectionView resource={resource} id={active} realm={realm} release={release} onBack={() => pick(null)} />}
             </div>
         </div>
     );
@@ -254,10 +263,23 @@ export function SectionsIndex<K extends ResourceKey = ResourceKey>({ resource, o
 
 /* ───────────────────────────── one section ───────────────────────────── */
 
-export function SectionView<K extends ResourceKey = ResourceKey>({ resource, id, onBack }: { resource: K; id: string; onBack?: () => void }) {
+export function SectionView<K extends ResourceKey = ResourceKey>({
+    resource,
+    id,
+    realm = 'operator',
+    release,
+    onBack,
+}: {
+    resource: K;
+    id: string;
+    realm?: ConfigRealm;
+    release?: ConfigReleaseTarget;
+    onBack?: () => void;
+}) {
     const m = useBeamUxMessages();
     const record = useResourceRecord(resource, id);
-    const section = asConfigSection(record.data);
+    const row = asConfigSection(record.data);
+    const section = row ? sectionForRealm(row, realm) : null;
     const [filter, setFilter] = useState<KeyFilter>('all');
     const [selected, setSelected] = useState<string | null>(null);
     if (record.isPending) return <p className="text-sm text-muted-foreground">{m.t('splicewire-beam-ux::messages.config_loading_section')}</p>;
@@ -268,11 +290,13 @@ export function SectionView<K extends ResourceKey = ResourceKey>({ resource, id,
         <div data-config-section={section.root} className="space-y-4">
             <SectionHeader section={section} onBack={onBack} />
             <SectionNotices section={section} />
+            <DraftBar resource={resource} section={section} release={release} />
             <FilterChips section={section} filter={filter} setFilter={setFilter} />
             <div className={cn('grid gap-4', inspected && 'xl:grid-cols-[minmax(0,1fr)_22rem]')}>
                 <KeyTable section={section} keys={keys} selected={selected} onSelect={setSelected} filter={filter} />
-                {inspected && <CascadeInspector section={section} keyData={inspected} onClose={() => setSelected(null)} />}
+                {inspected && <CascadeInspector section={section} keyData={inspected} onClose={() => setSelected(null)} resource={resource} realm={realm} />}
             </div>
+            <VersionsPanel resource={resource} section={section} />
         </div>
     );
 }
@@ -476,7 +500,20 @@ const STANDING_NOTE = {
     removed: 'splicewire-beam-ux::messages.config_standing_removed',
 } as const;
 
-export function CascadeInspector({ section, keyData, onClose }: { section: ConfigSectionData; keyData: ConfigKeyData; onClose?: () => void }) {
+export function CascadeInspector<K extends ResourceKey = ResourceKey>({
+    section,
+    keyData,
+    onClose,
+    resource,
+    realm = 'operator',
+}: {
+    section: ConfigSectionData;
+    keyData: ConfigKeyData;
+    onClose?: () => void;
+    /** The `beam-config` resource: with it the inspector offers the edit slot and the operator's lock (10b). */
+    resource?: K;
+    realm?: ConfigRealm;
+}) {
     const m = useBeamUxMessages();
     const schema = section.schema as SchemaNode;
     const label = keyLabel(schema, keyData.pointer);
@@ -509,6 +546,12 @@ export function CascadeInspector({ section, keyData, onClose }: { section: Confi
             </header>
 
             <ChangeNote section={section} keyData={keyData} />
+            {resource !== undefined && (
+                <>
+                    <EditSlot key={keyData.pointer} resource={resource} section={section} keyData={keyData} realm={realm} />
+                    <LockControl resource={resource} section={section} keyData={keyData} realm={realm} />
+                </>
+            )}
 
             <ol className="space-y-2" aria-label={m.t('splicewire-beam-ux::messages.config_layers')}>
                 {layers.map(({ layer, standing }, i) => (
