@@ -40,7 +40,10 @@ const wrap = (ui: React.ReactNode) => <CanvasProvider config={config}>{ui}</Canv
 const proseProfile = {...profileFixture, nodes: profileFixture.nodes.filter(node=>!node.name.startsWith('Demo'))};
 const wrapProse = (ui: React.ReactNode) => <CanvasProvider config={{...config,profile:proseProfile as CanvasConfig['profile']}}>{ui}</CanvasProvider>;
 async function editRichText(selector:string, text:string) {
-    await waitFor(()=>expect(document.querySelector(`.ProseMirror ${selector}`)).not.toBeNull());
+    // The rich editor is lazy-loaded (CanvasSiblings' ProseRun), so its first mount includes a cold module load:
+    // about 0.8s in a fresh release build room, past waitFor's 1s default on a loaded machine. 4s stays inside
+    // the 5s test timeout.
+    await waitFor(()=>expect(document.querySelector(`.ProseMirror ${selector}`)).not.toBeNull(),{timeout:4000});
     const elements=document.querySelectorAll(`.ProseMirror ${selector}`);
     const target=elements[elements.length-1] as HTMLElement;
     await act(async()=>{
