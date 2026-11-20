@@ -10,6 +10,7 @@ vi.mock('@schemastud/frame/session', () => ({
 }));
 
 import { AgreementsRequired, beamAgreementsPages } from '../src/index';
+import { sameOrigin } from '../src/pages/AgreementsRequired';
 
 afterEach(() => {
     cleanup();
@@ -67,6 +68,35 @@ describe('the agreements/required page', () => {
 
         await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Review again' })));
         expect(await screen.findByRole('dialog', { name: 'Terms of Service' })).toBeTruthy();
+    });
+
+    it('never navigates or links off-site, whatever the server sent (review P2 1, defence in depth)', async () => {
+        const visit = vi.fn();
+        render(
+            <AgreementsRequired
+                requirements={[TERMS]}
+                intended="https://evil.example/after"
+                back="javascript:alert(1)"
+                acceptUrl="/accept"
+                visit={visit}
+            />,
+        );
+        await screen.findByRole('dialog');
+        fireEvent.keyDown(screen.getByRole('dialog'), { key: 'Escape' });
+        expect((await screen.findByRole('link', { name: 'Go back' })).getAttribute('href')).toBe('/');
+
+        await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Review again' })));
+        fireEvent.click(await screen.findByRole('button', { name: 'I agree' }));
+        await waitFor(() => expect(visit).toHaveBeenCalledWith('/'));
+    });
+
+    it('keeps same-origin destinations and replaces everything else', () => {
+        const origin = 'http://localhost:3000';
+        expect(sameOrigin('/reports?q=1#a', '/', origin)).toBe('/reports?q=1#a');
+        expect(sameOrigin('http://localhost:3000/x?y=1', '/', origin)).toBe('/x?y=1');
+        for (const bad of ['//evil.example/x', '/\\evil.example', 'javascript:alert(1)', 'https://evil.example/', 'http://localhost:3001/x', 'data:text/html,hi']) {
+            expect(sameOrigin(bad, '/home', origin)).toBe('/home');
+        }
     });
 
     it('never shows a moved version: no dialog, no accept, a way to try again', () => {

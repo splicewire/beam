@@ -25,7 +25,27 @@ export interface AgreementsRequiredProps {
 
 type State = 'asking' | 'declined' | 'moved' | 'saving' | { error: string };
 
-export default function AgreementsRequired({ requirements, intended, back, acceptUrl, visit }: AgreementsRequiredProps) {
+/**
+ * review P2 1 (defence in depth; the server already keeps only same-origin destinations): a same-origin path for `url`,
+ * or `fallback`. Same-origin is a relative path or an http(s) URL with this page's scheme, host and port; anything else
+ * (another host, `//evil.example`, `javascript:`) is replaced, so neither "Go back" nor accepting sends anyone off-site.
+ */
+export function sameOrigin(url: string, fallback: string, origin: string = window.location.origin): string {
+    if (url.startsWith('/') && !url.startsWith('//') && !url.startsWith('/\\')) return url;
+    try {
+        const parsed = new URL(url, origin);
+        if ((parsed.protocol === 'http:' || parsed.protocol === 'https:') && parsed.origin === origin) {
+            return `${parsed.pathname}${parsed.search}${parsed.hash}`;
+        }
+    } catch {
+        // not a URL at all
+    }
+    return fallback;
+}
+
+export default function AgreementsRequired({ requirements, intended: rawIntended, back: rawBack, acceptUrl, visit }: AgreementsRequiredProps) {
+    const back = sameOrigin(rawBack, '/');
+    const intended = sameOrigin(rawIntended, back);
     const stepUp = useMemo(() => createStepUp(), []);
     const request = useMemo(() => createSessionRequest(), []);
     const moved = requirements.some((r) => r.moved || r.content === null || r.label === null);
