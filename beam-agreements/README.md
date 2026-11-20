@@ -70,6 +70,21 @@ createRoot(document.body.appendChild(document.createElement('div'))).render(<Agr
 - The dialog is a modal `role="dialog"` named by its title and described by the text. Focus starts on the text, Tab
   stays inside, Escape declines, and focus returns to where it was.
 
+## An ordinary route requires an agreement (the prompt page)
+
+beam's route middleware (`->middleware('agreement:terms')`, agreements 07) sends a refused PAGE visit to the seam's
+prompt, `agreements/required`. Merge this package's page into your Inertia page map:
+
+```tsx
+import { beamAgreementsPages } from '@splicewire/beam-agreements';
+
+beamInertiaOptions({ pages: { ...beamAgreementsPages, ...pages } });
+```
+
+The page is 06's step-up: the same dialog and controller. The server sends each Agreement's text only when the version
+in force still has the refusal's digest; a moved one shows "try again" instead. Accepting goes on to the intended URL,
+and declining stays on the page with "Go back" and "Review again".
+
 ## Tests
 
 `pnpm test` runs the screens over frame's memory transport (`@schemastud/frame/testing`) with fixture rows and a fixture

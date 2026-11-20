@@ -9,3 +9,7 @@ export type { CoverageCardProps } from './operator/CoverageCard';
 
 // agreements 06: a locked action asks for agreement and then continues.
 export * from './interlock/index';
+
+// agreements 07: the prompt a refused page visit lands on.
+export { beamAgreementsPages } from './pages/index';
+export { default as AgreementsRequired, type AgreementsRequiredProps } from './pages/AgreementsRequired';

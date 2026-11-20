@@ -1,7 +1,7 @@
 import { useEffect, useId, useRef, useSyncExternalStore, type KeyboardEvent } from 'react';
 import type { StepUpController } from './stepUp';
 
-const BUTTON = {
+export const BUTTON = {
     font: 'inherit',
     fontSize: '0.875rem',
     fontWeight: 500,
@@ -11,8 +11,8 @@ const BUTTON = {
     cursor: 'pointer',
 } as const;
 /** The host's primary colours where it defines them (shadcn tokens), else a dark neutral. */
-const PRIMARY = { ...BUTTON, border: '1px solid transparent', background: 'var(--primary, #111)', color: 'var(--primary-foreground, #fff)' } as const;
-const SECONDARY = { ...BUTTON, border: '1px solid var(--border, #d4d4d4)', background: 'transparent', color: 'inherit' } as const;
+export const PRIMARY = { ...BUTTON, border: '1px solid transparent', background: 'var(--primary, #111)', color: 'var(--primary-foreground, #fff)' } as const;
+export const SECONDARY = { ...BUTTON, border: '1px solid var(--border, #d4d4d4)', background: 'transparent', color: 'inherit' } as const;
 
 /**
  * The step-up dialog (agreements 06): each outstanding Agreement with its title and full frozen text, and two answers.
