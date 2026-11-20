@@ -1,6 +1,8 @@
 import { Link } from '@inertiajs/react';
-import { createFrameKit } from '@schemastud/frame';
+import { createFrameKit, createHttpTransport } from '@schemastud/frame';
 import type { CardLinkRenderer, FrameKit } from '@schemastud/frame';
+import { getBeamInertiaConfig } from '../config';
+import { pageAbilities } from './abilities';
 import type { SchemaNode } from '@schemastud/seam';
 import { toast } from 'sonner';
 import { frameIcon } from './icons';
@@ -48,6 +50,16 @@ const kits = new Map<string, FrameKit<FrameNav>>();
 export function kitFor(manifestUrl: string): FrameKit<FrameNav> {
     let kit = kits.get(manifestUrl);
     if (!kit) {
+        // agreements 06: a host's bindings (configureBeamInertia's `frameKit`) wrap this realm's transport and add
+        // frame's actionLock. Absent, nothing below changes: no transport is handed in and no lock is bound.
+        const bind = getBeamInertiaConfig().frameKit;
+        const bound = bind
+            ? bind({ manifestUrl, transport: createHttpTransport({ prefix: FRAME_PREFIX, manifestUrl }), abilities: pageAbilities })
+            : null;
+        const extra: object = {
+            ...(bound?.transport ? { transport: bound.transport } : {}),
+            ...(bound?.actionLock ? { actionLock: bound.actionLock } : {}),
+        };
         kit = createFrameKit<FrameNav>({
             prefix: FRAME_PREFIX,
             manifestUrl,
@@ -57,6 +69,7 @@ export function kitFor(manifestUrl: string): FrameKit<FrameNav> {
             schemaFetcher: async (ref: string): Promise<SchemaNode> => ({ $id: ref }) as SchemaNode,
             formResolver: createReleaseFilesFormResolver(),
             notify: ({ tone, message }) => (tone === 'error' ? toast.error(message) : toast.success(message)),
+            ...extra,
         });
         kits.set(manifestUrl, kit);
     }

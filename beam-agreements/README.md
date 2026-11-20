@@ -37,6 +37,39 @@ confirms and sends it.
 - `CoverageCard` takes `resource` and draws that resource's `summary` through frame's `DashboardCard`, so the card is
   the resource's declared summary widget (`StatRow` by default) with the payload's own label and figures.
 
+## A locked action asks for agreement, then continues
+
+Bind it once, into each realm's frame kit, and mount the dialog once:
+
+```tsx
+import { AgreementStepUp, createAgreementInterlock, createStepUp } from '@splicewire/beam-agreements';
+
+const stepUp = createStepUp();
+
+beamInertiaOptions({
+    // …
+    frameKit: ({ transport, abilities }) => {
+        const agreements = createAgreementInterlock({ transport, abilities, stepUp });
+        return { transport: agreements.transport, actionLock: agreements.actionLock };
+    },
+});
+
+// Anywhere, once: it renders nothing until asked.
+createRoot(document.body.appendChild(document.createElement('div'))).render(<AgreementStepUp controller={stepUp} />);
+```
+
+- **Locked before the click.** An action whose `requires` names an Agreement that the page's ability map reports unmet
+  (`agreement:{key}` false) is drawn locked by frame (`actionLock`, `@schemastud/frame` with agreements 06). Unlocking
+  shows the version in force and accepts that version's digest, then the action's own form or confirmation runs.
+- **A 428 the client didn't foresee.** The wrapped transport shows each outstanding Agreement's title and full frozen
+  text, and only when the text's digest is the refusal's. On a mismatch it replays once for a fresh refusal, then
+  errors. Accept calls the accept operation (or adds the agreement member to the input member the refusal names) and
+  replays the original request once. A second 428 is an error, never retried. Declining performs and records nothing.
+- Agreements are read through frame's transport (`get('agreements', key)`), never through the refusal's `readUrl`. They
+  are accepted through the `agreements` resource's declared `accept` action.
+- The dialog is a modal `role="dialog"` named by its title and described by the text. Focus starts on the text, Tab
+  stays inside, Escape declines, and focus returns to where it was.
+
 ## Tests
 
 `pnpm test` runs the screens over frame's memory transport (`@schemastud/frame/testing`) with fixture rows and a fixture

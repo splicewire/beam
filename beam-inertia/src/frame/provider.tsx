@@ -1,4 +1,6 @@
+import { usePage } from '@inertiajs/react';
 import type { ReactNode } from 'react';
+import { recordPageAbilities } from './abilities';
 import { kitFor } from './kit';
 import { useFrameRealm } from './realm';
 
@@ -10,6 +12,8 @@ import { useFrameRealm } from './realm';
  */
 export function TenantFrameProvider({ children }: { children: ReactNode }) {
     const { Provider } = kitFor(useFrameRealm().manifestUrl);
+    // What a host's kit bindings read (agreements 06): the page's own ability map, current as of this render.
+    recordPageAbilities((usePage() as { props?: { can?: unknown } } | undefined)?.props?.can);
 
     return <Provider>{children}</Provider>;
 }

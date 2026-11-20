@@ -1,5 +1,6 @@
 import type { ComponentType, SVGAttributes } from "react";
 import type { UxBuilderClient } from "@splicewire/beam-ux";
+import type { FrameTransport } from "@schemastud/frame";
 
 export type AuthFeature =
   | "registration"
@@ -38,6 +39,25 @@ export interface BeamInertiaConfig {
   entryClient?: UxBuilderClient;
   /** Host-owned editor route for an inspected entry; absent means no Open Theme link. */
   fileEditorHref?: (entryId: string) => string | undefined;
+  /**
+   * agreements 06: what the host binds into each realm's frame kit, once per realm. Handed the transport the kit would
+   * otherwise make and the page's flat ability map (`page.props.can`, read when asked), it returns the transport to use
+   * and frame's optional `actionLock` (e.g. `@splicewire/beam-agreements`' createAgreementInterlock). Absent, every kit
+   * is exactly as before.
+   */
+  frameKit?: (realm: FrameKitRealm) => FrameKitBindings;
+}
+
+export interface FrameKitRealm {
+  manifestUrl: string;
+  transport: FrameTransport;
+  abilities: () => Record<string, boolean> | undefined;
+}
+
+export interface FrameKitBindings {
+  transport?: FrameTransport;
+  /** frame's `FrameInjection.actionLock` (`@schemastud/frame` with agreements 06); typed loosely so either frame builds. */
+  actionLock?: (...args: never[]) => unknown;
 }
 let configuration: BeamInertiaConfig = {};
 export function configureBeamInertia(config: BeamInertiaConfig): void {
