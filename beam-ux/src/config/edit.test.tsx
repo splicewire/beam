@@ -206,6 +206,25 @@ describe('LockControl', () => {
 });
 
 describe('DraftBar', () => {
+    // config-sections 10b impeccable audit P2-1 (lead 01:01Z): the count line is a choice string, so it must go through
+    // m.choice. m.t rendered the raw "1 change pending|1 changes pending" in both realms of the flagship.
+    it('says "1 change pending" and "2 changes pending", never the raw choice string', () => {
+        const { Provider } = kit([SECTION]);
+        const header = (container: HTMLElement) => container.querySelector('[data-config-draft-bar] header p')?.textContent;
+        const one = render(<Provider><DraftBar resource="beam-config" section={SECTION} /></Provider>);
+        expect(header(one.container)).toBe('1 change pending');
+        one.unmount();
+        const theme = BEAM_UX.keys.find((k) => k.pointer === '/theme')!;
+        const two: ConfigSectionData = {
+            ...SECTION,
+            keys: SECTION.keys.map((k) => (k.pointer === '/theme' ? { ...theme, overridable: true, effect: 'live', ceiling: 'tenant' } : k)),
+            overrides: [...SECTION.overrides, { pointer: '/theme', op: 'set', value: 'dark', secret: false, set: true, setAt: null, revision: 'r2' }],
+        };
+        const both = render(<Provider><DraftBar resource="beam-config" section={two} /></Provider>);
+        expect(header(both.container)).toBe('2 changes pending');
+        expect(header(both.container)).not.toContain('|');
+    });
+
     it('shows the key-level diff and publishes or discards the section', async () => {
         const { Provider, invoke } = kit([SECTION]);
         const { container } = render(<Provider><DraftBar resource="beam-config" section={SECTION} /></Provider>);
