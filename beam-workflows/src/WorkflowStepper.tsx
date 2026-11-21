@@ -11,7 +11,7 @@ import {
     DialogTitle,
     cn,
 } from '@schemastud/ui';
-import type { WorkflowProjectionData } from '@splicewire/beam-resources/types/workflows';
+import type { WorkflowProjectionData, WorkflowTransitionData } from '@splicewire/beam-resources/types/workflows';
 import { humanizeWorkflowKey } from './humanizeWorkflowKey';
 import { useSubscribe } from './provider';
 import { useBeamWorkflowsMessages } from './messages';
@@ -147,6 +147,7 @@ export function WorkflowActions({
     onStatusEmitted,
     pending = false,
     confirm = {},
+    renderBlocked,
 }: {
     projection: WorkflowProjection | null;
     // Optional/falsy is a real, handled state (the effect below no-ops on it) — a host may not know
@@ -156,6 +157,12 @@ export function WorkflowActions({
     onStatusEmitted?: () => void;
     pending?: boolean;
     confirm?: Record<string, TransitionConfirm>;
+    /**
+     * agreements 11b: extra content beside a REFUSED move (one out of the current marking whose guard blocks it), e.g. a
+     * way to satisfy that guard. It receives the projected transition, with its `guard`, its declared
+     * `metadata.guardParams` and the guard's `reason`. Return null to show only the reason.
+     */
+    renderBlocked?: (transition: WorkflowTransitionData) => ReactNode;
 }) {
     // Live status push (Display seam): refresh on every emitted StatusEvent for THIS subject's
     // channel — a lifecycle change made elsewhere reflects here without a poll loop. The transport
@@ -171,6 +178,11 @@ export function WorkflowActions({
     }, [channel, subscribe]);
 
     const available = projection?.available ?? [];
+    // A refused move out of here, with the guard's own sentence (the server sets `reason` only for those). One per name:
+    // the move a person makes is the name.
+    const refused = (projection?.transitions ?? []).filter(
+        (t, i, all) => t.reason !== null && !available.includes(t.name) && all.findIndex((o) => o.name === t.name) === i,
+    );
 
     return (
         <>
@@ -196,6 +208,18 @@ export function WorkflowActions({
                     </Button>
                 );
             })}
+
+            {refused.map((transition) => (
+                <div key={`refused:${transition.name}`} data-workflow-refused={transition.name} className="flex flex-wrap items-center gap-2">
+                    <Button size="sm" variant="outline" disabled aria-describedby={`refused-reason-${transition.name}`}>
+                        {confirm[transition.name]?.triggerLabel ?? humanizeWorkflowKey(transition.name)}
+                    </Button>
+                    <span id={`refused-reason-${transition.name}`} className="text-xs text-[var(--beam-ink-60)]">
+                        {transition.reason}
+                    </span>
+                    {renderBlocked?.(transition)}
+                </div>
+            ))}
 
             {Object.entries(confirm).map(([name, cfg]) =>
                 cfg.onOpenChange ? (

@@ -36,7 +36,31 @@ import { useBeamWorkflowsMessages } from './messages';
 // without any of them coupling back to this 581-line component.
 
 /** The shape of a guard's params-schema properties the editor renders inputs from. */
-type ParamProperties = Record<string, { type?: string; title?: string; default?: unknown }>;
+type ParamProperties = Record<
+    string,
+    {
+        type?: string;
+        title?: string;
+        default?: unknown;
+        /** agreements 11b: a pick from declared choices (standard JSON Schema), rendered as a Select. */
+        oneOf?: Array<{ const?: unknown; title?: string }>;
+        enum?: unknown[];
+    }
+>;
+
+/** A string property's declared choices (`oneOf` const + title, or a plain `enum`), or null when it has none. */
+export function paramChoices(schema: ParamProperties[string]): Array<{ value: string; label: string }> | null {
+    if (schema.type !== 'string') return null;
+    if (Array.isArray(schema.oneOf) && schema.oneOf.length > 0) {
+        return schema.oneOf
+            .filter((choice) => typeof choice.const === 'string')
+            .map((choice) => ({ value: choice.const as string, label: choice.title ?? (choice.const as string) }));
+    }
+    if (Array.isArray(schema.enum) && schema.enum.length > 0) {
+        return schema.enum.filter((v): v is string => typeof v === 'string').map((v) => ({ value: v, label: v }));
+    }
+    return null;
+}
 
 export function WorkflowEditor({
     initial,
@@ -541,10 +565,25 @@ function PrimitiveParamFields({
     value: Record<string, unknown>;
     onChange: (value: Record<string, unknown>) => void;
 }) {
+    const m = useBeamWorkflowsMessages();
     return (
         <>
-            {Object.entries(properties).map(([key, schema]) =>
-                schema.type === 'boolean' ? (
+            {Object.entries(properties).map(([key, schema]) => {
+                const choices = paramChoices(schema);
+                return choices !== null ? (
+                    <div key={key} className="space-y-1">
+                        <Label htmlFor={`param-${key}`} className="text-[var(--beam-ink-60)]">
+                            {schema.title ?? key}
+                        </Label>
+                        <SimpleSelect
+                            id={`param-${key}`}
+                            aria-label={schema.title ?? key}
+                            value={String(value[key] ?? schema.default ?? '')}
+                            onValueChange={(picked) => onChange({ ...value, [key]: picked })}
+                            options={[{ value: '', label: m.t('splicewire-beam-workflows::messages.editor_guard_none') }, ...choices]}
+                        />
+                    </div>
+                ) : schema.type === 'boolean' ? (
                     <div key={key} className="flex items-center justify-between gap-3">
                         <Label htmlFor={`param-${key}`} className="text-[var(--beam-ink-60)]">
                             {schema.title ?? key}
@@ -567,8 +606,8 @@ function PrimitiveParamFields({
                             onChange={(e) => onChange({ ...value, [key]: e.target.value })}
                         />
                     </div>
-                ) : null,
-            )}
+                ) : null;
+            })}
         </>
     );
 }

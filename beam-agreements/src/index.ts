@@ -16,6 +16,14 @@ export { default as Legal, type LegalProps } from './pages/Legal';
 export { default as LegalVersion, type LegalVersionProps } from './pages/LegalVersion';
 export type { LegalVersionFull, LegalVersionSummary } from './pages/legal-shared';
 export { AgreementNotices, type AgreementNotice, type AgreementNoticesProps } from './notices/AgreementNotices';
+export {
+    AGREEMENT_GUARD,
+    AgreementBlockedStep,
+    agreementBlockedStep,
+    blockedAgreementKey,
+    type AgreementBlockedStepOptions,
+    type BlockedTransition,
+} from './workflows/AgreementBlockedStep';
 export { default as AgreementsRequired, type AgreementsRequiredProps } from './pages/AgreementsRequired';
 export { AgreementMemberWidget } from './widgets/agreement-member';
 export { default as registerAgreementWidgets } from './widgets/register';
