@@ -14,8 +14,8 @@ const notice: AgreementNotice = {
     legalUrl: '/legal/terms',
 };
 
-function requestWith(notices: AgreementNotice[], acceptUrl: string | null = '/beam/agreements/agreements/accept') {
-    return vi.fn(async (method: string) => (method === 'GET' ? { status: 200, data: { data: notices, acceptUrl } } : { status: 201, data: null })) as never;
+function requestWith(notices: AgreementNotice[], acceptUrl: string | null = '/beam/agreements/agreements/accept', acknowledgeUrl: string | null = '/beam/agreements/agreements/acknowledge') {
+    return vi.fn(async (method: string) => (method === 'GET' ? { status: 200, data: { data: notices, acceptUrl, acknowledgeUrl } } : { status: 201, data: null })) as never;
 }
 
 beforeEach(() => window.localStorage.clear());
@@ -55,5 +55,14 @@ describe('<AgreementNotices>', () => {
         fireEvent.click(await screen.findByRole('button', { name: 'I agree' }));
         await waitFor(() => expect(screen.queryByText(/has a new version/)).toBeNull());
         expect(request).toHaveBeenCalledWith('POST', '/beam/agreements/agreements/accept', undefined, { agreement: 'terms', version: 'v2', digest: 'd2' });
+    });
+
+    it('agreements 10b: a notice kind is acknowledged through its own operation, not agreed to', async () => {
+        const request = requestWith([{ ...notice, key: 'privacy', kind: 'notice', title: 'Privacy notice' }]);
+        render(<AgreementNotices request={request} />);
+        fireEvent.click(await screen.findByRole('button', { name: 'Acknowledge' }));
+        await waitFor(() => expect(screen.queryByText(/has a new version/)).toBeNull());
+        expect(request).toHaveBeenCalledWith('POST', '/beam/agreements/agreements/acknowledge', undefined, { agreement: 'privacy', version: 'v2', digest: 'd2' });
+        expect(screen.queryByRole('button', { name: 'I agree' })).toBeNull();
     });
 });

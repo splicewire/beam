@@ -5,6 +5,8 @@ import { PRIMARY, SECONDARY } from '../interlock/AgreementStepUp';
 /** agreements 09: one notice as `GET agreements/notices` serves it. */
 export interface AgreementNotice {
     key: string;
+    /** agreements 10b: the Agreement's kind. A `notice` is acknowledged; anything else is agreed to. */
+    kind?: string;
     title: string;
     label: string;
     digest: string;
@@ -55,15 +57,17 @@ export function AgreementNotices({ url = '/agreements/notices', request: injecte
     const request = useMemo(() => injected ?? createSessionRequest(), [injected]);
     const [notices, setNotices] = useState<AgreementNotice[]>([]);
     const [acceptUrl, setAcceptUrl] = useState<string | null>(null);
+    const [acknowledgeUrl, setAcknowledgeUrl] = useState<string | null>(null);
     const [busy, setBusy] = useState<string | null>(null);
     const [error, setError] = useState<{ key: string; message: string } | null>(null);
 
     useEffect(() => {
         const controller = new AbortController();
-        request<{ data: AgreementNotice[]; acceptUrl: string | null }>('GET', url, undefined, undefined, { signal: controller.signal })
+        request<{ data: AgreementNotice[]; acceptUrl: string | null; acknowledgeUrl?: string | null }>('GET', url, undefined, undefined, { signal: controller.signal })
             .then(({ data }) => {
                 setNotices((data?.data ?? []).filter((notice) => !isDismissed(notice)));
                 setAcceptUrl(data?.acceptUrl ?? null);
+                setAcknowledgeUrl(data?.acknowledgeUrl ?? null);
             })
             .catch(() => {
                 // A notice is never worth an error on every page: show nothing.
@@ -81,13 +85,18 @@ export function AgreementNotices({ url = '/agreements/notices', request: injecte
         [remove],
     );
 
+    /** agreements 10b (Q-10b-e): a notice kind is ACKNOWLEDGED (its own operation); anything else is agreed to. */
+    const isNotice = (notice: AgreementNotice) => notice.kind === 'notice';
+    const urlFor = useCallback((notice: AgreementNotice) => (isNotice(notice) ? acknowledgeUrl : acceptUrl), [acceptUrl, acknowledgeUrl]);
+
     const agree = useCallback(
         async (notice: AgreementNotice) => {
-            if (acceptUrl === null) return;
+            const target = urlFor(notice);
+            if (target === null) return;
             setBusy(notice.key);
             setError(null);
             try {
-                await request('POST', acceptUrl, undefined, { agreement: notice.key, version: notice.label, digest: notice.digest });
+                await request('POST', target, undefined, { agreement: notice.key, version: notice.label, digest: notice.digest });
                 remove(notice);
             } catch (e) {
                 setError({ key: notice.key, message: e instanceof Error && e.message ? e.message : 'Accepting failed. Nothing was done.' });
@@ -95,7 +104,7 @@ export function AgreementNotices({ url = '/agreements/notices', request: injecte
                 setBusy(null);
             }
         },
-        [acceptUrl, request, remove],
+        [urlFor, request, remove],
     );
 
     if (notices.length === 0) return null;
@@ -123,9 +132,9 @@ export function AgreementNotices({ url = '/agreements/notices', request: injecte
                     ) : null}
                     <p style={{ margin: 0, display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
                         <a href={notice.legalUrl ?? notice.readUrl}>Read it</a>
-                        {acceptUrl !== null ? (
+                        {urlFor(notice) !== null ? (
                             <button type="button" style={PRIMARY} disabled={busy === notice.key} onClick={() => void agree(notice)}>
-                                {busy === notice.key ? 'Recording…' : 'I agree'}
+                                {busy === notice.key ? 'Recording…' : isNotice(notice) ? 'Acknowledge' : 'I agree'}
                             </button>
                         ) : null}
                         <button type="button" style={SECONDARY} onClick={() => dismiss(notice)}>

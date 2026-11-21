@@ -255,4 +255,33 @@ describe('agreement-member schema widget', () => {
         fireEvent.click(screen.getByRole('button', { name: 'Submit' }));
         expect(onSubmit).not.toHaveBeenCalled();
     });
+
+    it('agreements 10b: never presents a contract and a consent as one checkbox: each agreement is its own member', async () => {
+        // Each widget reads its own agreement.
+        vi.stubGlobal('fetch', vi.fn(async (url: string) => {
+            const key = url.endsWith('voice-use') ? 'voice-use' : 'terms';
+            const title = key === 'terms' ? 'Terms of service' : 'Voice use';
+            return new Response(JSON.stringify({ data: { key, title, version: { digest: 'sha256:current', content: `${title} text.` } } }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+        }));
+        const registry = createWidgetRegistry();
+        registerAgreementWidgets(registry);
+        const Widget = registry.resolveWidget({ type: 'object', 'x-widget': 'agreement-member' }) as ComponentType<any>;
+        const terms = vi.fn();
+        const voice = vi.fn();
+        render(
+            <>
+                <Widget id="terms" name="terms" label="I accept the terms" value={undefined} options={{ key: 'terms', version: 3, digest: 'sha256:current', readUrl: '/beam/agreements/agreements/terms' }} onChange={terms} />
+                <Widget id="voice" name="voice" label="I consent to voice use" value={undefined} options={{ key: 'voice-use', version: 1, digest: 'sha256:current', readUrl: '/beam/agreements/agreements/voice-use' }} onChange={voice} />
+            </>,
+        );
+
+        await screen.findByText('Terms of service');
+        await screen.findByText('Voice use');
+        const boxes = screen.getAllByRole('checkbox');
+        expect(boxes).toHaveLength(2);
+        fireEvent.click(screen.getByRole('checkbox', { name: 'I consent to voice use' }));
+        expect(voice).toHaveBeenCalledWith({ key: 'voice-use', version: 1, digest: 'sha256:current' });
+        expect(terms).not.toHaveBeenCalled();
+    });
 });
+
