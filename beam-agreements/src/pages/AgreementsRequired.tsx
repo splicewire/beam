@@ -19,6 +19,8 @@ export interface AgreementsRequiredProps {
     intended: string;
     back: string;
     acceptUrl: string | null;
+    /** agreements 09: the host's sign-out (POST), offered on the prompt; null when the host has none. */
+    logoutUrl?: string | null;
     /** How to go to `intended` after accepting. Default: a full navigation. */
     visit?: (url: string) => void;
 }
@@ -43,7 +45,7 @@ export function sameOrigin(url: string, fallback: string, origin: string = windo
     return fallback;
 }
 
-export default function AgreementsRequired({ requirements, intended: rawIntended, back: rawBack, acceptUrl, visit }: AgreementsRequiredProps) {
+export default function AgreementsRequired({ requirements, intended: rawIntended, back: rawBack, acceptUrl, logoutUrl = null, visit }: AgreementsRequiredProps) {
     const back = sameOrigin(rawBack, '/');
     const intended = sameOrigin(rawIntended, back);
     const stepUp = useMemo(() => createStepUp(), []);
@@ -94,6 +96,16 @@ export default function AgreementsRequired({ requirements, intended: rawIntended
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
+    const signOut = useCallback(async () => {
+        if (logoutUrl === null) return;
+        try {
+            await request('POST', logoutUrl);
+        } catch {
+            // Signed out already, or the session expired: either way, leave.
+        }
+        go('/');
+    }, [logoutUrl, request, go]);
+
     const titles = requirements.map((r) => r.title).join(', ');
 
     return (
@@ -135,6 +147,13 @@ export default function AgreementsRequired({ requirements, intended: rawIntended
                     {state === 'saving' ? 'Recording your agreement…' : `To continue, please read and accept ${titles}.`}
                 </p>
             )}
+            {logoutUrl !== null ? (
+                <p style={{ margin: 0 }}>
+                    <button type="button" style={SECONDARY} onClick={() => void signOut()}>
+                        Sign out
+                    </button>
+                </p>
+            ) : null}
             <AgreementStepUp controller={stepUp} />
         </main>
     );

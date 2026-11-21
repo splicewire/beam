@@ -54,6 +54,34 @@ describe('the agreements/required page', () => {
         ]);
     });
 
+    it('agreements 09: shows what changed, and a person can sign out from the prompt', async () => {
+        const visit = vi.fn();
+        render(
+            <AgreementsRequired
+                requirements={[{ ...TERMS, summary: 'We now share data with processors.' }]}
+                intended="/reports"
+                back="/home"
+                acceptUrl="/accept"
+                logoutUrl="/logout"
+                visit={visit}
+            />,
+        );
+
+        const dialog = await screen.findByRole('dialog', { name: 'Terms of Service' });
+        expect(dialog.textContent).toContain('What changed: We now share data with processors.');
+        fireEvent.keyDown(dialog, { key: 'Escape' });
+        await act(async () => fireEvent.click(await screen.findByRole('button', { name: 'Sign out' })));
+
+        await waitFor(() => expect(visit).toHaveBeenCalledWith('/'));
+        expect(posted).toEqual([{ method: 'POST', url: '/logout', body: undefined }]);
+    });
+
+    it('offers no sign-out when the host has none', async () => {
+        render(<AgreementsRequired requirements={[TERMS]} intended="/reports" back="/home" acceptUrl="/accept" visit={vi.fn()} />);
+        await screen.findByRole('dialog');
+        expect(screen.queryByRole('button', { name: 'Sign out' })).toBeNull();
+    });
+
     it('declining stays on the prompt with a way back, records nothing, and can ask again', async () => {
         const visit = vi.fn();
         render(<AgreementsRequired requirements={[TERMS]} intended="/reports" back="/home" acceptUrl="/accept" visit={visit} />);
