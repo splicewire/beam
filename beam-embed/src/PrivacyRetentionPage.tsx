@@ -27,6 +27,7 @@ import {
     useRetentionPosture,
     useRetentionServices,
 } from './api';
+import { useMessageLocale } from '@schemastud/messages/react';
 import { useBeamEmbedMessages, type BeamEmbedMessageKey } from './messages';
 import { richMessage } from './rich-message';
 
@@ -247,7 +248,11 @@ export function EraseCard({ disabled }: { disabled: boolean }) {
     );
 
     const canOpen = subjectId.trim().length > 0; // controller: "A visitorId or sessionId is required."
-    const canDestroy = confirmText.trim().toUpperCase() === 'ERASE';
+    // localization 67: the typed confirm token is ONE key, resolved once, and that same value is shown in the label, used as
+    // the placeholder AND compared against (upper-cased in the reader's locale), so a reader types their own language's word.
+    const locale = useMessageLocale();
+    const eraseToken = m.t('splicewire-beam-embed::messages.erase_token');
+    const canDestroy = confirmText.trim().toLocaleUpperCase(locale) === eraseToken.toLocaleUpperCase(locale);
 
     function runErase() {
         const id = subjectId.trim();
@@ -391,14 +396,14 @@ export function EraseCard({ disabled }: { disabled: boolean }) {
                     <div className="grid gap-1.5">
                         <Label htmlFor="erase-confirm">
                             {richMessage(m, 'splicewire-beam-embed::messages.type_to_confirm', {
-                                token: <span className="font-mono font-semibold">ERASE</span>,
+                                token: <span className="font-mono font-semibold">{eraseToken}</span>,
                             })}
                         </Label>
                         <Input
                             id="erase-confirm"
                             value={confirmText}
                             onChange={(e) => setConfirmText(e.target.value)}
-                            placeholder="ERASE"
+                            placeholder={eraseToken}
                             className="font-mono"
                             autoComplete="off"
                         />

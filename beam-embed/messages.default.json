@@ -27,6 +27,7 @@
     "splicewire-beam-embed::messages.erase_permanently": "Erase permanently",
     "splicewire-beam-embed::messages.erase_person_bold": "person, not just their chats",
     "splicewire-beam-embed::messages.erase_title": "Erase a subject",
+    "splicewire-beam-embed::messages.erase_token": "ERASE",
     "splicewire-beam-embed::messages.erased": "Erased :n session for :subject. This cannot be undone.|Erased :n sessions for :subject. This cannot be undone.",
     "splicewire-beam-embed::messages.erasing": "Erasing…",
     "splicewire-beam-embed::messages.footer": "Prune previews its blast radius, then runs immediately; erase runs immediately. Both report how many sessions were affected. A browsable per-session list is coming in a future update.",

@@ -144,3 +144,5 @@ Part S4 (the seam, and PrivacyRetentionPage) moves 76 of its 80 pinned nodes ont
 - beam-embed/src/PrivacyRetentionPage.tsx — `ERASE` (JsxText and the confirm input's placeholder): the literal token the destructive gate compares (`confirmText.trim().toUpperCase() === 'ERASE'`), shown inside the translated "Type :token to confirm".
 
 Not catalogued, by rule: a chat's title, retention days and consent flag, a subject's id, the counts the server returns, and the host's `policyDescription` (rendered as given when supplied).
+
+Localization 67 keys the confirm token: `ERASE` becomes ONE key, `messages.erase_token`, resolved once and used for the label's `:token`, the confirm input's placeholder AND the destructive gate's comparison (`confirmText.trim().toLocaleUpperCase(locale) === token.toLocaleUpperCase(locale)`, the reader's locale from `useMessageLocale()`), so a reader types their own language's word; its --write lowers 4 to 2. The 2 left are the id formats `vis_…` and `sess_…` above.
