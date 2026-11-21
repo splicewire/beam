@@ -99,6 +99,36 @@ describe('agreement-member schema widget', () => {
         });
     });
 
+    it('refuses SchemaForm submission while the agreement checkbox is unchecked', async () => {
+        const onSubmit = vi.fn();
+        const registry = createWidgetRegistry();
+        registerAgreementWidgets(registry);
+        render(
+            <SchemaForm
+                schema={{
+                    type: 'object',
+                    required: ['agreementMember'],
+                    properties: {
+                        agreementMember: {
+                            type: 'object',
+                            title: 'I agree',
+                            'x-widget': 'agreement-member',
+                            'x-widget-options': { key: 'terms', version: 3, digest: 'sha256:current' },
+                        },
+                    },
+                }}
+                registry={registry}
+                onSubmit={onSubmit}
+            />,
+        );
+
+        expect(await screen.findByText('Frozen terms text.')).toBeTruthy();
+        fireEvent.click(screen.getByRole('button', { name: 'Submit' }));
+        const validation = await screen.findByRole('alert');
+        expect(validation.textContent).toContain("must have required property 'I agree'");
+        expect(onSubmit).not.toHaveBeenCalled();
+    });
+
     it('does not submit a previously selected member when the agreement REST read is forbidden', async () => {
         vi.stubGlobal('fetch', vi.fn(async () => new Response('{}', { status: 403 })));
         const onSubmit = vi.fn();
