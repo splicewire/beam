@@ -493,7 +493,7 @@ describe("Config members in the Release panel (ticket 11)", () => {
     expect(screen.queryByText("Config files in this commit")).toBeNull();
   });
 
-  // Strict mirror parser (r6, CONTRACT-11 §2b): the mirror is the ONE document {$schema, root, version, overrides:[…]}.
+  // Strict mirror parser (CONTRACT-11 §2b): the mirror is the ONE document {$schema, root, version, overrides:[…]}.
   const wrap = (overrides: unknown[], version: number | null = 2) =>
     JSON.stringify({ $schema: "beam-config-section:beam.ux", root: "beam.ux", version, overrides });
   const secretKey = (pointer: string) =>
@@ -546,6 +546,104 @@ describe("Config members in the Release panel (ticket 11)", () => {
     expect(previewed(container)).toBe(true);
     expect(container.innerHTML).toContain("Public-Heading");
     expect(container.innerHTML).toContain("relay.host.test");
+  });
+
+  it("previews when change.keys marks a secret and the mirror carries the matching marker row", () => {
+    const { container } = renderWithMirror(
+      wrap([
+        { pointer: "/heading", op: "set", value: "Public-Agree" },
+        { pointer: "/relay/token", op: "set", secret: true },
+      ]),
+      [secretKey("/relay/token")],
+    );
+    expect(previewed(container)).toBe(true);
+    expect(container.innerHTML).toContain("Public-Agree");
+  });
+
+  it("previews an empty overrides list with a null version", () => {
+    const { container } = renderWithMirror(
+      JSON.stringify({ $schema: "beam-config-section:beam.ux", root: "beam.ux", version: null, overrides: [] }),
+    );
+    expect(previewed(container)).toBe(true);
+  });
+
+  it("does not preview an otherwise-valid mirror when the section is unreadable", () => {
+    const { container } = render(
+      <ReleasePanel
+        release={{ ...release, realm: "operator", members: [configMember()] }}
+        entries={entries}
+        changes={{ config: [
+          configChange({
+            readable: false,
+            mirrorPath: "config/overrides/beam.ux.json",
+            mirror: wrap([{ pointer: "/heading", op: "set", value: "SHOULD-NOT-PREVIEW" }]),
+          }),
+        ] }}
+        onCommand={vi.fn()}
+      />,
+    );
+    expect(previewed(container)).toBe(false);
+    expect(container.innerHTML).not.toContain("SHOULD-NOT-PREVIEW");
+    expect(screen.getByText("config/overrides/beam.ux.json")).toBeTruthy();
+  });
+
+  it("masks a key's after value by a secret the mirror marks but change.keys does not", () => {
+    const { container } = render(
+      <ReleasePanel
+        release={{ ...release, realm: "operator", members: [configMember()] }}
+        entries={entries}
+        changes={{ config: [
+          configChange({
+            mirrorPath: "config/overrides/beam.ux.json",
+            mirror: wrap([
+              { pointer: "/relay", op: "set", value: { host: "ok" }, inherit: ["/token"] },
+              { pointer: "/relay/token", op: "set", secret: true },
+            ]),
+            keys: [configKey({ pointer: "/relay", secret: false, publishedSet: true, published: null, after: { host: "ok-sibling", token: "FAKE-MARKER-UNION" } })],
+          }),
+        ] }}
+        onCommand={vi.fn()}
+      />,
+    );
+    // /relay/token is a marker in the mirror but NOT in change.keys; the key table still drops it from /relay's after.
+    expect(container.innerHTML).not.toContain("FAKE-MARKER-UNION");
+    expect(container.innerHTML).toContain("ok-sibling");
+  });
+
+  it("renders a key with a non-string pointer without values, and does not crash", () => {
+    const { container } = render(
+      <ReleasePanel
+        release={{ ...release, realm: "operator", members: [configMember()] }}
+        entries={entries}
+        changes={{ config: [
+          configChange({
+            mirrorPath: null,
+            mirror: null,
+            keys: [configKey({ pointer: 7 as unknown as string, secret: false, publishedSet: true, published: "FAKE-NONSTRING", after: "FAKE-NONSTRING" })],
+          }),
+        ] }}
+        onCommand={vi.fn()}
+      />,
+    );
+    expect(container.innerHTML).not.toContain("FAKE-NONSTRING");
+  });
+
+  it("treats a key's non-false secret as secret and masks its value (err towards secret)", () => {
+    const { container } = render(
+      <ReleasePanel
+        release={{ ...release, realm: "operator", members: [configMember()] }}
+        entries={entries}
+        changes={{ config: [
+          configChange({
+            mirrorPath: null,
+            mirror: null,
+            keys: [configKey({ pointer: "/weird", secret: 0 as unknown as boolean, publishedSet: true, published: "FAKE-ERRSECRET", after: "FAKE-ERRSECRET", secretChange: "replaced" })],
+          }),
+        ] }}
+        onCommand={vi.fn()}
+      />,
+    );
+    expect(container.innerHTML).not.toContain("FAKE-ERRSECRET");
   });
 
   // The key table (NOT the mirror) still MASKS: a secret leaf nested in a key's published / after value is dropped.
@@ -627,6 +725,7 @@ describe("Config members in the Release panel (ticket 11)", () => {
     const { container } = renderDoc(overrides, keys);
     expect(previewed(container)).toBe(false);
     expect(container.innerHTML).not.toMatch(/FAKE-[A-Z0-9-]+/);
+    expect(screen.getByText("config/overrides/beam.ux.json")).toBeTruthy(); // the file is still named by path
   });
 
   it("lists no config file for an operator Release that writes none (null mirrorPath)", () => {

@@ -640,8 +640,13 @@ function ConfigMemberCard({
 }) {
   const m = useBeamUxMessages();
   const ref = member.ref;
-  // Cheap extra defence for the key table: drop a secret leaf nested in a published / after value, by this section's secret pointers.
-  const isSecret = secretMatcher((change?.keys ?? []).filter((key) => key.secret).map((key) => key.pointer));
+  // The key table masks a secret leaf nested in a published / after value. Its secret set is change.keys (erring towards
+  // secret) UNION the mirror's marker-row pointers when the mirror parses valid — a key's `after` may name a key the
+  // mirror marks secret but `change.keys` (changed keys only) does not. An absent or refused mirror falls back to change.keys.
+  const keySecrets = changeKeySecrets(change?.keys ?? []);
+  const mirrorMarkers =
+    change?.readable && change.mirror != null ? (sanitizeMirror(change.mirror, keySecrets)?.markers ?? []) : [];
+  const isSecret = secretMatcher([...keySecrets, ...mirrorMarkers]);
   return (
     <div data-config-member={ref} className="rounded border p-3">
       <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
@@ -723,17 +728,21 @@ function ConfigMemberCard({
 /** One key row: Key → Published → After publishing → Set by → Applies. A secret shows its change word, never a value. */
 function ConfigKeyRow({ row, isSecret }: { row: ReleaseConfigKeyChange; isSecret: (pointer: string) => boolean }) {
   const m = useBeamUxMessages();
+  // Err towards secret, as the masking side does; a key whose pointer is not a string shows no value and never crashes.
+  const secretKey = (row.secret as unknown) !== false && (row.secret as unknown) !== undefined;
+  const base = typeof row.pointer === "string" ? normalizePointer(row.pointer) : null;
+  const pointerText = typeof row.pointer === "string" ? row.pointer : String(row.pointer);
   // Defence in depth: a secret leaf nested inside a non-secret key's value is dropped even if the server forgot to null it.
-  const base = normalizePointer(row.pointer);
   const safe = (value: unknown) => {
+    if (base === null) return null;
     const result = sanitizeValue(value, base, isSecret);
     return result === OMIT ? null : result;
   };
   return (
-    <tr data-config-key={row.pointer} className="align-top">
-      <td className="py-1 pr-3 font-mono">{row.pointer}</td>
+    <tr data-config-key={pointerText} className="align-top">
+      <td className="py-1 pr-3 font-mono">{pointerText}</td>
       <td className="py-1 pr-3">
-        {row.secret ? (
+        {secretKey || base === null ? (
           <span className="text-muted-foreground">—</span>
         ) : (
           <>
@@ -748,8 +757,10 @@ function ConfigKeyRow({ row, isSecret }: { row: ReleaseConfigKeyChange; isSecret
         )}
       </td>
       <td className="py-1 pr-3">
-        {row.secret ? (
+        {secretKey ? (
           <span className="font-mono">{secretChangeText(m, row.secretChange)}</span>
+        ) : base === null ? (
+          <span className="text-muted-foreground">—</span>
         ) : (
           <>
             <PlainValue value={safe(row.after)} />
@@ -848,7 +859,7 @@ function anyDrop(value: unknown, pointer: string, dropped: (p: string) => boolea
 }
 
 /**
- * CONTRACT-11 §2b, strict AND consistent (r7): the mirror is the ONE document `{$schema, root, version, overrides:[…]}`,
+ * CONTRACT-11 §2b, strict AND consistent: the mirror is the ONE document `{$schema, root, version, overrides:[…]}`,
  * and the preview renders ONLY for a document that is both valid and consistent; otherwise the file is named by path only
  * (fail closed). Nothing is normalised or stripped on the mirror side — a doubtful document is refused, not repaired.
  * Grammar: exactly the four root keys; each row's keys a subset of pointer/op/value/secret/inherit; `pointer` a string
@@ -859,7 +870,10 @@ function anyDrop(value: unknown, pointer: string, dropped: (p: string) => boolea
  * non-marker row AT or BELOW a secret pointer, or a `set` whose `value` holds a leaf a secret pointer or its own `inherit`
  * names, is a refusal (a valid server has already taken those leaves out). The raw wire string never reaches the DOM.
  */
-function sanitizeMirror(mirror: string, changeKeySecretPointers: Set<string>): string | null {
+function sanitizeMirror(
+  mirror: string,
+  changeKeySecretPointers: Set<string>,
+): { text: string; markers: string[] } | null {
   let parsed: unknown;
   try {
     parsed = JSON.parse(mirror);
@@ -928,21 +942,35 @@ function sanitizeMirror(mirror: string, changeKeySecretPointers: Set<string>): s
     if ("inherit" in row) out.inherit = row.inherit;
     rebuilt.push(out);
   }
-  return JSON.stringify({ $schema, root, version, overrides: rebuilt }, null, 2);
+  return { text: JSON.stringify({ $schema, root, version, overrides: rebuilt }, null, 2), markers: markerPointers };
+}
+
+/**
+ * The secret pointers named by `change.keys`, erring TOWARDS secret on the masking side: a key counts as secret unless
+ * its `secret` is exactly `false` or absent, and a key whose `pointer` is not a string is skipped (never crashes).
+ */
+function changeKeySecrets(keys: readonly ReleaseConfigKeyChange[]): Set<string> {
+  const out = new Set<string>();
+  for (const key of keys) {
+    const secret = key.secret as unknown;
+    if (secret !== false && secret !== undefined && typeof key.pointer === "string") {
+      out.add(key.pointer);
+    }
+  }
+  return out;
 }
 
 /** One mirror file: its path, and a `<details>` preview of the SANITIZED content. A malformed mirror is named only, never previewed. */
 function ConfigMirrorFile({ change }: { change: ReleaseConfigChange }) {
-  const secretPointers = new Set(change.keys.filter((key) => key.secret).map((key) => key.pointer));
-  const safe =
-    change.readable && change.mirror !== null ? sanitizeMirror(change.mirror, secretPointers) : null;
-  if (safe === null) {
+  const parsed =
+    change.readable && change.mirror !== null ? sanitizeMirror(change.mirror, changeKeySecrets(change.keys)) : null;
+  if (parsed === null) {
     return <span className="font-mono text-xs">{change.mirrorPath}</span>;
   }
   return (
     <details className="rounded border bg-muted/30">
       <summary className="cursor-pointer px-2 py-1 font-mono text-xs">{change.mirrorPath}</summary>
-      <pre className="overflow-x-auto px-2 pb-2 font-mono text-[11px] leading-relaxed">{safe}</pre>
+      <pre className="overflow-x-auto px-2 pb-2 font-mono text-[11px] leading-relaxed">{parsed.text}</pre>
     </details>
   );
 }
