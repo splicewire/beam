@@ -1,6 +1,7 @@
 import type { ComponentType, SVGAttributes } from "react";
 import type { UxBuilderClient } from "@splicewire/beam-ux";
 import type { FrameTransport } from "@schemastud/frame";
+import type { WidgetRegistry } from "@schemastud/seam";
 
 export type AuthFeature =
   | "registration"
@@ -58,6 +59,8 @@ export interface FrameKitBindings {
   transport?: FrameTransport;
   /** frame's `FrameInjection.actionLock` (`@schemastud/frame` with agreements 06); typed loosely so either frame builds. */
   actionLock?: (...args: never[]) => unknown;
+  /** Host/package widgets registered into the kit's shared schema registry. */
+  widgets?: (registry: WidgetRegistry) => void;
 }
 let configuration: BeamInertiaConfig = {};
 export function configureBeamInertia(config: BeamInertiaConfig): void {

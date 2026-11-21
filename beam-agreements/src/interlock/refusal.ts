@@ -15,7 +15,7 @@ export interface OutstandingRequirement {
     title: string;
     scope: string;
     subject: string | number | null;
-    /** Not followed: the Agreement is read by key through frame's transport (see {@see AgreementReader}). */
+    /** For the REST-backed member widget; the 428 dialog reads by key through frame's transport. */
     readUrl: string;
     acceptOperation: string | null;
     member: string | null;
@@ -50,8 +50,8 @@ export const AGREEMENTS_RESOURCE = 'agreements';
 
 /**
  * Read Agreements through frame's own transport: `get('agreements', key)`, which beam's frame handler resolves with
- * the seam's AgreementBacking. The refusal's `readUrl` is deliberately NOT followed (the REST show route can't serve
- * this backing today; coord 16:26Z files that separately).
+ * the seam's AgreementBacking. The form widget uses the same backing through the REST show route; this reader stays
+ * transport-specific because the 428 dialog is composed around FrameTransport.
  */
 export function agreementsFrom(transport: Pick<FrameTransport, 'get'>): AgreementReader {
     return async (key) => {

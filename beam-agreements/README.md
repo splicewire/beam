@@ -65,8 +65,10 @@ createRoot(document.body.appendChild(document.createElement('div'))).render(<Agr
   text, and only when the text's digest is the refusal's. On a mismatch it replays once for a fresh refusal, then
   errors. Accept calls the accept operation (or adds the agreement member to the input member the refusal names) and
   replays the original request once. A second 428 is an error, never retried. Declining performs and records nothing.
-- Agreements are read through frame's transport (`get('agreements', key)`), never through the refusal's `readUrl`. They
-  are accepted through the `agreements` resource's declared `accept` action.
+- The 428 dialog reads Agreements through frame's transport (`get('agreements', key)`). The registered
+  `agreement-member` form widget reads its agreement through the REST `readUrl` (or the standard
+  `/beam/agreements/agreements/{key}` route) with same-origin credentials, and submits only the digest of the exact
+  text it displayed. Agreements are accepted through the `agreements` resource's declared `accept` action.
 - The dialog is a modal `role="dialog"` named by its title and described by the text. Focus starts on the text, Tab
   stays inside, Escape declines, and focus returns to where it was.
 

@@ -59,6 +59,7 @@ export function kitFor(manifestUrl: string): FrameKit<FrameNav> {
         const extra: object = {
             ...(bound?.transport ? { transport: bound.transport } : {}),
             ...(bound?.actionLock ? { actionLock: bound.actionLock } : {}),
+            ...(bound?.widgets ? { widgets: bound.widgets } : {}),
         };
         kit = createFrameKit<FrameNav>({
             prefix: FRAME_PREFIX,
