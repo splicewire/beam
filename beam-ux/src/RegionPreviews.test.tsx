@@ -5,6 +5,7 @@ import { UxBuilder } from './UxBuilder';
 import { UxBuilderProvider } from './provider';
 import type { BeamUxEntryBodyData, UxBuilderClient } from './types';
 import type { ReleaseRecord } from './releases';
+import { entryMember } from './release-member.fixtures';
 
 function savedBody(id: string, content: string): BeamUxEntryBodyData {
     return {
@@ -26,15 +27,7 @@ function release(id: string, status: string, entryId: string): ReleaseRecord {
         realm: 'site',
         status,
         reviewedBy: null,
-        members: [
-            {
-                entryId,
-                versionId: 'v1',
-                observedPin: null,
-                redirectTarget: null,
-                stale: false,
-            },
-        ],
+        members: [entryMember({ entryId, versionId: 'v1' })],
         workflow: null,
         canSchedule: false,
         reviewRequired: false,

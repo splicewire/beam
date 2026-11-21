@@ -3,6 +3,7 @@ import { ThemeEditor } from "./ThemeEditor";
 import type { EntryPublicationState, UxBuilderClient } from "./types";
 import { entryIds, themeEntryBody } from "./story-fixtures";
 import { MockUxBuilderProvider, makeMockClient } from "./story-harness";
+import { entryMember } from "./release-member.fixtures";
 
 /**
  * Catalog story for {@link ThemeEditor} (G2-BEAM-THEME-NAV) — the theme entry's editor seat.
@@ -78,13 +79,13 @@ function draftClient(): UxBuilderClient {
           status: "published",
           reviewedBy: null,
           members: [
-            {
+            entryMember({
               entryId: entryIds.theme,
               versionId: ref,
               observedPin: "saved-1",
-              redirectTarget: null,
-              stale: false,
-            },
+              label: "Theme",
+              entryType: "theme",
+            }),
           ],
           workflow: null,
           canSchedule: false,

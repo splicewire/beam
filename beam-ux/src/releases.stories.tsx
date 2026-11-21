@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { ReleasePanel, type ReleaseRecord } from "./releases";
+import { entryMember } from "./release-member.fixtures";
 const release: ReleaseRecord = {
   id: "review-1",
   title: "Publish Theme",
@@ -8,13 +9,13 @@ const release: ReleaseRecord = {
   status: "in_review",
   reviewedBy: null,
   members: [
-    {
+    entryMember({
       entryId: "theme",
       versionId: "saved-2",
       observedPin: "saved-1",
-      redirectTarget: null,
-      stale: false,
-    },
+      label: "Theme",
+      entryType: "theme",
+    }),
   ],
   workflow: {
     type: "beam-ux-release",

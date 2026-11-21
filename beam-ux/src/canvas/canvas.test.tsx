@@ -7,6 +7,7 @@ vi.mock('../editor/local-session.js', async (original) => {
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import type { JsonBlock, JsonDoc } from '../blockdoc/json.js';
+import { entryMember } from '../release-member.fixtures';
 import { attrsSchemaFor } from './attrsSchema.js';
 import { Breadcrumb } from './Breadcrumb.js';
 import { CanvasNode, edgeAt } from './CanvasNode.js';
@@ -664,13 +665,11 @@ describe('PageEditor — mode fork + transport', async () => {
             releaseCommand: vi.fn(async (_id: string, command: { entryId?: string; ref?: string | null }) => {
                 release = {
                     ...release,
-                    members: [...release.members, {
+                    members: [...release.members, entryMember({
                         entryId: command.entryId!,
                         versionId: command.ref!,
                         observedPin: command.ref!,
-                        redirectTarget: null,
-                        stale: false,
-                    }],
+                    })],
                 };
                 return release;
             }),
