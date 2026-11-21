@@ -12,6 +12,10 @@ export * from './interlock/index';
 
 // agreements 07: the prompt a refused page visit lands on.
 export { beamAgreementsPages } from './pages/index';
+export { default as Legal, type LegalProps } from './pages/Legal';
+export { default as LegalVersion, type LegalVersionProps } from './pages/LegalVersion';
+export type { LegalVersionFull, LegalVersionSummary } from './pages/legal-shared';
+export { AgreementNotices, type AgreementNotice, type AgreementNoticesProps } from './notices/AgreementNotices';
 export { default as AgreementsRequired, type AgreementsRequiredProps } from './pages/AgreementsRequired';
 export { AgreementMemberWidget } from './widgets/agreement-member';
 export { default as registerAgreementWidgets } from './widgets/register';

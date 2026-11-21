@@ -15,7 +15,7 @@ import { createStepUp } from '../interlock/stepUp';
  * re-asks). Declining stays here with a way back. Styling is inline only: a host's Tailwind doesn't scan node_modules.
  */
 export interface AgreementsRequiredProps {
-    requirements: Array<OutstandingRequirement & { label: string | null; content: string | null; moved: boolean }>;
+    requirements: Array<OutstandingRequirement & { label: string | null; content: string | null; summary?: string | null; moved: boolean }>;
     intended: string;
     back: string;
     acceptUrl: string | null;
@@ -60,6 +60,7 @@ export default function AgreementsRequired({ requirements, intended: rawIntended
                 label: r.label ?? '',
                 digest: r.digest,
                 content: r.content ?? '',
+                summary: r.summary ?? null,
                 remedy: { accept: r.acceptOperation ?? 'agreements.accept' },
             })),
         [requirements],

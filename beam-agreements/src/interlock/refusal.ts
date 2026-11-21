@@ -30,6 +30,8 @@ export interface PresentedAgreement {
     digest: string;
     /** The frozen text as presented: the exact content `digest` is the SHA-256 of (the seam's version.content). */
     content: string;
+    /** agreements 09: what changed, in the publisher's words; absent or null when none was written. */
+    summary?: string | null;
     /** How it is satisfied: the accept operation, or the input member a replay carries. */
     remedy: { accept: string } | { member: string; version: number };
 }
@@ -39,7 +41,7 @@ export interface AgreementRow {
     key?: string;
     title?: string;
     kind?: string;
-    version?: { label: string; digest: string; content: string } | null;
+    version?: { label: string; digest: string; content: string; summary?: string | null } | null;
 }
 
 /** Reads one Agreement by key. */
@@ -123,6 +125,7 @@ export async function presentRefused(
         label: version.label,
         digest: version.digest,
         content: version.content,
+        summary: version.summary ?? null,
         remedy:
             requirement.acceptOperation !== null
                 ? { accept: requirement.acceptOperation }

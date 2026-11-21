@@ -109,6 +109,11 @@ export function AgreementStepUp({ controller }: { controller: StepUpController }
                         <section key={agreement.key} data-agreement={agreement.key} data-digest={agreement.digest}>
                             {agreements.length > 1 ? <h3 style={{ margin: '0 0 8px', fontSize: '1rem' }}>{agreement.title}</h3> : null}
                             <p style={{ margin: '0 0 4px', fontSize: '0.8125rem', opacity: 0.75 }}>Version {agreement.label}</p>
+                            {agreement.summary ? (
+                                <p data-beam-agreements="summary" style={{ margin: '0 0 8px' }}>
+                                    <strong>What changed:</strong> {agreement.summary}
+                                </p>
+                            ) : null}
                             <div style={{ whiteSpace: 'pre-wrap' }}>{agreement.content}</div>
                         </section>
                     ))}
