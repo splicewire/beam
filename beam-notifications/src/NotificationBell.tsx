@@ -26,7 +26,9 @@ export interface NotificationBellProps {
  * kit and owns no provider (02-1/02-5): every read and write goes through that kit's transport (48-1).
  *
  * - The badge NUMBER keeps its meaning, things waiting on me: it is `needsYou.count`, and nothing else ever adds to it.
- *   Unread notifications are a DOT with no number, read from the resource's `unread` summary figure (ruling 7).
+ *   It keeps the existing badge rule (tower's ReviewCountBadge): nothing at zero, capped at 9+. The "Needs you" section
+ *   shows the exact count and its link even at zero, so the worklist stays one click away. Unread notifications are a
+ *   DOT with no number, read from the resource's `unread` summary figure (ruling 7).
  * - The popover has two sections that never share a list (ruling 13): "Needs you" is the count and one link to the
  *   worklist; "Recent" is the newest rows, each with its text, relative time, unread mark and link, and "Mark all read"
  *   and "See all" at its foot. "Recent" is absent when there are no stored rows; "Needs you" is absent with no slot.
@@ -52,9 +54,9 @@ export function NotificationBell({ needsYou, seeAllHref, recentLimit = 5, unread
                     className="relative inline-flex items-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium"
                 >
                     <Bell className="size-[13px]" aria-hidden />
-                    {needsYou ? (
+                    {needsYou && needsYou.count > 0 ? (
                         <span data-testid="bell-count" className="rounded-full bg-primary px-1.5 text-[10px] text-primary-foreground">
-                            {needsYou.count}
+                            {needsYou.count > 9 ? '9+' : needsYou.count}
                         </span>
                     ) : null}
                     {hasUnread ? <span data-testid="bell-unread-dot" aria-hidden className="absolute right-1 top-1 size-2 rounded-full bg-primary" /> : null}

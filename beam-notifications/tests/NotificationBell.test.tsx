@@ -1,6 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { createFrameKit, type FrameTransport } from '@schemastud/frame';
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { cleanup, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
@@ -68,6 +68,22 @@ describe('NotificationBell', () => {
         expect(within(bell).getByTestId('bell-count').textContent).toBe('3');
         await waitFor(() => expect(within(bell).getByTestId('bell-unread-dot')).toBeTruthy());
         expect(within(bell).getByTestId('bell-count').textContent).toBe('3');
+    });
+
+    it('keeps the badge rule: nothing at zero, capped at 9+, while Needs you keeps the exact count and its link', async () => {
+        for (const [count, badge] of [[0, null], [12, '9+']] as const) {
+            renderBell([], <NotificationBell needsYou={{ count, href: '/review' }} seeAllHref="/frame/notifications" />);
+            const bell = await screen.findByRole('button', { name: new RegExp(label('bell_label')) });
+            await waitFor(() => expect(bell.getAttribute('data-unread')).toBe('false'));
+            expect(within(bell).queryByTestId('bell-count')?.textContent ?? null).toBe(badge);
+
+            await userEvent.click(bell);
+            const needsYou = await screen.findByRole('region', { name: label('needs_you') });
+            const link = within(needsYou).getByRole('link');
+            expect(link.getAttribute('href')).toBe('/review');
+            expect(link.textContent).toContain(String(count));
+            cleanup();
+        }
     });
 
     it('shows no number without a Needs-you slot, only the unread dot, and no dot when nothing is unread', async () => {
