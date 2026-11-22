@@ -44,6 +44,26 @@ describe('agreement-member schema widget', () => {
         });
     });
 
+    it('agreements 16: showTitle false hides the title and keeps the frozen text and the checkbox label', async () => {
+        const registry = createWidgetRegistry();
+        registerAgreementWidgets(registry);
+        const Widget = registry.resolveWidget({ type: 'object', 'x-widget': 'agreement-member' }) as ComponentType<any>;
+        render(
+            <Widget
+                id="agreement-member"
+                name="agreementMember"
+                label="I agree"
+                value={undefined}
+                options={{ key: 'terms', version: 3, digest: 'sha256:current', showTitle: false }}
+                onChange={vi.fn()}
+            />,
+        );
+
+        expect(await screen.findByText('Frozen terms text.')).toBeTruthy();
+        expect(screen.queryByText('Terms of service')).toBeNull();
+        expect(screen.getByRole('checkbox', { name: 'I agree' })).toBeTruthy();
+    });
+
     it('does not read or submit agreement text when the schema omits the expected digest', async () => {
         const onChange = vi.fn();
         const registry = createWidgetRegistry();

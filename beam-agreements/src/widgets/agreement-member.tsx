@@ -9,6 +9,8 @@ type AgreementMemberOptions = {
     readUrl?: string;
     title?: string;
     label?: string;
+    /** agreements 16: false hides the Agreement's title (a host whose checkbox label already says it); default true. */
+    showTitle?: boolean;
 };
 
 type AgreementContent = { title: string; content: string; digest: string };
@@ -156,7 +158,7 @@ export function AgreementMemberWidget(props: AgreementMemberWidgetProps) {
 
     return (
         <fieldset data-agreement-member={key || undefined} disabled={locked} style={{ border: 0, margin: 0, padding: 0 }}>
-            {agreement ? <legend style={{ fontWeight: 600, marginBottom: 8 }}>{agreement.title}</legend> : null}
+            {agreement && options.showTitle !== false ? <legend style={{ fontWeight: 600, marginBottom: 8 }}>{agreement.title}</legend> : null}
             {agreement ? <div data-agreement-text="" style={{ whiteSpace: 'pre-wrap', marginBottom: 12 }}>{agreement.content}</div> : null}
             {unavailable ? <p role="alert">This agreement changed or is unavailable. Reload the form before accepting.</p> : null}
             <label htmlFor={checkboxId} style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
