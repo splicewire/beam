@@ -1,5 +1,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { createFrameKit, type FrameTransport } from '@schemastud/frame';
+import { MessageProvider } from '@schemastud/messages/react';
+import { hitTargetFloor } from '@schemastud/ui';
 import { cleanup, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ReactNode } from 'react';
@@ -45,15 +47,20 @@ function fakeTransport(initial: StoredNotification[]) {
     return { transport, calls, state };
 }
 
-function renderBell(rows: StoredNotification[], bell: ReactNode = <NotificationBell seeAllHref="/frame/notifications" />) {
+function renderBell(
+    rows: StoredNotification[],
+    bell: ReactNode = <NotificationBell seeAllHref="/frame/notifications" />,
+    options: { notify?: (notice: { tone: 'success' | 'error'; message: string }) => void; wrap?: (node: ReactNode) => ReactNode; transport?: FrameTransport } = {},
+) {
     const fake = fakeTransport(rows);
-    const kit = createFrameKit({ transport: fake.transport, urlState: 'memory' });
+    const kit = createFrameKit({ transport: options.transport ?? fake.transport, urlState: 'memory', notify: options.notify });
     const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-    render(
+    const tree = (
         <QueryClientProvider client={client}>
             <kit.Provider>{bell}</kit.Provider>
-        </QueryClientProvider>,
+        </QueryClientProvider>
     );
+    render(options.wrap ? options.wrap(tree) : tree);
 
     return fake;
 }
@@ -158,6 +165,79 @@ describe('NotificationBell', () => {
         expect(fetchSpy).not.toHaveBeenCalled();
         expect(fake.calls.every((c) => /^(list|summary|invoke) /.test(c))).toBe(true);
         fetchSpy.mockRestore();
+    });
+
+    // ---- attention-surfaces 11 cross-review amend ----
+
+    it('keeps the 44px tap floor on the trigger, as the top-bar neighbours do', async () => {
+        renderBell([]);
+        const bell = await screen.findByRole('button', { name: new RegExp(label('bell_label')) });
+        for (const cls of hitTargetFloor.split(' ')) expect(bell.className.split(' ')).toContain(cls);
+    });
+
+    it('renders every link through the host link component when one is given (no full reload)', async () => {
+        const hostLink = vi.fn(({ href, className, children }: { href: string; className?: string; children: ReactNode }) => (
+            <a href={href} className={className} data-host-link="">
+                {children}
+            </a>
+        ));
+        renderBell([row('a', 1)], <NotificationBell needsYou={{ count: 1, href: '/review' }} seeAllHref="/frame/notifications" renderLink={hostLink} />);
+        await userEvent.click(await screen.findByRole('button', { name: new RegExp(label('bell_label')) }));
+        await screen.findByRole('region', { name: label('recent') });
+
+        const links = screen.getAllByRole('link');
+        expect(links.map((l) => l.getAttribute('href')).sort()).toEqual(['/frame/notifications', '/review', '/somewhere/a']);
+        expect(links.every((l) => l.hasAttribute('data-host-link'))).toBe(true);
+    });
+
+    it('writes relative time in the reader\'s locale, not the browser\'s', async () => {
+        const german = { version: 1 as const, locale: 'de', realm: null, direction: 'ltr' as const, messages: {} };
+        renderBell([row('a', 3)], undefined, { wrap: (node) => <MessageProvider value={german}>{node}</MessageProvider> });
+        await userEvent.click(await screen.findByRole('button', { name: new RegExp(label('bell_label')) }));
+        const time = (await screen.findByRole('region', { name: label('recent') })).querySelector('time');
+        expect(time?.textContent).toBe(new Intl.RelativeTimeFormat('de', { numeric: 'auto' }).format(-3, 'minute'));
+    });
+
+    it('refreshes Recent on every open (ruling 8), not from a cache', async () => {
+        const fake = renderBell([row('a', 1)]);
+        const bell = await screen.findByRole('button', { name: new RegExp(label('bell_label')) });
+        await userEvent.click(bell);
+        await screen.findByRole('region', { name: label('recent') });
+        expect(fake.calls.filter((c) => c.startsWith('list ')).length).toBe(1);
+
+        await userEvent.click(bell); // close
+        await userEvent.click(bell); // reopen
+        await waitFor(() => expect(fake.calls.filter((c) => c.startsWith('list ')).length).toBe(2));
+    });
+
+    it('polls the unread figure every 60 seconds (ruling 8), and not sooner', async () => {
+        vi.useFakeTimers({ shouldAdvanceTime: true });
+        try {
+            const fake = renderBell([row('a', 1)]);
+            await screen.findByRole('button', { name: new RegExp(label('bell_label')) });
+            await waitFor(() => expect(fake.calls.filter((c) => c === 'summary notifications').length).toBe(1));
+
+            await vi.advanceTimersByTimeAsync(59_000);
+            expect(fake.calls.filter((c) => c === 'summary notifications').length).toBe(1);
+            await vi.advanceTimersByTimeAsync(2_000);
+            await waitFor(() => expect(fake.calls.filter((c) => c === 'summary notifications').length).toBe(2));
+        } finally {
+            vi.useRealTimers();
+        }
+    });
+
+    it('reports a failed mark read through the host\'s notice sink (66-1)', async () => {
+        const notify = vi.fn();
+        const fake = fakeTransport([row('a', 1)]);
+        (fake.transport as unknown as { invoke: ReturnType<typeof vi.fn> }).invoke = vi.fn(async () => {
+            throw new Error('refused');
+        });
+        renderBell([], undefined, { notify, transport: fake.transport });
+        await userEvent.click(await screen.findByRole('button', { name: new RegExp(label('bell_label')) }));
+        const recent = await screen.findByRole('region', { name: label('recent') });
+        await userEvent.click(within(recent).getByRole('button', { name: label('mark_read') }));
+
+        await waitFor(() => expect(notify).toHaveBeenCalledWith({ tone: 'error', message: label('mark_read_failed') }));
     });
 
     it('declares its client text as explicit keys in its own namespace', () => {

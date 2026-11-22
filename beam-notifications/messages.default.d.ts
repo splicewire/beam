@@ -9,6 +9,7 @@ declare const catalog: {
     readonly "splicewire-beam-notifications::messages.bell_label": string;
     readonly "splicewire-beam-notifications::messages.mark_all_read": string;
     readonly "splicewire-beam-notifications::messages.mark_read": string;
+    readonly "splicewire-beam-notifications::messages.mark_read_failed": string;
     readonly "splicewire-beam-notifications::messages.needs_you": string;
     readonly "splicewire-beam-notifications::messages.needs_you_open": string;
     readonly "splicewire-beam-notifications::messages.recent": string;

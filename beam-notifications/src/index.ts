@@ -1,4 +1,4 @@
-export { NotificationBell, type NeedsYou, type NotificationBellProps } from './NotificationBell';
+export { NotificationBell, type BellLink, type NeedsYou, type NotificationBellProps } from './NotificationBell';
 export {
     NOTIFICATIONS_RESOURCE,
     UNREAD_POLL_MS,

@@ -56,8 +56,8 @@ export function useRecentNotifications(open: boolean, limit: number) {
  * taken from the realm manifest and run by the kit transport's `invoke`, never a hand-written request. Afterwards every
  * cached notifications read refreshes, so the unread dot and the rows agree.
  */
-export function useMarkNotificationsRead() {
-    const { transport, manifestFor } = useFrameInjection();
+export function useMarkNotificationsRead(failedMessage: string) {
+    const { transport, manifestFor, notify } = useFrameInjection();
     const client = useQueryClient();
     const actions = manifestFor?.(NOTIFICATIONS_RESOURCE)?.actions ?? [];
 
@@ -68,6 +68,8 @@ export function useMarkNotificationsRead() {
 
             return transport.invoke(action, { id: target.id ?? null });
         },
+        // A refused or failed write reaches the host's one notice sink (66-1), never a silent no-op.
+        onError: () => notify?.({ tone: 'error', message: failedMessage }),
         onSettled: () => client.invalidateQueries({ queryKey: ['frame', NOTIFICATIONS_RESOURCE] }),
     });
 
