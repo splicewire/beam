@@ -11,10 +11,11 @@ type AgreementMemberOptions = {
     label?: string;
 };
 
-type AgreementContent = { title: string; content: string; digest: string };
+type AgreementContent = { title: string; content: string; digest: string; kind?: string };
 type AgreementReadResponse = {
     data?: {
         key?: unknown;
+        kind?: unknown;
         title?: unknown;
         version?: { digest?: unknown; content?: unknown } | null;
     };
@@ -125,11 +126,14 @@ export function AgreementMemberWidget(props: AgreementMemberWidgetProps) {
                     title: typeof data.title === 'string' ? data.title : options.title ?? key,
                     content: current.content,
                     digest: current.digest,
+                    kind: typeof data.kind === 'string' ? data.kind : undefined,
                 });
                 const existing = valueRef.current && typeof valueRef.current === 'object'
                     ? (valueRef.current as Partial<AgreementMember>)
                     : undefined;
-                if (
+                if (data.kind === 'notice' && valueRef.current !== undefined) {
+                    onChangeRef.current(undefined);
+                } else if (
                     valueRef.current !== undefined &&
                     (existing?.key !== key || existing.version !== version || existing.digest !== current.digest)
                 ) onChangeRef.current(undefined);
@@ -159,18 +163,20 @@ export function AgreementMemberWidget(props: AgreementMemberWidgetProps) {
             {agreement ? <legend style={{ fontWeight: 600, marginBottom: 8 }}>{agreement.title}</legend> : null}
             {agreement ? <div data-agreement-text="" style={{ whiteSpace: 'pre-wrap', marginBottom: 12 }}>{agreement.content}</div> : null}
             {unavailable ? <p role="alert">This agreement changed or is unavailable. Reload the form before accepting.</p> : null}
-            <label htmlFor={checkboxId} style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
-                <input
-                    id={checkboxId}
-                    type="checkbox"
-                    name={props.name}
-                    aria-label={options.label ?? label}
-                    checked={checked}
-                    disabled={locked}
-                    onChange={change}
-                />
-                <span>{options.label ?? label}</span>
-            </label>
+            {agreement?.kind === 'notice' ? null : (
+                <label htmlFor={checkboxId} style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
+                    <input
+                        id={checkboxId}
+                        type="checkbox"
+                        name={props.name}
+                        aria-label={options.label ?? label}
+                        checked={checked}
+                        disabled={locked}
+                        onChange={change}
+                    />
+                    <span>{options.label ?? label}</span>
+                </label>
+            )}
         </fieldset>
     );
 }

@@ -6,7 +6,7 @@ import registerAgreementWidgets from './register.js';
 
 beforeEach(() => {
     vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify({
-        data: { key: 'terms', title: 'Terms of service', version: { digest: 'sha256:current', content: 'Frozen terms text.' } },
+        data: { key: 'terms', kind: 'contract', title: 'Terms of service', version: { digest: 'sha256:current', content: 'Frozen terms text.' } },
     }), { status: 200, headers: { 'Content-Type': 'application/json' } })));
 });
 
@@ -42,6 +42,38 @@ describe('agreement-member schema widget', () => {
             cache: 'no-store',
             headers: { Accept: 'application/json' },
         });
+    });
+
+    it('shows a notice as information and submits no agreement member', async () => {
+        vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify({
+            data: { key: 'privacy', kind: 'notice', title: 'Privacy notice', version: { digest: 'sha256:notice', content: 'How we use your data.' } },
+        }), { status: 200, headers: { 'Content-Type': 'application/json' } })));
+        const onSubmit = vi.fn();
+        const registry = createWidgetRegistry();
+        registerAgreementWidgets(registry);
+        render(
+            <SchemaForm
+                schema={{
+                    type: 'object',
+                    properties: {
+                        privacy: {
+                            type: 'object',
+                            title: 'Privacy notice',
+                            'x-widget': 'agreement-member',
+                            'x-widget-options': { key: 'privacy', version: 2, digest: 'sha256:notice', readUrl: '/beam/agreements/agreements/privacy' },
+                        },
+                    },
+                }}
+                registry={registry}
+                onSubmit={onSubmit}
+            />,
+        );
+
+        expect(await screen.findByText('Privacy notice')).toBeTruthy();
+        expect(screen.getByText('How we use your data.')).toBeTruthy();
+        expect(screen.queryByRole('checkbox')).toBeNull();
+        fireEvent.click(screen.getByRole('button', { name: 'Submit' }));
+        expect(onSubmit.mock.calls[0]?.[0].formData).toEqual({});
     });
 
     it('does not read or submit agreement text when the schema omits the expected digest', async () => {
