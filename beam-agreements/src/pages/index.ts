@@ -11,4 +11,6 @@ export const beamAgreementsPages: Record<string, () => Promise<{ default: Compon
     // agreements 09: the public legal pages (the seam's AgreementsRoutes::mountPublic()).
     'agreements/legal': () => import('./Legal') as Promise<{ default: ComponentType<never> }>,
     'agreements/legal-version': () => import('./LegalVersion') as Promise<{ default: ComponentType<never> }>,
+    // agreements 12: the counterparty's signed page (the seam's AgreementsRoutes::mountConsent()).
+    'agreements/consent': () => import('./Consent') as Promise<{ default: ComponentType<never> }>,
 };

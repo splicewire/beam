@@ -16,6 +16,8 @@ export { default as Legal, type LegalProps } from './pages/Legal';
 export { default as LegalVersion, type LegalVersionProps } from './pages/LegalVersion';
 export type { LegalVersionFull, LegalVersionSummary } from './pages/legal-shared';
 export { AgreementNotices, type AgreementNotice, type AgreementNoticesProps } from './notices/AgreementNotices';
+export { default as Consent, type ConsentProps } from './pages/Consent';
+export { ConsentRequests, type ConsentRequestsProps } from './account/ConsentRequests';
 export {
     AGREEMENT_GUARD,
     AgreementBlockedStep,
