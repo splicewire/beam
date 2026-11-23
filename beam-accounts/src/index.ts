@@ -101,6 +101,7 @@ export {
 export { useBeamAccountsMessages, englishBeamAccountsMessages, type BeamAccountsMessages, type BeamAccountsMessageKey } from "./messages";
 export { NoticeError, type Notice } from "./message-descriptor";
 export { errorMessage } from "./utils";
+export { AgreementPrompt, type AgreementPromptData, type AgreementMember } from './agreement-prompt';
 
 // ── Getting onto a team (team onboarding) ───────────────────────────────────
 export { CreateTeamForm, type CreateTeamFormProps } from "./create-team-form";

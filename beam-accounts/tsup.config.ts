@@ -24,6 +24,7 @@ export default defineConfig({
     "@tanstack/react-table",
     "@schemastud/ui",
     "@splicewire/beam-ux",
+    "@splicewire/beam-agreements/widgets",
     "@schemastud/seam",
     "lucide-react",
   ],

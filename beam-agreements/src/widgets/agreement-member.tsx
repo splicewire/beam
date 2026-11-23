@@ -9,9 +9,12 @@ type AgreementMemberOptions = {
     readUrl?: string;
     title?: string;
     label?: string;
+    kind?: string;
+    content?: string;
+    legalUrl?: string | null;
 };
 
-type AgreementContent = { title: string; content: string; digest: string; kind?: string };
+type AgreementContent = { title: string; content: string; digest: string; kind?: string; legalUrl?: string | null };
 type AgreementReadResponse = {
     data?: {
         key?: unknown;
@@ -71,7 +74,8 @@ export function AgreementMemberWidget(props: AgreementMemberWidgetProps) {
     const readUrl = options.readUrl ?? (key === '' ? '' : `/beam/agreements/agreements/${encodeURIComponent(key)}`);
     // The show resource does not expose the requirements plane's ordinal. Requiring the schema digest lets this
     // widget prove that the text it displays is exactly the version the form will submit alongside that ordinal.
-    const complete = key !== '' && version !== undefined && typeof expectedDigest === 'string' && expectedDigest !== '' && readUrl !== '';
+    const embedded = typeof options.kind === 'string' && typeof options.content === 'string';
+    const complete = key !== '' && version !== undefined && typeof expectedDigest === 'string' && expectedDigest !== '' && (embedded || readUrl !== '');
     const member = value && typeof value === 'object' ? (value as Partial<AgreementMember>) : undefined;
     const onChangeRef = useRef(emitChange);
     onChangeRef.current = emitChange;
@@ -91,6 +95,18 @@ export function AgreementMemberWidget(props: AgreementMemberWidgetProps) {
         if (!complete) {
             setUnavailable(true);
             emitChange(undefined, 'The current agreement could not be verified.');
+            return () => { cancelled = true; };
+        }
+
+        if (embedded) {
+            setAgreement({
+                title: options.title ?? key,
+                content: options.content as string,
+                digest: expectedDigest as string,
+                kind: options.kind,
+                legalUrl: options.legalUrl,
+            });
+            if (options.kind === 'notice' && valueRef.current !== undefined) onChangeRef.current(undefined);
             return () => { cancelled = true; };
         }
 
@@ -127,6 +143,7 @@ export function AgreementMemberWidget(props: AgreementMemberWidgetProps) {
                     content: current.content,
                     digest: current.digest,
                     kind: typeof data.kind === 'string' ? data.kind : undefined,
+                    legalUrl: options.legalUrl,
                 });
                 const existing = valueRef.current && typeof valueRef.current === 'object'
                     ? (valueRef.current as Partial<AgreementMember>)
@@ -146,7 +163,7 @@ export function AgreementMemberWidget(props: AgreementMemberWidgetProps) {
             });
 
         return () => { cancelled = true; };
-    }, [complete, expectedDigest, key, options.title, readUrl]);
+    }, [complete, embedded, expectedDigest, key, options.content, options.kind, options.legalUrl, options.title, readUrl]);
 
     const locked = Boolean(disabled || readonly || !complete || !digestMatches);
 
@@ -162,6 +179,7 @@ export function AgreementMemberWidget(props: AgreementMemberWidgetProps) {
         <fieldset data-agreement-member={key || undefined} disabled={locked} style={{ border: 0, margin: 0, padding: 0 }}>
             {agreement ? <legend style={{ fontWeight: 600, marginBottom: 8 }}>{agreement.title}</legend> : null}
             {agreement ? <div data-agreement-text="" style={{ whiteSpace: 'pre-wrap', marginBottom: 12 }}>{agreement.content}</div> : null}
+            {agreement?.legalUrl ? <a href={agreement.legalUrl}>Read the full agreement</a> : null}
             {unavailable ? <p role="alert">This agreement changed or is unavailable. Reload the form before accepting.</p> : null}
             {agreement?.kind === 'notice' ? null : (
                 <label htmlFor={checkboxId} style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>

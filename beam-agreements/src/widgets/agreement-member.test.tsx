@@ -13,6 +13,56 @@ beforeEach(() => {
 afterEach(() => vi.unstubAllGlobals());
 
 describe('agreement-member schema widget', () => {
+    it('uses embedded guest terms without making an unauthenticated read', async () => {
+        const onChange = vi.fn();
+        const registry = createWidgetRegistry();
+        registerAgreementWidgets(registry);
+        const Widget = registry.resolveWidget({ type: 'object', 'x-widget': 'agreement-member' }) as ComponentType<any>;
+
+        render(
+            <Widget
+                id="agreement-member"
+                name="agreementMember"
+                label="I have read and agree"
+                value={undefined}
+                options={{
+                    key: 'terms', version: 3, digest: 'sha256:current', kind: 'contract',
+                    title: 'Terms of service', content: 'Frozen guest terms.', legalUrl: null,
+                }}
+                onChange={onChange}
+            />,
+        );
+
+        expect(await screen.findByText('Frozen guest terms.')).toBeTruthy();
+        expect(screen.getByRole('checkbox', { name: 'I have read and agree' })).toBeTruthy();
+        expect(fetch).not.toHaveBeenCalled();
+        fireEvent.click(screen.getByRole('checkbox', { name: 'I have read and agree' }));
+        expect(onChange.mock.calls.at(-1)?.[0]).toEqual({ key: 'terms', version: 3, digest: 'sha256:current' });
+    });
+
+    it('renders an embedded notice without a checkbox or member', async () => {
+        const onChange = vi.fn();
+        const registry = createWidgetRegistry();
+        registerAgreementWidgets(registry);
+        const Widget = registry.resolveWidget({ type: 'object', 'x-widget': 'agreement-member' }) as ComponentType<any>;
+
+        render(
+            <Widget
+                id="agreement-member"
+                name="agreementMember"
+                label="Agreement"
+                value={undefined}
+                options={{ key: 'privacy', version: 1, digest: 'sha256:notice', kind: 'notice', title: 'Privacy notice', content: 'We use your data.' }}
+                onChange={onChange}
+            />,
+        );
+
+        expect(await screen.findByText('We use your data.')).toBeTruthy();
+        expect(screen.queryByRole('checkbox')).toBeNull();
+        expect(fetch).not.toHaveBeenCalled();
+        expect(onChange.mock.calls.at(-1)?.[0]).toBeUndefined();
+    });
+
     it('fetches the agreement and emits only the existing member shape when checked', async () => {
         const registry = createWidgetRegistry();
         registerAgreementWidgets(registry);
