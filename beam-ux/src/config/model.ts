@@ -177,6 +177,44 @@ export function cascade(key: ConfigKeyData): CascadeLayer[] {
     }));
 }
 
+/** One row of the inspector's stack: a layer that holds a value, or a runtime tier the package closed the key to. */
+export type ProvenanceRow = ({ kind: 'layer' } & CascadeLayer) | { kind: 'closed'; tier: ConfigTier };
+
+/**
+ * The cascade with each CLOSED tier in its place on the ladder (config-sections 17). A tier the package closed the key
+ * to has no layer, and "not set" would be wrong: no value from that tier can ever apply. Only tiers the ceiling admits
+ * are shown, since a tier above the ceiling is already out of reach and the header says so.
+ */
+export function provenance(key: ConfigKeyData): ProvenanceRow[] {
+    const rank = (tier: ConfigTier) => TIER_ORDER.indexOf(tier);
+    const closed = closedTiers(key).filter((tier) => rank(tier) <= rank(key.ceiling));
+    const rows: ProvenanceRow[] = cascade(key).map((row) => ({ kind: 'layer', ...row }));
+    for (const tier of closed) {
+        const at = rows.findIndex((row) => rank(row.kind === 'layer' ? row.layer.tier : row.tier) < rank(tier));
+        rows.splice(at < 0 ? rows.length : at, 0, { kind: 'closed', tier });
+    }
+    return rows;
+}
+
+/** The runtime tiers the package closed the key to (`#[ConfigKey(closed: …)]`), bottom-up. */
+export function closedTiers(key: ConfigKeyData): ConfigTier[] {
+    return [...(key.closed ?? [])].sort((a, b) => TIER_ORDER.indexOf(a) - TIER_ORDER.indexOf(b));
+}
+
+/** Whether the key is closed to the tier a realm writes (the operator realm writes `operator`, the tenant realm `tenant`). */
+export function closedToRealm(key: ConfigKeyData, realm: ConfigRealm): boolean {
+    return (key.closed ?? []).includes(realm);
+}
+
+/**
+ * Whether the key holds a LIST (config-sections 21). A list is one key: it is saved whole, and no tier may override one
+ * item, because an index names a position, not a record, and positions move when the list changes.
+ */
+export function isListKey(schema: SchemaNode, pointer: string): boolean {
+    const type = nodeAt(schema, pointer)?.type;
+    return type === 'array' || (Array.isArray(type) && type.includes('array'));
+}
+
 /** A non-secret value as plain text, for the fallback read and a layer line. */
 export function formatValue(value: unknown): string {
     // A JSON null renders as its JSON token, like every other JSON value here: a value, not copy.
@@ -300,6 +338,8 @@ export function canEdit(section: ConfigSectionData, key: ConfigKeyData, realm: C
     if (!key.overridable || key.effect === 'deploy') return false;
     if (TIER_ORDER.indexOf(key.ceiling) < TIER_ORDER.indexOf(section.tier)) return false;
     if (realm === 'tenant' && isLocked(key)) return false;
+    // config-sections 17: the server refuses a write from a tier the package closed the key to (ConfigTierBoundary).
+    if (closedToRealm(key, realm)) return false;
     return true;
 }
 

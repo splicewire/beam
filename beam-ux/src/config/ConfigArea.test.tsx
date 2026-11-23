@@ -31,9 +31,9 @@ function ModelPicker(props: WidgetProps) {
  * ConfigSectionData's declarations), so ListShell resolves columns in manifest mode. `manifest: false` is the
  * no-manifest fallback, kept to its own test.
  */
-function mount(section?: string, { manifest = true }: { manifest?: boolean } = {}) {
+function mount(section?: string, { manifest = true, rows = CONFIG_SECTIONS }: { manifest?: boolean; rows?: ConfigSectionData[] } = {}) {
     const kit = createFrameKit({
-        transport: createMemoryTransport({ rows: { 'beam-config': CONFIG_SECTIONS }, ...(manifest ? { manifest: BEAM_CONFIG_MANIFEST } : {}) }),
+        transport: createMemoryTransport({ rows: { 'beam-config': rows }, ...(manifest ? { manifest: BEAM_CONFIG_MANIFEST } : {}) }),
         urlState: 'memory',
         widgets: (registry) => registry.registerWidget('model-picker', ModelPicker),
     });
@@ -275,6 +275,33 @@ describe('the Cascade inspector', () => {
         const removed = pane.querySelector('[data-config-standing="removed"]') as HTMLElement;
         expect(removed.textContent).toContain('removed from config() by a service provider');
         expect(pane.querySelector('[data-config-standing="wins"]')?.getAttribute('data-config-layer')).toBe('provider');
+    });
+
+    // config-sections 17: the package closed Validation mode to the operator tier.
+    const CLOSED_UX: ConfigSectionData = {
+        ...BEAM_UX,
+        keys: BEAM_UX.keys.map((k) => (k.pointer === '/mode' ? { ...k, closed: ['operator'], overridable: false } : k)),
+    };
+
+    it('draws a tier the package closed as closed, in its place on the ladder, never as not set', async () => {
+        mount('beam.ux', { rows: [APP_CHAT, CLOSED_UX, BEAM_TENANCY] });
+        fireEvent.click(within(await keyRow('/mode')).getByText('Validation mode'));
+        const pane = await screen.findByRole('complementary', { name: 'Cascade for Validation mode' });
+        const layers = [...pane.querySelectorAll('[data-config-layer]')];
+        expect(layers.map((l) => [l.getAttribute('data-config-layer'), l.getAttribute('data-config-standing')])).toEqual([
+            ['operator', 'closed'],
+            ['package', 'wins'],
+        ]);
+        expect(layers[0]!.textContent).toContain('The package closed this key to the operator.');
+        expect(layers[0]!.textContent).not.toMatch(/not set/i);
+        expect(pane.querySelector('[data-config-closed-to="operator"]')?.textContent).toBe('closed to the operator');
+    });
+
+    it('draws no closed row for an open key', async () => {
+        mount('beam.ux');
+        fireEvent.click(within(await keyRow('/mode')).getByText('Validation mode'));
+        const pane = await screen.findByRole('complementary', { name: 'Cascade for Validation mode' });
+        expect(pane.querySelector('[data-config-standing="closed"], [data-config-closed-to]')).toBeNull();
     });
 
     it('closes', async () => {
