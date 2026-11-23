@@ -96,7 +96,9 @@ export function AgreementMemberWidget(props: AgreementMemberWidgetProps) {
 
         if (!complete) {
             setUnavailable(true);
-            emitChange(undefined, 'The current agreement could not be verified.');
+            // `undefined` is defaulted to `{}` for object fields by some RJSF versions. A null
+            // keeps this object-typed field invalid, so an unverified assent cannot pass submit.
+            emitChange(null, 'The current agreement could not be verified.');
             return () => { cancelled = true; };
         }
 
@@ -108,7 +110,14 @@ export function AgreementMemberWidget(props: AgreementMemberWidgetProps) {
                 kind: options.kind,
                 legalUrl: options.legalUrl,
             });
-            if (options.kind === 'notice' && valueRef.current !== undefined) onChangeRef.current(undefined);
+            const existing = valueRef.current && typeof valueRef.current === 'object'
+                ? (valueRef.current as Partial<AgreementMember>)
+                : undefined;
+            if (options.kind === 'notice') {
+                if (valueRef.current !== undefined) onChangeRef.current(undefined);
+            } else if (
+                existing?.key !== key || existing.version !== version || existing.digest !== expectedDigest
+            ) onChangeRef.current(null);
             return () => { cancelled = true; };
         }
 
@@ -137,7 +146,7 @@ export function AgreementMemberWidget(props: AgreementMemberWidgetProps) {
                     typeof current.content !== 'string'
                 ) {
                     setUnavailable(true);
-                    onChangeRef.current(undefined, 'The current agreement could not be verified.');
+                    onChangeRef.current(null, 'The current agreement could not be verified.');
                     return;
                 }
                 setAgreement({
@@ -150,17 +159,16 @@ export function AgreementMemberWidget(props: AgreementMemberWidgetProps) {
                 const existing = valueRef.current && typeof valueRef.current === 'object'
                     ? (valueRef.current as Partial<AgreementMember>)
                     : undefined;
-                if (data.kind === 'notice' && valueRef.current !== undefined) {
-                    onChangeRef.current(undefined);
+                if (data.kind === 'notice') {
+                    if (valueRef.current !== undefined) onChangeRef.current(undefined);
                 } else if (
-                    valueRef.current !== undefined &&
-                    (existing?.key !== key || existing.version !== version || existing.digest !== current.digest)
-                ) onChangeRef.current(undefined);
+                    existing?.key !== key || existing.version !== version || existing.digest !== current.digest
+                ) onChangeRef.current(null);
             })
             .catch(() => {
                 if (!cancelled) {
                     setUnavailable(true);
-                    onChangeRef.current(undefined, 'The current agreement could not be verified.');
+                    onChangeRef.current(null, 'The current agreement could not be verified.');
                 }
             });
 
@@ -173,7 +181,7 @@ export function AgreementMemberWidget(props: AgreementMemberWidgetProps) {
         emitChange(
             event.currentTarget.checked && version !== undefined && digestMatches
                 ? { key, version, digest: agreement.digest } satisfies AgreementMember
-                : undefined,
+                : null,
         );
     };
 
