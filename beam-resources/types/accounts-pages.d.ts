@@ -11,6 +11,7 @@ status: undefined | string | null,
 demoAccounts: DemoAccountLinkData[] | undefined,
 demoUserSearchUrl: undefined | string,
 passwordRules: undefined | string,
+agreements: undefined | Array<any>,
 };
 
 export type DemoAccountLinkData = {
