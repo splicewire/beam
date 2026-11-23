@@ -1,6 +1,6 @@
 // config-sections 10a: the Config area's pure view model over the generated `beam-config` slice.
 import { describe, expect, it } from 'vitest';
-import { asConfigSection, cascade, deploySource, family, humanize, keyLabel, matchesFilter, nodeAt, pointerTokens } from './model';
+import { asConfigSection, cascade, closedToRealm, deploySource, family, humanize, isListKey, keyLabel, matchesFilter, nodeAt, pointerTokens, provenance } from './model';
 import { APP_CHAT, BEAM_UX } from './ConfigArea.fixtures';
 
 const key = (pointer: string, section = BEAM_UX) => section.keys.find((k) => k.pointer === pointer)!;
@@ -64,5 +64,45 @@ describe('filters and sources', () => {
         expect(asConfigSection(BEAM_UX)).toBe(BEAM_UX);
         expect(asConfigSection({ id: 'x' })).toBeNull();
         expect(asConfigSection(null)).toBeNull();
+    });
+});
+
+// config-sections 17: a tier the package closed the key to is shown as closed, in its place on the ladder, not as "not set".
+describe('a closed tier', () => {
+    const mode = key('/mode');
+    const closed = { ...mode, closed: ['operator' as const], overridable: false };
+
+    it('takes its place in the stack, between the workspace and the tiers below the operator', () => {
+        const withTenant = { ...closed, tier: 'tenant' as const, layers: [...mode.layers, { tier: 'tenant' as const, value: 'lenient', source: null, shadowed: false, removed: false }] };
+        expect(provenance(withTenant).map((r) => (r.kind === 'closed' ? [r.tier, 'closed'] : [r.layer.tier, r.standing]))).toEqual([
+            ['tenant', 'wins'],
+            ['operator', 'closed'],
+            ['package', 'loses'],
+        ]);
+    });
+
+    it('sits on top when no higher layer holds a value, and an open key has no closed row', () => {
+        expect(provenance(closed).map((r) => r.kind)).toEqual(['closed', 'layer']);
+        expect(provenance(mode).some((r) => r.kind === 'closed')).toBe(false);
+    });
+
+    it('is not drawn above the ceiling, where the header already says the key is out of reach', () => {
+        expect(provenance({ ...closed, closed: ['tenant'], ceiling: 'operator' }).some((r) => r.kind === 'closed')).toBe(false);
+    });
+
+    it('names the realm whose tier it closes', () => {
+        expect(closedToRealm(closed, 'operator')).toBe(true);
+        expect(closedToRealm(closed, 'tenant')).toBe(false);
+        expect(closedToRealm(mode, 'operator')).toBe(false);
+    });
+});
+
+// config-sections 21: a list is one key, saved whole.
+describe('a list key', () => {
+    it('is a key whose schema node is an array, nullable or not', () => {
+        expect(isListKey(BEAM_UX.schema, '/site/reserved_prefixes')).toBe(true);
+        expect(isListKey({ type: 'object', properties: { relays: { type: ['array', 'null'] } } }, '/relays')).toBe(true);
+        expect(isListKey(BEAM_UX.schema, '/cache_ttl')).toBe(false);
+        expect(isListKey(BEAM_UX.schema, '/site')).toBe(false);
     });
 });

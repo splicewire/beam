@@ -2,7 +2,7 @@ import { useBeamMessages } from '../../messages';
 import { Head } from '@inertiajs/react';
 import { BrowserRouter } from 'react-router';
 import { useFrameManifest } from '../../frame/manifest';
-import { TenantFrameProvider } from '../../frame/provider';
+import { BeamFrameProvider } from '../../frame/provider';
 import {
     DefaultFrameRealm,
     FrameRealmProvider,
@@ -43,11 +43,11 @@ export default function FrameConsole(props: Partial<FrameRealmContext>) {
     return (
         <FrameRealmProvider realm={realm} basename={basename} manifestUrl={manifestUrl}>
             {/* The provider reads the manifest, so it has to sit INSIDE the realm context. */}
-            <TenantFrameProvider>
+            <BeamFrameProvider>
                 <BrowserRouter basename={basename}>
                     <ConsoleBody />
                 </BrowserRouter>
-            </TenantFrameProvider>
+            </BeamFrameProvider>
         </FrameRealmProvider>
     );
 }

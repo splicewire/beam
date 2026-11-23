@@ -54,6 +54,7 @@ export const BEAM_UX: ConfigSectionData = {
             set: true,
             merge: 'replace',
             lock: null,
+            closed: [],
         },
         {
             pointer: '/mode',
@@ -69,6 +70,7 @@ export const BEAM_UX: ConfigSectionData = {
             set: true,
             merge: 'replace',
             lock: null,
+            closed: [],
         },
         {
             pointer: '/theme',
@@ -84,6 +86,7 @@ export const BEAM_UX: ConfigSectionData = {
             set: true,
             merge: 'replace',
             lock: null,
+            closed: [],
         },
         {
             pointer: '/legacy_blocks',
@@ -102,6 +105,7 @@ export const BEAM_UX: ConfigSectionData = {
             set: true,
             merge: 'replace',
             lock: null,
+            closed: [],
         },
         {
             pointer: '/site/artifact_root',
@@ -120,6 +124,7 @@ export const BEAM_UX: ConfigSectionData = {
             set: true,
             merge: 'replace',
             lock: null,
+            closed: [],
         },
         {
             pointer: '/site/reserved_prefixes',
@@ -139,6 +144,7 @@ export const BEAM_UX: ConfigSectionData = {
             set: true,
             merge: 'extend',
             lock: null,
+            closed: [],
         },
     ],
     shadowedPackageKeys: ['/site/artifact_root'],
@@ -184,6 +190,7 @@ export const APP_CHAT: ConfigSectionData = {
             set: true,
             merge: 'replace',
             lock: null,
+            closed: [],
         },
         {
             pointer: '/default_model',
@@ -199,6 +206,7 @@ export const APP_CHAT: ConfigSectionData = {
             set: true,
             merge: 'replace',
             lock: null,
+            closed: [],
         },
         {
             pointer: '/google.cse.query/limit',
@@ -214,6 +222,7 @@ export const APP_CHAT: ConfigSectionData = {
             set: true,
             merge: 'replace',
             lock: null,
+            closed: [],
         },
     ],
     shadowedPackageKeys: [],
@@ -248,6 +257,7 @@ export const BEAM_TENANCY: ConfigSectionData = {
             set: true,
             merge: 'replace',
             lock: null,
+            closed: [],
         },
     ],
     shadowedPackageKeys: [],
