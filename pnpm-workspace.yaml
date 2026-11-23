@@ -8,6 +8,7 @@ packages:
   - beam-ux-prototype
   - beam-mainframe
   - beam-workflows
+  - beam-notifications
   - beam-ux
   - beam-mdx
   - beam-accounts

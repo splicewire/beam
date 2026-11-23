@@ -37,7 +37,8 @@ import { Button, Input, cn } from '@schemastud/ui';
 import { AlertTriangle, Search, X } from 'lucide-react';
 import {
     asConfigSection,
-    cascade,
+    closedTiers,
+    provenance,
     sectionForRealm,
     type ConfigRealm,
     deploySource,
@@ -521,7 +522,8 @@ export function CascadeInspector<K extends ResourceKey = ResourceKey>({
     const schema = section.schema as SchemaNode;
     const label = keyLabel(schema, keyData.pointer);
     const description = keyDescription(schema, keyData.pointer);
-    const layers = cascade(keyData);
+    const rows = provenance(keyData);
+    const closed = closedTiers(keyData);
     return (
         <aside aria-label={m.t('splicewire-beam-ux::messages.config_cascade_for', { label })} data-config-inspector={keyData.pointer} className="space-y-3 rounded-lg border bg-card p-4">
             <header className="space-y-1">
@@ -545,6 +547,11 @@ export function CascadeInspector<K extends ResourceKey = ResourceKey>({
                     <span className="font-mono text-[10.5px] text-muted-foreground">
                         {keyData.overridable ? m.t('splicewire-beam-ux::messages.config_overridable_up_to', { tier: m.t(TIER_WORD[keyData.ceiling]) }) : m.t('splicewire-beam-ux::messages.config_not_overridable')}
                     </span>
+                    {closed.map((tier) => (
+                        <span key={tier} data-config-closed-to={tier} className="font-mono text-[10.5px] text-muted-foreground">
+                            {m.t('splicewire-beam-ux::messages.config_closed_to', { tier: m.t(TIER_WORD[tier]) })}
+                        </span>
+                    ))}
                 </div>
             </header>
 
@@ -557,31 +564,41 @@ export function CascadeInspector<K extends ResourceKey = ResourceKey>({
             )}
 
             <ol className="space-y-2" aria-label={m.t('splicewire-beam-ux::messages.config_layers')}>
-                {layers.map(({ layer, standing }, i) => (
-                    <li
-                        key={`${layer.tier}-${i}`}
-                        data-config-layer={layer.tier}
-                        data-config-standing={standing}
-                        className={cn('rounded-lg border', standing === 'wins' ? 'ring-1 ring-primary/25' : 'opacity-80')}
-                    >
-                        <header className="flex items-center justify-between gap-2 border-b px-3 py-1.5">
-                            <TierPill tier={layer.tier} />
-                            <span className="truncate font-mono text-[10.5px] text-muted-foreground" title={layer.source ?? ''}>
-                                {layer.source ?? '—'}
-                            </span>
-                        </header>
-                        <div className="space-y-0.5 px-3 py-2">
-                            {keyData.secret ? (
-                                standing === 'wins' ? <SecretValue set={keyData.set} /> : <span className="font-mono text-xs text-muted-foreground">{m.t('splicewire-beam-ux::messages.config_withheld')}</span>
-                            ) : (
-                                <PlainValue value={layer.value} struck={standing !== 'wins'} />
-                            )}
-                            {(standing === 'shadowed' || standing === 'removed') && (
-                                <p className="font-mono text-[10.5px] text-muted-foreground">{m.t(STANDING_NOTE[standing])}</p>
-                            )}
-                        </div>
-                    </li>
-                ))}
+                {rows.map((row, i) =>
+                    row.kind === 'closed' ? (
+                        <li key={`closed-${row.tier}`} data-config-layer={row.tier} data-config-standing="closed" className="rounded-lg border border-dashed">
+                            <header className="flex items-center justify-between gap-2 border-b border-dashed px-3 py-1.5">
+                                <TierPill tier={row.tier} />
+                                <span className="font-mono text-[10.5px] text-muted-foreground">{m.t('splicewire-beam-ux::messages.config_standing_closed')}</span>
+                            </header>
+                            <p className="px-3 py-2 text-xs text-muted-foreground">{m.t('splicewire-beam-ux::messages.config_closed_note', { tier: m.t(TIER_WORD[row.tier]) })}</p>
+                        </li>
+                    ) : (
+                        <li
+                            key={`${row.layer.tier}-${i}`}
+                            data-config-layer={row.layer.tier}
+                            data-config-standing={row.standing}
+                            className={cn('rounded-lg border', row.standing === 'wins' ? 'ring-1 ring-primary/25' : 'opacity-80')}
+                        >
+                            <header className="flex items-center justify-between gap-2 border-b px-3 py-1.5">
+                                <TierPill tier={row.layer.tier} />
+                                <span className="truncate font-mono text-[10.5px] text-muted-foreground" title={row.layer.source ?? ''}>
+                                    {row.layer.source ?? '—'}
+                                </span>
+                            </header>
+                            <div className="space-y-0.5 px-3 py-2">
+                                {keyData.secret ? (
+                                    row.standing === 'wins' ? <SecretValue set={keyData.set} /> : <span className="font-mono text-xs text-muted-foreground">{m.t('splicewire-beam-ux::messages.config_withheld')}</span>
+                                ) : (
+                                    <PlainValue value={row.layer.value} struck={row.standing !== 'wins'} />
+                                )}
+                                {(row.standing === 'shadowed' || row.standing === 'removed') && (
+                                    <p className="font-mono text-[10.5px] text-muted-foreground">{m.t(STANDING_NOTE[row.standing])}</p>
+                                )}
+                            </div>
+                        </li>
+                    ),
+                )}
             </ol>
             {keyData.env && (
                 <p data-config-env-note className="font-mono text-[10.5px] text-muted-foreground">

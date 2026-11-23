@@ -1,0 +1,11 @@
+{
+  "splicewire-beam-notifications::messages.bell_label": "Notifications",
+  "splicewire-beam-notifications::messages.mark_all_read": "Mark all read",
+  "splicewire-beam-notifications::messages.mark_read": "Mark read",
+  "splicewire-beam-notifications::messages.mark_read_failed": "Couldn't mark that read. Try again.",
+  "splicewire-beam-notifications::messages.needs_you": "Needs you",
+  "splicewire-beam-notifications::messages.needs_you_open": "Open the worklist",
+  "splicewire-beam-notifications::messages.recent": "Recent",
+  "splicewire-beam-notifications::messages.see_all": "See all",
+  "splicewire-beam-notifications::messages.unread": "Unread"
+}

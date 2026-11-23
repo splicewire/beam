@@ -185,6 +185,11 @@ export function beamInertiaOptions(config: BeamInertiaConfig = {}) {
 }
 
 export { resolveBeamPage } from "./pages";
+// frame-foundation 92: a host page mounts the realm's frame kit (its `frameKit` bindings, `contexts` included) the
+// way beam-inertia's own console does, and draws a resource in a host render context through frame's public API.
+export { BeamFrameProvider } from "./frame/provider";
+export { FrameRealmProvider, useFrameRealm } from "./frame/realm";
+export type { FrameRealmContext } from "./frame/realm";
 // EP-07 (ux-0228 d6): the canvas registry's names, for beam:doctor's Manifest Profile vs JS registry check.
 export { registrySnapshot } from "./editor/registry-snapshot";
 export {

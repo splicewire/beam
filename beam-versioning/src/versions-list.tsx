@@ -4,6 +4,7 @@ import { Badge, Button } from '@schemastud/ui';
 import { relativeTime } from './relative-time';
 import type { VersionData } from './types';
 import { useBeamVersioningMessages } from './messages';
+import { systemLabel } from './system-label';
 
 function VersionRow<TVersion extends VersionData>({
     version,
@@ -29,7 +30,7 @@ function VersionRow<TVersion extends VersionData>({
                     )}
                 </div>
                 <div className="mt-0.5 flex items-center gap-2 text-xs text-muted-foreground">
-                    {version.label && <span className="truncate">{version.label}</span>}
+                    {version.label && <span className="truncate">{systemLabel(version.label, m)}</span>}
                     {version.label && version.createdAt && <span>·</span>}
                     {version.createdAt && <span>{relativeTime(version.createdAt, m)}</span>}
                 </div>

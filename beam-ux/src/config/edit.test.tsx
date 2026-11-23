@@ -59,6 +59,29 @@ const SECTION: ConfigSectionData = {
 };
 
 describe('EditSlot', () => {
+
+    // config-sections 17: a key closed to the operator tier offers the operator no edit, and says why.
+    it('names the closed tier instead of offering an edit the server would refuse', async () => {
+        const closed: ConfigKeyData = { ...editable, closed: ['operator'] };
+        const { Provider } = kit([SECTION]);
+        render(<Provider><EditSlot resource="beam-config" section={SECTION} keyData={closed} realm="operator" /></Provider>);
+        const reason = document.querySelector('[data-config-closed-reason="operator"]') as HTMLElement;
+        expect(reason.textContent).toBe('Closed to the operator by its package: this tier cannot set the key.');
+        expect(screen.queryByRole('button', { name: 'Save draft' })).toBeNull();
+    });
+
+    // config-sections 21: a list is one key, saved whole; the slot says so.
+    it('tells the editor a list is saved whole, and says nothing of the sort for a scalar', async () => {
+        const PREFIXES = BEAM_UX.keys.find((k) => k.pointer === '/site/reserved_prefixes')!;
+        const list: ConfigKeyData = { ...PREFIXES, overridable: true, effect: 'live', ceiling: 'tenant' };
+        const { Provider } = kit([SECTION]);
+        const { unmount } = render(<Provider><EditSlot resource="beam-config" section={SECTION} keyData={list} realm="operator" /></Provider>);
+        expect(document.querySelector('[data-config-list-rule]')?.textContent).toContain('A list is saved whole');
+        unmount();
+        render(<Provider><EditSlot resource="beam-config" section={SECTION} keyData={editable} realm="operator" /></Provider>);
+        expect(document.querySelector('[data-config-list-rule]')).toBeNull();
+    });
+
     it("saves an edited value as a draft 'set', as the JSON text save-draft takes", async () => {
         const { Provider, invoke } = kit([SECTION]);
         render(<Provider><EditSlot resource="beam-config" section={SECTION} keyData={editable} realm="operator" /></Provider>);

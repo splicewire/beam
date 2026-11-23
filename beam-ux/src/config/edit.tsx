@@ -29,7 +29,9 @@ import {
     canEdit,
     draftFor,
     formatValue,
+    closedToRealm,
     hasPendingDraft,
+    isListKey,
     isLocked,
     keyDiff,
     keyLabel,
@@ -37,6 +39,7 @@ import {
     pointerTokens,
     toDraftValue,
     TIER_ORDER,
+    TIER_WORD,
     type ConfigKeyData,
     type ConfigRealm,
     type ConfigSectionData,
@@ -280,6 +283,16 @@ function EditSlotFields<K extends ResourceKey = ResourceKey>({
     // is not offered here (out of scope for 10b): `null` is "Set to null" where the schema allows it.
     const [dirty, setDirty] = useState(false);
     if (!canEdit(section, keyData, realm)) {
+        // config-sections 17: the package closed the key to this realm's tier. Say so, so the operator reads why there is
+        // no edit slot instead of finding none (a tenant never sees a key closed to the tenant tier: the server drops it).
+        if (closedToRealm(keyData, realm)) {
+            return (
+                <p data-config-closed-reason={realm} className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                    <Lock className="size-3" aria-hidden />
+                    {m.t('splicewire-beam-ux::messages.config_closed_reason', { tier: m.t(TIER_WORD[realm]) })}
+                </p>
+            );
+        }
         if (realm === 'tenant' && keyData.lock) {
             return (
                 <p data-config-locked className="flex items-center gap-1.5 text-xs text-muted-foreground">
@@ -313,6 +326,12 @@ function EditSlotFields<K extends ResourceKey = ResourceKey>({
                     setDirty(true);
                 }}
             />
+            {isListKey(schema, keyData.pointer) && (
+                // config-sections 21: a list is saved whole. An index is a position, not a record, so no tier overrides one item.
+                <p data-config-list-rule className="text-xs text-muted-foreground">
+                    {m.t('splicewire-beam-ux::messages.config_list_rule')}
+                </p>
+            )}
             {!valid && <p className="text-xs text-destructive">{m.t('splicewire-beam-ux::messages.config_value_invalid')}</p>}
             <RefusalNote error={save.error} />
             <div className="flex flex-wrap gap-2">

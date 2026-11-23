@@ -12,6 +12,8 @@
     "splicewire-beam-versioning::messages.head": "HEAD",
     "splicewire-beam-versioning::messages.label_aria": "Version label",
     "splicewire-beam-versioning::messages.label_placeholder": "Optional label (e.g. before the rewrite)",
+    "splicewire-beam-versioning::messages.label_published": "published",
+    "splicewire-beam-versioning::messages.label_restore_of": "restore of :version",
     "splicewire-beam-versioning::messages.load_failed": "Could not load version history.",
     "splicewire-beam-versioning::messages.loading": "Loading versions…",
     "splicewire-beam-versioning::messages.restore": "Restore",

@@ -60,6 +60,7 @@ export function kitFor(manifestUrl: string): FrameKit<FrameNav> {
             ...(bound?.transport ? { transport: bound.transport } : {}),
             ...(bound?.actionLock ? { actionLock: bound.actionLock } : {}),
             ...(bound?.widgets ? { widgets: bound.widgets } : {}),
+            ...(bound?.contexts ? { contexts: bound.contexts } : {}),
         };
         kit = createFrameKit<FrameNav>({
             prefix: FRAME_PREFIX,

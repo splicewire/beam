@@ -6,7 +6,7 @@
  * The server registers one read-only `{realm}-dashboard` resource per realm whose row Data binds the
  * root `list-item` to `dashboard-card`, and projects its leaf as an ordinary `mounts: 'list'` entry.
  * `FrameRoutes` already mounts every such leaf as `<ListShell columns={[]} …>`; what turns that shell
- * from a table into a grid of cards is the injection `TenantFrameProvider` builds — the card set in
+ * from a table into a grid of cards is the injection `BeamFrameProvider` builds — the card set in
  * the registry and `manifestFor` for resolving a row's TARGET resource. This test drives the real
  * provider and the real router over a hand-built manifest and a mocked transport, so a regression in
  * either wiring (a card set not registered, a lookup not on the injection) shows as a missing card.
@@ -35,7 +35,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { kitFor } from "./kit";
 import type { FrameManifest } from "./manifest";
 import { FrameRealmProvider } from "./realm";
-import { TenantFrameProvider } from "./provider";
+import { BeamFrameProvider } from "./provider";
 import { FrameRoutes } from "./router";
 
 // `usePage` is read by `useFrameRealm` below the explicit realm provider these tests mount, so
@@ -262,14 +262,14 @@ function mountLeaf(rows: DashboardRow[]) {
         basename="/operator"
         manifestUrl="/operator/frame/manifest"
       >
-        <TenantFrameProvider>
+        <BeamFrameProvider>
           <MemoryRouter
             basename="/operator"
             initialEntries={["/operator/dashboard"]}
           >
             <FrameRoutes manifest={MANIFEST} />
           </MemoryRouter>
-        </TenantFrameProvider>
+        </BeamFrameProvider>
       </FrameRealmProvider>
     </QueryClientProvider>
   );
@@ -478,11 +478,11 @@ function mountSeat(manifest: FrameManifest, rows: DashboardRow[]) {
   return render(
     <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
       <FrameRealmProvider realm="operator" basename="/operator" manifestUrl="/operator/frame/manifest">
-        <TenantFrameProvider>
+        <BeamFrameProvider>
           <MemoryRouter basename="/operator" initialEntries={["/operator/reports"]}>
             <FrameRoutes manifest={manifest} />
           </MemoryRouter>
-        </TenantFrameProvider>
+        </BeamFrameProvider>
       </FrameRealmProvider>
     </QueryClientProvider>
   );
