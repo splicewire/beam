@@ -27,7 +27,9 @@ it('requires a verified member before accepting an invitation with blocking term
     render(<Form />);
     const accept = screen.getByRole('button', { name: 'Accept invitation' });
     expect((accept as HTMLButtonElement).disabled).toBe(true);
-    fireEvent.click(await screen.findByRole('checkbox', { name: 'I agree to Terms' }));
+    const checkbox = await screen.findByRole('checkbox', { name: 'I agree to Terms' });
+    await waitFor(() => expect((checkbox as HTMLInputElement).disabled).toBe(false));
+    fireEvent.click(checkbox);
     await waitFor(() => expect((accept as HTMLButtonElement).disabled).toBe(false));
     fireEvent.click(accept);
     expect(onAccept).toHaveBeenCalledOnce();
