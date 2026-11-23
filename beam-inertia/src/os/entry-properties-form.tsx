@@ -12,7 +12,7 @@ import { useBeamMessages } from '../messages';
 import { router } from '@inertiajs/react';
 import { EditShell } from '@schemastud/frame';
 import { formFromManifest, useFrameManifest } from '../frame/manifest';
-import { TenantFrameProvider } from '../frame/provider';
+import { BeamFrameProvider } from '../frame/provider';
 import { DefaultFrameRealm, FrameRealmProvider } from '../frame/realm';
 
 /** The ParticleResource every page entry is a row of (`#[ParticleResource]` on beam-ux's entry). */
@@ -56,9 +56,9 @@ export default function EntryPropertiesForm({ entryId }: { entryId: string }) {
         // The TENANT realm's manifest, explicitly: this window floats over site pages whose own props
         // name no realm, and `beam-ux-entry` is placed in the tenant console.
         <FrameRealmProvider {...DefaultFrameRealm}>
-            <TenantFrameProvider>
+            <BeamFrameProvider>
                 <EntryForm entryId={entryId} />
-            </TenantFrameProvider>
+            </BeamFrameProvider>
         </FrameRealmProvider>
     );
 }

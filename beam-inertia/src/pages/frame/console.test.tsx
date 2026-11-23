@@ -33,7 +33,7 @@ vi.mock('@inertiajs/react', () => ({ Head: () => null, usePage: () => ({ props: 
 // The provider and the route table are exercised by their own tests; here they are witnesses that
 // report what the page handed them.
 vi.mock('../../frame/provider', () => ({
-    TenantFrameProvider: ({ children }: { children: unknown }) => <>{children as never}</>,
+    BeamFrameProvider: ({ children }: { children: unknown }) => <>{children as never}</>,
 }));
 vi.mock('../../frame/router', async () => {
     const { useLocation } = await import('react-router');

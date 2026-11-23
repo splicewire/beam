@@ -55,12 +55,35 @@ export interface FrameKitRealm {
   abilities: () => Record<string, boolean> | undefined;
 }
 
+/**
+ * frame-foundation 92: the registrar a host's `frameKit().contexts` callback receives. A local structural type, so
+ * beam-inertia names no frame export: frame's `FrameContextRegistry` satisfies it. A record-grain context draws the
+ * whole record; a fallback shares its context's grain.
+ */
+export interface FrameKitContextRegistrar {
+  register(
+    name: string,
+    definition?: {
+      grain?: "property" | "record" | "collection";
+      readonly fallback?: readonly string[];
+      readonly reserved?: readonly string[];
+    },
+    by?: string,
+  ): void;
+}
+
 export interface FrameKitBindings {
   transport?: FrameTransport;
   /** frame's `FrameInjection.actionLock` (`@schemastud/frame` with agreements 06); typed loosely so either frame builds. */
   actionLock?: (...args: never[]) => unknown;
   /** Host/package widgets registered into the kit's shared schema registry. */
   widgets?: (registry: WidgetRegistry) => void;
+  /**
+   * frame-foundation 92: the host's own render contexts, handed to frame's `createFrameKit({ contexts })`
+   * (`@schemastud/frame` with frame-foundation 91, grain with 92), so an unbound widget in a host context falls back
+   * along the edge the host registered. Absent, the kit has frame's seven.
+   */
+  contexts?: (contexts: FrameKitContextRegistrar) => void;
 }
 let configuration: BeamInertiaConfig = {};
 export function configureBeamInertia(config: BeamInertiaConfig): void {
