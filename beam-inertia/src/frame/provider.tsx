@@ -8,7 +8,7 @@ import { useFrameRealm } from './realm';
  * Mounts the surrounding realm's frame kit (`kitFor`, one per realm at module scope) — any realm, tenant or operator,
  * so the public name is realm-neutral (frame-foundation 92). A host page mounts it under `FrameRealmProvider`.
  *
- * Mounted twice for one realm â a console inside a layout that already mounts it â the inner one
+ * Mounted twice for one realm — a console inside a layout that already mounts it — the inner one
  * is a pass-through, because both render the same kit's `Provider`.
  */
 export function BeamFrameProvider({ children }: { children: ReactNode }) {
