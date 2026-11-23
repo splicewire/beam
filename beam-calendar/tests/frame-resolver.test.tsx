@@ -47,6 +47,7 @@ function cell(over: Partial<CalendarCell> = {}): CalendarCell {
         createdAt: null,
         updatedAt: null,
         children: null,
+        compositionRevision: null,
         ...over,
     };
 }
