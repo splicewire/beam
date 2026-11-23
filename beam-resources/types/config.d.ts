@@ -33,6 +33,7 @@ secret: boolean,
 set: boolean,
 merge: ConfigMerge,
 lock: ConfigLockData | null,
+closed: ConfigTier[],
 };
 
 export type ConfigLayerData = {
