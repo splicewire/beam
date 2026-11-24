@@ -215,7 +215,7 @@ function Readiness({ preview, open }: { preview: PreviewBarData; open: (path: st
                     {readiness.notes.map((item, index) => (
                         <li key={`${item.code}-${item.entryId ?? ''}-${index}`}>
                             {item.message}
-                            {item.releaseDueAt ? ` ${m.t('splicewire-beam-ux::messages.site_publish_due', { when: new Date(item.releaseDueAt).toLocaleString() })}` : null}
+                            {item.releaseDueAt ? ` ${m.t('splicewire-beam-ux::messages.site_publish_due', { when: m.date(new Date(item.releaseDueAt), { dateStyle: 'medium', timeStyle: 'short' }) })}` : null}
                         </li>
                     ))}
                 </ul>
