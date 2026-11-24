@@ -24,6 +24,7 @@ it('offers six panels and writes a selected layer while preserving className',as
  expect(screen.getByRole('region',{name:'Text contrast'}).textContent).toContain('Contrast unknown');
  fireEvent.change(screen.getByLabelText('Breakpoint'),{target:{value:'md'}});
  fireEvent.change(screen.getByLabelText('State'),{target:{value:'hover'}});
+ fireEvent.click(screen.getByText('Text'));
  fireEvent.change(screen.getByLabelText('color token'),{target:{value:'var(--brand)'}});
  await waitFor(()=>expect(screen.getByTestId('attrs').textContent).toContain('var(--brand)'));
  const result=JSON.parse(screen.getByTestId('attrs').textContent!);
@@ -57,6 +58,43 @@ it('hides style panels for code components without a forwarding declaration',()=
  expect(screen.queryByText('Size')).toBeNull();
  expect(screen.getByText(/does not declare root-style forwarding/)).toBeTruthy();
  expect(screen.queryByLabelText('className')).toBeNull();
+});
+it('mounts a style panel\'s controls only while the panel is open',()=>{
+ render(<Harness/>);fireEvent.click(screen.getByText('Select node'));
+ const inspector=document.querySelector('[data-frame-region="inspector"]')!;
+ const panels=[...inspector.querySelectorAll('details')];
+ expect(panels).toHaveLength(7);
+ for(const details of panels){expect(details.open).toBe(false);expect([...details.children].map(child=>child.tagName)).toEqual(['SUMMARY']);}
+ expect(screen.queryByLabelText('color token')).toBeNull();
+ fireEvent.click(screen.getByText('Text'));
+ expect((screen.getByText('Text').closest('details') as HTMLDetailsElement).open).toBe(true);
+ expect((screen.getByLabelText('color') as HTMLInputElement).value).toBe('red');
+ expect(screen.queryByLabelText('width')).toBeNull();
+ fireEvent.click(screen.getByText('Text'));
+ expect((screen.getByText('Text').closest('details') as HTMLDetailsElement).open).toBe(false);
+ expect(screen.queryByLabelText('color token')).toBeNull();
+});
+it('keeps an edit, an unsaved draft and panel-local values across closing and reopening a panel',async()=>{
+ render(<Harness/>);fireEvent.click(screen.getByText('Select node'));
+ fireEvent.click(screen.getByText('Text'));
+ fireEvent.change(screen.getByLabelText('color token'),{target:{value:'var(--brand)'}});
+ await waitFor(()=>expect(screen.getByTestId('attrs').textContent).toContain('var(--brand)'));
+ fireEvent.change(screen.getByLabelText('font-size'),{target:{value:'2rem'}});
+ fireEvent.click(screen.getByText('Text'));
+ expect(screen.queryByLabelText('font-size')).toBeNull();
+ fireEvent.click(screen.getByText('Text'));
+ expect((screen.getByLabelText('color token') as HTMLSelectElement).value).toBe('var(--brand)');
+ const size=screen.getByLabelText('font-size') as HTMLInputElement;
+ expect(size.value).toBe('2rem');
+ expect(screen.getByTestId('attrs').textContent).not.toContain('2rem');
+ fireEvent.blur(size);
+ await waitFor(()=>expect(screen.getByTestId('attrs').textContent).toContain('2rem'));
+ fireEvent.click(screen.getByText('Gradient stops'));
+ fireEvent.change(screen.getByLabelText('Start colour token'),{target:{value:'var(--brand)'}});
+ fireEvent.click(screen.getByText('Gradient stops'));
+ expect(screen.queryByLabelText('Start colour token')).toBeNull();
+ fireEvent.click(screen.getByText('Gradient stops'));
+ expect((screen.getByLabelText('Start colour token') as HTMLSelectElement).value).toBe('var(--brand)');
 });
 
 function ImageHarness({type='img',declared=true,upload=vi.fn()}:{type?:string;declared?:boolean;upload?:(file:File)=>Promise<{id:string;name:string;url:string}>}) {

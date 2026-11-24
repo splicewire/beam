@@ -1,4 +1,4 @@
-import {useEffect,useId,useState} from 'react';
+import {useEffect,useId,useRef,useState,type ReactNode} from 'react';
 import {useEditShellMount} from '@schemastud/frame/editor';
 import {SchemaForm,type SchemaNode} from '@schemastud/seam';
 import type {BlockStyle} from '../blockdoc/style';
@@ -42,6 +42,11 @@ export function BlockInspector(){
  const [rawValue,setRawValue]=useState('');
  const [gradientStart,setGradientStart]=useState('#ffffff');
  const [gradientEnd,setGradientEnd]=useState('#000000');
+ // A panel mounts its controls only while it is open: closed, the panels held 220 of the
+ // inspector's 243 controls, and every edit re-rendered and re-committed all of them.
+ const [openPanels,setOpenPanels]=useState<Record<string,boolean>>({});
+ // The per-property text input writes on blur; its typed text outlives its panel closing first.
+ const drafts=useRef(new Map<string,string>());
  const tokenId=useId();
  const id=mount.selectedNodeId;
  const node=id!==null?mount.getNode(id) as Node|null:null;
@@ -92,11 +97,12 @@ export function BlockInspector(){
   const inherited=effectiveDeclaration(style,property,selection,registry);
   const value=own(property);
   const mixed=styles.length>1&&new Set(styles.map(s=>effectiveDeclaration(s,property,selection,registry)?.value??'')).size>1;
+  const draftKey=`${id}:${selection.breakpoint}:${selection.state}:${property}:${value}`;
   return <div key={property} style={{marginBlock:8}}>
    <label>{m.t('splicewire-beam-ux::messages.inspect_property_token',{property})}<select aria-label={m.t('splicewire-beam-ux::messages.inspect_property_token',{property})} value={tokens.includes(value)?value:''} onChange={event=>{if(event.target.value)write(property,event.target.value);}}>
     <option value="">{m.t('splicewire-beam-ux::messages.inspect_custom_value')}</option>{tokens.map(token=><option key={token} value={token}>{token} {resolve(token)!==token?`(${resolve(token)})`:''}</option>)}</select></label>
-   <label>{property}<input aria-label={property} list={tokenId} key={`${id}:${selection.breakpoint}:${selection.state}:${property}:${value}`} defaultValue={value}
-    placeholder={mixed?m.t('splicewire-beam-ux::messages.inspect_mixed_values'):inherited?.value||rendered[property]||m.t('splicewire-beam-ux::messages.inspect_unset')} onBlur={event=>{if(event.target.value!==value)write(property,event.target.value||null);}}/></label>
+   <label>{property}<input aria-label={property} list={tokenId} key={draftKey} defaultValue={drafts.current.get(draftKey)??value} onChange={event=>{drafts.current.set(draftKey,event.target.value);}}
+    placeholder={mixed?m.t('splicewire-beam-ux::messages.inspect_mixed_values'):inherited?.value||rendered[property]||m.t('splicewire-beam-ux::messages.inspect_unset')} onBlur={event=>{drafts.current.delete(draftKey);if(event.target.value!==value)write(property,event.target.value||null);}}/></label>
    {mixed&&<small>{m.t('splicewire-beam-ux::messages.inspect_property_mixed',{property})}</small>}
    <small>{inherited?`${inherited.layer}: ${resolve(inherited.value)}`:rendered[property]?m.t('splicewire-beam-ux::messages.inspect_rendered_inherited',{value:rendered[property]}):m.t('splicewire-beam-ux::messages.inspect_no_value')}</small>
    {(property==='color'||property.endsWith('-color'))&&<ColourControls property={property} value={value||inherited?.value||rendered[property]||'#000000'} onChange={value=>write(property,value)} onError={setError}/>}
@@ -105,6 +111,10 @@ export function BlockInspector(){
     <button type="button" onClick={()=>{void navigator.clipboard?.writeText(`${property}: ${value||inherited?.value||rendered[property]||''};`).catch(()=>setError(notice('splicewire-beam-ux::messages.inspect_copy_failed')));}}>{m.t('splicewire-beam-ux::messages.inspect_copy_property',{property})}</button></div>
   </div>;
  };
+ const panel=(key:string,summary:ReactNode,body:()=>ReactNode)=><details key={key} open={openPanels[key]===true}
+  onToggle={event=>{const now=event.currentTarget.open;setOpenPanels(current=>(current[key]===true)===now?current:{...current,[key]:now});}}>
+  <summary onClick={event=>{event.preventDefault();setOpenPanels(current=>({...current,[key]:current[key]!==true}));}}>{summary}</summary>
+  {openPanels[key]===true&&body()}</details>;
  return <div data-frame-region="inspector" data-node-type={node.type} style={{padding:12,overflow:'auto'}}>
   {error&&<p role="alert">{say(m,error)}</p>}
   {selected.length<=1&&<BindingInspector key={id} path={id}/>}
@@ -124,8 +134,8 @@ export function BlockInspector(){
     <option value="">{m.t('splicewire-beam-ux::messages.inspect_default')}</option>{Object.keys(registry.states).map(name=><option key={name}>{name}</option>)}</select></label>
    <p>{m.t('splicewire-beam-ux::messages.inspect_preview_explainer')}</p>
    <datalist id={tokenId}>{tokens.map(token=><option key={token} value={token}>{resolve(token)}</option>)}</datalist>
-   {Object.entries(PANELS).map(([name,fields])=><details key={name}><summary>{PANEL_LABEL[name]?m.t(PANEL_LABEL[name]):name}</summary>{fields.map(field)}</details>)}
-   <details><summary>{m.t('splicewire-beam-ux::messages.inspect_gradient_stops')}</summary>
+   {Object.entries(PANELS).map(([name,fields])=>panel(name,PANEL_LABEL[name]?m.t(PANEL_LABEL[name]):name,()=>fields.map(field)))}
+   {panel('gradient',m.t('splicewire-beam-ux::messages.inspect_gradient_stops'),()=><>
     <label>{m.t('splicewire-beam-ux::messages.inspect_start_colour_token')}<select aria-label={m.t('splicewire-beam-ux::messages.inspect_start_colour_token')} value={tokens.includes(gradientStart)?gradientStart:''} onChange={event=>{if(event.target.value)setGradientStart(event.target.value);}}>
      <option value="">{m.t('splicewire-beam-ux::messages.inspect_custom_colour')}</option>{tokens.map(token=><option key={token} value={token}>{token}</option>)}</select></label>
     <label>{m.t('splicewire-beam-ux::messages.inspect_start_colour')}<input type={tokens.includes(gradientStart)?'text':'color'} value={gradientStart} onChange={event=>setGradientStart(event.target.value)}/></label>
@@ -133,13 +143,13 @@ export function BlockInspector(){
      <option value="">{m.t('splicewire-beam-ux::messages.inspect_custom_colour')}</option>{tokens.map(token=><option key={token} value={token}>{token}</option>)}</select></label>
     <label>{m.t('splicewire-beam-ux::messages.inspect_end_colour')}<input type={tokens.includes(gradientEnd)?'text':'color'} value={gradientEnd} onChange={event=>setGradientEnd(event.target.value)}/></label>
     <button type="button" onClick={()=>write('background-image',`linear-gradient(${gradientStart}, ${gradientEnd})`)}>{m.t('splicewire-beam-ux::messages.inspect_apply_gradient')}</button>
-   </details>
-   <details><summary>{m.t('splicewire-beam-ux::messages.inspect_advanced')}</summary>{[...new Set(style.layers.flatMap(layer=>Object.keys(layer.declarations)))].filter(property=>!Object.values(PANELS).flat().includes(property)).map(field)}
+   </>)}
+   {panel('advanced',m.t('splicewire-beam-ux::messages.inspect_advanced'),()=><>{[...new Set(style.layers.flatMap(layer=>Object.keys(layer.declarations)))].filter(property=>!Object.values(PANELS).flat().includes(property)).map(field)}
     <label>{m.t('splicewire-beam-ux::messages.inspect_css_property')}<input value={rawProperty} onChange={event=>setRawProperty(event.target.value)}/></label>
     <label>{m.t('splicewire-beam-ux::messages.inspect_css_value_token')}<select aria-label={m.t('splicewire-beam-ux::messages.inspect_css_value_token')} value={tokens.includes(rawValue)?rawValue:''} onChange={event=>{if(event.target.value)setRawValue(event.target.value);}}>
      <option value="">{m.t('splicewire-beam-ux::messages.inspect_custom_value')}</option>{tokens.map(token=><option key={token} value={token}>{token}</option>)}</select></label>
     <label>{m.t('splicewire-beam-ux::messages.inspect_css_value')}<input list={tokenId} value={rawValue} onChange={event=>setRawValue(event.target.value)}/></label><button type="button" onClick={()=>write(rawProperty,rawValue)}>{m.t('splicewire-beam-ux::messages.inspect_set_declaration')}</button>
-   </details>
+   </>)}
    <section aria-label={m.t('splicewire-beam-ux::messages.inspect_text_contrast')}><h3>{m.t('splicewire-beam-ux::messages.inspect_text_contrast')}</h3><p>{ratio===null?m.t('splicewire-beam-ux::messages.inspect_contrast_unknown'):m.t(ratio>=4.5?'splicewire-beam-ux::messages.inspect_contrast_meets':'splicewire-beam-ux::messages.inspect_contrast_below',{ratio:ratio.toFixed(2)})}</p>
     {shade&&ratio!==null&&ratio<4.5&&<button type="button" onClick={()=>write('color',shade)}>{m.t('splicewire-beam-ux::messages.inspect_use_readable_shade',{shade})}</button>}</section>
   </>}

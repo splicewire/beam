@@ -13,6 +13,10 @@ const profile={profile:'content',version:1,doc:{admitsChildCategories:['html']},
  'x-events':[{name:'sign_up',source:'package',parameters:['method']},{name:'generate_lead',source:'package',parameters:['currency','value']},{name:'host_custom',source:'host',parameters:[]}]};
 beforeEach(()=>vi.stubGlobal('ResizeObserver',class{observe(){}unobserve(){}disconnect(){}}));
 afterEach(()=>{cleanup();vi.unstubAllGlobals();});
+// The binding controls live in the inspector's Data binding section. Querying the whole five-region shell makes every
+// label query read `labels` on its ~240 controls, each a walk of the document in jsdom: seconds of CPU per test, which a
+// parallel run on a loaded machine stretched past the test timeout (owner-review-20261112 ticket 72).
+const bindingSection=()=>within(screen.getByLabelText('Data binding'));
 function Harness({readOnly=false,change=()=>{},port}:{readOnly?:boolean;change?:(doc:JsonDoc)=>void;port?:CanvasConfig['bindingPreview']}){
  const [doc,setDoc]=useState(initial);const state=useRef({doc,readOnly});state.current={doc,readOnly};
  const registry=useMemo(()=>{const r=createWidgetRegistry();r.registerWidget('canvas',((props:CanvasWidgetProps)=><CanvasWidget {...props} value={state.current.doc} readonly={state.current.readOnly} onChange={next=>{setDoc(next);change(next);}}/>) as unknown as WidgetResolution);return r;},[]);
@@ -22,54 +26,55 @@ it('handpicks named author-readable Records through the real schema form and exi
  const id='019a3456-7890-7000-8000-000000000001';
  const read=vi.fn<NonNullable<NonNullable<CanvasConfig['bindingPreview']>['resolve']>>(async()=>({bindings:{paragraph:{records:[{id,fields:{title:'Article One'}}],hasMore:true,page:1}},record:null,choices:[],hasMore:false,recordPage:false,selectedValue:null,pagePublic:true}));
  const port={entryId:'page',resolve:read};const change=vi.fn();render(<Harness port={port} change={change}/>);
- fireEvent.click(screen.getByText('p 0'));fireEvent.change(screen.getByLabelText('Collection'),{target:{value:'posts'}});
- fireEvent.change(screen.getByLabelText('Record selection'),{target:{value:'handpicked'}});
- const option=await screen.findByRole('checkbox',{name:'Article One'});fireEvent.click(option);
+ fireEvent.click(screen.getByText('p 0'));const binding=bindingSection();fireEvent.change(binding.getByLabelText('Collection'),{target:{value:'posts'}});
+ fireEvent.change(binding.getByLabelText('Record selection'),{target:{value:'handpicked'}});
+ const option=await binding.findByRole('checkbox',{name:'Article One'});fireEvent.click(option);
  await waitFor(()=>expect(JSON.parse(screen.getByTestId('doc').textContent!)[0].repeat.query.ids).toEqual([id]));
  const [node]=JSON.parse(screen.getByTestId('doc').textContent!);
  expect(node.repeat.query.limit).toBe(25);expect(node).not.toHaveProperty('when');expect(node.children).toEqual([{kind:'text',value:'Fallback'}]);
  const projected=read.mock.calls.flatMap(call=>call[1].filter(isJsonBlock)).find(node=>node.repeat?.query?.limit===100);
  expect(projected?.repeat?.query).not.toHaveProperty('ids');expect(projected?.when).toEqual({any:[{field:'id',operator:'is set'},{field:'fields.title',operator:'is set'}]});
  expect(screen.getByText(/First 100 matching Records/)).toBeTruthy();expect(change).toHaveBeenCalled();
- fireEvent.change(screen.getByLabelText('Record selection'),{target:{value:'matching'}});
+ fireEvent.change(binding.getByLabelText('Record selection'),{target:{value:'matching'}});
  expect(JSON.parse(screen.getByTestId('doc').textContent!)[0].repeat.query).not.toHaveProperty('ids');
 });
 it('writes profile Collection, first-page query, field binding and typed when rules through canvas commands',()=>{
- const change=vi.fn();render(<Harness change={change}/>);fireEvent.click(screen.getByText('p 0'));
- fireEvent.change(screen.getByLabelText('Collection'),{target:{value:'posts'}});
+ const change=vi.fn();render(<Harness change={change}/>);fireEvent.click(screen.getByText('p 0'));const binding=bindingSection();
+ fireEvent.change(binding.getByLabelText('Collection'),{target:{value:'posts'}});
  expect(screen.getByText(/has no Public Read/)).toBeTruthy();
- expect(within(screen.getByLabelText('Text field')).queryByRole('option',{name:/fields.rich/})).toBeNull();
- fireEvent.change(screen.getByLabelText('Record limit'),{target:{value:'10'}});
- fireEvent.change(screen.getByLabelText('Sort field'),{target:{value:'fields.title'}});
- fireEvent.change(screen.getByLabelText('Sort order'),{target:{value:'descending'}});
- fireEvent.change(screen.getByLabelText('Text field'),{target:{value:'fields.title'}});
- fireEvent.change(screen.getByLabelText('Bind title'),{target:{value:'fields.title'}});
- fireEvent.change(screen.getByLabelText('Condition match'),{target:{value:'any'}});fireEvent.click(screen.getByText('Add display rule'));
- fireEvent.change(screen.getByLabelText('Rule 1 field'),{target:{value:'fields.count'}});
- fireEvent.change(screen.getByLabelText('Rule 1 operator'),{target:{value:'greater than'}});
- fireEvent.change(screen.getByLabelText('Rule 1 value'),{target:{value:'2'}});fireEvent.blur(screen.getByLabelText('Rule 1 value'));
+ expect(within(binding.getByLabelText('Text field')).queryByRole('option',{name:/fields.rich/})).toBeNull();
+ fireEvent.change(binding.getByLabelText('Record limit'),{target:{value:'10'}});
+ fireEvent.change(binding.getByLabelText('Sort field'),{target:{value:'fields.title'}});
+ fireEvent.change(binding.getByLabelText('Sort order'),{target:{value:'descending'}});
+ fireEvent.change(binding.getByLabelText('Text field'),{target:{value:'fields.title'}});
+ fireEvent.change(binding.getByLabelText('Bind title'),{target:{value:'fields.title'}});
+ fireEvent.change(binding.getByLabelText('Condition match'),{target:{value:'any'}});fireEvent.click(screen.getByText('Add display rule'));
+ fireEvent.change(binding.getByLabelText('Rule 1 field'),{target:{value:'fields.count'}});
+ fireEvent.change(binding.getByLabelText('Rule 1 operator'),{target:{value:'greater than'}});
+ fireEvent.change(binding.getByLabelText('Rule 1 value'),{target:{value:'2'}});fireEvent.blur(binding.getByLabelText('Rule 1 value'));
  const [node]=JSON.parse(screen.getByTestId('doc').textContent!);
  expect(node.id).toBe('paragraph');expect(node.repeat).toEqual({collection:'posts',query:{limit:10,sort:'-title'},empty:[]});
  expect(node.children).toEqual([{kind:'text',value:'Fallback',field:'fields.title'}]);
  expect(node.props).toContainEqual({kind:'field',name:'title',value:'fields.title'});
  expect(node.when).toEqual({any:[{field:'fields.count',operator:'greater than',value:2}]});
+ fireEvent.click(screen.getByText('Text',{selector:'summary'}));
  fireEvent.change(screen.getByLabelText('color'),{target:{value:'red'}});fireEvent.blur(screen.getByLabelText('color'));
  expect(JSON.parse(screen.getByTestId('doc').textContent!)[0].props).toContainEqual({kind:'field',name:'title',value:'fields.title'});
  expect(change).toHaveBeenCalled();
 });
 it('cannot mutate binding declarations in a read-only canvas',()=>{
- const change=vi.fn();render(<Harness readOnly change={change}/>);fireEvent.click(screen.getByText('p 0'));
- expect((screen.getByLabelText('Collection') as HTMLSelectElement).closest('fieldset')?.disabled).toBe(true);
- fireEvent.change(screen.getByLabelText('Collection'),{target:{value:'posts'}});
+ const change=vi.fn();render(<Harness readOnly change={change}/>);fireEvent.click(screen.getByText('p 0'));const binding=bindingSection();
+ expect((binding.getByLabelText('Collection') as HTMLSelectElement).closest('fieldset')?.disabled).toBe(true);
+ fireEvent.change(binding.getByLabelText('Collection'),{target:{value:'posts'}});
  expect(change).not.toHaveBeenCalled();expect(screen.getByTestId('doc').textContent).not.toContain('repeat');
 });
 it('offers the profile Event Vocabulary and writes an optional Click Event label',()=>{
- const change=vi.fn();render(<Harness change={change}/>);fireEvent.click(screen.getByText('p 0'));
- fireEvent.change(screen.getByLabelText('Click event'),{target:{value:'generate_lead'}});
- fireEvent.change(screen.getByLabelText('Click event label'),{target:{value:'Hero CTA'}});
+ const change=vi.fn();render(<Harness change={change}/>);fireEvent.click(screen.getByText('p 0'));const binding=bindingSection();
+ fireEvent.change(binding.getByLabelText('Click event'),{target:{value:'generate_lead'}});
+ fireEvent.change(binding.getByLabelText('Click event label'),{target:{value:'Hero CTA'}});
  expect(JSON.parse(screen.getByTestId('doc').textContent!)[0].clickEvent).toEqual({name:'generate_lead',label:'Hero CTA'});
- expect(within(screen.getByLabelText('Click event')).getByRole('option',{name:'host_custom (host)'})).toBeTruthy();
- fireEvent.change(screen.getByLabelText('Click event'),{target:{value:''}});
+ expect(within(binding.getByLabelText('Click event')).getByRole('option',{name:'host_custom (host)'})).toBeTruthy();
+ fireEvent.change(binding.getByLabelText('Click event'),{target:{value:''}});
  expect(JSON.parse(screen.getByTestId('doc').textContent!)[0]).not.toHaveProperty('clickEvent');
  expect(change).toHaveBeenCalled();
 });

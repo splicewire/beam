@@ -20,6 +20,7 @@ function Harness({readOnly=false,onChange=()=>{},initial,profile}:{readOnly?:boo
 it('selects several outline blocks and applies one mixed-value style edit',async()=>{
  const change=vi.fn();render(<Harness onChange={change}/>);
  fireEvent.click(screen.getByText('div 0'));fireEvent.click(screen.getByText('div 1'),{ctrlKey:true});
+ fireEvent.click(screen.getByText('Text',{selector:'summary'}));
  expect(screen.getByText('color: Mixed values')).toBeTruthy();
  fireEvent.change(screen.getByLabelText('color'),{target:{value:'green'}});fireEvent.blur(screen.getByLabelText('color'));
  await waitFor(()=>expect(change).toHaveBeenCalledTimes(1));
