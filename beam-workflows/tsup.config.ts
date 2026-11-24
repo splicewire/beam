@@ -1,7 +1,7 @@
 import { defineConfig } from 'tsup';
 
 export default defineConfig({
-    entry: { index: 'src/index.ts', 'action-form': 'src/action-form.ts' },
+    entry: { index: 'src/index.ts', 'action-form': 'src/action-form.ts', 'workflow-board': 'src/workflow-board.ts' },
     format: ['esm'],
     dts: true,
     sourcemap: true,
@@ -23,6 +23,9 @@ export default defineConfig({
         'react-dom',
         '@tanstack/react-query',
         '@schemastud/ui',
+        // The workflow board's card board (owner-review 47) and its drag library, an optional peer: never bundled.
+        '@schemastud/ui/card-board',
+        '@dnd-kit/core',
         '@xyflow/react',
         'lucide-react',
         // The messages runtime is the host's one instance; the package catalog is imported through its own exported

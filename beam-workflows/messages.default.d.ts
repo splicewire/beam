@@ -59,6 +59,11 @@ declare const catalog: {
     readonly "splicewire-beam-workflows::messages.admin_unbound": string;
     readonly "splicewire-beam-workflows::messages.admin_version_active": string;
     readonly "splicewire-beam-workflows::messages.admin_version_records": string;
+    readonly "splicewire-beam-workflows::messages.board_choose_one": string;
+    readonly "splicewire-beam-workflows::messages.board_no_transition": string;
+    readonly "splicewire-beam-workflows::messages.board_transition_failed": string;
+    readonly "splicewire-beam-workflows::messages.board_transition_failed_no_reason": string;
+    readonly "splicewire-beam-workflows::messages.board_transitions": string;
     readonly "splicewire-beam-workflows::messages.cancel": string;
     readonly "splicewire-beam-workflows::messages.choose_transition": string;
     readonly "splicewire-beam-workflows::messages.detail_applied": string;

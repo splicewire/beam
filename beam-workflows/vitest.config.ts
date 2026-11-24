@@ -29,6 +29,8 @@ export default defineConfig({
             '@tanstack/react-table': pkgDir('@tanstack/react-table'),
             '@tanstack/react-query': pkgDir('@tanstack/react-query'),
             // Resolve the foundation UI to its built dist (its published entry), not its src.
+            // The card board subpath (owner-review 47) first: the alias below is a file, so a subpath would append to it.
+            '@schemastud/ui/card-board': entry('@schemastud/ui/card-board'),
             '@schemastud/ui': entry('@schemastud/ui'),
         },
     },

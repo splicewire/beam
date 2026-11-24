@@ -140,3 +140,38 @@ that entry without replacing the existing barrel. It needs the existing generate
 `@splicewire/beam-resources/types/workflows` projection (WorkflowProjectionData and WorkflowTransitionData)
 as a type-only build/consumer input. It does not require graph/admin runtime peers. Scheduling
 transport/admission remains injected; the entry does not bind a scheduler or enable scheduling.
+
+## Workflow board
+
+`@splicewire/beam-workflows/workflow-board` exports `WorkflowBoard`, built on the card board of
+`@schemastud/ui/card-board`. It is its own entry because the card board drags with `@dnd-kit/core`, an
+**optional** peer that only a host using the board installs, and it needs `@schemastud/ui` at
+`c6b98762` or later (the first with `./card-board`). The root entry never imports it.
+
+Without an adapter, it is the card board with your lanes, cards and `onMove`. With the workflow
+adapter, you pass `getProjection` and `onTransition` instead:
+
+```tsx
+import { WorkflowBoard } from '@splicewire/beam-workflows/workflow-board';
+
+<WorkflowBoard
+    cards={posts}
+    getCardKey={(p) => p.id}
+    getCardLabel={(p) => p.title}
+    renderCard={(p) => <PostSummary post={p} />}
+    getProjection={(p) => p.workflow} // WorkflowProjectionData, one per subject
+    onTransition={(p, name) => client.transition(p.id, name)} // reject to refuse, with the reason as its message
+/>;
+```
+
+The lanes are the projection's places (through `workflowProjectionToSteps`, the stepper's adapter),
+and each card sits in its subject's `current` place. Each card offers its `available` transitions as
+buttons. Moving a card to a lane follows `transitionIntoPlace`:
+
+- one available transition leads into that place: it runs;
+- none does: the move is refused with that transition's backend `reason`, or a plain sentence, and the
+  card goes back;
+- more than one does: the move is refused, and the card's buttons pick which one.
+
+You own `cards`: a card stays in its new lane once the subject's new projection says so. There is no
+batch projection read; pass one projection per subject.
