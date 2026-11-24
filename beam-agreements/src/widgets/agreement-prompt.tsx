@@ -1,12 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { AgreementMemberWidget } from './agreement-member';
-
-type AgreementRead = {
-    key?: unknown;
-    kind?: unknown;
-    title?: unknown;
-    version?: { digest?: unknown; content?: unknown; label?: unknown; effectiveAt?: unknown; summary?: unknown } | null;
-};
+import { fetchAgreement, type AgreementRead, type AgreementReader } from './agreement-read';
 
 export interface AgreementPromptProps {
     agreementKey: string;
@@ -24,16 +18,24 @@ export interface AgreementPromptProps {
     legalUrl?: string | null;
     value?: unknown;
     onChange: (value: unknown) => void;
+    /**
+     * agreements 15: reads `readUrl` through the host's own transport (another API origin, a bearer token). Absent,
+     * the prompt reads it with a same-origin `fetch`, as before.
+     */
+    read?: AgreementReader;
 }
 
 /** A sign-up or invitation prompt: notices inform; blocking kinds use the shared member widget. */
-export function AgreementPrompt({ agreementKey, readUrl, required = true, version, digest, kind, title: embeddedTitle, label, effectiveAt, summary, content: embeddedContent, legalUrl, value, onChange }: AgreementPromptProps) {
+export function AgreementPrompt({ agreementKey, readUrl, required = true, version, digest, kind, title: embeddedTitle, label, effectiveAt, summary, content: embeddedContent, legalUrl, value, onChange, read }: AgreementPromptProps) {
     const [agreement, setAgreement] = useState<AgreementRead | null>(null);
     const [unavailable, setUnavailable] = useState(false);
     const valueRef = useRef(value);
     valueRef.current = value;
     const onChangeRef = useRef(onChange);
     onChangeRef.current = onChange;
+    // A host may pass a fresh reader each render; the read follows the Agreement, not the function's identity.
+    const readRef = useRef(read);
+    readRef.current = read;
 
     useEffect(() => {
         let cancelled = false;
@@ -56,19 +58,9 @@ export function AgreementPrompt({ agreementKey, readUrl, required = true, versio
             return () => { cancelled = true; };
         }
 
-        void fetch(readUrl, {
-            method: 'GET',
-            credentials: 'same-origin',
-            cache: 'no-store',
-            headers: { Accept: 'application/json' },
-        })
-            .then(async (response) => {
-                if (response.status === 401 || response.status === 403 || response.status === 404 || !response.ok) {
-                    throw new Error('Agreement read failed.');
-                }
-                return response.json() as Promise<{ data?: AgreementRead }>;
-            })
-            .then(({ data }) => {
+        void Promise.resolve()
+            .then(() => (readRef.current ?? fetchAgreement)(readUrl))
+            .then((data) => {
                 if (cancelled) return;
                 if (data?.key !== agreementKey || typeof data.kind !== 'string' || !data.version || typeof data.version.content !== 'string') {
                     setUnavailable(true);
@@ -117,6 +109,7 @@ export function AgreementPrompt({ agreementKey, readUrl, required = true, versio
             value={value}
             options={{ key: agreementKey, version, digest, readUrl, kind, content, legalUrl, title, label: `I agree to ${title}` }}
             schema={{ title }}
+            read={read}
             onChange={(member) => onChange(member)}
         />
     );

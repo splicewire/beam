@@ -118,3 +118,51 @@ it.each([401, 403, 404])('does not show agreement text or a member when read ret
     expect(screen.queryByRole('checkbox')).toBeNull();
     expect(onChange).not.toHaveBeenCalled();
 });
+
+it('reads through the host reader when given one, never fetch (agreements 15)', async () => {
+    const fetch = vi.fn();
+    vi.stubGlobal('fetch', fetch);
+    const read = vi.fn(async () => ({
+        key: 'plan.terms',
+        kind: 'terms',
+        title: 'Plan terms',
+        version: { digest: 'sha256:aa', content: 'Plan terms read through the host.' },
+    }));
+    const onChange = vi.fn();
+
+    render(<AgreementPrompt agreementKey="plan.terms" readUrl="/beam/agreements/agreements/plan.terms" version={3} digest="sha256:aa" kind="terms" read={read} onChange={onChange} />);
+
+    expect(await screen.findByText('Plan terms read through the host.')).toBeTruthy();
+    expect(read).toHaveBeenCalledExactlyOnceWith('/beam/agreements/agreements/plan.terms');
+    expect(fetch).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('checkbox'));
+    expect(onChange).toHaveBeenLastCalledWith({ key: 'plan.terms', version: 3, digest: 'sha256:aa' });
+});
+
+it('reads with a same-origin fetch when no reader is given (agreements 15)', async () => {
+    const fetch = vi.fn().mockResolvedValue(responseFor({
+        key: 'plan.terms',
+        kind: 'terms',
+        title: 'Plan terms',
+        version: { digest: 'sha256:aa', content: 'Plan terms read by fetch.' },
+    }));
+    vi.stubGlobal('fetch', fetch);
+
+    render(<AgreementPrompt agreementKey="plan.terms" readUrl="/beam/agreements/agreements/plan.terms" version={3} digest="sha256:aa" kind="terms" onChange={vi.fn()} />);
+
+    expect(await screen.findByText('Plan terms read by fetch.')).toBeTruthy();
+    expect(fetch).toHaveBeenCalledExactlyOnceWith('/beam/agreements/agreements/plan.terms', expect.objectContaining({ credentials: 'same-origin' }));
+});
+
+it('shows the terms as unavailable when the host reader refuses (agreements 15)', async () => {
+    const fetch = vi.fn();
+    vi.stubGlobal('fetch', fetch);
+    const onChange = vi.fn();
+
+    render(<AgreementPrompt agreementKey="plan.terms" readUrl="/beam/agreements/agreements/plan.terms" version={3} digest="sha256:aa" kind="terms" read={async () => { throw new Error('403'); }} onChange={onChange} />);
+
+    expect(await screen.findByRole('alert')).toBeTruthy();
+    expect(screen.queryByRole('checkbox')).toBeNull();
+    expect(fetch).not.toHaveBeenCalled();
+    expect(onChange).not.toHaveBeenCalled();
+});

@@ -1,4 +1,5 @@
 import { useEffect, useId, useRef, useState, type ChangeEvent } from 'react';
+import { fetchAgreement, type AgreementReader } from './agreement-read';
 
 type AgreementMember = { key: string; version: number; digest: string };
 
@@ -17,14 +18,6 @@ type AgreementMemberOptions = {
 };
 
 type AgreementContent = { title: string; content: string; digest: string; kind?: string; legalUrl?: string | null };
-type AgreementReadResponse = {
-    data?: {
-        key?: unknown;
-        kind?: unknown;
-        title?: unknown;
-        version?: { digest?: unknown; content?: unknown } | null;
-    };
-};
 
 interface AgreementMemberWidgetProps {
     id?: string;
@@ -42,6 +35,11 @@ interface AgreementMemberWidgetProps {
     schema?: { title?: string };
     // RJSF's custom widget and composite-field callbacks differ after the first value argument.
     onChange: (value: any, pathOrError?: any, errorSchema?: any) => void;
+    /**
+     * agreements 15: the host's reader of `readUrl`, given by {@link AgreementPrompt} or by registerAgreementWidgets'
+     * options. Absent, the widget reads it with a same-origin `fetch`, as before.
+     */
+    read?: AgreementReader;
 }
 
 function optionsOf(options: unknown): AgreementMemberOptions {
@@ -83,6 +81,8 @@ export function AgreementMemberWidget(props: AgreementMemberWidgetProps) {
     onChangeRef.current = emitChange;
     const valueRef = useRef(value);
     valueRef.current = value;
+    const readRef = useRef(props.read);
+    readRef.current = props.read;
     const [agreement, setAgreement] = useState<AgreementContent | null>(null);
     const [unavailable, setUnavailable] = useState(false);
 
@@ -121,20 +121,9 @@ export function AgreementMemberWidget(props: AgreementMemberWidgetProps) {
             return () => { cancelled = true; };
         }
 
-        void fetch(readUrl, {
-            method: 'GET',
-            credentials: 'same-origin',
-            cache: 'no-store',
-            headers: { Accept: 'application/json' },
-        })
-            .then(async (response) => {
-                // In particular, never turn an authorization or missing-row response into usable form state.
-                if (response.status === 401 || response.status === 403 || response.status === 404 || !response.ok) {
-                    throw new Error('Agreement read failed.');
-                }
-                return response.json() as Promise<AgreementReadResponse>;
-            })
-            .then(({ data }) => {
+        void Promise.resolve()
+            .then(() => (readRef.current ?? fetchAgreement)(readUrl))
+            .then((data) => {
                 const current = data?.version;
                 if (cancelled) return;
                 if (

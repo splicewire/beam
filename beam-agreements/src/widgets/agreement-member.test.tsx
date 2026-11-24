@@ -389,3 +389,53 @@ describe('agreement-member schema widget', () => {
     });
 });
 
+
+describe('agreement-member with a host reader (agreements 15)', () => {
+    const render428Member = (Widget: ComponentType<any>, onChange = vi.fn()) => {
+        render(
+            <Widget
+                id="agreement-member"
+                name="agreementMember"
+                label="I have read and agree"
+                value={undefined}
+                options={{ key: 'terms', version: 3, digest: 'sha256:current', readUrl: '/beam/agreements/agreements/terms' }}
+                onChange={onChange}
+            />,
+        );
+        return onChange;
+    };
+
+    it('reads through the reader registerAgreementWidgets was given, never fetch', async () => {
+        const read = vi.fn(async () => ({ key: 'terms', kind: 'contract', title: 'Terms of service', version: { digest: 'sha256:current', content: 'Read through the host.' } }));
+        const registry = createWidgetRegistry();
+        registerAgreementWidgets(registry, { read });
+        const onChange = render428Member(registry.resolveWidget({ type: 'object', 'x-widget': 'agreement-member' }) as ComponentType<any>);
+
+        expect(await screen.findByText('Read through the host.')).toBeTruthy();
+        expect(read).toHaveBeenCalledExactlyOnceWith('/beam/agreements/agreements/terms');
+        expect(fetch).not.toHaveBeenCalled();
+        fireEvent.click(screen.getByRole('checkbox', { name: 'I have read and agree' }));
+        expect(onChange.mock.calls.at(-1)?.[0]).toEqual({ key: 'terms', version: 3, digest: 'sha256:current' });
+    });
+
+    it('reads with a same-origin fetch when registered without a reader', async () => {
+        const registry = createWidgetRegistry();
+        registerAgreementWidgets(registry);
+        render428Member(registry.resolveWidget({ type: 'object', 'x-widget': 'agreement-member' }) as ComponentType<any>);
+
+        expect(await screen.findByText('Frozen terms text.')).toBeTruthy();
+        expect(fetch).toHaveBeenCalledExactlyOnceWith('/beam/agreements/agreements/terms', expect.objectContaining({ credentials: 'same-origin' }));
+    });
+
+    it('collects no member when the reader refuses', async () => {
+        const read = vi.fn(async () => { throw new Error('401'); });
+        const registry = createWidgetRegistry();
+        registerAgreementWidgets(registry, { read });
+        const onChange = render428Member(registry.resolveWidget({ type: 'object', 'x-widget': 'agreement-member' }) as ComponentType<any>);
+
+        expect(await screen.findByRole('alert')).toBeTruthy();
+        expect(fetch).not.toHaveBeenCalled();
+        expect((screen.getByRole('checkbox') as HTMLInputElement).disabled).toBe(true);
+        expect(onChange).toHaveBeenLastCalledWith(null, { __errors: ['The current agreement could not be verified.'] });
+    });
+});
