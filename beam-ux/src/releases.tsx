@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@schemastud/ui";
 import { WorkflowActionForm } from "@splicewire/beam-workflows/action-form";
 import type { WorkflowProjectionData } from "@splicewire/beam-workflows/action-form";
@@ -1142,6 +1142,9 @@ export function BuiltReleaseAssembly({
   const [releases, setReleases] = useState<ReleaseRecord[]>([]);
   const [releaseId, setReleaseId] = useState("");
   const [title, setTitle] = useState("");
+  // Releases this editor created since mount, with their latest status. The first list load can land
+  // after a create; it keeps such a draft until the server lists it, and is the truth for every other id.
+  const created = useRef(new Map<string, ReleaseRecord["status"]>());
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<Notice | null>(null);
   const activeRelease = releases.find((release) => release.id === releaseId);
@@ -1152,9 +1155,15 @@ export function BuiltReleaseAssembly({
       .then((records) => {
         if (!live) return;
         const editable = records.filter((record) => record.status === "draft");
-        setReleases(editable);
+        const loaded = new Set(editable.map((record) => record.id));
+        const createdDraft = (id: string) =>
+          !loaded.has(id) && created.current.get(id) === "draft";
+        setReleases((current) => [
+          ...current.filter((record) => createdDraft(record.id)),
+          ...editable,
+        ]);
         setReleaseId((current) =>
-          editable.some((record) => record.id === current)
+          loaded.has(current) || createdDraft(current)
             ? current
             : editable[0]?.id ?? "",
         );
@@ -1178,6 +1187,7 @@ export function BuiltReleaseAssembly({
     setError(null);
     try {
       const release = await createRelease(entryId, name);
+      created.current.set(release.id, release.status);
       setReleases((current) => [
         release,
         ...current.filter((item) => item.id !== release.id),
@@ -1194,6 +1204,7 @@ export function BuiltReleaseAssembly({
   const command = async (input: ReleaseCommand) => {
     if (!activeRelease) return;
     const updated = await releaseCommand(activeRelease.id, input);
+    if (created.current.has(updated.id)) created.current.set(updated.id, updated.status);
     setReleases((current) =>
       current.map((item) => (item.id === updated.id ? updated : item)),
     );

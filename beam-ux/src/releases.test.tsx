@@ -1,6 +1,7 @@
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { act, render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { describe, it, expect, vi } from "vitest";
 import {
+  BuiltReleaseAssembly,
   ReleasePanel,
   type ReleaseRecord,
   type ReleaseConfigChange,
@@ -965,5 +966,39 @@ describe("Config members in the Release panel (ticket 11)", () => {
     // No files to commit, but the secrets note still reassures; the file-list heading must not appear over nothing.
     expect(screen.queryByText("Config files in this commit")).toBeNull();
     expect(screen.getByText("1 secret is stored encrypted and never written to a file or a commit.")).toBeTruthy();
+  });
+});
+
+describe("BuiltReleaseAssembly: the first list load lands after a create", () => {
+  const draft = (id: string, title: string): ReleaseRecord => ({ ...release, id, title, status: "draft", workflow: null });
+  const assemble = (list: Promise<ReleaseRecord[]>, created: ReleaseRecord) =>
+    render(
+      <BuiltReleaseAssembly entryId="entry-1" entryTitle="Home" versions={[]} listReleases={() => list}
+        createRelease={vi.fn().mockResolvedValue(created)} releaseCommand={vi.fn()} />,
+    );
+  const createAndLoad = async (created: ReleaseRecord, records: ReleaseRecord[]) => {
+    let resolveList!: (records: ReleaseRecord[]) => void;
+    assemble(new Promise((resolve) => { resolveList = resolve; }), created);
+    fireEvent.change(screen.getByLabelText("Release title"), { target: { value: created.title } });
+    await act(async () => { fireEvent.click(screen.getByRole("button", { name: "Create built Release" })); });
+    expect((screen.getByLabelText("Release to assemble") as HTMLSelectElement).value).toBe(created.id);
+    await act(async () => { resolveList(records); });
+    const select = screen.getByLabelText("Release to assemble") as HTMLSelectElement;
+    return { value: select.value, options: Array.from(select.options).slice(1).map((o) => `${o.value}:${o.text}`) };
+  };
+
+  it("keeps the created draft and its selection; the server list is the truth for the rest", async () => {
+    const { value, options } = await createAndLoad(draft("r-new", "Launch"), [
+      draft("r-other", "Other"),
+      { ...draft("r-done", "Done"), status: "published" } as ReleaseRecord,
+    ]);
+    expect(value).toBe("r-new");
+    expect(options).toEqual(["r-new:Launch", "r-other:Other"]);
+  });
+
+  it("takes the server's record when the late list already carries the created Release", async () => {
+    const { value, options } = await createAndLoad(draft("r-new", "Launch"), [draft("r-new", "Launch (server)")]);
+    expect(value).toBe("r-new");
+    expect(options).toEqual(["r-new:Launch (server)"]);
   });
 });
