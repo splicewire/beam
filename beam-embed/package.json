@@ -33,12 +33,10 @@
       "catalog": "./messages"
     }
   },
-  "dependencies": {
-    "@splicewire/beam-resources": "^0.1.3"
-  },
   "peerDependencies": {
     "@schemastud/messages": "^0.1.0",
     "@schemastud/ui": "*",
+    "@splicewire/beam-resources": ">=0.6.0 <0.10.0",
     "@tanstack/react-query": ">=5",
     "lucide-react": ">=0.400.0",
     "react": ">=18",

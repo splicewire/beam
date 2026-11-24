@@ -45,13 +45,11 @@
             "catalog": "./messages"
         }
     },
-    "dependencies": {
-        "@splicewire/_resources": "git+https://github.com/splicewire/_resources.git#33be024a9c5386f0a18bd8f928cc092485a12346"
-    },
     "peerDependencies": {
         "@schemastud/big-calendar": "*",
         "@schemastud/messages": "^0.1.0",
         "@schemastud/ui": "*",
+        "@splicewire/_resources": ">=0.5.0 <0.7.0",
         "@tanstack/react-query": ">=5",
         "lucide-react": ">=0.400.0",
         "react": ">=18"
@@ -61,6 +59,7 @@
         "@schemastud/frame": "github:schemastud/js#9503dcf4d839c269ee6053a6a421800bbbb7f974&path:/frame",
         "@schemastud/messages": "github:schemastud/js#47810c9e78aca3eb452f7b34a1eaaed909f4102c&path:/messages",
         "@schemastud/ui": "github:schemastud/js#abef468b39df9b1e81fd9a2081e69f8094c60e4e&path:/ui",
+        "@splicewire/_resources": "git+https://github.com/splicewire/_resources.git#33be024a9c5386f0a18bd8f928cc092485a12346",
         "@tanstack/react-query": "^5.62.0",
         "@testing-library/dom": "^10.4.1",
         "@testing-library/react": "^16.1.0",

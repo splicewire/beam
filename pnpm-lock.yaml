@@ -253,10 +253,6 @@ importers:
         version: 4.1.10(@types/node@26.1.1)(jsdom@25.0.1)(vite@8.1.5(@types/node@26.1.1)(esbuild@0.27.7)(jiti@2.7.0)(yaml@2.9.0))
 
   beam-calendar:
-    dependencies:
-      '@splicewire/_resources':
-        specifier: git+https://github.com/splicewire/_resources.git#33be024a9c5386f0a18bd8f928cc092485a12346
-        version: git+https://github.com/splicewire/_resources.git#33be024a9c5386f0a18bd8f928cc092485a12346
     devDependencies:
       '@schemastud/big-calendar':
         specifier: github:schemastud/js#af4f6b6af02767e9c8287f864baa5006dabc3bf3&path:/big-calendar
@@ -270,6 +266,9 @@ importers:
       '@schemastud/ui':
         specifier: github:schemastud/js#abef468b39df9b1e81fd9a2081e69f8094c60e4e&path:/ui
         version: https://codeload.github.com/schemastud/js/tar.gz/abef468b39df9b1e81fd9a2081e69f8094c60e4e#path:/ui(@radix-ui/react-dialog@1.1.23(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-select@2.3.7(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-separator@1.1.15(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-slot@1.5.0(@types/react@19.2.17)(react@19.2.7))(@radix-ui/react-switch@1.4.1(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-tooltip@1.2.16(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@tanstack/react-table@8.21.3(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(lucide-react@0.468.0(react@19.2.7))(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
+      '@splicewire/_resources':
+        specifier: git+https://github.com/splicewire/_resources.git#33be024a9c5386f0a18bd8f928cc092485a12346
+        version: git+https://github.com/splicewire/_resources.git#33be024a9c5386f0a18bd8f928cc092485a12346
       '@tanstack/react-query':
         specifier: ^5.62.0
         version: 5.101.4(react@19.2.7)
@@ -442,9 +441,6 @@ importers:
 
   beam-embed:
     dependencies:
-      '@splicewire/beam-resources':
-        specifier: link:../beam-resources
-        version: link:../beam-resources
       '@tanstack/react-query':
         specifier: '>=5'
         version: 5.101.4(react@19.2.7)
@@ -464,6 +460,9 @@ importers:
       '@schemastud/ui':
         specifier: github:schemastud/js#abef468b39df9b1e81fd9a2081e69f8094c60e4e&path:/ui
         version: https://codeload.github.com/schemastud/js/tar.gz/abef468b39df9b1e81fd9a2081e69f8094c60e4e#path:/ui(@radix-ui/react-dialog@1.1.23(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-select@2.3.7(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-separator@1.1.15(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-slot@1.5.0(@types/react@19.2.17)(react@19.2.7))(@radix-ui/react-switch@1.4.1(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@radix-ui/react-tooltip@1.2.16(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@tanstack/react-table@8.21.3(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(lucide-react@0.475.0(react@19.2.7))(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
+      '@splicewire/beam-resources':
+        specifier: link:../beam-resources
+        version: link:../beam-resources
       '@testing-library/dom':
         specifier: ^10.4.1
         version: 10.4.1
