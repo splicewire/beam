@@ -57,6 +57,16 @@ export { WorkflowMigrate } from './WorkflowMigrate';
 export { WorkflowStepperTrack, WorkflowActions } from './WorkflowStepper';
 export type { WorkflowProjection, TransitionConfirm } from './WorkflowStepper';
 
+// The storyboard stepper (owner-review 30): plain keyed steps as a rail and a storyboard with shared selection and open
+// state, no provider and nothing workflow-specific. The workflow adapter is a separate export beside it.
+export {
+    StoryboardStepper,
+    type StoryboardStep,
+    type StoryboardStepStatus,
+    type StoryboardStepperProps,
+} from './StoryboardStepper';
+export { workflowProjectionToSteps, type WorkflowStepsOptions } from './workflowSteps';
+
 // The root admin surface (slice 05): composes Editor + Diff + Migrate over the injected client.
 export { WorkflowsAdminPage } from './WorkflowsAdminPage';
 

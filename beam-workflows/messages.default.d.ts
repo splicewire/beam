@@ -181,6 +181,13 @@ declare const catalog: {
     readonly "splicewire-beam-workflows::messages.recipients_undeclared": string;
     readonly "splicewire-beam-workflows::messages.saving": string;
     readonly "splicewire-beam-workflows::messages.stepper_lifecycle": string;
+    readonly "splicewire-beam-workflows::messages.storyboard_rail": string;
+    readonly "splicewire-beam-workflows::messages.storyboard_status_current": string;
+    readonly "splicewire-beam-workflows::messages.storyboard_status_done": string;
+    readonly "splicewire-beam-workflows::messages.storyboard_status_upcoming": string;
+    readonly "splicewire-beam-workflows::messages.storyboard_step_closed": string;
+    readonly "splicewire-beam-workflows::messages.storyboard_step_opened": string;
+    readonly "splicewire-beam-workflows::messages.storyboard_wire": string;
     readonly "splicewire-beam-workflows::messages.timezone": string;
     readonly "splicewire-beam-workflows::messages.to": string;
     readonly "splicewire-beam-workflows::messages.transitions": string;
