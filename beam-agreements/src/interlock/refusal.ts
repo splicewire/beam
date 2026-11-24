@@ -1,25 +1,13 @@
 import { FrameActionError, type FrameTransport } from '@schemastud/frame';
+import { requirementsOf, type OutstandingRequirement } from './requirements';
 
 /**
- * agreements 06: the browser side of a 428. The body is beam's RequirementRefusalData (agreements 04): one
- * OutstandingRequirementData per unmet Requirement, each naming exactly one remedy: `acceptOperation` (call it, then
- * replay) or `member` (replay with the agreement member added to that input member). Read structurally: a body that
- * isn't this shape isn't ours, and the original error is rethrown unchanged.
+ * agreements 06: the browser side of a 428 on frame's transport. The body is read by `requirementsOf` (one parser for
+ * every transport, agreements 15): a body that isn't beam's refusal isn't ours, and the original error is rethrown
+ * unchanged.
  */
-export interface OutstandingRequirement {
-    key: string;
-    /** The 1-based ordinal of the version the server wants (the plane's int `version`, agreements 04). */
-    version: number;
-    digest: string;
-    kind: string;
-    title: string;
-    scope: string;
-    subject: string | number | null;
-    /** For the REST-backed member widget; the 428 dialog reads by key through frame's transport. */
-    readUrl: string;
-    acceptOperation: string | null;
-    member: string | null;
-}
+export { requirementsOf };
+export type { OutstandingRequirement };
 
 /** One Agreement as the person will read it: the text, already checked to be the version whose digest is submitted. */
 export interface PresentedAgreement {
@@ -66,26 +54,10 @@ export function agreementsFrom(transport: Pick<FrameTransport, 'get'>): Agreemen
     };
 }
 
-function isOutstanding(value: unknown): value is OutstandingRequirement {
-    if (!value || typeof value !== 'object') return false;
-    const r = value as Record<string, unknown>;
-    return (
-        typeof r.key === 'string' &&
-        typeof r.version === 'number' &&
-        typeof r.digest === 'string' &&
-        typeof r.title === 'string' &&
-        (typeof r.acceptOperation === 'string' || r.acceptOperation === null) &&
-        (typeof r.member === 'string' || r.member === null)
-    );
-}
-
 /** The outstanding Requirements of a 428, or null when the error is anything else (then it isn't ours to handle). */
 export function refusalOf(error: unknown): OutstandingRequirement[] | null {
     if (!(error instanceof FrameActionError) || error.status !== 428) return null;
-    const body = error.body as { requirements?: unknown; data?: { requirements?: unknown } } | null;
-    const list = body?.requirements ?? body?.data?.requirements;
-    if (!Array.isArray(list) || list.length === 0 || !list.every(isOutstanding)) return null;
-    return list;
+    return requirementsOf(error.body);
 }
 
 /** The text of an Agreement changed between the refusal and the read, twice: nothing was done. */

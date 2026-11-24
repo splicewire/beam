@@ -9,6 +9,8 @@ import {
     createAgreementInterlock,
     createAgreementLock,
     createStepUp,
+    refusalOf,
+    requirementsOf,
     type AgreementRow,
     type OutstandingRequirement,
     type PresentedAgreement,
@@ -205,6 +207,31 @@ describe('the 428 interceptor', () => {
         expect(transport.get).toHaveBeenCalledWith('agreements', 'terms');
         expect(fetchSpy).not.toHaveBeenCalled();
         fetchSpy.mockRestore();
+    });
+});
+
+describe('requirementsOf: one parser for every transport (agreements 15)', () => {
+    it('reads the refusal body bare or wrapped in data', () => {
+        const list = [outstanding({ acceptOperation: null, member: 'agreementMembers' })];
+        expect(requirementsOf({ message: 'Agreement required.', requirements: list })).toEqual(list);
+        expect(requirementsOf({ data: { requirements: list } })).toEqual(list);
+    });
+
+    it('answers null for anything that is not beam refusal', () => {
+        expect(requirementsOf(null)).toBeNull();
+        expect(requirementsOf('Precondition Required')).toBeNull();
+        expect(requirementsOf({ message: 'x' })).toBeNull();
+        expect(requirementsOf({ requirements: [] })).toBeNull();
+        expect(requirementsOf({ requirements: [{ key: 'terms' }] })).toBeNull();
+    });
+
+    it('is what refusalOf reads on frame transport, and the widgets entry exports the same function', async () => {
+        const list = [outstanding()];
+        expect(refusalOf(refused(list))).toEqual(list);
+        expect(refusalOf(new FrameActionError(409, { requirements: list }))).toBeNull();
+        expect(refusalOf({ status: 428, body: { requirements: list } })).toBeNull();
+        const widgets = await import('../src/widgets/register');
+        expect(widgets.requirementsOf).toBe(requirementsOf);
     });
 });
 

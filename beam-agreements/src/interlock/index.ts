@@ -55,6 +55,7 @@ export { createAgreementLock, type AgreementLockOptions, type FrameActionLock } 
 export {
     agreementsFrom,
     refusalOf,
+    requirementsOf,
     presentRefused,
     AgreementTextMismatchError,
     AgreementUnavailableError,
