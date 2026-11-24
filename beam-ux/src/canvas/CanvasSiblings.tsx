@@ -5,7 +5,9 @@ import {useCanvas,isEditGated} from './context';
 import {proseRole,proseRuns,toProse} from './prose';
 import {blockToProps} from './props';
 import { useBeamUxMessages } from '../messages.js';
-const ProseRun=lazy(()=>import('./ProseRun'));
+/** Loads the rich editor's module, which the canvas mounts lazily. A module export for tests that await the load; not in the package index. */
+export const loadProseRun=()=>import('./ProseRun');
+const ProseRun=lazy(loadProseRun);
 export type ProseChange=(parent:string,start:number,end:number,body:JsonDoc)=>void;
 export function CanvasSiblings({
     nodes,

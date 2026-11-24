@@ -1,5 +1,5 @@
 import profileFixture from '../editor/default-profile.fixture.json';
-import {CanvasSiblings} from './CanvasSiblings';
+import {CanvasSiblings,loadProseRun} from './CanvasSiblings';
 vi.mock('../editor/local-session.js', async (original) => {
     const module = await original<typeof import('../editor/local-session.js')>();
     return { ...module, IndexedDbSessions: class { async forEntry() { return []; } async write() {} async close() {} } };
@@ -23,6 +23,9 @@ import { EDIT_GATE_ATTR, VIEW_GATE_ATTR } from './props.js';
 import { ClassChipsWidget, StyleRowsWidget } from './widgets.js';
 import { useStyleSelection } from './StyleSelection';
 
+// The rich editor mounts lazily (ProseRun). Its module loads once, here, so its Suspense resolves on a loaded module
+// instead of racing a cold import against waitFor on a busy machine (owner-review-20261112 ticket 72).
+beforeAll(loadProseRun);
 beforeAll(()=>{
     // jsdom has no layout. PM measures the selection after a real DOM input mutation.
     Range.prototype.getClientRects=()=>[] as unknown as DOMRectList;
@@ -41,10 +44,8 @@ const wrap = (ui: React.ReactNode) => <CanvasProvider config={config}>{ui}</Canv
 const proseProfile = {...profileFixture, nodes: profileFixture.nodes.filter(node=>!node.name.startsWith('Demo'))};
 const wrapProse = (ui: React.ReactNode) => <CanvasProvider config={{...config,profile:proseProfile as CanvasConfig['profile']}}>{ui}</CanvasProvider>;
 async function editRichText(selector:string, text:string) {
-    // The rich editor is lazy-loaded (CanvasSiblings' ProseRun), so its first mount includes a cold module load:
-    // about 0.8s in a fresh release build room, past waitFor's 1s default on a loaded machine. 4s stays inside
-    // the 5s test timeout.
-    await waitFor(()=>expect(document.querySelector(`.ProseMirror ${selector}`)).not.toBeNull(),{timeout:4000});
+    // The editor module is already loaded (beforeAll), so this waits only on React resolving the lazy boundary.
+    await waitFor(()=>expect(document.querySelector(`.ProseMirror ${selector}`)).not.toBeNull());
     const elements=document.querySelectorAll(`.ProseMirror ${selector}`);
     const target=elements[elements.length-1] as HTMLElement;
     await act(async()=>{
