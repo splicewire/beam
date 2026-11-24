@@ -314,6 +314,21 @@ describe('DraftBar', () => {
         expect((screen.getByRole('button', { name: 'Add to the Release' }) as HTMLButtonElement).disabled).toBe(true);
     });
 
+    // config-sections 10b proof finding A: after a direct Publish the tier still holds its override, so the bar stays,
+    // but its headline counted overrides ("1 change pending"). It counts what is pending.
+    it.each([
+        ['a direct Publish', { draft: 2, published: 2, draftPending: false }],
+        ['Discard draft', { draft: 1, published: 1, draftPending: false }],
+    ] as const)('counts no change pending after %s, though the tier keeps its override', (_what, pins) => {
+        const { Provider } = kit([SECTION]);
+        const header = (container: HTMLElement) => container.querySelector('[data-config-draft-bar] header p')?.textContent;
+        const { container, rerender } = render(<Provider><DraftBar resource="beam-config" section={SECTION} /></Provider>);
+        expect(header(container)).toBe('1 change pending');
+        rerender(<Provider><DraftBar resource="beam-config" section={{ ...SECTION, pins }} /></Provider>);
+        expect(container.querySelector('[data-config-draft-bar]')).not.toBeNull();
+        expect(header(container)).toBe('0 changes pending');
+    });
+
     it('disables Add when the section has overrides but no pending draft', async () => {
         const { Provider } = kit([SECTION]);
         const idle = { ...SECTION, pins: { draft: 1, published: 1, draftPending: false } };

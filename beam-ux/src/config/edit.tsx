@@ -480,6 +480,10 @@ export function DraftBar<K extends ResourceKey = ResourceKey>({
     if (!hasPendingDraft(section) && section.overrides.length === 0) return null;
     const schema = section.schema as SchemaNode;
     const lines = keyDiff(section);
+    // The headline counts what is PENDING. `lines` are the tier's overrides, which stay after a direct Publish or a
+    // Discard; with no draft pending they are published, not pending (10b proof finding A: "1 change pending" after a
+    // Publish). Same rule as the Add gate below.
+    const pending = hasPendingDraft(section) ? lines.length : 0;
     const busy = publish.pending || discard.pending || adding;
     const addToRelease = async (target: ConfigReleaseTarget) => {
         setAdding(true);
@@ -498,7 +502,7 @@ export function DraftBar<K extends ResourceKey = ResourceKey>({
     return (
         <section data-config-draft-bar aria-label={m.t('splicewire-beam-ux::messages.config_draft_bar')} className="sticky top-0 z-10 space-y-2 rounded-lg border bg-card p-3 shadow-sm">
             <header className="flex flex-wrap items-center justify-between gap-2">
-                <p className="text-sm font-medium">{m.choice('splicewire-beam-ux::messages.config_changes_pending', lines.length, { count: lines.length })}</p>
+                <p className="text-sm font-medium">{m.choice('splicewire-beam-ux::messages.config_changes_pending', pending, { count: pending })}</p>
                 <div className="flex flex-wrap gap-2">
                     {release && (
                         <Button
