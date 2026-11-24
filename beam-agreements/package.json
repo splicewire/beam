@@ -1,6 +1,6 @@
 {
     "name": "@splicewire/beam-agreements",
-    "version": "0.0.0",
+    "version": "0.2.3",
     "description": "Agreements and consents in the browser: the account and operator screens over frame's shells.",
     "type": "module",
     "sideEffects": false,
