@@ -11,6 +11,22 @@ status: undefined | string | null,
 demoAccounts: DemoAccountLinkData[] | undefined,
 demoUserSearchUrl: undefined | string,
 passwordRules: undefined | string,
+agreements: AgreementPromptData[] | undefined,
+};
+
+export type AgreementPromptData = {
+key: string,
+readUrl: undefined | string,
+required: boolean,
+version: undefined | number,
+digest: undefined | string,
+kind: undefined | string,
+title: undefined | string,
+label: undefined | string,
+effectiveAt: undefined | string,
+summary: undefined | string | null,
+content: undefined | string,
+legalUrl: undefined | string | null,
 };
 
 export type DemoAccountLinkData = {

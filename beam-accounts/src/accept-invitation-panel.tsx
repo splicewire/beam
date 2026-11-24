@@ -3,6 +3,7 @@ import { Button, buttonVariants, cn } from '@schemastud/ui';
 import { AuthError } from './auth-fields';
 import { useBeamAccountsMessages, type BeamAccountsMessages } from './messages';
 import { richMessage } from './rich-message';
+import { AgreementPrompt, type AgreementMember, type AgreementPromptData } from './agreement-prompt';
 
 /**
  * The server's verdict on an invitation link for the current viewer — `InvitationRedemption` in
@@ -22,6 +23,9 @@ export interface AcceptInvitationPanelProps {
     viewerEmail?: string | null;
     /** Take the seat. Offered only in the `ready` state. */
     onAccept?: () => void;
+    agreements?: AgreementPromptData[];
+    agreementMembers?: Record<string, AgreementMember>;
+    onAgreementMembersChange?: (values: Record<string, AgreementMember>) => void;
     processing?: boolean;
     /** Why the last accept was refused (the redeem operation's `invitation` error). */
     error?: string | null;
@@ -65,8 +69,25 @@ export function AcceptInvitationPanel(props: AcceptInvitationPanelProps) {
                     <Heading>{m.t('splicewire-beam-accounts::messages.invite_join', { team })}</Heading>
                     {invitedLine}
                     <p className="text-sm text-muted-foreground">{m.t('splicewire-beam-accounts::messages.invite_signed_in_as', { email: viewerEmail ?? email ?? "" })}</p>
+                    {props.agreements?.map((agreement) => (
+                        <AgreementPrompt
+                            key={agreement.key}
+                            agreement={agreement}
+                            values={props.agreementMembers ?? {}}
+                            onChange={(key, member) => {
+                                const next = { ...(props.agreementMembers ?? {}) };
+                                if (member) next[key] = member;
+                                else delete next[key];
+                                props.onAgreementMembersChange?.(next);
+                            }}
+                        />
+                    ))}
                     <AuthError message={error} />
-                    <Button className="w-full" onClick={onAccept} disabled={processing || !onAccept}>
+                    <Button
+                        className="w-full"
+                        onClick={onAccept}
+                        disabled={processing || !onAccept || Boolean(props.agreements?.some((agreement) => agreement.required && !props.agreementMembers?.[agreement.key]))}
+                    >
                         {processing ? m.t('splicewire-beam-accounts::messages.invite_joining') : m.t('splicewire-beam-accounts::messages.invite_accept')}
                     </Button>
                 </>

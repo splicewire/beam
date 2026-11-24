@@ -10,12 +10,24 @@ import { Label } from '../../components/ui/label';
 import { Spinner } from '../../components/ui/spinner';
 import type { AuthEntryPageData } from '@splicewire/beam-resources/types/accounts-pages';
 import { reportEvent } from '@splicewire/beam-ux/site';
+import { AgreementPrompt, type AgreementMember } from '@splicewire/beam-accounts';
+import { useState } from 'react';
 
 // theme-entries-and-authoring STR-03: a sealed island (editor/registry.tsx), no longer the top-level
 // Inertia page — read via usePage() instead of received as a direct component prop.
 export default function Register() {
     const messages = useBeamMessages();
-    const { passwordRules } = usePage<AuthEntryPageData>().props;
+    const { passwordRules, agreements } = usePage<AuthEntryPageData>().props;
+    const [agreementMembers, setAgreementMembers] = useState<Record<string, AgreementMember>>({});
+
+    const changeAgreementMember = (key: string, member?: AgreementMember) => {
+        setAgreementMembers((current) => {
+            const next = { ...current };
+            if (member) next[key] = member;
+            else delete next[key];
+            return next;
+        });
+    };
 
     return (
         <>
@@ -24,12 +36,23 @@ export default function Register() {
                 method="post"
                 onSuccess={() => reportEvent('sign_up', { method: 'password' })}
                 resetOnSuccess={['password', 'passwordConfirmation']}
+                transform={(data) => Object.keys(agreementMembers).length > 0
+                    ? { ...data, agreementMembers: Object.values(agreementMembers) }
+                    : data}
                 disableWhileProcessing
                 className="flex flex-col gap-6"
             >
                 {({ processing, errors }) => (
                     <>
                         <div className="grid gap-6">
+                            {agreements?.map((agreement) => (
+                                <AgreementPrompt
+                                    key={agreement.key}
+                                    agreement={agreement}
+                                    values={agreementMembers}
+                                    onChange={changeAgreementMember}
+                                />
+                            ))}
                             <div className="grid gap-2">
                                 <Label htmlFor="name">{messages.t('splicewire-beam-inertia::messages.auth_name')}</Label>
                                 <Input
@@ -96,6 +119,7 @@ export default function Register() {
                             <Button
                                 type="submit"
                                 className="mt-2 w-full"
+                                disabled={Boolean(agreements?.some((agreement) => agreement.required && !agreementMembers[agreement.key]))}
                                 tabIndex={5}
                                 data-test="register-user-button"
                             >

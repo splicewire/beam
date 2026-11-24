@@ -28,4 +28,5 @@ export {
 } from './workflows/AgreementBlockedStep';
 export { default as AgreementsRequired, type AgreementsRequiredProps } from './pages/AgreementsRequired';
 export { AgreementMemberWidget } from './widgets/agreement-member';
+export { AgreementPrompt, type AgreementPromptProps } from './widgets/agreement-prompt';
 export { default as registerAgreementWidgets } from './widgets/register';

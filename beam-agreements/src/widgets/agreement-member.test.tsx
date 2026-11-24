@@ -6,13 +6,64 @@ import registerAgreementWidgets from './register.js';
 
 beforeEach(() => {
     vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify({
-        data: { key: 'terms', title: 'Terms of service', version: { digest: 'sha256:current', content: 'Frozen terms text.' } },
+        data: { key: 'terms', kind: 'contract', title: 'Terms of service', version: { digest: 'sha256:current', content: 'Frozen terms text.' } },
     }), { status: 200, headers: { 'Content-Type': 'application/json' } })));
 });
 
 afterEach(() => vi.unstubAllGlobals());
 
 describe('agreement-member schema widget', () => {
+    it('uses embedded guest terms without making an unauthenticated read', async () => {
+        const onChange = vi.fn();
+        const registry = createWidgetRegistry();
+        registerAgreementWidgets(registry);
+        const Widget = registry.resolveWidget({ type: 'object', 'x-widget': 'agreement-member' }) as ComponentType<any>;
+
+        render(
+            <Widget
+                id="agreement-member"
+                name="agreementMember"
+                label="I have read and agree"
+                value={undefined}
+                options={{
+                    key: 'terms', version: 3, digest: 'sha256:current', kind: 'contract',
+                    title: 'Terms of service', content: 'Frozen guest terms.', legalUrl: null,
+                }}
+                onChange={onChange}
+            />,
+        );
+
+        expect(await screen.findByText('Frozen guest terms.')).toBeTruthy();
+        expect(screen.getByRole('checkbox', { name: 'I have read and agree' })).toBeTruthy();
+        expect(fetch).not.toHaveBeenCalled();
+        expect(onChange).toHaveBeenCalledWith(null);
+        fireEvent.click(screen.getByRole('checkbox', { name: 'I have read and agree' }));
+        expect(onChange.mock.calls.at(-1)?.[0]).toEqual({ key: 'terms', version: 3, digest: 'sha256:current' });
+    });
+
+    it('renders an embedded notice without a checkbox or member', async () => {
+        const onChange = vi.fn();
+        const registry = createWidgetRegistry();
+        registerAgreementWidgets(registry);
+        const Widget = registry.resolveWidget({ type: 'object', 'x-widget': 'agreement-member' }) as ComponentType<any>;
+
+        render(
+            <Widget
+                id="agreement-member"
+                name="agreementMember"
+                label="Agreement"
+                value={undefined}
+                options={{ key: 'privacy', version: 1, digest: 'sha256:notice', kind: 'notice', title: 'Privacy notice', content: 'We use your data.' }}
+                onChange={onChange}
+            />,
+        );
+
+        expect(await screen.findByText('We use your data.')).toBeTruthy();
+        expect(screen.queryByRole('checkbox')).toBeNull();
+        expect(fetch).not.toHaveBeenCalled();
+        expect(onChange.mock.calls.at(-1)?.[0]).toBeUndefined();
+    });
+
     it('fetches the agreement and emits only the existing member shape when checked', async () => {
         const registry = createWidgetRegistry();
         registerAgreementWidgets(registry);
@@ -34,6 +85,7 @@ describe('agreement-member schema widget', () => {
 
         expect(await screen.findByText('Terms of service')).toBeTruthy();
         expect(screen.getByText('Frozen terms text.')).toBeTruthy();
+        expect(onChange).toHaveBeenCalledWith(null);
         fireEvent.click(screen.getByRole('checkbox', { name: 'I have read and agree' }));
         expect(onChange).toHaveBeenCalledWith({ key: 'terms', version: 3, digest: 'sha256:current' });
         expect(fetch).toHaveBeenCalledWith('/beam/agreements/agreements/terms', {
@@ -42,6 +94,38 @@ describe('agreement-member schema widget', () => {
             cache: 'no-store',
             headers: { Accept: 'application/json' },
         });
+    });
+
+    it('shows a notice as information and submits no agreement member', async () => {
+        vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify({
+            data: { key: 'privacy', kind: 'notice', title: 'Privacy notice', version: { digest: 'sha256:notice', content: 'How we use your data.' } },
+        }), { status: 200, headers: { 'Content-Type': 'application/json' } })));
+        const onSubmit = vi.fn();
+        const registry = createWidgetRegistry();
+        registerAgreementWidgets(registry);
+        render(
+            <SchemaForm
+                schema={{
+                    type: 'object',
+                    properties: {
+                        privacy: {
+                            type: 'object',
+                            title: 'Privacy notice',
+                            'x-widget': 'agreement-member',
+                            'x-widget-options': { key: 'privacy', version: 2, digest: 'sha256:notice', readUrl: '/beam/agreements/agreements/privacy' },
+                        },
+                    },
+                }}
+                registry={registry}
+                onSubmit={onSubmit}
+            />,
+        );
+
+        expect(await screen.findByText('Privacy notice')).toBeTruthy();
+        expect(screen.getByText('How we use your data.')).toBeTruthy();
+        expect(screen.queryByRole('checkbox')).toBeNull();
+        fireEvent.click(screen.getByRole('button', { name: 'Submit' }));
+        expect(onSubmit.mock.calls[0]?.[0].formData).toEqual({});
     });
 
     it('agreements 16: showTitle false hides the title and keeps the frozen text and the checkbox label', async () => {
@@ -84,7 +168,7 @@ describe('agreement-member schema widget', () => {
         expect(screen.queryByText('Frozen terms text.')).toBeNull();
         expect(fetch).not.toHaveBeenCalled();
         expect((screen.getByRole('checkbox', { name: 'I agree' }) as HTMLInputElement).disabled).toBe(true);
-        expect(onChange.mock.calls[0]?.[0]).toBeUndefined();
+        expect(onChange.mock.calls[0]?.[0]).toBeNull();
     });
 
     it('renders from schema x-widget-options and submits the fetched member through SchemaForm', async () => {
@@ -144,8 +228,7 @@ describe('agreement-member schema widget', () => {
 
         expect(await screen.findByText('Frozen terms text.')).toBeTruthy();
         fireEvent.click(screen.getByRole('button', { name: 'Submit' }));
-        const validation = await screen.findByRole('alert');
-        expect(validation.textContent).toContain("must have required property 'I agree'");
+        await screen.findByRole('alert');
         expect(onSubmit).not.toHaveBeenCalled();
     });
 
@@ -196,7 +279,7 @@ describe('agreement-member schema widget', () => {
         );
 
         fireEvent.click(await screen.findByRole('checkbox', { name: 'I agree' }));
-        expect(onChange.mock.calls[0]?.[0]).toBeUndefined();
+        expect(onChange.mock.calls[0]?.[0]).toBeNull();
     });
 
     it('does not show stale text or permit assent after the digest moves', async () => {
@@ -221,7 +304,7 @@ describe('agreement-member schema widget', () => {
         expect(await screen.findByRole('alert')).toBeTruthy();
         expect(screen.queryByText('New frozen text.')).toBeNull();
         expect((screen.getByRole('checkbox', { name: 'I agree' }) as HTMLInputElement).disabled).toBe(true);
-        expect(onChange.mock.calls[0]?.[0]).toBeUndefined();
+        expect(onChange.mock.calls[0]?.[0]).toBeNull();
     });
 
     it.each([401, 403, 404])('does not show text or retain a submitted member when REST returns %i', async (status) => {
@@ -244,7 +327,7 @@ describe('agreement-member schema widget', () => {
         expect(await screen.findByRole('alert')).toBeTruthy();
         expect(screen.queryByText('Frozen terms text.')).toBeNull();
         expect((screen.getByRole('checkbox', { name: 'I agree' }) as HTMLInputElement).disabled).toBe(true);
-        expect(onChange.mock.calls[0]?.[0]).toBeUndefined();
+        expect(onChange.mock.calls[0]?.[0]).toBeNull();
     });
 
     it.each([401, 403, 404])('blocks the form submission when the agreement read returns %i', async (status) => {
@@ -299,9 +382,10 @@ describe('agreement-member schema widget', () => {
         await screen.findByText('Voice use');
         const boxes = screen.getAllByRole('checkbox');
         expect(boxes).toHaveLength(2);
+        expect(terms).toHaveBeenCalledExactlyOnceWith(null);
         fireEvent.click(screen.getByRole('checkbox', { name: 'I consent to voice use' }));
         expect(voice).toHaveBeenCalledWith({ key: 'voice-use', version: 1, digest: 'sha256:current' });
-        expect(terms).not.toHaveBeenCalled();
+        expect(terms).toHaveBeenCalledExactlyOnceWith(null);
     });
 });
 

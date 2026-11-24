@@ -1,6 +1,7 @@
 import { useBeamMessages } from '../../messages';
 import { Head, router, usePage } from '@inertiajs/react';
-import { AcceptInvitationPanel, type InvitationState } from '@splicewire/beam-accounts';
+import { AcceptInvitationPanel, type AgreementMember, type InvitationState } from '@splicewire/beam-accounts';
+import type { AgreementPromptData } from '@splicewire/beam-resources/types/accounts-pages';
 import { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { resetFrameAfterTeamChange } from '../../frame/team-change';
@@ -33,6 +34,7 @@ type AcceptInvitationPageProps = {
     registerUrl: string | null;
     loginUrl: string | null;
     logoutUrl: string | null;
+    agreements?: AgreementPromptData[];
     errors?: Record<string, string>;
 };
 
@@ -51,13 +53,14 @@ export default function AcceptInvitation() {
 
     const props = usePage<AcceptInvitationPageProps>().props;
     const [processing, setProcessing] = useState(false);
+    const [agreementMembers, setAgreementMembers] = useState<Record<string, AgreementMember>>({});
     const queryClient = useQueryClient();
 
     const accept = props.acceptUrl
         ? () =>
               router.post(
                   props.acceptUrl!,
-                  {},
+                  Object.keys(agreementMembers).length > 0 ? { agreementMembers: Object.values(agreementMembers) } : {},
                   {
                       onStart: () => setProcessing(true),
                       onFinish: () => setProcessing(false),
@@ -90,6 +93,9 @@ export default function AcceptInvitation() {
                 loginHref={props.loginUrl}
                 onLogout={logout}
                 homeHref={props.viewerEmail ? '/dashboard' : null}
+                agreements={props.agreements}
+                agreementMembers={agreementMembers}
+                onAgreementMembersChange={setAgreementMembers}
             />
         </>
     );

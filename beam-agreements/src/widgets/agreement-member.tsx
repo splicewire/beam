@@ -9,14 +9,18 @@ type AgreementMemberOptions = {
     readUrl?: string;
     title?: string;
     label?: string;
+    kind?: string;
+    content?: string;
+    legalUrl?: string | null;
     /** agreements 16: false hides the Agreement's title (a host whose checkbox label already says it); default true. */
     showTitle?: boolean;
 };
 
-type AgreementContent = { title: string; content: string; digest: string };
+type AgreementContent = { title: string; content: string; digest: string; kind?: string; legalUrl?: string | null };
 type AgreementReadResponse = {
     data?: {
         key?: unknown;
+        kind?: unknown;
         title?: unknown;
         version?: { digest?: unknown; content?: unknown } | null;
     };
@@ -72,7 +76,8 @@ export function AgreementMemberWidget(props: AgreementMemberWidgetProps) {
     const readUrl = options.readUrl ?? (key === '' ? '' : `/beam/agreements/agreements/${encodeURIComponent(key)}`);
     // The show resource does not expose the requirements plane's ordinal. Requiring the schema digest lets this
     // widget prove that the text it displays is exactly the version the form will submit alongside that ordinal.
-    const complete = key !== '' && version !== undefined && typeof expectedDigest === 'string' && expectedDigest !== '' && readUrl !== '';
+    const embedded = typeof options.kind === 'string' && typeof options.content === 'string';
+    const complete = key !== '' && version !== undefined && typeof expectedDigest === 'string' && expectedDigest !== '' && (embedded || readUrl !== '');
     const member = value && typeof value === 'object' ? (value as Partial<AgreementMember>) : undefined;
     const onChangeRef = useRef(emitChange);
     onChangeRef.current = emitChange;
@@ -91,7 +96,28 @@ export function AgreementMemberWidget(props: AgreementMemberWidgetProps) {
 
         if (!complete) {
             setUnavailable(true);
-            emitChange(undefined, 'The current agreement could not be verified.');
+            // `undefined` is defaulted to `{}` for object fields by some RJSF versions. A null
+            // keeps this object-typed field invalid, so an unverified assent cannot pass submit.
+            emitChange(null, 'The current agreement could not be verified.');
+            return () => { cancelled = true; };
+        }
+
+        if (embedded) {
+            setAgreement({
+                title: options.title ?? key,
+                content: options.content as string,
+                digest: expectedDigest as string,
+                kind: options.kind,
+                legalUrl: options.legalUrl,
+            });
+            const existing = valueRef.current && typeof valueRef.current === 'object'
+                ? (valueRef.current as Partial<AgreementMember>)
+                : undefined;
+            if (options.kind === 'notice') {
+                if (valueRef.current !== undefined) onChangeRef.current(undefined);
+            } else if (
+                existing?.key !== key || existing.version !== version || existing.digest !== expectedDigest
+            ) onChangeRef.current(null);
             return () => { cancelled = true; };
         }
 
@@ -120,31 +146,34 @@ export function AgreementMemberWidget(props: AgreementMemberWidgetProps) {
                     typeof current.content !== 'string'
                 ) {
                     setUnavailable(true);
-                    onChangeRef.current(undefined, 'The current agreement could not be verified.');
+                    onChangeRef.current(null, 'The current agreement could not be verified.');
                     return;
                 }
                 setAgreement({
                     title: typeof data.title === 'string' ? data.title : options.title ?? key,
                     content: current.content,
                     digest: current.digest,
+                    kind: typeof data.kind === 'string' ? data.kind : undefined,
+                    legalUrl: options.legalUrl,
                 });
                 const existing = valueRef.current && typeof valueRef.current === 'object'
                     ? (valueRef.current as Partial<AgreementMember>)
                     : undefined;
-                if (
-                    valueRef.current !== undefined &&
-                    (existing?.key !== key || existing.version !== version || existing.digest !== current.digest)
-                ) onChangeRef.current(undefined);
+                if (data.kind === 'notice') {
+                    if (valueRef.current !== undefined) onChangeRef.current(undefined);
+                } else if (
+                    existing?.key !== key || existing.version !== version || existing.digest !== current.digest
+                ) onChangeRef.current(null);
             })
             .catch(() => {
                 if (!cancelled) {
                     setUnavailable(true);
-                    onChangeRef.current(undefined, 'The current agreement could not be verified.');
+                    onChangeRef.current(null, 'The current agreement could not be verified.');
                 }
             });
 
         return () => { cancelled = true; };
-    }, [complete, expectedDigest, key, options.title, readUrl]);
+    }, [complete, embedded, expectedDigest, key, options.content, options.kind, options.legalUrl, options.title, readUrl]);
 
     const locked = Boolean(disabled || readonly || !complete || !digestMatches);
 
@@ -152,7 +181,7 @@ export function AgreementMemberWidget(props: AgreementMemberWidgetProps) {
         emitChange(
             event.currentTarget.checked && version !== undefined && digestMatches
                 ? { key, version, digest: agreement.digest } satisfies AgreementMember
-                : undefined,
+                : null,
         );
     };
 
@@ -160,19 +189,22 @@ export function AgreementMemberWidget(props: AgreementMemberWidgetProps) {
         <fieldset data-agreement-member={key || undefined} disabled={locked} style={{ border: 0, margin: 0, padding: 0 }}>
             {agreement && options.showTitle !== false ? <legend style={{ fontWeight: 600, marginBottom: 8 }}>{agreement.title}</legend> : null}
             {agreement ? <div data-agreement-text="" style={{ whiteSpace: 'pre-wrap', marginBottom: 12 }}>{agreement.content}</div> : null}
+            {agreement?.legalUrl ? <a href={agreement.legalUrl}>Read the full agreement</a> : null}
             {unavailable ? <p role="alert">This agreement changed or is unavailable. Reload the form before accepting.</p> : null}
-            <label htmlFor={checkboxId} style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
-                <input
-                    id={checkboxId}
-                    type="checkbox"
-                    name={props.name}
-                    aria-label={options.label ?? label}
-                    checked={checked}
-                    disabled={locked}
-                    onChange={change}
-                />
-                <span>{options.label ?? label}</span>
-            </label>
+            {agreement?.kind === 'notice' ? null : (
+                <label htmlFor={checkboxId} style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
+                    <input
+                        id={checkboxId}
+                        type="checkbox"
+                        name={props.name}
+                        aria-label={options.label ?? label}
+                        checked={checked}
+                        disabled={locked}
+                        onChange={change}
+                    />
+                    <span>{options.label ?? label}</span>
+                </label>
+            )}
         </fieldset>
     );
 }

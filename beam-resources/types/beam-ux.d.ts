@@ -19,7 +19,7 @@ fileLanguages?: string[] | null,
 intakeForms?: Record<string, Record<string, any>>,
 mediaLibrary?: boolean,
 authoredComponents: ComponentCanvasData[],
-redirects?: Array<{ path: string; match: string; permanent: boolean; origin: string }> | null,
+redirects?: RedirectRowData[] | null,
 };
 
 export type EntryVersionData = {
@@ -197,6 +197,13 @@ childFields: string | null,
 fields: Record<string, string | number | boolean>,
 unclaimed: Record<string, string>,
 recordPage?: RecordPageData | null,
+};
+
+export type RedirectRowData = {
+path: string,
+match: string,
+permanent: boolean,
+origin: string,
 };
 
 export type ReleaseRecordingData = {
