@@ -135,6 +135,9 @@ export const DOCS_LAYOUT_CSS = `
 .beam-docs-rail a { color: var(--beam-ink-70); }
 .beam-docs-rail a:hover { color: var(--beam-fg, var(--beam-ink)); }
 .beam-docs-rail a[aria-current='page'], .beam-docs-rail a[data-active='true'] { color: var(--beam-fg, var(--beam-ink)); font-weight: 600; }
+/* tutorial-dx 09 (browser check): RealmNav paints an active row with the host sidebar's bg-sidebar-accent, a dark-sidebar
+   token that put the ink above at 1.06:1 on the docs page. The rail's current row takes a wash of its own ink instead. */
+.beam-docs-rail a[aria-current='page'], .beam-docs-rail a[data-active='true'] { background-color: color-mix(in srgb, var(--beam-fg, var(--beam-ink)) 8%, transparent); }
 /* tutorial-dx 09b: the group and zone labels are not links, so the rule above left them in the host's --sidebar-* ink
    at 55% and 80%: nearly invisible on a docs page. They take the same --beam-ink-70 as the rail's links. */
 .beam-docs-rail .beam-nav-label, .beam-docs-rail .beam-nav-zone-label { color: var(--beam-ink-70); }
