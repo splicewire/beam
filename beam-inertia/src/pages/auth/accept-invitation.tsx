@@ -27,6 +27,8 @@ type AcceptInvitationPageProps = {
     teamName: string | null;
     email: string | null;
     role: string | null;
+    /** The role's catalog label (localization 69b); absent from a server before that, so optional. */
+    roleLabel?: string | null;
     inviterName: string | null;
     expiresAt: string | null;
     viewerEmail: string | null;
@@ -84,6 +86,7 @@ export default function AcceptInvitation() {
                 teamName={props.teamName}
                 email={props.email}
                 role={props.role}
+                roleLabel={props.roleLabel}
                 inviterName={props.inviterName}
                 viewerEmail={props.viewerEmail}
                 onAccept={accept}

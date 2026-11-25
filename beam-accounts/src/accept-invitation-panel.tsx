@@ -18,6 +18,11 @@ export interface AcceptInvitationPanelProps {
     /** The invited address. */
     email?: string | null;
     role?: string | null;
+    /**
+     * The role's display label from the server (the Role enum's catalog line, translated). Preferred over `role` when
+     * present. Null for a role outside the server's vocabulary: the panel then shows `role` capitalised.
+     */
+    roleLabel?: string | null;
     inviterName?: string | null;
     /** Who is signed in, for the `wrong-account` explanation. */
     viewerEmail?: string | null;
@@ -37,8 +42,12 @@ export interface AcceptInvitationPanelProps {
     homeHref?: string | null;
 }
 
-/** A role is a machine name, shown capitalised; with none, the invitation is for a member. */
-function roleLabel(role: string | null | undefined, m: BeamAccountsMessages): string {
+/**
+ * The server's label when it sent one; otherwise the role's machine name, shown capitalised; with no role, the
+ * invitation is for a member.
+ */
+function roleLabel(role: string | null | undefined, label: string | null | undefined, m: BeamAccountsMessages): string {
+    if (role && label) return label;
     return role ? role.charAt(0).toUpperCase() + role.slice(1) : m.t('splicewire-beam-accounts::messages.invite_member_role');
 }
 
@@ -53,12 +62,12 @@ const secondaryLink = cn(buttonVariants({ variant: 'outline' }), 'w-full');
  * Transport-free: the host supplies `onAccept` / `onLogout` and the hrefs, and renders the page chrome.
  */
 export function AcceptInvitationPanel(props: AcceptInvitationPanelProps) {
-    const { state, teamName, email, role, inviterName, viewerEmail, onAccept, processing = false, error } = props;
+    const { state, teamName, email, role, roleLabel: serverRoleLabel, inviterName, viewerEmail, onAccept, processing = false, error } = props;
     const m = useBeamAccountsMessages();
     const team = teamName ?? m.t('splicewire-beam-accounts::messages.invite_the_team');
     const invitedLine = (
         <p className="text-sm text-muted-foreground">
-            {richMessage(m, 'splicewire-beam-accounts::messages.invite_invited_line', { inviter: inviterName ?? m.t('splicewire-beam-accounts::messages.invite_a_teammate'), email: <b className="font-medium text-foreground">{email}</b>, team: <b className="font-medium text-foreground">{team}</b>, role: <b className="font-medium text-foreground">{roleLabel(role, m)}</b> })}
+            {richMessage(m, 'splicewire-beam-accounts::messages.invite_invited_line', { inviter: inviterName ?? m.t('splicewire-beam-accounts::messages.invite_a_teammate'), email: <b className="font-medium text-foreground">{email}</b>, team: <b className="font-medium text-foreground">{team}</b>, role: <b className="font-medium text-foreground">{roleLabel(role, serverRoleLabel, m)}</b> })}
         </p>
     );
 
