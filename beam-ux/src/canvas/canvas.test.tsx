@@ -691,7 +691,8 @@ describe('PageEditor — mode fork + transport', async () => {
         fireEvent.change(screen.getByLabelText('Release title'), { target: { value: 'Launch' } });
         fireEvent.click(screen.getByRole('button', { name: 'Create built Release' }));
         await waitFor(() => expect(transport.createRelease).toHaveBeenCalledWith('entry-1', 'Launch'));
-        fireEvent.change(screen.getByLabelText('Release to assemble'), { target: { value: 'release-launch' } });
+        // The call is not the render: wait for the created Release to be offered before choosing it.
+        fireEvent.change(await screen.findByLabelText('Release to assemble'), { target: { value: 'release-launch' } });
         expect((screen.getByLabelText('Entry') as HTMLSelectElement).value).toBe('entry-1');
         fireEvent.change(screen.getByLabelText('Saved version'), { target: { value: 'v-v1' } });
         expect((screen.getByRole('button', { name: 'Add to Release' }) as HTMLButtonElement).disabled).toBe(false);
