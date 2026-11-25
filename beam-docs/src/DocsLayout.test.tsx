@@ -72,6 +72,16 @@ describe('DocsLayout', () => {
         expect(screen.getByRole('link', { name: 'Webhooks' }).getAttribute('aria-current')).toBeNull();
     });
 
+    // tutorial-dx 09b browser check (2026-11-25): RealmNav paints the active row with the host sidebar's
+    // `bg-sidebar-accent`, a dark-sidebar token, under the docs ink: 1.06:1 on the site. The docs rail paints its own.
+    it('paints the current rail row from the docs ink, not the host sidebar accent', () => {
+        const { container } = render(<DocsLayout {...props} currentHref="/learn/beam/api-keys" nav={{ items: [
+            { title: 'Docs', href: '/learn/beam', children: [{ title: 'API keys', href: '/learn/beam/api-keys' }] },
+        ] }}><p>Guide</p></DocsLayout>);
+        const current = container.querySelector('.beam-docs-rail a[aria-current="page"]')!;
+        expect(getComputedStyle(current).backgroundColor).toContain('var(--beam-fg');
+    });
+
     it('leaves a server-stamped active row as the only current one', () => {
         render(<DocsLayout {...props} currentHref="/learn/beam/api-keys" nav={{ items: [
             { title: 'Docs', href: '/learn/beam', children: [
