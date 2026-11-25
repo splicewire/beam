@@ -43,16 +43,27 @@ const config: CanvasConfig = { registry: { Hero }, MdxView, MdxEdit };
 const wrap = (ui: React.ReactNode) => <CanvasProvider config={config}>{ui}</CanvasProvider>;
 const proseProfile = {...profileFixture, nodes: profileFixture.nodes.filter(node=>!node.name.startsWith('Demo'))};
 const wrapProse = (ui: React.ReactNode) => <CanvasProvider config={{...config,profile:proseProfile as CanvasConfig['profile']}}>{ui}</CanvasProvider>;
-async function editRichText(selector:string, text:string) {
+/**
+ * Types `text` into the last `selector` node of the open rich editor, as an author does, with no wall-clock wait.
+ * - Waits for the editor to hold exactly `count` such nodes. An editor that already showed an earlier heading is
+ *   not yet ready for the new one.
+ * - The caret is in the editor, so the canvas's own blur-flush (Save draft, Publish) commits the edit, as for an author.
+ *   Without focus the commit rode on blockdoc's 0 ms debounce beating a 20 ms sleep, which a loaded machine can lose
+ *   (owner-review-20261112 ticket 72).
+ * - Returns once the editor's own state holds the text, read through ProseMirror's mutation observer.
+ */
+async function editRichText(selector:string, text:string, count=1) {
     // The editor module is already loaded (beforeAll), so this waits only on React resolving the lazy boundary.
-    await waitFor(()=>expect(document.querySelector(`.ProseMirror ${selector}`)).not.toBeNull());
+    await waitFor(()=>expect(document.querySelectorAll(`.ProseMirror ${selector}`)).toHaveLength(count));
     const elements=document.querySelectorAll(`.ProseMirror ${selector}`);
     const target=elements[elements.length-1] as HTMLElement;
+    const surface=target.closest('.ProseMirror') as HTMLElement & {editor?:{state:{doc:{textContent:string}}}};
+    act(()=>surface.focus());
     await act(async()=>{
         target.textContent=text;
         fireEvent.input(target);
-        await new Promise(resolve=>setTimeout(resolve,20));
     });
+    await waitFor(()=>expect(surface.editor?.state.doc.textContent).toContain(text));
 }
 
 
@@ -1008,7 +1019,7 @@ describe('PageEditor — mode fork + transport', async () => {
         const { container } = await enterEditMode(transport);
 
         /** Insert a heading from the palette and commit typed text into it the way an author does. */
-        const authorHeading = async (text: string) => {
+        const authorHeading = async (text: string, count: number) => {
             const palette = Array.from(
                 container.querySelectorAll('.pe-panel.pe-left .ve-pal-item'),
             ).find((el) => (el.textContent ?? '').includes('Heading')) as HTMLElement;
@@ -1021,7 +1032,7 @@ describe('PageEditor — mode fork + transport', async () => {
                 fireEvent.doubleClick(inserted);
             });
 
-            await editRichText('h2',text);
+            await editRichText('h2',text,count);
         };
 
         const save = async () => {
@@ -1031,11 +1042,11 @@ describe('PageEditor — mode fork + transport', async () => {
             });
         };
 
-        await authorHeading('Baseline');
+        await authorHeading('Baseline', 1);
         await save();
 
         // No reload, no remount, no re-seed — the same mounted editor takes its second edit.
-        await authorHeading('Marker');
+        await authorHeading('Marker', 2);
         await save();
 
         expect(transport.saveDraft).toHaveBeenCalledTimes(2);
@@ -1319,6 +1330,7 @@ describe('CanvasWidget — the stale-snapshot race (G2-BEAM-AUTHOR-FIRST-EDIT-LO
         fireEvent.doubleClick(h1);
         rerender(wrapProse(<CanvasWidget value={current} onChange={onChange} editShellMount={mount as never} />));
         await editRichText('h1',typed);
+        act(()=>(document.activeElement as HTMLElement).blur());
         expect(onChange).toHaveBeenCalled();
         rerender(wrapProse(<CanvasWidget value={current} onChange={onChange} editShellMount={mount as never} />));
 
