@@ -11,6 +11,7 @@ packages:
   - beam-notifications
   - beam-ux
   - beam-mdx
+  - beam-agreements
   - beam-accounts
   - beam-docs
   - beam-market
@@ -21,4 +22,3 @@ packages:
   - beam-intake
   - beam-inertia
   - beam-embed
-  - beam-agreements
