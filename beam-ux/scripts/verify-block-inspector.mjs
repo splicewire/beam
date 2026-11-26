@@ -1,7 +1,6 @@
 // Real Chromium: a closed style panel mounts its controls only when opened, and they read the block's CURRENT values.
 // jsdom cannot prove this (no native <details>/<summary> activation or focus move). No host/DB claim.
-// Run from beam-ux: node scripts/verify-block-inspector.mjs (as verify-page-settings.mjs). Where the vitest config's
-// pins live only in pnpm's hidden hoist, prefix NODE_PATH=$PWD/../node_modules/.pnpm/node_modules.
+// Run from beam-ux: node scripts/verify-block-inspector.mjs (as verify-page-settings.mjs).
 import assert from 'node:assert/strict';
 import { fileURLToPath } from 'node:url';
 import { resolve } from 'node:path';
