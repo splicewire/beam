@@ -36,11 +36,18 @@ test("the lockfile's importers are the workspace's packages", () => {
   }
   assert.deepEqual(importers.filter((name) => name !== ".").sort(), [...workspaces].sort());
 });
-test("every first-party dependency resolves to its checkout, as the npm workspace linked it", () => {
+test("consumed Beam workspaces resolve locally without linking released family dependencies", () => {
   const overrides = read("package.json").pnpm?.overrides ?? {};
-  const names = new Set(workspaces.flatMap((dir) => specsOf(manifests[dir]).map(([name]) => name)).filter((name) => /^@(splicewire|schemastud)\//.test(name)));
+  const names = new Set(workspaces.flatMap((dir) => specsOf(manifests[dir]).map(([name]) => name)));
+  // Canonical release repin 07c9bd0 removed out-of-repo overrides. Root Storybook
+  // devDependency links are workbench inputs, not overrides of released package dependencies.
   for (const name of names) {
-    assert.match(overrides[name] ?? "", /^link:/, `${name} has no link: override in the root package.json`);
+    if (dirOf[name]) assert.equal(overrides[name], `link:${dirOf[name]}`, `${name} must resolve to its workspace checkout`);
   }
-  for (const dir of workspaces) assert.equal(overrides[manifests[dir].name], `link:${dir}`);
+  for (const [name, spec] of Object.entries(overrides)) {
+    if (dirOf[name]) assert.equal(spec, `link:${dirOf[name]}`, `${name} points outside its workspace checkout`);
+    else if (/^@(splicewire|schemastud)\//.test(name)) {
+      assert.doesNotMatch(spec, /^link:/, `${name} must retain its release resolution, not a global sibling link`);
+    }
+  }
 });
