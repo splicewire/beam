@@ -5,7 +5,10 @@ import { canonicalCommerceInput, workspaceStoryPatterns } from './canonical-comm
 import { workspaces as workspaceList } from '../scripts/workspaces.mjs';
 
 const workspaces: string[] = workspaceList();
-const commerce = canonicalCommerceInput(fileURLToPath(new URL('./commerce-source.local.json', import.meta.url)));
+const commerce = canonicalCommerceInput(fileURLToPath(new URL('./commerce-source.local.json', import.meta.url)), { optional: true });
+if (!commerce) {
+    console.warn('[beam Storybook] Commerce stories unavailable. Select canonical commerce in .storybook/commerce-source.local.json to enable them.');
+}
 
 /**
  * The beam per-repo Storybook — the "free-tier" catalog of the composition architecture
@@ -19,7 +22,7 @@ const commerce = canonicalCommerceInput(fileURLToPath(new URL('./commerce-source
  * remaining workspace, plus the three canonical commerce inputs selected by the private manifest below.
  */
 const config: StorybookConfig = {
-    stories: [...workspaceStoryPatterns(workspaces), ...commerce.stories],
+    stories: [...workspaceStoryPatterns(workspaces), ...(commerce?.stories ?? [])],
     addons: [],
     framework: {
         name: '@storybook/react-vite',
@@ -29,7 +32,8 @@ const config: StorybookConfig = {
         // The private selected canonical source is outside this workspace; allow only that explicit root too.
         cfg.server ??= {};
         cfg.server.fs ??= {};
-        cfg.server.fs.allow = [...(cfg.server.fs.allow ?? []), fileURLToPath(new URL('..', import.meta.url)), commerce.packageRoot];
+        cfg.server.fs.allow = [...(cfg.server.fs.allow ?? []), fileURLToPath(new URL('..', import.meta.url))];
+        if (commerce) cfg.server.fs.allow.push(commerce.packageRoot);
         cfg.plugins ??= [];
         // Tailwind v4 — the packages are headless (tsup libs, no CSS pipeline); the workbench
         // supplies the Tailwind + token layer so `bg-primary` etc. render skinned. Per-package

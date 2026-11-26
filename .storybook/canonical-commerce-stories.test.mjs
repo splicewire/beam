@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, rmSync, realpathSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, rmSync, realpathSync, symlinkSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { resolve } from 'node:path';
 import { execFileSync } from 'node:child_process';
@@ -31,6 +31,23 @@ test('keeps other workspace patterns and replaces exactly the three commerce fil
 test('missing explicit selection refuses instead of falling back to mirror stories', () => {
     assert.throws(() => canonicalCommerceInput('/not-an-owned-selection.json'), /Select canonical commerce/);
 });
+test('optional selection skips commerce only when the selection file is absent', (t) => {
+    const f = fixture(t);
+    const absent = resolve(f.root, 'absent.json');
+    assert.equal(canonicalCommerceInput(absent, { optional: true }), null);
+    assert.deepEqual(canonicalCommerceInput(f.path, { optional: true }).stories,
+        commerceStoryFiles.map((file) => resolve(f.root, file)));
+});
+
+test('optional selection still rejects an explicit broken or invalid selection', (t) => {
+    const f = fixture(t);
+    const dangling = resolve(f.root, 'dangling.json');
+    symlinkSync(resolve(f.root, 'absent.json'), dangling);
+    assert.throws(() => canonicalCommerceInput(dangling, { optional: true }), /Select canonical commerce/);
+    writeFileSync(f.path, 'invalid json');
+    assert.throws(() => canonicalCommerceInput(f.path, { optional: true }), /Select canonical commerce/);
+});
+
 test('a different source commit refuses', (t) => {
     const f = fixture(t); f.selection.sourceCommit = '0'.repeat(40); f.save();
     assert.throws(() => canonicalCommerceInput(f.path), /HEAD does not match/);

@@ -1,4 +1,4 @@
-import { readFileSync, realpathSync } from 'node:fs';
+import { lstatSync, readFileSync, realpathSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { createHash } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
@@ -12,10 +12,13 @@ const artifactFiles = ['dist/index.js', 'dist/index.d.ts', 'dist/index.js.map'];
 const fail = (message) => { throw new Error(`[beam Storybook] ${message}`); };
 
 /** A private manifest selects immutable canonical inputs; never fall back to the retired mirror. */
-export function canonicalCommerceInput(manifestPath) {
+export function canonicalCommerceInput(manifestPath, { optional = false } = {}) {
     let selected;
     try { selected = JSON.parse(readFileSync(manifestPath, 'utf8')); }
-    catch { fail('Select canonical commerce in .storybook/commerce-source.local.json (see its example); input is missing or invalid.'); }
+    catch (error) {
+        if (optional && error.code === 'ENOENT' && !lstatSync(manifestPath, { throwIfNoEntry: false })) return null;
+        fail('Select canonical commerce in .storybook/commerce-source.local.json (see its example); input is missing or invalid.');
+    }
     const packageRoot = realpathSync(resolve(dirname(manifestPath), selected.packageRoot));
     const pkg = JSON.parse(readFileSync(resolve(packageRoot, 'package.json'), 'utf8'));
     if (pkg.name !== '@splicewire/beam-commerce' || pkg.repository?.url !== 'https://github.com/splicewire/laravel-beam-commerce.git'
